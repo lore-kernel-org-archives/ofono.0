@@ -1,87 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============3493717829051924515=="
+Content-Type: multipart/mixed; boundary="===============6707435244905369258=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] extended support for LTE and NR. Some minor fixes.
- part 1 of 7
-Date: Wed, 19 Sep 2018 16:45:26 -0500
-Message-ID: <ab528817-cb1b-e0fd-0ec5-be9abbdf0884@gmail.com>
-In-Reply-To: <3362056b-a4d5-d51f-7c23-8e1fef2c130a@jolla.com>
+Subject: Re: ublox TOBY-R200
+Date: Wed, 19 Sep 2018 16:55:26 -0500
+Message-ID: <85bde1b1-3ee4-7f62-88e3-809bf31ca335@gmail.com>
+In-Reply-To: <CAFJydPWS6sVv0+0pYTRjy6Ne5r1+Z8A8r2QUOqWFGNZrGGE+og@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3493717829051924515==
+--===============6707435244905369258==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi Frank,
 
->> I understand that! It makes things easier for you guys.
->>
->> But we had to avoid certain compile-time dependencies in ofono, and a =
+Please stop top-posting on this mailing list.  We follow the accepted =
 
->> straightforward (and perhaps the only) way to achieve that was to use =
+best practice of open source mailing lists and require replies to be =
 
->> binary plugins. For us plugin API is not subject to change (plugins =
+in-line.
 
->> don't necessarily get upgraded together with ofono), meaning more =
+> Sep 19 20:17:41 gateway daemon.warn ofonod[152]: Context activated for
+> driver that doesn't support automatic context activation.
 
->> changes between our fork and upstream in case if upstream breaks it, =
+So this is a big clue that something is wrong.  The uBlox driver can =
 
->> more maintenance work and more room for errors. Obviously, I would =
+create 'atmodem' or 'ubloxmodem' gprs contexts.  The atmodem =
 
->> like to keep differences to a minimum.
+gprs_context driver does not support .read_settings.  That is because we =
 
-So I sympathize, but really it might also be a hint to finally start =
+so far have not needed to support LTE contexts via PPP.  You would =
 
-getting things upstream.
+likely end up spiking the CPU to 100% and melt your device if you tried =
 
->>
->> I'm just humbly asking - if there's a way to keep plugin API backward =
+that ;)
 
->> compatible, please do it that way. There is at least one person in the =
+The 'ubloxmodem' gprs_context driver does support read_settings, but I =
 
->> world who would appreciate it.
->>
+don't know enough about this hardware to guide you any further.
 
-The problem is, the next time this comes up there may be no way to avoid =
+> I'm new to oFono and connman so I'm going to try to get cellular =
 
-it...  Or we break binary compatibility inadvertently.  It is just not =
+> connectivity working on a BeagleBone Black with u-blox TOBY-L201 (oFono =
 
-something we're going to be looking out for.
+> supported modem) plugged into USB first.=C2=A0 I can activate a context =
 
-> =
+> successfully but cellular still says Connected =3D False in connmanctl on =
 
-> Actually, in our fork we have already modified enum =
+> the BeagleBone Black.=C2=A0 Any pointers or links on how to do get connma=
+n =
 
-> ofono_gprs_auth_method and that's what we have there:
-> =
-
-> enum ofono_gprs_auth_method {
->  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_ANY =3D 0,
->  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_NONE,
->  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_CHAP,
->  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_PAP,
-> };
-
-So you already made life very hard for yourself ;)
-
-> =
-
-> (ANY =3D PAP_CHAP, and don't ask me why we added new values to the =
-
-> beginning of the enum - it was before we started using binary plugins). =
-
-> I would be more than happy if upstream started to use the same enum!
+> working with oFono are appreciated.
 > =
 
 
-That assumes that we should support your METHOD_ANY thing.  I've not =
-
-heard any good arguments for that yet...
+This might be better asked on the ConnMan mailing list.
 
 Regards,
 -Denis
 
---===============3493717829051924515==--
+--===============6707435244905369258==--
 
