@@ -1,45 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5142904387419582865=="
+Content-Type: multipart/mixed; boundary="===============5085543447712304159=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 5/7] extended support for LTE and NR. Some minor fixes. part 5
+Subject: [PATCH 6/7] extended support for LTE and NR. Some minor fixes. part 6
  of 7
-Date: Wed, 19 Sep 2018 07:37:31 +0200
-Message-ID: <1537335453-21498-5-git-send-email-gciofono@gmail.com>
+Date: Wed, 19 Sep 2018 07:37:32 +0200
+Message-ID: <1537335453-21498-6-git-send-email-gciofono@gmail.com>
 In-Reply-To: <1537335453-21498-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5142904387419582865==
+--===============5085543447712304159==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatmux.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ Makefile.am | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
-index 9660006..21552d9 100644
---- a/gatchat/gatmux.c
-+++ b/gatchat/gatmux.c
-@@ -30,8 +30,8 @@
- #include <string.h>
- #include <alloca.h>
+diff --git a/Makefile.am b/Makefile.am
+index 6dee4ce..fabda0a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -397,6 +397,8 @@ builtin_modules +=3D gemaltomodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/gemaltomodem/gemaltomodem.h \
+ 			drivers/gemaltomodem/gemaltomodem.c \
++			drivers/gemaltomodem/gprs-context-wwan.c \
++			drivers/gemaltomodem/voicecall.c \
+ 			drivers/gemaltomodem/location-reporting.c
  =
 
--#pragma GCC diagnostic ignored "-Wpragmas"
--#pragma GCC diagnostic ignored "-Wcast-function-type"
-+//#pragma GCC diagnostic ignored "-Wpragmas"
-+//#pragma GCC diagnostic ignored "-Wcast-function-type"
- =
-
- #include <glib.h>
- =
-
+ builtin_modules +=3D xmm7modem
 -- =
 
 1.9.1
 
 
---===============5142904387419582865==--
+--===============5085543447712304159==--
 
