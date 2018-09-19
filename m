@@ -1,79 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============2678850033178491796=="
+Content-Type: multipart/mixed; boundary="===============3493717829051924515=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 1/7] extended support for LTE and NR. Some minor fixes.
  part 1 of 7
-Date: Wed, 19 Sep 2018 23:48:24 +0300
-Message-ID: <3362056b-a4d5-d51f-7c23-8e1fef2c130a@jolla.com>
-In-Reply-To: <15b88dc7-f0bc-67c7-3963-5339f4c45613@jolla.com>
+Date: Wed, 19 Sep 2018 16:45:26 -0500
+Message-ID: <ab528817-cb1b-e0fd-0ec5-be9abbdf0884@gmail.com>
+In-Reply-To: <3362056b-a4d5-d51f-7c23-8e1fef2c130a@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2678850033178491796==
+--===============3493717829051924515==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 19/09/18 19:54, Slava Monich wrote:
-> On 19/09/18 19:32, Denis Kenzior wrote:
->> Hi Slava,
+Hi Slava,
+
+>> I understand that! It makes things easier for you guys.
 >>
->>> Anything in include is external API. We do maintain not just =
+>> But we had to avoid certain compile-time dependencies in ofono, and a =
 
->>> out-of-tree, but binary plugins. Backward (binary!) compatibility a =
+>> straightforward (and perhaps the only) way to achieve that was to use =
 
->>> must for us. Please do not break it.
+>> binary plugins. For us plugin API is not subject to change (plugins =
+
+>> don't necessarily get upgraded together with ofono), meaning more =
+
+>> changes between our fork and upstream in case if upstream breaks it, =
+
+>> more maintenance work and more room for errors. Obviously, I would =
+
+>> like to keep differences to a minimum.
+
+So I sympathize, but really it might also be a hint to finally start =
+
+getting things upstream.
+
 >>
->> That is why we have 'OFONO_API_SUBJECT_TO_CHANGE' as a reminder. We =
+>> I'm just humbly asking - if there's a way to keep plugin API backward =
 
->> mean it.=C2=A0 D-Bus API is stable, we never made any guarantees about t=
-he =
+>> compatible, please do it that way. There is at least one person in the =
 
->> internal APIs.
+>> world who would appreciate it.
 >>
->
-> I understand that! It makes things easier for you guys.
->
-> But we had to avoid certain compile-time dependencies in ofono, and a =
 
-> straightforward (and perhaps the only) way to achieve that was to use =
+The problem is, the next time this comes up there may be no way to avoid =
 
-> binary plugins. For us plugin API is not subject to change (plugins =
+it...  Or we break binary compatibility inadvertently.  It is just not =
 
-> don't necessarily get upgraded together with ofono), meaning more =
+something we're going to be looking out for.
 
-> changes between our fork and upstream in case if upstream breaks it, =
+> =
 
-> more maintenance work and more room for errors. Obviously, I would =
+> Actually, in our fork we have already modified enum =
 
-> like to keep differences to a minimum.
->
-> I'm just humbly asking - if there's a way to keep plugin API backward =
+> ofono_gprs_auth_method and that's what we have there:
+> =
 
-> compatible, please do it that way. There is at least one person in the =
+> enum ofono_gprs_auth_method {
+>  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_ANY =3D 0,
+>  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_NONE,
+>  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_CHAP,
+>  =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_PAP,
+> };
 
-> world who would appreciate it.
->
+So you already made life very hard for yourself ;)
 
-Actually, in our fork we have already modified enum =
+> =
 
-ofono_gprs_auth_method and that's what we have there:
+> (ANY =3D PAP_CHAP, and don't ask me why we added new values to the =
 
-enum ofono_gprs_auth_method {
- =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_ANY =3D 0,
- =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_NONE,
- =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_CHAP,
- =C2=A0=C2=A0=C2=A0 OFONO_GPRS_AUTH_METHOD_PAP,
-};
+> beginning of the enum - it was before we started using binary plugins). =
 
-(ANY =3D PAP_CHAP, and don't ask me why we added new values to the =
+> I would be more than happy if upstream started to use the same enum!
+> =
 
-beginning of the enum - it was before we started using binary plugins). =
 
-I would be more than happy if upstream started to use the same enum!
+That assumes that we should support your METHOD_ANY thing.  I've not =
 
-Cheers,
--Slava
+heard any good arguments for that yet...
 
---===============2678850033178491796==--
+Regards,
+-Denis
+
+--===============3493717829051924515==--
 
