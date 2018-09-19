@@ -1,41 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============5085543447712304159=="
+Content-Type: multipart/mixed; boundary="===============7877367529845463785=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 6/7] extended support for LTE and NR. Some minor fixes. part 6
+Subject: [PATCH 7/7] extended support for LTE and NR. Some minor fixes. part 7
  of 7
-Date: Wed, 19 Sep 2018 07:37:32 +0200
-Message-ID: <1537335453-21498-6-git-send-email-gciofono@gmail.com>
+Date: Wed, 19 Sep 2018 07:37:33 +0200
+Message-ID: <1537335453-21498-7-git-send-email-gciofono@gmail.com>
 In-Reply-To: <1537335453-21498-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5085543447712304159==
+--===============7877367529845463785==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am | 2 ++
- 1 file changed, 2 insertions(+)
+ AUTHORS | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/Makefile.am b/Makefile.am
-index 6dee4ce..fabda0a 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -397,6 +397,8 @@ builtin_modules +=3D gemaltomodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/gemaltomodem/gemaltomodem.h \
- 			drivers/gemaltomodem/gemaltomodem.c \
-+			drivers/gemaltomodem/gprs-context-wwan.c \
-+			drivers/gemaltomodem/voicecall.c \
- 			drivers/gemaltomodem/location-reporting.c
- =
-
- builtin_modules +=3D xmm7modem
+diff --git a/AUTHORS b/AUTHORS
+index 52f46e9..9488a41 100644
+--- a/AUTHORS
++++ b/AUTHORS
+@@ -137,3 +137,6 @@ Varun Gargi <varun.gargi@intel.com>
+ Florent Beillonnet <florent.beillonnet@gmail.com>
+ Martin Hundeb=C3=B8ll <martin@geanix.com>
+ Julien Tournier <tournier.julien@gmail.com>
++Sebastian Arnd <sebastianarnd@gmail.com>
++Giacinto Cifelli <gciofono@gmail.com>
++Martin Baschin <martin.baschin@gemalto.com>
 -- =
 
 1.9.1
 
 
---===============5085543447712304159==--
+--===============7877367529845463785==--
 
