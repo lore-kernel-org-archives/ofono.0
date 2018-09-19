@@ -1,35 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1310640507519635080=="
+Content-Type: multipart/mixed; boundary="===============5340532295556811189=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] extended support for LTE and NR. Some minor fixes.
- part 1 of 7
-Date: Wed, 19 Sep 2018 11:32:35 -0500
-Message-ID: <9b74d1aa-9d2d-aaee-b510-003f79c6ff73@gmail.com>
-In-Reply-To: <8ce15cf4-9505-c68c-8080-fc1ce97df3b8@jolla.com>
+Subject: Re: [PATCH 3/3] sim800: adding documentation to inform about the udev
+ rule the user must add
+Date: Wed, 19 Sep 2018 11:43:49 -0500
+Message-ID: <bc5638ae-f6f3-2a2a-9af2-3d9bf0405a3e@gmail.com>
+In-Reply-To: <1537302987-12592-3-git-send-email-vielclement@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1310640507519635080==
+--===============5340532295556811189==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi,
 
-> Anything in include is external API. We do maintain not just =
+On 09/18/2018 03:36 PM, Cl=C3=A9mentViel wrote:
+> From: clem <vielclement@gmail.com>
 
-> out-of-tree, but binary plugins. Backward (binary!) compatibility a must =
+Can you fix your Author information (see AUTHORS for an example). =
 
-> for us. Please do not break it.
+Otherwise I cannot take these...
 
-That is why we have 'OFONO_API_SUBJECT_TO_CHANGE' as a reminder.  We =
+> =
 
-mean it.  D-Bus API is stable, we never made any guarantees about the =
+> ---
+>   doc/sim800-modem.txt | 7 +++++++
+>   1 file changed, 7 insertions(+)
+>   create mode 100644 doc/sim800-modem.txt
+> =
 
-internal APIs.
+> diff --git a/doc/sim800-modem.txt b/doc/sim800-modem.txt
+> new file mode 100644
+> index 0000000..6731879
+> --- /dev/null
+> +++ b/doc/sim800-modem.txt
+> @@ -0,0 +1,7 @@
+> +SIM800 modem usage
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +To enable SIM900 module support you need to put the following
+> +udev rule into appropriate file in /{etc,lib}/udev/rules.d:
+> +
+> +KERNEL=3D=3D"ttyUSB0", ENV{OFONO_DRIVER}=3D"sim800"
+> =
+
+
+So sim800 is a serial device right?  I take it you're running it from a =
+
+serial converter here?
 
 Regards,
 -Denis
 
---===============1310640507519635080==--
+--===============5340532295556811189==--
 
