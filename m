@@ -1,89 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============7872633993037808706=="
+Content-Type: multipart/mixed; boundary="===============5837814797261478773=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/7] extended support for LTE and NR. Some minor fixes.
- part 2 of 7
-Date: Wed, 19 Sep 2018 13:23:58 -0500
-Message-ID: <99acf5e5-ee78-216b-4651-e9aff31cb839@gmail.com>
-In-Reply-To: <CAKSBH7H+iSZu6OUq56+EAY-kQ3o=fwMDSWTHz49PHBxCq6jHhA@mail.gmail.com>
+From: Clement Viel <vielclement@gmail.com>
+Subject: Re: [PATCH 3/3] sim800: adding documentation to inform about the udev
+ rule the user must add
+Date: Wed, 19 Sep 2018 21:25:02 +0200
+Message-ID: <20180919192501.GA3536@turing>
+In-Reply-To: <bc5638ae-f6f3-2a2a-9af2-3d9bf0405a3e@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7872633993037808706==
+--===============5837814797261478773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+On Wed, Sep 19, 2018 at 11:43:49AM -0500, Denis Kenzior wrote:
+> Hi,
+> =
 
-> I had a look at this all, and I have a problem. I cannot check the =
+> On 09/18/2018 03:36 PM, Cl=C3=A9mentViel wrote:
+> >From: clem <vielclement@gmail.com>
+> =
 
-> parameters as they are entered one by one.
-> Example: if I blank user/pwd when the authentication is changed to NONE, =
+> Can you fix your Author information (see AUTHORS for an example). Otherwi=
+se
+> I cannot take these...
 
-> then if changed again to CHAP, the module will reject it.
-> Shall I store the parameters, or keep them also in case of error?
-
-So in the case of ConnectionContext the parameters are not sent out to =
-
-the driver until context activation is attempted.  Hence all the =
-
-settings are immediate and the activation fails or it succeeds.
-
-However, in the LongTermEvolution driver setup the settings are =
-
-immediate.  Thus the D-Bus API you propose is thus not really suitable =
-
-and needs to be modified. Since we're kind of stuck with the =
-
-'DefaultAccessPointName' property at this point, the only two ways out =
-
-of this I can think of are:
-
-- Have the driver handle this.  So if PAP/CHAP is selected but username =
-
-or password are invalid, default to no authentication.  The assumption =
-
-will be that eventually valid parameters are given.
-
-Or perhaps we only call out into the driver method once the parameters =
-
-in their entirety are valid, accepting whatever the user puts in as long =
-
-as the individual property input is valid according to core validity checks.
-
-....
+Yep, I'll do it the right way
 
 > =
 
-> Another way would be to have a SetParameters() function, and set them =
+> >
+> >---
+> >  doc/sim800-modem.txt | 7 +++++++
+> >  1 file changed, 7 insertions(+)
+> >  create mode 100644 doc/sim800-modem.txt
+> >
+> >diff --git a/doc/sim800-modem.txt b/doc/sim800-modem.txt
+> >new file mode 100644
+> >index 0000000..6731879
+> >--- /dev/null
+> >+++ b/doc/sim800-modem.txt
+> >@@ -0,0 +1,7 @@
+> >+SIM800 modem usage
+> >+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> >+
+> >+To enable SIM900 module support you need to put the following
+> >+udev rule into appropriate file in /{etc,lib}/udev/rules.d:
+> >+
+> >+KERNEL=3D=3D"ttyUSB0", ENV{OFONO_DRIVER}=3D"sim800"
+> >
+> =
 
-> all together, including the APN, and not allowing writing them =
+> So sim800 is a serial device right?  I take it you're running it from a
+> serial converter here?
 
-> separately, apart from the APN which already exists.
-> I don't really like it, either.
+Yes, there is a converter. I let "ttyUSB0" as the starter kit provided by S=
+imCom comes with a converter.
+
 > =
 
 
-As you point out, this is the second alternative.  AuthenticationMethod, =
 
-Username & Password would need to be set via a method call and =
+> Regards,
+> -Denis
 
-optionally exposed as [readonly] properties.  Protocol could still be =
-
-handled as per DefaultAccessPointName or inside the aforementioned =
-
-method call.
-
-> Or introduce an atom function that is called before modem->set_online(tru=
-e)?
-> =
-
-
-This might be trickier, but could also work...
-
-Regards,
--Denis
-
---===============7872633993037808706==--
+--===============5837814797261478773==--
 
