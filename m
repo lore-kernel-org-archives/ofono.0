@@ -1,83 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============1202275999626835761=="
+Content-Type: multipart/mixed; boundary="===============7314606886185589526=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] sim800: adding support for Simcom SIM800 modem
-Date: Wed, 19 Sep 2018 11:51:26 -0500
-Message-ID: <8f8dea50-577d-fa93-509a-3a8103a7fff5@gmail.com>
-In-Reply-To: <1537302987-12592-1-git-send-email-vielclement@gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: Re: [PATCH 1/7] extended support for LTE and NR. Some minor fixes.
+ part 1 of 7
+Date: Wed, 19 Sep 2018 19:54:22 +0300
+Message-ID: <15b88dc7-f0bc-67c7-3963-5339f4c45613@jolla.com>
+In-Reply-To: <9b74d1aa-9d2d-aaee-b510-003f79c6ff73@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1202275999626835761==
+--===============7314606886185589526==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On 19/09/18 19:32, Denis Kenzior wrote:
+> Hi Slava,
+>
+>> Anything in include is external API. We do maintain not just =
 
-On 09/18/2018 03:36 PM, Cl=C3=A9mentViel wrote:
-> From: clem <vielclement@gmail.com>
-> =
+>> out-of-tree, but binary plugins. Backward (binary!) compatibility a =
 
+>> must for us. Please do not break it.
+>
+> That is why we have 'OFONO_API_SUBJECT_TO_CHANGE' as a reminder. We =
 
-You might want to describe how this is different from sim900 that it =
+> mean it.=C2=A0 D-Bus API is stable, we never made any guarantees about th=
+e =
 
-warrants a fully separate driver?
+> internal APIs.
+>
 
-If there are only minor differences, then this can be handled via UDEV =
+I understand that! It makes things easier for you guys.
 
-attributes or querying +CGMM, etc.
+But we had to avoid certain compile-time dependencies in ofono, and a =
 
-> ---
->   Makefile.am      |   4 +
->   plugins/sim800.c | 424 ++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   2 files changed, 428 insertions(+)
->   create mode 100644 plugins/sim800.c
-> =
+straightforward (and perhaps the only) way to achieve that was to use =
 
+binary plugins. For us plugin API is not subject to change (plugins =
 
-<snip>
+don't necessarily get upgraded together with ofono), meaning more =
 
-> +
-> +static void sim800_post_sim(struct ofono_modem *modem)
-> +{
-> +	struct sim800_data *data =3D ofono_modem_get_data(modem);
-> +	struct ofono_gprs *gprs;
-> +	struct ofono_gprs_context *gc;
-> +
-> +	DBG("%p", modem);
-> +
-> +	/* Dirty Hack : give some time to sim800 for multiplexing
-> +	 *				to be effective and avoid VOICE_DLC to be
-> +	 *				flooded thus leading to a "famine" situation
-> +	 */
-> +
-> +	sleep(2);
+changes between our fork and upstream in case if upstream breaks it, =
 
-No sleeps inside plugins.  That blocks the entire daemon and we can't =
+more maintenance work and more room for errors. Obviously, I would like =
 
-have that.  How does this help you anyway?  GAtChat is a queue, so only =
+to keep differences to a minimum.
 
-1 command is outstanding at a time.
+I'm just humbly asking - if there's a way to keep plugin API backward =
 
-> +	ofono_sms_create(modem, OFONO_VENDOR_SIMCOM, "atmodem",
-> +						data->dlcs[SMS_DLC]);
-> +
-> +
-> +	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->dlcs[GPRS_DLC]);
-> +	if (gprs =3D=3D NULL)
-> +		return;
-> +
-> +	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_SIMCOM,
-> +					"atmodem", data->dlcs[GPRS_DLC]);
-> +	if (gc)
-> +		ofono_gprs_add_context(gprs, gc);
-> +}
-> +
+compatible, please do it that way. There is at least one person in the =
 
-Regards,
--Denis
+world who would appreciate it.
 
---===============1202275999626835761==--
+Cheers,
+-Slava
+
+--===============7314606886185589526==--
 
