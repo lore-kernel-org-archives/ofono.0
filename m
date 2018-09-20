@@ -1,71 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============6069775228778259920=="
+Content-Type: multipart/mixed; boundary="===============1584808356405104053=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH] src/gprs.c: make sure that the context is properly
- released
-Date: Thu, 20 Sep 2018 17:59:48 +0200
-Message-ID: <CAKSBH7ELaaW78NVTpLjTP7gQG2xXkR619Yz7bTP6ar_0WW-S7Q@mail.gmail.com>
-In-Reply-To: <05f802be-6de2-f881-8308-296ca39eaff0@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/7] extended support for LTE and NR. Some minor fixes.
+ part 2 of 7
+Date: Thu, 20 Sep 2018 11:02:58 -0500
+Message-ID: <1eb977ba-e4be-b6c8-11fb-9059ad2256cd@gmail.com>
+In-Reply-To: <CAKSBH7HkxiEySdhB1diB=+KvDiyEe5iz0SyFg=0xdRUiq0MPgw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6069775228778259920==
+--===============1584808356405104053==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Giacinto,
 
-On Thu, Sep 20, 2018 at 5:55 PM Denis Kenzior <denkenz@gmail.com> wrote:
+> static DBusMessage *lte_set_property(DBusConnection *conn,
+> DBusMessage *msg, void *data)
+> {
+> [...]
+> if (lte->driver->set_property)
+> lte->driver->set_property(...);
 
-> Hi Giacinto,
->
-> > I got this change from external branches.
-> >
-> > I doubted it was needed anymore, but couldn't be sure that I had tested
-> > all cases.
-> >
-> > thank you for checking it, and it can then be left out.
->
-> I can apply this patch without the chunk in question.  Or do you want to
-> resubmit?
->
+What is this buying you?
 
-If you can apply directly it would be great, thanks.
+> else if (lte->driver->set_default_attach_info)
+> lte->driver->set_default_attach_info(...);
+> else
+> return __ofono_error_not_implemented(msg);
+> [...]
+> =
+
+> in src/modem.c:
+> =
+
+> static void sim_state_watch(enum ofono_sim_state new_state, void *user)
+> {
+> [...]
+> case OFONO_SIM_STATE_READY:
+> modem_change_state(modem, MODEM_STATE_OFFLINE);
+> =
+
+> ofono_lte_set_reginfo(modem);
+
+How does this help you?  You might be in the OFFLINE state for a while =
+
+and the LTE settings might still be messed with in that time.
+
+> =
+
+> /* Modem is always online, proceed to online state. */
+> if (modem_is_always_online(modem) =3D=3D TRUE)
+> set_online(modem, TRUE);
+> =
+
+> if (modem->online =3D=3D TRUE)
+> modem_change_state(modem, MODEM_STATE_ONLINE);
+> else if (modem->get_online)
+> modem->driver->set_online(modem, 1, common_online_cb,
+> modem);
+> =
+
+> modem->get_online =3D FALSE;
+> =
+
+> break;
+> }
+> =
+
+> I see that if(modem_is_always_online) maybe it will come too late, but =
+
+> in that case also the current solution
+> with set_default_attach_info suffers from the same limitation, so no =
+
+> regression.
+
+The modem_is_always_online case is a bit strange, it is for really =
+
+primitive devices which likely won't have an LTE atom anyway.
+
+> =
+
+> Of course then, again in src/lte.c, the function ofono_lte_set_reginfo =
+
+> will look for an lte atom, if present will call it without parameter for =
+
+> sending the AT+CGDCONT and AT+CGAUTH to the modem.
+> =
+
+> Would this work for you?
+> =
 
 
->
-> Regards,
-> -Denis
->
+I don't see how this helps.
 
 Regards,
-Giacinto
+-Denis
 
---===============6069775228778259920==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+SGkgRGVuaXMsPGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+
-PGRpdiBkaXI9Imx0ciI+T24gVGh1LCBTZXAgMjAsIDIwMTggYXQgNTo1NSBQTSBEZW5pcyBLZW56
-aW9yICZsdDs8YSBocmVmPSJtYWlsdG86ZGVua2VuekBnbWFpbC5jb20iPmRlbmtlbnpAZ21haWwu
-Y29tPC9hPiZndDsgd3JvdGU6PGJyPjwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90
-ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3Bh
-ZGRpbmctbGVmdDoxZXgiPkhpIEdpYWNpbnRvLDxicj4KPGJyPgomZ3Q7IEkgZ290IHRoaXMgY2hh
-bmdlIGZyb20gZXh0ZXJuYWwgYnJhbmNoZXMuPGJyPgomZ3Q7IDxicj4KJmd0OyBJIGRvdWJ0ZWQg
-aXQgd2FzIG5lZWRlZCBhbnltb3JlLCBidXQgY291bGRuJiMzOTt0IGJlIHN1cmUgdGhhdCBJIGhh
-ZCB0ZXN0ZWQgPGJyPgomZ3Q7IGFsbCBjYXNlcy48YnI+CiZndDsgPGJyPgomZ3Q7IHRoYW5rIHlv
-dSBmb3IgY2hlY2tpbmcgaXQsIGFuZCBpdCBjYW4gdGhlbiBiZSBsZWZ0IG91dC48YnI+Cjxicj4K
-SSBjYW4gYXBwbHkgdGhpcyBwYXRjaCB3aXRob3V0IHRoZSBjaHVuayBpbiBxdWVzdGlvbi7CoCBP
-ciBkbyB5b3Ugd2FudCB0byA8YnI+CnJlc3VibWl0Pzxicj48L2Jsb2NrcXVvdGU+PGRpdj48YnI+
-PC9kaXY+PGRpdj5JZiB5b3UgY2FuIGFwcGx5IGRpcmVjdGx5IGl0IHdvdWxkIGJlIGdyZWF0LCB0
-aGFua3MuPC9kaXY+PGRpdj7CoDwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIg
-c3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRp
-bmctbGVmdDoxZXgiPgo8YnI+ClJlZ2FyZHMsPGJyPgotRGVuaXM8YnI+PC9ibG9ja3F1b3RlPjxk
-aXY+PGJyPjwvZGl2PjxkaXY+UmVnYXJkcyw8L2Rpdj48ZGl2PkdpYWNpbnRvPC9kaXY+PGRpdj7C
-oDwvZGl2PjwvZGl2PjwvZGl2Pgo=
-
---===============6069775228778259920==--
+--===============1584808356405104053==--
 
