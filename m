@@ -1,43 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============6925853197246412411=="
+Content-Type: multipart/mixed; boundary="===============6928728945616158428=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/4] gprs: added two authentication methods: NONE and ANY
-Date: Thu, 20 Sep 2018 10:27:08 -0500
-Message-ID: <ca7c3785-5855-0942-a464-ebc40cae2a47@gmail.com>
-In-Reply-To: <1537417430-10904-1-git-send-email-gciofono@gmail.com>
+Subject: Re: [PATCH] bugfix: src/gprs.c used the right binary NOT operator in
+ bitwise operation instead of the boolean NOT operator
+Date: Thu, 20 Sep 2018 10:29:14 -0500
+Message-ID: <4844e9b8-c4ab-f9a3-002e-8ba48b7a8ba9@gmail.com>
+In-Reply-To: <1537417573-10973-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6925853197246412411==
+--===============6928728945616158428==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
-On 09/19/2018 11:23 PM, Giacinto Cifelli wrote:
-> OFONO_GPRS_AUTH_METHOD_NONE disables the authentication
-> OFONO_GPRS_AUTH_METHOD_ANY tries first CHAP then PAP,
-> but only applies to supporting drivers and modules
-
-No, we're not supporting METHOD_ANY for the reasons outlined already. =
-
-Pretty much all of our drivers cannot handle this and settings are =
-
-expected to work across devices.  So if I plug modem from manufacturer =
-
-A, provision a context, connect.  Disconnect modem A, then connect modem =
-
-from manufacturer B, things should still work seamlessly.
-
+On 09/19/2018 11:26 PM, Giacinto Cifelli wrote:
 > ---
->   include/gprs-context.h | 4 +++-
->   1 file changed, 3 insertions(+), 1 deletion(-)
+>   src/gprs.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 > =
 
+
+Applied after tweaking the commit message.
 
 Regards,
 -Denis
 
---===============6925853197246412411==--
+
+--===============6928728945616158428==--
 
