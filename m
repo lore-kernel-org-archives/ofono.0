@@ -1,58 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6614970077126381237=="
+Content-Type: multipart/mixed; boundary="===============1215771088457067286=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 2/2] tools/auto-enable.c and tools/huawei-audio.c: removed
- calls to g_thread_init
-Date: Thu, 20 Sep 2018 06:39:41 +0200
-Message-ID: <1537418381-18473-2-git-send-email-gciofono@gmail.com>
-In-Reply-To: <1537418381-18473-1-git-send-email-gciofono@gmail.com>
+Subject: [PATCH] src/gprs.c: make sure that the context is properly released
+Date: Thu, 20 Sep 2018 06:42:59 +0200
+Message-ID: <1537418579-18547-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6614970077126381237==
+--===============1215771088457067286==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- tools/auto-enable.c  | 5 -----
- tools/huawei-audio.c | 5 -----
- 2 files changed, 10 deletions(-)
+ src/gprs.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/tools/auto-enable.c b/tools/auto-enable.c
-index 87fb0a8..5195aaa 100644
---- a/tools/auto-enable.c
-+++ b/tools/auto-enable.c
-@@ -492,11 +492,6 @@ int main(int argc, char **argv)
- 	guint watch;
- 	struct sigaction sa;
+diff --git a/src/gprs.c b/src/gprs.c
+index 8f5d195..40f43e3 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1642,6 +1642,9 @@ static void release_active_contexts(struct ofono_gprs=
+ *gprs)
  =
 
--#ifdef NEED_THREADS
--	if (g_thread_supported() =3D=3D FALSE)
--		g_thread_init(NULL);
--#endif
--
- 	context =3D g_option_context_new(NULL);
- 	g_option_context_add_main_entries(context, options, NULL);
+ 		if (gc->driver->detach_shutdown !=3D NULL)
+ 			gc->driver->detach_shutdown(gc, ctx->context.cid);
++
++		/* Make sure the context is properly cleared */
++		release_context(ctx);
+ 	}
+ }
  =
 
-diff --git a/tools/huawei-audio.c b/tools/huawei-audio.c
-index 9997a58..10b599f 100644
---- a/tools/huawei-audio.c
-+++ b/tools/huawei-audio.c
-@@ -775,11 +775,6 @@ int main(int argc, char **argv)
- 	guint watch;
- 	struct sigaction sa;
+@@ -2241,6 +2244,7 @@ static DBusMessage *gprs_remove_context(DBusConnectio=
+n *conn,
+ 	}
  =
 
--#ifdef NEED_THREADS
--	if (g_thread_supported() =3D=3D FALSE)
--		g_thread_init(NULL);
--#endif
--
- 	context =3D g_option_context_new(NULL);
- 	g_option_context_add_main_entries(context, options, NULL);
+ 	DBG("Unregistering context: %s", ctx->path);
++	release_context(ctx);
+ 	context_dbus_unregister(ctx);
+ 	gprs->contexts =3D g_slist_remove(gprs->contexts, ctx);
  =
 
 -- =
@@ -60,5 +49,5 @@ index 9997a58..10b599f 100644
 1.9.1
 
 
---===============6614970077126381237==--
+--===============1215771088457067286==--
 
