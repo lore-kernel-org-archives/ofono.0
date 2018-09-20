@@ -1,33 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0119185894779770807=="
+Content-Type: multipart/mixed; boundary="===============3566901154914409328=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem/sms: added missing return in at_cmt_notify before
- error processing
-Date: Thu, 20 Sep 2018 10:52:16 -0500
-Message-ID: <1dedd764-6bca-d57e-04c3-b624f301a649@gmail.com>
-In-Reply-To: <1537420089-25524-1-git-send-email-gciofono@gmail.com>
+Subject: Re: [PATCH] src/gprs.c: make sure that the context is properly
+ released
+Date: Thu, 20 Sep 2018 10:55:02 -0500
+Message-ID: <05f802be-6de2-f881-8308-296ca39eaff0@gmail.com>
+In-Reply-To: <CAKSBH7HrOQ5fb12zaR3qcnXJ7eKHa_3UO7nSH0vtSQc3_ZJ3Ag@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0119185894779770807==
+--===============3566901154914409328==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
-On 09/20/2018 12:08 AM, Giacinto Cifelli wrote:
-> ---
->   drivers/atmodem/sms.c | 1 +
->   1 file changed, 1 insertion(+)
+> I got this change from external branches.
 > =
 
+> I doubted it was needed anymore, but couldn't be sure that I had tested =
 
-Applied after tweaking the commit description.
+> all cases.
+> =
+
+> thank you for checking it, and it can then be left out.
+
+I can apply this patch without the chunk in question.  Or do you want to =
+
+resubmit?
 
 Regards,
 -Denis
 
-
---===============0119185894779770807==--
+--===============3566901154914409328==--
 
