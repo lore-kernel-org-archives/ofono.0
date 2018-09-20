@@ -1,47 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5669746437574094420=="
+Content-Type: multipart/mixed; boundary="===============8098149134987561025=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 3/4] plugins/file-provisioning.c: take into account
- auth_methods NONE and ANY
-Date: Thu, 20 Sep 2018 06:23:49 +0200
-Message-ID: <1537417430-10904-3-git-send-email-gciofono@gmail.com>
+Subject: [PATCH 4/4] src/gprs.c: added support for NONE and ANY authentication
+ methods
+Date: Thu, 20 Sep 2018 06:23:50 +0200
+Message-ID: <1537417430-10904-4-git-send-email-gciofono@gmail.com>
 In-Reply-To: <1537417430-10904-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5669746437574094420==
+--===============8098149134987561025==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-added the support for the NONE and ANY authentication methods
 ---
- plugins/file-provision.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ src/gprs.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/plugins/file-provision.c b/plugins/file-provision.c
-index d4846a6..f7412e6 100644
---- a/plugins/file-provision.c
-+++ b/plugins/file-provision.c
-@@ -104,6 +104,12 @@ static int config_file_provision_get_settings(const ch=
-ar *mcc,
- 		else if (g_strcmp0(value, "pap") =3D=3D 0)
- 			(*settings)[0].auth_method =3D
- 						OFONO_GPRS_AUTH_METHOD_PAP;
-+		else if (g_strcmp0(value, "none") =3D=3D 0)
-+			(*settings)[0].auth_method =3D
-+						OFONO_GPRS_AUTH_METHOD_NONE;
-+		else if (g_strcmp0(value, "any") =3D=3D 0)
-+			(*settings)[0].auth_method =3D
-+						OFONO_GPRS_AUTH_METHOD_ANY;
- 		else
- 			DBG("Unknown auth method: %s", value);
+diff --git a/src/gprs.c b/src/gprs.c
+index 377eced..f17f31b 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -261,6 +261,10 @@ static const char *gprs_auth_method_to_string(enum ofo=
+no_gprs_auth_method auth)
+ 		return "chap";
+ 	case OFONO_GPRS_AUTH_METHOD_PAP:
+ 		return "pap";
++	case OFONO_GPRS_AUTH_METHOD_NONE:
++		return "none";
++	default:
++		return NULL;
+ 	};
  =
 
+ 	return NULL;
+@@ -275,6 +279,9 @@ static gboolean gprs_auth_method_from_string(const char=
+ *str,
+ 	} else if (g_str_equal(str, "pap")) {
+ 		*auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
+ 		return TRUE;
++	} else if (g_str_equal(str, "none")) {
++		*auth =3D OFONO_GPRS_AUTH_METHOD_NONE;
++		return TRUE;
+ 	}
+ =
+
+ 	return FALSE;
 -- =
 
 1.9.1
 
 
---===============5669746437574094420==--
+--===============8098149134987561025==--
 
