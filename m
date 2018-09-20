@@ -1,56 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8098149134987561025=="
+Content-Type: multipart/mixed; boundary="===============8595834023651774411=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 4/4] src/gprs.c: added support for NONE and ANY authentication
- methods
-Date: Thu, 20 Sep 2018 06:23:50 +0200
-Message-ID: <1537417430-10904-4-git-send-email-gciofono@gmail.com>
-In-Reply-To: <1537417430-10904-1-git-send-email-gciofono@gmail.com>
+Subject: [PATCH] bugfix: src/gprs.c used the right binary NOT operator in
+ bitwise operation instead of the boolean NOT operator
+Date: Thu, 20 Sep 2018 06:26:13 +0200
+Message-ID: <1537417573-10973-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8098149134987561025==
+--===============8595834023651774411==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ src/gprs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/gprs.c b/src/gprs.c
-index 377eced..f17f31b 100644
+index f17f31b..8f5d195 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
-@@ -261,6 +261,10 @@ static const char *gprs_auth_method_to_string(enum ofo=
-no_gprs_auth_method auth)
- 		return "chap";
- 	case OFONO_GPRS_AUTH_METHOD_PAP:
- 		return "pap";
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		return "none";
-+	default:
-+		return NULL;
- 	};
+@@ -1015,7 +1015,7 @@ static void pri_read_settings_callback(const struct o=
+fono_error *error,
  =
 
- 	return NULL;
-@@ -275,6 +279,9 @@ static gboolean gprs_auth_method_from_string(const char=
- *str,
- 	} else if (g_str_equal(str, "pap")) {
- 		*auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
- 		return TRUE;
-+	} else if (g_str_equal(str, "none")) {
-+		*auth =3D OFONO_GPRS_AUTH_METHOD_NONE;
-+		return TRUE;
- 	}
+ 	value =3D pri_ctx->active;
  =
 
- 	return FALSE;
+-	gprs->flags &=3D !GPRS_FLAG_ATTACHING;
++	gprs->flags &=3D ~GPRS_FLAG_ATTACHING;
+ =
+
+ 	gprs->driver_attached =3D TRUE;
+ 	gprs_set_attached_property(gprs, TRUE);
 -- =
 
 1.9.1
 
 
---===============8098149134987561025==--
+--===============8595834023651774411==--
 
