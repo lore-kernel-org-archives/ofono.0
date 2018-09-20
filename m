@@ -1,60 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8712061763860568502=="
+Content-Type: multipart/mixed; boundary="===============5669746437574094420=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 2/4] added default values handling for gprs authentication in
- atmodem and mbimmodem
-Date: Thu, 20 Sep 2018 06:23:48 +0200
-Message-ID: <1537417430-10904-2-git-send-email-gciofono@gmail.com>
+Subject: [PATCH 3/4] plugins/file-provisioning.c: take into account
+ auth_methods NONE and ANY
+Date: Thu, 20 Sep 2018 06:23:49 +0200
+Message-ID: <1537417430-10904-3-git-send-email-gciofono@gmail.com>
 In-Reply-To: <1537417430-10904-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8712061763860568502==
+--===============5669746437574094420==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-this is needed so that with the additional methods NONE and ANY
-the compilation is not broken
+added the support for the NONE and ANY authentication methods
 ---
- drivers/atmodem/gprs-context.c   | 2 ++
- drivers/mbimmodem/gprs-context.c | 2 ++
- 2 files changed, 4 insertions(+)
+ plugins/file-provision.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 79ac4c8..0585850 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -304,6 +304,8 @@ static void at_gprs_activate_primary(struct ofono_gprs_=
-context *gc,
- 				snprintf(buf + len, sizeof(buf) - len - 3,
- 						",\"PAP:%s\"", ctx->apn);
- 				break;
-+			default:
-+				break;
- 			}
- 			break;
- 		default:
-diff --git a/drivers/mbimmodem/gprs-context.c b/drivers/mbimmodem/gprs-cont=
-ext.c
-index 79793c9..ce33b92 100644
---- a/drivers/mbimmodem/gprs-context.c
-+++ b/drivers/mbimmodem/gprs-context.c
-@@ -75,6 +75,8 @@ static uint32_t auth_method_to_auth_protocol(enum ofono_g=
-prs_auth_method method)
- 		return 2; /* MBIMAuthProtocolChap */
- 	case OFONO_GPRS_AUTH_METHOD_PAP:
- 		return 1; /* MBIMAuthProtocolPap */
-+	default:
-+		return 0;
- 	}
+diff --git a/plugins/file-provision.c b/plugins/file-provision.c
+index d4846a6..f7412e6 100644
+--- a/plugins/file-provision.c
++++ b/plugins/file-provision.c
+@@ -104,6 +104,12 @@ static int config_file_provision_get_settings(const ch=
+ar *mcc,
+ 		else if (g_strcmp0(value, "pap") =3D=3D 0)
+ 			(*settings)[0].auth_method =3D
+ 						OFONO_GPRS_AUTH_METHOD_PAP;
++		else if (g_strcmp0(value, "none") =3D=3D 0)
++			(*settings)[0].auth_method =3D
++						OFONO_GPRS_AUTH_METHOD_NONE;
++		else if (g_strcmp0(value, "any") =3D=3D 0)
++			(*settings)[0].auth_method =3D
++						OFONO_GPRS_AUTH_METHOD_ANY;
+ 		else
+ 			DBG("Unknown auth method: %s", value);
  =
 
- 	return 0;
 -- =
 
 1.9.1
 
 
---===============8712061763860568502==--
+--===============5669746437574094420==--
 
