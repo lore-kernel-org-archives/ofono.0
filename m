@@ -1,47 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1215771088457067286=="
+Content-Type: multipart/mixed; boundary="===============0888667796852666451=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH] src/gprs.c: make sure that the context is properly released
-Date: Thu, 20 Sep 2018 06:42:59 +0200
-Message-ID: <1537418579-18547-1-git-send-email-gciofono@gmail.com>
+Subject: [PATCH] mbim driver: call the release function in case MBIM OPEN fails
+Date: Thu, 20 Sep 2018 06:47:42 +0200
+Message-ID: <1537418862-24984-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1215771088457067286==
+--===============0888667796852666451==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/mbimmodem/mbim.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 8f5d195..40f43e3 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1642,6 +1642,9 @@ static void release_active_contexts(struct ofono_gprs=
- *gprs)
- =
-
- 		if (gc->driver->detach_shutdown !=3D NULL)
- 			gc->driver->detach_shutdown(gc, ctx->context.cid);
-+
-+		/* Make sure the context is properly cleared */
-+		release_context(ctx);
+diff --git a/drivers/mbimmodem/mbim.c b/drivers/mbimmodem/mbim.c
+index 9fcf44b..f4132d0 100644
+--- a/drivers/mbimmodem/mbim.c
++++ b/drivers/mbimmodem/mbim.c
+@@ -781,6 +781,9 @@ static bool open_read_handler(struct l_io *io, void *us=
+er_data)
+ 	/* Grab OPEN_DONE Status field */
+ 	if (l_get_le32(buf) !=3D 0) {
+ 		close(fd);
++		if (device->disconnect_handler)
++			device->disconnect_handler(device->ready_data);
++		device->is_ready =3D false;
+ 		return false;
  	}
- }
- =
-
-@@ -2241,6 +2244,7 @@ static DBusMessage *gprs_remove_context(DBusConnectio=
-n *conn,
- 	}
- =
-
- 	DBG("Unregistering context: %s", ctx->path);
-+	release_context(ctx);
- 	context_dbus_unregister(ctx);
- 	gprs->contexts =3D g_slist_remove(gprs->contexts, ctx);
  =
 
 -- =
@@ -49,5 +37,5 @@ n *conn,
 1.9.1
 
 
---===============1215771088457067286==--
+--===============0888667796852666451==--
 
