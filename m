@@ -1,38 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4968592091464706336=="
+Content-Type: multipart/mixed; boundary="===============6430055314923285942=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH] mbim driver: fixed the initialization function
-Date: Thu, 20 Sep 2018 06:49:12 +0200
-Message-ID: <1537418952-25060-1-git-send-email-gciofono@gmail.com>
+Subject: [PATCH] atmodem/sms: added missing return in at_cmt_notify before
+ error processing
+Date: Thu, 20 Sep 2018 07:08:09 +0200
+Message-ID: <1537420089-25524-1-git-send-email-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4968592091464706336==
+--===============6430055314923285942==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/mbimmodem/mbimmodem.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/atmodem/sms.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/mbimmodem/mbimmodem.c b/drivers/mbimmodem/mbimmodem.c
-index a4c9daa..2a01dd6 100644
---- a/drivers/mbimmodem/mbimmodem.c
-+++ b/drivers/mbimmodem/mbimmodem.c
-@@ -33,7 +33,7 @@ static int mbimmodem_init(void)
- 	mbim_devinfo_init();
- 	mbim_sim_init();
- 	mbim_netreg_init();
--	mbim_sms_exit();
-+	mbim_sms_init();
- 	mbim_gprs_init();
- 	mbim_gprs_context_init();
- 	return 0;
+diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+index 7e78fcf..fb4d67a 100644
+--- a/drivers/atmodem/sms.c
++++ b/drivers/atmodem/sms.c
+@@ -455,6 +455,7 @@ static void at_cmt_notify(GAtResult *result, gpointer u=
+ser_data)
+ =
+
+ 	if (data->vendor !=3D OFONO_VENDOR_SIMCOM)
+ 		at_ack_delivery(sms);
++	return;
+ =
+
+ err:
+ 	ofono_error("Unable to parse CMT notification");
 -- =
 
 1.9.1
 
 
---===============4968592091464706336==--
+--===============6430055314923285942==--
 
