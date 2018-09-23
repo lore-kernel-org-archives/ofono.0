@@ -1,63 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============0162705395272618832=="
+Content-Type: multipart/mixed; boundary="===============3799788137835171556=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH] atmodem/sim: added vendor Gemalto
-Date: Sun, 23 Sep 2018 07:28:58 +0200
-Message-ID: <20180923052858.8309-1-gciofono@gmail.com>
+Subject: [PATCH] atmodem/sms: added vendor Gemalto support.
+Date: Sun, 23 Sep 2018 07:31:14 +0200
+Message-ID: <20180923053114.8428-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0162705395272618832==
+--===============3799788137835171556==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-also renamed the cinterion_* functions in gemalto_*.
-Eventually, the vendor cinterion will be removed.
+Cinterion and Gemalto overlap for now, but
+eventually Cinterion will be removed.
 ---
- drivers/atmodem/sim.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ drivers/atmodem/sms.c | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 0907635d..fd25d77c 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -66,7 +66,7 @@ static const char *oercn_prefix[] =3D { "_OERCN:", NULL };
- static const char *cpinr_prefixes[] =3D { "+CPINR:", "+CPINRE:", NULL };
- static const char *epin_prefix[] =3D { "*EPIN:", NULL };
- static const char *simcom_spic_prefix[] =3D { "+SPIC:", NULL };
--static const char *cinterion_spic_prefix[] =3D { "^SPIC:", NULL };
-+static const char *gemalto_spic_prefix[] =3D { "^SPIC:", NULL };
- static const char *pct_prefix[] =3D { "#PCT:", NULL };
- static const char *pnnm_prefix[] =3D { "+PNNM:", NULL };
- static const char *qpinc_prefix[] =3D { "+QPINC:", NULL };
-@@ -1110,7 +1110,7 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
- }
+diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+index fb4d67ae..7944c4e4 100644
+--- a/drivers/atmodem/sms.c
++++ b/drivers/atmodem/sms.c
+@@ -219,10 +219,16 @@ static void at_cmgs(struct ofono_sms *sms, const unsi=
+gned char *pdu,
+ 	char buf[512];
+ 	int len;
  =
 
--static void cinterion_spic_cb(gboolean ok, GAtResult *result,
-+static void gemalto_spic_cb(gboolean ok, GAtResult *result,
- 							gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
-@@ -1228,8 +1228,9 @@ static void at_pin_retries_query(struct ofono_sim *si=
-m,
- 			return;
- 		break;
- 	case OFONO_VENDOR_CINTERION:
--		if (g_at_chat_send(sd->chat, "AT^SPIC", cinterion_spic_prefix,
--					cinterion_spic_cb, cbd, g_free) > 0)
+-	if (mms) {
+-		snprintf(buf, sizeof(buf), "AT+CMMS=3D%d", mms);
+-		g_at_chat_send(data->chat, buf, none_prefix,
+-				NULL, NULL, NULL);
++	switch(data->vendor) {
 +	case OFONO_VENDOR_GEMALTO:
-+		if (g_at_chat_send(sd->chat, "AT^SPIC", gemalto_spic_prefix,
-+					gemalto_spic_cb, cbd, g_free) > 0)
- 			return;
- 		break;
- 	default:
++		break;
++	default:
++		if (mms) {
++			snprintf(buf, sizeof(buf), "AT+CMMS=3D%d", mms);
++			g_at_chat_send(data->chat, buf, none_prefix,
++					NULL, NULL, NULL);
++		}
++		break;
+ 	}
+ =
+
+ 	len =3D snprintf(buf, sizeof(buf), "AT+CMGS=3D%d\r", tpdu_len);
+@@ -330,6 +336,7 @@ static inline void at_ack_delivery(struct ofono_sms *sm=
+s)
+ 	if (data->cnma_ack_pdu) {
+ 		switch (data->vendor) {
+ 		case OFONO_VENDOR_CINTERION:
++		case OFONO_VENDOR_GEMALTO:
+ 			snprintf(buf, sizeof(buf), "AT+CNMA=3D1");
+ 			break;
+ 		default:
+@@ -412,9 +419,10 @@ static void at_cmt_notify(GAtResult *result, gpointer =
+user_data)
+ =
+
+ 	switch (data->vendor) {
+ 	case OFONO_VENDOR_CINTERION:
++	case OFONO_VENDOR_GEMALTO:
+ 		if (!g_at_result_iter_next_number(&iter, &tpdu_len)) {
+ 			/*
+-			 * Some cinterions modems (ALS3,PLS8...), act in
++			 * Some Gemalto modems (ALS3,PLS8...), act in
+ 			 * accordance with 3GPP 27.005.  So we need to skip
+ 			 * the first (<alpha>) field
+ 			 *  \r\n+CMT: ,23\r\nCAFECAFECAFE... ...\r\n
 -- =
 
 2.17.1
 
 
---===============0162705395272618832==--
+--===============3799788137835171556==--
 
