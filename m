@@ -1,53 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7476977057805139207=="
+Content-Type: multipart/mixed; boundary="===============6968713047892280159=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: MBIM IP configuration
-Date: Mon, 24 Sep 2018 16:17:41 -0500
-Message-ID: <d773975b-e323-19d8-083e-857b652db65a@gmail.com>
-In-Reply-To: <CAKSBH7EYgTj-r2WLSZikV2Ez4uzkQn-Ew9N4Bvab2fuB1YzrzA@mail.gmail.com>
+Subject: Re: commit d37c22be20c83cf370638a9bad243bc5219c5509
+Date: Mon, 24 Sep 2018 16:25:52 -0500
+Message-ID: <29b52008-59ee-d168-dc89-1e7de3b7e021@gmail.com>
+In-Reply-To: <CAKSBH7HDxmrBEGDAnzDGgdQEs9LwjcBGkShn_xw47rrAU9=rbA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7476977057805139207==
+--===============6968713047892280159==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
-On 09/24/2018 12:45 AM, Giacinto Cifelli wrote:
-> Dear all,
+> Besides, several modules use the option linux driver, which blocks in =
+
+> case the port doesn't answer.
+> This single call:
+> g_at_chat_unref(port);
+> blocks either 30s or 1 minute, depending on the system. I might step =
+
+> into it twice during my hardware initialization for several 3G models.
+> It helps to run this line on a separate thread unblocking the rest.
 > =
 
-> I have stepped into a very slow networks, that takes almost 1 minute to =
 
-> assign an IP address once the MBIM CONNECT DONE is returned.
-> Under these conditions, the call to IP_CONFIGURATION returns all empty =
+What system call blocks (use strace to determine this) ?  If anything =
 
-> values, and the driver sets the connection method to 'dhcp'.
-> But this modem does not support DHCP, so is there a way out of this?
-> Can the driver set the method to kind of 'waiting', and query =
+inside the option driver blocks for 30-60 seconds, that is unacceptable =
 
-> periodically, let's say every 500ms or every second?
-
-You can try and have mbim_ip_configuration_cb retry the IP_CONFIGURATION =
-
-command in this case after a timeout.  However, this seems to also be =
-
-completely against the MBIM specification.  If the device signals that =
-
-no IP configuration details are available, then DHCP is implied. =
-
-However, most MBIM devices do not support DHCP anyway.  So this is bizarre.
-
-The fact that you get IP details after a minute also implies that this =
-
-has nothing to do with the network wanting DHCP done by the host (like =
-
-you posit in your other email on the subject).
+and needs to be fixed in the kernel.
 
 Regards,
 -Denis
 
---===============7476977057805139207==--
+--===============6968713047892280159==--
 
