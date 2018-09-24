@@ -1,47 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============5973898339301091193=="
+Content-Type: multipart/mixed; boundary="===============7476977057805139207=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] location-reporting.h: driver properties handling
-Date: Mon, 24 Sep 2018 16:07:12 -0500
-Message-ID: <c8c8e4a5-f86c-7f9e-c89e-d4c25a2d30fb@gmail.com>
-In-Reply-To: <20180923061922.23288-1-gciofono@gmail.com>
+Subject: Re: MBIM IP configuration
+Date: Mon, 24 Sep 2018 16:17:41 -0500
+Message-ID: <d773975b-e323-19d8-083e-857b652db65a@gmail.com>
+In-Reply-To: <CAKSBH7EYgTj-r2WLSZikV2Ez4uzkQn-Ew9N4Bvab2fuB1YzrzA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5973898339301091193==
+--===============7476977057805139207==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
-On 09/23/2018 01:19 AM, Giacinto Cifelli wrote:
-> The GNSS receiver configuration is highly proprietary.
-> Some are configured through the GNSS port itself, some through other
-> ports. The properties themselves vary among the manufacturers, with no
-> standard available. Besides, ofono doesn't handle any state for a GNSS
-> receiver.
+On 09/24/2018 12:45 AM, Giacinto Cifelli wrote:
+> Dear all,
 > =
 
-> Therefore, this extensions allows to get and set directly D-Bus
-> properties by the driver.
-> ---
->   include/location-reporting.h | 3 +++
->   1 file changed, 3 insertions(+)
->
+> I have stepped into a very slow networks, that takes almost 1 minute to =
 
-No.  We're never going to do stuff like this.  Drivers are never going =
+> assign an IP address once the MBIM CONNECT DONE is returned.
+> Under these conditions, the call to IP_CONFIGURATION returns all empty =
 
-to get D-Bus messages.  They don't even know anything about D-Bus.
+> values, and the driver sets the connection method to 'dhcp'.
+> But this modem does not support DHCP, so is there a way out of this?
+> Can the driver set the method to kind of 'waiting', and query =
 
-Either properly support the format you have in =
+> periodically, let's say every 500ms or every second?
 
-doc/location-reporting-api.txt or feel free to create a vendor specific =
+You can try and have mbim_ip_configuration_cb retry the IP_CONFIGURATION =
 
-D-Bus API for Gemalto inside plugins/gemalto.c
+command in this case after a timeout.  However, this seems to also be =
+
+completely against the MBIM specification.  If the device signals that =
+
+no IP configuration details are available, then DHCP is implied. =
+
+However, most MBIM devices do not support DHCP anyway.  So this is bizarre.
+
+The fact that you get IP details after a minute also implies that this =
+
+has nothing to do with the network wanting DHCP done by the host (like =
+
+you posit in your other email on the subject).
 
 Regards,
 -Denis
 
---===============5973898339301091193==--
+--===============7476977057805139207==--
 
