@@ -1,48 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============2007752562776235237=="
+Content-Type: multipart/mixed; boundary="===============1522094036917602731=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: MBIM IP configuration
-Date: Mon, 24 Sep 2018 07:45:48 +0200
-Message-ID: <CAKSBH7EYgTj-r2WLSZikV2Ez4uzkQn-Ew9N4Bvab2fuB1YzrzA@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: commit d37c22be20c83cf370638a9bad243bc5219c5509
+Date: Mon, 24 Sep 2018 08:24:04 +0200
+Message-ID: <809730A9-6AF4-4CF2-A17E-5BB6ACC58E09@holtmann.org>
+In-Reply-To: <CAKSBH7HDxmrBEGDAnzDGgdQEs9LwjcBGkShn_xw47rrAU9=rbA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2007752562776235237==
+--===============1522094036917602731==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear all,
+Hi Giacinto,
 
-I have stepped into a very slow networks, that takes almost 1 minute to
-assign an IP address once the MBIM CONNECT DONE is returned.
-Under these conditions, the call to IP_CONFIGURATION returns all empty
-values, and the driver sets the connection method to 'dhcp'.
-But this modem does not support DHCP, so is there a way out of this?
-Can the driver set the method to kind of 'waiting', and query periodically,
-let's say every 500ms or every second?
+> > was it necessary to remove entirely the NEED_THREADS flag?
+> > =
 
-Best regards,
-Giacinto
+> > I was going to use it in the Gemalto driver, to speed up the device rec=
+ognition, because for some modules it is hit and miss.
+> > But only as an optional feature, because in some systems it might be mi=
+ssing.
+> > =
 
---===============2007752562776235237==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+> > Also, for some high-speed modems which take long to boot, there is a po=
+tential critical race in the recognition that the use threads can solve eas=
+ily. The alternative is to increase the internal timers a lot.
+> > =
 
-PGRpdiBkaXI9Imx0ciI+RGVhciBhbGwsPGRpdj48YnI+PC9kaXY+PGRpdj5JIGhhdmUgc3RlcHBl
-ZCBpbnRvIGEgdmVyeSBzbG93IG5ldHdvcmtzLCB0aGF0IHRha2VzIGFsbW9zdCAxIG1pbnV0ZSB0
-byBhc3NpZ24gYW4gSVAgYWRkcmVzcyBvbmNlIHRoZSBNQklNIENPTk5FQ1QgRE9ORSBpcyByZXR1
-cm5lZC48L2Rpdj48ZGl2PlVuZGVyIHRoZXNlIGNvbmRpdGlvbnMsIHRoZSBjYWxsIHRvIElQX0NP
-TkZJR1VSQVRJT04gcmV0dXJucyBhbGwgZW1wdHkgdmFsdWVzLCBhbmQgdGhlIGRyaXZlciBzZXRz
-IHRoZSBjb25uZWN0aW9uIG1ldGhvZCB0byAmIzM5O2RoY3AmIzM5Oy48L2Rpdj48ZGl2PkJ1dCB0
-aGlzIG1vZGVtIGRvZXMgbm90IHN1cHBvcnQgREhDUCwgc28gaXMgdGhlcmUgYSB3YXkgb3V0IG9m
-IHRoaXM/PC9kaXY+PGRpdj5DYW4gdGhlIGRyaXZlciBzZXQgdGhlIG1ldGhvZCB0byBraW5kIG9m
-ICYjMzk7d2FpdGluZyYjMzk7LCBhbmQgcXVlcnkgcGVyaW9kaWNhbGx5LCBsZXQmIzM5O3Mgc2F5
-IGV2ZXJ5IDUwMG1zIG9yIGV2ZXJ5IHNlY29uZD88L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkJl
-c3QgcmVnYXJkcyw8L2Rpdj48ZGl2PkdpYWNpbnRvPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48
-YnI+PC9kaXY+PC9kaXY+Cg==
+> > I likely need to add a new flag for it.
+> =
 
---===============2007752562776235237==--
+> using threads is not the solution. This can be all done properly with sin=
+gle thread event loop driven methods.
+> =
+
+> for sure, and in fact as of now the support is optional.
+> But I already need to ask for an extension of the Powered timout from 20 =
+to 60 seconds because several LTE chipsets take at least 30-40 seconds to b=
+oot once they have already enumerated on USB. It would be good to shorten t=
+his time.
+> =
+
+> Besides, several modules use the option linux driver, which blocks in cas=
+e the port doesn't answer.
+> This single call:
+> 	g_at_chat_unref(port);
+> blocks either 30s or 1 minute, depending on the system. I might step into=
+ it twice during my hardware initialization for several 3G models.
+> It helps to run this line on a separate thread unblocking the rest.
+
+no it does not. Nothing in GAtChat is thread safe. So running this in a sep=
+arate thread just means you are having tons of race conditions on your hand.
+
+Regards
+
+Marcel
+
+
+--===============1522094036917602731==--
 
