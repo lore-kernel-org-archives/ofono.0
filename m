@@ -1,53 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============6223098921693858998=="
+Content-Type: multipart/mixed; boundary="===============3979571897186368265=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH] atmodem/sms: no mms support for gemalto
-Date: Tue, 25 Sep 2018 15:19:37 +0200
-Message-ID: <20180925131937.19265-1-gciofono@gmail.com>
+Subject: [PATCH 1/4] gprs-context: added OFONO_GPRS_AUTH_METHOD_NONE
+Date: Tue, 25 Sep 2018 15:20:32 +0200
+Message-ID: <20180925132035.19417-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6223098921693858998==
+--===============3979571897186368265==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/sms.c | 14 ++++++++++----
- 1 file changed, 10 insertions(+), 4 deletions(-)
+ include/gprs-context.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-index 64169086..64d0f6e8 100644
---- a/drivers/atmodem/sms.c
-+++ b/drivers/atmodem/sms.c
-@@ -219,10 +219,16 @@ static void at_cmgs(struct ofono_sms *sms, const unsi=
-gned char *pdu,
- 	char buf[512];
- 	int len;
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index 20ca9efc..8869c12e 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -57,6 +57,7 @@ enum ofono_gprs_context_type {
+ enum ofono_gprs_auth_method {
+ 	OFONO_GPRS_AUTH_METHOD_CHAP =3D 0,
+ 	OFONO_GPRS_AUTH_METHOD_PAP,
++	OFONO_GPRS_AUTH_METHOD_NONE,
+ };
  =
 
--	if (mms) {
--		snprintf(buf, sizeof(buf), "AT+CMMS=3D%d", mms);
--		g_at_chat_send(data->chat, buf, none_prefix,
--				NULL, NULL, NULL);
-+	switch(data->vendor) {
-+	case OFONO_VENDOR_GEMALTO:
-+		break;
-+	default:
-+		if (mms) {
-+			snprintf(buf, sizeof(buf), "AT+CMMS=3D%d", mms);
-+			g_at_chat_send(data->chat, buf, none_prefix,
-+					NULL, NULL, NULL);
-+		}
-+		break;
- 	}
- =
-
- 	len =3D snprintf(buf, sizeof(buf), "AT+CMGS=3D%d\r", tpdu_len);
+ struct ofono_gprs_primary_context {
 -- =
 
 2.17.1
 
 
---===============6223098921693858998==--
+--===============3979571897186368265==--
 
