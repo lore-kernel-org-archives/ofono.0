@@ -1,54 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============2308281221079240841=="
+Content-Type: multipart/mixed; boundary="===============9166828768052330987=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH] atmodem/sms: change vendor CINTERION in GEMALTO
-Date: Tue, 25 Sep 2018 09:13:12 +0200
-Message-ID: <20180925071313.25119-1-gciofono@gmail.com>
+Subject: [PATCH] gemalto plugin: sms vendor to GEMALTO
+Date: Tue, 25 Sep 2018 09:13:13 +0200
+Message-ID: <20180925071313.25119-2-gciofono@gmail.com>
+In-Reply-To: <20180925071313.25119-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2308281221079240841==
+--===============9166828768052330987==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+changed from CINTERION.
+Note that the cinterion plugin itself does not use the specific vendor
+for the sms atom.
 ---
- drivers/atmodem/sms.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ plugins/gemalto.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-index fb4d67ae..64169086 100644
---- a/drivers/atmodem/sms.c
-+++ b/drivers/atmodem/sms.c
-@@ -329,7 +329,7 @@ static inline void at_ack_delivery(struct ofono_sms *sm=
-s)
- 	/* We must acknowledge the PDU using CNMA */
- 	if (data->cnma_ack_pdu) {
- 		switch (data->vendor) {
--		case OFONO_VENDOR_CINTERION:
-+		case OFONO_VENDOR_GEMALTO:
- 			snprintf(buf, sizeof(buf), "AT+CNMA=3D1");
- 			break;
- 		default:
-@@ -411,10 +411,10 @@ static void at_cmt_notify(GAtResult *result, gpointer=
- user_data)
- 		goto err;
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index 6e0d765b..0fcf30d8 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -589,7 +589,7 @@ static void gemalto_post_sim(struct ofono_modem *modem)
  =
 
- 	switch (data->vendor) {
--	case OFONO_VENDOR_CINTERION:
-+	case OFONO_VENDOR_GEMALTO:
- 		if (!g_at_result_iter_next_number(&iter, &tpdu_len)) {
- 			/*
--			 * Some cinterions modems (ALS3,PLS8...), act in
-+			 * Some Gemalto modems (ALS3,PLS8...), act in
- 			 * accordance with 3GPP 27.005.  So we need to skip
- 			 * the first (<alpha>) field
- 			 *  \r\n+CMT: ,23\r\nCAFECAFECAFE... ...\r\n
+ 	ofono_phonebook_create(modem, 0, "atmodem", data->app);
+ =
+
+-	ofono_sms_create(modem, OFONO_VENDOR_CINTERION, "atmodem", data->app);
++	ofono_sms_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
+ =
+
+ 	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->app);
+ 	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->mdm);
 -- =
 
 2.17.1
 
 
---===============2308281221079240841==--
+--===============9166828768052330987==--
 
