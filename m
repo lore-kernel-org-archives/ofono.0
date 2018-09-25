@@ -1,44 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============8871300670332881814=="
+Content-Type: multipart/mixed; boundary="===============2308281221079240841=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH] gemalto plugin: sim vendor to GEMALTO
-Date: Tue, 25 Sep 2018 09:12:33 +0200
-Message-ID: <20180925071233.25070-2-gciofono@gmail.com>
-In-Reply-To: <20180925071233.25070-1-gciofono@gmail.com>
+Subject: [PATCH] atmodem/sms: change vendor CINTERION in GEMALTO
+Date: Tue, 25 Sep 2018 09:13:12 +0200
+Message-ID: <20180925071313.25119-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8871300670332881814==
+--===============2308281221079240841==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-switched from CINTERION.
-Note that the cinterion plugin itself does not use the specific vendor
-for the sms atom.
 ---
- plugins/gemalto.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/atmodem/sms.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index b7734124..6e0d765b 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -571,7 +571,7 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
+diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+index fb4d67ae..64169086 100644
+--- a/drivers/atmodem/sms.c
++++ b/drivers/atmodem/sms.c
+@@ -329,7 +329,7 @@ static inline void at_ack_delivery(struct ofono_sms *sm=
+s)
+ 	/* We must acknowledge the PDU using CNMA */
+ 	if (data->cnma_ack_pdu) {
+ 		switch (data->vendor) {
+-		case OFONO_VENDOR_CINTERION:
++		case OFONO_VENDOR_GEMALTO:
+ 			snprintf(buf, sizeof(buf), "AT+CNMA=3D1");
+ 			break;
+ 		default:
+@@ -411,10 +411,10 @@ static void at_cmt_notify(GAtResult *result, gpointer=
+ user_data)
+ 		goto err;
  =
 
- 	ofono_devinfo_create(modem, 0, "atmodem", data->app);
- 	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
--	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_CINTERION, "atmodem",
-+	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
- 						data->app);
- =
-
- 	if (data->sim && data->have_sim =3D=3D TRUE)
+ 	switch (data->vendor) {
+-	case OFONO_VENDOR_CINTERION:
++	case OFONO_VENDOR_GEMALTO:
+ 		if (!g_at_result_iter_next_number(&iter, &tpdu_len)) {
+ 			/*
+-			 * Some cinterions modems (ALS3,PLS8...), act in
++			 * Some Gemalto modems (ALS3,PLS8...), act in
+ 			 * accordance with 3GPP 27.005.  So we need to skip
+ 			 * the first (<alpha>) field
+ 			 *  \r\n+CMT: ,23\r\nCAFECAFECAFE... ...\r\n
 -- =
 
 2.17.1
 
 
---===============8871300670332881814==--
+--===============2308281221079240841==--
 
