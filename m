@@ -1,61 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============3542399314366840276=="
+Content-Type: multipart/mixed; boundary="===============1197819186037894773=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] sim800: adding support for SimCom SIM800 modem
-Date: Tue, 25 Sep 2018 13:41:23 -0500
-Message-ID: <b393cbe2-44b3-b049-732a-b300ac459871@gmail.com>
-In-Reply-To: <20180925180824.GA3215@turing>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH] atmodem/sim: change vendor CINTERION in GEMALTO
+Date: Wed, 26 Sep 2018 05:28:58 +0200
+Message-ID: <CAKSBH7Hdebc6gah7shQsPeV+U4pQRHUNgzT4feipWUx5xd0=cg@mail.gmail.com>
+In-Reply-To: <eeac1ee9-caba-2f87-44a4-ee4df563a418@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3542399314366840276==
+--===============1197819186037894773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Clement,
+hi Denis,
 
->>
->> I ran a quick diff between this and sim900 driver and there's really not
->> enough differences to warrant a completely separate plugin.  Can't we ju=
-st
->> simply query the model version and act accordingly?
-> =
+On Tue, 25 Sep 2018, 16:43 Denis Kenzior, <denkenz@gmail.com> wrote:
 
-> My opinion is that the sim800 driver is much to be needed as Simcom consi=
-ders the sim800 as the new sim900.
-> I "fear" that merging the two drivers will end up in a big file having a =
-lot of "if...else" for every different feature
-> between those two drivers. Whereas having the two separate for some time =
-will allow to address the use of sim800's new features
-> and support legacy sim900.
+> On 09/25/2018 02:12 AM, Giacinto Cifelli wrote:
+> > ---
+> >   drivers/atmodem/sim.c | 10 +++++-----
+> >   1 file changed, 5 insertions(+), 5 deletions(-)
+> >
+>
+> Both applied.  Can you make sure that your patches are also
+> sequence-numbered.
+>
+> e.g.
+> git format-patch -2
+> git send-email 000*
+>
 
-It might not be as bad as you think.  Besides, if we determine at some =
+yes, I have forgotten in this particular instance, apologies.
 
-future date, that sim800 and sim900 are different enough to warrant =
+>
+> Regards,
+> -Denis
+>
 
-different drivers, then we have the option of splitting them out into =
+regards,
+Giacinto
 
-separate drivers at that time.
+>
 
-> =
+--===============1197819186037894773==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> But as you are the maintainer, I think the decision is yours. Tell me and=
- i'll modify my patches accordingly then preventing too much noisy commits =
-:)
-> =
+PGRpdiBkaXI9ImF1dG8iPjxkaXY+aGkgRGVuaXMsPGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9x
+dW90ZSI+PGRpdiBkaXI9Imx0ciI+T24gVHVlLCAyNSBTZXAgMjAxOCwgMTY6NDMgRGVuaXMgS2Vu
+emlvciwgJmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSI+ZGVua2VuekBnbWFp
+bC5jb208L2E+Jmd0OyB3cm90ZTo8YnI+PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1
+b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7
+cGFkZGluZy1sZWZ0OjFleCI+T24gMDkvMjUvMjAxOCAwMjoxMiBBTSwgR2lhY2ludG8gQ2lmZWxs
+aSB3cm90ZTo8YnI+CiZndDsgLS0tPGJyPgomZ3Q7wqAgwqBkcml2ZXJzL2F0bW9kZW0vc2ltLmMg
+fCAxMCArKysrKy0tLS0tPGJyPgomZ3Q7wqAgwqAxIGZpbGUgY2hhbmdlZCwgNSBpbnNlcnRpb25z
+KCspLCA1IGRlbGV0aW9ucygtKTxicj4KJmd0OyA8YnI+Cjxicj4KQm90aCBhcHBsaWVkLsKgIENh
+biB5b3UgbWFrZSBzdXJlIHRoYXQgeW91ciBwYXRjaGVzIGFyZSBhbHNvIDxicj4Kc2VxdWVuY2Ut
+bnVtYmVyZWQuPGJyPgo8YnI+CmUuZy48YnI+CmdpdCBmb3JtYXQtcGF0Y2ggLTI8YnI+CmdpdCBz
+ZW5kLWVtYWlsIDAwMCo8YnI+PC9ibG9ja3F1b3RlPjwvZGl2PjwvZGl2PjxkaXYgZGlyPSJhdXRv
+Ij48YnI+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPnllcywgSSBoYXZlIGZvcmdvdHRlbiBpbiB0aGlz
+IHBhcnRpY3VsYXIgaW5zdGFuY2UsIGFwb2xvZ2llcy48L2Rpdj48ZGl2IGRpcj0iYXV0byI+PGRp
+diBjbGFzcz0iZ21haWxfcXVvdGUiPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5
+bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmct
+bGVmdDoxZXgiPgo8YnI+ClJlZ2FyZHMsPGJyPgotRGVuaXM8YnI+PC9ibG9ja3F1b3RlPjwvZGl2
+PjwvZGl2PjxkaXYgZGlyPSJhdXRvIj48YnI+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPnJlZ2FyZHMs
+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPkdpYWNpbnRvPC9kaXY+PGRpdiBkaXI9ImF1dG8iPjxkaXYg
+Y2xhc3M9ImdtYWlsX3F1b3RlIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxl
+PSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxl
+ZnQ6MWV4Ij48L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
 
-
-My feeling is that we should merge these.  The only difference I see =
-
-right now is a VENDOR flag tweak and an SMS Ready notification handling. =
-
-  These don't amount to much and could be easily handled by the existing =
-
-driver.
-
-Regards,
--Denis
-
---===============3542399314366840276==--
+--===============1197819186037894773==--
 
