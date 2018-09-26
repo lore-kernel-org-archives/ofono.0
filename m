@@ -1,38 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============1197819186037894773=="
+Content-Type: multipart/mixed; boundary="===============3072823497233012692=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH] atmodem/sim: change vendor CINTERION in GEMALTO
-Date: Wed, 26 Sep 2018 05:28:58 +0200
-Message-ID: <CAKSBH7Hdebc6gah7shQsPeV+U4pQRHUNgzT4feipWUx5xd0=cg@mail.gmail.com>
-In-Reply-To: <eeac1ee9-caba-2f87-44a4-ee4df563a418@gmail.com>
+Subject: Re: [PATCH] atmodem/sms: no mms support for gemalto
+Date: Wed, 26 Sep 2018 05:30:45 +0200
+Message-ID: <CAKSBH7Gk_TXDz8Tz4Cf2DSYMMX2_1_tOSsUS-9LkQAdaPCxFjg@mail.gmail.com>
+In-Reply-To: <55cd4a9f-623f-1583-6528-c5b893c49870@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1197819186037894773==
+--===============3072823497233012692==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-hi Denis,
+On Tue, 25 Sep 2018, 16:49 Denis Kenzior, <denkenz@gmail.com> wrote:
 
-On Tue, 25 Sep 2018, 16:43 Denis Kenzior, <denkenz@gmail.com> wrote:
-
-> On 09/25/2018 02:12 AM, Giacinto Cifelli wrote:
+> Hi Giacinto,
+>
+> On 09/25/2018 08:19 AM, Giacinto Cifelli wrote:
 > > ---
-> >   drivers/atmodem/sim.c | 10 +++++-----
-> >   1 file changed, 5 insertions(+), 5 deletions(-)
+> >   drivers/atmodem/sms.c | 14 ++++++++++----
+> >   1 file changed, 10 insertions(+), 4 deletions(-)
 > >
+> > diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+> > index 64169086..64d0f6e8 100644
+> > --- a/drivers/atmodem/sms.c
+> > +++ b/drivers/atmodem/sms.c
+> > @@ -219,10 +219,16 @@ static void at_cmgs(struct ofono_sms *sms, const
+> unsigned char *pdu,
+> >       char buf[512];
+> >       int len;
+> >
+> > -     if (mms) {
+> > -             snprintf(buf, sizeof(buf), "AT+CMMS=3D%d", mms);
+> > -             g_at_chat_send(data->chat, buf, none_prefix,
+> > -                             NULL, NULL, NULL);
+> > +     switch(data->vendor) {
 >
-> Both applied.  Can you make sure that your patches are also
-> sequence-numbered.
->
-> e.g.
-> git format-patch -2
-> git send-email 000*
+> Space after switch
 >
 
-yes, I have forgotten in this particular instance, apologies.
+ok. I thought it was after the entire structure, ie, after the closing }.
 
+
+> > +     case OFONO_VENDOR_GEMALTO:
+> > +             break;
+> > +     default:
+> > +             if (mms) {
+> > +                     snprintf(buf, sizeof(buf), "AT+CMMS=3D%d", mms);
+> > +                     g_at_chat_send(data->chat, buf, none_prefix,
+> > +                                     NULL, NULL, NULL);
+> > +             }
+> > +             break;
+> >       }
+>
+> Hmm, wouldn't this be more logical & readable this way:
+>
+> if (mms) {
+>         switch (data->vendor) {
+>         case:
+>         default:
+>         }
+> }
+>
+
+that is a good idea. I will change and submit shortly
+
+
+> >
+> >       len =3D snprintf(buf, sizeof(buf), "AT+CMGS=3D%d\r", tpdu_len);
+> >
 >
 > Regards,
 > -Denis
@@ -41,36 +78,65 @@ yes, I have forgotten in this particular instance, apologies.
 regards,
 Giacinto
 
->
-
---===============1197819186037894773==
+--===============3072823497233012692==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9ImF1dG8iPjxkaXY+aGkgRGVuaXMsPGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9x
-dW90ZSI+PGRpdiBkaXI9Imx0ciI+T24gVHVlLCAyNSBTZXAgMjAxOCwgMTY6NDMgRGVuaXMgS2Vu
-emlvciwgJmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSI+ZGVua2VuekBnbWFp
-bC5jb208L2E+Jmd0OyB3cm90ZTo8YnI+PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1
-b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7
-cGFkZGluZy1sZWZ0OjFleCI+T24gMDkvMjUvMjAxOCAwMjoxMiBBTSwgR2lhY2ludG8gQ2lmZWxs
-aSB3cm90ZTo8YnI+CiZndDsgLS0tPGJyPgomZ3Q7wqAgwqBkcml2ZXJzL2F0bW9kZW0vc2ltLmMg
-fCAxMCArKysrKy0tLS0tPGJyPgomZ3Q7wqAgwqAxIGZpbGUgY2hhbmdlZCwgNSBpbnNlcnRpb25z
-KCspLCA1IGRlbGV0aW9ucygtKTxicj4KJmd0OyA8YnI+Cjxicj4KQm90aCBhcHBsaWVkLsKgIENh
-biB5b3UgbWFrZSBzdXJlIHRoYXQgeW91ciBwYXRjaGVzIGFyZSBhbHNvIDxicj4Kc2VxdWVuY2Ut
-bnVtYmVyZWQuPGJyPgo8YnI+CmUuZy48YnI+CmdpdCBmb3JtYXQtcGF0Y2ggLTI8YnI+CmdpdCBz
-ZW5kLWVtYWlsIDAwMCo8YnI+PC9ibG9ja3F1b3RlPjwvZGl2PjwvZGl2PjxkaXYgZGlyPSJhdXRv
-Ij48YnI+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPnllcywgSSBoYXZlIGZvcmdvdHRlbiBpbiB0aGlz
-IHBhcnRpY3VsYXIgaW5zdGFuY2UsIGFwb2xvZ2llcy48L2Rpdj48ZGl2IGRpcj0iYXV0byI+PGRp
-diBjbGFzcz0iZ21haWxfcXVvdGUiPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5
-bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmct
-bGVmdDoxZXgiPgo8YnI+ClJlZ2FyZHMsPGJyPgotRGVuaXM8YnI+PC9ibG9ja3F1b3RlPjwvZGl2
-PjwvZGl2PjxkaXYgZGlyPSJhdXRvIj48YnI+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPnJlZ2FyZHMs
-PC9kaXY+PGRpdiBkaXI9ImF1dG8iPkdpYWNpbnRvPC9kaXY+PGRpdiBkaXI9ImF1dG8iPjxkaXYg
-Y2xhc3M9ImdtYWlsX3F1b3RlIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxl
-PSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxl
-ZnQ6MWV4Ij48L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
+PGRpdiBkaXI9ImF1dG8iPjxkaXY+PGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGRp
+diBkaXI9Imx0ciI+T24gVHVlLCAyNSBTZXAgMjAxOCwgMTY6NDkgRGVuaXMgS2VuemlvciwgJmx0
+OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSI+ZGVua2VuekBnbWFpbC5jb208L2E+
+Jmd0OyB3cm90ZTo8YnI+PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHls
+ZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1s
+ZWZ0OjFleCI+SGkgR2lhY2ludG8sPGJyPgo8YnI+Ck9uIDA5LzI1LzIwMTggMDg6MTkgQU0sIEdp
+YWNpbnRvIENpZmVsbGkgd3JvdGU6PGJyPgomZ3Q7IC0tLTxicj4KJmd0O8KgIMKgZHJpdmVycy9h
+dG1vZGVtL3Ntcy5jIHwgMTQgKysrKysrKysrKy0tLS08YnI+CiZndDvCoCDCoDEgZmlsZSBjaGFu
+Z2VkLCAxMCBpbnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygtKTxicj4KJmd0OyA8YnI+CiZndDsg
+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9zbXMuYyBiL2RyaXZlcnMvYXRtb2RlbS9zbXMu
+Yzxicj4KJmd0OyBpbmRleCA2NDE2OTA4Ni4uNjRkMGY2ZTggMTAwNjQ0PGJyPgomZ3Q7IC0tLSBh
+L2RyaXZlcnMvYXRtb2RlbS9zbXMuYzxicj4KJmd0OyArKysgYi9kcml2ZXJzL2F0bW9kZW0vc21z
+LmM8YnI+CiZndDsgQEAgLTIxOSwxMCArMjE5LDE2IEBAIHN0YXRpYyB2b2lkIGF0X2NtZ3Moc3Ry
+dWN0IG9mb25vX3NtcyAqc21zLCBjb25zdCB1bnNpZ25lZCBjaGFyICpwZHUsPGJyPgomZ3Q7wqAg
+wqAgwqAgwqBjaGFyIGJ1Zls1MTJdOzxicj4KJmd0O8KgIMKgIMKgIMKgaW50IGxlbjs8YnI+CiZn
+dDvCoCDCoDxicj4KJmd0OyAtwqAgwqAgwqBpZiAobW1zKSB7PGJyPgomZ3Q7IC3CoCDCoCDCoCDC
+oCDCoCDCoCDCoHNucHJpbnRmKGJ1Ziwgc2l6ZW9mKGJ1ZiksICZxdW90O0FUK0NNTVM9JWQmcXVv
+dDssIG1tcyk7PGJyPgomZ3Q7IC3CoCDCoCDCoCDCoCDCoCDCoCDCoGdfYXRfY2hhdF9zZW5kKGRh
+dGEtJmd0O2NoYXQsIGJ1Ziwgbm9uZV9wcmVmaXgsPGJyPgomZ3Q7IC3CoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoE5VTEwsIE5VTEwsIE5VTEwpOzxicj4KJmd0OyAr
+wqAgwqAgwqBzd2l0Y2goZGF0YS0mZ3Q7dmVuZG9yKSB7PGJyPgo8YnI+ClNwYWNlIGFmdGVyIHN3
+aXRjaDxicj48L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPjxicj48L2Rp
+dj48ZGl2IGRpcj0iYXV0byI+b2suIEkgdGhvdWdodCBpdCB3YXMgYWZ0ZXIgdGhlIGVudGlyZSBz
+dHJ1Y3R1cmUsIGllLCBhZnRlciB0aGUgY2xvc2luZyB9LjwvZGl2PjxkaXYgZGlyPSJhdXRvIj48
+YnI+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj48YmxvY2tx
+dW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXIt
+bGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4KPGJyPgomZ3Q7ICvCoCDCoCDC
+oGNhc2UgT0ZPTk9fVkVORE9SX0dFTUFMVE86PGJyPgomZ3Q7ICvCoCDCoCDCoCDCoCDCoCDCoCDC
+oGJyZWFrOzxicj4KJmd0OyArwqAgwqAgwqBkZWZhdWx0Ojxicj4KJmd0OyArwqAgwqAgwqAgwqAg
+wqAgwqAgwqBpZiAobW1zKSB7PGJyPgomZ3Q7ICvCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoHNucHJpbnRmKGJ1Ziwgc2l6ZW9mKGJ1ZiksICZxdW90O0FUK0NNTVM9JWQmcXVvdDssIG1t
+cyk7PGJyPgomZ3Q7ICvCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoGdfYXRfY2hhdF9z
+ZW5kKGRhdGEtJmd0O2NoYXQsIGJ1Ziwgbm9uZV9wcmVmaXgsPGJyPgomZ3Q7ICvCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoE5VTEwsIE5VTEws
+IE5VTEwpOzxicj4KJmd0OyArwqAgwqAgwqAgwqAgwqAgwqAgwqB9PGJyPgomZ3Q7ICvCoCDCoCDC
+oCDCoCDCoCDCoCDCoGJyZWFrOzxicj4KJmd0O8KgIMKgIMKgIMKgfTxicj4KPGJyPgpIbW0sIHdv
+dWxkbiYjMzk7dCB0aGlzIGJlIG1vcmUgbG9naWNhbCAmYW1wOyByZWFkYWJsZSB0aGlzIHdheTo8
+YnI+Cjxicj4KaWYgKG1tcykgezxicj4KwqAgwqAgwqAgwqAgc3dpdGNoIChkYXRhLSZndDt2ZW5k
+b3IpIHs8YnI+CsKgIMKgIMKgIMKgIGNhc2U6PGJyPgrCoCDCoCDCoCDCoCBkZWZhdWx0Ojxicj4K
+wqAgwqAgwqAgwqAgfTxicj4KfTxicj48L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PGRpdiBkaXI9
+ImF1dG8iPjxicj48L2Rpdj48ZGl2IGRpcj0iYXV0byI+dGhhdCBpcyBhIGdvb2QgaWRlYS4gSSB3
+aWxsIGNoYW5nZSBhbmQgc3VibWl0IHNob3J0bHk8L2Rpdj48ZGl2IGRpcj0iYXV0byI+PGJyPjwv
+ZGl2PjxkaXYgZGlyPSJhdXRvIj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGJsb2NrcXVvdGUg
+Y2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6
+MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+Cjxicj4KJmd0O8KgIMKgPGJyPgomZ3Q7
+wqAgwqAgwqAgwqBsZW4gPSBzbnByaW50ZihidWYsIHNpemVvZihidWYpLCAmcXVvdDtBVCtDTUdT
+PSVkXHImcXVvdDssIHRwZHVfbGVuKTs8YnI+CiZndDsgPGJyPgo8YnI+ClJlZ2FyZHMsPGJyPgot
+RGVuaXM8YnI+PC9ibG9ja3F1b3RlPjwvZGl2PjwvZGl2PjxkaXYgZGlyPSJhdXRvIj48YnI+PC9k
+aXY+PGRpdiBkaXI9ImF1dG8iPnJlZ2FyZHMsPC9kaXY+PGRpdiBkaXI9ImF1dG8iPkdpYWNpbnRv
+PC9kaXY+PGRpdiBkaXI9ImF1dG8iPjxicj48L2Rpdj48ZGl2IGRpcj0iYXV0byI+PGRpdiBjbGFz
+cz0iZ21haWxfcXVvdGUiPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1h
+cmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDox
+ZXgiPgo8L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
 
---===============1197819186037894773==--
+--===============3072823497233012692==--
 
