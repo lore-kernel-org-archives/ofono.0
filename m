@@ -1,65 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============3655654197722500319=="
+Content-Type: multipart/mixed; boundary="===============1837271752276053527=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH] atmodem/sms: no mms support for Gemalto
-Date: Thu, 27 Sep 2018 04:10:51 +0200
-Message-ID: <CAKSBH7H3_tHDTNZ2c8mr=5+ZU2L+Qk7rXjBJTfOCmE-1m7UBhw@mail.gmail.com>
-In-Reply-To: <1a0eeb45-0a2c-506c-9404-30a6305e2534@gmail.com>
+Subject: status
+Date: Thu, 27 Sep 2018 04:24:47 +0200
+Message-ID: <CAKSBH7EF1K2mr-dgtRvnP3-8b2-PLuGHVmGvudd62kLyN1BBkA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3655654197722500319==
+--===============1837271752276053527==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Denis, Marcel,
 
-On Wed, Sep 26, 2018 at 11:34 PM Denis Kenzior <denkenz@gmail.com> wrote:
+so far you have accepted minor adjustments here and there, rejected the
+gemaltomodem/location-reporting, gave very useful comments on the
+gemaltomodem/voicecall atom. On top of it, I have some homework to find out
+which call of the option linux kernel is blocking for 30/60 seconds.
 
-> Hi Giacinto,
->
-> On 09/26/2018 06:32 AM, Giacinto Cifelli wrote:
-> > ---
-> >   drivers/atmodem/sms.c | 17 +++++++++++------
-> >   1 file changed, 11 insertions(+), 6 deletions(-)
-> >
->
-> This patch doesn't apply.  I'm guessing it is on top of your local tree
-> and not on top of origin/master.
->
+For the gemaltomodem/gprs-context, it is not clear how to proceed. Would
+you kindly give some suggestion other than "these modules don't exist in my
+world"?
 
-yes, I have forgotten to commit out the previous version :(
-I am going to resubmit soon.
+Also, I would like to know where do we stand with the following, on which I
+have seen no commments at all:
+from the 23.09.2018:
+  atmodem/gprs: added LTE and NR indicators - absolutely needed to handle
+IMC stacks
+  atmodem/gprs: added autoattach handling - needed to avoid ofono
+self-destruction
+  atmodem/gprs: initial Gemalto vendor - on top of the previous ones
 
+from the 25.09.2018:
+  4 patches for the OFONO_GPRS_AUTH_METHOD_NONE.
+Here I need to know if you are willing to do it or not. The initial answer
+was permissive, but then I have the impression you changed your mind.
 
-> Regards,
-> -Denis
->
+Thank you,
+best regards,
+Giacinto
 
---===============3655654197722500319==
+--===============1837271752276053527==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+SGkgRGVuaXMsPGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+
-PGRpdiBkaXI9Imx0ciI+T24gV2VkLCBTZXAgMjYsIDIwMTggYXQgMTE6MzQgUE0gRGVuaXMgS2Vu
-emlvciAmbHQ7PGEgaHJlZj0ibWFpbHRvOmRlbmtlbnpAZ21haWwuY29tIj5kZW5rZW56QGdtYWls
-LmNvbTwvYT4mZ3Q7IHdyb3RlOjxicj48L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVv
-dGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtw
-YWRkaW5nLWxlZnQ6MWV4Ij5IaSBHaWFjaW50byw8YnI+Cjxicj4KT24gMDkvMjYvMjAxOCAwNjoz
-MiBBTSwgR2lhY2ludG8gQ2lmZWxsaSB3cm90ZTo8YnI+CiZndDsgLS0tPGJyPgomZ3Q7wqAgwqBk
-cml2ZXJzL2F0bW9kZW0vc21zLmMgfCAxNyArKysrKysrKysrKy0tLS0tLTxicj4KJmd0O8KgIMKg
-MSBmaWxlIGNoYW5nZWQsIDExIGluc2VydGlvbnMoKyksIDYgZGVsZXRpb25zKC0pPGJyPgomZ3Q7
-IDxicj4KPGJyPgpUaGlzIHBhdGNoIGRvZXNuJiMzOTt0IGFwcGx5LsKgIEkmIzM5O20gZ3Vlc3Np
-bmcgaXQgaXMgb24gdG9wIG9mIHlvdXIgbG9jYWwgdHJlZSA8YnI+CmFuZCBub3Qgb24gdG9wIG9m
-IG9yaWdpbi9tYXN0ZXIuPGJyPjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2Pnllcywg
-SSBoYXZlIGZvcmdvdHRlbiB0byBjb21taXQgb3V0IHRoZSBwcmV2aW91cyB2ZXJzaW9uIDooPC9k
-aXY+PGRpdj5JIGFtIGdvaW5nIHRvIHJlc3VibWl0IHNvb24uPC9kaXY+PGRpdj7CoDxicj48L2Rp
-dj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhl
-eDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4KUmVnYXJkcyw8
-YnI+Ci1EZW5pczxicj4KPC9ibG9ja3F1b3RlPjwvZGl2PjwvZGl2Pgo=
+PGRpdiBkaXI9Imx0ciI+SGkgRGVuaXMsIE1hcmNlbCw8ZGl2Pjxicj48L2Rpdj48ZGl2PnNvIGZh
+ciB5b3UgaGF2ZSBhY2NlcHRlZCBtaW5vciBhZGp1c3RtZW50cyBoZXJlIGFuZCB0aGVyZSwgcmVq
+ZWN0ZWQgdGhlIGdlbWFsdG9tb2RlbS9sb2NhdGlvbi1yZXBvcnRpbmcsIGdhdmUgdmVyeSB1c2Vm
+dWwgY29tbWVudHMgb24gdGhlIGdlbWFsdG9tb2RlbS92b2ljZWNhbGwgYXRvbS4gT24gdG9wIG9m
+IGl0LMKgSSBoYXZlIHNvbWUgaG9tZXdvcmsgdG8gZmluZCBvdXQgd2hpY2ggY2FsbCBvZiB0aGUg
+b3B0aW9uIGxpbnV4IGtlcm5lbCBpcyBibG9ja2luZyBmb3IgMzAvNjAgc2Vjb25kcy48L2Rpdj48
+ZGl2Pjxicj48L2Rpdj48ZGl2PkZvciB0aGUgZ2VtYWx0b21vZGVtL2dwcnMtY29udGV4dCwgaXQg
+aXMgbm90IGNsZWFyIGhvdyB0byBwcm9jZWVkLiBXb3VsZCB5b3Uga2luZGx5IGdpdmUgc29tZSBz
+dWdnZXN0aW9uIG90aGVyIHRoYW4gJnF1b3Q7dGhlc2UgbW9kdWxlcyBkb24mIzM5O3QgZXhpc3Qg
+aW4gbXkgd29ybGQmcXVvdDs/PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5BbHNvLCBJIHdvdWxk
+IGxpa2UgdG8ga25vdyB3aGVyZSBkbyB3ZSBzdGFuZCB3aXRoIHRoZSBmb2xsb3dpbmcsIG9uIHdo
+aWNoIEkgaGF2ZSBzZWVuIG5vIGNvbW1tZW50cyBhdCBhbGw6PGJyPjwvZGl2PjxkaXY+ZnJvbSB0
+aGUgMjMuMDkuMjAxODo8L2Rpdj48ZGl2PsKgIGF0bW9kZW0vZ3ByczogYWRkZWQgTFRFIGFuZCBO
+UiBpbmRpY2F0b3JzIC0gYWJzb2x1dGVseSBuZWVkZWQgdG8gaGFuZGxlIElNQyBzdGFja3M8L2Rp
+dj48ZGl2PsKgIGF0bW9kZW0vZ3ByczogYWRkZWQgYXV0b2F0dGFjaCBoYW5kbGluZyAtIG5lZWRl
+ZCB0byBhdm9pZCBvZm9ubyBzZWxmLWRlc3RydWN0aW9uPC9kaXY+PGRpdj7CoCBhdG1vZGVtL2dw
+cnM6IGluaXRpYWwgR2VtYWx0byB2ZW5kb3IgLSBvbiB0b3Agb2YgdGhlIHByZXZpb3VzIG9uZXM8
+L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PmZyb20gdGhlIDI1LjA5LjIwMTg6PC9kaXY+PGRpdj7C
+oCA0IHBhdGNoZXMgZm9yIHRoZSBPRk9OT19HUFJTX0FVVEhfTUVUSE9EX05PTkUuPC9kaXY+PGRp
+dj5IZXJlIEkgbmVlZCB0byBrbm93IGlmIHlvdSBhcmUgd2lsbGluZyB0byBkbyBpdCBvciBub3Qu
+IFRoZSBpbml0aWFsIGFuc3dlciB3YXMgcGVybWlzc2l2ZSwgYnV0IHRoZW4gSSBoYXZlIHRoZSBp
+bXByZXNzaW9uIHlvdSBjaGFuZ2VkIHlvdXIgbWluZC48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
+PlRoYW5rIHlvdSw8L2Rpdj48ZGl2PmJlc3QgcmVnYXJkcyw8L2Rpdj48ZGl2PkdpYWNpbnRvPC9k
+aXY+PGRpdj48YnI+PC9kaXY+PC9kaXY+Cg==
 
---===============3655654197722500319==--
+--===============1837271752276053527==--
 
