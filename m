@@ -1,122 +1,171 @@
-Content-Type: multipart/mixed; boundary="===============2526153731632971844=="
+Content-Type: multipart/mixed; boundary="===============6672345978258789203=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem/gprs: added autoattach handling
-Date: Fri, 28 Sep 2018 08:40:49 -0500
-Message-ID: <f692c73a-dce4-4401-5621-bea86571f70b@gmail.com>
-In-Reply-To: <CAKSBH7GAHVsX1J6ESLcVS5_7D0B5VsCrxzpy7zCqJZ4WQsX7cw@mail.gmail.com>
+Subject: Re: [PATCH] atmodem/gprs: added LTE and NR indicators
+Date: Fri, 28 Sep 2018 09:00:58 -0500
+Message-ID: <c8f258f7-321a-f66b-0223-6ef8aeb024f9@gmail.com>
+In-Reply-To: <CAKSBH7HJ0XghPAVzMxhFoarg03xo6CWde-GzSW7=TjnaKzFyhA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2526153731632971844==
+--===============6672345978258789203==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
->> You can't really do that though.  It is fully possible for a modem to
->> roam off LTE onto 3G and not be attached...  So we still need tosend
->> +CGATT in this case.
+>> Err, why?  We should get a proper status from +CREG.  And the
+>> network-registration state overrides whatever status the gprs atom
+>> thinks it is in.
 > =
 
-> You can't really do that, either. It is possible that the module hops
-> off LTE for a CSFB call of for a simple SMS, and the current logic
+> yes and no. In case of handover things get messy today.
+> I will try to collect a log to show this.
+> =
 
-It may be the logic is flawed here.  Or the event sequence causes GPRS =
 
-to thrash about and cause a detach.  I wonder if this can be fixed in =
+Great, that would be useful.
 
-the gprs core atom itself?
+>>
+>> Also, the driver is the wrong place for all this logic anyway.  CEREG
+>> and C5REG status reporting is standardized, so we can easily add this to
+>> the oFono core (gprs) API.  E.g. ofono_gprs_status_notify was for 2G/3G
+>> PS domain registration state reporting (CGREG).  We should now introduce
+>> ofono_gprs_eutran_status_notify for reporting CEREG status and
+>> ofono_gprs_5g_status_notify for C5REG.  The core then can collate this
+>> information and act accordingly.  Having each driver doing all this
+>> logic is wasteful and error prone.
+> =
 
-E.g. for a CSFB / SMS, we should see something like:
+> this is specific to AT-based modem. qmi and mbim do not suffer from this.
+> I don't know about dun, ril, isi drivers (the other ones that
+> implement a gprs atom)
+> So, in my opinion is related to the 27.007, and stays in the driver.
+> =
 
-+CREG: 1, foo, bar, 7 // Home network, EUTRAN
-+CREG: 1, baz, bea, 2
-+CGREG: 1, baz, bea, 2
 
-> will send immediately AT+CGATT=3D0 which will wreak havoc: the contexts
-> that should be handed-over or suspended are released, and the module
+So just as a bit of background, oFono follows 27.007 to the letter when =
 
-So if we're sending a +CGATT=3D0 in that event sequence, then it is likely =
+possible.  If you look at the way atom driver APIs are defined, they map =
 
-a bug.  Can you actually share an AT command trace / debug log of what =
+1:1 to 27.007.  We only introduce enums and operations that are not =
 
-is happening?  export OFONO_AT_DEBUG=3D1 prior to running oFono.
+present in 27.007 for very specific circumstances.
 
-> is never able to return to LTE because forced to detach.
-> I didn't see the call drop in my tests, but it is not impossible that
-> some modules would also do that as a consequence.
-> I didn't test on the move or with a simulator, but I suppose also in
-> case of HO LTE->3G we have the same scenario.
+In the end QMI was also very similar to 27.007.  I don't know if they =
 
-The problem is that every vendor handles CGATT slightly differently.  It =
+have kept up with some of the latest features introduced by 3GPP, but =
 
-is a bit of a mess, but yes it sounds like we are doing something wrong =
+all these status reporting operations can remain optional.  If QMI/MBIM =
 
-here.
+can emulate them, that's great.  If not, things should still work.
+
+Also note that gprs driver might not be shared across all AT command =
+
+based modems in the future.  E.g. you may want to have your own version =
+
+for gemalto if the vendor specific logic gets too invasive.  In which =
+
+case you'd need to duplicate all this logic...  No, it really does =
+
+belong in the core.
+
+>>> If COPS does not report a technology or reports the same technology,
+>>> we take the indicator.
+>>
+>> This sounds unnecessary to me...
+> =
+
+> the problem here is that when there are different indicators for 2G/3G an=
+d LTE,
+> in case of change of technology one of them reports a deregistration
+> (from the previous technology), and promptly ofono sends AT+CGATT=3D0.
+> =
+
+
+Unsurprising.  This is a common issue with AT commands.  The issue is =
+
+that AT command order matters.  So if the modem sends them in a sequence =
+
+that isn't useful to the upper layers, things become hard.  Each command =
+
+is processed individually without actual context as to what is going on =
+
+elsewhere.  This is why I'm actually against using C5REG/EREG except for =
+
+informational purposes only.  The definitive information needs to come =
+
+from CREG.
+
+>>
+>>>
+>>> Similar handling for AT+CGREG?, AT+CEREG?, AT+C5GREG? : we take the
+>>> best result.
+>>>
+>>> An initial verification for the presence of any of these indicators is
+>>> required. Also how many of them are available is needed information.
+>>
+>> So the real question is, why do you think you need all this anyway?  The
+>> GPRS registration status is only important for one case, and that is
+>> control of packet domain registration while roaming on 2G/3G networks.
+>> On EUTRAN networks that is not possible anyway, so we're essentially
+>> always Powered & Attached regardless of the RoamingAllowed setting.
+>>
+> =
+
+> maybe this is the issue: roaming should be handled at context-activation =
+stage,
+> not with the attach.
+> All hand-over cases don't work well with ofono.
+> Even a simple registration in 3G first then upgraded to LTE by the
+> network will not work because
+> the module would send +CGREG=3D4 and ofono AT+CGATT=3D0, and detach from =
+LTE,
+> back to 3G, perform another attach and repeat forever...
+
+Yep, I agree, the logic is overly aggressive.  The reason is that =
+
+there's no 27.007 standard for disabling automatic PS attach while =
+
+roaming.  So in order to implement RoamingAllowed we had to issue the =
+
+big CGATT=3D0 hammer to stop the modem from attaching until we told it to =
+
+do so.
+
+Do we have any vendor specific commands that we can use to send a hint =
+
+to the modem not to auto-attach while roaming?  Then gprs can stop being =
+
+so paranoid.  Another option would be to only detach once we're roaming =
+
+and attached...
 
 > =
 
-> For Gemalto modules it is kind of mandatory to let the module handle
-> the attach by itself if it supports LTE, and I believe also for other
-> vendors, hence the autoattach flag.
-
-Well, this is a bit of a strange situation actually.  So the original =
-
-RoamingAllowed logic was introduced because some networks actually =
-
-charged roaming fees when the Modem was attached (not even context =
-
-activated) to the PS network.  So the RoamingAllowed hammer was added to =
-
-make sure that if the user enabled that option, no attach would be =
-
-attempted while roaming.
-
-This still in theory applies to LTE-capable devices: even if we drop =
-
-from LTE to 3G to make a phone call, we should still detach if the =
-
-setting applies.  So the question is why does +CGATT affect anything in =
-
-the LTE state?  In some sense I don't think it was meant to affect LTE =
-
-state.
-
-However, I think the fundamental problem is that 27.007 never provided =
-
-us the right command to actually tell the modem what to do.  We really =
-
-just needed a hint out to the modem not to auto-attach while roaming, =
-
-something that mapped to RoamingAllowed setting.  Unfortunately the =
-
-+CGATT was the only thing available.
-
+> LTE modules are supposed to react to AT+CGATT=3Dx, just like any pre-LTE =
+ones.
+> I haven't seen anywhere in the 27.007 that CGATT doesn't apply there.
 > =
 
-> Maybe the data-roaming logic should move from attach to context activatio=
-n.
-> Also the operators expect it to work this way nowadays, even for
-> pre-LTE modules.
 
-So honestly I was never happy with the RoamingAllowed stuff, nor the =
+Agreed, that is my interpretation of what 27.007 says as well.  However, =
 
-logic that drove it.  But at this point we're kind of stuck with it for =
+I think 3GPP messed this up...
 
-1.x.  The question is, can this be fixed somehow?
+> I understand from your comments that the aim of ofono is to handle
+> first the registration with CREG,
+> then the attach.
+> I see if it is possible to come with some clean scenarios for this in
+> case of multiple technologies,
+> but I fear not without this kind of code.
+> Note that it will be the same for LTE->NR as it is now for 2G/3G->LTE.
 
-If not, then we can consider starting oFono 2.x branch and dropping =
-
-RoamingAllowed from the D-Bus API.  This would also allow us to fix some =
-
-other long-standing issues with the D-Bus API as well.  However, this is =
-
-quite a major step with its own consequences...
+Lets fix the LTE cases first and then we worry about NR :)
 
 Regards,
 -Denis
 
---===============2526153731632971844==--
+--===============6672345978258789203==--
 
