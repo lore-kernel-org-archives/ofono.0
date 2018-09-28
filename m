@@ -1,98 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============6144255512514399613=="
+Content-Type: multipart/mixed; boundary="===============1410022576212137015=="
 MIME-Version: 1.0
-From: Anirudh Gargi <anirudh.gargi@intel.com>
-Subject: [PATCH] network: add support eutran sms only states
-Date: Fri, 28 Sep 2018 11:01:12 +0530
-Message-ID: <1538112672-18092-1-git-send-email-anirudh.gargi@intel.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH] atmodem/gprs: added autoattach handling
+Date: Fri, 28 Sep 2018 07:41:24 +0200
+Message-ID: <CAKSBH7GAHVsX1J6ESLcVS5_7D0B5VsCrxzpy7zCqJZ4WQsX7cw@mail.gmail.com>
+In-Reply-To: <8a93003d-85dd-0c00-1710-9db8c5bb8c81@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6144255512514399613==
+--===============1410022576212137015==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-EUTRAN SMS states mapped to registered and roaming respectively.
-For the new CREG status (9/10) of CREG, it can be map to a new Dbus
-CSFB property.
+On Thu, Sep 27, 2018 at 5:49 PM Denis Kenzior <denkenz@gmail.com> wrote:
+>
+> Hii Giacinto,
+>
+> On 09/23/2018 12:21 AM, Giacinto Cifelli wrote:
+> > In case of LTE modem, attaching manually is normally unneeded.
+> > Forcing a detach (in case of gprs-context activation failure) is
+> > actually a mistake, also because this will also trigger a technology
+> > reselection and a possible invalid state, especially for LTE-only
+> > modems.
+>
+> Okay, so it sounds like the core src/gprs.c logic is not taking
+> technology into account.   Should this be fixed there?
+>
+> >
+> > This simple patch adds a flag to skip the AT+CGATT=3Dx command.
+> > The flag is to be set by vendor-specific options.
+> >
+> > By default the behavior remains unchanged.
+> > ---
+> >   drivers/atmodem/gprs.c | 9 ++++++++-
+> >   1 file changed, 8 insertions(+), 1 deletion(-)
+> >
+> > diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+> > index 6e01738a..fc0d8aa3 100644
+> > --- a/drivers/atmodem/gprs.c
+> > +++ b/drivers/atmodem/gprs.c
+> > @@ -59,6 +59,7 @@ struct gprs_data {
+> >       gboolean has_cereg;
+> >       gboolean has_c5greg;
+> >       gboolean nb_inds;
+> > +     gboolean auto_attach; /* for LTE modems & co */
+> >       int attached;
+> >       int cgreg_status;
+> >       int cereg_status;
+> > @@ -88,9 +89,15 @@ static void at_gprs_set_attached(struct ofono_gprs *=
+gprs, int attached,
+> >                                       ofono_gprs_cb_t cb, void *data)
+> >   {
+> >       struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
+> > -     struct cb_data *cbd =3D cb_data_new(cb, data);
+> > +     struct cb_data *cbd;
+> >       char buf[64];
+> >
+> > +     if (gd->auto_attach) {
+> > +             CALLBACK_WITH_SUCCESS(cb, data);
+> > +             return;
+> > +     }
+> > +
+>
+> You can't really do that though.  It is fully possible for a modem to
+> roam off LTE onto 3G and not be attached...  So we still need tosend
+> +CGATT in this case.
 
-Added clarity in API doc for voice calling in case of lte.
----
- doc/network-api.txt |  4 +++-
- src/common.c        |  4 ++++
- src/common.h        | 19 +++++++++++++------
- 3 files changed, 20 insertions(+), 7 deletions(-)
+You can't really do that, either. It is possible that the module hops
+off LTE for a CSFB call of for a simple SMS, and the current logic
+will send immediately AT+CGATT=3D0 which will wreak havoc: the contexts
+that should be handed-over or suspended are released, and the module
+is never able to return to LTE because forced to detach.
+I didn't see the call drop in my tests, but it is not impossible that
+some modules would also do that as a consequence.
+I didn't test on the move or with a simulator, but I suppose also in
+case of HO LTE->3G we have the same scenario.
 
-diff --git a/doc/network-api.txt b/doc/network-api.txt
-index 83a2bc0..9c367c7 100644
---- a/doc/network-api.txt
-+++ b/doc/network-api.txt
-@@ -77,7 +77,9 @@ Properties	string Mode [readonly]
- =
+For Gemalto modules it is kind of mandatory to let the module handle
+the attach by itself if it supports LTE, and I believe also for other
+vendors, hence the autoattach flag.
 
- 		string Status [readonly]
- =
+Maybe the data-roaming logic should move from attach to context activation.
+Also the operators expect it to work this way nowadays, even for
+pre-LTE modules.
 
--			The current registration status of a modem.
-+			The current registration status of a modem. In case
-+			technology is 'lte', 'registered' and 'roaming' may
-+			not necessarily mean voice calling available.
- =
+>
+> > +     cbd =3D cb_data_new(cb, data);
+> >       snprintf(buf, sizeof(buf), "AT+CGATT=3D%i", attached ? 1 : 0);
+> >
+> >       if (g_at_chat_send(gd->chat, buf, none_prefix,
+> >
+>
+> Regards,
+> -Denis
 
- 			The possible values are:
- 				"unregistered"  Not registered to any network
-diff --git a/src/common.c b/src/common.c
-index 3ccaf7c..0db412a 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -669,6 +669,10 @@ const char *registration_status_to_string(int status)
- 		return "unknown";
- 	case NETWORK_REGISTRATION_STATUS_ROAMING:
- 		return "roaming";
-+	case NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN:
-+		return "registered";
-+	case NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN:
-+		return "roaming";
- 	}
- =
-
- 	return "";
-diff --git a/src/common.h b/src/common.h
-index 1b6b01d..f7bd3cb 100644
---- a/src/common.h
-+++ b/src/common.h
-@@ -37,12 +37,19 @@ enum access_technology {
- =
-
- /* 27.007 Section 7.2 <stat> */
- enum network_registration_status {
--	NETWORK_REGISTRATION_STATUS_NOT_REGISTERED =3D	0,
--	NETWORK_REGISTRATION_STATUS_REGISTERED =3D	1,
--	NETWORK_REGISTRATION_STATUS_SEARCHING =3D		2,
--	NETWORK_REGISTRATION_STATUS_DENIED =3D		3,
--	NETWORK_REGISTRATION_STATUS_UNKNOWN =3D		4,
--	NETWORK_REGISTRATION_STATUS_ROAMING =3D		5,
-+	NETWORK_REGISTRATION_STATUS_NOT_REGISTERED =3D		0,
-+	NETWORK_REGISTRATION_STATUS_REGISTERED =3D		1,
-+	NETWORK_REGISTRATION_STATUS_SEARCHING =3D			2,
-+	NETWORK_REGISTRATION_STATUS_DENIED =3D			3,
-+	NETWORK_REGISTRATION_STATUS_UNKNOWN =3D			4,
-+	NETWORK_REGISTRATION_STATUS_ROAMING =3D			5,
-+	NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN =3D	6,
-+	NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN =3D	7,
-+	/*
-+	 * Add along with new CSFB Dbus property.
-+	NETWORK_REGISTRATION_STATUS_REGISTERED_NO_CSFB_EUTRAN =3D	9,
-+	NETWORK_REGISTRATION_STATUS_ROAMING_NO_CSFB_EUTRAN =3D	10,
-+	*/
- };
- =
-
- /* 27.007 Section 7.3 <stat> */
--- =
-
-2.7.4
-
-
---===============6144255512514399613==--
+--===============1410022576212137015==--
 
