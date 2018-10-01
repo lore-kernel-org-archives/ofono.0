@@ -1,45 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6226072397157752874=="
+Content-Type: multipart/mixed; boundary="===============3001867589832654992=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sms: add support for 2 regional languages
-Date: Mon, 01 Oct 2018 14:57:07 -0500
-Message-ID: <b2afd78b-c031-2b2d-0a95-7b5454334d8a@gmail.com>
-In-Reply-To: <1538388176-12699-1-git-send-email-nandini.rebello@intel.com>
+Subject: Re: [PATCH 2/6] coex: Adding coex includes for coex atom
+Date: Mon, 01 Oct 2018 14:59:51 -0500
+Message-ID: <de6981f2-68ac-ba47-199c-fc34488104af@gmail.com>
+In-Reply-To: <1538390022-6183-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6226072397157752874==
+--===============3001867589832654992==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 10/01/2018 05:02 AM, Nandini Rebello wrote:
-> Adding support for bengali and gujrati for GSM 7 bit. More 8 to
-> follow soon. Adding script to set the sms alphabet.
+Hi Antara,
+
+On 10/01/2018 05:33 AM, Antara Borwankar wrote:
+> From: Antara <antara.borwankar@intel.com>
+> =
+
+> Added coex.h which describes the includes of coex atom
 > ---
->   doc/messagemanager-api.txt |   2 +
->   src/sms.c                  |   8 +
->   src/smsutil.c              |   4 +-
->   src/smsutil.h              |   2 +
->   src/util.c                 | 454 ++++++++++++++++++++++++++++++++++++++=
-++++++-
->   src/util.h                 |   2 +
->   test/set-sms-alphabet      |  25 +++
->   7 files changed, 493 insertions(+), 4 deletions(-)
->   create mode 100644 test/set-sms-alphabet
+>   include/coex.h | 119 ++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 119 insertions(+)
+>   create mode 100644 include/coex.h
 > =
 
 
-I went ahead and applied this patch after splitting it into 4 commits =
+Since this is going to be Intel modem specific, and will be implemented =
 
-per our 'Patch Submission' guidelines.  Please do this on your end in =
+inside the modem driver, I don't think we really need a driver =
 
-the future :)
+abstraction at all, right?  E.g. can't we just send AT commands directly =
 
-You're also now in AUTHORS.
+from the modem driver similar to how ril_intel.c's thermal stuff is done?
 
 Regards,
 -Denis
 
---===============6226072397157752874==--
+--===============3001867589832654992==--
 
