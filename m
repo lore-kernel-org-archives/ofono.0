@@ -1,50 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============2325862903824542618=="
+Content-Type: multipart/mixed; boundary="===============0181522302900875676=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH 1/6] coex: adding coex interface doc for  coex api
-Date: Mon, 01 Oct 2018 21:20:43 +0200
-Message-ID: <20181001192043.GA4218@amd>
-In-Reply-To: <1538389988-6093-1-git-send-email-antara.borwankar@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] network: add support eutran sms only states
+Date: Mon, 01 Oct 2018 14:42:52 -0500
+Message-ID: <e4f924bd-4ae3-2ebf-ab36-33ac389fcd24@gmail.com>
+In-Reply-To: <1538112672-18092-1-git-send-email-anirudh.gargi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2325862903824542618==
+--===============0181522302900875676==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Anirudh,
+
+On 09/28/2018 12:31 AM, Anirudh Gargi wrote:
+> EUTRAN SMS states mapped to registered and roaming respectively.
+> For the new CREG status (9/10) of CREG, it can be map to a new Dbus
+> CSFB property.
+> =
+
+> Added clarity in API doc for voice calling in case of lte.
+> ---
+>   doc/network-api.txt |  4 +++-
+>   src/common.c        |  4 ++++
+>   src/common.h        | 19 +++++++++++++------
+>   3 files changed, 20 insertions(+), 7 deletions(-)
+> =
 
 
-> +*header for params
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +string
-> +	uint16 MobileNetworkCode [readonly, optional]
-> +		Contains the MNC of the cell.
+I split this patch into two and...
 
-> +string
-> +	uint16 MobileCountryCode [readonly, optional]
-> +		Contains the MCC of the cell.
+> diff --git a/doc/network-api.txt b/doc/network-api.txt
+> index 83a2bc0..9c367c7 100644
+> --- a/doc/network-api.txt
+> +++ b/doc/network-api.txt
+> @@ -77,7 +77,9 @@ Properties	string Mode [readonly]
+>   =
 
-Confused. What is *header? Is MobileNetworkCode uint16 or string?
-									Pavel
--- =
+>   		string Status [readonly]
+>   =
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+> -			The current registration status of a modem.
+> +			The current registration status of a modem. In case
+> +			technology is 'lte', 'registered' and 'roaming' may
+> +			not necessarily mean voice calling available.
+>   =
 
---===============2325862903824542618==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
+>   			The possible values are:
+>   				"unregistered"  Not registered to any network
+> diff --git a/src/common.c b/src/common.c
+> index 3ccaf7c..0db412a 100644
+> --- a/src/common.c
+> +++ b/src/common.c
+> @@ -669,6 +669,10 @@ const char *registration_status_to_string(int status)
+>   		return "unknown";
+>   	case NETWORK_REGISTRATION_STATUS_ROAMING:
+>   		return "roaming";
+> +	case NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN:
+> +		return "registered";
+> +	case NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN:
+> +		return "roaming";
+>   	}
+>   =
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFsdXljNHNBQ2drUU1PZndhcFhiK3ZKeGdBQ2doMjJuZjhQOUdhWlFINWs3ZTNJbFZLT0UK
-RndZQW5BaVFHbVZFMk1wS3BUbW9ma3BiT2MrRDh1dmcKPXhQMUkKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
+>   	return "";
+> diff --git a/src/common.h b/src/common.h
+> index 1b6b01d..f7bd3cb 100644
+> --- a/src/common.h
+> +++ b/src/common.h
+> @@ -37,12 +37,19 @@ enum access_technology {
+>   =
 
---===============2325862903824542618==--
+>   /* 27.007 Section 7.2 <stat> */
+>   enum network_registration_status {
+> -	NETWORK_REGISTRATION_STATUS_NOT_REGISTERED =3D	0,
+> -	NETWORK_REGISTRATION_STATUS_REGISTERED =3D	1,
+> -	NETWORK_REGISTRATION_STATUS_SEARCHING =3D		2,
+> -	NETWORK_REGISTRATION_STATUS_DENIED =3D		3,
+> -	NETWORK_REGISTRATION_STATUS_UNKNOWN =3D		4,
+> -	NETWORK_REGISTRATION_STATUS_ROAMING =3D		5,
+> +	NETWORK_REGISTRATION_STATUS_NOT_REGISTERED =3D		0,
+> +	NETWORK_REGISTRATION_STATUS_REGISTERED =3D		1,
+> +	NETWORK_REGISTRATION_STATUS_SEARCHING =3D			2,
+> +	NETWORK_REGISTRATION_STATUS_DENIED =3D			3,
+> +	NETWORK_REGISTRATION_STATUS_UNKNOWN =3D			4,
+> +	NETWORK_REGISTRATION_STATUS_ROAMING =3D			5,
+> +	NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN =3D	6,
+> +	NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN =3D	7,
+> +	/*
+> +	 * Add along with new CSFB Dbus property.
+> +	NETWORK_REGISTRATION_STATUS_REGISTERED_NO_CSFB_EUTRAN =3D	9,
+> +	NETWORK_REGISTRATION_STATUS_ROAMING_NO_CSFB_EUTRAN =3D	10,
+> +	*/
+
+Took out this commented out block.
+
+>   };
+>   =
+
+>   /* 27.007 Section 7.3 <stat> */
+> =
+
+
+Patches have been applied, thanks.
+
+Regards,
+-Denis
+
+--===============0181522302900875676==--
 
