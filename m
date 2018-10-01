@@ -1,41 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2197237012747156909=="
+Content-Type: multipart/mixed; boundary="===============4136734487114879806=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 4/6] coex: added agent for coex atom to provide bt and wifi
- data
-Date: Mon, 01 Oct 2018 16:04:35 +0530
-Message-ID: <1538390075-6342-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 5/6] coex: Added xmm7modem driver for coex
+Date: Mon, 01 Oct 2018 16:05:12 +0530
+Message-ID: <1538390112-6440-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2197237012747156909==
+--===============4136734487114879806==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Antara <antara.borwankar@intel.com>
 
-Adding coexagent which implements coex agent interface to
-provide bt and wifi data
+adding coex driver for xmm7modem which uses intel  proprietory
+AT commands. To enable/disable coex in modem and get bt and wifi
+notifications. The driver will also be able to get the PLMN history.
 ---
- src/coexagent.c | 384 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ drivers/xmm7modem/coex.c | 641 +++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/coexagent.h |  77 ++++++++++++
- 2 files changed, 461 insertions(+)
- create mode 100644 src/coexagent.c
- create mode 100644 src/coexagent.h
+ 1 file changed, 641 insertions(+)
+ create mode 100644 drivers/xmm7modem/coex.c
 
-diff --git a/src/coexagent.c b/src/coexagent.c
+diff --git a/drivers/xmm7modem/coex.c b/drivers/xmm7modem/coex.c
 new file mode 100644
-index 0000000..7bdbef5
+index 0000000..fa0b0c4
 --- /dev/null
-+++ b/src/coexagent.c
-@@ -0,0 +1,384 @@
++++ b/drivers/xmm7modem/coex.c
+@@ -0,0 +1,641 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2008-2016  Intel Corporation. All rights reserved.
 + *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
@@ -58,454 +56,626 @@ index 0000000..7bdbef5
 +#endif
 +
 +#define _GNU_SOURCE
-+#include <stdint.h>
++#include <stdlib.h>
++#include <stdio.h>
 +#include <string.h>
 +#include <errno.h>
 +
 +#include <glib.h>
-+#include <gdbus.h>
 +
-+#include "ofono.h"
++#include <ofono/modem.h>
++#include <ofono/log.h>
++#include <ofono/coex.h>
 +
-+#include "common.h"
-+#include "coexagent.h"
++#include "gatchat.h"
++#include "gatresult.h"
 +
-+#define COEX_MANAGER_INTERFACE "org.coex.Manager"
++#include "xmm7modem.h"
 +
-+struct coex_agent {
-+	char *path;
-+	char *bus;
-+	guint disconnect_watch;
-+	ofono_bool_t remove_on_terminate;
-+	ofono_destroy_func removed_cb;
-+	void *removed_data;
-+	DBusMessage *msg;
-+	DBusPendingCall *call;
-+	void *user_data;
-+	int min_length;
-+	int max_length;
-+	ofono_bool_t hidden_entry;
-+	ofono_destroy_func user_destroy;
++#define BAND_LEN 20
++static const char *xnvmplmn_prefix[] =3D { "+XNVMPLMN:", NULL };
++
++struct coex_data {
++	GAtChat *chat;
++	ofono_bool_t wlan_active;
++	enum ofono_wlan_bw wlan_bw;
++	ofono_bool_t bt_active;
++	ofono_bool_t wlan_active_pending;
++	enum ofono_wlan_bw wlan_bw_pending;
++	ofono_bool_t bt_active_pending;
 +};
 +
-+#define CALLBACK_END()						\
-+done:								\
-+	if (result =3D=3D COEX_AGENT_RESULT_TERMINATE &&		\
-+			agent->remove_on_terminate)		\
-+		remove_agent =3D TRUE;				\
-+	else							\
-+		remove_agent =3D FALSE;				\
-+								\
-+error:								\
-+	coex_agent_request_end(agent);				\
-+	dbus_message_unref(reply);				\
-+								\
-+	if (remove_agent)					\
-+		coex_agent_free(agent)				\
++enum xmm_net_band_lte {
++	NET_BAND_LTE_INVALID =3D 0,
++	NET_BAND_LTE_1 =3D 101,
++	NET_BAND_LTE_2,
++	NET_BAND_LTE_3,
++	NET_BAND_LTE_4,
++	NET_BAND_LTE_5,
++	NET_BAND_LTE_6,
++	NET_BAND_LTE_7,
++	NET_BAND_LTE_8,
++	NET_BAND_LTE_9,
++	NET_BAND_LTE_10,
++	NET_BAND_LTE_11,
++	NET_BAND_LTE_12,
++	NET_BAND_LTE_13,
++	NET_BAND_LTE_14,
++	NET_BAND_LTE_15,
++	NET_BAND_LTE_16,
++	NET_BAND_LTE_17,
++	NET_BAND_LTE_18,
++	NET_BAND_LTE_19,
++	NET_BAND_LTE_20,
++	NET_BAND_LTE_21,
++	NET_BAND_LTE_22,
++	NET_BAND_LTE_23,
++	NET_BAND_LTE_24,
++	NET_BAND_LTE_25,
++	NET_BAND_LTE_26,
++	NET_BAND_LTE_27,
++	NET_BAND_LTE_28,
++	NET_BAND_LTE_29,
++	NET_BAND_LTE_30,
++	NET_BAND_LTE_31,
++	NET_BAND_LTE_32,
++	NET_BAND_LTE_33,
++	NET_BAND_LTE_34,
++	NET_BAND_LTE_35,
++	NET_BAND_LTE_36,
++	NET_BAND_LTE_37,
++	NET_BAND_LTE_38,
++	NET_BAND_LTE_39,
++	NET_BAND_LTE_40,
++	NET_BAND_LTE_41,
++	NET_BAND_LTE_42,
++	NET_BAND_LTE_43 =3D 143
++};
 +
-+ofono_bool_t coex_agent_matches(struct coex_agent *agent,
-+			const char *path, const char *sender)
++static const char *none_prefix[] =3D { NULL };
++
++static void xmm_set_bt_active_cb(gboolean ok, GAtResult *result,
++					gpointer user_data);
++
++static void xmm_set_wlan_active_cb(gboolean ok, GAtResult *result,
++					gpointer user_data);
++
++static void xmm_coex_l_notify(GAtResult *result, gpointer user_data)
 +{
-+	return !strcmp(agent->path, path) && !strcmp(agent->bus, sender);
-+}
++	struct ofono_coex *coex =3D user_data;
++	GAtResultIter iter;
++	int lte_active;
 +
-+static int check_error(struct coex_agent *agent, DBusMessage *reply,
-+		enum coex_agent_result *out_result)
-+{
-+	DBusError err;
-+	int result =3D 0;
++	g_at_result_iter_init(&iter, result);
 +
-+	dbus_error_init(&err);
-+
-+	if (dbus_set_error_from_message(&err, reply) =3D=3D FALSE) {
-+		*out_result =3D COEX_AGENT_RESULT_OK;
-+		return 0;
-+	}
-+
-+	ofono_debug("CoexAgent %s replied with error %s, %s",
-+			agent->path, err.name, err.message);
-+
-+	result =3D -EINVAL;
-+
-+	dbus_error_free(&err);
-+	return result;
-+}
-+
-+void coex_agent_set_removed_notify(struct coex_agent *agent,
-+					ofono_destroy_func destroy,
-+					void *user_data)
-+{
-+	agent->removed_cb =3D destroy;
-+	agent->removed_data =3D user_data;
-+}
-+
-+static void coex_agent_send_noreply(struct coex_agent *agent, const char *=
-method)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	DBusMessage *message;
-+
-+	message =3D dbus_message_new_method_call(agent->bus, agent->path,
-+					OFONO_COEX_INTERFACE,
-+					method);
-+	if (message =3D=3D NULL)
++	if (!g_at_result_iter_next(&iter, "+XNRTCWSL:"))
 +		return;
 +
-+	dbus_message_set_no_reply(message, TRUE);
++	if (!g_at_result_iter_next_number(&iter, &lte_active))
++		return;
 +
-+	g_dbus_send_message(conn, message);
++	DBG("lte_active:%d", lte_active);
++
++	ofono_lte_coex_status_notify(coex, lte_active);
 +}
 +
-+void coex_agent_send_release(struct coex_agent *agent)
++void xmm_get_band_string(int lte_band, char* band)
 +{
-+	coex_agent_send_noreply(agent, "Release");
++	switch (lte_band) {
++		case NET_BAND_LTE_1:
++		strncpy(band,"BAND_LTE_1",BAND_LEN);
++		break;
++		case NET_BAND_LTE_2:
++		strncpy(band,"BAND_LTE_2",BAND_LEN);
++		break;
++		case NET_BAND_LTE_3:
++		strncpy(band,"BAND_LTE_3",BAND_LEN);
++		break;
++		case NET_BAND_LTE_4:
++		strncpy(band,"BAND_LTE_4",BAND_LEN);
++		break;
++		case NET_BAND_LTE_5:
++		strncpy(band,"BAND_LTE_5",BAND_LEN);
++		break;
++		case NET_BAND_LTE_6:
++		strncpy(band,"BAND_LTE_6",BAND_LEN);
++		break;
++		case NET_BAND_LTE_7:
++		strncpy(band,"BAND_LTE_7",BAND_LEN);
++		break;
++		case NET_BAND_LTE_8:
++		strncpy(band,"BAND_LTE_8",BAND_LEN);
++		break;
++		case NET_BAND_LTE_9:
++		strncpy(band,"BAND_LTE_9",BAND_LEN);
++		break;
++		case NET_BAND_LTE_10:
++		strncpy(band,"BAND_LTE_10",BAND_LEN);
++		break;
++		case NET_BAND_LTE_11:
++		strncpy(band,"BAND_LTE_11",BAND_LEN);
++		break;
++		case NET_BAND_LTE_12:
++		strncpy(band,"BAND_LTE_12",BAND_LEN);
++		break;
++		case NET_BAND_LTE_13:
++		strncpy(band,"BAND_LTE_13",BAND_LEN);
++		break;
++		case NET_BAND_LTE_14:
++		strncpy(band,"BAND_LTE_14",BAND_LEN);
++		break;
++		case NET_BAND_LTE_15:
++		strncpy(band,"BAND_LTE_15",BAND_LEN);
++		break;
++		case NET_BAND_LTE_16:
++		strncpy(band,"BAND_LTE_16",BAND_LEN);
++		break;
++		case NET_BAND_LTE_17:
++		strncpy(band,"BAND_LTE_17",BAND_LEN);
++		break;
++		case NET_BAND_LTE_18:
++		strncpy(band,"BAND_LTE_18",BAND_LEN);
++		break;
++		case NET_BAND_LTE_19:
++		strncpy(band,"BAND_LTE_19",BAND_LEN);
++		break;
++		case NET_BAND_LTE_20:
++		strncpy(band,"BAND_LTE_20",BAND_LEN);
++		break;
++		case NET_BAND_LTE_21:
++		strncpy(band,"BAND_LTE_21",BAND_LEN);
++		break;
++		case NET_BAND_LTE_22:
++		strncpy(band,"BAND_LTE_22",BAND_LEN);
++		break;
++		case NET_BAND_LTE_23:
++		strncpy(band,"BAND_LTE_23",BAND_LEN);
++		break;
++		case NET_BAND_LTE_24:
++		strncpy(band,"BAND_LTE_24",BAND_LEN);
++		break;
++		case NET_BAND_LTE_25:
++		strncpy(band,"BAND_LTE_25",BAND_LEN);
++		break;
++		case NET_BAND_LTE_26:
++		strncpy(band,"BAND_LTE_26",BAND_LEN);
++		break;
++		case NET_BAND_LTE_27:
++		strncpy(band,"BAND_LTE_27",BAND_LEN);
++		break;
++		case NET_BAND_LTE_28:
++		strncpy(band,"BAND_LTE_28",BAND_LEN);
++		break;
++		case NET_BAND_LTE_33:
++		strncpy(band,"BAND_LTE_33",BAND_LEN);
++		break;
++		case NET_BAND_LTE_34:
++		strncpy(band,"BAND_LTE_34",BAND_LEN);
++		break;
++		case NET_BAND_LTE_35:
++		strncpy(band,"BAND_LTE_35",BAND_LEN);
++		break;
++		case NET_BAND_LTE_36:
++		strncpy(band,"BAND_LTE_36",BAND_LEN);
++		break;
++		case NET_BAND_LTE_37:
++		strncpy(band,"BAND_LTE_37",BAND_LEN);
++		break;
++		case NET_BAND_LTE_38:
++		strncpy(band,"BAND_LTE_38",BAND_LEN);
++		break;
++		case NET_BAND_LTE_39:
++		strncpy(band,"BAND_LTE_39",BAND_LEN);
++		break;
++		case NET_BAND_LTE_40:
++		strncpy(band,"BAND_LTE_40",BAND_LEN);
++		break;
++		case NET_BAND_LTE_41:
++		strncpy(band,"BAND_LTE_41",BAND_LEN);
++		break;
++		case NET_BAND_LTE_42:
++		strncpy(band,"BAND_LTE_42",BAND_LEN);
++		break;
++		case NET_BAND_LTE_43:
++		strncpy(band,"BAND_LTE_43",BAND_LEN);
++		break;
++		default:
++		strncpy(band,"INVALID",BAND_LEN);
++		break;
++	}
 +}
 +
-+static void coex_agent_request_end(struct coex_agent *agent)
++static void xmm_lte_band_notify(GAtResult *result, gpointer user_data)
 +{
-+	if (agent->msg) {
-+		dbus_message_unref(agent->msg);
-+		agent->msg =3D NULL;
-+	}
++	struct ofono_coex *coex =3D user_data;
++	GAtResultIter iter;
++	int lte_band;
++	char band[BAND_LEN];
 +
-+	if (agent->call) {
-+		dbus_pending_call_unref(agent->call);
-+		agent->call =3D NULL;
-+	}
++	g_at_result_iter_init(&iter, result);
 +
-+	if (agent->user_destroy)
-+		agent->user_destroy(agent->user_data);
++	if (!g_at_result_iter_next(&iter, "+XCCINFO:"))
++		return;
 +
-+	agent->user_destroy =3D NULL;
-+	agent->user_data =3D NULL;
++	g_at_result_iter_skip_next(&iter);
++	g_at_result_iter_skip_next(&iter);
++	g_at_result_iter_skip_next(&iter);
++	g_at_result_iter_skip_next(&iter);
++
++	if (!g_at_result_iter_next_number(&iter, &lte_band))
++		return;
++
++	xmm_get_band_string(lte_band, band);
++
++	DBG("lte_band:%s", band);
++	ofono_coex_ril_lte_band_notify(coex, band);
 +}
 +
-+void coex_agent_free(struct coex_agent *agent)
++static void xmm_coex_w_notify(GAtResult *result, gpointer user_data)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	if (agent->disconnect_watch) {
-+		coex_agent_send_release(agent);
-+
-+		g_dbus_remove_watch(conn, agent->disconnect_watch);
-+		agent->disconnect_watch =3D 0;
-+	}
-+
-+	if (agent->removed_cb)
-+		agent->removed_cb(agent->removed_data);
-+
-+	g_free(agent->path);
-+	g_free(agent->bus);
-+	g_free(agent);
-+}
-+
-+static void coex_agent_disconnect_cb(DBusConnection *conn, void *user_data)
-+{
-+	struct coex_agent *agent =3D user_data;
-+
-+	ofono_debug("Agent exited without calling Unregister");
-+
-+	agent->disconnect_watch =3D 0;
-+
-+	coex_agent_free(agent);
-+}
-+
-+struct coex_agent* coex_agent_new(const char *path, const char *sender,
-+				ofono_bool_t remove_on_terminate)
-+{
-+	struct coex_agent* agent =3D g_try_new0(struct coex_agent, 1);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	DBG("");
-+	if (agent =3D=3D NULL)
-+		return NULL;
-+
-+	agent->path =3D g_strdup(path);
-+	agent->bus =3D g_strdup(sender);
-+
-+	agent->remove_on_terminate =3D remove_on_terminate;
-+
-+	agent->disconnect_watch =3D g_dbus_add_disconnect_watch(conn, sender,
-+							coex_agent_disconnect_cb,
-+							agent, NULL);
-+
-+	return agent;
-+}
-+
-+static void coex_agent_coex_wlan_notify_cb(DBusPendingCall *call, void *da=
-ta)
-+{
-+	struct coex_agent *agent =3D data;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	enum coex_agent_result result;
-+	gboolean remove_agent;
-+
-+	DBG("");
-+	if (check_error(agent, reply, &result) =3D=3D -EINVAL) {
-+		remove_agent =3D TRUE;
-+		goto error;
-+	}
-+
-+	if (result !=3D COEX_AGENT_RESULT_OK) {
-+		goto done;
-+	}
-+
-+	if (dbus_message_get_args(reply, NULL, DBUS_TYPE_INVALID) =3D=3D FALSE) {
-+		ofono_error("Can't parse the reply to DisplayText()");
-+		remove_agent =3D TRUE;
-+		goto error;
-+	}
-+
-+	CALLBACK_END();
-+}
-+
-+int coex_agent_coex_wlan_notify(struct coex_agent *agent,
-+			const struct wl_coex_info wlan_info,
-+			ofono_bool_t urgent,
-+			void *user_data, ofono_destroy_func destroy)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	DBusMessageIter wl_args, wl_dict, wl_array;
-+	const dbus_int32_t *pwl_array =3D wlan_info.safe_vector;
-+	dbus_int32_t value;
-+
-+	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
-+						OFONO_COEX_AGENT_INTERFACE,
-+						"ReceiveWiFiNotification");
-+	if (agent->msg =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	dbus_message_iter_init_append(agent->msg, &wl_args);
-+
-+	dbus_message_iter_open_container(&wl_args, DBUS_TYPE_ARRAY,
-+				DBUS_TYPE_INT32_AS_STRING, &wl_array);
-+	dbus_message_iter_append_fixed_array(&wl_array, DBUS_TYPE_INT32,
-+					&pwl_array, MAX_WL_SAFE_VECTOR);
-+
-+	dbus_message_iter_close_container(&wl_args, &wl_array);
-+
-+	dbus_message_iter_open_container(&wl_args, DBUS_TYPE_ARRAY,
-+							"{sv}", &wl_dict);
-+
-+	value =3D wlan_info.safe_tx_min;
-+	ofono_dbus_dict_append(&wl_dict, "SafeTxMin",
-+			 DBUS_TYPE_UINT32, &value);
-+	value =3D wlan_info.safe_tx_max;
-+	ofono_dbus_dict_append(&wl_dict, "SafeTxMax",
-+			 DBUS_TYPE_UINT32, &value);
-+	value =3D wlan_info.safe_rx_min;
-+	ofono_dbus_dict_append(&wl_dict, "SafeRxMin",
-+			 DBUS_TYPE_UINT32, &value);
-+	value =3D wlan_info.safe_rx_max;
-+	ofono_dbus_dict_append(&wl_dict, "SafeRxMax",
-+			 DBUS_TYPE_UINT32, &value);
-+	value =3D wlan_info.num_safe_vector;
-+	ofono_dbus_dict_append(&wl_dict, "NumSafeVector",
-+			 DBUS_TYPE_UINT32, &value);
-+
-+	dbus_message_iter_close_container(&wl_args, &wl_dict);
-+
-+	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-+						-1) =3D=3D FALSE ||
-+						agent->call =3D=3D NULL)
-+		return -EIO;
-+
-+	agent->user_data =3D user_data;
-+	agent->user_destroy =3D destroy;
-+
-+	dbus_pending_call_set_notify(agent->call, coex_agent_coex_wlan_notify_cb,
-+					agent, NULL);
-+
-+	return 0;
-+}
-+
-+static void coex_agent_coex_bt_notify_cb(DBusPendingCall *call, void *data)
-+{
-+	struct coex_agent *agent =3D data;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	enum coex_agent_result result;
-+	gboolean remove_agent;
-+
-+	DBG("");
-+	if (check_error(agent, reply,&result) =3D=3D -EINVAL) {
-+		remove_agent =3D TRUE;
-+		goto error;
-+	}
-+
-+	if (result !=3D COEX_AGENT_RESULT_OK) {
-+		goto done;
-+	}
-+
-+	if (dbus_message_get_args(reply, NULL, DBUS_TYPE_INVALID) =3D=3D FALSE) {
-+		ofono_error("Can't parse the reply to DisplayText()");
-+		remove_agent =3D TRUE;
-+		goto error;
-+	}
-+
-+	CALLBACK_END();
-+}
-+
-+int coex_agent_coex_bt_notify(struct coex_agent *agent,
-+			const struct bt_coex_info bt_info,
-+			ofono_bool_t urgent,
-+			void *user_data, ofono_destroy_func destroy)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	DBusMessageIter bt_args, bt_dict, bt_array;
-+	const dbus_int32_t *pbt_array =3D bt_info.safe_vector;
-+	int len =3D MAX_BT_SAFE_VECTOR;
-+	dbus_int32_t value;
-+
-+	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
-+						OFONO_COEX_AGENT_INTERFACE,
-+						"ReceiveBTNotification");
-+
-+	if (agent->msg =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	pbt_array =3D bt_info.safe_vector;
-+
-+	for(len =3D 0 ; len < MAX_BT_SAFE_VECTOR; len++)
-+		DBG("pbt_array[%d] =3D %d", len, pbt_array[len]);
-+
-+	dbus_message_iter_init_append(agent->msg, &bt_args);
-+
-+	dbus_message_iter_open_container(&bt_args, DBUS_TYPE_ARRAY,
-+					DBUS_TYPE_INT32_AS_STRING, &bt_array);
-+
-+	dbus_message_iter_append_fixed_array(&bt_array, DBUS_TYPE_INT32,
-+					&pbt_array, len);
-+
-+	dbus_message_iter_close_container(&bt_args, &bt_array);
-+
-+	dbus_message_iter_open_container(&bt_args,
-+					DBUS_TYPE_ARRAY, "{sv}", &bt_dict);
-+
-+	value =3D bt_info.safe_tx_min;
-+	DBG("value =3D %d", value);
-+	ofono_dbus_dict_append(&bt_dict, "SafeTxMin",
-+			DBUS_TYPE_UINT32, &value);
-+	value =3D bt_info.safe_tx_max;
-+	DBG("value =3D %d", value);
-+	ofono_dbus_dict_append(&bt_dict, "SafeTxMax",
-+			DBUS_TYPE_UINT32, &value);
-+	value =3D bt_info.safe_rx_min;
-+	DBG("value =3D %d", value);
-+	ofono_dbus_dict_append(&bt_dict, "SafeRxMin",
-+			DBUS_TYPE_UINT32, &value);
-+	value =3D bt_info.safe_rx_max;
-+	DBG("value =3D %d", value);
-+	ofono_dbus_dict_append(&bt_dict, "SafeRxMax",
-+			DBUS_TYPE_UINT32, &value);
-+	value =3D bt_info.num_safe_vector;
-+	DBG("value =3D %d", value);
-+	ofono_dbus_dict_append(&bt_dict, "NumSafeVector",
-+			DBUS_TYPE_UINT32, &value);
-+
-+	dbus_message_iter_close_container(&bt_args, &bt_dict);
-+
-+	if ((dbus_connection_send_with_reply(conn, agent->msg,
-+					&agent->call, -1) =3D=3D FALSE) ||
-+					agent->call =3D=3D NULL) {
-+		return -EIO;
-+	}
-+
-+	agent->user_data =3D user_data;
-+	agent->user_destroy =3D destroy;
-+
-+	dbus_pending_call_set_notify(agent->call, coex_agent_coex_bt_notify_cb,
-+				agent, NULL);
-+
-+	return 0;
-+}
-diff --git a/src/coexagent.h b/src/coexagent.h
-new file mode 100644
-index 0000000..2ba80ba
---- /dev/null
-+++ b/src/coexagent.h
-@@ -0,0 +1,77 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+#ifndef COEXAGENT_H
-+#define COEXAGENT_H
-+struct coex_agent;
-+
-+#define MAX_BT_SAFE_VECTOR 15
-+#define MAX_WL_SAFE_VECTOR 13
-+
-+enum coex_agent_result {
-+	COEX_AGENT_RESULT_OK,
-+	COEX_AGENT_RESULT_BACK,
-+	COEX_AGENT_RESULT_TERMINATE,
-+	COEX_AGENT_RESULT_TIMEOUT,
-+	COEX_AGENT_RESULT_BUSY,
-+};
-+
-+struct bt_coex_info {
++	struct ofono_coex *coex =3D user_data;
++	GAtResultIter iter;
 +	int safe_tx_min;
 +	int safe_tx_max;
 +	int safe_rx_min;
 +	int safe_rx_max;
 +	int safe_vector[MAX_BT_SAFE_VECTOR];
 +	int num_safe_vector;
-+};
++	int count;
 +
-+struct wl_coex_info {
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+XNRTCWSW:"))
++		return;
++
++	g_at_result_iter_next_number(&iter, &safe_rx_min);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_next_number(&iter, &safe_rx_max);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_next_number(&iter, &safe_tx_min);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_next_number(&iter, &safe_tx_max);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_next_number(&iter, &num_safe_vector);
++
++	for(count =3D 0; count < num_safe_vector; count++) {
++		g_at_result_iter_next_number(&iter, &safe_vector[count]);
++	}
++
++	DBG("WLAN notification");
++
++	ofono_wlan_coex_status_notify(coex, safe_tx_min, safe_tx_max,
++		safe_rx_min, safe_rx_max,num_safe_vector,safe_vector);
++}
++
++
++static void xmm_coex_b_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_coex *coex =3D user_data;
++	GAtResultIter iter;
 +	int safe_tx_min;
 +	int safe_tx_max;
 +	int safe_rx_min;
 +	int safe_rx_max;
 +	int safe_vector[MAX_BT_SAFE_VECTOR];
 +	int num_safe_vector;
++	int count;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+XNRTCWSB:"))
++		return;
++
++	g_at_result_iter_next_number(&iter, &safe_rx_min);
++
++	g_at_result_iter_next_number(&iter, &safe_rx_max);
++
++	g_at_result_iter_next_number(&iter, &safe_tx_min);
++
++	g_at_result_iter_next_number(&iter, &safe_tx_max);
++
++	g_at_result_iter_next_number(&iter, &num_safe_vector);
++
++	for(count =3D 0; count < num_safe_vector; count++) {
++		g_at_result_iter_next_number(&iter, &safe_vector[count]);
++	}
++
++	DBG("BT notification");
++
++	ofono_wlan_coex_status_notify(coex, safe_tx_min, safe_tx_max,
++		safe_rx_min, safe_rx_max,num_safe_vector,safe_vector);
++}
++
++static void xmm_coex_enable_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_coex_enable_cb_t cd =3D cbd->cb;
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		struct ofono_error error;
++		decode_at_error(&error, g_at_result_final_response(result));
++		cd(&error, cbd->data);
++		return;
++	}
++
++	CALLBACK_WITH_SUCCESS(cd, cbd->data);
++}
++
++
++
++static void xmm_coex_enable(struct ofono_coex *coex,
++			ofono_coex_enable_cb_t cb, void *data)
++{
++	struct coex_data *cd =3D ofono_coex_get_data(coex);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	DBG("");
++
++	if(g_at_chat_send(cd->chat, "AT+XNRTCWS=3D7", none_prefix,
++				xmm_coex_enable_cb, cbd, NULL) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static int xmm_coex_probe(struct ofono_coex *coex, unsigned int vendor,
++				void *user)
++{
++	GAtChat *chat =3D user;
++	struct coex_data *cd;
++
++	DBG("at coex probe");
++
++	cd =3D g_try_new0(struct coex_data, 1);
++	if (!cd)
++		return -ENOMEM;
++
++	cd->chat =3D g_at_chat_clone(chat);
++
++	ofono_coex_set_data(coex, cd);
++
++	g_at_chat_register(cd->chat, "+XNRTCWSL:", xmm_coex_l_notify,
++					FALSE, coex, NULL);
++	g_at_chat_register(cd->chat, "+XNRTCWSW:", xmm_coex_w_notify,
++					FALSE, coex, NULL);
++	g_at_chat_register(cd->chat, "+XNRTCWSB:", xmm_coex_b_notify,
++					FALSE, coex, NULL);
++	g_at_chat_register(cd->chat, "+XCCINFO:", xmm_lte_band_notify,
++					FALSE, coex, NULL);
++
++	g_at_chat_send(cd->chat, "AT+XCCINFO=3D1", none_prefix,
++				NULL, NULL, NULL);
++	g_at_chat_send(cd->chat, "AT+XNRTAPP=3D10,100", none_prefix,
++				NULL, NULL, NULL);
++
++	ofono_coex_register(coex);
++
++	return 0;
++}
++
++static void xmm_coex_remove_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_coex_enable_cb_t cd =3D cbd->cb;
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		struct ofono_error error;
++		decode_at_error(&error, g_at_result_final_response(result));
++		cd(&error, cbd->data);
++		return;
++	}
++
++	CALLBACK_WITH_SUCCESS(cd, cbd->data);
++}
++
++
++static void xmm_coex_remove(struct ofono_coex *coex,
++			ofono_coex_remove_cb_t cb, void *data)
++{
++	struct coex_data *cd =3D ofono_coex_get_data(coex);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	DBG("");
++
++	if(g_at_chat_send(cd->chat, "AT+XNRTCWS=3D0", none_prefix,
++				xmm_coex_remove_cb, cbd, NULL) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static void xmm_set_bt_active_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_coex_enable_cb_t cd =3D cbd->cb;
++	struct coex_data* coex =3D ofono_coex_get_data(cbd->data);
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		struct ofono_error error;
++		decode_at_error(&error, g_at_result_final_response(result));
++		cd(&error, cbd->data);
++		return;
++	}
++
++	coex->bt_active =3D coex->bt_active_pending;
++	CALLBACK_WITH_SUCCESS(cd, cbd->data);
++}
++
++
++
++static void xmm_set_bt_active(struct ofono_coex *coex, ofono_bool_t bt_act=
+ive,
++			ofono_coex_bt_active_set_cb_t cb, void *data)
++{
++	struct coex_data *cd =3D ofono_coex_get_data(coex);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[64];
++
++	DBG("");
++	sprintf(buf, "AT+XNRTCWS=3D65535,%u,%u,%u", (int)cd->wlan_active,
++				(int)cd->wlan_bw,bt_active);
++	if(g_at_chat_send(cd->chat, buf, none_prefix,
++				xmm_set_bt_active_cb, cbd, NULL) > 0) {
++	cd->bt_active_pending =3D bt_active;
++		return;
++	}
++
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++
++static void xmm_set_wlan_active_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_coex_enable_cb_t cd =3D cbd->cb;
++	struct coex_data* coex =3D ofono_coex_get_data(cbd->data);
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		struct ofono_error error;
++		decode_at_error(&error, g_at_result_final_response(result));
++		cd(&error, cbd->data);
++		return;
++	}
++
++	coex->wlan_active =3D coex->wlan_active_pending;
++	coex->wlan_bw =3D coex->wlan_bw_pending;
++	CALLBACK_WITH_SUCCESS(cd, cbd->data);
++}
++
++static void xmm_get_plmn_history_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_coex_get_plmn_history_cb_t cd =3D cbd->cb;
++	struct Plmnhist *list =3D NULL;
++	GAtResultIter iter;
++	int list_size =3D 0;
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		CALLBACK_WITH_FAILURE(cd, 0, NULL, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, "+XNVMPLMN:")) {
++		if (!list_size)
++			list =3D g_new0(struct Plmnhist, ++list_size);
++		else
++			list =3D g_renew(struct Plmnhist, list, ++list_size);
++
++		g_at_result_iter_next_number(&iter, (int*)&list[list_size - 1].mcc);
++		g_at_result_iter_next_number(&iter, (int*)&list[list_size - 1].mnc);
++		g_at_result_iter_next_number(&iter, (int*)&list[list_size - 1].fdd);
++		g_at_result_iter_next_number(&iter, (int*)&list[list_size - 1].tdd);
++		g_at_result_iter_next_number(&iter, (int*)&list[list_size - 1].bw);
++
++		DBG("list_size =3D %d", list_size);
++	}
++
++	CALLBACK_WITH_SUCCESS(cd, list_size, list, cbd->data);
++	if(list)
++		g_free(list);
++}
++
++static void xmm_get_plmn_history(struct ofono_coex *coex,
++			ofono_coex_get_plmn_history_cb_t cb, void *data)
++{
++	struct coex_data *cd =3D ofono_coex_get_data(coex);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	DBG("");
++	if(g_at_chat_send(cd->chat, "AT+XNVMPLMN=3D2,2", xnvmplmn_prefix,
++				xmm_get_plmn_history_cb, cbd, NULL) > 0) {
++		return;
++	}
++
++	CALLBACK_WITH_FAILURE(cb, 0, NULL, cbd->data);
++	g_free(cbd);
++}
++
++
++static void xmm_set_wlan_active(struct ofono_coex *coex,
++			ofono_bool_t wlan_active, enum ofono_wlan_bw wlan_bw,
++			ofono_coex_bt_active_set_cb_t cb, void *data)
++{
++	struct coex_data *cd =3D ofono_coex_get_data(coex);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[64];
++
++	DBG("");
++	sprintf(buf, "AT+XNRTCWS=3D65535,%u,%u", (int)wlan_active,
++				(int)wlan_bw);
++	if(g_at_chat_send(cd->chat, buf, none_prefix,
++				xmm_set_wlan_active_cb, cbd, NULL) > 0) {
++		cd->wlan_active_pending =3D wlan_active;
++		cd->wlan_bw =3D wlan_bw;
++		return;
++	}
++
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++
++static struct ofono_coex_driver driver =3D {
++	.name =3D "xmm7modem",
++	.probe =3D xmm_coex_probe,
++	.enable =3D xmm_coex_enable,
++	.remove =3D xmm_coex_remove,
++	.set_bt_active =3D xmm_set_bt_active,
++	.set_wlan_active =3D xmm_set_wlan_active,
++	.get_plmn_history =3D xmm_get_plmn_history
 +};
 +
-+struct coex_agent* coex_agent_new(const char *path, const char *sender,
-+				ofono_bool_t remove_on_terminate);
++void xmm_coex_init(void)
++{
++	ofono_coex_driver_register(&driver);
++}
 +
-+void coex_agent_set_removed_notify(struct coex_agent *agent,
-+				ofono_destroy_func destroy, void *user_data);
-+
-+ofono_bool_t coex_agent_matches(struct coex_agent *agent,
-+			const char *path, const char *sender);
-+
-+int coex_agent_coex_bt_notify(struct coex_agent *agent,
-+			const struct bt_coex_info bt_info,
-+			ofono_bool_t urgent,
-+			void *user_data, ofono_destroy_func destroy);
-+
-+int coex_agent_coex_wlan_notify(struct coex_agent *agent,
-+			const struct wl_coex_info wlan_info,
-+			ofono_bool_t urgent,
-+			void *user_data, ofono_destroy_func destroy);
-+
-+void coex_agent_send_release(struct coex_agent *agent);
-+
-+void coex_agent_free(struct coex_agent *agent);
-+
-+#endif
++void xmm_coex_exit(void)
++{
++	ofono_coex_driver_unregister(&driver);
++}
 -- =
 
 1.9.1
 
 
---===============2197237012747156909==--
+--===============4136734487114879806==--
 
