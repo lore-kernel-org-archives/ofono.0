@@ -1,40 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============3145754652459140209=="
+Content-Type: multipart/mixed; boundary="===============4594929458631434997=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: status
-Date: Fri, 28 Sep 2018 09:04:25 -0500
-Message-ID: <2a96466c-ea65-56a0-461e-888d54076dc0@gmail.com>
-In-Reply-To: <8fa934fd-8da7-5953-4543-3b7487e97aec@monom.org>
+From: Anirudh Gargi <anirudh.gargi@intel.com>
+Subject: [PATCH] gprs: fix seg fault in case of NULL callback
+Date: Mon, 01 Oct 2018 11:49:13 +0530
+Message-ID: <1538374753-8613-1-git-send-email-anirudh.gargi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3145754652459140209==
+--===============4594929458631434997==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+In case of AT callback if callback handler is NULL, check for null
+before calling the success macro.
 
-> While we have DHCP code in ConnMan I wouldn't recommend to port it as it
-> is. Patrik reimplemented DHCP for systemd-netword using ConnMan's
-> version as blueprint. That code looks much saner. Propably, it would
-> make sense to carve out a library (using ELL as support library) from
-> the systemd's version and make ConnMan and oFono depending on it.
+Logs:
+ofonod[32496]: src/network.c:current_operator_callback() 0x157ad60, (nil)
+ofonod[32496]: src/gprs.c:netreg_status_changed() 0
+ofonod[32496]: src/gprs.c:gprs_netreg_update() attach: 0, driver_attached: 1
+ofonod[32496]: src/gprs.c:ofono_gprs_detached_notify() /xmm7xxx_0
+ofonod[32496]: drivers/ifxmodem/gprs-context.c:ifx_gprs_detach_shutdown()
+ofonod[32496]: drivers/ifxmodem/gprs-context.c:ifx_gprs_deactivate_primary(=
+) cid 0
+ofonod[32496]: src/gprs.c:ofono_gprs_detached_notify() /xmm7xxx_0
+ofonod[32496]: src/gprs.c:gprs_attach_callback() /xmm7xxx_0 error =3D 0
+ofonod[32496]: drivers/ifxmodem/gprs-context.c:deactivate_cb() ok 0
+ofonod[32496]: Aborting (signal 11) [./../src/ofonod]
+ofonod[32496]: ++++++++ backtrace ++++++++
+ofonod[32496]: +++++++++++++++++++++++++++
+---
+ drivers/ifxmodem/gprs-context.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-Yep, I think ell is the logical place for it.  I have started putting =
+diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
+t.c
+index 43e81c5..885e41b 100644
+--- a/drivers/ifxmodem/gprs-context.c
++++ b/drivers/ifxmodem/gprs-context.c
+@@ -514,6 +514,9 @@ static void deactivate_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ 	if (gcd->vendor !=3D OFONO_VENDOR_XMM)
+ 		g_at_chat_resume(gcd->chat);
+ =
 
-together the basics for DHCP based on ideas in ConnMan/systemd and =
++	if (!gcd->cb)
++		return;
++
+ 	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
+ }
+ =
 
-trying a few new ideas as well.  The approach in systemd was a bit =
+-- =
 
-heavy-handed for my taste with the use of BPFs flying everywhere.  I =
+2.7.4
 
-still need to see whether a simpler approach would be workable, but have =
 
-been busy elsewhere.
-
-Regards,
--Denis
-
---===============3145754652459140209==--
+--===============4594929458631434997==--
 
