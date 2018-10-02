@@ -1,42 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============7653848590466806014=="
+Content-Type: multipart/mixed; boundary="===============0788833503409785894=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 4/6] plugins/file-provisioning.c: support for auth NONE
-Date: Tue, 02 Oct 2018 08:26:25 +0200
-Message-ID: <20181002062628.17466-3-gciofono@gmail.com>
+Subject: [PATCH 3/6] src/gprs: support for NONE auth
+Date: Tue, 02 Oct 2018 08:26:26 +0200
+Message-ID: <20181002062628.17466-4-gciofono@gmail.com>
 In-Reply-To: <20181002062628.17466-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7653848590466806014==
+--===============0788833503409785894==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/file-provision.c | 3 +++
- 1 file changed, 3 insertions(+)
+ src/gprs.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/plugins/file-provision.c b/plugins/file-provision.c
-index d4846a65..9c4a02d1 100644
---- a/plugins/file-provision.c
-+++ b/plugins/file-provision.c
-@@ -104,6 +104,9 @@ static int config_file_provision_get_settings(const cha=
-r *mcc,
- 		else if (g_strcmp0(value, "pap") =3D=3D 0)
- 			(*settings)[0].auth_method =3D
- 						OFONO_GPRS_AUTH_METHOD_PAP;
-+		else if (g_strcmp0(value, "none") =3D=3D 0)
-+			(*settings)[0].auth_method =3D
-+						OFONO_GPRS_AUTH_METHOD_NONE;
- 		else
- 			DBG("Unknown auth method: %s", value);
+diff --git a/src/gprs.c b/src/gprs.c
+index 79fafdbc..235c8884 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -261,6 +261,10 @@ static const char *gprs_auth_method_to_string(enum ofo=
+no_gprs_auth_method auth)
+ 		return "chap";
+ 	case OFONO_GPRS_AUTH_METHOD_PAP:
+ 		return "pap";
++	case OFONO_GPRS_AUTH_METHOD_NONE:
++		return "none";
++	default:
++		return NULL;
+ 	};
  =
 
+ 	return NULL;
+@@ -275,6 +279,9 @@ static gboolean gprs_auth_method_from_string(const char=
+ *str,
+ 	} else if (g_str_equal(str, "pap")) {
+ 		*auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
+ 		return TRUE;
++	} else if (g_str_equal(str, "none")) {
++		*auth =3D OFONO_GPRS_AUTH_METHOD_NONE;
++		return TRUE;
+ 	}
+ =
+
+ 	return FALSE;
 -- =
 
 2.17.1
 
 
---===============7653848590466806014==--
+--===============0788833503409785894==--
 
