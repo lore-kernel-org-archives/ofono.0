@@ -1,71 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============0613317802580130636=="
+Content-Type: multipart/mixed; boundary="===============1554439543907134824=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 5/6] gatchat: support for auth NONE
-Date: Wed, 03 Oct 2018 05:32:15 +0200
-Message-ID: <20181003033215.6283-1-gciofono@gmail.com>
+From: Anirudh Gargi <anirudh.gargi@intel.com>
+Subject: [PATCH] xmm7xxx: enable sms and phonebook support
+Date: Wed, 03 Oct 2018 12:07:28 +0530
+Message-ID: <1538548648-22855-1-git-send-email-anirudh.gargi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0613317802580130636==
+--===============1554439543907134824==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Added authentication method G_AT_PPP_AUTH_METHOD_NONE and its handling.
+Enable SMS and Phonebook atom for the xmm7xxx series modem.
+SMS send and CREG eutran states fixed in atmodem driver to support
+sms and phonebook feature for xmm7xxx based modems.
 ---
- gatchat/gatppp.c  | 3 ++-
- gatchat/gatppp.h  | 1 +
- gatchat/ppp_lcp.c | 3 +++
- 3 files changed, 6 insertions(+), 1 deletion(-)
+ plugins/xmm7xxx.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 4a80b4b3..141e2746 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -615,7 +615,8 @@ const char *g_at_ppp_get_password(GAtPPP *ppp)
- gboolean g_at_ppp_set_auth_method(GAtPPP *ppp, GAtPPPAuthMethod method)
- {
- 	if (method !=3D G_AT_PPP_AUTH_METHOD_CHAP &&
--					method !=3D G_AT_PPP_AUTH_METHOD_PAP)
-+					method !=3D G_AT_PPP_AUTH_METHOD_PAP &&
-+					method !=3D G_AT_PPP_AUTH_METHOD_NONE)
- 		return FALSE;
+diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
+index 9db87ad..a6dd097 100644
+--- a/plugins/xmm7xxx.c
++++ b/plugins/xmm7xxx.c
+@@ -50,6 +50,8 @@
+ #include <ofono/lte.h>
+ #include <ofono/ims.h>
+ #include <ofono/sim-auth.h>
++#include <ofono/sms.h>
++#include <ofono/phonebook.h>
  =
 
- 	ppp->auth_method =3D method;
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index 213f7e90..dd203c28 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -46,6 +46,7 @@ typedef enum _GAtPPPDisconnectReason {
- typedef enum _GAtPPPAuthMethod {
- 	G_AT_PPP_AUTH_METHOD_CHAP,
- 	G_AT_PPP_AUTH_METHOD_PAP,
-+	G_AT_PPP_AUTH_METHOD_NONE,
- } GAtPPPAuthMethod;
- =
-
- typedef void (*GAtPPPConnectFunc)(const char *iface, const char *local,
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index df9cd0ef..3fe38217 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -279,6 +279,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
- 				*new_len =3D 4;
- =
-
- 				return RCR_NAK;
-+
-+			case G_AT_PPP_AUTH_METHOD_NONE:
-+				return RCR_REJECT;
- 			}
- 			break;
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
+@@ -128,13 +130,19 @@ static void switch_sim_state_status(struct ofono_mode=
+m *modem, int status)
+ 		break;
+ 	case 2:	/* SIM inserted, PIN verification not needed - READY */
+ 	case 3:	/* SIM inserted, PIN verified - READY */
+-	case 7:
++	case 7: /* SIM inserted, SMS and phonebook - READY */
+ 		if (data->have_sim =3D=3D FALSE) {
+ 			ofono_sim_inserted_notify(data->sim, TRUE);
+ 			data->have_sim =3D TRUE;
  		}
+ =
+
+ 		ofono_sim_initialized_notify(data->sim);
++		if (data->sms_phonebook_added =3D=3D FALSE) {
++			ofono_phonebook_create(modem, 0, "atmodem", data->chat);
++			ofono_sms_create(modem, 0, "atmodem", data->chat);
++			data->sms_phonebook_added =3D TRUE;
++		}
++
+ 		break;
+ 	default:
+ 		ofono_warn("Unknown SIM state %d received", status);
 -- =
 
-2.17.1
+2.7.4
 
 
---===============0613317802580130636==--
+--===============1554439543907134824==--
 
