@@ -1,79 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============4521745518521407278=="
+Content-Type: multipart/mixed; boundary="===============0613317802580130636=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/6] gatchat: support for auth NONE
-Date: Tue, 02 Oct 2018 18:26:00 -0500
-Message-ID: <fcd0ecad-519e-7add-88cf-e39060886f64@gmail.com>
-In-Reply-To: <20181002062628.17466-5-gciofono@gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: [PATCH 5/6] gatchat: support for auth NONE
+Date: Wed, 03 Oct 2018 05:32:15 +0200
+Message-ID: <20181003033215.6283-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4521745518521407278==
+--===============0613317802580130636==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Added authentication method G_AT_PPP_AUTH_METHOD_NONE and its handling.
+---
+ gatchat/gatppp.c  | 3 ++-
+ gatchat/gatppp.h  | 1 +
+ gatchat/ppp_lcp.c | 3 +++
+ 3 files changed, 6 insertions(+), 1 deletion(-)
 
-On 10/02/2018 01:26 AM, Giacinto Cifelli wrote:
-> Added authentication method G_AT_PPP_AUTH_METHOD_NONE and its handling.
-> =
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 4a80b4b3..141e2746 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -615,7 +615,8 @@ const char *g_at_ppp_get_password(GAtPPP *ppp)
+ gboolean g_at_ppp_set_auth_method(GAtPPP *ppp, GAtPPPAuthMethod method)
+ {
+ 	if (method !=3D G_AT_PPP_AUTH_METHOD_CHAP &&
+-					method !=3D G_AT_PPP_AUTH_METHOD_PAP)
++					method !=3D G_AT_PPP_AUTH_METHOD_PAP &&
++					method !=3D G_AT_PPP_AUTH_METHOD_NONE)
+ 		return FALSE;
+ =
 
-> This method is already used in the code, and
+ 	ppp->auth_method =3D method;
+diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
+index 213f7e90..dd203c28 100644
+--- a/gatchat/gatppp.h
++++ b/gatchat/gatppp.h
+@@ -46,6 +46,7 @@ typedef enum _GAtPPPDisconnectReason {
+ typedef enum _GAtPPPAuthMethod {
+ 	G_AT_PPP_AUTH_METHOD_CHAP,
+ 	G_AT_PPP_AUTH_METHOD_PAP,
++	G_AT_PPP_AUTH_METHOD_NONE,
+ } GAtPPPAuthMethod;
+ =
 
-Hmm, I don't think so?
+ typedef void (*GAtPPPConnectFunc)(const char *iface, const char *local,
+diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+index df9cd0ef..3fe38217 100644
+--- a/gatchat/ppp_lcp.c
++++ b/gatchat/ppp_lcp.c
+@@ -279,6 +279,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
+ 				*new_len =3D 4;
+ =
 
-> the patch is just allowing its explicit use, on top of the implicit
-> selection done when username is empty.
+ 				return RCR_NAK;
++
++			case G_AT_PPP_AUTH_METHOD_NONE:
++				return RCR_REJECT;
+ 			}
+ 			break;
+ 		}
+-- =
 
-I do not see how this is true?  Even if username / password is empty, =
-
-the CHAP/PAP authentication method applies.  We just hash the empty =
-
-password for CHAP / send it plaintext for PAP.
-
-There is of course the possibility that the PPP server can simply not =
-
-ask us for the AUTH_PROTO option, in which case we would find that =
-
-acceptable and the auth protocol would not be used.
-
-> ---
->   gatchat/gatppp.c  | 3 ++-
->   gatchat/gatppp.h  | 1 +
->   gatchat/ppp_lcp.c | 3 +++
->   3 files changed, 6 insertions(+), 1 deletion(-)
-> =
-
-
-<snip>
-
-> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-> index df9cd0ef..258ae763 100644
-> --- a/gatchat/ppp_lcp.c
-> +++ b/gatchat/ppp_lcp.c
-> @@ -279,6 +279,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data *ppp=
-cp,
->   				*new_len =3D 4;
->   =
-
->   				return RCR_NAK;
-> +
-> +			case G_AT_PPP_AUTH_METHOD_NONE:
-> +				return RCR_ACCEPT;
-
-Should this not be RCR_REJECT ?  Otherwise we're accepting a server =
-
-proposed auth protocol when we're explicitly configured not to use one.
-
->   			}
->   			break;
->   		}
-> =
+2.17.1
 
 
-Regards,
--Denis
-
---===============4521745518521407278==--
+--===============0613317802580130636==--
 
