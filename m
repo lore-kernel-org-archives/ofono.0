@@ -1,35 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7886075388563089832=="
+Content-Type: multipart/mixed; boundary="===============3818525595354572537=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] xmm7xxx: enable sms and phonebook support
-Date: Wed, 03 Oct 2018 11:43:27 -0500
-Message-ID: <8eaa17b6-e4bb-428b-5a72-eb99c390c4ab@gmail.com>
-In-Reply-To: <1538548648-22855-1-git-send-email-anirudh.gargi@intel.com>
+Subject: Re: [PATCH 5/6] gatchat: support for auth NONE
+Date: Wed, 03 Oct 2018 11:45:45 -0500
+Message-ID: <57db13cf-d035-4441-08d3-12bf43a0a594@gmail.com>
+In-Reply-To: <20181003033215.6283-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7886075388563089832==
+--===============3818525595354572537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-H Anirudh,
-
-On 10/03/2018 01:37 AM, Anirudh Gargi wrote:
-> Enable SMS and Phonebook atom for the xmm7xxx series modem.
-> SMS send and CREG eutran states fixed in atmodem driver to support
-> sms and phonebook feature for xmm7xxx based modems.
+On 10/02/2018 10:32 PM, Giacinto Cifelli wrote:
+> Added authentication method G_AT_PPP_AUTH_METHOD_NONE and its handling.
 > ---
->   plugins/xmm7xxx.c | 10 +++++++++-
->   1 file changed, 9 insertions(+), 1 deletion(-)
+>   gatchat/gatppp.c  | 3 ++-
+>   gatchat/gatppp.h  | 1 +
+>   gatchat/ppp_lcp.c | 3 +++
+>   3 files changed, 6 insertions(+), 1 deletion(-)
 > =
 
 
-Applied after fixing up the commit message.
+I went ahead and applied this one.  I'll look at the other 5 patches =
+
+again soon.
 
 Regards,
 -Denis
 
 
---===============7886075388563089832==--
+--===============3818525595354572537==--
 
