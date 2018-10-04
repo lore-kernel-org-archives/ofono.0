@@ -1,528 +1,167 @@
-Content-Type: multipart/mixed; boundary="===============5840742997935819594=="
+Content-Type: multipart/mixed; boundary="===============0062637499650247088=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 6/6] drivers: support for auth NONE
-Date: Thu, 04 Oct 2018 05:44:39 +0200
-Message-ID: <CAKSBH7ENUfr9=Vsie_EJgZCu69Xn2XQdCejK3b+Jj15mjyr3Cg@mail.gmail.com>
-In-Reply-To: <295d97ca-194b-1260-f161-4626b826bcc9@gmail.com>
+Date: Wed, 03 Oct 2018 23:40:24 -0500
+Message-ID: <ef12e098-960c-f132-4a8e-767a6d882432@gmail.com>
+In-Reply-To: <CAKSBH7ENUfr9=Vsie_EJgZCu69Xn2XQdCejK3b+Jj15mjyr3Cg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5840742997935819594==
+--===============0062637499650247088==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-hi Denis,
+Hi Giacinto,
 
-thank you for your comments on the code.
-I will change and re-submit.
+> I suppose your comments on [PATCH 2/4]. I have addressed them on the
+> [PATCH 2/6].
+> Basically, as you can also see from the code, the user-set value are stor=
+ed,
+> but the driver changes them internally if suited:
+> - if no username it changes to AUTH_NONE, this is already in place for so=
+me
+> - if AUTH_NONE, username and password are cleared internally
+> This permissive approach allows also to deal with the next question (see =
+below).
 
-On Wed, Oct 3, 2018 at 11:29 PM Denis Kenzior <denkenz@gmail.com> wrote:
->
-> Hi Giacinto,
->
-> On 10/02/2018 01:26 AM, Giacinto Cifelli wrote:
-> > Added the explicit support for auth NONE.
-> > It is added in all drivers/*/gprs-context.c atoms that support
-> > authentication.
-> >
-> > The support for no-authentication case is already present in all
-> > drivers. This patch allows to use it explicitly.
-> > Note that the swmodem driver does not have any authentication
-> > concept: no changes.
-> >
-> > Additionally, the behavior is left unchanged in case of inconsistent
-> > parameters: if username is empty, then fallback to auth NONE.
-> > ---
-> >   drivers/atmodem/gprs-context.c        | 20 ++++++++++++++++----
-> >   drivers/ifxmodem/gprs-context.c       |  6 ++++++
-> >   drivers/isimodem/gprs-context.c       |  5 +++++
-> >   drivers/mbimmodem/gprs-context.c      | 16 +++++++++++++---
-> >   drivers/mbmmodem/gprs-context.c       | 11 ++++++-----
-> >   drivers/qmimodem/gprs-context.c       | 13 +++++++++----
-> >   drivers/rilmodem/gprs-context.c       | 13 +++++++++----
-> >   drivers/stemodem/gprs-context.c       |  9 +++++----
-> >   drivers/telitmodem/gprs-context-ncm.c | 10 ++++++++--
-> >   drivers/ubloxmodem/gprs-context.c     |  7 ++++---
-> >   10 files changed, 81 insertions(+), 29 deletions(-)
-> >
-> > diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-cont=
-ext.c
-> > index 79ac4c8e..d53fd1d8 100644
-> > --- a/drivers/atmodem/gprs-context.c
-> > +++ b/drivers/atmodem/gprs-context.c
-> > @@ -158,7 +158,12 @@ static gboolean setup_ppp(struct ofono_gprs_contex=
-t *gc)
-> >               g_at_ppp_set_debug(gcd->ppp, ppp_debug, "PPP");
-> >
-> >       g_at_ppp_set_auth_method(gcd->ppp, gcd->auth_method);
-> > -     g_at_ppp_set_credentials(gcd->ppp, gcd->username, gcd->password);
-> > +
-> > +     if (gcd->auth_method !=3D G_AT_PPP_AUTH_METHOD_NONE)
-> > +             g_at_ppp_set_credentials(gcd->ppp, gcd->username,
-> > +                                                             gcd->pass=
-word);
-> > +     else
-> > +             g_at_ppp_set_credentials(gcd->ppp, NULL, NULL);
->
-> This else part seems unneeded
->
-> >
-> >       /* set connect and disconnect callbacks */
-> >       g_at_ppp_set_connect_function(gcd->ppp, ppp_connect, gc);
-> > @@ -247,7 +252,7 @@ static void at_gprs_activate_primary(struct ofono_g=
-prs_context *gc,
-> >       memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-> >       memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-> >
-> > -     /* We only support CHAP and PAP */
-> > +     /* We support CHAP, PAP and NONE */
-> >       switch (ctx->auth_method) {
-> >       case OFONO_GPRS_AUTH_METHOD_CHAP:
-> >               gcd->auth_method =3D G_AT_PPP_AUTH_METHOD_CHAP;
-> > @@ -255,8 +260,11 @@ static void at_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
-> >       case OFONO_GPRS_AUTH_METHOD_PAP:
-> >               gcd->auth_method =3D G_AT_PPP_AUTH_METHOD_PAP;
-> >               break;
-> > -     default:
-> > -             goto error;
-> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
-> > +             gcd->auth_method =3D G_AT_PPP_AUTH_METHOD_NONE;
-> > +             gcd->username[0] =3D 0;
-> > +             gcd->password[0] =3D 0;
-> > +             break;
-> >       }
-> >
-> >       gcd->state =3D STATE_ENABLING;
-> > @@ -304,6 +312,10 @@ static void at_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
-> >                               snprintf(buf + len, sizeof(buf) - len - 3,
-> >                                               ",\"PAP:%s\"", ctx->apn);
-> >                               break;
-> > +                     case OFONO_GPRS_AUTH_METHOD_NONE:
-> > +                             snprintf(buf + len, sizeof(buf) - len - 3,
-> > +                                             ",\"%s\"", ctx->apn);
-> > +                             break;
-> >                       }
-> >                       break;
-> >               default:
-> > diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-co=
-ntext.c
-> > index 885e41bb..81b056cc 100644
-> > --- a/drivers/ifxmodem/gprs-context.c
-> > +++ b/drivers/ifxmodem/gprs-context.c
-> > @@ -466,9 +466,15 @@ static void ifx_gprs_activate_primary(struct ofono=
-_gprs_context *gc,
-> >       gcd->active_context =3D ctx->cid;
-> >       gcd->cb =3D cb;
-> >       gcd->cb_data =3D data;
-> > +
-> >       memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-> >       memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-> >
-> > +     if (ctx->auth_method =3D=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-> > +             gcd->username[0] =3D 0;
-> > +             gcd->password[0] =3D 0;
-> > +     }
-> > +
->
-> Ugh, I'd really prefer something like:
->
-> if (method =3D=3D NONE) {
->         memset(gcd->username, 0, sizeof(gcd->username));
->         ...
-> } else {
->         memcpy(...);
-> }
->
-> >       gcd->state =3D STATE_ENABLING;
-> >       gcd->proto =3D ctx->proto;
-> >
-> > diff --git a/drivers/isimodem/gprs-context.c b/drivers/isimodem/gprs-co=
-ntext.c
-> > index ce53d022..b1c819c2 100644
-> > --- a/drivers/isimodem/gprs-context.c
-> > +++ b/drivers/isimodem/gprs-context.c
-> > @@ -544,6 +544,11 @@ static void isi_gprs_activate_primary(struct ofono=
-_gprs_context *gc,
-> >       strncpy(cd->password, ctx->password, GPDS_MAX_PASSWORD_LENGTH);
-> >       cd->username[GPDS_MAX_PASSWORD_LENGTH] =3D '\0';
-> >
-> > +     if (ctx->auth_method =3D=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-> > +             cd->username[0] =3D 0;
-> > +             cd->password[0] =3D 0;
-> > +     }
-> > +
-> >       cd->pep =3D g_isi_pep_create(cd->idx, NULL, NULL);
-> >       if (cd->pep =3D=3D NULL)
-> >               goto error;
-> > diff --git a/drivers/mbimmodem/gprs-context.c b/drivers/mbimmodem/gprs-=
-context.c
-> > index 79793c92..be256e43 100644
-> > --- a/drivers/mbimmodem/gprs-context.c
-> > +++ b/drivers/mbimmodem/gprs-context.c
-> > @@ -75,9 +75,11 @@ static uint32_t auth_method_to_auth_protocol(enum of=
-ono_gprs_auth_method method)
-> >               return 2; /* MBIMAuthProtocolChap */
-> >       case OFONO_GPRS_AUTH_METHOD_PAP:
-> >               return 1; /* MBIMAuthProtocolPap */
-> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
-> > +             return 0; /* MBIMAUthProtocolNone */
-> >       }
-> >
-> > -     return 0;
-> > +     return 0; /* MBIMAUthProtocolNone */
-> >   }
-> >
-> >   static void mbim_deactivate_cb(struct mbim_message *message, void *us=
-er)
-> > @@ -345,6 +347,8 @@ static void mbim_gprs_activate_primary(struct ofono=
-_gprs_context *gc,
-> >   {
-> >       struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> >       struct mbim_message *message;
-> > +     const char username =3D NULL;
-> > +     const char password =3D NULL;
-> >
-> >       DBG("cid %u", ctx->cid);
-> >
-> > @@ -354,6 +358,12 @@ static void mbim_gprs_activate_primary(struct ofon=
-o_gprs_context *gc,
-> >       gcd->active_context =3D ctx->cid;
-> >       gcd->proto =3D ctx->proto;
-> >
-> > +     if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->use=
-rname[0])
-> > +             username =3D ctx->username;
-> > +
-> > +     if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->pas=
-sword[0])
-> > +             password =3D ctx->password;
-> > +
-> >       message =3D mbim_message_new(mbim_uuid_basic_connect,
-> >                                       MBIM_CID_CONNECT,
-> >                                       MBIM_COMMAND_TYPE_SET);
-> > @@ -361,8 +371,8 @@ static void mbim_gprs_activate_primary(struct ofono=
-_gprs_context *gc,
-> >                               ctx->cid,
-> >                               1, /* MBIMActivationCommandActivate */
-> >                               ctx->apn,
-> > -                             ctx->username[0] ? ctx->username : NULL,
-> > -                             ctx->password[0] ? ctx->password : NULL,
-> > +                             username,
-> > +                             password,
-> >                               0, /*MBIMCompressionNone */
-> >                               auth_method_to_auth_protocol(ctx->auth_me=
-thod),
-> >                               proto_to_context_ip_type(ctx->proto),
-> > diff --git a/drivers/mbmmodem/gprs-context.c b/drivers/mbmmodem/gprs-co=
-ntext.c
-> > index e961afa1..fa8b44b6 100644
-> > --- a/drivers/mbmmodem/gprs-context.c
-> > +++ b/drivers/mbmmodem/gprs-context.c
-> > @@ -394,11 +394,12 @@ static void mbm_gprs_activate_primary(struct ofon=
-o_gprs_context *gc,
-> >        * Set username and password, this should be done after CGDCONT
-> >        * or an error can occur.  We don't bother with error checking
-> >        * here
-> > -      * */
-> > -     snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-> > -                     ctx->cid, ctx->username, ctx->password);
-> > -
-> > -     g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> > +      */
-> > +     if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-> > +             snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\=
-"",
-> > +                             ctx->cid, ctx->username, ctx->password);
-> > +             g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, N=
-ULL);
-> > +     }
-> >
-> >       return;
-> >
-> > diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-co=
-ntext.c
-> > index 9a22b89f..7f31dd0e 100644
-> > --- a/drivers/qmimodem/gprs-context.c
-> > +++ b/drivers/qmimodem/gprs-context.c
-> > @@ -238,7 +238,12 @@ static void qmi_activate_primary(struct ofono_gprs=
-_context *gc,
-> >       struct cb_data *cbd =3D cb_data_new(cb, user_data);
-> >       struct qmi_param *param;
-> >       uint8_t ip_family;
-> > -     uint8_t auth;
-> > +     /*
-> > +      * set default authentication to CHAP, even if unneeded,
-> > +      * otherwise the compiler complains that:
-> > +      * =E2=80=98auth=E2=80=99 may be used uninitialized in this funct=
-ion
-> > +      */
-> > +     uint8_t auth =3D QMI_WDS_AUTHENTICATION_CHAP;
->
-> Ugh.  I really hate GCC people sometimes.  While the warning is strictly
-> correct, it is useless for 99% of the code and forces us to jump through
-> hoops.  Anyway, I would propose we use the following pattern:
->
-> int auth_method_to_qmi(enum ofono_auth_method method, uint8_t *out_auth)
-> {
->         switch (method)
->         case CHAP:
->                 *out_auth =3D ...
->                 return 0;
->         case:
->                 ...
->         }
->
->         return -ERANGE;
-> }
->
-> >
-> >       DBG("cid %u", ctx->cid);
-> >
-> > @@ -273,7 +278,7 @@ static void qmi_activate_primary(struct ofono_gprs_=
-context *gc,
-> >       case OFONO_GPRS_AUTH_METHOD_PAP:
-> >               auth =3D QMI_WDS_AUTHENTICATION_PAP;
-> >               break;
-> > -     default:
-> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
-> >               auth =3D QMI_WDS_AUTHENTICATION_NONE;
-> >               break;
-> >       }
-> > @@ -281,11 +286,11 @@ static void qmi_activate_primary(struct ofono_gpr=
-s_context *gc,
-> >       qmi_param_append_uint8(param, QMI_WDS_PARAM_AUTHENTICATION_PREFER=
-ENCE,
-> >                                       auth);
-> >
-> > -     if (ctx->username[0] !=3D '\0')
-> > +     if (auth !=3D QMI_WDS_AUTHENTICATION_NONE && ctx->username[0] !=
-=3D '\0')
-> >               qmi_param_append(param, QMI_WDS_PARAM_USERNAME,
-> >                                       strlen(ctx->username), ctx->usern=
-ame);
-> >
-> > -     if (ctx->password[0] !=3D '\0')
-> > +     if (auth !=3D QMI_WDS_AUTHENTICATION_NONE &&  ctx->password[0] !=
-=3D '\0')
-> >               qmi_param_append(param, QMI_WDS_PARAM_PASSWORD,
-> >                                       strlen(ctx->password), ctx->passw=
-ord);
-> >
-> > diff --git a/drivers/rilmodem/gprs-context.c b/drivers/rilmodem/gprs-co=
-ntext.c
-> > index 1f476e23..ef62cba9 100644
-> > --- a/drivers/rilmodem/gprs-context.c
-> > +++ b/drivers/rilmodem/gprs-context.c
-> > @@ -598,9 +598,12 @@ static void ril_gprs_context_activate_primary(stru=
-ct ofono_gprs_context *gc,
-> >        * We do the same as in $AOSP/frameworks/opt/telephony/src/java/c=
-om/
-> >        * android/internal/telephony/dataconnection/DataConnection.java,
-> >        * onConnect(), and use authentication or not depending on whether
-> > -      * the user field is empty or not.
-> > +      * the user field is empty or not,
-> > +      * on top of the verification for the authentication method.
-> >        */
-> > -     if (ctx->username[0] !=3D '\0')
-> > +
-> > +     if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE &&
-> > +                                             ctx->username[0] !=3D '\0=
-')
-> >               auth_type =3D RIL_AUTH_BOTH;
-> >       else
-> >               auth_type =3D RIL_AUTH_NONE;
-> > @@ -615,8 +618,10 @@ static void ril_gprs_context_activate_primary(stru=
-ct ofono_gprs_context *gc,
-> >               parcel_w_string(&rilp, buf);
-> >
-> >               g_ril_append_print_buf(gcd->ril, "(%d,%s,%s,%s,%s,%d,%s,%=
-u)",
-> > -                             tech, profile, ctx->apn, ctx->username,
-> > -                             ctx->password, auth_type,
-> > +                             tech, profile, ctx->apn,
-> > +                             auth_type =3D=3D RIL_AUTH_NONE ? "" : ctx=
-->username,
-> > +                             auth_type =3D=3D RIL_AUTH_NONE ? "" : ctx=
-->password,
-> > +                             auth_type,
-> >                               ril_util_gprs_proto_to_ril_string(ctx->pr=
-oto),
-> >                               ctx->cid);
-> >       } else
-> > diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-co=
-ntext.c
-> > index 18b2bfa4..32facd8c 100644
-> > --- a/drivers/stemodem/gprs-context.c
-> > +++ b/drivers/stemodem/gprs-context.c
-> > @@ -307,10 +307,11 @@ static void ste_gprs_activate_primary(struct ofon=
-o_gprs_context *gc,
-> >        * or an error can occur.  We don't bother with error checking
-> >        * here
-> >        */
-> > -     snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-> > -                     ctx->cid, ctx->username, ctx->password);
-> > -
-> > -     g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> > +     if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-> > +             snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\=
-"",
-> > +                             ctx->cid, ctx->username, ctx->password);
-> > +             g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, N=
-ULL);
-> > +     }
-> >
-> >       return;
-> >
-> > diff --git a/drivers/telitmodem/gprs-context-ncm.c b/drivers/telitmodem=
-/gprs-context-ncm.c
-> > index 7139740c..9c9b9500 100644
-> > --- a/drivers/telitmodem/gprs-context-ncm.c
-> > +++ b/drivers/telitmodem/gprs-context-ncm.c
-> > @@ -277,7 +277,8 @@ static void setup_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
-> >               return;
-> >       }
-> >
-> > -     if (gcd->username[0] && gcd->password[0])
-> > +     if (gcd->auth_method !=3D AUTH_METHOD_NONE &&
-> > +                                     gcd->username[0] && gcd->password=
-[0])
-> >               sprintf(buf, "AT#PDPAUTH=3D%u,%u,\"%s\",\"%s\"",
-> >                       gcd->active_context, gcd->auth_method,
-> >                       gcd->username, gcd->password);
-> > @@ -320,7 +321,7 @@ static void telitncm_gprs_activate_primary(struct o=
-fono_gprs_context *gc,
-> >       gcd->state =3D STATE_ENABLING;
-> >       gcd->proto =3D ctx->proto;
-> >
-> > -     /* We only support CHAP and PAP */
-> > +     /* We support CHAP, PAP and NONE */
-> >       switch (ctx->auth_method) {
-> >       case OFONO_GPRS_AUTH_METHOD_CHAP:
-> >               gcd->auth_method =3D AUTH_METHOD_CHAP;
-> > @@ -328,6 +329,11 @@ static void telitncm_gprs_activate_primary(struct =
-ofono_gprs_context *gc,
-> >       case OFONO_GPRS_AUTH_METHOD_PAP:
-> >               gcd->auth_method =3D AUTH_METHOD_PAP;
-> >               break;
-> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
-> > +             gcd->auth_method =3D AUTH_METHOD_NONE;
-> > +             gcd->username[0] =3D 0;
-> > +             gcd->password[0] =3D 0;
-> > +             break;
-> >       default:
-> >               goto error;
-> >       }
-> > diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gpr=
-s-context.c
-> > index 6fe2719f..7eb18f09 100644
-> > --- a/drivers/ubloxmodem/gprs-context.c
-> > +++ b/drivers/ubloxmodem/gprs-context.c
-> > @@ -315,9 +315,10 @@ static void ublox_send_uauthreq(struct ofono_gprs_=
-context *gc,
-> >       case OFONO_GPRS_AUTH_METHOD_CHAP:
-> >               auth =3D 2;
-> >               break;
-> > -     default:
-> > -             ofono_error("Unsupported auth type %u", auth_method);
-> > -             return;
-> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
-> > +             auth =3D 0;
-> > +             username =3D password =3D "";
-> > +             break;
-> >       }
-> >
-> >       snprintf(buf, sizeof(buf), "AT+UAUTHREQ=3D%u,%u,\"%s\",\"%s\"",
-> >
->
-> Anyway, these look fine to me otherwise.  But I still wouldn't mind some
-> explanation of how we're addressing the questions I raised in my E-mail
-> on Sep 27.
+All right.  But do you also want to mention this behavior in the D-Bus =
+
+documentation?  E.g. something to the effect of if AuthenticationMethod =
+
+is set to None, then username / password values are ignored?
+
+> =
+
+>> Also, what are we doing with plugins/mbpi.c?  That database only
+>> supports pap/chap but potentially with missing username/password
+>> attributes.  Should we be converting these to type 'none'?  Or leaving
+>> things as is and having the drivers deal with converting type chap,
+>> empty username/password to type none.  I thought the whole idea of
+>> introducing type 'None' was that you hated that drivers were doing this?
+> =
+
+> I had added the 'none' also there, then removed it. It looks to me
+> this database is for CDMA (but I am not sure).
+> In the database itself I have on my machine, there is a single 'pap',
+> no 'chap', and in all other cases the fields are missing.
+
+This database is for both CDMA and GSM.  Essentially CHAP is assumed if =
+
+PAP is not explicitly specified.
+
+> =
+
+> If it is for CDMA, I am not sure how much should this database be maintai=
+ned.
+> I know that several users have a private branch of ofono for CDMA, and
+> do not intend to change or submit,
+> because the technology is felt EOL.
+
+Mobile Broadband Provider Info is still maintained.  See =
+
+https://github.com/GNOME/mobile-broadband-provider-info.  The database =
+
+itself was never really that good, but it was at least something.  I =
+
+think the Ubuntu guys had a plugin that used the Android provisioning =
+
+db, but it was never contributed upstream.
+
+> =
+
+> Maybe this could be removed in a 2.x branch that you mentioned apropos
+> AT+CGATT=3D0 when roaming.
+> =
+
+> In the meanwhile, I have chosen to ignore it. It is not difficult to
+> add it in the code if necessary,
+> and I can also considered it separately from this series of patches.
+> =
+
+
+Given how closely related it is, it probably should be considered in the =
+
+same series.  This is one of those situations where we're messing with =
+
+the existing API and so all changes go in or none at all...  But given =
+
+that the drivers are expected to handle empty username/passwords =
+
+already, I'm okay leaving mbpi as is... but it might be a good idea to =
+
+fix it anyway...
+
+>>    I believe you referred to this as a 'hack' or similar terminology? :)
+> =
+
+> undocumented hack, yes :)
+> it is the undocumented part that I don't like. For this db, for
+> example, one may assume that
+> without user/pwd it is no-auth. Which is true for all drivers except
+> PPP, that would
+> default to chap and attempt to generate a password, as you described 2 da=
+ys ago.
+
+That actually depends on what the modem PPP stack does.  If it doesn't =
+
+request authentication, then none will be attempted.
+
+> =
+
+> My concern is for the use of the auth_method for the default LTE bearer.
+> In that case I would prefer to have such a method clearly identified,
+> because the combined attach could
+
+So isn't this a good reason to make sure provisioning sets these =
+
+properly?  Default attach parameters are not currently provisioned, but =
+
+perhaps they need to be.
+
+> fail for various reasons, the network answer is in general
+> inconsistent (I have counted already
+> half a dozen failure codes when APN/auth are incorrect), and - mainly
+> - there is no immediate feedback
+> to the application: the registration is attempted a few times, then
+> there is a back-off timer of 12 minutes (T3346),
+> when the module could attach to a legacy technology. In all this, the
+> user might just believe that it is out of LTE
+> coverage at first, and will take a long time to associate the symptoms
+> with the actual issue.
+> =
+
+> Another issue for the default context is that the parameters are in
+> general non-volatile, so if the SIM is changed,
+> and with it perhaps only the APN, it would still refer to the previous
+> auth_method and parameters until changed explicitly.
+
+Another reason to provision the default attach parameters.  If you =
+
+change the SIM and no settings are read from storage (which is stored =
+
+per IMSI), then oFono should attempt to provision the default attach =
+
+parameters.
+
+> And in the future, it seems the SIM will be changed quite often
+> And it seems to be particularly important for VoLTE, because no
+> operator supports it in roaming. The standard exists,
+> but seems unattractive.
+> With the sunset of 2G/3G, the only way to have voice will be using a
+> local SIM profile.
+> This SIM exchange is technical achieved with the eUICC.
+> =
+
+> BTW, the SIM hot swap seems to be another point to improve, but for
+> now I am not going into this.
 >
 
-I suppose your comments on [PATCH 2/4]. I have addressed them on the
-[PATCH 2/6].
-Basically, as you can also see from the code, the user-set value are stored,
-but the driver changes them internally if suited:
-- if no username it changes to AUTH_NONE, this is already in place for some
-- if AUTH_NONE, username and password are cleared internally
-This permissive approach allows also to deal with the next question (see be=
-low).
-
-> Also, what are we doing with plugins/mbpi.c?  That database only
-> supports pap/chap but potentially with missing username/password
-> attributes.  Should we be converting these to type 'none'?  Or leaving
-> things as is and having the drivers deal with converting type chap,
-> empty username/password to type none.  I thought the whole idea of
-> introducing type 'None' was that you hated that drivers were doing this?
-
-I had added the 'none' also there, then removed it. It looks to me
-this database is for CDMA (but I am not sure).
-In the database itself I have on my machine, there is a single 'pap',
-no 'chap', and in all other cases the fields are missing.
-
-If it is for CDMA, I am not sure how much should this database be maintaine=
-d.
-I know that several users have a private branch of ofono for CDMA, and
-do not intend to change or submit,
-because the technology is felt EOL.
-
-Maybe this could be removed in a 2.x branch that you mentioned apropos
-AT+CGATT=3D0 when roaming.
-
-In the meanwhile, I have chosen to ignore it. It is not difficult to
-add it in the code if necessary,
-and I can also considered it separately from this series of patches.
-
->   I believe you referred to this as a 'hack' or similar terminology? :)
-
-undocumented hack, yes :)
-it is the undocumented part that I don't like. For this db, for
-example, one may assume that
-without user/pwd it is no-auth. Which is true for all drivers except
-PPP, that would
-default to chap and attempt to generate a password, as you described 2 days=
- ago.
-
-My concern is for the use of the auth_method for the default LTE bearer.
-In that case I would prefer to have such a method clearly identified,
-because the combined attach could
-fail for various reasons, the network answer is in general
-inconsistent (I have counted already
-half a dozen failure codes when APN/auth are incorrect), and - mainly
-- there is no immediate feedback
-to the application: the registration is attempted a few times, then
-there is a back-off timer of 12 minutes (T3346),
-when the module could attach to a legacy technology. In all this, the
-user might just believe that it is out of LTE
-coverage at first, and will take a long time to associate the symptoms
-with the actual issue.
-
-Another issue for the default context is that the parameters are in
-general non-volatile, so if the SIM is changed,
-and with it perhaps only the APN, it would still refer to the previous
-auth_method and parameters until changed explicitly.
-And in the future, it seems the SIM will be changed quite often
-And it seems to be particularly important for VoLTE, because no
-operator supports it in roaming. The standard exists,
-but seems unattractive.
-With the sunset of 2G/3G, the only way to have voice will be using a
-local SIM profile.
-This SIM exchange is technical achieved with the eUICC.
-
-BTW, the SIM hot swap seems to be another point to improve, but for
-now I am not going into this.
-
->
-> Regards,
-> -Denis
+Out of curiosity, what do you have in mind?
 
 Regards,
-Giacinto
+-Denis
 
---===============5840742997935819594==--
+--===============0062637499650247088==--
 
