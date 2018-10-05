@@ -1,79 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0317227904701209349=="
+Content-Type: multipart/mixed; boundary="===============0718122932578517123=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
 Subject: Re: [PATCH 6/6] drivers: support for auth NONE
-Date: Thu, 04 Oct 2018 22:37:19 -0500
-Message-ID: <b91ce547-a36b-91fa-6dfe-1326cca020ca@gmail.com>
-In-Reply-To: <CAKSBH7FuMX2xdZ0oNgKDzOz8WZQEp7g-9DBy8Utb-oFzWPVbBA@mail.gmail.com>
+Date: Fri, 05 Oct 2018 05:54:13 +0200
+Message-ID: <CAKSBH7Gw_jc93AGGZsi+ZmZy910BJ6DdYOxwUF8bzmjeReHKvw@mail.gmail.com>
+In-Reply-To: <b91ce547-a36b-91fa-6dfe-1326cca020ca@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0317227904701209349==
+--===============0718122932578517123==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi Denis,
 
-> this is in a function that assigns the variable for sure:
-> =
+>
+> And if we ever add a new enumeration and forget to update this code, the
+> compiler will complain.  This is what we want.  If we add a default:
+> here, compiler will not warn us, that leads to bugs.
 
-> static uint32_t auth_method_to_auth_protocol(enum ofono_gprs_auth_method =
-method)
-> {
-> switch (method) {
-> case OFONO_GPRS_AUTH_METHOD_CHAP:
-> return 2; /* MBIMAuthProtocolChap */
-> case OFONO_GPRS_AUTH_METHOD_PAP:
-> return 1; /* MBIMAuthProtocolPap */
-> }
-> =
+in this construct yes, I perfectly agree.
 
-> return 0;  // < see here?
-> }
-> =
+>
+> Not according to any compiler I tried.  I literally tested this before
+> sending the above email on both GCC 7.3 and GCC 8.2.  So what compiler
+> are you using?
 
-> that's why the compiler doesnt complain.
-> =
+default ubuntu 18.04 compiler:
+gcc (Ubuntu 7.3.0-27ubuntu1~18.04) 7.3.0
 
+>
+> >
+> > Please note that the current code for qmimodem has a default already,
+> > and it is the only way the compiler doesn't complain:
+>
+> And that is wrong and should be fixed.
 
-Sure, but you also know the core will never send you a value that is not =
+I will do it, in the mbim way.
+Even if technically this should be a different patch, in this episode
+I am saving the world from the implicit lack of authentication, not
+from the bad coding style.
+But the two this time go together.
 
-PAP/CHAP.  So you know that in reality we never get to the 'return 0' =
+I will submit a new patch later today.
+Would you please comment on the [PATCH 4/6] too, about the plugins, so
+I will take care of both together?
 
-part, even though the compiler might think that we could.
-
-And if we ever add a new enumeration and forget to update this code, the =
-
-compiler will complain.  This is what we want.  If we add a default: =
-
-here, compiler will not warn us, that leads to bugs.
-
->> uint32_t auth;
->>
->> if (auth_method_to_foo(method, &auth) < 0)
->>          goto error;
->>
-> =
-
-> this doesnt work, because it could leave the variable auth unassigned,
-> according to the compiler.
-
-Not according to any compiler I tried.  I literally tested this before =
-
-sending the above email on both GCC 7.3 and GCC 8.2.  So what compiler =
-
-are you using?
-
-> =
-
-> Please note that the current code for qmimodem has a default already,
-> and it is the only way the compiler doesn't complain:
-
-And that is wrong and should be fixed.
+>
+> Regards,
+> -Denis
 
 Regards,
--Denis
+Giacinto
 
---===============0317227904701209349==--
+--===============0718122932578517123==--
 
