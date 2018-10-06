@@ -1,42 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0003350736393363516=="
+Content-Type: multipart/mixed; boundary="===============8151718009070468968=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 1/5] connman-api: added "none" auth_method
-Date: Sat, 06 Oct 2018 07:45:16 +0200
-Message-ID: <20181006054520.26737-1-gciofono@gmail.com>
+Subject: [PATCH 2/5] gprs-context: added OFONO_GPRS_AUTH_METHOD_NONE
+Date: Sat, 06 Oct 2018 07:45:17 +0200
+Message-ID: <20181006054520.26737-2-gciofono@gmail.com>
+In-Reply-To: <20181006054520.26737-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0003350736393363516==
+--===============8151718009070468968==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This method makes explicit the lack of authentication.
+
+When selected, the username and password are ignored, but they are not
+changed in the user-defined properties for the context.
+This treatment is necessary to allow setting independently auth_method,
+username and password.
+
+This method is also selected implicitly when username is set to
+an empty string. Also this selection is done without changing the
+user-defined auth_method for the context, so that the behavior is
+consistent.
 ---
- doc/connman-api.txt | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ include/gprs-context.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-index 9220d0de..578b9755 100644
---- a/doc/connman-api.txt
-+++ b/doc/connman-api.txt
-@@ -192,7 +192,8 @@ Properties	boolean Active [readwrite]
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index 20ca9efc..8869c12e 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -57,6 +57,7 @@ enum ofono_gprs_context_type {
+ enum ofono_gprs_auth_method {
+ 	OFONO_GPRS_AUTH_METHOD_CHAP =3D 0,
+ 	OFONO_GPRS_AUTH_METHOD_PAP,
++	OFONO_GPRS_AUTH_METHOD_NONE,
+ };
  =
 
- 		string AuthenticationMethod [readwrite]
- 			Holds the PPP authentication method to use.  Valid
--			values are "pap" and "chap".  Defaults to "chap".
-+			values are "pap", "chap" and "none".
-+			Defaults to "chap".
- =
-
- 		string Username [readwrite]
- =
-
+ struct ofono_gprs_primary_context {
 -- =
 
 2.17.1
 
 
---===============0003350736393363516==--
+--===============8151718009070468968==--
 
