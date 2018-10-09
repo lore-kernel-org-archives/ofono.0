@@ -1,153 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============2753460996243981747=="
+Content-Type: multipart/mixed; boundary="===============2807753468866489152=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/5] drivers: support for auth NONE
-Date: Tue, 09 Oct 2018 12:41:48 -0500
-Message-ID: <9110ae75-3245-7131-8a3e-92fb83fef5ce@gmail.com>
-In-Reply-To: <20181006054520.26737-5-gciofono@gmail.com>
+Subject: Re: [PATCH 1/2] netmon: Added netmon driver for xmm7modem
+Date: Tue, 09 Oct 2018 12:56:32 -0500
+Message-ID: <4907c3b3-8022-4cdc-95dc-2d02b9119e6e@gmail.com>
+In-Reply-To: <1539085295-4427-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2753460996243981747==
+--===============2807753468866489152==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi Antara,
 
-I applied a modified version of this patch, see below:
+On 10/09/2018 06:41 AM, Antara Borwankar wrote:
+> From: Antara <antara.borwankar@intel.com>
+> =
 
-> diff --git a/drivers/mbimmodem/gprs-context.c b/drivers/mbimmodem/gprs-co=
-ntext.c
-> index 79793c92..be256e43 100644
-> --- a/drivers/mbimmodem/gprs-context.c
-> +++ b/drivers/mbimmodem/gprs-context.c
-> @@ -75,9 +75,11 @@ static uint32_t auth_method_to_auth_protocol(enum ofon=
-o_gprs_auth_method method)
->   		return 2; /* MBIMAuthProtocolChap */
->   	case OFONO_GPRS_AUTH_METHOD_PAP:
->   		return 1; /* MBIMAuthProtocolPap */
-> +	case OFONO_GPRS_AUTH_METHOD_NONE:
-> +		return 0; /* MBIMAUthProtocolNone */
->   	}
->   =
+> adding netmon driver for xmm7modem which uses intel proprietary
+> AT command +XMCI
+> ---
+>   drivers/xmm7modem/netmon.c    | 264 +++++++++++++++++++++++++++++++++++=
++++++++
+>   drivers/xmm7modem/xmm7modem.c |   3 +-
+>   drivers/xmm7modem/xmm7modem.h |   3 +
+>   3 files changed, 269 insertions(+), 1 deletion(-)
+>   create mode 100644 drivers/xmm7modem/netmon.c
+> =
 
-> -	return 0;
-> +	return 0; /* MBIMAUthProtocolNone */
->   }
->   =
 
->   static void mbim_deactivate_cb(struct mbim_message *message, void *user)
-> @@ -345,6 +347,8 @@ static void mbim_gprs_activate_primary(struct ofono_g=
-prs_context *gc,
->   {
->   	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
->   	struct mbim_message *message;
-> +	const char username =3D NULL;
-> +	const char password =3D NULL;
+Applied with a few tweaks:
 
-These were changed to const char *
-
->   =
-
->   	DBG("cid %u", ctx->cid);
->   =
-
-> @@ -354,6 +358,12 @@ static void mbim_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
->   	gcd->active_context =3D ctx->cid;
->   	gcd->proto =3D ctx->proto;
->   =
-
-> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->username[=
-0])
-> +		username =3D ctx->username;
+> +static void xmm7modem_netmon_request_update(struct ofono_netmon *netmon,
+> +					ofono_netmon_cb_t cb, void *data)
+> +{
+> +	struct netmon_driver_data *nmd =3D ofono_netmon_get_data(netmon);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
 > +
-> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->password[=
-0])
-> +		password =3D ctx->password;
+> +	DBG("xmm7modem netmon request update");
 > +
->   	message =3D mbim_message_new(mbim_uuid_basic_connect,
->   					MBIM_CID_CONNECT,
->   					MBIM_COMMAND_TYPE_SET);
-> @@ -361,8 +371,8 @@ static void mbim_gprs_activate_primary(struct ofono_g=
-prs_context *gc,
->   				ctx->cid,
->   				1, /* MBIMActivationCommandActivate */
->   				ctx->apn,
-> -				ctx->username[0] ? ctx->username : NULL,
-> -				ctx->password[0] ? ctx->password : NULL,
-> +				username,
-> +				password,
->   				0, /*MBIMCompressionNone */
->   				auth_method_to_auth_protocol(ctx->auth_method),
->   				proto_to_context_ip_type(ctx->proto),
-> diff --git a/drivers/mbmmodem/gprs-context.c b/drivers/mbmmodem/gprs-cont=
-ext.c
-> index e961afa1..fa8b44b6 100644
-> --- a/drivers/mbmmodem/gprs-context.c
-> +++ b/drivers/mbmmodem/gprs-context.c
-> @@ -394,11 +394,12 @@ static void mbm_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
->   	 * Set username and password, this should be done after CGDCONT
->   	 * or an error can occur.  We don't bother with error checking
->   	 * here
-> -	 * */
-> -	snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-> -			ctx->cid, ctx->username, ctx->password);
-> -
-> -	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +	 */
-> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-> +		snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-> +				ctx->cid, ctx->username, ctx->password);
-> +		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
+> +	if (g_at_chat_send(nmd->chat, "AT+XMCI=3D1", xmci_prefix,
+> +				xmci_cb, cbd, g_free) =3D=3D 0) {
+> +		CALLBACK_WITH_FAILURE(cb, data);
 > +	}
->   =
 
->   	return;
->   =
+I changed this part to
+if (g_at_chat_send(...) > 0)
+	return;
 
+CALLBACK_WITH_FAILURE(...);
 
-I dropped this part entirely.  The reason is that we can have profiles =
+> +}
+> +
 
-with username/password & without operating on the same CID.  Since the =
+<snip>
 
-setting is permanent on the modem, we need to set it/clear it even when =
+> +static int xmm7modem_netmon_probe(struct ofono_netmon *netmon,
+> +					unsigned int vendor, void *user)
+> +{
+> +	GAtChat *chat =3D user;
+> +	struct netmon_driver_data *nmd;
+> +
+> +	DBG("xmm7modem netmon probe");
+> +
+> +	nmd =3D g_new0(struct netmon_driver_data, 1);
+> +	if (nmd =3D=3D NULL)
+> +		return -ENOMEM;
 
-AUTH_METHOD_NONE is used.
+g_new0 cannot fail (it aborts if memory isn't available).  So this if =
 
-If you disagree, please send a follow up series.
+statement was removed.
 
-> diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-cont=
-ext.c
-> index 18b2bfa4..32facd8c 100644
-> --- a/drivers/stemodem/gprs-context.c
-> +++ b/drivers/stemodem/gprs-context.c
-> @@ -307,10 +307,11 @@ static void ste_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
->   	 * or an error can occur.  We don't bother with error checking
->   	 * here
->   	 */
-> -	snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-> -			ctx->cid, ctx->username, ctx->password);
-> -
-> -	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-> +		snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-> +				ctx->cid, ctx->username, ctx->password);
-> +		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +	}
->   =
-
->   	return;
->   =
-
-
-Dropped for the same reason as above
+> +
+> +	nmd->chat =3D g_at_chat_clone(chat);
+> +
+> +	ofono_netmon_set_data(netmon, nmd);
+> +
+> +	g_idle_add(ril_delayed_register, netmon);
+> +
+> +	return 0;
+> +}
+> +
 
 Regards,
 -Denis
 
---===============2753460996243981747==--
+--===============2807753468866489152==--
 
