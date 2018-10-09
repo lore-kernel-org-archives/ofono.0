@@ -1,427 +1,343 @@
-Content-Type: multipart/mixed; boundary="===============0294089695037643784=="
+Content-Type: multipart/mixed; boundary="===============2310373893651766288=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 5/5] drivers: support for auth NONE
-Date: Sat, 06 Oct 2018 07:45:20 +0200
-Message-ID: <20181006054520.26737-5-gciofono@gmail.com>
-In-Reply-To: <20181006054520.26737-1-gciofono@gmail.com>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH 1/2] netmon: Added netmon driver for xmm7modem
+Date: Tue, 09 Oct 2018 16:55:37 +0530
+Message-ID: <1539084337-2356-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0294089695037643784==
+--===============2310373893651766288==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Added the explicit support for auth NONE.
-It needs to be added in all drivers/*/gprs-context.c atoms.
+From: Antara <antara.borwankar@intel.com>
 
-This method is already supported by all atoms that support
-authentication (ie, all but Sierra' swmodem driver).
-
-The behavior is left unchanged in case of inconsistent parameters:
-if username is empty, then fallback to auth NONE.
+adding netmon driver for xmm7modem which uses intel proprietary
+AT command +XMCI
 ---
- drivers/atmodem/gprs-context.c        | 18 ++++++++++++----
- drivers/ifxmodem/gprs-context.c       | 10 +++++++--
- drivers/isimodem/gprs-context.c       | 14 ++++++++-----
- drivers/mbimmodem/gprs-context.c      | 16 +++++++++++---
- drivers/mbmmodem/gprs-context.c       | 11 +++++-----
- drivers/qmimodem/gprs-context.c       | 30 +++++++++++++++------------
- drivers/rilmodem/gprs-context.c       | 13 ++++++++----
- drivers/stemodem/gprs-context.c       |  9 ++++----
- drivers/telitmodem/gprs-context-ncm.c | 10 +++++++--
- drivers/ubloxmodem/gprs-context.c     |  7 ++++---
- 10 files changed, 93 insertions(+), 45 deletions(-)
+ drivers/xmm7modem/netmon.c    | 264 ++++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/xmm7modem/xmm7modem.c |   3 +-
+ drivers/xmm7modem/xmm7modem.h |   3 +
+ 3 files changed, 269 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/xmm7modem/netmon.c
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 79ac4c8e..2212af69 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -158,7 +158,10 @@ static gboolean setup_ppp(struct ofono_gprs_context *g=
-c)
- 		g_at_ppp_set_debug(gcd->ppp, ppp_debug, "PPP");
- =
-
- 	g_at_ppp_set_auth_method(gcd->ppp, gcd->auth_method);
--	g_at_ppp_set_credentials(gcd->ppp, gcd->username, gcd->password);
+diff --git a/drivers/xmm7modem/netmon.c b/drivers/xmm7modem/netmon.c
+new file mode 100644
+index 0000000..7316791
+--- /dev/null
++++ b/drivers/xmm7modem/netmon.c
+@@ -0,0 +1,264 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2017  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+	if (gcd->auth_method !=3D G_AT_PPP_AUTH_METHOD_NONE)
-+		g_at_ppp_set_credentials(gcd->ppp, gcd->username,
-+								gcd->password);
- =
-
- 	/* set connect and disconnect callbacks */
- 	g_at_ppp_set_connect_function(gcd->ppp, ppp_connect, gc);
-@@ -247,7 +250,7 @@ static void at_gprs_activate_primary(struct ofono_gprs_=
-context *gc,
- 	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
- 	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
- =
-
--	/* We only support CHAP and PAP */
-+	/* We support CHAP, PAP and NONE */
- 	switch (ctx->auth_method) {
- 	case OFONO_GPRS_AUTH_METHOD_CHAP:
- 		gcd->auth_method =3D G_AT_PPP_AUTH_METHOD_CHAP;
-@@ -255,8 +258,11 @@ static void at_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- 	case OFONO_GPRS_AUTH_METHOD_PAP:
- 		gcd->auth_method =3D G_AT_PPP_AUTH_METHOD_PAP;
- 		break;
--	default:
--		goto error;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		gcd->auth_method =3D G_AT_PPP_AUTH_METHOD_NONE;
-+		memset(gcd->username, 0, sizeof(gcd->username));
-+		memset(gcd->password, 0, sizeof(gcd->password));
-+		break;
- 	}
- =
-
- 	gcd->state =3D STATE_ENABLING;
-@@ -304,6 +310,10 @@ static void at_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- 				snprintf(buf + len, sizeof(buf) - len - 3,
- 						",\"PAP:%s\"", ctx->apn);
- 				break;
-+			case OFONO_GPRS_AUTH_METHOD_NONE:
-+				snprintf(buf + len, sizeof(buf) - len - 3,
-+						",\"%s\"", ctx->apn);
-+				break;
- 			}
- 			break;
- 		default:
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 885e41bb..289b4341 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -466,8 +466,14 @@ static void ifx_gprs_activate_primary(struct ofono_gpr=
-s_context *gc,
- 	gcd->active_context =3D ctx->cid;
- 	gcd->cb =3D cb;
- 	gcd->cb_data =3D data;
--	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
--	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
 +
-+	if (ctx->auth_method =3D=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-+		memset(gcd->username, 0, sizeof(gcd->username));
-+		memset(gcd->password, 0, sizeof(gcd->password));
-+	} else {
-+		memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-+		memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-+	}
- =
-
- 	gcd->state =3D STATE_ENABLING;
- 	gcd->proto =3D ctx->proto;
-diff --git a/drivers/isimodem/gprs-context.c b/drivers/isimodem/gprs-contex=
-t.c
-index ce53d022..4d2e7a12 100644
---- a/drivers/isimodem/gprs-context.c
-+++ b/drivers/isimodem/gprs-context.c
-@@ -538,11 +538,15 @@ static void isi_gprs_activate_primary(struct ofono_gp=
-rs_context *gc,
- 	strncpy(cd->apn, ctx->apn, GPDS_MAX_APN_STRING_LENGTH);
- 	cd->apn[GPDS_MAX_APN_STRING_LENGTH] =3D '\0';
- =
-
--	strncpy(cd->username, ctx->username, GPDS_MAX_USERNAME_LENGTH);
--	cd->username[GPDS_MAX_USERNAME_LENGTH] =3D '\0';
--
--	strncpy(cd->password, ctx->password, GPDS_MAX_PASSWORD_LENGTH);
--	cd->username[GPDS_MAX_PASSWORD_LENGTH] =3D '\0';
-+	if (ctx->auth_method =3D=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-+		memset(cd->username, 0, sizeof(cd->username));
-+		memset(cd->password, 0, sizeof(cd->password));
-+	} else {
-+		strncpy(cd->username, ctx->username, GPDS_MAX_USERNAME_LENGTH);
-+		cd->username[GPDS_MAX_USERNAME_LENGTH] =3D '\0';
-+		strncpy(cd->password, ctx->password, GPDS_MAX_PASSWORD_LENGTH);
-+		cd->username[GPDS_MAX_PASSWORD_LENGTH] =3D '\0';
-+	}
- =
-
- 	cd->pep =3D g_isi_pep_create(cd->idx, NULL, NULL);
- 	if (cd->pep =3D=3D NULL)
-diff --git a/drivers/mbimmodem/gprs-context.c b/drivers/mbimmodem/gprs-cont=
-ext.c
-index 79793c92..be256e43 100644
---- a/drivers/mbimmodem/gprs-context.c
-+++ b/drivers/mbimmodem/gprs-context.c
-@@ -75,9 +75,11 @@ static uint32_t auth_method_to_auth_protocol(enum ofono_=
-gprs_auth_method method)
- 		return 2; /* MBIMAuthProtocolChap */
- 	case OFONO_GPRS_AUTH_METHOD_PAP:
- 		return 1; /* MBIMAuthProtocolPap */
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		return 0; /* MBIMAUthProtocolNone */
- 	}
- =
-
--	return 0;
-+	return 0; /* MBIMAUthProtocolNone */
- }
- =
-
- static void mbim_deactivate_cb(struct mbim_message *message, void *user)
-@@ -345,6 +347,8 @@ static void mbim_gprs_activate_primary(struct ofono_gpr=
-s_context *gc,
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct mbim_message *message;
-+	const char username =3D NULL;
-+	const char password =3D NULL;
- =
-
- 	DBG("cid %u", ctx->cid);
- =
-
-@@ -354,6 +358,12 @@ static void mbim_gprs_activate_primary(struct ofono_gp=
-rs_context *gc,
- 	gcd->active_context =3D ctx->cid;
- 	gcd->proto =3D ctx->proto;
- =
-
-+	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->username[0])
-+		username =3D ctx->username;
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <stdlib.h>
++#include <stdint.h>
++#include <string.h>
++#include <errno.h>
 +
-+	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->password[0])
-+		password =3D ctx->password;
++#include <glib.h>
 +
- 	message =3D mbim_message_new(mbim_uuid_basic_connect,
- 					MBIM_CID_CONNECT,
- 					MBIM_COMMAND_TYPE_SET);
-@@ -361,8 +371,8 @@ static void mbim_gprs_activate_primary(struct ofono_gpr=
-s_context *gc,
- 				ctx->cid,
- 				1, /* MBIMActivationCommandActivate */
- 				ctx->apn,
--				ctx->username[0] ? ctx->username : NULL,
--				ctx->password[0] ? ctx->password : NULL,
-+				username,
-+				password,
- 				0, /*MBIMCompressionNone */
- 				auth_method_to_auth_protocol(ctx->auth_method),
- 				proto_to_context_ip_type(ctx->proto),
-diff --git a/drivers/mbmmodem/gprs-context.c b/drivers/mbmmodem/gprs-contex=
-t.c
-index e961afa1..fa8b44b6 100644
---- a/drivers/mbmmodem/gprs-context.c
-+++ b/drivers/mbmmodem/gprs-context.c
-@@ -394,11 +394,12 @@ static void mbm_gprs_activate_primary(struct ofono_gp=
-rs_context *gc,
- 	 * Set username and password, this should be done after CGDCONT
- 	 * or an error can occur.  We don't bother with error checking
- 	 * here
--	 * */
--	snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
--			ctx->cid, ctx->username, ctx->password);
--
--	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+	 */
-+	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-+		snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-+				ctx->cid, ctx->username, ctx->password);
-+		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+	}
- =
-
- 	return;
- =
-
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
-t.c
-index 9a22b89f..985bdd64 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -230,6 +230,20 @@ static void qmi_gprs_read_settings(struct ofono_gprs_c=
-ontext* gc,
- 	g_free(cbd);
- }
- =
-
-+static uint8_t auth_method_to_qmi_auth(enum ofono_gprs_auth_method method)
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/netreg.h>
++#include <ofono/netmon.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "common.h"
++#include "xmm7modem.h"
++#include "drivers/atmodem/vendor.h"
++
++static const char *xmci_prefix[] =3D { "+XMCI:", NULL };
++
++struct netmon_driver_data {
++	GAtChat *chat;
++};
++
++enum xmci_ofono_type_info {
++	XMCI_GSM_SERV_CELL,
++	XMCI_GSM_NEIGH_CELL,
++	XMCI_UMTS_SERV_CELL,
++	XMCI_UMTS_NEIGH_CELL,
++	XMCI_LTE_SERV_CELL,
++	XMCI_LTE_NEIGH_CELL
++};
++
++/*
++ * Returns the appropriate radio access technology.
++ *
++ * If we can not resolve to a specific radio access technolgy
++ * we return OFONO_NETMON_CELL_TYPE_GSM by default.
++ */
++static int xmm7modem_map_radio_access_technology(int tech)
 +{
-+	switch (method) {
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		return QMI_WDS_AUTHENTICATION_CHAP;
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		return QMI_WDS_AUTHENTICATION_PAP;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		return QMI_WDS_AUTHENTICATION_NONE;
++	switch (tech) {
++	case XMCI_GSM_SERV_CELL:
++	case XMCI_GSM_NEIGH_CELL:
++		return OFONO_NETMON_CELL_TYPE_GSM;
++	case XMCI_UMTS_SERV_CELL:
++	case XMCI_UMTS_NEIGH_CELL:
++		return OFONO_NETMON_CELL_TYPE_UMTS;
++	case XMCI_LTE_SERV_CELL:
++	case XMCI_LTE_NEIGH_CELL:
++		return OFONO_NETMON_CELL_TYPE_LTE;
 +	}
 +
-+	return QMI_WDS_AUTHENTICATION_NONE;
++	return OFONO_NETMON_CELL_TYPE_GSM;
 +}
 +
- static void qmi_activate_primary(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
- 				ofono_gprs_context_cb_t cb, void *user_data)
-@@ -266,26 +280,16 @@ static void qmi_activate_primary(struct ofono_gprs_co=
-ntext *gc,
- =
-
- 	qmi_param_append_uint8(param, QMI_WDS_PARAM_IP_FAMILY, ip_family);
- =
-
--	switch (ctx->auth_method) {
--	case OFONO_GPRS_AUTH_METHOD_CHAP:
--		auth =3D QMI_WDS_AUTHENTICATION_CHAP;
--		break;
--	case OFONO_GPRS_AUTH_METHOD_PAP:
--		auth =3D QMI_WDS_AUTHENTICATION_PAP;
--		break;
--	default:
--		auth =3D QMI_WDS_AUTHENTICATION_NONE;
--		break;
--	}
-+	auth =3D auth_method_to_qmi_auth(ctx->auth_method);
- =
-
- 	qmi_param_append_uint8(param, QMI_WDS_PARAM_AUTHENTICATION_PREFERENCE,
- 					auth);
- =
-
--	if (ctx->username[0] !=3D '\0')
-+	if (auth !=3D QMI_WDS_AUTHENTICATION_NONE && ctx->username[0] !=3D '\0')
- 		qmi_param_append(param, QMI_WDS_PARAM_USERNAME,
- 					strlen(ctx->username), ctx->username);
- =
-
--	if (ctx->password[0] !=3D '\0')
-+	if (auth !=3D QMI_WDS_AUTHENTICATION_NONE &&  ctx->password[0] !=3D '\0')
- 		qmi_param_append(param, QMI_WDS_PARAM_PASSWORD,
- 					strlen(ctx->password), ctx->password);
- =
-
-diff --git a/drivers/rilmodem/gprs-context.c b/drivers/rilmodem/gprs-contex=
-t.c
-index 1f476e23..ef62cba9 100644
---- a/drivers/rilmodem/gprs-context.c
-+++ b/drivers/rilmodem/gprs-context.c
-@@ -598,9 +598,12 @@ static void ril_gprs_context_activate_primary(struct o=
-fono_gprs_context *gc,
- 	 * We do the same as in $AOSP/frameworks/opt/telephony/src/java/com/
- 	 * android/internal/telephony/dataconnection/DataConnection.java,
- 	 * onConnect(), and use authentication or not depending on whether
--	 * the user field is empty or not.
-+	 * the user field is empty or not,
-+	 * on top of the verification for the authentication method.
- 	 */
--	if (ctx->username[0] !=3D '\0')
++static void xmci_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	struct ofono_netmon *netmon =3D cbd->data;
++	ofono_netmon_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++	GAtResultIter iter;
++	int number;
++	int rxlev =3D -1;
++	int ber =3D -1;
++	int rscp =3D -1;
++	int rsrp =3D -1;
++	int ecn0 =3D -1;
++	int rsrq =3D -1;
++	int tech =3D -1;
 +
-+	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE &&
-+						ctx->username[0] !=3D '\0')
- 		auth_type =3D RIL_AUTH_BOTH;
- 	else
- 		auth_type =3D RIL_AUTH_NONE;
-@@ -615,8 +618,10 @@ static void ril_gprs_context_activate_primary(struct o=
-fono_gprs_context *gc,
- 		parcel_w_string(&rilp, buf);
- =
-
- 		g_ril_append_print_buf(gcd->ril, "(%d,%s,%s,%s,%s,%d,%s,%u)",
--				tech, profile, ctx->apn, ctx->username,
--				ctx->password, auth_type,
-+				tech, profile, ctx->apn,
-+				auth_type =3D=3D RIL_AUTH_NONE ? "" : ctx->username,
-+				auth_type =3D=3D RIL_AUTH_NONE ? "" : ctx->password,
-+				auth_type,
- 				ril_util_gprs_proto_to_ril_string(ctx->proto),
- 				ctx->cid);
- 	} else
-diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
-t.c
-index 18b2bfa4..32facd8c 100644
---- a/drivers/stemodem/gprs-context.c
-+++ b/drivers/stemodem/gprs-context.c
-@@ -307,10 +307,11 @@ static void ste_gprs_activate_primary(struct ofono_gp=
-rs_context *gc,
- 	 * or an error can occur.  We don't bother with error checking
- 	 * here
- 	 */
--	snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
--			ctx->cid, ctx->username, ctx->password);
--
--	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
-+		snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
-+				ctx->cid, ctx->username, ctx->password);
-+		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
++	DBG("ok %d", ok);
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, cbd->data);
++		return;
 +	}
- =
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, "+XMCI:")) {
++		if (!g_at_result_iter_next_number(&iter, &number))
++			break;
++		tech =3D xmm7modem_map_radio_access_technology(number);
++
++		switch(number) {
++		case XMCI_GSM_SERV_CELL:
++			/* skip <MCC>,<MNC>,<LAC>,<CI>,<BSIC> */
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++
++			g_at_result_iter_next_number(&iter, &number);
++			rxlev =3D number !=3D 99 ? number:rxlev;
++
++			g_at_result_iter_next_number(&iter, &number);
++			ber =3D number !=3D 99 ? number:ber;
++			break;
++		case XMCI_UMTS_SERV_CELL:
++			/* =
 
- 	return;
- =
++			 * skip <MCC>,<MNC>,<LAC>,<CI><PSC>,<DLUARFNC>,
++			 * <ULUARFCN>,<PATHLOSS>,<RSSI> =
 
-diff --git a/drivers/telitmodem/gprs-context-ncm.c b/drivers/telitmodem/gpr=
-s-context-ncm.c
-index 7139740c..9c9b9500 100644
---- a/drivers/telitmodem/gprs-context-ncm.c
-+++ b/drivers/telitmodem/gprs-context-ncm.c
-@@ -277,7 +277,8 @@ static void setup_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
- 		return;
- 	}
- =
++			 */
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++
++			g_at_result_iter_next_number(&iter, &number);
++			rscp =3D number !=3D 255 ? number:rscp;
++
++			g_at_result_iter_next_number(&iter, &number);
++			ecn0 =3D number !=3D 255 ? number:ecn0;
++			break;
++		case XMCI_LTE_SERV_CELL:
++			/* =
 
--	if (gcd->username[0] && gcd->password[0])
-+	if (gcd->auth_method !=3D AUTH_METHOD_NONE &&
-+					gcd->username[0] && gcd->password[0])
- 		sprintf(buf, "AT#PDPAUTH=3D%u,%u,\"%s\",\"%s\"",
- 			gcd->active_context, gcd->auth_method,
- 			gcd->username, gcd->password);
-@@ -320,7 +321,7 @@ static void telitncm_gprs_activate_primary(struct ofono=
-_gprs_context *gc,
- 	gcd->state =3D STATE_ENABLING;
- 	gcd->proto =3D ctx->proto;
- =
++			 * skip <MCC>,<MNC>,<TAC>,<CI>,<PCI>,<DLUARFNC>,
++			 * <ULUARFCN>,<PATHLOSS_LTE>
++			 */
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++
++			g_at_result_iter_next_number(&iter, &number);
++			rsrq =3D number !=3D 255 ? number:rsrq;
++
++			g_at_result_iter_next_number(&iter, &number);
++			rsrp =3D number !=3D 255 ? number:rsrp;
++			break;
++		default:
++			break;
++		}
++
++		ofono_netmon_serving_cell_notify(netmon,
++						tech,
++						OFONO_NETMON_INFO_RXLEV, rxlev,
++						OFONO_NETMON_INFO_BER, ber,
++						OFONO_NETMON_INFO_RSCP, rscp,
++						OFONO_NETMON_INFO_ECN0, ecn0,
++						OFONO_NETMON_INFO_RSRQ, rsrq,
++						OFONO_NETMON_INFO_RSRP, rsrp,
++						OFONO_NETMON_INFO_INVALID);
++		=
 
--	/* We only support CHAP and PAP */
-+	/* We support CHAP, PAP and NONE */
- 	switch (ctx->auth_method) {
- 	case OFONO_GPRS_AUTH_METHOD_CHAP:
- 		gcd->auth_method =3D AUTH_METHOD_CHAP;
-@@ -328,6 +329,11 @@ static void telitncm_gprs_activate_primary(struct ofon=
-o_gprs_context *gc,
- 	case OFONO_GPRS_AUTH_METHOD_PAP:
- 		gcd->auth_method =3D AUTH_METHOD_PAP;
- 		break;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		gcd->auth_method =3D AUTH_METHOD_NONE;
-+		gcd->username[0] =3D 0;
-+		gcd->password[0] =3D 0;
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
 +		break;
- 	default:
- 		goto error;
- 	}
-diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
-ntext.c
-index 6fe2719f..7eb18f09 100644
---- a/drivers/ubloxmodem/gprs-context.c
-+++ b/drivers/ubloxmodem/gprs-context.c
-@@ -315,9 +315,10 @@ static void ublox_send_uauthreq(struct ofono_gprs_cont=
-ext *gc,
- 	case OFONO_GPRS_AUTH_METHOD_CHAP:
- 		auth =3D 2;
- 		break;
--	default:
--		ofono_error("Unsupported auth type %u", auth_method);
--		return;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		auth =3D 0;
-+		username =3D password =3D "";
-+		break;
- 	}
++	}
++}
++
++static void xmm7modem_netmon_request_update(struct ofono_netmon *netmon,
++					ofono_netmon_cb_t cb, void *data)
++{
++	struct netmon_driver_data *nmd =3D ofono_netmon_get_data(netmon);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	DBG("xmm7modem netmon request update");
++
++	if (g_at_chat_send(nmd->chat, "AT+XMCI=3D1", xmci_prefix,
++				xmci_cb, cbd, g_free) =3D=3D 0) {
++		CALLBACK_WITH_FAILURE(cb, data);
++	}
++}
++
++static gboolean ril_delayed_register(gpointer user_data)
++{
++	struct ofono_netmon *netmon =3D user_data;
++
++	ofono_netmon_register(netmon);
++
++	return FALSE;
++}
++
++static int xmm7modem_netmon_probe(struct ofono_netmon *netmon,
++					unsigned int vendor, void *user)
++{
++	GAtChat *chat =3D user;
++	struct netmon_driver_data *nmd;
++
++	DBG("xmm7modem netmon probe");
++
++	nmd =3D g_new0(struct netmon_driver_data, 1);
++	if (nmd =3D=3D NULL)
++		return -ENOMEM;
++
++	nmd->chat =3D g_at_chat_clone(chat);
++
++	ofono_netmon_set_data(netmon, nmd);
++
++	g_idle_add(ril_delayed_register, netmon);
++
++	return 0;
++}
++
++static void xmm7modem_netmon_remove(struct ofono_netmon *netmon)
++{
++	struct netmon_driver_data *nmd =3D ofono_netmon_get_data(netmon);
++
++	DBG("xmm7modem netmon remove");
++
++	g_at_chat_unref(nmd->chat);
++
++	ofono_netmon_set_data(netmon, NULL);
++
++	g_free(nmd);
++}
++
++static struct ofono_netmon_driver driver =3D {
++	.name			=3D XMM7MODEM,
++	.probe			=3D xmm7modem_netmon_probe,
++	.remove			=3D xmm7modem_netmon_remove,
++	.request_update		=3D xmm7modem_netmon_request_update,
++};
++
++void xmm_netmon_init(void)
++{
++	ofono_netmon_driver_register(&driver);
++}
++
++void xmm_netmon_exit(void)
++{
++	ofono_netmon_driver_unregister(&driver);
++}
+diff --git a/drivers/xmm7modem/xmm7modem.c b/drivers/xmm7modem/xmm7modem.c
+index 5c08343..2cce2a7 100644
+--- a/drivers/xmm7modem/xmm7modem.c
++++ b/drivers/xmm7modem/xmm7modem.c
+@@ -37,7 +37,7 @@ static int xmm7modem_init(void)
+ {
+ 	xmm_radio_settings_init();
+ 	xmm_ims_init();
+-
++	xmm_netmon_init();
+ 	return 0;
+ }
  =
 
- 	snprintf(buf, sizeof(buf), "AT+UAUTHREQ=3D%u,%u,\"%s\",\"%s\"",
+@@ -45,6 +45,7 @@ static void xmm7modem_exit(void)
+ {
+ 	xmm_radio_settings_exit();
+ 	xmm_ims_exit();
++	xmm_netmon_exit();
+ }
+ =
+
+ OFONO_PLUGIN_DEFINE(xmm7modem, "Intel xmm7xxx series modem driver",
+diff --git a/drivers/xmm7modem/xmm7modem.h b/drivers/xmm7modem/xmm7modem.h
+index 5f8f172..a5cd55e 100644
+--- a/drivers/xmm7modem/xmm7modem.h
++++ b/drivers/xmm7modem/xmm7modem.h
+@@ -28,3 +28,6 @@ extern void xmm_radio_settings_exit(void);
+ =
+
+ extern void xmm_ims_init(void);
+ extern void xmm_ims_exit(void);
++
++extern void xmm_netmon_init(void);
++extern void xmm_netmon_exit(void);
 -- =
 
-2.17.1
+1.9.1
 
 
---===============0294089695037643784==--
+--===============2310373893651766288==--
 
