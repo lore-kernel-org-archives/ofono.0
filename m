@@ -1,60 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============2021475746788829384=="
+Content-Type: multipart/mixed; boundary="===============1764881765564419449=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 2/2] netmon: Enabled netmon atom for xmm7modem plugin
-Date: Tue, 09 Oct 2018 17:12:10 +0530
-Message-ID: <1539085330-4517-1-git-send-email-antara.borwankar@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/5] src/gprs: support for NONE auth
+Date: Tue, 09 Oct 2018 12:37:18 -0500
+Message-ID: <b4b5e9b2-9109-6ee0-8902-4470b9f31f87@gmail.com>
+In-Reply-To: <20181006054520.26737-3-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2021475746788829384==
+--===============1764881765564419449==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Antara <antara.borwankar@intel.com>
+Hi Giacinto,
 
-enabling netmon atom to report current serving cell measurements
-for xmm7modem
----
- Makefile.am       | 3 ++-
- plugins/xmm7xxx.c | 1 +
- 2 files changed, 3 insertions(+), 1 deletion(-)
+On 10/06/2018 12:45 AM, Giacinto Cifelli wrote:
+> ---
+>   src/gprs.c | 7 +++++++
+>   1 file changed, 7 insertions(+)
 
-diff --git a/Makefile.am b/Makefile.am
-index 10ace55..6667524 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -404,7 +404,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/xmm7modem/xmm7modem.h \
- 			drivers/xmm7modem/xmm7modem.c \
- 			drivers/xmm7modem/radio-settings.c \
--			drivers/xmm7modem/ims.c
-+			drivers/xmm7modem/ims.c \
-+			drivers/xmm7modem/netmon.c
- =
+Applied, see below:
 
- if PHONESIM
- builtin_modules +=3D phonesim
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index 066e2e7..243738e 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -356,6 +356,7 @@ static void xmm7xxx_post_online(struct ofono_modem *mod=
-em)
- 		ofono_gprs_add_context(gprs, gc);
- =
+> =
 
- 	ofono_ims_create(modem, "xmm7modem", data->chat);
-+	ofono_netmon_create(modem, 0, "xmm7modem", data->chat);
- }
- =
+> diff --git a/src/gprs.c b/src/gprs.c
+> index 79fafdbc..235c8884 100644
+> --- a/src/gprs.c
+> +++ b/src/gprs.c
+> @@ -261,6 +261,10 @@ static const char *gprs_auth_method_to_string(enum o=
+fono_gprs_auth_method auth)
+>   		return "chap";
+>   	case OFONO_GPRS_AUTH_METHOD_PAP:
+>   		return "pap";
+> +	case OFONO_GPRS_AUTH_METHOD_NONE:
+> +		return "none";
+> +	default:
+> +		return NULL;
 
- static int xmm7xxx_probe(struct ofono_modem *modem)
--- =
+I dropped this default statement for reasons outlined in our earlier =
 
-1.9.1
+discussions.
+
+>   	};
+>   =
+
+>   	return NULL;
+> @@ -275,6 +279,9 @@ static gboolean gprs_auth_method_from_string(const ch=
+ar *str,
+>   	} else if (g_str_equal(str, "pap")) {
+>   		*auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
+>   		return TRUE;
+> +	} else if (g_str_equal(str, "none")) {
+> +		*auth =3D OFONO_GPRS_AUTH_METHOD_NONE;
+> +		return TRUE;
+>   	}
+>   =
+
+>   	return FALSE;
+> =
 
 
---===============2021475746788829384==--
+Regards,
+-Denis
+
+--===============1764881765564419449==--
 
