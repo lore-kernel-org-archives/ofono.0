@@ -1,104 +1,203 @@
-Content-Type: multipart/mixed; boundary="===============8853433927130568595=="
+Content-Type: multipart/mixed; boundary="===============6563324144622728152=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 1/2] types.h: auth_method and proto enumerations
-Date: Tue, 09 Oct 2018 21:32:41 +0200
-Message-ID: <20181009193242.17477-1-gciofono@gmail.com>
+Subject: [PATCH 2/2] common: proto and auth_method conversion functions
+Date: Tue, 09 Oct 2018 21:32:42 +0200
+Message-ID: <20181009193242.17477-2-gciofono@gmail.com>
+In-Reply-To: <20181009193242.17477-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8853433927130568595==
+--===============6563324144622728152==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-ofono_gprs_proto and ofono_gprs_auth_method, and related length consts,
-moved to types.h from gprs-context.h,
-so that they can be shared also with lte core functions
+the following functions:
+	gprs_proto_to_string
+	gprs_proto_from_string
+	gprs_auth_method_to_string
+	gprs_auth_method_from_string
+
+are moved from gprs.c to common.c, with related declaration in common.h
+so that they can also be accessed from lte core functions
 ---
- include/gprs-context.h | 21 ---------------------
- include/types.h        | 21 +++++++++++++++++++++
- 2 files changed, 21 insertions(+), 21 deletions(-)
+ src/common.c | 62 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/common.h |  8 +++++++
+ src/gprs.c   | 62 ----------------------------------------------------
+ 3 files changed, 70 insertions(+), 62 deletions(-)
 
-diff --git a/include/gprs-context.h b/include/gprs-context.h
-index 8869c12e..965cefc2 100644
---- a/include/gprs-context.h
-+++ b/include/gprs-context.h
-@@ -31,21 +31,6 @@ extern "C" {
- struct ofono_gprs_context;
- struct ofono_modem;
+diff --git a/src/common.c b/src/common.c
+index 0db412a6..0328a98a 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -769,3 +769,65 @@ const char *call_status_to_string(enum call_status sta=
+tus)
  =
 
--/*
-- * ETSI 123.003, Section 9.1:
-- * the APN has, after encoding as defined in the paragraph below, a maximum
-- * length of 100 octets
-- */
--#define OFONO_GPRS_MAX_APN_LENGTH 100
--#define OFONO_GPRS_MAX_USERNAME_LENGTH 63
--#define OFONO_GPRS_MAX_PASSWORD_LENGTH 255
--
--enum ofono_gprs_proto {
--	OFONO_GPRS_PROTO_IP =3D 0,
--	OFONO_GPRS_PROTO_IPV6,
--	OFONO_GPRS_PROTO_IPV4V6,
--};
--
- enum ofono_gprs_context_type {
- 	OFONO_GPRS_CONTEXT_TYPE_ANY =3D 0,
- 	OFONO_GPRS_CONTEXT_TYPE_INTERNET,
-@@ -54,12 +39,6 @@ enum ofono_gprs_context_type {
- 	OFONO_GPRS_CONTEXT_TYPE_IMS,
- };
- =
-
--enum ofono_gprs_auth_method {
--	OFONO_GPRS_AUTH_METHOD_CHAP =3D 0,
--	OFONO_GPRS_AUTH_METHOD_PAP,
--	OFONO_GPRS_AUTH_METHOD_NONE,
--};
--
- struct ofono_gprs_primary_context {
- 	unsigned int cid;
- 	char apn[OFONO_GPRS_MAX_APN_LENGTH + 1];
-diff --git a/include/types.h b/include/types.h
-index 90d8c2c9..7e356185 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -122,6 +122,27 @@ struct ofono_uuid {
- 	unsigned char uuid[OFONO_SHA1_UUID_LEN];
- };
- =
-
-+/*
-+ * ETSI 123.003, Section 9.1:
-+ * the APN has, after encoding as defined in the paragraph below, a maximum
-+ * length of 100 octets
-+ */
-+#define OFONO_GPRS_MAX_APN_LENGTH 100
-+#define OFONO_GPRS_MAX_USERNAME_LENGTH 63
-+#define OFONO_GPRS_MAX_PASSWORD_LENGTH 255
+ 	return "unknown";
+ }
 +
-+enum ofono_gprs_proto {
-+	OFONO_GPRS_PROTO_IP =3D 0,
-+	OFONO_GPRS_PROTO_IPV6,
-+	OFONO_GPRS_PROTO_IPV4V6,
-+};
++const char *gprs_proto_to_string(enum ofono_gprs_proto proto)
++{
++	switch (proto) {
++	case OFONO_GPRS_PROTO_IP:
++		return "ip";
++	case OFONO_GPRS_PROTO_IPV6:
++		return "ipv6";
++	case OFONO_GPRS_PROTO_IPV4V6:
++		return "dual";
++	};
 +
-+enum ofono_gprs_auth_method {
-+	OFONO_GPRS_AUTH_METHOD_CHAP =3D 0,
-+	OFONO_GPRS_AUTH_METHOD_PAP,
-+	OFONO_GPRS_AUTH_METHOD_NONE,
-+};
++	return NULL;
++}
 +
- const char *ofono_uuid_to_str(const struct ofono_uuid *uuid);
- void ofono_call_init(struct ofono_call *call);
++gboolean gprs_proto_from_string(const char *str, enum ofono_gprs_proto *pr=
+oto)
++{
++	if (g_str_equal(str, "ip")) {
++		*proto =3D OFONO_GPRS_PROTO_IP;
++		return TRUE;
++	} else if (g_str_equal(str, "ipv6")) {
++		*proto =3D OFONO_GPRS_PROTO_IPV6;
++		return TRUE;
++	} else if (g_str_equal(str, "dual")) {
++		*proto =3D OFONO_GPRS_PROTO_IPV4V6;
++		return TRUE;
++	}
++
++	return FALSE;
++}
++
++const char *gprs_auth_method_to_string(enum ofono_gprs_auth_method auth)
++{
++	switch (auth) {
++	case OFONO_GPRS_AUTH_METHOD_CHAP:
++		return "chap";
++	case OFONO_GPRS_AUTH_METHOD_PAP:
++		return "pap";
++	case OFONO_GPRS_AUTH_METHOD_NONE:
++		return "none";
++	};
++
++	return NULL;
++}
++
++gboolean gprs_auth_method_from_string(const char *str,
++					enum ofono_gprs_auth_method *auth)
++{
++	if (g_str_equal(str, "chap")) {
++		*auth =3D OFONO_GPRS_AUTH_METHOD_CHAP;
++		return TRUE;
++	} else if (g_str_equal(str, "pap")) {
++		*auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
++		return TRUE;
++	} else if (g_str_equal(str, "none")) {
++		*auth =3D OFONO_GPRS_AUTH_METHOD_NONE;
++		return TRUE;
++	}
++
++	return FALSE;
++}
++
+diff --git a/src/common.h b/src/common.h
+index 923470f5..79c05fc4 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -187,3 +187,11 @@ const char *packet_bearer_to_string(int bearer);
  =
 
+ gboolean is_valid_apn(const char *apn);
+ const char *call_status_to_string(enum call_status status);
++
++const char *gprs_proto_to_string(enum ofono_gprs_proto proto);
++gboolean gprs_proto_from_string(const char *str, enum ofono_gprs_proto *pr=
+oto);
++
++const char *gprs_auth_method_to_string(enum ofono_gprs_auth_method auth);
++gboolean gprs_auth_method_from_string(const char *str,
++					enum ofono_gprs_auth_method *auth);
++
+diff --git a/src/gprs.c b/src/gprs.c
+index 9f87cc98..edd17f23 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -223,68 +223,6 @@ static gboolean gprs_context_string_to_type(const char=
+ *str,
+ 	return FALSE;
+ }
+ =
+
+-static const char *gprs_proto_to_string(enum ofono_gprs_proto proto)
+-{
+-	switch (proto) {
+-	case OFONO_GPRS_PROTO_IP:
+-		return "ip";
+-	case OFONO_GPRS_PROTO_IPV6:
+-		return "ipv6";
+-	case OFONO_GPRS_PROTO_IPV4V6:
+-		return "dual";
+-	};
+-
+-	return NULL;
+-}
+-
+-static gboolean gprs_proto_from_string(const char *str,
+-					enum ofono_gprs_proto *proto)
+-{
+-	if (g_str_equal(str, "ip")) {
+-		*proto =3D OFONO_GPRS_PROTO_IP;
+-		return TRUE;
+-	} else if (g_str_equal(str, "ipv6")) {
+-		*proto =3D OFONO_GPRS_PROTO_IPV6;
+-		return TRUE;
+-	} else if (g_str_equal(str, "dual")) {
+-		*proto =3D OFONO_GPRS_PROTO_IPV4V6;
+-		return TRUE;
+-	}
+-
+-	return FALSE;
+-}
+-
+-static const char *gprs_auth_method_to_string(enum ofono_gprs_auth_method =
+auth)
+-{
+-	switch (auth) {
+-	case OFONO_GPRS_AUTH_METHOD_CHAP:
+-		return "chap";
+-	case OFONO_GPRS_AUTH_METHOD_PAP:
+-		return "pap";
+-	case OFONO_GPRS_AUTH_METHOD_NONE:
+-		return "none";
+-	};
+-
+-	return NULL;
+-}
+-
+-static gboolean gprs_auth_method_from_string(const char *str,
+-					enum ofono_gprs_auth_method *auth)
+-{
+-	if (g_str_equal(str, "chap")) {
+-		*auth =3D OFONO_GPRS_AUTH_METHOD_CHAP;
+-		return TRUE;
+-	} else if (g_str_equal(str, "pap")) {
+-		*auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
+-		return TRUE;
+-	} else if (g_str_equal(str, "none")) {
+-		*auth =3D OFONO_GPRS_AUTH_METHOD_NONE;
+-		return TRUE;
+-	}
+-
+-	return FALSE;
+-}
+-
+ static unsigned int gprs_cid_alloc(struct ofono_gprs *gprs)
+ {
+ 	return idmap_alloc(gprs->cid_map);
 -- =
 
 2.17.1
 
 
---===============8853433927130568595==--
+--===============6563324144622728152==--
 
