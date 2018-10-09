@@ -1,45 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============0026313128897976983=="
+Content-Type: multipart/mixed; boundary="===============8184159453605103189=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] netmon: Enabled netmon atom for xmm7modem plugin
-Date: Tue, 09 Oct 2018 12:57:22 -0500
-Message-ID: <aebbeacc-a37d-8a28-3aaf-6186e238111b@gmail.com>
-In-Reply-To: <1539085330-4517-1-git-send-email-antara.borwankar@intel.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH 3/5] src/gprs: support for NONE auth
+Date: Tue, 09 Oct 2018 20:49:51 +0200
+Message-ID: <CAKSBH7GOjFLrLMUbT=BHTbidS7XgadK93FZppKjjvpbmkDCOeA@mail.gmail.com>
+In-Reply-To: <b4b5e9b2-9109-6ee0-8902-4470b9f31f87@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0026313128897976983==
+--===============8184159453605103189==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+Hi Denis,
 
-> diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-> index 066e2e7..243738e 100644
-> --- a/plugins/xmm7xxx.c
-> +++ b/plugins/xmm7xxx.c
+On Tue, Oct 9, 2018 at 7:37 PM Denis Kenzior <denkenz@gmail.com> wrote:
+>
+> Hi Giacinto,
+>
+> On 10/06/2018 12:45 AM, Giacinto Cifelli wrote:
+> > ---
+> >   src/gprs.c | 7 +++++++
+> >   1 file changed, 7 insertions(+)
+>
+> Applied, see below:
+>
+> >
+> > diff --git a/src/gprs.c b/src/gprs.c
+> > index 79fafdbc..235c8884 100644
+> > --- a/src/gprs.c
+> > +++ b/src/gprs.c
+> > @@ -261,6 +261,10 @@ static const char *gprs_auth_method_to_string(enum=
+ ofono_gprs_auth_method auth)
+> >               return "chap";
+> >       case OFONO_GPRS_AUTH_METHOD_PAP:
+> >               return "pap";
+> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
+> > +             return "none";
+> > +     default:
+> > +             return NULL;
+>
+> I dropped this default statement for reasons outlined in our earlier
+> discussions.
 
-I also added '#include <ofono/netmon.h>' at the top of this file.
+oh yes, thanks. I forgot to change this too.
 
-> @@ -356,6 +356,7 @@ static void xmm7xxx_post_online(struct ofono_modem *m=
-odem)
->   		ofono_gprs_add_context(gprs, gc);
->   =
-
->   	ofono_ims_create(modem, "xmm7modem", data->chat);
-> +	ofono_netmon_create(modem, 0, "xmm7modem", data->chat);
->   }
->   =
-
->   static int xmm7xxx_probe(struct ofono_modem *modem)
-> =
-
-
-Applied, thanks.
+>
+> >       };
+> >
+> >       return NULL;
+> > @@ -275,6 +279,9 @@ static gboolean gprs_auth_method_from_string(const =
+char *str,
+> >       } else if (g_str_equal(str, "pap")) {
+> >               *auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
+> >               return TRUE;
+> > +     } else if (g_str_equal(str, "none")) {
+> > +             *auth =3D OFONO_GPRS_AUTH_METHOD_NONE;
+> > +             return TRUE;
+> >       }
+> >
+> >       return FALSE;
+> >
+>
+> Regards,
+> -Denis
 
 Regards,
--Denis
+Giacinto
 
---===============0026313128897976983==--
+--===============8184159453605103189==--
 
