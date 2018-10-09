@@ -1,106 +1,153 @@
-Content-Type: multipart/mixed; boundary="===============6779192055531325076=="
+Content-Type: multipart/mixed; boundary="===============2753460996243981747=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/5] plugins/provisioning and mbpi: support for auth NONE
-Date: Tue, 09 Oct 2018 12:38:31 -0500
-Message-ID: <c58d346a-8c62-8223-2977-468e382b7c3d@gmail.com>
-In-Reply-To: <20181006054520.26737-4-gciofono@gmail.com>
+Subject: Re: [PATCH 5/5] drivers: support for auth NONE
+Date: Tue, 09 Oct 2018 12:41:48 -0500
+Message-ID: <9110ae75-3245-7131-8a3e-92fb83fef5ce@gmail.com>
+In-Reply-To: <20181006054520.26737-5-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6779192055531325076==
+--===============2753460996243981747==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
-On 10/06/2018 12:45 AM, Giacinto Cifelli wrote:
-> support of 'none' in file-provisioning:
-> the default authentication method is set to NONE
-> =
+I applied a modified version of this patch, see below:
 
-> support of 'none' in mbpi:
-> the default method remains CHAP, but it is overridden by NONE after
-> parsing the entire key for the apn and detecting no username/password
-> ---
->   plugins/file-provision.c | 7 +++++--
->   plugins/mbpi.c           | 6 ++++++
->   2 files changed, 11 insertions(+), 2 deletions(-)
-> =
-
-
-I broke this up into two separate commits, also:
-
-> diff --git a/plugins/file-provision.c b/plugins/file-provision.c
-> index d4846a65..3a1a5a68 100644
-> --- a/plugins/file-provision.c
-> +++ b/plugins/file-provision.c
-> @@ -93,18 +93,21 @@ static int config_file_provision_get_settings(const c=
-har *mcc,
->   	if (value !=3D NULL)
->   		(*settings)[0].password =3D value;
+> diff --git a/drivers/mbimmodem/gprs-context.c b/drivers/mbimmodem/gprs-co=
+ntext.c
+> index 79793c92..be256e43 100644
+> --- a/drivers/mbimmodem/gprs-context.c
+> +++ b/drivers/mbimmodem/gprs-context.c
+> @@ -75,9 +75,11 @@ static uint32_t auth_method_to_auth_protocol(enum ofon=
+o_gprs_auth_method method)
+>   		return 2; /* MBIMAuthProtocolChap */
+>   	case OFONO_GPRS_AUTH_METHOD_PAP:
+>   		return 1; /* MBIMAuthProtocolPap */
+> +	case OFONO_GPRS_AUTH_METHOD_NONE:
+> +		return 0; /* MBIMAUthProtocolNone */
+>   	}
 >   =
 
-> -	(*settings)[0].auth_method =3D OFONO_GPRS_AUTH_METHOD_CHAP;
-> +	/* select default authentication method */
-> +	(*settings)[0].auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
+> -	return 0;
+> +	return 0; /* MBIMAUthProtocolNone */
+>   }
+>   =
+
+>   static void mbim_deactivate_cb(struct mbim_message *message, void *user)
+> @@ -345,6 +347,8 @@ static void mbim_gprs_activate_primary(struct ofono_g=
+prs_context *gc,
+>   {
+>   	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+>   	struct mbim_message *message;
+> +	const char username =3D NULL;
+> +	const char password =3D NULL;
+
+These were changed to const char *
+
+>   =
+
+>   	DBG("cid %u", ctx->cid);
+>   =
+
+> @@ -354,6 +358,12 @@ static void mbim_gprs_activate_primary(struct ofono_=
+gprs_context *gc,
+>   	gcd->active_context =3D ctx->cid;
+>   	gcd->proto =3D ctx->proto;
+>   =
+
+> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->username[=
+0])
+> +		username =3D ctx->username;
 > +
->   	value =3D g_key_file_get_string(key_file, setting_group,
->   					"internet.AuthenticationMethod", NULL);
->   =
-
->   	if (value !=3D NULL) {
+> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE && ctx->password[=
+0])
+> +		password =3D ctx->password;
 > +
-
-This part was dropped
-
->   		if (g_strcmp0(value, "chap") =3D=3D 0)
->   			(*settings)[0].auth_method =3D
->   						OFONO_GPRS_AUTH_METHOD_CHAP;
->   		else if (g_strcmp0(value, "pap") =3D=3D 0)
->   			(*settings)[0].auth_method =3D
->   						OFONO_GPRS_AUTH_METHOD_PAP;
-> -		else
-> +		else if (g_strcmp0(value, "none") !=3D 0)
->   			DBG("Unknown auth method: %s", value);
+>   	message =3D mbim_message_new(mbim_uuid_basic_connect,
+>   					MBIM_CID_CONNECT,
+>   					MBIM_COMMAND_TYPE_SET);
+> @@ -361,8 +371,8 @@ static void mbim_gprs_activate_primary(struct ofono_g=
+prs_context *gc,
+>   				ctx->cid,
+>   				1, /* MBIMActivationCommandActivate */
+>   				ctx->apn,
+> -				ctx->username[0] ? ctx->username : NULL,
+> -				ctx->password[0] ? ctx->password : NULL,
+> +				username,
+> +				password,
+>   				0, /*MBIMCompressionNone */
+>   				auth_method_to_auth_protocol(ctx->auth_method),
+>   				proto_to_context_ip_type(ctx->proto),
+> diff --git a/drivers/mbmmodem/gprs-context.c b/drivers/mbmmodem/gprs-cont=
+ext.c
+> index e961afa1..fa8b44b6 100644
+> --- a/drivers/mbmmodem/gprs-context.c
+> +++ b/drivers/mbmmodem/gprs-context.c
+> @@ -394,11 +394,12 @@ static void mbm_gprs_activate_primary(struct ofono_=
+gprs_context *gc,
+>   	 * Set username and password, this should be done after CGDCONT
+>   	 * or an error can occur.  We don't bother with error checking
+>   	 * here
+> -	 * */
+> -	snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
+> -			ctx->cid, ctx->username, ctx->password);
+> -
+> -	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
+> +	 */
+> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
+> +		snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
+> +				ctx->cid, ctx->username, ctx->password);
+> +		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
+> +	}
 >   =
 
->   		g_free(value);
-> diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-> index ae92c762..433f1b55 100644
-> --- a/plugins/mbpi.c
-> +++ b/plugins/mbpi.c
-> @@ -325,6 +325,8 @@ static void apn_handler(GMarkupParseContext *context,=
- struct gsm_data *gsm,
->   	ap->apn =3D g_strdup(apn);
->   	ap->type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
->   	ap->proto =3D OFONO_GPRS_PROTO_IP;
-> +
-> +	/* pre-select default authentication method */
->   	ap->auth_method =3D OFONO_GPRS_AUTH_METHOD_CHAP;
+>   	return;
 >   =
 
->   	g_markup_parse_context_push(context, &apn_parser, ap);
-> @@ -395,6 +397,10 @@ static void gsm_end(GMarkupParseContext *context, co=
-nst gchar *element_name,
->   	if (ap =3D=3D NULL)
->   		return;
+
+I dropped this part entirely.  The reason is that we can have profiles =
+
+with username/password & without operating on the same CID.  Since the =
+
+setting is permanent on the modem, we need to set it/clear it even when =
+
+AUTH_METHOD_NONE is used.
+
+If you disagree, please send a follow up series.
+
+> diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-cont=
+ext.c
+> index 18b2bfa4..32facd8c 100644
+> --- a/drivers/stemodem/gprs-context.c
+> +++ b/drivers/stemodem/gprs-context.c
+> @@ -307,10 +307,11 @@ static void ste_gprs_activate_primary(struct ofono_=
+gprs_context *gc,
+>   	 * or an error can occur.  We don't bother with error checking
+>   	 * here
+>   	 */
+> -	snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
+> -			ctx->cid, ctx->username, ctx->password);
+> -
+> -	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
+> +	if (ctx->auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE) {
+> +		snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
+> +				ctx->cid, ctx->username, ctx->password);
+> +		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
+> +	}
 >   =
 
-> +	/* select authentication method NONE if fit */
-> +	if (!ap->username || !ap->password)
-> +		ap->auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
-> +
->   	if (gsm->allow_duplicates =3D=3D FALSE) {
->   		GSList *l;
+>   	return;
 >   =
 
-> =
 
+Dropped for the same reason as above
 
 Regards,
 -Denis
 
---===============6779192055531325076==--
+--===============2753460996243981747==--
 
