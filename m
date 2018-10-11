@@ -1,366 +1,413 @@
-Content-Type: multipart/mixed; boundary="===============7246884593155084947=="
+Content-Type: multipart/mixed; boundary="===============7844580144830638399=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH 5/6] atmodem/lte: proto and authentication handling
-Date: Thu, 11 Oct 2018 21:51:55 +0200
-Message-ID: <da05e9af-1ac8-a0ec-c6fd-8d3d96b10bbd@southpole.se>
-In-Reply-To: <20181010065454.15232-4-gciofono@gmail.com>
+Subject: Re: [PATCH 3/6] src/lte: added proto and authentication handling
+Date: Thu, 11 Oct 2018 22:07:31 +0200
+Message-ID: <56bbb99c-7076-7534-72d9-672eea1e44f1@southpole.se>
+In-Reply-To: <20181010065454.15232-3-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7246884593155084947==
+--===============7844580144830638399==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-I think this patch deserves a couple of lines of justification in the =
-
-patch description.=C2=A0 From the subject, it isn't obvious what this is =
-
-about, and a quick glance at the diff only raises further questions.=C2=A0 =
-
-Try to explain in the patch description what this is about, what problem =
-
-your modification is solving.
-
 
 On 10/10/18 08:54, Giacinto Cifelli wrote:
 > ---
->   drivers/atmodem/lte.c | 79 +++++++++++++++++++++++++++----------------
->   1 file changed, 50 insertions(+), 29 deletions(-)
+>   src/lte.c | 242 +++++++++++++++++++++++++++++++++++++++++-------------
+>   1 file changed, 186 insertions(+), 56 deletions(-)
 >
-> diff --git a/drivers/atmodem/lte.c b/drivers/atmodem/lte.c
-> index efa4e5fe..1d097c68 100644
-> --- a/drivers/atmodem/lte.c
-> +++ b/drivers/atmodem/lte.c
+> diff --git a/src/lte.c b/src/lte.c
+> index 23fe8e1c..2412fcec 100644
+> --- a/src/lte.c
+> +++ b/src/lte.c
 > @@ -3,6 +3,7 @@
 >    *  oFono - Open Source Telephony
 >    *
->    *  Copyright (C) 2017  Intel Corporation. All rights reserved.
+>    *  Copyright (C) 2016  Endocode AG. All rights reserved.
 > + *  Copyright (C) 2018 Gemalto M2M
-
-Why is copyright attributed to Gemalto when you and the other purported =
-
-authors (referencing your AUTHORS patch... see below) all use gmail =
-
-addresses?
-
-
-On 10/10/18 08:54, Giacinto Cifelli wrote:
-> ---
->   AUTHORS | 3 +++
->   1 file changed, 3 insertions(+)
->
-> diff --git a/AUTHORS b/AUTHORS
-> index 2d360e6e..8f0f5893 100644
-> --- a/AUTHORS
-> +++ b/AUTHORS
-> @@ -138,3 +138,6 @@ Florent Beillonnet<florent.beillonnet@gmail.com>
->   Martin Hundeb=C3=B8ll<martin@geanix.com>
->   Julien Tournier<tournier.julien@gmail.com>
->   Nandini Rebello<nandini.rebello@intel.com>
-> +Giacinto Cifelli<gciofono@gmail.com>
-> +Martin Baschin<martin.baschin@googlemail.com>
-> +Sebastian Arnd<sebastianarnd@gmail.com>
-
-Three authors but only Giacinto's name appears in the patches?
-
-
 >    *
 >    *  This program is free software; you can redistribute it and/or modify
 >    *  it under the terms of the GNU General Public License version 2 as
-> @@ -45,48 +46,67 @@ struct lte_driver_data {
->   	GAtChat *chat;
->   };
+> @@ -39,7 +40,11 @@
 >   =
 
-> -static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *re=
-sult,
-> -							gpointer user_data)
-> +static void at_set_reg_info(const struct ofono_lte *lte,
-> +			const struct ofono_lte_default_attach_info *info)
+>   #define SETTINGS_STORE "lte"
+>   #define SETTINGS_GROUP "Settings"
+> -#define DEFAULT_APN_KEY "DefaultAccessPointName"
+> +#define LTE_APN "DefaultAccessPointName"
+> +#define LTE_PROTO "Protocol"
+> +#define LTE_USERNAME "Username"
+> +#define LTE_PASSWORD "Password"
+> +#define LTE_AUTH_METHOD "AuthenticationMethod"
+>   =
+
+>   struct ofono_lte {
+>   	const struct ofono_lte_driver *driver;
+> @@ -57,6 +62,10 @@ static GSList *g_drivers =3D NULL;
+>   static void lte_load_settings(struct ofono_lte *lte)
 >   {
-> -	struct cb_data *cbd =3D user_data;
-> -	ofono_lte_cb_t cb =3D cbd->cb;
-> -	struct ofono_error error;
-> +	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
-> +	char buf_cgdcont[32 + OFONO_GPRS_MAX_APN_LENGTH  +1];
-> +	char buf_cgauth[32 + OFONO_GPRS_MAX_USERNAME_LENGTH +
-> +					OFONO_GPRS_MAX_PASSWORD_LENGTH +1];
-> +	guint buflen =3D sizeof(buf_cgauth);
-> +	enum ofono_gprs_auth_method auth_method;
+>   	char *apn;
+> +	char *proto_str;
+> +	char *auth_method_str;
+> +	char *username;
+> +	char *password;
 >   =
 
-> -	DBG("ok %d", ok);
-> +	if (strlen(info->apn) > 0)
-> +		snprintf(buf_cgdcont, sizeof(buf_cgdcont),
-> +				"AT+CGDCONT=3D0,\"IP\",\"%s\"", info->apn);
-> +	else
-> +		snprintf(buf_cgdcont, sizeof(buf_cgdcont),
-> +				"AT+CGDCONT=3D0,\"IP\"");
+>   	if (lte->imsi =3D=3D NULL)
+>   		return;
+> @@ -69,19 +78,57 @@ static void lte_load_settings(struct ofono_lte *lte)
+>   		return;
+>   	}
 >   =
 
-> -	decode_at_error(&error, g_at_result_final_response(result));
-> -	cb(&error, cbd->data);
-> +	if (g_at_chat_send(ldd->chat, buf_cgdcont, NULL, NULL, NULL, NULL) =3D=
-=3D 0)
-> +		return;
+> -	apn =3D g_key_file_get_string(lte->settings, SETTINGS_GROUP ,
+> -					DEFAULT_APN_KEY, NULL);
+> -	if (apn) {
+> +	apn =3D g_key_file_get_string(lte->settings, SETTINGS_GROUP,
+> +				LTE_APN, NULL);
+> +	proto_str =3D g_key_file_get_string(lte->settings, SETTINGS_GROUP,
+> +				LTE_PROTO, NULL);
+> +	auth_method_str =3D g_key_file_get_string(lte->settings, SETTINGS_GROUP,
+> +				LTE_AUTH_METHOD, NULL);
+> +	username =3D g_key_file_get_string(lte->settings, SETTINGS_GROUP,
+> +				LTE_USERNAME, NULL);
+> +	password =3D g_key_file_get_string(lte->settings, SETTINGS_GROUP,
+> +				LTE_PASSWORD, NULL);
+> +	if (apn)
+>   		strcpy(lte->info.apn, apn);
+> -		g_free(apn);
+> -	}
 > +
-> +	snprintf(buf_cgauth, buflen, "AT+CGAUTH=3D0,");
-> +	buflen -=3D strlen(buf_cgauth);
-
-Using snprintf() without checking the return value is mostly =
-
-pointless... if you know with certainty that your buffer will hold your =
-
-string just use sprintf.=C2=A0 The above could be better written as:
-
-n =3D sprintf(...);
-buflen -=3D n;
-
-
+> +	if (proto_str =3D=3D NULL)
+> +		proto_str =3D g_strdup("ip");
 > +
-> +	auth_method =3D info->auth_method;
+> +	/* this must have a valid default */
+> +	if (!gprs_proto_from_string(proto_str, &lte->info.proto))
+> +		lte->info.proto =3D OFONO_GPRS_PROTO_IP;
 > +
-> +	/*
-> +	 * change the authentication method if the  parameters are invalid
-> +	 * for behavior compatibility
-> +	 */
-> +	if(!*info->username || !*info->password)
-> +		auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
+> +	if (auth_method_str =3D=3D NULL)
+> +		auth_method_str =3D g_strdup("none");
 > +
-> +	switch(auth_method) {
-> +	case OFONO_GPRS_AUTH_METHOD_PAP:
-> +		snprintf(buf_cgauth+strlen(buf_cgauth),
+> +	/* this must have a valid default */
+> +	if (!gprs_auth_method_from_string(auth_method_str,
+> +							&lte->info.auth_method))
+> +		lte->info.auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
+> +
+> +	if (username)
+> +		strcpy(lte->info.username, username);
+> +
+> +	if (password)
+> +		strcpy(lte->info.password, password);
+> +
+> +	g_free(apn);
+> +	g_free(proto_str);
+> +	g_free(auth_method_str);
+> +	g_free(username);
+> +	g_free(password);
+>   }
+>   =
 
-You know strlen(buf_cgauth) already... it's 'n' above, the return value =
+>   static DBusMessage *lte_get_properties(DBusConnection *conn,
+>   					DBusMessage *msg, void *data)
+>   {
+>   	struct ofono_lte *lte =3D data;
+> +	const char *proto =3D gprs_proto_to_string(lte->info.proto);
+>   	const char *apn =3D lte->info.apn;
+> +	const char* auth_method =3D
+> +			gprs_auth_method_to_string(lte->info.auth_method);
+> +	const char *username =3D lte->info.username;
+> +	const char *password =3D lte->info.password;
+>   	DBusMessage *reply;
+>   	DBusMessageIter iter;
+>   	DBusMessageIter dict;
+> @@ -95,20 +142,28 @@ static DBusMessage *lte_get_properties(DBusConnectio=
+n *conn,
+>   	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+>   					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+>   					&dict);
+> -	ofono_dbus_dict_append(&dict, DEFAULT_APN_KEY, DBUS_TYPE_STRING, &apn);
+> +	ofono_dbus_dict_append(&dict, LTE_APN, DBUS_TYPE_STRING, &apn);
+> +	ofono_dbus_dict_append(&dict, LTE_PROTO, DBUS_TYPE_STRING, &proto);
+> +	ofono_dbus_dict_append(&dict, LTE_AUTH_METHOD, DBUS_TYPE_STRING,
+> +					&auth_method);
+> +	ofono_dbus_dict_append(&dict, LTE_USERNAME, DBUS_TYPE_STRING,
+> +					&username);
+> +	ofono_dbus_dict_append(&dict, LTE_PASSWORD, DBUS_TYPE_STRING,
+> +					&password);
+>   	dbus_message_iter_close_container(&iter, &dict);
+>   =
 
-from snprintf.=C2=A0 No need to traverse the string again to figure this ou=
-t.
+>   	return reply;
+>   }
+>   =
 
-> +				buflen, "1,\"%s\",\"%s\"",
-> +				info->username, info->password);
-> +		break;
-> +	case OFONO_GPRS_AUTH_METHOD_CHAP:
-> +		snprintf(buf_cgauth+strlen(buf_cgauth),
-> +				buflen, "2,\"%s\",\"%s\"",
-> +				info->username, info->password);
-> +		break;
-> +	case OFONO_GPRS_AUTH_METHOD_NONE:
-> +		snprintf(buf_cgauth+strlen(buf_cgauth), buflen, "0");
-> +		break;
+>   static void lte_set_default_attach_info_cb(const struct ofono_error *er=
+ror,
+> -						void *data)
+> +								void *data)
+>   {
+>   	struct ofono_lte *lte =3D data;
+>   	const char *path =3D __ofono_atom_get_path(lte->atom);
+>   	DBusConnection *conn =3D ofono_dbus_get_connection();
+>   	DBusMessage *reply;
+> -	const char *apn =3D lte->info.apn;
+> +	const char *key;
+> +	const char *propstr =3D NULL;
+>   =
+
+>   	DBG("%s error %d", path, error->type);
+>   =
+
+> @@ -118,55 +173,64 @@ static void lte_set_default_attach_info_cb(const st=
+ruct ofono_error *error,
+>   		return;
+>   	}
+>   =
+
+> -	g_strlcpy(lte->info.apn, lte->pending_info.apn,
+> -			OFONO_GPRS_MAX_APN_LENGTH + 1);
+> +	if (!g_str_equal(lte->pending_info.apn, lte->info.apn)) {
+> +		g_strlcpy(lte->info.apn, lte->pending_info.apn,
+> +					OFONO_GPRS_MAX_APN_LENGTH + 1);
+> +		key =3D LTE_APN;
+> +		propstr =3D lte->info.apn;
+> +	} else if (lte->pending_info.proto !=3D lte->info.proto) {
+> +		lte->info.proto =3D lte->pending_info.proto;
+> +		key =3D LTE_PROTO;
+> +		propstr =3D gprs_proto_to_string(lte->info.proto);
+> +	} else if (lte->pending_info.auth_method !=3D lte->info.auth_method) {
+> +		lte->info.auth_method =3D lte->pending_info.auth_method;
+> +		key =3D LTE_AUTH_METHOD;
+> +		propstr =3D gprs_auth_method_to_string(lte->info.auth_method);
+> +
+> +	} else if (!g_str_equal(lte->pending_info.username,
+> +							lte->info.username)) {
+> +		g_strlcpy(lte->info.username, lte->pending_info.username,
+> +					OFONO_GPRS_MAX_USERNAME_LENGTH + 1);
+> +		key =3D LTE_USERNAME;
+> +		propstr =3D lte->info.username;
+> +	} else if (!g_str_equal(lte->pending_info.password,
+> +							lte->info.password)) {
+> +		g_strlcpy(lte->info.password, lte->pending_info.password,
+> +					OFONO_GPRS_MAX_PASSWORD_LENGTH + 1);
+> +		key =3D LTE_PASSWORD;
+> +		propstr =3D lte->info.password;
+> +	} else {
+> +		/*
+> +		 * this should never happen, because no property change is
+> +		 * checked before.
+
+If this should never happen, handling it _gracefully_ doesn't make much =
+
+sense.=C2=A0 If this _can't_ happen, skip the check; if it _might but =
+
+shouldn't_, log an error, at least.
+
+> +		 * Neverthelss, in this case it will answer the D-Bus message
+> +		 * but emit no signal
+> +		 */
+> +		key =3D NULL;
 > +	}
 > +
-> +	g_at_chat_send(ldd->chat, buf_cgauth, NULL, NULL, NULL, NULL);
+> +	reply =3D dbus_message_new_method_return(lte->pending);
+> +	__ofono_dbus_pending_reply(&lte->pending, reply);
+> +
+> +	if(!key)
+> +		return;
+>   =
 
-Can't fail?
+>   	if (lte->settings) {
+> -		if (strlen(lte->info.apn) =3D=3D 0)
+> -			/* Clear entry on empty APN. */
+> -			g_key_file_remove_key(lte->settings, SETTINGS_GROUP,
+> -						DEFAULT_APN_KEY, NULL);
+> +		if (!*propstr)
+> +			/* Clear entry on empty string. */
+> +			g_key_file_remove_key(lte->settings,
+> +				SETTINGS_GROUP, key, NULL);
+>   		else
+> -			g_key_file_set_string(lte->settings, SETTINGS_GROUP,
+> -						DEFAULT_APN_KEY, lte->info.apn);
+> +			g_key_file_set_string(lte->settings,
+> +				SETTINGS_GROUP, key, propstr);
+>   =
 
+>   		storage_sync(lte->imsi, SETTINGS_STORE, lte->settings);
+>   	}
+>   =
+
+> -	reply =3D dbus_message_new_method_return(lte->pending);
+> -	__ofono_dbus_pending_reply(&lte->pending, reply);
+> -
+>   	ofono_dbus_signal_property_changed(conn, path,
+>   					OFONO_CONNECTION_CONTEXT_INTERFACE,
+> -					DEFAULT_APN_KEY,
+> -					DBUS_TYPE_STRING, &apn);
+> -}
+> -
+> -static DBusMessage *lte_set_default_apn(struct ofono_lte *lte,
+> -				DBusConnection *conn, DBusMessage *msg,
+> -				const char *apn)
+> -{
+> -	if (lte->driver->set_default_attach_info =3D=3D NULL)
+> -		return __ofono_error_not_implemented(msg);
+> -
+> -	if (lte->pending)
+> -		return __ofono_error_busy(msg);
+> -
+> -	if (g_str_equal(apn, lte->info.apn))
+> -		return dbus_message_new_method_return(msg);
+> -
+> -	/* We do care about empty value: it can be used for reset. */
+> -	if (is_valid_apn(apn) =3D=3D FALSE && apn[0] !=3D '\0')
+> -		return __ofono_error_invalid_format(msg);
+> -
+> -	lte->pending =3D dbus_message_ref(msg);
+> -
+> -	g_strlcpy(lte->pending_info.apn, apn, OFONO_GPRS_MAX_APN_LENGTH + 1);
+> -
+> -	lte->driver->set_default_attach_info(lte, &lte->pending_info,
+> -					lte_set_default_attach_info_cb, lte);
+> -
+> -	return NULL;
+> +					key,
+> +					DBUS_TYPE_STRING, &propstr);
 >   }
 >   =
 
->   static void at_lte_set_default_attach_info(const struct ofono_lte *lte,
->   			const struct ofono_lte_default_attach_info *info,
->   			ofono_lte_cb_t cb, void *data)
+>   static DBusMessage *lte_set_property(DBusConnection *conn,
+> @@ -177,6 +241,14 @@ static DBusMessage *lte_set_property(DBusConnection =
+*conn,
+>   	DBusMessageIter var;
+>   	const char *property;
+>   	const char *str;
+> +	enum ofono_gprs_auth_method auth_method;
+> +	enum ofono_gprs_proto proto;
+> +
+> +	if (lte->driver->set_default_attach_info =3D=3D NULL)
+> +		return __ofono_error_not_implemented(msg);
+> +
+> +	if (lte->pending)
+> +		return __ofono_error_busy(msg);
+>   =
+
+>   	if (!dbus_message_iter_init(msg, &iter))
+>   		return __ofono_error_invalid_args(msg);
+> @@ -192,16 +264,64 @@ static DBusMessage *lte_set_property(DBusConnection=
+ *conn,
+>   =
+
+>   	dbus_message_iter_recurse(&iter, &var);
+>   =
+
+> -	if (!strcmp(property, DEFAULT_APN_KEY)) {
+> -		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
+> -			return __ofono_error_invalid_args(msg);
+> +	if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_get_basic(&var, &str);
+>   =
+
+> -		dbus_message_iter_get_basic(&var, &str);
+> +	if ((strcmp(property, LTE_APN) =3D=3D 0)) {
+>   =
+
+> -		return lte_set_default_apn(lte, conn, msg, str);
+> -	}
+> +		if (g_str_equal(str, lte->info.apn))
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		/* We do care about empty value: it can be used for reset. */
+> +		if (is_valid_apn(str) =3D=3D FALSE && str[0] !=3D '\0')
+> +			return __ofono_error_invalid_format(msg);
+> +
+> +		g_strlcpy(lte->pending_info.apn, str,
+> +					OFONO_GPRS_MAX_APN_LENGTH + 1);
+> +
+> +	} else if ((strcmp(property, LTE_PROTO) =3D=3D 0)) {
+> +
+> +		if (!gprs_proto_from_string(str, &proto))
+> +			return __ofono_error_invalid_format(msg);
+> +
+> +		if (proto =3D=3D lte->info.proto)
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		lte->pending_info.proto =3D proto;
+> +
+> +	} else if (strcmp(property, LTE_AUTH_METHOD) =3D=3D 0) {
+> +
+> +		if (!gprs_auth_method_from_string(str, &auth_method))
+> +			return __ofono_error_invalid_format(msg);
+> +
+> +		if (proto =3D=3D lte->info.proto)
+> +			return dbus_message_new_method_return(msg);
+>   =
+
+> -	return __ofono_error_invalid_args(msg);
+> +	} else if (strcmp(property, LTE_USERNAME) =3D=3D 0) {
+> +
+> +		if (g_str_equal(str, lte->info.username))
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		g_strlcpy(lte->pending_info.username, str,
+> +					OFONO_GPRS_MAX_USERNAME_LENGTH + 1);
+> +
+> +	} else if (strcmp(property, LTE_PASSWORD) =3D=3D 0) {
+> +
+> +		if (g_str_equal(str, lte->info.password))
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		g_strlcpy(lte->pending_info.password, str,
+> +					OFONO_GPRS_MAX_PASSWORD_LENGTH + 1);
+> +
+> +	} else
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	lte->pending =3D dbus_message_ref(msg);
+> +	lte->driver->set_default_attach_info(lte, &lte->pending_info,
+> +					lte_set_default_attach_info_cb, lte);
+
+Note here that you've short-circuited the atmodem implementation (in =
+
+patch 5/6) of this function so that the callback gets invoked =
+
+immediately instead of on a subsequent mainloop iteration.=C2=A0 That often =
+
+leads to surprising results... not sure if that's the case here, but the =
+
+dbus_message_ref that follows looks suspicious.
+
+> +	return dbus_message_ref(msg);;
+>   }
+>   =
+
+>   static const GDBusMethodTable lte_methods[] =3D {
+> @@ -374,6 +494,16 @@ void *ofono_lte_get_data(const struct ofono_lte *lte)
+>   	return lte->driver_data;
+>   }
+>   =
+
+> +void ofono_lte_set_reg_info(struct ofono_modem *modem)
+> +{
+> +	struct ofono_lte *lte =3D __ofono_atom_find(OFONO_ATOM_TYPE_LTE, modem);
+> +
+> +	if(!lte || !lte->driver || !lte->driver->set_reg_info)
+> +		return;
+> +
+> +	lte->driver->set_reg_info(lte, &lte->info);
+> +}
+> +
+>   struct ofono_modem *ofono_lte_get_modem(const struct ofono_lte *lte)
 >   {
-> -	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
-> -	char buf[32 + OFONO_GPRS_MAX_APN_LENGTH + 1];
-> -	struct cb_data *cbd =3D cb_data_new(cb, data);
-> -
-> -	DBG("LTE config with APN: %s", info->apn);
-> -
-> -	if (strlen(info->apn) > 0)
-> -		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\",\"%s\"",
-> -				info->apn);
-> -	else
-> -		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\"");
-> -
-> -	/* We can't do much in case of failure so don't check response. */
-> -	if (g_at_chat_send(ldd->chat, buf, NULL,
-> -			at_lte_set_default_attach_info_cb, cbd, g_free) > 0)
-> -		return;
-> -
-> -	CALLBACK_WITH_FAILURE(cb, data);
-> +	CALLBACK_WITH_SUCCESS(cb, data);
->   }
->   =
-
-
-Aside from abandoning all error handling, what does set_reg_info provide =
-
-that could not have been handled by set_default_attach_info?
-
-
->   static gboolean lte_delayed_register(gpointer user_data)
->   {
-> -	struct ofono_lte *lte =3D user_data;
-> -
-> -	ofono_lte_register(lte);
-> +	ofono_lte_register(user_data);
-
-I prefer the original version... nonetheless, this change doesn't belong =
-
-in this patch.
-
->   =
-
->   	return FALSE;
->   }
-> @@ -129,6 +149,7 @@ static struct ofono_lte_driver driver =3D {
->   	.probe				=3D at_lte_probe,
->   	.remove				=3D at_lte_remove,
->   	.set_default_attach_info	=3D at_lte_set_default_attach_info,
-> +	.set_reg_info			=3D at_set_reg_info,
->   };
->   =
-
->   void at_lte_init(void)
+>   	return __ofono_atom_get_modem(lte->atom);
 
 /Jonas
 
---===============7246884593155084947==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+CiAgPGhlYWQ+CiAgICA8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRl
-bnQ9InRleHQvaHRtbDsgY2hhcnNldD11dGYtOCI+CiAgPC9oZWFkPgogIDxib2R5IHRleHQ9IiMw
-MDAwMDAiIGJnY29sb3I9IiNGRkZGRkYiPgogICAgPHA+SGksPC9wPgogICAgPHA+SSB0aGluayB0
-aGlzIHBhdGNoIGRlc2VydmVzIGEgY291cGxlIG9mIGxpbmVzIG9mIGp1c3RpZmljYXRpb24gaW4K
-ICAgICAgdGhlIHBhdGNoIGRlc2NyaXB0aW9uLsKgIEZyb20gdGhlIHN1YmplY3QsIGl0IGlzbid0
-IG9idmlvdXMgd2hhdAogICAgICB0aGlzIGlzIGFib3V0LCBhbmQgYSBxdWljayBnbGFuY2UgYXQg
-dGhlIGRpZmYgb25seSByYWlzZXMgZnVydGhlcgogICAgICBxdWVzdGlvbnMuwqAgVHJ5IHRvIGV4
-cGxhaW4gaW4gdGhlIHBhdGNoIGRlc2NyaXB0aW9uIHdoYXQgdGhpcyBpcwogICAgICBhYm91dCwg
-d2hhdCBwcm9ibGVtIHlvdXIgbW9kaWZpY2F0aW9uIGlzIHNvbHZpbmcuPGJyPgogICAgPC9wPgog
-ICAgPGJyPgogICAgPGRpdiBjbGFzcz0ibW96LWNpdGUtcHJlZml4Ij5PbiAxMC8xMC8xOCAwODo1
-NCwgR2lhY2ludG8gQ2lmZWxsaQogICAgICB3cm90ZTo8YnI+CiAgICA8L2Rpdj4KICAgIDxibG9j
-a3F1b3RlIHR5cGU9ImNpdGUiCiAgICAgIGNpdGU9Im1pZDoyMDE4MTAxMDA2NTQ1NC4xNTIzMi00
-LWdjaW9mb25vQGdtYWlsLmNvbSI+CiAgICAgIDxwcmUgd3JhcD0iIj4tLS0KIGRyaXZlcnMvYXRt
-b2RlbS9sdGUuYyB8IDc5ICsrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0t
-LS0KIDEgZmlsZSBjaGFuZ2VkLCA1MCBpbnNlcnRpb25zKCspLCAyOSBkZWxldGlvbnMoLSkKCmRp
-ZmYgLS1naXQgYS9kcml2ZXJzL2F0bW9kZW0vbHRlLmMgYi9kcml2ZXJzL2F0bW9kZW0vbHRlLmMK
-aW5kZXggZWZhNGU1ZmUuLjFkMDk3YzY4IDEwMDY0NAotLS0gYS9kcml2ZXJzL2F0bW9kZW0vbHRl
-LmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL2x0ZS5jCkBAIC0zLDYgKzMsNyBAQAogICogIG9Gb25v
-IC0gT3BlbiBTb3VyY2UgVGVsZXBob255CiAgKgogICogIENvcHlyaWdodCAoQykgMjAxNyAgSW50
-ZWwgQ29ycG9yYXRpb24uIEFsbCByaWdodHMgcmVzZXJ2ZWQuCisgKiAgQ29weXJpZ2h0IChDKSAy
-MDE4IEdlbWFsdG8gTTJNPC9wcmU+CiAgICA8L2Jsb2NrcXVvdGU+CiAgICA8YnI+CiAgICBXaHkg
-aXMgY29weXJpZ2h0IGF0dHJpYnV0ZWQgdG8gR2VtYWx0byB3aGVuIHlvdSBhbmQgdGhlIG90aGVy
-CiAgICBwdXJwb3J0ZWQgYXV0aG9ycyAocmVmZXJlbmNpbmcgeW91ciBBVVRIT1JTIHBhdGNoLi4u
-IHNlZSBiZWxvdykgYWxsCiAgICB1c2UgZ21haWwgYWRkcmVzc2VzPzxicj4KICAgIDxicj4KICAg
-IDxicj4KICAgIDxkaXYgY2xhc3M9Im1vei1jaXRlLXByZWZpeCI+T24gMTAvMTAvMTggMDg6NTQs
-IEdpYWNpbnRvIENpZmVsbGkKICAgICAgd3JvdGU6PGJyPgogICAgPC9kaXY+CiAgICA8YmxvY2tx
-dW90ZSB0eXBlPSJjaXRlIgogICAgICBjaXRlPSJtaWQ6MjAxODEwMTAwNjU0NTQuMTUyMzItNi1n
-Y2lvZm9ub0BnbWFpbC5jb20iPgogICAgICA8cHJlIHdyYXA9IiI+LS0tCiBBVVRIT1JTIHwgMyAr
-KysKIDEgZmlsZSBjaGFuZ2VkLCAzIGluc2VydGlvbnMoKykKCmRpZmYgLS1naXQgYS9BVVRIT1JT
-IGIvQVVUSE9SUwppbmRleCAyZDM2MGU2ZS4uOGYwZjU4OTMgMTAwNjQ0Ci0tLSBhL0FVVEhPUlMK
-KysrIGIvQVVUSE9SUwpAQCAtMTM4LDMgKzEzOCw2IEBAIEZsb3JlbnQgQmVpbGxvbm5ldCA8YSBj
-bGFzcz0ibW96LXR4dC1saW5rLXJmYzIzOTZFIiBocmVmPSJtYWlsdG86ZmxvcmVudC5iZWlsbG9u
-bmV0QGdtYWlsLmNvbSI+Jmx0O2Zsb3JlbnQuYmVpbGxvbm5ldEBnbWFpbC5jb20mZ3Q7PC9hPgog
-TWFydGluIEh1bmRlYsO4bGwgPGEgY2xhc3M9Im1vei10eHQtbGluay1yZmMyMzk2RSIgaHJlZj0i
-bWFpbHRvOm1hcnRpbkBnZWFuaXguY29tIj4mbHQ7bWFydGluQGdlYW5peC5jb20mZ3Q7PC9hPgog
-SnVsaWVuIFRvdXJuaWVyIDxhIGNsYXNzPSJtb3otdHh0LWxpbmstcmZjMjM5NkUiIGhyZWY9Im1h
-aWx0bzp0b3Vybmllci5qdWxpZW5AZ21haWwuY29tIj4mbHQ7dG91cm5pZXIuanVsaWVuQGdtYWls
-LmNvbSZndDs8L2E+CiBOYW5kaW5pIFJlYmVsbG8gPGEgY2xhc3M9Im1vei10eHQtbGluay1yZmMy
-Mzk2RSIgaHJlZj0ibWFpbHRvOm5hbmRpbmkucmViZWxsb0BpbnRlbC5jb20iPiZsdDtuYW5kaW5p
-LnJlYmVsbG9AaW50ZWwuY29tJmd0OzwvYT4KK0dpYWNpbnRvIENpZmVsbGkgPGEgY2xhc3M9Im1v
-ei10eHQtbGluay1yZmMyMzk2RSIgaHJlZj0ibWFpbHRvOmdjaW9mb25vQGdtYWlsLmNvbSI+Jmx0
-O2djaW9mb25vQGdtYWlsLmNvbSZndDs8L2E+CitNYXJ0aW4gQmFzY2hpbiA8YSBjbGFzcz0ibW96
-LXR4dC1saW5rLXJmYzIzOTZFIiBocmVmPSJtYWlsdG86bWFydGluLmJhc2NoaW5AZ29vZ2xlbWFp
-bC5jb20iPiZsdDttYXJ0aW4uYmFzY2hpbkBnb29nbGVtYWlsLmNvbSZndDs8L2E+CitTZWJhc3Rp
-YW4gQXJuZCA8YSBjbGFzcz0ibW96LXR4dC1saW5rLXJmYzIzOTZFIiBocmVmPSJtYWlsdG86c2Vi
-YXN0aWFuYXJuZEBnbWFpbC5jb20iPiZsdDtzZWJhc3RpYW5hcm5kQGdtYWlsLmNvbSZndDs8L2E+
-PC9wcmU+CiAgICA8L2Jsb2NrcXVvdGU+CiAgICA8YnI+CiAgICBUaHJlZSBhdXRob3JzIGJ1dCBv
-bmx5IEdpYWNpbnRvJ3MgbmFtZSBhcHBlYXJzIGluIHRoZSBwYXRjaGVzPzxicj4KICAgIDxicj4K
-ICAgIDxicj4KICAgIDxibG9ja3F1b3RlIHR5cGU9ImNpdGUiCiAgICAgIGNpdGU9Im1pZDoyMDE4
-MTAxMDA2NTQ1NC4xNTIzMi00LWdjaW9mb25vQGdtYWlsLmNvbSI+CiAgICAgIDxwcmUgd3JhcD0i
-Ij4KICAqCiAgKiAgVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7IHlvdSBjYW4gcmVkaXN0
-cmlidXRlIGl0IGFuZC9vciBtb2RpZnkKICAqICBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdO
-VSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIHZlcnNpb24gMiBhcwpAQCAtNDUsNDggKzQ2LDY3IEBA
-IHN0cnVjdCBsdGVfZHJpdmVyX2RhdGEgewogCUdBdENoYXQgKmNoYXQ7CiB9OwogCi1zdGF0aWMg
-dm9pZCBhdF9sdGVfc2V0X2RlZmF1bHRfYXR0YWNoX2luZm9fY2IoZ2Jvb2xlYW4gb2ssIEdBdFJl
-c3VsdCAqcmVzdWx0LAotCQkJCQkJCWdwb2ludGVyIHVzZXJfZGF0YSkKK3N0YXRpYyB2b2lkIGF0
-X3NldF9yZWdfaW5mbyhjb25zdCBzdHJ1Y3Qgb2Zvbm9fbHRlICpsdGUsCisJCQljb25zdCBzdHJ1
-Y3Qgb2Zvbm9fbHRlX2RlZmF1bHRfYXR0YWNoX2luZm8gKmluZm8pCiB7Ci0Jc3RydWN0IGNiX2Rh
-dGEgKmNiZCA9IHVzZXJfZGF0YTsKLQlvZm9ub19sdGVfY2JfdCBjYiA9IGNiZC0mZ3Q7Y2I7Ci0J
-c3RydWN0IG9mb25vX2Vycm9yIGVycm9yOworCXN0cnVjdCBsdGVfZHJpdmVyX2RhdGEgKmxkZCA9
-IG9mb25vX2x0ZV9nZXRfZGF0YShsdGUpOworCWNoYXIgYnVmX2NnZGNvbnRbMzIgKyBPRk9OT19H
-UFJTX01BWF9BUE5fTEVOR1RIICArMV07CisJY2hhciBidWZfY2dhdXRoWzMyICsgT0ZPTk9fR1BS
-U19NQVhfVVNFUk5BTUVfTEVOR1RIICsKKwkJCQkJT0ZPTk9fR1BSU19NQVhfUEFTU1dPUkRfTEVO
-R1RIICsxXTsKKwlndWludCBidWZsZW4gPSBzaXplb2YoYnVmX2NnYXV0aCk7CisJZW51bSBvZm9u
-b19ncHJzX2F1dGhfbWV0aG9kIGF1dGhfbWV0aG9kOwogCi0JREJHKCJvayAlZCIsIG9rKTsKKwlp
-ZiAoc3RybGVuKGluZm8tJmd0O2FwbikgJmd0OyAwKQorCQlzbnByaW50ZihidWZfY2dkY29udCwg
-c2l6ZW9mKGJ1Zl9jZ2Rjb250KSwKKwkJCQkiQVQrQ0dEQ09OVD0wLFwiSVBcIixcIiVzXCIiLCBp
-bmZvLSZndDthcG4pOworCWVsc2UKKwkJc25wcmludGYoYnVmX2NnZGNvbnQsIHNpemVvZihidWZf
-Y2dkY29udCksCisJCQkJIkFUK0NHRENPTlQ9MCxcIklQXCIiKTsKIAotCWRlY29kZV9hdF9lcnJv
-cigmYW1wO2Vycm9yLCBnX2F0X3Jlc3VsdF9maW5hbF9yZXNwb25zZShyZXN1bHQpKTsKLQljYigm
-YW1wO2Vycm9yLCBjYmQtJmd0O2RhdGEpOworCWlmIChnX2F0X2NoYXRfc2VuZChsZGQtJmd0O2No
-YXQsIGJ1Zl9jZ2Rjb250LCBOVUxMLCBOVUxMLCBOVUxMLCBOVUxMKSA9PSAwKQorCQlyZXR1cm47
-CisKKwlzbnByaW50ZihidWZfY2dhdXRoLCBidWZsZW4sICJBVCtDR0FVVEg9MCwiKTsKKwlidWZs
-ZW4gLT0gc3RybGVuKGJ1Zl9jZ2F1dGgpOzwvcHJlPgogICAgPC9ibG9ja3F1b3RlPgogICAgPGJy
-PgogICAgVXNpbmcgc25wcmludGYoKSB3aXRob3V0IGNoZWNraW5nIHRoZSByZXR1cm4gdmFsdWUg
-aXMgbW9zdGx5CiAgICBwb2ludGxlc3MuLi4gaWYgeW91IGtub3cgd2l0aCBjZXJ0YWludHkgdGhh
-dCB5b3VyIGJ1ZmZlciB3aWxsIGhvbGQKICAgIHlvdXIgc3RyaW5nIGp1c3QgdXNlIHNwcmludGYu
-wqAgVGhlIGFib3ZlIGNvdWxkIGJlIGJldHRlciB3cml0dGVuIGFzOjxicj4KICAgIDxicj4KICAg
-IG4gPSBzcHJpbnRmKC4uLik7PGJyPgogICAgYnVmbGVuIC09IG47PGJyPgogICAgPGJyPgogICAg
-PGJyPgogICAgPGJsb2NrcXVvdGUgdHlwZT0iY2l0ZSIKICAgICAgY2l0ZT0ibWlkOjIwMTgxMDEw
-MDY1NDU0LjE1MjMyLTQtZ2Npb2Zvbm9AZ21haWwuY29tIj4KICAgICAgPHByZSB3cmFwPSIiPgor
-CisJYXV0aF9tZXRob2QgPSBpbmZvLSZndDthdXRoX21ldGhvZDsKKworCS8qCisJICogY2hhbmdl
-IHRoZSBhdXRoZW50aWNhdGlvbiBtZXRob2QgaWYgdGhlICBwYXJhbWV0ZXJzIGFyZSBpbnZhbGlk
-CisJICogZm9yIGJlaGF2aW9yIGNvbXBhdGliaWxpdHkKKwkgKi8KKwlpZighKmluZm8tJmd0O3Vz
-ZXJuYW1lIHx8ICEqaW5mby0mZ3Q7cGFzc3dvcmQpCisJCWF1dGhfbWV0aG9kID0gT0ZPTk9fR1BS
-U19BVVRIX01FVEhPRF9OT05FOworCisJc3dpdGNoKGF1dGhfbWV0aG9kKSB7CisJY2FzZSBPRk9O
-T19HUFJTX0FVVEhfTUVUSE9EX1BBUDoKKwkJc25wcmludGYoYnVmX2NnYXV0aCtzdHJsZW4oYnVm
-X2NnYXV0aCksPC9wcmU+CiAgICA8L2Jsb2NrcXVvdGU+CiAgICA8YnI+CiAgICBZb3Uga25vdyBz
-dHJsZW4oYnVmX2NnYXV0aCkgYWxyZWFkeS4uLiBpdCdzICduJyBhYm92ZSwgdGhlIHJldHVybgog
-ICAgdmFsdWUgZnJvbSBzbnByaW50Zi7CoCBObyBuZWVkIHRvIHRyYXZlcnNlIHRoZSBzdHJpbmcg
-YWdhaW4gdG8gZmlndXJlCiAgICB0aGlzIG91dC48YnI+CiAgICA8YnI+CiAgICA8YmxvY2txdW90
-ZSB0eXBlPSJjaXRlIgogICAgICBjaXRlPSJtaWQ6MjAxODEwMTAwNjU0NTQuMTUyMzItNC1nY2lv
-Zm9ub0BnbWFpbC5jb20iPgogICAgICA8cHJlIHdyYXA9IiI+CisJCQkJYnVmbGVuLCAiMSxcIiVz
-XCIsXCIlc1wiIiwKKwkJCQlpbmZvLSZndDt1c2VybmFtZSwgaW5mby0mZ3Q7cGFzc3dvcmQpOwor
-CQlicmVhazsKKwljYXNlIE9GT05PX0dQUlNfQVVUSF9NRVRIT0RfQ0hBUDoKKwkJc25wcmludGYo
-YnVmX2NnYXV0aCtzdHJsZW4oYnVmX2NnYXV0aCksCisJCQkJYnVmbGVuLCAiMixcIiVzXCIsXCIl
-c1wiIiwKKwkJCQlpbmZvLSZndDt1c2VybmFtZSwgaW5mby0mZ3Q7cGFzc3dvcmQpOworCQlicmVh
-azsKKwljYXNlIE9GT05PX0dQUlNfQVVUSF9NRVRIT0RfTk9ORToKKwkJc25wcmludGYoYnVmX2Nn
-YXV0aCtzdHJsZW4oYnVmX2NnYXV0aCksIGJ1ZmxlbiwgIjAiKTsKKwkJYnJlYWs7CisJfQorCisJ
-Z19hdF9jaGF0X3NlbmQobGRkLSZndDtjaGF0LCBidWZfY2dhdXRoLCBOVUxMLCBOVUxMLCBOVUxM
-LCBOVUxMKTs8L3ByZT4KICAgIDwvYmxvY2txdW90ZT4KICAgIDxicj4KICAgIENhbid0IGZhaWw/
-PGJyPgogICAgPGJyPgogICAgPGJsb2NrcXVvdGUgdHlwZT0iY2l0ZSIKICAgICAgY2l0ZT0ibWlk
-OjIwMTgxMDEwMDY1NDU0LjE1MjMyLTQtZ2Npb2Zvbm9AZ21haWwuY29tIj4KICAgICAgPHByZSB3
-cmFwPSIiPgogfQogCiBzdGF0aWMgdm9pZCBhdF9sdGVfc2V0X2RlZmF1bHRfYXR0YWNoX2luZm8o
-Y29uc3Qgc3RydWN0IG9mb25vX2x0ZSAqbHRlLAogCQkJY29uc3Qgc3RydWN0IG9mb25vX2x0ZV9k
-ZWZhdWx0X2F0dGFjaF9pbmZvICppbmZvLAogCQkJb2Zvbm9fbHRlX2NiX3QgY2IsIHZvaWQgKmRh
-dGEpCiB7Ci0Jc3RydWN0IGx0ZV9kcml2ZXJfZGF0YSAqbGRkID0gb2Zvbm9fbHRlX2dldF9kYXRh
-KGx0ZSk7Ci0JY2hhciBidWZbMzIgKyBPRk9OT19HUFJTX01BWF9BUE5fTEVOR1RIICsgMV07Ci0J
-c3RydWN0IGNiX2RhdGEgKmNiZCA9IGNiX2RhdGFfbmV3KGNiLCBkYXRhKTsKLQotCURCRygiTFRF
-IGNvbmZpZyB3aXRoIEFQTjogJXMiLCBpbmZvLSZndDthcG4pOwotCi0JaWYgKHN0cmxlbihpbmZv
-LSZndDthcG4pICZndDsgMCkKLQkJc25wcmludGYoYnVmLCBzaXplb2YoYnVmKSwgIkFUK0NHRENP
-TlQ9MCxcIklQXCIsXCIlc1wiIiwKLQkJCQlpbmZvLSZndDthcG4pOwotCWVsc2UKLQkJc25wcmlu
-dGYoYnVmLCBzaXplb2YoYnVmKSwgIkFUK0NHRENPTlQ9MCxcIklQXCIiKTsKLQotCS8qIFdlIGNh
-bid0IGRvIG11Y2ggaW4gY2FzZSBvZiBmYWlsdXJlIHNvIGRvbid0IGNoZWNrIHJlc3BvbnNlLiAq
-LwotCWlmIChnX2F0X2NoYXRfc2VuZChsZGQtJmd0O2NoYXQsIGJ1ZiwgTlVMTCwKLQkJCWF0X2x0
-ZV9zZXRfZGVmYXVsdF9hdHRhY2hfaW5mb19jYiwgY2JkLCBnX2ZyZWUpICZndDsgMCkKLQkJcmV0
-dXJuOwotCi0JQ0FMTEJBQ0tfV0lUSF9GQUlMVVJFKGNiLCBkYXRhKTsKKwlDQUxMQkFDS19XSVRI
-X1NVQ0NFU1MoY2IsIGRhdGEpOwogfQogPC9wcmU+CiAgICA8L2Jsb2NrcXVvdGU+CiAgICA8YnI+
-CiAgICBBc2lkZSBmcm9tIGFiYW5kb25pbmcgYWxsIGVycm9yIGhhbmRsaW5nLCB3aGF0IGRvZXMg
-c2V0X3JlZ19pbmZvCiAgICBwcm92aWRlIHRoYXQgY291bGQgbm90IGhhdmUgYmVlbiBoYW5kbGVk
-IGJ5IHNldF9kZWZhdWx0X2F0dGFjaF9pbmZvPzxicj4KICAgIDxicj4KICAgIDxicj4KICAgIDxi
-bG9ja3F1b3RlIHR5cGU9ImNpdGUiCiAgICAgIGNpdGU9Im1pZDoyMDE4MTAxMDA2NTQ1NC4xNTIz
-Mi00LWdjaW9mb25vQGdtYWlsLmNvbSI+CiAgICAgIDxwcmUgd3JhcD0iIj4KIHN0YXRpYyBnYm9v
-bGVhbiBsdGVfZGVsYXllZF9yZWdpc3RlcihncG9pbnRlciB1c2VyX2RhdGEpCiB7Ci0Jc3RydWN0
-IG9mb25vX2x0ZSAqbHRlID0gdXNlcl9kYXRhOwotCi0Jb2Zvbm9fbHRlX3JlZ2lzdGVyKGx0ZSk7
-CisJb2Zvbm9fbHRlX3JlZ2lzdGVyKHVzZXJfZGF0YSk7PC9wcmU+CiAgICA8L2Jsb2NrcXVvdGU+
-CiAgICA8YnI+CiAgICBJIHByZWZlciB0aGUgb3JpZ2luYWwgdmVyc2lvbi4uLiBub25ldGhlbGVz
-cywgdGhpcyBjaGFuZ2UgZG9lc24ndAogICAgYmVsb25nIGluIHRoaXMgcGF0Y2guPGJyPgogICAg
-PGJyPgogICAgPGJsb2NrcXVvdGUgdHlwZT0iY2l0ZSIKICAgICAgY2l0ZT0ibWlkOjIwMTgxMDEw
-MDY1NDU0LjE1MjMyLTQtZ2Npb2Zvbm9AZ21haWwuY29tIj4KICAgICAgPHByZSB3cmFwPSIiPgog
-CiAJcmV0dXJuIEZBTFNFOwogfQpAQCAtMTI5LDYgKzE0OSw3IEBAIHN0YXRpYyBzdHJ1Y3Qgb2Zv
-bm9fbHRlX2RyaXZlciBkcml2ZXIgPSB7CiAJLnByb2JlCQkJCT0gYXRfbHRlX3Byb2JlLAogCS5y
-ZW1vdmUJCQkJPSBhdF9sdGVfcmVtb3ZlLAogCS5zZXRfZGVmYXVsdF9hdHRhY2hfaW5mbwk9IGF0
-X2x0ZV9zZXRfZGVmYXVsdF9hdHRhY2hfaW5mbywKKwkuc2V0X3JlZ19pbmZvCQkJPSBhdF9zZXRf
-cmVnX2luZm8sCiB9OwogCiB2b2lkIGF0X2x0ZV9pbml0KHZvaWQpCjwvcHJlPgogICAgPC9ibG9j
-a3F1b3RlPgogICAgPGJyPgogICAgL0pvbmFzPGJyPgogIDwvYm9keT4KPC9odG1sPgo=
-
---===============7246884593155084947==--
+--===============7844580144830638399==--
 
