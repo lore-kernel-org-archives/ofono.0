@@ -1,51 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8570119729807588792=="
+Content-Type: multipart/mixed; boundary="===============0260584579956452867=="
 MIME-Version: 1.0
-From: Nandini Rebello <nandini.rebello@intel.com>
-Subject: [PATCH] sms:fix a missing entry in single shift table
-Date: Thu, 11 Oct 2018 16:53:32 +0530
-Message-ID: <1539257012-19328-1-git-send-email-nandini.rebello@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sms:fix a missing entry in single shift table
+Date: Thu, 11 Oct 2018 10:18:30 -0500
+Message-ID: <3d99b888-b929-93ae-ce37-e3a5338b22cc@gmail.com>
+In-Reply-To: <1539257012-19328-1-git-send-email-nandini.rebello@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8570119729807588792==
+--===============0260584579956452867==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fix a missing char in the nation language set in single shift table
-for a special character. Character set again validated.
+Hi Nandini,
 
-Future language table to carry this fix.
----
- src/util.c | 2 ++
- 1 file changed, 2 insertions(+)
+On 10/11/2018 06:23 AM, Nandini Rebello wrote:
+> Fix a missing char in the nation language set in single shift table
+> for a special character. Character set again validated.
+> =
 
-diff --git a/src/util.c b/src/util.c
-index 2f01cec..70d72d7 100644
---- a/src/util.c
-+++ b/src/util.c
-@@ -376,6 +376,7 @@ static const struct codepoint ben_ext_gsm[] =3D {
- };
- =
-
- static const struct codepoint ben_ext_unicode[] =3D {
-+	{ 0x000C, 0x1B0A },
- 	{ 0x0022, 0x1B05 },
- 	{ 0X0023, 0x1B17 },
- 	{ 0x0024, 0x1B02 },
-@@ -535,6 +536,7 @@ static const struct codepoint guj_ext_gsm[] =3D {
- };
- =
-
- static const struct codepoint guj_ext_unicode[] =3D {
-+	{ 0x000C, 0x1B0A },
- 	{ 0x0022, 0x1B05 },
- 	{ 0x0023, 0x1B17 },
- 	{ 0x0024, 0x1B02 },
--- =
-
-2.7.4
+> Future language table to carry this fix.
+> ---
+>   src/util.c | 2 ++
+>   1 file changed, 2 insertions(+)
+> =
 
 
---===============8570119729807588792==--
+Applied, thanks.
+
+You may want to add unit tests for each new alphabet you introduce into =
+
+unit/test-sms.c.  I think we have some sanity checks in there for =
+
+Spanish/etc alphabets already.
+
+Regards,
+-Denis
+
+--===============0260584579956452867==--
 
