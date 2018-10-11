@@ -1,52 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============0016049614852743928=="
+Content-Type: multipart/mixed; boundary="===============8570119729807588792=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: vendor-specific shared functions
-Date: Wed, 10 Oct 2018 10:09:57 +0200
-Message-ID: <CAKSBH7FQNkfV7SXiDgLp964xYs+8GCY-mBUyj4awU-AfpZ7H4g@mail.gmail.com>
+From: Nandini Rebello <nandini.rebello@intel.com>
+Subject: [PATCH] sms:fix a missing entry in single shift table
+Date: Thu, 11 Oct 2018 16:53:32 +0530
+Message-ID: <1539257012-19328-1-git-send-email-nandini.rebello@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0016049614852743928==
+--===============8570119729807588792==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear all,
+Fix a missing char in the nation language set in single shift table
+for a special character. Character set again validated.
 
-I have a question for shared functions among atoms, but vendor-specific.
+Future language table to carry this fix.
+---
+ src/util.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-For Gemalto, I have these two for now:
+diff --git a/src/util.c b/src/util.c
+index 2f01cec..70d72d7 100644
+--- a/src/util.c
++++ b/src/util.c
+@@ -376,6 +376,7 @@ static const struct codepoint ben_ext_gsm[] =3D {
+ };
+ =
 
-gboolean gemalto_get_auth_command(struct ofono_modem *modem, int cid,
-enum ofono_gprs_auth_method auth_method,
-const char *username, const char *password,
-char *buf, guint buflen);
+ static const struct codepoint ben_ext_unicode[] =3D {
++	{ 0x000C, 0x1B0A },
+ 	{ 0x0022, 0x1B05 },
+ 	{ 0X0023, 0x1B17 },
+ 	{ 0x0024, 0x1B02 },
+@@ -535,6 +536,7 @@ static const struct codepoint guj_ext_gsm[] =3D {
+ };
+ =
 
-void gemalto_get_cgdcont_command(struct ofono_modem *modem,
-guint cid, enum ofono_gprs_proto proto, const char *apn,
-char *buf, guint buflen);
+ static const struct codepoint guj_ext_unicode[] =3D {
++	{ 0x000C, 0x1B0A },
+ 	{ 0x0022, 0x1B05 },
+ 	{ 0x0023, 0x1B17 },
+ 	{ 0x0024, 0x1B02 },
+-- =
 
-that will be used by gprs-context and lte atoms.
+2.7.4
 
-I saw that also uBlox might benefit from the same shared functions,
-because they prepend "PAP:" or "CHAP:" to the APN name if the
-authentication is used.
-For other vendors I don't know because the specifications are not
-public, but there are loads of URC-parsing functions, sometimes
-already duplicated.
 
-I would like to set my functions in atmodem/utils.c, with headers in
-atmodem/utils.h.
-But maybe it is better to use atmodem/vendor.h and create an atmodem/vendor=
-.c ?
-Or duplicate them?
-
-Any suggestion is appreciated.
-
-thank you,
-Regards,
-Giacinto
-
---===============0016049614852743928==--
+--===============8570119729807588792==--
 
