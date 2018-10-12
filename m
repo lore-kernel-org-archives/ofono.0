@@ -1,68 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5993484425076287622=="
+Content-Type: multipart/mixed; boundary="===============7483898240571135735=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH 1/6] lte-api: protocol and authentication properties
-Date: Fri, 12 Oct 2018 06:13:49 +0200
-Message-ID: <CAKSBH7FFGZa39=HLuwPV0vkjbn7=88ZHqNLZULzdMjk537byLQ@mail.gmail.com>
-In-Reply-To: <1df9304c-e4c4-8465-1f1b-0e47c95c08c1@gmail.com>
+Subject: Re: [PATCH 6/6] Gemalto contributors
+Date: Fri, 12 Oct 2018 06:15:05 +0200
+Message-ID: <CAKSBH7HyFxEGjjLZtQwyqezSG3PJ9Ck30SZq59LJQjivL5K2RQ@mail.gmail.com>
+In-Reply-To: <34f7be71-7466-c388-5c5a-1cb69555ab78@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5993484425076287622==
+--===============7483898240571135735==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On Fri, Oct 12, 2018 at 6:06 AM Denis Kenzior <denkenz@gmail.com> wrote:
+On Fri, Oct 12, 2018 at 6:10 AM Denis Kenzior <denkenz@gmail.com> wrote:
 >
 > Hi Giacinto,
 >
-> >> Reading through your patches, I'm missing an overarching explanation of
-> >> why we need this.  Do you really have an LTE network in range that
-> >> requires authentication for the default APN?
-> >
-> > yes, quite a few of them actually.
-> > And all private APN I have seen so far require authentication, even
-> > for the combined attach.
+> On 10/10/2018 01:54 AM, Giacinto Cifelli wrote:
+> > ---
+> >   AUTHORS | 3 +++
+> >   1 file changed, 3 insertions(+)
 > >
 >
-> Are these networks something a typical user would see?  Or is this
-> mainly for M2M type usecases?
-
-My focus is mainly M2M use cases, but also public networks may require
-authentication.
-
+> Please don't send me patches to AUTHORS.  The maintainers will take care
+> of it.  If I forget, send me a nudge to do so.
 >
-> Fundamentally this whole username / password for a default bearer
-> activation is utterly insane.  The network provider has your IMSI, it
-> can lookup whether you're authorized for that APN or not, or suggest you
-> an APN that will work...  But I digress..
-
-There is also another problem: the default and data context APN is
-often the same, and if the auth is not set for both in the same way,
-the context activation fails.
-But I digress too.
-
->
-> >
-> > Shall I extend the explanation?
->
-> An extended explanation is always a good idea.  Especially for something
-> that seems to be pretty esoteric.
->
-> > There wasn't much of an explanation why we need a default APN for LTE, =
-either.
+> > diff --git a/AUTHORS b/AUTHORS
+> > index 2d360e6e..8f0f5893 100644
+> > --- a/AUTHORS
+> > +++ b/AUTHORS
+> > @@ -138,3 +138,6 @@ Florent Beillonnet <florent.beillonnet@gmail.com>
+> >   Martin Hundeb=C3=B8ll <martin@geanix.com>
+> >   Julien Tournier <tournier.julien@gmail.com>
+> >   Nandini Rebello <nandini.rebello@intel.com>
+> > +Giacinto Cifelli <gciofono@gmail.com>
+> > +Martin Baschin <martin.baschin@googlemail.com>
+> > +Sebastian Arnd <sebastianarnd@gmail.com>
 > >
 >
-> Sure there was.  Not sure why you say that :)  Maybe it wasn't recorded
-> in the git commit but it was discussed on the mailing list, IRC, etc.
-> But again, see above.  The whole default attach APN needing to be
-> provisioned by the client is utterly insane.
+> If these guys have written some of the code and you're submitting a
+> series of patches, then make sure their name is set as the Author of the
+> particular commit they wrote.  If that is not possible, then we might
+> need to look into using various git tags for this.  E.g. perhaps
+> Co-authored-by tag.
 
-I prefer not to comment on these practices. For instance, is there an
-archive of the chat and mailing list that I or anyone could access?
+this co-authored-by seems quite interesting. I will use it.
+
 
 >
 > Regards,
@@ -71,5 +57,5 @@ archive of the chat and mailing list that I or anyone could access?
 Regards,
 Giacinto
 
---===============5993484425076287622==--
+--===============7483898240571135735==--
 
