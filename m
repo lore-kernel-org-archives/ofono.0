@@ -1,74 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============4964937876305552987=="
+Content-Type: multipart/mixed; boundary="===============0125716080877168075=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] src/lte: added proto and authentication handling
-Date: Fri, 12 Oct 2018 12:47:00 -0500
-Message-ID: <7bf041d0-299d-51b3-896b-2ca242ff0646@gmail.com>
-In-Reply-To: <CAKSBH7Ez4GTSFwgo29Sbmh-BW1W9HqOU=fgQpJGHZta1BM_5kQ@mail.gmail.com>
+Subject: Re: [RFC PATCH v3 1/1] atmodem/lte: proto and authentication handling
+Date: Fri, 12 Oct 2018 12:59:22 -0500
+Message-ID: <e8c01c63-cac6-4b3b-865f-6e90c65d2682@gmail.com>
+In-Reply-To: <CAKSBH7EWLpeujk-QegZmB0P3P7Kdi4Tv1PLg7F0gb6T0WPLZMg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4964937876305552987==
+--===============0125716080877168075==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
->> Ugh.  I'm not really liking this at all.  The property name and the new
->> value are already available inside the dbus_message object (e.g.
->> lte->pending).  There's nothing wrong with parsing that message again or
->> simply store pointers to the data inside the dbus-message.
->>
+On 10/12/2018 11:54 AM, Giacinto Cifelli wrote:
+> Hi,
 > =
 
-> ah no! this is the famous "it's initialized to NULL when the structure
-> is created", do you remember it?
-
-No?
-
-> The pointer to the dbus message would go out of scope once the dbus
-> message is answered, which happens before the signal is emitted.
+> I trust you, but I have checked the code :)
 > =
 
-
-So build the signal prior to answering the method return...  You can =
-
-still send the signal afterwards.
-
->>> +             if (!*propstr)
->>> +                     /* Clear entry on empty string. */
->>> +                     g_key_file_remove_key(lte->settings,
->>> +                             SETTINGS_GROUP, key, NULL);
->>>                else
->>> -                     g_key_file_set_string(lte->settings, SETTINGS_GRO=
-UP,
->>> -                                             DEFAULT_APN_KEY, lte->inf=
-o.apn);
->>> +                     g_key_file_set_string(lte->settings,
->>> +                             SETTINGS_GROUP, key, propstr);
->>>
->>>                storage_sync(lte->imsi, SETTINGS_STORE, lte->settings);
->>>        }
->>
->> I can see this applying for APN and maybe Username/Password.  But not
->> the other settings...?
+> you are right, the at_command_create may fail (on allocation error
+> from g_try_new0) and in this case it doesn't call the g_free.
 > =
 
-> I don't get this sorry. which part is applicable only to apn/user/pwd?
-> the propstr is never null for protocol and auth_method, due to the
-> close-set enumeration.
+> However I have to say that the code leaks alot: overall the construct
+> is used 237 times, and only 98 times the g_free is called.
 
-The removal part should probably only apply to APNs and Username / =
+Umm, can you give me some examples?  Do note that we have 2 patterns =
 
-Password.  Fair enough that others would never be empty, but you might =
+that we use:
 
-still want to make an explicit check or at least a comment stating this =
+Pattern 1 is the most common:
 
-for clarity.
+if (g_at_chat_send(...) > 0)
+	return;
+
+g_free/destroy(...);
+CALLBACK_WITH_FAILURE();
+
+Pattern 2 is what you want:
+
+if (g_at_chat_send(...) =3D=3D 0) {
+	g_free/destroy(...);
+	CALLBACK_WITH_FAILURE();
+	return;
+}
+
+> That said, according to Denis nowadays we don't use g_try_new0 because
+> the allocation won't fail, so we are unlikely to see it in action.
+That is not really an excuse, and we can change the implementation of =
+
+send() at any time.  So you still need to be paranoid.
 
 Regards,
 -Denis
 
---===============4964937876305552987==--
+--===============0125716080877168075==--
 
