@@ -1,192 +1,186 @@
-Content-Type: multipart/mixed; boundary="===============6483227017397639675=="
+Content-Type: multipart/mixed; boundary="===============8678978037333018766=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH 1/5] lte-api: protocol and authentication properties
-Date: Fri, 12 Oct 2018 17:25:25 +0200
-Message-ID: <CAKSBH7HBDrzZP3PRXh+4VNZZHDByE+2N+GktE+ioaC22SuHt_w@mail.gmail.com>
-In-Reply-To: <CAKSBH7GgVmK7B7G3JEtj4v3yfo+=i63HmMgCE0W+aim9hzGuLg@mail.gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [RFC PATCH v3 1/1] atmodem/lte: proto and authentication handling
+Date: Fri, 12 Oct 2018 18:14:22 +0200
+Message-ID: <9e274614-97e2-439c-5b58-4c7946f7fc9f@southpole.se>
+In-Reply-To: <20181012131646.25397-2-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6483227017397639675==
+--===============8678978037333018766==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi,
 
-it turns out we have setup in our testnet an apn with authentication,
-so I didn't need to wait until next week for this test.
+This looks reasonable from my point of view.=C2=A0 Two little comments belo=
+w...
 
-However, as I was going to test, I have noticed a few things:
-- the current patch adds a 'standard' feature. As such, it doesn't
-really apply to Gemalto modules. For this, I need to submit afterwards
-another patch for the vendor-specific code. Au passage, it would help
-answering my question about where to put shared vendor code in the
-atmodem driver. Now that I know the process, I might as well submit my
-proposal as --rfc. I am therefore in a very frustrating situation that
-I cannot test exactly this code. Also, I am some 150-200 commits away
-from being able to run properly our modules, with the plugin quite
-different from how it is today. Bottom line: I test my code, but when
-I need to abstract some parts like the one under discussion, it gets
-harder until the whole sequence gets more concrete. I understand that
-these steps must be followed to have clean commits, but I need some
-latitude here.
-
-- what would an ofono trace show? practically nothing. In order to see
-something significant, I would need to make an STT or a QXDM trace
-(that I am not allowed to share), or a network-side trace, that I
-cannot do.
-
-- the second best thing is however a plain AT trace, and this is
-below, with some comments. I took it with "microcom port |
-timestamp_script". The pipe might produce the time difference on the
-next line because of this, but it is informative nevertheless. I have
-configured first a normal apn (ber2-ericsson), then the one that
-requires authentication (ber-auth.ericsson), but without supplying the
-needed parameters, which is the current situation of the ofono
-project: as expected, it tries a few times, the timer T3346 kicks in
-and it attaches to 3G. Then I give the authentication information, and
-gets LTE coverage.
-
-Regards,
-Giacinto
-
-[2018-10-12 16:16:27+0200] at+cgdcont?
-[2018-10-12 16:16:27+0200] +CGDCONT:
-1,"IP","ber2.ericsson","0.0.0.0",0,0,0,0,0,0
-[2018-10-12 16:16:27+0200] +CGDCONT:
-2,"IPV4V6","ims","0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",0,0,0,0,1,1
-[2018-10-12 16:16:27+0200] +CGDCONT:
-3,"IPV4V6","sos","0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",0,0,0,1,1,1
-[2018-10-12 16:16:27+0200]
-[2018-10-12 16:16:27+0200] OK
-[2018-10-12 16:16:32+0200] at+cfun=3D1
-[2018-10-12 16:16:32+0200] OK
-[2018-10-12 16:16:32+0200]
-[2018-10-12 16:16:32+0200] ^SYSSTART
-[2018-10-12 16:16:32+0200]
-[2018-10-12 16:16:32+0200] +CREG: 4
-[2018-10-12 16:16:32+0200]
-[2018-10-12 16:16:32+0200] +CREG: 2
-[2018-10-12 16:16:32+0200]
-           // 0 seconds
-[2018-10-12 16:16:32+0200] +CREG: 1,"009B","0009B03",7
-[2018-10-12 16:16:37+0200] at+cops?
-[2018-10-12 16:16:37+0200] +COPS: 0,0,"EDAV",7
-[2018-10-12 16:16:37+0200]
-[2018-10-12 16:16:37+0200] OK
-[2018-10-12 16:16:43+0200] at+cfun=3D4
-[2018-10-12 16:16:43+0200] OK
-[2018-10-12 16:16:43+0200]
-[2018-10-12 16:16:43+0200] ^SYSSTART AIRPLANE MODE
-[2018-10-12 16:16:43+0200]
-[2018-10-12 16:16:43+0200] +CREG: 0
-[2018-10-12 16:17:33+0200] at+cgdcont=3D1,"IP","ber-auth.ericsson"
-[2018-10-12 16:17:33+0200] OK
-[2018-10-12 16:17:39+0200] at+cfun=3D1
-[2018-10-12 16:17:39+0200] OK
-[2018-10-12 16:17:39+0200]
-[2018-10-12 16:17:39+0200] ^SYSSTART
-[2018-10-12 16:17:39+0200]
-[2018-10-12 16:17:39+0200] +CREG: 4
-[2018-10-12 16:17:40+0200]
-[2018-10-12 16:17:40+0200] +CREG: 2
-[2018-10-12 16:18:02+0200]
-           // 22 seconds
-[2018-10-12 16:18:02+0200] +CREG: 1,"012F","12F3C3D",6
-[2018-10-12 16:18:25+0200] at+cops?
-[2018-10-12 16:18:25+0200] +COPS: 0,0,"EDAV",6
-[2018-10-12 16:18:25+0200]
-[2018-10-12 16:18:25+0200] OK
-[2018-10-12 16:18:30+0200] at+cfun=3D4
-[2018-10-12 16:18:30+0200] OK
-[2018-10-12 16:18:31+0200]
-[2018-10-12 16:18:31+0200] ^SYSSTART AIRPLANE MODE
-[2018-10-12 16:18:31+0200]
-[2018-10-12 16:18:31+0200] +CREG: 0
-[2018-10-12 16:19:04+0200] at^sgauth=3D1,2,"gemalto","gemalto"
-[2018-10-12 16:19:04+0200] OK
-[2018-10-12 16:19:24+0200] at+cgdcont?
-[2018-10-12 16:19:24+0200] +CGDCONT:
-1,"IP","ber-auth.ericsson","0.0.0.0",0,0,0,0,0,0
-[2018-10-12 16:19:24+0200] +CGDCONT:
-2,"IPV4V6","ims","0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",0,0,0,0,1,1
-[2018-10-12 16:19:24+0200] +CGDCONT:
-3,"IPV4V6","sos","0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",0,0,0,1,1,1
-[2018-10-12 16:19:24+0200]
-[2018-10-12 16:19:24+0200] OK
-[2018-10-12 16:19:32+0200] at+cfun=3D1
-[2018-10-12 16:19:32+0200] OK
-[2018-10-12 16:19:32+0200]
-[2018-10-12 16:19:32+0200] ^SYSSTART
-[2018-10-12 16:19:32+0200]
-[2018-10-12 16:19:32+0200] +CREG: 4
-[2018-10-12 16:19:32+0200]
-[2018-10-12 16:19:32+0200] +CREG: 2
-[2018-10-12 16:19:32+0200]
-           0 seconds, last network
-[2018-10-12 16:19:32+0200] +CREG: 1,"012F","12F3C3D",6
-[2018-10-12 16:19:38+0200]
-           6 seconds, reselection on idle
-[2018-10-12 16:19:38+0200] +CREG: 1,"009B","0009B03",7
-[2018-10-12 16:19:49+0200] at+cfun=3D4
-[2018-10-12 16:19:49+0200] OK
-[2018-10-12 16:19:49+0200]
-[2018-10-12 16:19:49+0200] ^SYSSTART AIRPLANE MODE
-[2018-10-12 16:19:49+0200]
-[2018-10-12 16:19:49+0200] +CREG: 0
-[2018-10-12 16:19:52+0200] at+cfun=3D1
-[2018-10-12 16:19:52+0200] OK
-[2018-10-12 16:19:52+0200]
-[2018-10-12 16:19:52+0200] ^SYSSTART
-[2018-10-12 16:19:52+0200]
-[2018-10-12 16:19:52+0200] +CREG: 4
-[2018-10-12 16:19:53+0200]
-[2018-10-12 16:19:53+0200] +CREG: 2
-[2018-10-12 16:19:53+0200]
-           // 0 seconds
-[2018-10-12 16:19:53+0200] +CREG: 1,"009B","0009B03",7
-[2018-10-12 16:19:57+0200] at+cgdcont?
-[2018-10-12 16:19:57+0200] +CGDCONT:
-1,"IP","ber-auth.ericsson","0.0.0.0",0,0,0,0,0,0
-[2018-10-12 16:19:57+0200] +CGDCONT:
-2,"IPV4V6","ims","0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",0,0,0,0,1,1
-[2018-10-12 16:19:57+0200] +CGDCONT:
-3,"IPV4V6","sos","0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",0,0,0,1,1,1
-[2018-10-12 16:19:57+0200]
-[2018-10-12 16:19:57+0200] OK
-[2018-10-12 16:20:00+0200] at+cops?
-[2018-10-12 16:20:00+0200] +COPS: 0,0,"EDAV",7
-[2018-10-12 16:20:00+0200]
-[2018-10-12 16:20:00+0200] OK
+/Jonas
 
 
-On Fri, Oct 12, 2018 at 10:33 AM Giacinto Cifelli <gciofono@gmail.com> wr=
-ote:
+On 12/10/18 15:16, Giacinto Cifelli wrote:
+> The ofono_lte_default_attach_info now handles also the protocol and the
+> authentication method, username and password.
 >
-> Hi,
+> Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
+> ---
+>   drivers/atmodem/lte.c | 94 ++++++++++++++++++++++++++++++++++++++-----
+>   1 file changed, 84 insertions(+), 10 deletions(-)
 >
-> On Fri, Oct 12, 2018 at 10:17 AM Jonas Bonn <jonas@southpole.se> wrote:
-> >
-> > Hi Giacinto,
-> >
-> > Could you provide an ofono log showing the network registration
-> > behaviour for both the case where you pass incorrect authentication
-> > parameters via the default context and the case where you pass valid
-> > parameters?
-> >
->
-> ok, I can do it with a network simulator. I will try to do it next week.
->
-> By the way, now that I remember, authentication on the default context
-> is a requirement for the Softbank certification.
->
-> > /Jonas
-> >
-> >
->
-> Giacinto
+> diff --git a/drivers/atmodem/lte.c b/drivers/atmodem/lte.c
+> index efa4e5fe..e5af6cd2 100644
+> --- a/drivers/atmodem/lte.c
+> +++ b/drivers/atmodem/lte.c
+> @@ -3,6 +3,7 @@
+>    *  oFono - Open Source Telephony
+>    *
+>    *  Copyright (C) 2017  Intel Corporation. All rights reserved.
+> + *  Copyright (C) 2018 Gemalto M2M
+>    *
+>    *  This program is free software; you can redistribute it and/or modify
+>    *  it under the terms of the GNU General Public License version 2 as
+> @@ -45,10 +46,17 @@ struct lte_driver_data {
+>   	GAtChat *chat;
+>   };
+>   =
 
---===============6483227017397639675==--
+> -static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *re=
+sult,
+> +struct lte_callbackdata {
+> +	ofono_lte_cb_t cb;
+> +	void *data;
+> +	struct lte_driver_data *ldd;
+> +	const struct ofono_lte_default_attach_info *info;
+> +};
+> +
+> +static void at_lte_set_auth_cb(gboolean ok, GAtResult *result,
+>   							gpointer user_data)
+>   {
+> -	struct cb_data *cbd =3D user_data;
+> +	struct lte_callbackdata *cbd =3D user_data;
+>   	ofono_lte_cb_t cb =3D cbd->cb;
+>   	struct ofono_error error;
+>   =
+
+> @@ -58,27 +66,93 @@ static void at_lte_set_default_attach_info_cb(gboolea=
+n ok, GAtResult *result,
+>   	cb(&error, cbd->data);
+>   }
+>   =
+
+> +static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *re=
+sult,
+> +							gpointer user_data)
+> +{
+> +	struct lte_callbackdata *cbd =3D user_data;
+> +	ofono_lte_cb_t cb =3D cbd->cb;
+> +	void *data =3D cbd->data;
+> +	struct ofono_error error;
+> +	char buf[32 + OFONO_GPRS_MAX_USERNAME_LENGTH +
+> +					OFONO_GPRS_MAX_PASSWORD_LENGTH  + 1];
+> +	size_t buflen =3D sizeof(buf);
+> +	size_t len;
+> +	enum ofono_gprs_auth_method auth_method;
+> +
+> +	if (!ok) {
+> +		g_free(cbd);
+> +		decode_at_error(&error, g_at_result_final_response(result));
+> +		cb(&error, data);
+
+You'll want a return here, too.
+
+> +	}
+> +
+> +	len =3D snprintf(buf, buflen, "AT+CGAUTH=3D0,");
+> +	buflen -=3D len;
+> +	auth_method =3D cbd->info->auth_method;
+> +
+> +	/* change the authentication method if the  parameters are invalid */
+> +	if (!*cbd->info->username || !*cbd->info->password)
+> +		auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
+> +
+> +	switch (auth_method) {
+> +	case OFONO_GPRS_AUTH_METHOD_PAP:
+> +		snprintf(buf + len, buflen, "1,\"%s\",\"%s\"",
+> +				cbd->info->username, cbd->info->password);
+> +		break;
+> +	case OFONO_GPRS_AUTH_METHOD_CHAP:
+> +		snprintf(buf + len, buflen, "2,\"%s\",\"%s\"",
+> +				cbd->info->username, cbd->info->password);
+> +		break;
+> +	case OFONO_GPRS_AUTH_METHOD_NONE:
+> +		snprintf(buf + len, buflen, "0");
+> +		break;
+> +	}
+> +
+> +	if (g_at_chat_send(cbd->ldd->chat, buf, NULL,
+> +			at_lte_set_auth_cb, cbd, g_free) > 0)
+> +		return;
+> +
+Here you'll leak cbd again.
+
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +}
+> +
+>   static void at_lte_set_default_attach_info(const struct ofono_lte *lte,
+>   			const struct ofono_lte_default_attach_info *info,
+>   			ofono_lte_cb_t cb, void *data)
+>   {
+>   	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
+>   	char buf[32 + OFONO_GPRS_MAX_APN_LENGTH + 1];
+> -	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +	struct lte_callbackdata *cbd =3D g_new0(struct lte_callbackdata ,1);
+> +	const char *proto;
+> +	size_t len;
+>   =
+
+>   	DBG("LTE config with APN: %s", info->apn);
+>   =
+
+> -	if (strlen(info->apn) > 0)
+> -		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\",\"%s\"",
+> -				info->apn);
+> -	else
+> -		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\"");
+> +	cbd->cb =3D cb;
+> +	cbd->data =3D data;
+> +	cbd->ldd =3D ldd;
+> +	cbd->info =3D info;
+> +
+> +	switch (info->proto) {
+> +	case OFONO_GPRS_PROTO_IPV6:
+> +		proto =3D "IPV6";
+> +		break;
+> +	case OFONO_GPRS_PROTO_IPV4V6:
+> +		proto =3D "IPV4V6";
+> +		break;
+> +	case OFONO_GPRS_PROTO_IP:
+> +		proto =3D "IP";
+> +		break;
+> +	}
+> +
+> +	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"%s\"", proto);
+> +
+> +	if (*info->apn)
+> +		snprintf(buf+len, sizeof(buf)-len, ",\"%s\"", info->apn);
+>   =
+
+> -	/* We can't do much in case of failure so don't check response. */
+>   	if (g_at_chat_send(ldd->chat, buf, NULL,
+> -			at_lte_set_default_attach_info_cb, cbd, g_free) > 0)
+> +			at_lte_set_default_attach_info_cb, cbd, NULL) > 0)
+>   		return;
+>   =
+
+> +	g_free(cbd);
+>   	CALLBACK_WITH_FAILURE(cb, data);
+>   }
+>   =
+
+
+
+--===============8678978037333018766==--
 
