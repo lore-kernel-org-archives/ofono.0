@@ -1,58 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============5969745646834126161=="
+Content-Type: multipart/mixed; boundary="===============4964937876305552987=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [RFC PATCH v3 1/1] atmodem/lte: proto and authentication handling
-Date: Fri, 12 Oct 2018 18:54:18 +0200
-Message-ID: <CAKSBH7EWLpeujk-QegZmB0P3P7Kdi4Tv1PLg7F0gb6T0WPLZMg@mail.gmail.com>
-In-Reply-To: <fe2ef791-e8de-c3ca-b430-8a5c6ddec9c6@southpole.se>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/6] src/lte: added proto and authentication handling
+Date: Fri, 12 Oct 2018 12:47:00 -0500
+Message-ID: <7bf041d0-299d-51b3-896b-2ca242ff0646@gmail.com>
+In-Reply-To: <CAKSBH7Ez4GTSFwgo29Sbmh-BW1W9HqOU=fgQpJGHZta1BM_5kQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5969745646834126161==
+--===============4964937876305552987==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Giacinto,
 
-I trust you, but I have checked the code :)
+>> Ugh.  I'm not really liking this at all.  The property name and the new
+>> value are already available inside the dbus_message object (e.g.
+>> lte->pending).  There's nothing wrong with parsing that message again or
+>> simply store pointers to the data inside the dbus-message.
+>>
+> =
 
-you are right, the at_command_create may fail (on allocation error
-from g_try_new0) and in this case it doesn't call the g_free.
+> ah no! this is the famous "it's initialized to NULL when the structure
+> is created", do you remember it?
 
-However I have to say that the code leaks alot: overall the construct
-is used 237 times, and only 98 times the g_free is called.
-That said, according to Denis nowadays we don't use g_try_new0 because
-the allocation won't fail, so we are unlikely to see it in action.
+No?
 
-I add the g_free :D
+> The pointer to the dbus message would go out of scope once the dbus
+> message is answered, which happens before the signal is emitted.
+> =
+
+
+So build the signal prior to answering the method return...  You can =
+
+still send the signal afterwards.
+
+>>> +             if (!*propstr)
+>>> +                     /* Clear entry on empty string. */
+>>> +                     g_key_file_remove_key(lte->settings,
+>>> +                             SETTINGS_GROUP, key, NULL);
+>>>                else
+>>> -                     g_key_file_set_string(lte->settings, SETTINGS_GRO=
+UP,
+>>> -                                             DEFAULT_APN_KEY, lte->inf=
+o.apn);
+>>> +                     g_key_file_set_string(lte->settings,
+>>> +                             SETTINGS_GROUP, key, propstr);
+>>>
+>>>                storage_sync(lte->imsi, SETTINGS_STORE, lte->settings);
+>>>        }
+>>
+>> I can see this applying for APN and maybe Username/Password.  But not
+>> the other settings...?
+> =
+
+> I don't get this sorry. which part is applicable only to apn/user/pwd?
+> the propstr is never null for protocol and auth_method, due to the
+> close-set enumeration.
+
+The removal part should probably only apply to APNs and Username / =
+
+Password.  Fair enough that others would never be empty, but you might =
+
+still want to make an explicit check or at least a comment stating this =
+
+for clarity.
 
 Regards,
-Giacinto
+-Denis
 
-On Fri, Oct 12, 2018 at 6:31 PM Jonas Bonn <jonas@southpole.se> wrote:
->
->
-> On 12/10/18 18:23, Giacinto Cifelli wrote:
-> > actually:
-> >
-> >>> +
-> >>> +     if (g_at_chat_send(cbd->ldd->chat, buf, NULL,
-> >>> +                     at_lte_set_auth_cb, cbd, g_free) > 0)
-> >>> +             return;
-> >>> +
-> >> Here you'll leak cbd again.
-> > here there is a g_free in the call. Also in case of failure the g_free
-> > is executed, I think (also because it is the same construct as
-> > everywhere else).
-> > Or not?
->
-> If g_at_chat_send returns 0, g_free() won't be called so you need to
-> free the data yourself.  That should be the construct used elsewhere so
-> if you see it done differently your seeing bugs (probably).
->
-> /Jonas
->
-
---===============5969745646834126161==--
+--===============4964937876305552987==--
 
