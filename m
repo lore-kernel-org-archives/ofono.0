@@ -1,59 +1,111 @@
-Content-Type: multipart/mixed; boundary="===============0795933991422380662=="
+Content-Type: multipart/mixed; boundary="===============3782893843096577370=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH 4/6] src/modem: notify lte driver before going online
-Date: Thu, 11 Oct 2018 22:19:38 +0200
-Message-ID: <8966c3c6-2a82-c0ae-bb59-6acb93bbd3c8@southpole.se>
-In-Reply-To: <20181010065454.15232-5-gciofono@gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH 1/6] lte-api: protocol and authentication properties
+Date: Fri, 12 Oct 2018 04:41:09 +0200
+Message-ID: <CAKSBH7HVsDzO7RSc9O_KVH-LSMWqUMa4Ag1=W6fjUdHRxa-Bqg@mail.gmail.com>
+In-Reply-To: <32e78673-6aaa-25b8-8919-f004d483f851@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0795933991422380662==
+--===============3782893843096577370==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Jonas,
 
-
-On 10/10/18 08:54, Giacinto Cifelli wrote:
-> ---
->   src/modem.c | 2 ++
->   1 file changed, 2 insertions(+)
+On Thu, Oct 11, 2018 at 9:07 PM Jonas Bonn <jonas@southpole.se> wrote:
 >
-> diff --git a/src/modem.c b/src/modem.c
-> index 9e254482..74dbe7ad 100644
-> --- a/src/modem.c
-> +++ b/src/modem.c
-> @@ -729,6 +729,8 @@ static void sim_state_watch(enum ofono_sim_state new_=
-state, void *user)
->   	case OFONO_SIM_STATE_READY:
->   		modem_change_state(modem, MODEM_STATE_OFFLINE);
->   =
+> Hi Giacinto,
+>
+> Reading through your patches, I'm missing an overarching explanation of
+> why we need this.  Do you really have an LTE network in range that
+> requires authentication for the default APN?
 
-> +		ofono_lte_set_reg_info(modem);
-> +
+yes, quite a few of them actually.
+And all private APN I have seen so far require authentication, even
+for the combined attach.
 
-modem_change_state(...OFFLINE) results in the post_sim() implementation =
+> What happens if
+> authentication fails... are you connected to an alternative APN
+> automatically, with other service parameters? What indication is
+> available to the user if authentication fails?
 
-being called.=C2=A0 The drivers that implement the lte atom all call =
+In general LTE registration is denied and fallback to legacy
+technology if available.
 
-ofono_lte_create() there.
+>
+> /Jonas
 
-Your .._set_reg_info function checks for the existence of the atom and =
+Shall I extend the explanation?
+There wasn't much of an explanation why we need a default APN for LTE, eith=
+er.
 
-does some work.=C2=A0 As such, why not just merge the contents of =
+Regards,
+Giacinto
 
-ofono_lte_set_reg_info() into the at_lte_probe function instead... from =
+>
+>
+> On 10/10/18 08:54, Giacinto Cifelli wrote:
+> > added 4 properties for handling the type of context and the
+> > authentication method, exactly like in any gprs context handling.
+> > The properties are named after the equivalent gprs-context one, for
+> > compatibility and uniformity.
+> > ---
+> >   doc/lte-api.txt | 34 ++++++++++++++++++++++++++++++++++
+> >   1 file changed, 34 insertions(+)
+> >
+> > diff --git a/doc/lte-api.txt b/doc/lte-api.txt
+> > index 8a2a97d9..e9cbba0a 100644
+> > --- a/doc/lte-api.txt
+> > +++ b/doc/lte-api.txt
+> > @@ -33,3 +33,37 @@ Properties string DefaultAccessPointName [readwrite]
+> >
+> >                       Setting this property to an empty string clears t=
+he
+> >                       default APN from the modem.
+> > +
+> > +             string Protocol [readwrite]
+> > +
+> > +                     Holds the protocol for this context.  Valid values
+> > +                     are: "ip", "ipv6" and "dual". Default value is "i=
+p".
+> > +
+> > +             string AuthenticationMethod [readwrite]
+> > +
+> > +                     Sets the Method used for the authentication
+> > +                     for the default APN.
+> > +
+> > +                     Available values are "none", "pap" and "chap".
+> > +                     Default is "none".
+> > +
+> > +                     If the AuthenticationMethod is set to 'none' it r=
+emove
+> > +                     the authentication for the DefaultAPN.
+> > +                     In case of AuthenticationMethod 'none',
+> > +                     if the Username and Password properties are not e=
+mpty,
+> > +                     the values are preserved in the properties, but t=
+hey
+> > +                     are not used or transmitted to the module.
+> > +                     Conversely, if Username or Password are empty, the
+> > +                     authentication method selected internally is 'non=
+e',
+> > +                     but the property AuthenticationMethod is left unc=
+hanged.
+> > +
+> > +             string Username [readwrite]
+> > +
+> > +                     Holds the username to be used for authentication
+> > +                     purposes.
+> > +
+> > +             string Password [readwrite]
+> > +
+> > +                     Holds the password to be used for authentication
+> > +                     purposes.
+> > +
+>
 
-there, it's more obvious what's going on.
-
-/Jonas
-
-
->   		/* Modem is always online, proceed to online state. */
->   		if (modem_is_always_online(modem) =3D=3D TRUE)
->   			set_online(modem, TRUE);
-
-
---===============0795933991422380662==--
+--===============3782893843096577370==--
 
