@@ -1,92 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============2341929593872595149=="
+Content-Type: multipart/mixed; boundary="===============3867266262468103838=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH 1/5] lte-api: protocol and authentication properties
-Date: Fri, 12 Oct 2018 10:17:44 +0200
-Message-ID: <da60a69f-0328-e836-2ade-9cd2e14c3d0f@southpole.se>
-In-Reply-To: <20181012072749.7788-1-gciofono@gmail.com>
+Subject: Re: [PATCH v2 0/5] lte atom proto and authentication
+Date: Fri, 12 Oct 2018 10:25:19 +0200
+Message-ID: <30b709cc-56a1-5e10-5eb5-6506a2434053@southpole.se>
+In-Reply-To: <20181012081452.19086-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2341929593872595149==
+--===============3867266262468103838==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Wow... 45 minutes since your last submission and two minutes since I =
 
-Could you provide an ofono log showing the network registration =
+sent my last review email.=C2=A0 Impressive speed! ;)=C2=A0 Like I said, sl=
+ow down...
 
-behaviour for both the case where you pass incorrect authentication =
+Since I doubt any of my comments are incorporated here, I'll just wait =
 
-parameters via the default context and the case where you pass valid =
+for v3 before reading them again...
 
-parameters?
+
+On 12/10/18 10:14, Giacinto Cifelli wrote:
+> Second version of the lte atom, with selection of protocol and authentica=
+tion.
+> In this version the settings are applied as soon as a property is changed.
+
+Include a long description here of what problem you are trying to solve =
+
+and what approach you are using to solve that problem. Reading this =
+
+description should be sufficient for me to be able to understand where =
+
+the following sequence of patches is taking me.
+
+For follow-up versions, include a little section "Changes in v2" that =
+
+tells me how v2 differs from the series v1 that I, possibly, have =
+
+already reviewed.
 
 /Jonas
 
-
-On 12/10/18 09:27, Giacinto Cifelli wrote:
-> added 4 properties for handling the type of context and the
-> authentication method, exactly like in any gprs context handling.
-> The properties are named after the equivalent gprs-context one, for
-> compatibility and uniformity.
 >
-> Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
-> ---
->   doc/lte-api.txt | 40 ++++++++++++++++++++++++++++++++++++++++
->   1 file changed, 40 insertions(+)
+> Giacinto Cifelli (5):
+>    lte-api: protocol and authentication properties
+>    lte.h: added proto and authentication handling
+>    src/lte: added proto and authentication handling
+>    atmodem/lte: proto and authentication handling
+>    Gemalto contributors so far
 >
-> diff --git a/doc/lte-api.txt b/doc/lte-api.txt
-> index 8a2a97d9..fe575cc6 100644
-> --- a/doc/lte-api.txt
-> +++ b/doc/lte-api.txt
-> @@ -33,3 +33,43 @@ Properties	string DefaultAccessPointName [readwrite]
->   =
-
->   			Setting this property to an empty string clears the
->   			default APN from the modem.
-> +
-> +		string Protocol [readwrite]
-> +
-> +			Holds the protocol for this context.  Valid values
-> +			are: "ip", "ipv6" and "dual". Default value is "ip".
-> +
-> +		string AuthenticationMethod [readwrite]
-> +
-> +			Sets the Method used for the authentication
-> +			for the default APN.
-> +
-> +			Available values are "none", "pap" and "chap".
-> +			Default is "none".
-> +
-> +			If the AuthenticationMethod is set to 'none' it remove
-> +			the authentication for the DefaultAPN.
-> +			In case of AuthenticationMethod 'none',
-> +			if the Username and Password properties are not empty,
-> +			the values are preserved in the properties, but they
-> +			are not used or transmitted to the module.
-> +			Conversely, if Username or Password are empty, the
-> +			authentication method selected internally is 'none',
-> +			but the property AuthenticationMethod is left unchanged.
-> +
-> +			If the default APN supports authentication and it
-> +			fails, then it is up to the network how to proceed.
-> +			In general LTE access is denied and the modem can
-> +			fallback to a legacy technology if capable and another
-> +			radio technology is available.
-> +
-> +		string Username [readwrite]
-> +
-> +			Holds the username to be used for authentication
-> +			purposes.
-> +
-> +		string Password [readwrite]
-> +
-> +			Holds the password to be used for authentication
-> +			purposes.
-> +
+>   AUTHORS               |   2 +
+>   doc/lte-api.txt       |  39 +++++++
+>   drivers/atmodem/lte.c |  92 ++++++++++++++--
+>   include/lte.h         |   5 +
+>   src/lte.c             | 236 ++++++++++++++++++++++++++++++++----------
+>   5 files changed, 307 insertions(+), 67 deletions(-)
+>
 
 
---===============2341929593872595149==--
+--===============3867266262468103838==--
 
