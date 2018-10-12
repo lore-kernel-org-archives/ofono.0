@@ -1,49 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============2837542464567188561=="
+Content-Type: multipart/mixed; boundary="===============2371269355783093130=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH 5/5] Gemalto contributors so far
-Date: Fri, 12 Oct 2018 10:30:58 +0200
-Message-ID: <CAKSBH7EBopswV73HoWDqPw8bFE2dgoyowqJU5wweHh0ajhoUWg@mail.gmail.com>
-In-Reply-To: <13668305-5f76-132b-8c1e-3287db3abe47@southpole.se>
+Subject: Re: [PATCH 1/5] lte-api: protocol and authentication properties
+Date: Fri, 12 Oct 2018 10:33:39 +0200
+Message-ID: <CAKSBH7GgVmK7B7G3JEtj4v3yfo+=i63HmMgCE0W+aim9hzGuLg@mail.gmail.com>
+In-Reply-To: <da60a69f-0328-e836-2ade-9cd2e14c3d0f@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2837542464567188561==
+--===============2371269355783093130==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I missed that part, I only noticed the co-author bit.
-To be honest, I don't really care that I get mentioned, but I would
-like that the people who work with me aren't forgotten.
+Hi,
 
-thanks :)
-On Fri, Oct 12, 2018 at 10:13 AM Jonas Bonn <jonas@southpole.se> wrote:
+On Fri, Oct 12, 2018 at 10:17 AM Jonas Bonn <jonas@southpole.se> wrote:
 >
-> Hi,
+> Hi Giacinto,
 >
-> Denis already asked you to drop this patch.
+> Could you provide an ofono log showing the network registration
+> behaviour for both the case where you pass incorrect authentication
+> parameters via the default context and the case where you pass valid
+> parameters?
 >
+
+ok, I can do it with a network simulator. I will try to do it next week.
+
+By the way, now that I remember, authentication on the default context
+is a requirement for the Softbank certification.
+
 > /Jonas
 >
 >
-> On 12/10/18 09:27, Giacinto Cifelli wrote:
-> > Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
-> > ---
-> >   AUTHORS | 2 ++
-> >   1 file changed, 2 insertions(+)
-> >
-> > diff --git a/AUTHORS b/AUTHORS
-> > index 2d360e6e..f64cc03c 100644
-> > --- a/AUTHORS
-> > +++ b/AUTHORS
-> > @@ -138,3 +138,5 @@ Florent Beillonnet <florent.beillonnet@gmail.com>
-> >   Martin Hundeb=C3=B8ll <martin@geanix.com>
-> >   Julien Tournier <tournier.julien@gmail.com>
-> >   Nandini Rebello <nandini.rebello@intel.com>
-> > +Martin Baschin <martin.baschin@googlemail.com>
-> > +Giacinto Cifelli <gciofono@gmail.com>
->
 
---===============2837542464567188561==--
+Giacinto
+
+--===============2371269355783093130==--
 
