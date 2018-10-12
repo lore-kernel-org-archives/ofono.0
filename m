@@ -1,66 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============0849549107469275085=="
+Content-Type: multipart/mixed; boundary="===============8248430564957169669=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/6] lte-api: protocol and authentication properties
-Date: Thu, 11 Oct 2018 23:06:06 -0500
-Message-ID: <1df9304c-e4c4-8465-1f1b-0e47c95c08c1@gmail.com>
-In-Reply-To: <CAKSBH7HVsDzO7RSc9O_KVH-LSMWqUMa4Ag1=W6fjUdHRxa-Bqg@mail.gmail.com>
+Subject: Re: [PATCH 6/6] Gemalto contributors
+Date: Thu, 11 Oct 2018 23:10:29 -0500
+Message-ID: <34f7be71-7466-c388-5c5a-1cb69555ab78@gmail.com>
+In-Reply-To: <20181010065454.15232-6-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0849549107469275085==
+--===============8248430564957169669==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
->> Reading through your patches, I'm missing an overarching explanation of
->> why we need this.  Do you really have an LTE network in range that
->> requires authentication for the default APN?
-> =
-
-> yes, quite a few of them actually.
-> And all private APN I have seen so far require authentication, even
-> for the combined attach.
+On 10/10/2018 01:54 AM, Giacinto Cifelli wrote:
+> ---
+>   AUTHORS | 3 +++
+>   1 file changed, 3 insertions(+)
 > =
 
 
-Are these networks something a typical user would see?  Or is this =
+Please don't send me patches to AUTHORS.  The maintainers will take care =
 
-mainly for M2M type usecases?
+of it.  If I forget, send me a nudge to do so.
 
-Fundamentally this whole username / password for a default bearer =
-
-activation is utterly insane.  The network provider has your IMSI, it =
-
-can lookup whether you're authorized for that APN or not, or suggest you =
-
-an APN that will work...  But I digress..
-
-> =
-
-> Shall I extend the explanation?
-
-An extended explanation is always a good idea.  Especially for something =
-
-that seems to be pretty esoteric.
-
-> There wasn't much of an explanation why we need a default APN for LTE, ei=
-ther.
+> diff --git a/AUTHORS b/AUTHORS
+> index 2d360e6e..8f0f5893 100644
+> --- a/AUTHORS
+> +++ b/AUTHORS
+> @@ -138,3 +138,6 @@ Florent Beillonnet <florent.beillonnet@gmail.com>
+>   Martin Hundeb=C3=B8ll <martin@geanix.com>
+>   Julien Tournier <tournier.julien@gmail.com>
+>   Nandini Rebello <nandini.rebello@intel.com>
+> +Giacinto Cifelli <gciofono@gmail.com>
+> +Martin Baschin <martin.baschin@googlemail.com>
+> +Sebastian Arnd <sebastianarnd@gmail.com>
 > =
 
 
-Sure there was.  Not sure why you say that :)  Maybe it wasn't recorded =
+If these guys have written some of the code and you're submitting a =
 
-in the git commit but it was discussed on the mailing list, IRC, etc. =
+series of patches, then make sure their name is set as the Author of the =
 
-But again, see above.  The whole default attach APN needing to be =
+particular commit they wrote.  If that is not possible, then we might =
 
-provisioned by the client is utterly insane.
+need to look into using various git tags for this.  E.g. perhaps =
+
+Co-authored-by tag.
 
 Regards,
 -Denis
 
---===============0849549107469275085==--
+--===============8248430564957169669==--
 
