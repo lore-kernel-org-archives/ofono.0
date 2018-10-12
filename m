@@ -1,80 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5734733266700403279=="
+Content-Type: multipart/mixed; boundary="===============5531298304427184677=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH 2/5] lte.h: added proto and authentication handling
-Date: Fri, 12 Oct 2018 09:48:58 +0200
-Message-ID: <CAKSBH7HH_utubc9_UJpFMaNX9MdzJJtyNpySfWmtO1-i+gd9Ww@mail.gmail.com>
-In-Reply-To: <55123d63-6a43-7b4c-4fc2-34fce6e88346@southpole.se>
+From: Nandini Rebello <nandini.rebello@intel.com>
+Subject: [PATCH] doc: add support for 8 additional sms alphabets
+Date: Fri, 12 Oct 2018 13:40:55 +0530
+Message-ID: <1539331855-3439-1-git-send-email-nandini.rebello@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5734733266700403279==
+--===============5531298304427184677==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Adding support for hindi,kannada,malayalam,oriya,punjabi,tamil,
+telugu and urdu for GSM 7 bit.
+---
+ doc/messagemanager-api.txt | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-On Fri, Oct 12, 2018 at 9:44 AM Jonas Bonn <jonas@southpole.se> wrote:
->
-> Hi,
->
-> Pass --prefix=3D"PATCH v2" and --cover-letter options to git-format-patch
-> in order to differentiate your patch submissions from each other.
+diff --git a/doc/messagemanager-api.txt b/doc/messagemanager-api.txt
+index 8d85a1b..6f3a21c 100644
+--- a/doc/messagemanager-api.txt
++++ b/doc/messagemanager-api.txt
+@@ -106,6 +106,14 @@ Properties	string ServiceCenterAddress
+ 				"portuguese" - Portuguese alphabet
+ 				"bengali" - Bengali alphabet
+ 				"gujarati" - Gujarati alphabet
++				"hindi" - Hindi alphabet
++				"kannada" - Kannada alphabet
++				"malayalam" - Malayalam alphabet
++				"oriya" - Oriya alphabet
++				"punjabi"- Punjabi alphabet
++				"tamil" - Tamil alphabet
++				"telugu" - Telugu alphabet
++				"urdu" - Urdu alphabet
+ =
 
-thanks. I will re-submit with all this.
->
->
-> On 12/10/18 09:27, Giacinto Cifelli wrote:
-> > Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
->
-> Tags go after description, and you've already got this down below anyway.
+ 			The standard, language-specific alphabets are defined
+ 			in 3GPP TS23.038, Annex A.  By default, oFono uses
+-- =
 
-yes, I have noticed too late, sorry.
+2.7.4
 
->
-> >
-> > The ofono_lte_default_attach_info is extended with protocol,
-> > authentication method, username and password.
-> > The transmission of this info from the src to the atom happens
-> > through the existing set_default_attach_info.
-> > A signal is emitted when one of these properties changes
-> >
-> > Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
-> > ---
-> >   include/lte.h | 5 +++++
-> >   1 file changed, 5 insertions(+)
-> >
-> > diff --git a/include/lte.h b/include/lte.h
-> > index 0f2501c0..2f12ac29 100644
-> > --- a/include/lte.h
-> > +++ b/include/lte.h
-> > @@ -3,6 +3,7 @@
-> >    *  oFono - Open Source Telephony
-> >    *
-> >    *  Copyright (C) 2016  Endocode AG. All rights reserved.
-> > + *  Copyright (C) 2018 Gemalto M2M
->
-> I wouldn't add a copyright line for a trivial change like this...
->
-> >    *
-> >    *  This program is free software; you can redistribute it and/or mod=
-ify
-> >    *  it under the terms of the GNU General Public License version 2 as
-> > @@ -32,6 +33,10 @@ struct ofono_lte;
-> >
-> >   struct ofono_lte_default_attach_info {
-> >       char apn[OFONO_GPRS_MAX_APN_LENGTH + 1];
-> > +     enum ofono_gprs_proto proto;
-> > +     enum ofono_gprs_auth_method auth_method;
-> > +     char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
-> > +     char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
-> >   };
-> >
-> >   typedef void (*ofono_lte_cb_t)(const struct ofono_error *error, void =
-*data);
->
-> /Jonas
 
---===============5734733266700403279==--
+--===============5531298304427184677==--
 
