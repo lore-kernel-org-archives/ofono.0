@@ -1,54 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1407434488671253097=="
+Content-Type: multipart/mixed; boundary="===============1163106289736841888=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH v2 0/5] lte atom proto and authentication
-Date: Fri, 12 Oct 2018 10:35:10 +0200
-Message-ID: <CAKSBH7FnidTngi1qa3k2mmXRrta2xEhURc23DQxAF3K5NMan0A@mail.gmail.com>
-In-Reply-To: <30b709cc-56a1-5e10-5eb5-6506a2434053@southpole.se>
+Subject: [RFC PATCH v3 0/1] atmodem/lte atom
+Date: Fri, 12 Oct 2018 15:16:45 +0200
+Message-ID: <20181012131646.25397-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1407434488671253097==
+--===============1163106289736841888==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-On Fri, Oct 12, 2018 at 10:25 AM Jonas Bonn <jonas@southpole.se> wrote:
->
-> Wow... 45 minutes since your last submission and two minutes since I
-> sent my last review email.  Impressive speed! ;)  Like I said, slow down.=
-..
+I would like to have this new version of the lte atom patch reviewed.
 
-yes, I think we were writing in parallel.
+I have integrated all Jonas and Denis comments, except Jonas request
+to change the cbd in the fuction at_lte_set_default_attach_info, which
+I don't know how to do neatly in a driver. In all example I see the
+allocation is done in the core, so that there is no problem for the
+cleanup. If you could point out an example of structure passed as data
+in the drivers, I would use the same.
 
->
-> Since I doubt any of my comments are incorporated here, I'll just wait
-> for v3 before reading them again...
->
->
-> On 12/10/18 10:14, Giacinto Cifelli wrote:
-> > Second version of the lte atom, with selection of protocol and authenti=
-cation.
-> > In this version the settings are applied as soon as a property is chang=
-ed.
->
-> Include a long description here of what problem you are trying to solve
-> and what approach you are using to solve that problem. Reading this
-> description should be sufficient for me to be able to understand where
-> the following sequence of patches is taking me.
->
-> For follow-up versions, include a little section "Changes in v2" that
-> tells me how v2 differs from the series v1 that I, possibly, have
-> already reviewed.
+This is only a partial submit, if it is ok I will send the series.
+The differences in this version related to the v2 are:
+- use of size_t for lengths
+- naming convention for callback function
+- restructuring of the cgdcont string according to Jonas wishes
+- revovered memory leak in case of failure of g_at_chat_send in
+	the function at_lte_set_default_attach_info
+- removed useless and out-of-patch change in lte_delayed_register
 
-ok. I will do all of this for the v3.
 
->
-> /Jonas
->
+Giacinto Cifelli (1):
+  atmodem/lte: proto and authentication handling
 
-Giacinto
+ drivers/atmodem/lte.c | 94 ++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 84 insertions(+), 10 deletions(-)
 
---===============1407434488671253097==--
+--
+2.17.1
+
+
+--===============1163106289736841888==--
 
