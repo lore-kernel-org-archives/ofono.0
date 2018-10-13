@@ -1,214 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============2774030588853413558=="
+Content-Type: multipart/mixed; boundary="===============7617576412659329517=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH v4 4/4] atmodem/lte: proto and authentication handling
-Date: Sat, 13 Oct 2018 07:48:55 +0200
-Message-ID: <20181013054855.20150-5-gciofono@gmail.com>
-In-Reply-To: <20181013054855.20150-1-gciofono@gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [PATCH v4 4/4] atmodem/lte: proto and authentication handling
+Date: Sat, 13 Oct 2018 08:23:51 +0200
+Message-ID: <87a9d0c5-0ddf-f165-eff5-69c0ee8f3a3a@southpole.se>
+In-Reply-To: <20181013054855.20150-5-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2774030588853413558==
+--===============7617576412659329517==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The ofono_lte_default_attach_info now handles also the protocol and the
-authentication method, username and password.
-
-Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
----
- drivers/atmodem/lte.c | 133 ++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 123 insertions(+), 10 deletions(-)
-
-diff --git a/drivers/atmodem/lte.c b/drivers/atmodem/lte.c
-index efa4e5fe..72e0a6ef 100644
---- a/drivers/atmodem/lte.c
-+++ b/drivers/atmodem/lte.c
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2017  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2018 Gemalto M2M
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -45,10 +46,57 @@ struct lte_driver_data {
- 	GAtChat *chat;
- };
- =
-
--static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *resu=
-lt,
-+struct lte_cbd {
-+	gint ref_count; /* Ref count */
-+	ofono_lte_cb_t cb;
-+	void *data;
-+	GAtChat *chat;
-+	const struct ofono_lte_default_attach_info *info;
-+};
-+
-+static struct lte_cbd *lte_cb_data_new0(void *cb, void *data,
-+		GAtChat *chat, const struct ofono_lte_default_attach_info *info)
-+{
-+	struct lte_cbd *cbd =3D g_new0(struct lte_cbd, 1);
-+
-+	cbd->ref_count =3D 1;
-+	cbd->cb =3D cb;
-+	cbd->data =3D data;
-+	cbd->chat =3D chat;
-+	cbd->info =3D info;
-+
-+	return cbd;
-+}
-+
-+static inline struct lte_cbd *lte_cb_data_ref(struct lte_cbd *cbd)
-+{
-+	if (cbd =3D=3D NULL)
-+		return NULL;
-+
-+	g_atomic_int_inc(&cbd->ref_count);
-+
-+	return cbd;
-+}
-+
-+static void lte_cb_data_unref(gpointer user_data)
-+{
-+	gboolean is_zero;
-+	struct lte_cbd *cbd =3D user_data;
-+
-+	if (cbd =3D=3D NULL)
-+		return;
-+
-+	is_zero =3D g_atomic_int_dec_and_test(&cbd->ref_count);
-+
-+	if (is_zero =3D=3D TRUE)
-+		g_free(cbd);
-+}
-+
-+
-+static void at_lte_set_auth_cb(gboolean ok, GAtResult *result,
- 							gpointer user_data)
- {
--	struct cb_data *cbd =3D user_data;
-+	struct lte_cbd *cbd =3D user_data;
- 	ofono_lte_cb_t cb =3D cbd->cb;
- 	struct ofono_error error;
- =
-
-@@ -58,27 +106,92 @@ static void at_lte_set_default_attach_info_cb(gboolean=
- ok, GAtResult *result,
- 	cb(&error, cbd->data);
- }
- =
-
-+static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *resu=
-lt,
-+							gpointer user_data)
-+{
-+	struct lte_cbd *cbd =3D user_data;
-+	ofono_lte_cb_t cb =3D cbd->cb;
-+	void *data =3D cbd->data;
-+	struct ofono_error error;
-+	char buf[32 + OFONO_GPRS_MAX_USERNAME_LENGTH +
-+					OFONO_GPRS_MAX_PASSWORD_LENGTH  + 1];
-+	size_t buflen =3D sizeof(buf);
-+	size_t len;
-+	enum ofono_gprs_auth_method auth_method;
-+
-+	if (!ok) {
-+		lte_cb_data_unref(cbd);
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		cb(&error, data);
-+		return;
-+	}
-+
-+	len =3D snprintf(buf, buflen, "AT+CGAUTH=3D0,");
-+	buflen -=3D len;
-+	auth_method =3D cbd->info->auth_method;
-+
-+	/* change the authentication method if the  parameters are invalid */
-+	if (!*cbd->info->username || !*cbd->info->password)
-+		auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
-+
-+	switch (auth_method) {
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		snprintf(buf + len, buflen, "1,\"%s\",\"%s\"",
-+				cbd->info->username, cbd->info->password);
-+		break;
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		snprintf(buf + len, buflen, "2,\"%s\",\"%s\"",
-+				cbd->info->username, cbd->info->password);
-+		break;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		snprintf(buf + len, buflen, "0");
-+		break;
-+	}
-+
-+	cbd =3D lte_cb_data_ref(cbd);
-+	if (g_at_chat_send(cbd->chat, buf, NULL,
-+			at_lte_set_auth_cb, cbd, lte_cb_data_unref) > 0)
-+		return;
-+
-+	lte_cb_data_unref(cbd);
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
- static void at_lte_set_default_attach_info(const struct ofono_lte *lte,
- 			const struct ofono_lte_default_attach_info *info,
- 			ofono_lte_cb_t cb, void *data)
- {
- 	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
- 	char buf[32 + OFONO_GPRS_MAX_APN_LENGTH + 1];
--	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	const char *proto;
-+	size_t len;
-+	struct lte_cbd *cbd =3D lte_cb_data_new0(cb, data, ldd->chat, info);
- =
-
- 	DBG("LTE config with APN: %s", info->apn);
- =
-
--	if (strlen(info->apn) > 0)
--		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\",\"%s\"",
--				info->apn);
--	else
--		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\"");
-+	switch (info->proto) {
-+	case OFONO_GPRS_PROTO_IPV6:
-+		proto =3D "IPV6";
-+		break;
-+	case OFONO_GPRS_PROTO_IPV4V6:
-+		proto =3D "IPV4V6";
-+		break;
-+	case OFONO_GPRS_PROTO_IP:
-+		proto =3D "IP";
-+		break;
-+	}
-+
-+	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"%s\"", proto);
-+
-+	if (*info->apn)
-+		snprintf(buf+len, sizeof(buf)-len, ",\"%s\"", info->apn);
- =
-
--	/* We can't do much in case of failure so don't check response. */
- 	if (g_at_chat_send(ldd->chat, buf, NULL,
--			at_lte_set_default_attach_info_cb, cbd, g_free) > 0)
-+			at_lte_set_default_attach_info_cb,
-+			cbd, lte_cb_data_unref) > 0)
- 		return;
- =
-
-+	lte_cb_data_unref(cbd);
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
-
--- =
-
-2.17.1
+Hi,
 
 
---===============2774030588853413558==--
+On 13/10/18 07:48, Giacinto Cifelli wrote:
+> The ofono_lte_default_attach_info now handles also the protocol and the
+> authentication method, username and password.
+>
+> Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
+> ---
+>   drivers/atmodem/lte.c | 133 ++++++++++++++++++++++++++++++++++++++----
+>   1 file changed, 123 insertions(+), 10 deletions(-)
+>
+> diff --git a/drivers/atmodem/lte.c b/drivers/atmodem/lte.c
+> index efa4e5fe..72e0a6ef 100644
+> --- a/drivers/atmodem/lte.c
+> +++ b/drivers/atmodem/lte.c
+> @@ -3,6 +3,7 @@
+>    *  oFono - Open Source Telephony
+>    *
+>    *  Copyright (C) 2017  Intel Corporation. All rights reserved.
+> + *  Copyright (C) 2018 Gemalto M2M
+>    *
+>    *  This program is free software; you can redistribute it and/or modify
+>    *  it under the terms of the GNU General Public License version 2 as
+> @@ -45,10 +46,57 @@ struct lte_driver_data {
+>   	GAtChat *chat;
+>   };
+>   =
+
+> -static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *re=
+sult,
+> +struct lte_cbd {
+> +	gint ref_count; /* Ref count */
+> +	ofono_lte_cb_t cb;
+> +	void *data;
+> +	GAtChat *chat;
+> +	const struct ofono_lte_default_attach_info *info;
+> +};
+> +
+> +static struct lte_cbd *lte_cb_data_new0(void *cb, void *data,
+> +		GAtChat *chat, const struct ofono_lte_default_attach_info *info)
+> +{
+> +	struct lte_cbd *cbd =3D g_new0(struct lte_cbd, 1);
+> +
+> +	cbd->ref_count =3D 1;
+> +	cbd->cb =3D cb;
+> +	cbd->data =3D data;
+> +	cbd->chat =3D chat;
+> +	cbd->info =3D info;
+> +
+> +	return cbd;
+> +}
+> +
+> +static inline struct lte_cbd *lte_cb_data_ref(struct lte_cbd *cbd)
+> +{
+> +	if (cbd =3D=3D NULL)
+> +		return NULL;
+> +
+> +	g_atomic_int_inc(&cbd->ref_count);
+> +
+> +	return cbd;
+> +}
+> +
+> +static void lte_cb_data_unref(gpointer user_data)
+> +{
+> +	gboolean is_zero;
+> +	struct lte_cbd *cbd =3D user_data;
+> +
+> +	if (cbd =3D=3D NULL)
+> +		return;
+> +
+> +	is_zero =3D g_atomic_int_dec_and_test(&cbd->ref_count);
+> +
+> +	if (is_zero =3D=3D TRUE)
+> +		g_free(cbd);
+> +}
+> +
+
+The above isn't wrong, but I question the need for the atomic =
+
+constructs.=C2=A0 ofono isn't a thread-safe library.
+
+I see that there other uses of atomic accessors in the codebase, but I =
+
+believe these are remnants of a past approach with other ambitions... =
+
+Denis will set me right if I'm wrong about this because this mostly =
+
+predates my involvement with ofono. :)
+
+/Jonas
+
+
+--===============7617576412659329517==--
 
