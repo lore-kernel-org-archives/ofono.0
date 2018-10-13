@@ -1,57 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0794490033227760060=="
+Content-Type: multipart/mixed; boundary="===============1060668089844845996=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [RFC PATCH v3 1/1] atmodem/lte: proto and authentication handling
-Date: Fri, 12 Oct 2018 21:05:11 +0200
-Message-ID: <CAKSBH7E15UrnzmF+GENagRUMwUONq2BR+PR8EDAeYNkhG2Dnaw@mail.gmail.com>
-In-Reply-To: <dbf1fa8d-fd15-0890-ebfe-e0b8e4ad82c8@gmail.com>
+Subject: [PATCH v4 0/4] lte atom auth and IP protocol 
+Date: Sat, 13 Oct 2018 07:48:51 +0200
+Message-ID: <20181013054855.20150-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0794490033227760060==
+--===============1060668089844845996==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+ would like to submit this patch for the lte atom
 
->
-> Then memcpy the pending structure (or the needed members) into an area
-> with lifetime you control.
+This patch adds:
+-  the protocol for the default LTE APN, ip, ipv6 and both
+- the authentication handling, with 3 properties:
+	method, username, password
 
-that's better, excellent even: I only need chat as a matter of fact.
+The behavior of the patch is described in the api document (part 1/4),
+and in the core atom header (part 2/4). The same description is
+duplicated for convenience in the core atom source (part 3/4).
+The part 4/4 is the driver/atmodem reflex of these changes.
 
->
-> >>
-> >> Why are you removing the destructor.  This will cause leaks whenever a
-> >> hot-unplug event happens and this command is queued...
-> >>
-> >> If you want to use cbd across multiple commands, the proper way to do
-> >> that is with a reference counted structure.
-> >
-> > is there an example elsewhere in the code?
-> >
->
-> drivers/ubloxmodem/netmon.c
-> drivers/hfpmodem/slc.c
+This patch implements these extended parameters as described by the
+3GPP TS 27.007.
 
-oh, it's done by hand. Like this I knew how to do it :)
-Nevertheless, good example. I will do the same.
 
->
-> There may be a few other places that get this wrong and should be fixed.
->   Feel free to point them out when/if you see these.
+Related to the v3, this new version fixes:
+- a missing return in case of error in at_lte_set_default_attach_info_cb
+- discards the use of lte_driver_data in favour of its member chat
+	for passing among callbacks, as the persistence of the first
+	cannot be guaranteed, or at least controlled by the driver atom
+- fixes the memory management of the object passed among callbacks
+	by using a reference counted structure
 
-ok. It is difficult to grep because the lines are broken (and
-therefore cannot grep for it), so it is just in case I step on them by
-chance.
 
->
-> Regards,
-> -Denis
+Giacinto Cifelli (4):
+  lte-api: protocol and authentication properties
+  lte.h: added proto and authentication handling
+  src/lte: added proto and authentication handling
+  atmodem/lte: proto and authentication handling
 
-Regards,
-Giacinto
+ doc/lte-api.txt       |  39 +++++++
+ drivers/atmodem/lte.c | 133 ++++++++++++++++++++++--
+ include/lte.h         |   5 +
+ src/lte.c             | 236 ++++++++++++++++++++++++++++++++----------
+ 4 files changed, 347 insertions(+), 66 deletions(-)
 
---===============0794490033227760060==--
+-- =
+
+2.17.1
+
+
+--===============1060668089844845996==--
 
