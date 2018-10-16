@@ -1,190 +1,327 @@
-Content-Type: multipart/mixed; boundary="===============5971969159774429895=="
+Content-Type: multipart/mixed; boundary="===============5309503170326996726=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 1/1] atmodem/lte: Gemalto vendor specific extension
-Date: Tue, 16 Oct 2018 13:06:53 -0500
-Message-ID: <860a87d3-266a-2e4d-1a3c-baa0c429cb81@gmail.com>
-In-Reply-To: <CAKSBH7Fc4stwyMZnGWpR4VAjMBqWZVR0kuJNCLppL=gzrqj8wA@mail.gmail.com>
+Subject: Re: [RFC PATCH v6 1/1] lte: protocol and authentication for default
+ ctx
+Date: Tue, 16 Oct 2018 14:16:58 -0500
+Message-ID: <ec6678c6-405b-8e60-87fc-52c2567cfc97@gmail.com>
+In-Reply-To: <20181013073433.26680-2-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5971969159774429895==
+--===============5309503170326996726==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
->>> +static int gemalto_get_auth_type(enum ofono_gprs_auth_method auth_meth=
-od)
->>> +{
->>> +     switch (auth_method) {
->>> +     case OFONO_GPRS_AUTH_METHOD_PAP:
->>> +             return 1;
->>> +     case OFONO_GPRS_AUTH_METHOD_CHAP:
->>> +             return 2;
->>> +     case OFONO_GPRS_AUTH_METHOD_NONE:
->>> +             return 0;
->>> +     }
->>> +
->>> +     return 0;
->>
->> This looks to be exact same enumeration that 27.007 uses...?
+
+On 10/13/2018 02:34 AM, Giacinto Cifelli wrote:
+> Many LTE networks require user authentication, even for the default
+> context. In particular, most of the private APNs use this facility
+> to add some control on top of the MNO providing the service, so that
+> another user of the same network cannot access the private one.
+> As such, we add these parameters to the default context
+> settings that will attempt to use when registering to the network.
 > =
 
-> yes, and?
-> I still need to convert the enum to int. Is there a function somewhere?
-
-Right.  So what I'm hinting at is that this should be a generic utility =
-
-method inside atutil.c (with no gemalto_ prefix) and you can simply use =
-
-that.
-
+> The additional parameters added by this patch are:  protocol, user, and
+> password.  These are sufficient to allow to connect to networks
+> available to the patch author where ofono previously failed to register
+> to the network at all.
 > =
 
->>
->>> +}
->>> +
->>> +gboolean gemalto_get_auth_command(struct ofono_modem *modem, int cid,
->>> +                             enum ofono_gprs_auth_method auth_method,
->>> +                             const char *username, const char *passwor=
-d,
->>> +                             char *buf, guint buflen)
->>> +{
->>> +     int gemalto_auth =3D ofono_modem_get_integer(modem, "GemaltoAuthT=
-ype");
->>
->> Why don't you just simply pass the gemalto auth into this function
->> directly instead of having to pass in the modem object?
-> =
-
-> Because I need to pass further values in the future.
-> I still need handle the auto-provisioned modems.
-> I prefer that the calling function doesn't have to know how the buffer
-> is filled:
-> it will just receive the command.
-
-I wouldn't do it this way, but okay.  I don't much care how the vendor =
-
-specific stuff looks :)  You may want to consider returning a newly =
-
-allocated char * in this case to make the caller's job a bit easier.  I =
-
-get a bit twitchy once the number of function arguments exceeds 5-6.
-
-> =
-
->>
->>> +     int len;
->>> +     /*
->>> +      * 0x01: use sgauth (0=3Duse cgauth)
->>> +      * 0x02: pwd, user order (0=3Duser, pwd order)
->>> +      * 0x04: always use all: method, user, password
->>> +      */
->>
->> But certain combinations are not valid?  E.g. can we have a +CGAUTH with
->> a wrong username/password order?
-> =
-
-> yes, out of the 8 combinations possible, today I have counted 5 (the
-> R&D can be very creative sometimes),
-> If the point is to enumerate the configurations instead, this is how I
-> handled it in a previous submit, but was much worst
-> because there were switch-cases with 1, 2, or 3 labels together.
-> At least like this it is clear what the code is doing.
+> Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
+> ---
+>   src/lte.c | 241 +++++++++++++++++++++++++++++++++++++++++-------------
+>   1 file changed, 185 insertions(+), 56 deletions(-)
 > =
 
 
-Okay, fair enough.  You might want to add a comment about which =
+So I'm fine with the overall approach taken here, but the actual =
 
-combinations are not possible.
+implementation still has issues:
 
->>
->> Have you considered simply writing a gemalto specific gprs.c driver that
->> will use SGAUTH and using the default atmodem one on the sane devices?
+>   static void lte_set_default_attach_info_cb(const struct ofono_error *er=
+ror,
+> -						void *data)
+> +								void *data)
+>   {
+>   	struct ofono_lte *lte =3D data;
+>   	const char *path =3D __ofono_atom_get_path(lte->atom);
+>   	DBusConnection *conn =3D ofono_dbus_get_connection();
+>   	DBusMessage *reply;
+> -	const char *apn =3D lte->info.apn;
+> +	const char *propstr =3D NULL;
+> +	char *key =3D g_strdup(lte->key);
+
+I'd do this differently:
+
+>   =
+
+>   	DBG("%s error %d", path, error->type);
+>   =
+
+
+char *key;
+char *value;
+const char *str;
+DBusMessageIter iter;
+DbusMessageIter var;
+
+....
+
+// No error checking needed since we already validated pending:
+
+dbus_message_iter_init(lte->pending, &iter);
+dbus_message_iter_get_basic(&iter, &str);
+key =3D strdup(str);
+
+dbus_message_iter_next(&iter);
+dbus_message_iter_recurse(&iter, &var);
+dbus_message_iter_get_basic(&var, &str);
+value =3D strdup(str);
+
+> @@ -118,55 +174,68 @@ static void lte_set_default_attach_info_cb(const st=
+ruct ofono_error *error,
+>   		return;
+>   	}
+>   =
+
+> -	g_strlcpy(lte->info.apn, lte->pending_info.apn,
+> -			OFONO_GPRS_MAX_APN_LENGTH + 1);
+> +	if (!g_str_equal(lte->pending_info.apn, lte->info.apn)) {
+> +		g_strlcpy(lte->info.apn, lte->pending_info.apn,
+> +					OFONO_GPRS_MAX_APN_LENGTH + 1);
+> +		propstr =3D lte->info.apn;
+> +	} else if (lte->pending_info.proto !=3D lte->info.proto) {
+> +		lte->info.proto =3D lte->pending_info.proto;
+> +		key =3D LTE_PROTO;
+> +		propstr =3D gprs_proto_to_string(lte->info.proto);
+> +	} else if (lte->pending_info.auth_method !=3D lte->info.auth_method) {
+> +		lte->info.auth_method =3D lte->pending_info.auth_method;
+> +		propstr =3D gprs_auth_method_to_string(lte->info.auth_method);
+> +
+> +	} else if (!g_str_equal(lte->pending_info.username,
+> +							lte->info.username)) {
+> +		g_strlcpy(lte->info.username, lte->pending_info.username,
+> +					OFONO_GPRS_MAX_USERNAME_LENGTH + 1);
+> +		propstr =3D lte->info.username;
+> +	} else if (!g_str_equal(lte->pending_info.password,
+> +							lte->info.password)) {
+> +		g_strlcpy(lte->info.password, lte->pending_info.password,
+> +					OFONO_GPRS_MAX_PASSWORD_LENGTH + 1);
+> +		propstr =3D lte->info.password;
+> +	} else {
+> +		/*
+> +		 * this should never happen, because no property change is
+> +		 * checked before.
+> +		 * Neverthelss, in this case it will answer the D-Bus message
+> +		 * but emit no signal
+> +		 */
+> +		ofono_error("unexpected property change: ignored");
+> +		g_free(key);
+> +		key =3D NULL;
+> +	}
+
+Get rid of this entire if/else block and simply do:
+
+memcpy(&lte->info, &lte->pending_info, sizeof(lte->info));
+
+> +
+> +	reply =3D dbus_message_new_method_return(lte->pending);
+> +	__ofono_dbus_pending_reply(&lte->pending, reply);
+> +
+> +	if(!key)
+> +		return;
+>   =
+
+>   	if (lte->settings) {
+> -		if (strlen(lte->info.apn) =3D=3D 0)
+> -			/* Clear entry on empty APN. */
+> -			g_key_file_remove_key(lte->settings, SETTINGS_GROUP,
+> -						DEFAULT_APN_KEY, NULL);
+> +		/*
+> +		 * the following code removes from storage empty APN, user, pwd
+> +		 * for proto and auth_method, given that they always
+> +		 * have defaults, it will not do anything.
+> +		 */
+> +		if (!*propstr)
+> +			/* Clear entry on empty string. */
+> +			g_key_file_remove_key(lte->settings,
+> +				SETTINGS_GROUP, key, NULL);
+>   		else
+> -			g_key_file_set_string(lte->settings, SETTINGS_GROUP,
+> -						DEFAULT_APN_KEY, lte->info.apn);
+> +			g_key_file_set_string(lte->settings,
+> +				SETTINGS_GROUP, key, propstr);
+>   =
+
+>   		storage_sync(lte->imsi, SETTINGS_STORE, lte->settings);
+>   	}
+>   =
+
+> -	reply =3D dbus_message_new_method_return(lte->pending);
+> -	__ofono_dbus_pending_reply(&lte->pending, reply);
+> -
+>   	ofono_dbus_signal_property_changed(conn, path,
+>   					OFONO_CONNECTION_CONTEXT_INTERFACE,
+> -					DEFAULT_APN_KEY,
+> -					DBUS_TYPE_STRING, &apn);
+
+g_free(value);
+
+> -}
+> -
+> -static DBusMessage *lte_set_default_apn(struct ofono_lte *lte,
+> -				DBusConnection *conn, DBusMessage *msg,
+> -				const char *apn)
+> -{
+> -	if (lte->driver->set_default_attach_info =3D=3D NULL)
+> -		return __ofono_error_not_implemented(msg);
+> -
+> -	if (lte->pending)
+> -		return __ofono_error_busy(msg);
+> -
+> -	if (g_str_equal(apn, lte->info.apn))
+> -		return dbus_message_new_method_return(msg);
+> -
+> -	/* We do care about empty value: it can be used for reset. */
+> -	if (is_valid_apn(apn) =3D=3D FALSE && apn[0] !=3D '\0')
+> -		return __ofono_error_invalid_format(msg);
+> -
+> -	lte->pending =3D dbus_message_ref(msg);
+> -
+> -	g_strlcpy(lte->pending_info.apn, apn, OFONO_GPRS_MAX_APN_LENGTH + 1);
+> -
+> -	lte->driver->set_default_attach_info(lte, &lte->pending_info,
+> -					lte_set_default_attach_info_cb, lte);
+> -
+> -	return NULL;
+> +					key,
+> +					DBUS_TYPE_STRING, &propstr);
+> +	g_free(key);
+>   }
+>   =
+
+>   static DBusMessage *lte_set_property(DBusConnection *conn,
+> @@ -177,6 +246,14 @@ static DBusMessage *lte_set_property(DBusConnection =
+*conn,
+>   	DBusMessageIter var;
+>   	const char *property;
+>   	const char *str;
+> +	enum ofono_gprs_auth_method auth_method;
+> +	enum ofono_gprs_proto proto;
+> +
+> +	if (lte->driver->set_default_attach_info =3D=3D NULL)
+> +		return __ofono_error_not_implemented(msg);
+> +
+> +	if (lte->pending)
+> +		return __ofono_error_busy(msg);
+>   =
+
+
+So you may want to do:
+
+memcpy(&lte->pending_info, &lte->info, sizeof(lte->info));
+
+>   	if (!dbus_message_iter_init(msg, &iter))
+>   		return __ofono_error_invalid_args(msg);
+> @@ -192,16 +269,68 @@ static DBusMessage *lte_set_property(DBusConnection=
+ *conn,
+>   =
+
+>   	dbus_message_iter_recurse(&iter, &var);
+>   =
+
+> -	if (!strcmp(property, DEFAULT_APN_KEY)) {
+> -		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
+> -			return __ofono_error_invalid_args(msg);
+> +	if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
+> +		return __ofono_error_invalid_args(msg);
+>   =
+
+> -		dbus_message_iter_get_basic(&var, &str);
+> +	dbus_message_iter_get_basic(&var, &str);
+>   =
+
+> -		return lte_set_default_apn(lte, conn, msg, str);
+> -	}
+> +	if ((strcmp(property, LTE_APN) =3D=3D 0)) {
+> +
+> +		if (g_str_equal(str, lte->info.apn))
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		/* We do care about empty value: it can be used for reset. */
+> +		if (is_valid_apn(str) =3D=3D FALSE && str[0] !=3D '\0')
+> +			return __ofono_error_invalid_format(msg);
+> +
+> +		g_strlcpy(lte->pending_info.apn, str,
+> +					OFONO_GPRS_MAX_APN_LENGTH + 1);
+> +
+> +	} else if ((strcmp(property, LTE_PROTO) =3D=3D 0)) {
+> +
+> +		if (!gprs_proto_from_string(str, &proto))
+> +			return __ofono_error_invalid_format(msg);
+> +
+> +		if (proto =3D=3D lte->info.proto)
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		lte->pending_info.proto =3D proto;
+>   =
+
+> -	return __ofono_error_invalid_args(msg);
+> +	} else if (strcmp(property, LTE_AUTH_METHOD) =3D=3D 0) {
+> +
+> +		if (!gprs_auth_method_from_string(str, &auth_method))
+> +			return __ofono_error_invalid_format(msg);
+> +
+> +		if (auth_method =3D=3D lte->info.auth_method)
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		lte->pending_info.auth_method =3D auth_method;
+> +
+> +	} else if (strcmp(property, LTE_USERNAME) =3D=3D 0) {
+> +
+> +		if (g_str_equal(str, lte->info.username))
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		g_strlcpy(lte->pending_info.username, str,
+> +					OFONO_GPRS_MAX_USERNAME_LENGTH + 1);
+> +
+> +	} else if (strcmp(property, LTE_PASSWORD) =3D=3D 0) {
+> +
+> +		if (g_str_equal(str, lte->info.password))
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		g_strlcpy(lte->pending_info.password, str,
+> +					OFONO_GPRS_MAX_PASSWORD_LENGTH + 1);
+> +
+> +	} else
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	lte->key =3D property;
+
+And this isn't needed.  Or alternatively store both the key and value =
+
+being set to in ofono_lte.  But I much prefer just parsing the message =
+
+again.
+
+> +	lte->pending =3D dbus_message_ref(msg);
+> +	lte->driver->set_default_attach_info(lte, &lte->pending_info,
+> +					lte_set_default_attach_info_cb, lte);
+> +
+> +	return NULL;
+>   }
+>   =
+
+>   static const GDBusMethodTable lte_methods[] =3D {
 > =
 
-> Even CGAUTH is not completely standard for some models, some require
-> all parameters for auth=3DNONE.
-> Besides, gemalto doesnt use the CID=3D0 as in the standard.
-> =
-
-> There are no sane and insane modems. At most standard and proprietary.
-
-Lol, trust me there are :)  I've seen many insane ones and a few that =
-
-are mostly sane.  The weird situation with +CGAUTH requiring all =
-
-arguments can be VENDOR-ized in the atmodem lte driver easily.  But the =
-
-use of +SGAUTH and stuff probably requires a separate vendor driver =
-
-anyway.  So if you want to just lump this all into =
-
-drivers/gemaltomodem/lte.c I'd be okay with that.
-
->>
->>> +                     guint cid, enum ofono_gprs_proto proto, const cha=
-r *apn,
->>> +                                                     char *buf, guint =
-buflen)
->>
->> Why is CGDCONT specific to gemalto?  This looks pretty standard
-> =
-
-> CID=3D1 for the default APN (for the current models).
-> And because for auto-provisioning models I need to return a totally
-> different command in some cases (like: 'AT').
-> And there are no cgdcont-building functions around.
-> =
-
-
-I thought the default APN was cid=3D0.
-
-Why don't we create a CGDCONT builder inside atutil.c and you can use =
-
-that.  If you need some special ones then you can write a gemalto =
-
-specific version later that can do something like:
-
-gemalto_get_cgdcont()
-{
-	if (27007-compliant)
-		return at_util_get_cgdcont();
-
-	/* do stuff */
-}
-
->>> +static inline int at_util_convert_signal_strength_cesq(int strength_GS=
-M,
->>> +                                     int strength_UTRAN, int strength_=
-EUTRAN)
->>> +{
->>> +     int result =3D -1;
->>> +
->>> +     if (strength_GSM !=3D 99)
->>> +             result =3D (strength_GSM * 100) / 63;
->>> +     else if (strength_UTRAN !=3D 255)
->>> +             result =3D (strength_UTRAN * 100) / 96;
->>> +     else if (strength_EUTRAN !=3D 255)
->>> +             result =3D (strength_EUTRAN * 100) / 97;
->>> +
->>> +     return result;
->>> +}
->>> +
->>
->> How is this related to the current patch?
-> =
-
-> Sorry, I didn't see it. However I did submit a patch for it on the
-> 21.09.2018 on which I have never received any feedback.
-> =
-
-
-There are too many patches flying about.  Just resubmit the relevant series.
 
 Regards,
 -Denis
 
---===============5971969159774429895==--
+--===============5309503170326996726==--
 
