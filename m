@@ -1,59 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============3599214804289578948=="
+Content-Type: multipart/mixed; boundary="===============0674241640662890068=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
 Subject: Re: [PATCH v4 1/2] Gemalto: voicecall atom
-Date: Wed, 17 Oct 2018 10:01:44 +0200
-Message-ID: <CAKSBH7E+0XikiXST7czB+JWk+BtQaS2TWV8+xs6qbhwCSpj4QA@mail.gmail.com>
-In-Reply-To: <cae21e96-7824-6e1c-7bb8-0d73b5139528@southpole.se>
+Date: Wed, 17 Oct 2018 10:33:08 +0200
+Message-ID: <7cf3ee00-de57-a0f3-1530-c9d580706f07@southpole.se>
+In-Reply-To: <CAKSBH7HTtr_bh4AcnsOCXUecLRAOvG4YHkwRaqzmp_QArEm_Mg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3599214804289578948==
+--===============0674241640662890068==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi again,
+Hi,
 
-On Wed, Oct 17, 2018 at 8:28 AM Jonas Bonn <jonas@southpole.se> wrote:
+
+On 17/10/18 09:30, Giacinto Cifelli wrote:
+
+>>> +
+>>> +#ifdef HAVE_CONFIG_H
+>>> +#include <config.h>
+>>> +#endif
+>>> +
+>>> +#define _GNU_SOURCE
+>> What requires _GNU_SOURCE?
+> I don't know. It was part of drivers/atmodem/voicecall.c.
+> Maybe Denis knows?
+
+If you don't know that you need it, drop it.=C2=A0 If the code fails to bui=
+ld =
+
+without it, you need it.=C2=A0 I can't immediately see what requires this i=
+n =
+
+your code, but maybe there's something.=C2=A0 Otherwise it would be nice no=
+t =
+
+to propagate this further when somebody cut-and-paste's your code. :)
+
+drivers/atmodem/voicecall.c doesn't need it either.=C2=A0 Builds fine witho=
+ut.
+
 >
-> Hi,
+>>> +
+>>> +static struct ofono_voicecall_driver driver =3D {
+>>> +     .name                   =3D "gemaltomodem",
+>>> +     .probe                  =3D gemalto_voicecall_probe,
+>>> +     .remove                 =3D gemalto_voicecall_remove,
+>>> +     .dial                   =3D gemalto_dial,
+>>> +     .answer                 =3D gemalto_answer,
+>>> +     .hangup_all             =3D gemalto_hangup_all,
+>>> +     .hangup_active          =3D gemalto_hangup,
+>>> +     .hold_all_active        =3D gemalto_hold_all_active,
+>>> +     .release_all_held       =3D gemalto_release_all_held,
+>>> +     .set_udub               =3D gemalto_set_udub,
+>>> +     .release_all_active     =3D gemalto_release_all_active,
+>>> +     .release_specific       =3D gemalto_release_specific,
+>>> +     .private_chat           =3D gemalto_private_chat,
+>>> +     .create_multiparty      =3D gemalto_create_multiparty,
+>>> +     .transfer               =3D gemalto_transfer,
+>>> +     .deflect                =3D NULL,
+>>> +     .swap_without_accept    =3D NULL,
+>> Are other drivers explicit about _not_ providing implementations? I'd
+>> drop these otherwise?
+>>
+> again, it is done so in the original drivers/atmodem/voicecall.c.
+
+I would drop them...
+
 >
+> overall, thank you for reviewing and also for your questions, it gave
+> me the possibility to clarify some points.
 >
-> On 17/10/18 06:52, Giacinto Cifelli wrote:
-> > Added voicecall atom specific for Gemalto modems.
+> regards,
+> Giacinto
+> ---
+> full list of suspicious externs:
 
-> > diff --git a/drivers/gemaltomodem/voicecall.c b/drivers/gemaltomodem/vo=
-icecall.c
-> > new file mode 100644
-> > index 00000000..8e2c7e10
-> > --- /dev/null
-> > +++ b/drivers/gemaltomodem/voicecall.c
-> > @@ -0,0 +1,581 @@
+Thanks.=C2=A0 Some of those "suspicious externs" are mine, too! :)
 
-> > +static void gemalto_send_dtmf(struct ofono_voicecall *vc, const char *=
-dtmf,
-> > +                     ofono_voicecall_cb_t cb, void *data)
-> > +{
-> > +     int len =3D strlen(dtmf);
-> > +     int s;
-> > +     int i;
-> > +     char *buf;
-> > +     struct ofono_modem *modem =3D ofono_voicecall_get_modem(vc);
-> > +     int use_quotes =3D ofono_modem_get_integer(modem, "GemaltoVtsQuot=
-es");
-> > +
-> > +     /* strlen("+VTS=3D\"T\";") =3D 9 + initial AT + null */
-> > +     buf =3D g_new(char, len * 9 + 3);
->
-> Use alloca() instead... currently you are leaking buf.
+/Jonas
 
-Gladly, excellent idea.
-Stack allocation is very sparingly used in ofono, while it would be a
-better alternative in many cases.
 
-Regards,
-Giacinto
-
---===============3599214804289578948==--
+--===============0674241640662890068==--
 
