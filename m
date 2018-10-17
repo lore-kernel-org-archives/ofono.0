@@ -1,83 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============3962956767585097989=="
+Content-Type: multipart/mixed; boundary="===============0775599045463024477=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: [PATCH 1/1] Remove superfluous definitions of _GNU_SOURCE
-Date: Wed, 17 Oct 2018 18:32:20 +0200
-Message-ID: <a89f93d2-f1c7-e231-258e-50f8dd2f54c6@norrbonn.se>
-In-Reply-To: <0c3424d8-7346-3db7-3161-ba70a80723c2@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v4 1/2] Gemalto: voicecall atom
+Date: Wed, 17 Oct 2018 11:34:13 -0500
+Message-ID: <6883d3b6-0a7b-e985-1da8-96b580feb157@gmail.com>
+In-Reply-To: <6245aa25-9400-1b3b-1c2b-266ab0067768@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3962956767585097989==
+--===============0775599045463024477==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jonas,
 
-On 17/10/18 17:03, Denis Kenzior wrote:
-> Hi Jonas,
+On 10/17/2018 11:30 AM, Jonas Bonn wrote:
 > =
 
-> On 10/17/2018 05:23 AM, Jonas Bonn wrote:
->> There are a large number of files in the tree that define _GNU_SOURCE
->> despite not actually using features hidden behind this flag.=C2=A0 This =
-patch
->> removes all these definitions in one fell swoop...
->> ---
+> =
+
+> On 17/10/18 17:18, Denis Kenzior wrote:
+>> Hi Jonas,
+>>>> +
+>>>> +extern void gemalto_voicecall_init();
+>>>> +extern void gemalto_voicecall_exit();
+>>>> +
+>>>
+>>> Why are these "extern"?
+>>>
 >>
->> I realize that it's not quite kosher in ofono to send pathes that touch
->> more than directory.=C2=A0 Breaking this up into separate patches doesn't
->> really make sense though, given its nature.=C2=A0 If the list insists,
->> though, I can break this up into a series of ~50 patches...
->>
+>> Okay, I haven't had my coffee yet, but what is the actual problem?  =
+
+>> All functions defined in the header are extern anyway, whether they're =
+
+>> labeled extern or not.=C2=A0 So, dropping extern would have no actual =
+
+>> effect besides style.
 > =
 
-> Yes, fair enough.=C2=A0 But:
-> =
+> No, of course, it's stylistic... just interesting that this particular =
 
-> drivers/mbimmodem/mbim.c: In function =E2=80=98receive_header=E2=80=99:
-> drivers/mbimmodem/mbim.c:423:16: error: implicit declaration of function =
+> style is used in these particular header files and nowhere else.=C2=A0 Wa=
+s =
 
-> =E2=80=98TEMP_FAILURE_RETRY=E2=80=99 [-Werror=3Dimplicit-function-declara=
-tion]
->  =C2=A0 ssize_t len =3D TEMP_FAILURE_RETRY(read(fd,
->  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 ^~~~~~~~~~~~~~~~~~
-> =
+> there a reason for that once?=C2=A0 Something to do with modules/plugins?
 
-> =
+That is a good question.  I'm not sure there was a reason.  But then =
 
-> tools/tty-redirector.c: In function =E2=80=98accept_handler=E2=80=99:
-> tools/tty-redirector.c:249:8: error: implicit declaration of function =
+that code is ~10 years old, so I wouldn't remember the reason anyway.
 
-> =E2=80=98accept4=E2=80=99; did you mean =E2=80=98accept=E2=80=99? [-Werro=
-r=3Dimplicit-function-declaration]
->  =C2=A0 nfd =3D accept4(fd, (struct sockaddr *) &addr, &addrlen, SOCK_CLO=
-EXEC);
->  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ^~~~~~~
->  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 accept
-> =
+If it bothers you so much, feel free to remove the externs.
 
 > =
 
-
-Right.  mbim and tools are not in my configuration...
-
-> Anyway, I was nice and fixed these for you.=C2=A0 It compiles cleanly for=
- me =
-
-> and I applied this patch.
-
-
-Thanks.  Good of you!
-
-/Jonas
-
+> Grab a coffee.=C2=A0 The day is long!
 > =
 
-> Regards,
-> -Denis
 
---===============3962956767585097989==--
+Yep, having it now.  :)
+
+Regards,
+-Denis
+
+--===============0775599045463024477==--
 
