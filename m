@@ -1,53 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5678833544928844429=="
+Content-Type: multipart/mixed; boundary="===============0982644420293747541=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH v4 1/2] Gemalto: voicecall atom
-Date: Wed, 17 Oct 2018 12:29:24 +0200
-Message-ID: <eb04bece-800f-c563-782b-038c7bcfecc9@southpole.se>
-In-Reply-To: <CAKSBH7EfkmnKapRox2ajEQVL3nKCiyKOgbosBfQGfwgY6bmAXw@mail.gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH 1/1] Remove superfluous definitions of _GNU_SOURCE
+Date: Wed, 17 Oct 2018 12:35:08 +0200
+Message-ID: <CAKSBH7FaCYUOmpG6JYkzGMPxKEKXm+XDFeAZ0N9LDwrFEdmzgg@mail.gmail.com>
+In-Reply-To: <20181017102304.5857-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5678833544928844429==
+--===============0982644420293747541==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi,
 
-
-On 17/10/18 10:52, Giacinto Cifelli wrote:
+On Wed, Oct 17, 2018 at 12:23 PM Jonas Bonn <jonas@norrbonn.se> wrote:
 >
->>>>> +
->>>>> +static struct ofono_voicecall_driver driver =3D {
->>>>> +     .name                   =3D "gemaltomodem",
->>>>> +     .probe                  =3D gemalto_voicecall_probe,
->>>>> +     .remove                 =3D gemalto_voicecall_remove,
->>>>> +     .dial                   =3D gemalto_dial,
->>>>> +     .answer                 =3D gemalto_answer,
->>>>> +     .hangup_all             =3D gemalto_hangup_all,
->>>>> +     .hangup_active          =3D gemalto_hangup,
->>>>> +     .hold_all_active        =3D gemalto_hold_all_active,
->>>>> +     .release_all_held       =3D gemalto_release_all_held,
->>>>> +     .set_udub               =3D gemalto_set_udub,
->>>>> +     .release_all_active     =3D gemalto_release_all_active,
->>>>> +     .release_specific       =3D gemalto_release_specific,
->>>>> +     .private_chat           =3D gemalto_private_chat,
->>>>> +     .create_multiparty      =3D gemalto_create_multiparty,
->>>>> +     .transfer               =3D gemalto_transfer,
->>>>> +     .deflect                =3D NULL,
->>>>> +     .swap_without_accept    =3D NULL,
->>>> Are other drivers explicit about _not_ providing implementations? I'd
->>>> drop these otherwise?
->>>>
->>> again, it is done so in the original drivers/atmodem/voicecall.c.
->> I would drop them...
-> I would like to know why they weren't dropped in atmodem in the first
-> place, before dropping them.
-> Either solution is ok for me, I just want some clarification.
+> There are a large number of files in the tree that define _GNU_SOURCE
+> despite not actually using features hidden behind this flag.  This patch
+> removes all these definitions in one fell swoop...
+> ---
+>
+> I realize that it's not quite kosher in ofono to send pathes that touch
+> more than directory.  Breaking this up into separate patches doesn't
+> really make sense though, given its nature.  If the list insists,
+> though, I can break this up into a series of ~50 patches...
+>
+> /Jonas
 
-Make the declaration 'const' while you're at it.
+Do all files and the project compile?
 
-/Jonas
+A single patch seems better in this case, in my opinion - for what it's wor=
+th -.
 
---===============5678833544928844429==--
+Regards,
+Giacinto
+
+--===============0982644420293747541==--
 
