@@ -1,91 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============7597030578740616448=="
+Content-Type: multipart/mixed; boundary="===============7372377023977411850=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Stuck in modem driver enable
-Date: Thu, 18 Oct 2018 17:48:01 -0500
-Message-ID: <d23da274-c820-db96-763b-6cf94110f21a@gmail.com>
-In-Reply-To: <AM4PR1001MB0786A11CCCAC698C6DE3A93196F80@AM4PR1001MB0786.EURPRD10.PROD.OUTLOOK.COM>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: Re: [PATCH v7 6/7] gemalto/lte: Gemalto vendor lte atom
+Date: Fri, 19 Oct 2018 01:59:14 +0300
+Message-ID: <85109d4e-0e01-d126-41b0-94a1abef9311@jolla.com>
+In-Reply-To: <cb95ecab-da1e-878d-89d9-a6d3d5a3d321@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7597030578740616448==
+--===============7372377023977411850==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mattias,
-
-On 10/18/2018 05:52 AM, Mattias M=C3=A5nsson wrote:
-> We have implemented a driver for the Gemalto modem we are using and =
-
-> today I noticed that it got stuck in initialization (during enable). The =
-
-> problem is that the AT+CFUN=3D4 (which is the last step of our init) now =
-
-> returned a CME error. The error handling for this is inspired from all =
-
-> the other drivers:
-> =
-
-> =
-
-> static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-> {
-> struct ofono_modem *modem =3D user_data;
-> struct verimalto_data *data =3D ofono_modem_get_data(modem);
-> =
-
-> if (!ok) {
-> g_at_chat_unref(data->app);
-> data->app =3D NULL;
-> =
-
-> g_at_chat_unref(data->mdm);
-> data->mdm =3D NULL;
-> =
-
-> ofono_modem_set_powered(modem, FALSE);
-> return;
-> }
-> =
-
-> // Get initial SIM state
-> data->sim_state_query =3D at_util_sim_state_query_new(data->app,
-> 2, 20, sim_state_cb, modem,
-> NULL);
-> }
-> =
-
-> This will put the modem in not=C2=A0powered state. The problem is that as=
- it =
-
-> has not completed the initialization, there is now no interfaces at all =
+On 18/10/18 22:32, Jonas Bonn wrote:
+> ...
+>
+>> +#include <ofono/log.h>
+>> +#include <ofono/types.h>
+>> +
+>> +#include "ofono.h"
+>> +#include "gemaltomodem.h"
+>> +
+>> +enum gemalto_auth_option {
+>> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_DEFAULTS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 =3D 0x00,
+>> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_USE_SGAUTH=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 =3D 0x01,
+>> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_ORDER_PWD_USR=C2=A0=C2=A0=C2=A0 =3D 0x0=
+2,
+>> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_ALW_ALL_PARAMS=C2=A0=C2=A0=C2=A0 =3D 0x=
+04,
+>> +};
+>
+> Using an enumeration to name flags feels awkward.=C2=A0 I would #define t=
+hese:
+>
+> #define AUTH_F_USE_SGATH (1<<0)
+> #define AUTH_F_SWAP_CREDENTIALS (1<<1)
+> #define AUTH_F_ALWAYS_ALL_PARAMS (1<<2)
+>
 
 
-What interfaces?  DBus interfaces?  You still have the Modem interface =
+It may feel awkward but I actually find that (enum'ing flags) quite =
 
-present...
+useful for debugging with gdb - it allows the debugger to refer to those =
 
-> set up. So we can not try to power it again or anything else. Are=C2=A0al=
-l =
+flags by name.
 
+Cheers,
+-Slava
 
-The above code does not actually trigger the removal of the Modem =
-
-itself.  So that object is still present and you can still try to set =
-
-Powered to True.  It might still fail the second time of course...
-
-> these drivers having an issue with error handling=C2=A0or have I missed =
-
-> something else? And how could I handle it better?
-Not that I'm aware of.  Is there perhaps something deeper happening here =
-
-than what you describe?
-
-Regards,
--Denis
-
---===============7597030578740616448==--
+--===============7372377023977411850==--
 
