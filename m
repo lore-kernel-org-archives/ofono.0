@@ -1,79 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============2951804057015804853=="
+Content-Type: multipart/mixed; boundary="===============7597030578740616448=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: [PATCH v7 7/7] plugins/gemalto: use Gemalto lte atom
-Date: Thu, 18 Oct 2018 21:41:22 +0200
-Message-ID: <51a9f923-bafd-a35a-f02b-efac92fc7f0c@norrbonn.se>
-In-Reply-To: <20181018184952.10797-8-gciofono@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Stuck in modem driver enable
+Date: Thu, 18 Oct 2018 17:48:01 -0500
+Message-ID: <d23da274-c820-db96-763b-6cf94110f21a@gmail.com>
+In-Reply-To: <AM4PR1001MB0786A11CCCAC698C6DE3A93196F80@AM4PR1001MB0786.EURPRD10.PROD.OUTLOOK.COM>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2951804057015804853==
+--===============7597030578740616448==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi Mattias,
 
-On 18/10/18 20:49, Giacinto Cifelli wrote:
-> Switch from atmodem to gemaltomodem for the lte atom, in order to
-> benefit from the correct syntax for the AT commands.
-> The current models included in the Gemalto plugin only use one type
-> of authentication syntax, despite the atom supporting the syntax for
-> all Gemalto modules.
-> Therefore for now the variable GemaltoAuthType is set to a fixed value,
-> independent on the model.
-> ---
->   plugins/gemalto.c | 16 +++++++++++++---
->   1 file changed, 13 insertions(+), 3 deletions(-)
+On 10/18/2018 05:52 AM, Mattias M=C3=A5nsson wrote:
+> We have implemented a driver for the Gemalto modem we are using and =
+
+> today I noticed that it got stuck in initialization (during enable). The =
+
+> problem is that the AT+CFUN=3D4 (which is the last step of our init) now =
+
+> returned a CME error. The error handling for this is inspired from all =
+
+> the other drivers:
 > =
 
-> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-> index 5d3c77a9..3ca9f2d6 100644
-> --- a/plugins/gemalto.c
-> +++ b/plugins/gemalto.c
-> @@ -63,6 +63,13 @@ static const char *none_prefix[] =3D { NULL };
->   static const char *sctm_prefix[] =3D { "^SCTM:", NULL };
->   static const char *sbv_prefix[] =3D { "^SBV:", NULL };
->   =
+> =
 
-> +enum auth_option {
-> +	GEMALTO_AUTH_DEFAULTS		=3D 0x00,
-> +	GEMALTO_AUTH_USE_SGAUTH		=3D 0x01,
-> +	GEMALTO_AUTH_ORDER_PWD_USR	=3D 0x02,
-> +	GEMALTO_AUTH_ALW_ALL_PARAMS	=3D 0x04,
-> +};
-> +
->   struct gemalto_hardware_monitor {
->   	DBusMessage *msg;
->   	int32_t temperature;
-> @@ -609,9 +616,12 @@ static void gemalto_post_sim(struct ofono_modem *mod=
-em)
->   	ofono_call_meter_create(modem, 0, "atmodem", data->app);
->   	ofono_call_barring_create(modem, 0, "atmodem", data->app);
->   =
+> static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+> {
+> struct ofono_modem *modem =3D user_data;
+> struct verimalto_data *data =3D ofono_modem_get_data(modem);
+> =
 
-> -	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x))
-> -		ofono_lte_create(modem, OFONO_VENDOR_CINTERION,
-> -						"atmodem", data->app);
-> +	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x)) {
-> +		ofono_modem_set_integer(modem, "GemaltoAuthType",
-> +						GEMALTO_AUTH_USE_SGAUTH |
-> +						GEMALTO_AUTH_ORDER_PWD_USR);
-> +		ofono_lte_create(modem, 0, "gemaltomodem", data->app);
+> if (!ok) {
+> g_at_chat_unref(data->app);
+> data->app =3D NULL;
+> =
 
-Why not call ofono_modem_get_string(modem, "Model") directly in the LTE =
+> g_at_chat_unref(data->mdm);
+> data->mdm =3D NULL;
+> =
 
-atom in order to get the flags?
+> ofono_modem_set_powered(modem, FALSE);
+> return;
+> }
+> =
 
-/Jonas
+> // Get initial SIM state
+> data->sim_state_query =3D at_util_sim_state_query_new(data->app,
+> 2, 20, sim_state_cb, modem,
+> NULL);
+> }
+> =
 
-> +	}
->   }
->   =
+> This will put the modem in not=C2=A0powered state. The problem is that as=
+ it =
 
->   static void gemalto_post_online(struct ofono_modem *modem)
->=20
+> has not completed the initialization, there is now no interfaces at all =
 
---===============2951804057015804853==--
+
+What interfaces?  DBus interfaces?  You still have the Modem interface =
+
+present...
+
+> set up. So we can not try to power it again or anything else. Are=C2=A0al=
+l =
+
+
+The above code does not actually trigger the removal of the Modem =
+
+itself.  So that object is still present and you can still try to set =
+
+Powered to True.  It might still fail the second time of course...
+
+> these drivers having an issue with error handling=C2=A0or have I missed =
+
+> something else? And how could I handle it better?
+Not that I'm aware of.  Is there perhaps something deeper happening here =
+
+than what you describe?
+
+Regards,
+-Denis
+
+--===============7597030578740616448==--
 
