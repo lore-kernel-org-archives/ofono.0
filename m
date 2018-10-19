@@ -1,37 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5352601669445952958=="
+Content-Type: multipart/mixed; boundary="===============7006888445912874804=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: [PATCH v7 6/7] gemalto/lte: Gemalto vendor lte atom
-Date: Fri, 19 Oct 2018 08:04:37 +0200
-Message-ID: <5de66880-8ac9-a6ce-198c-26be1f3c3925@norrbonn.se>
-In-Reply-To: <CAKSBH7HtY0TCz3FUTscJUOfXPw9NuYCf0WmXz1xgUfzHUDz+pg@mail.gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: [PATCH v8 0/5] lte atom auth and IP protocol
+Date: Fri, 19 Oct 2018 13:31:36 +0200
+Message-ID: <20181019113141.20734-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5352601669445952958==
+--===============7006888445912874804==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+I would like to submit this patch for the lte atom
+
+This patch adds in core atom:
+-  the protocol for the default LTE APN, ip, ipv6 and both
+- the authentication handling, with 3 properties:
+	method, username, password
+
+then these are used in the atmodem atom:
+
+The behavior of the patch is described in the api document (part 1),
+and in the core atom header (part 2).
+
+Related to the previous version, this version:
+- changes the name of the function at_auth_type_from_method in
+  atmodem/atutils, as suggested by Jonas, and calls it without passing
+  from an intermediate local variable.
 
 
-On 19/10/18 05:21, Giacinto Cifelli wrote:
-> Hi Jonas,
-> =
+Giacinto Cifelli (5):
+  lte-api: protocol and authentication properties
+  lte.h: added proto and authentication handling
+  lte: protocol and authentication for default ctx
+  atmodem/atutil: shared functions for cgdcont
+  atmodem/lte: proto and authentication handling
 
-> thank you for taking the time to go through the code.
-> =
+ doc/lte-api.txt          |  39 +++++++
+ drivers/atmodem/atutil.c |  49 +++++++++
+ drivers/atmodem/atutil.h |   6 ++
+ drivers/atmodem/lte.c    | 118 ++++++++++++++++++---
+ include/lte.h            |   5 +
+ src/lte.c                | 222 +++++++++++++++++++++++++++++----------
+ 6 files changed, 367 insertions(+), 72 deletions(-)
 
-> I haven't seen any comments on the first 5 patches. Is it possible to
-> apply them?
+-- =
 
-On the whole, things look pretty good.  Denis applies the patches; I can =
+2.17.1
 
-only expedite the process a bit by providing some review while he =
 
-sleeps... ;)
-
-/Jonas
-
---===============5352601669445952958==--
+--===============7006888445912874804==--
 
