@@ -1,82 +1,601 @@
-Content-Type: multipart/mixed; boundary="===============1332716104363432465=="
+Content-Type: multipart/mixed; boundary="===============6904831375868854708=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH v7 7/7] plugins/gemalto: use Gemalto lte atom
-Date: Fri, 19 Oct 2018 05:09:28 +0200
-Message-ID: <CAKSBH7HvP8mPbciSZ845RvyqiEPT1i338QYRLX=8mFqSzf3O2Q@mail.gmail.com>
-In-Reply-To: <51a9f923-bafd-a35a-f02b-efac92fc7f0c@norrbonn.se>
+Subject: Re: [PATCH v7 6/7] gemalto/lte: Gemalto vendor lte atom
+Date: Fri, 19 Oct 2018 05:21:54 +0200
+Message-ID: <CAKSBH7HtY0TCz3FUTscJUOfXPw9NuYCf0WmXz1xgUfzHUDz+pg@mail.gmail.com>
+In-Reply-To: <cb95ecab-da1e-878d-89d9-a6d3d5a3d321@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1332716104363432465==
+--===============6904831375868854708==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
 
-On Thu, Oct 18, 2018 at 9:41 PM Jonas Bonn <jonas@norrbonn.se> wrote:
+thank you for taking the time to go through the code.
+
+I haven't seen any comments on the first 5 patches. Is it possible to
+apply them?
+
+
+On Thu, Oct 18, 2018 at 9:32 PM Jonas Bonn <jonas@norrbonn.se> wrote:
 >
 > Hi Giacinto,
 >
+> This looks pretty good to me...  Some comments below.
+>
 > On 18/10/18 20:49, Giacinto Cifelli wrote:
-> > Switch from atmodem to gemaltomodem for the lte atom, in order to
-> > benefit from the correct syntax for the AT commands.
-> > The current models included in the Gemalto plugin only use one type
-> > of authentication syntax, despite the atom supporting the syntax for
-> > all Gemalto modules.
-> > Therefore for now the variable GemaltoAuthType is set to a fixed value,
-> > independent on the model.
+> > Added a vendor-specific lte atom, for handling PDP context creation
+> > and authentication, using the actual formats for the vendor.
+> >
+> > The code for PDP context and authentication command formating
+> > is in a separate file, gemaltoutil, because in the future it can be
+> > shared with the gprs-context atom.
+> >
+> > Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
+> > Co-authored-by: Sebastian Arnd <sebastianarnd@gmail.com>
 > > ---
-> >   plugins/gemalto.c | 16 +++++++++++++---
-> >   1 file changed, 13 insertions(+), 3 deletions(-)
+> >   Makefile.am                         |   5 +-
+> >   drivers/gemaltomodem/gemaltomodem.c |   2 +
+> >   drivers/gemaltomodem/gemaltomodem.h |   4 +
+> >   drivers/gemaltomodem/gemaltoutil.c  | 106 +++++++++++++
+> >   drivers/gemaltomodem/gemaltoutil.h  |  31 ++++
+> >   drivers/gemaltomodem/lte.c          | 221 ++++++++++++++++++++++++++++
+> >   6 files changed, 368 insertions(+), 1 deletion(-)
+> >   create mode 100644 drivers/gemaltomodem/gemaltoutil.c
+> >   create mode 100644 drivers/gemaltomodem/gemaltoutil.h
+> >   create mode 100644 drivers/gemaltomodem/lte.c
 > >
-> > diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-> > index 5d3c77a9..3ca9f2d6 100644
-> > --- a/plugins/gemalto.c
-> > +++ b/plugins/gemalto.c
-> > @@ -63,6 +63,13 @@ static const char *none_prefix[] =3D { NULL };
-> >   static const char *sctm_prefix[] =3D { "^SCTM:", NULL };
-> >   static const char *sbv_prefix[] =3D { "^SBV:", NULL };
+> > diff --git a/Makefile.am b/Makefile.am
+> > index e8e4ed95..dd0bc0bb 100644
+> > --- a/Makefile.am
+> > +++ b/Makefile.am
+> > @@ -397,8 +397,11 @@ builtin_modules +=3D gemaltomodem
+> >   builtin_sources +=3D drivers/atmodem/atutil.h \
+> >                       drivers/gemaltomodem/gemaltomodem.h \
+> >                       drivers/gemaltomodem/gemaltomodem.c \
+> > +                     drivers/gemaltomodem/gemaltoutil.h \
+> > +                     drivers/gemaltomodem/gemaltoutil.c \
+> >                       drivers/gemaltomodem/location-reporting.c \
+> > -                     drivers/gemaltomodem/voicecall.c
+> > +                     drivers/gemaltomodem/voicecall.c \
+> > +                     drivers/gemaltomodem/lte.c
 > >
-> > +enum auth_option {
+> >   builtin_modules +=3D xmm7modem
+> >   builtin_sources +=3D drivers/atmodem/atutil.h \
+> > diff --git a/drivers/gemaltomodem/gemaltomodem.c b/drivers/gemaltomodem=
+/gemaltomodem.c
+> > index 4818ac66..459c3583 100644
+> > --- a/drivers/gemaltomodem/gemaltomodem.c
+> > +++ b/drivers/gemaltomodem/gemaltomodem.c
+> > @@ -37,12 +37,14 @@ static int gemaltomodem_init(void)
+> >   {
+> >       gemalto_location_reporting_init();
+> >       gemalto_voicecall_init();
+> > +     gemalto_lte_init();
+> >
+> >       return 0;
+> >   }
+> >
+> >   static void gemaltomodem_exit(void)
+> >   {
+> > +     gemalto_lte_exit();
+> >       gemalto_voicecall_exit();
+> >       gemalto_location_reporting_exit();
+> >   }
+> > diff --git a/drivers/gemaltomodem/gemaltomodem.h b/drivers/gemaltomodem=
+/gemaltomodem.h
+> > index 27b1460e..9f285563 100644
+> > --- a/drivers/gemaltomodem/gemaltomodem.h
+> > +++ b/drivers/gemaltomodem/gemaltomodem.h
+> > @@ -21,9 +21,13 @@
+> >    */
+> >
+> >   #include <drivers/atmodem/atutil.h>
+> > +#include "gemaltoutil.h"
+> >
+> >   extern void gemalto_location_reporting_init();
+> >   extern void gemalto_location_reporting_exit();
+> >
+> >   extern void gemalto_voicecall_init();
+> >   extern void gemalto_voicecall_exit();
+> > +
+> > +extern void gemalto_lte_init();
+> > +extern void gemalto_lte_exit();
+> > diff --git a/drivers/gemaltomodem/gemaltoutil.c b/drivers/gemaltomodem/=
+gemaltoutil.c
+> > new file mode 100644
+> > index 00000000..d8c08e16
+> > --- /dev/null
+> > +++ b/drivers/gemaltomodem/gemaltoutil.c
+> > @@ -0,0 +1,106 @@
+> > +/*
+> > + *
+> > + *  oFono - Open Source Telephony
+> > + *
+> > + *  Copyright (C) 2018 Gemalto M2M
+> > + *
+> > + *  This program is free software; you can redistribute it and/or modi=
+fy
+> > + *  it under the terms of the GNU General Public License version 2 as
+> > + *  published by the Free Software Foundation.
+> > + *
+> > + *  This program is distributed in the hope that it will be useful,
+> > + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> > + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> > + *  GNU General Public License for more details.
+> > + *
+> > + *  You should have received a copy of the GNU General Public License
+> > + *  along with this program; if not, write to the Free Software
+> > + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1=
+301  USA
+> > + *
+> > + */
+> > +
+> > +#ifdef HAVE_CONFIG_H
+> > +#include <config.h>
+> > +#endif
+> > +
+> > +#include <glib.h>
+> > +#include <gatchat.h>
+> > +#include <string.h>
+> > +#include <stdio.h>
+> > +#include <stdlib.h>
+> > +#include <errno.h>
+> > +
+> > +#define OFONO_API_SUBJECT_TO_CHANGE
+>
+> You shouldn't need this here... only if you pull in ofono/plugin.h direct=
+ly.
+>
+> > +#include <ofono/log.h>
+> > +#include <ofono/types.h>
+> > +
+> > +#include "ofono.h"
+> > +#include "gemaltomodem.h"
+> > +
+> > +enum gemalto_auth_option {
 > > +     GEMALTO_AUTH_DEFAULTS           =3D 0x00,
 > > +     GEMALTO_AUTH_USE_SGAUTH         =3D 0x01,
 > > +     GEMALTO_AUTH_ORDER_PWD_USR      =3D 0x02,
 > > +     GEMALTO_AUTH_ALW_ALL_PARAMS     =3D 0x04,
 > > +};
-> > +
-> >   struct gemalto_hardware_monitor {
-> >       DBusMessage *msg;
-> >       int32_t temperature;
-> > @@ -609,9 +616,12 @@ static void gemalto_post_sim(struct ofono_modem *m=
-odem)
-> >       ofono_call_meter_create(modem, 0, "atmodem", data->app);
-> >       ofono_call_barring_create(modem, 0, "atmodem", data->app);
-> >
-> > -     if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x))
-> > -             ofono_lte_create(modem, OFONO_VENDOR_CINTERION,
-> > -                                             "atmodem", data->app);
-> > +     if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x)) {
-> > +             ofono_modem_set_integer(modem, "GemaltoAuthType",
-> > +                                             GEMALTO_AUTH_USE_SGAUTH |
-> > +                                             GEMALTO_AUTH_ORDER_PWD_US=
-R);
-> > +             ofono_lte_create(modem, 0, "gemaltomodem", data->app);
 >
-> Why not call ofono_modem_get_string(modem, "Model") directly in the LTE
-> atom in order to get the flags?
+> Using an enumeration to name flags feels awkward.  I would #define these:
+>
+> #define AUTH_F_USE_SGATH (1<<0)
+> #define AUTH_F_SWAP_CREDENTIALS (1<<1)
+> #define AUTH_F_ALWAYS_ALL_PARAMS (1<<2)
 
-Because it is not the atom's job.
-There are other flags planned, and not all will be determined by model.
-Beside, remembering to update each atom for each new modem is error-prone.
+I prefer enum because I have several groups of flags, so it is clearer
+which values a variable can take.
+And also the advantage of gdb mentioned by Slava.
 
+>
+> Abbreviating ALWAYS to ALW is awkward...
 
+ALW is a standard abbreviation. the 3GPP 31.102 is full of it.
+But this I more willing to change, along with the shift of bits
+instead of the hexa mapping.
+
+>
+> Furthermore, considering that these flags are supposed to be set in
+> udevng.c or the gemalto plugin, these flags really need to be defined
+> elsewhere... include/gemalto.h, perhaps?
+>
+>
+> > +
+> > +char *gemalto_get_auth_command(struct ofono_modem *modem, int cid,
+> > +                             enum ofono_gprs_auth_method auth_method,
+> > +                             const char *username, const char *passwor=
+d)
+> > +{
+> > +     int gemalto_auth =3D ofono_modem_get_integer(modem, "GemaltoAuthT=
+ype");
+>
+> Can we call these flags, or authflags, or something along those lines?
+> Would be much clear, especially since we already have auth_method and
+> auth_type to confuse with gemalto_auth.
+
+ok, I will call them GemaltoAuthFlags.
+
+>
+>
+> > +     int len;
+> > +     int auth_type =3D at_get_auth_type(auth_method);
+> > +     size_t buflen =3D 32 + OFONO_GPRS_MAX_USERNAME_LENGTH +
+> > +                                     OFONO_GPRS_MAX_PASSWORD_LENGTH  +=
+ 1;
+> > +     char *buf =3D g_new(char, buflen);
+> > +
+> > +     /* for now. Later to consider modules where the LTE attach CID=3D=
+3 */
+> > +     if (cid=3D=3D0)
+> > +             cid=3D1;
+> > +
+> > +     if (gemalto_auth & GEMALTO_AUTH_USE_SGAUTH)
+> > +             len =3D snprintf(buf, buflen, "AT^SGAUTH=3D%d,%d", cid, a=
+uth_type);
+>
+> Instead of declaring the auth_type variable, just call the function
+> directly in the parameter list.  Rename the function to
+> at_auth_type_from_method() (or similar) so that it's obvious what it does.
+>
+> (This stems from the fact that I keep losing track of the meaning of the
+> similarly named variables... auth_type, auth_method, gemalto_auth).
+>
+
+ok, good idea, this variable is only used once.
+
+>
+> > +     else
+> > +             len =3D snprintf(buf, buflen, "AT+CGAUTH=3D%d,%d", cid, a=
+uth_type);
+> > +
+> > +     buflen -=3D len;
+> > +
+> > +     switch(auth_method) {
+> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
+> > +
+> > +             if (gemalto_auth & GEMALTO_AUTH_ALW_ALL_PARAMS)
+> > +                     snprintf(buf+len, buflen, ",\"\",\"\"");
+> > +
+> > +             break;
+> > +     case OFONO_GPRS_AUTH_METHOD_PAP:
+> > +     case OFONO_GPRS_AUTH_METHOD_CHAP:
+> > +
+> > +             if (gemalto_auth & GEMALTO_AUTH_ORDER_PWD_USR)
+> > +                     snprintf(buf+len, buflen, ",\"%s\",\"%s\"",
+> > +                                                     password, usernam=
+e);
+> > +             else
+> > +                     snprintf(buf+len, buflen, ",\"%s\",\"%s\"",
+> > +                                                     username, passwor=
+d);
+> > +
+> > +             break;
+> > +     }
+> > +
+> > +     return buf;
+> > +}
+> > +
+> > +char *gemalto_get_cgdcont_command(struct ofono_modem *modem, guint cid,
+> > +                             enum ofono_gprs_proto proto, const char *=
+apn)
+> > +{
+> > +     /*
+> > +      * For future extension: verify if the module supports automatic
+> > +      * context provisioning and if so, also if there is a manual over=
+ride
+> > +      * This is an ofono_modem_get_integer property
+> > +      */
+> > +
+> > +     /* for now. Later to consider modules where the LTE attach CID=3D=
+3 */
+> > +     if (cid=3D=3D0)
+> > +             cid=3D1;
+>
+> I'm a bit confused why cid=3D=3D0 means cid should be 1... is this because
+> the AT network-registration atom assumes CID =3D=3D 0 for the default
+> context?  This should probably be fixed at the source, in that case, in
+> atmodem/network-registration.c, with a vendor quirk...???
+
+the 3GPP 27.007 says that the LTE attach context ID is 0, but actual
+modems use other values.
+For now there are around only models which use CID=3D1, but Gemalto also
+has models with CID=3D3.
+I will have to set another variable for this.
+
+>
+> > +
+> > +     return at_get_cgdcont_command(cid, proto, apn);
+> > +}
+> > diff --git a/drivers/gemaltomodem/gemaltoutil.h b/drivers/gemaltomodem/=
+gemaltoutil.h
+> > new file mode 100644
+> > index 00000000..d653f61d
+> > --- /dev/null
+> > +++ b/drivers/gemaltomodem/gemaltoutil.h
+> > @@ -0,0 +1,31 @@
+> > +/*
+> > + *
+> > + *  oFono - Open Source Telephony
+> > + *
+> > + *  Copyright (C) 2018 Gemalto M2M
+> > + *
+> > + *  This program is free software; you can redistribute it and/or modi=
+fy
+> > + *  it under the terms of the GNU General Public License version 2 as
+> > + *  published by the Free Software Foundation.
+> > + *
+> > + *  This program is distributed in the hope that it will be useful,
+> > + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> > + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> > + *  GNU General Public License for more details.
+> > + *
+> > + *  You should have received a copy of the GNU General Public License
+> > + *  along with this program; if not, write to the Free Software
+> > + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1=
+301  USA
+> > + *
+> > + */
+> > +
+> > +struct ofono_modem;
+>
+> I think you might as well just pull in modem.h here.
+>
+> > +
+> > +char *gemalto_get_auth_command(struct ofono_modem *modem, int cid,
+> > +                             enum ofono_gprs_auth_method auth_method,
+>
+> This enum isn't defined either.
+
+That's strange. I might have included the relevant headers in the c file.
+I'll look into it.
+
+>
+> > +                             const char *username, const char *passwor=
+d);
+> > +
+> > +
+> > +char *gemalto_get_cgdcont_command(struct ofono_modem *modem, guint cid,
+> > +                             enum ofono_gprs_proto proto, const char *=
+apn);
+> > +
+> > diff --git a/drivers/gemaltomodem/lte.c b/drivers/gemaltomodem/lte.c
+> > new file mode 100644
+> > index 00000000..1c72173f
+> > --- /dev/null
+> > +++ b/drivers/gemaltomodem/lte.c
+> > @@ -0,0 +1,221 @@
+> > +/*
+> > + *
+> > + *  oFono - Open Source Telephony
+> > + *
+> > + *  Copyright (C) 2017  Intel Corporation. All rights reserved.
+> > + *  Copyright (C) 2018 Gemalto M2M
+> > + *
+> > + *  This program is free software; you can redistribute it and/or modi=
+fy
+> > + *  it under the terms of the GNU General Public License version 2 as
+> > + *  published by the Free Software Foundation.
+> > + *
+> > + *  This program is distributed in the hope that it will be useful,
+> > + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> > + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> > + *  GNU General Public License for more details.
+> > + *
+> > + *  You should have received a copy of the GNU General Public License
+> > + *  along with this program; if not, write to the Free Software
+> > + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1=
+301  USA
+> > + *
+> > + */
+> > +
+> > +#ifdef HAVE_CONFIG_H
+> > +#include <config.h>
+> > +#endif
+> > +
+> > +#include <stdlib.h>
+> > +#include <stdio.h>
+> > +#include <string.h>
+> > +#include <errno.h>
+> > +
+> > +#include <glib.h>
+> > +
+> > +#include <ofono/modem.h>
+> > +#include <ofono/gprs-context.h>
+> > +#include <ofono/log.h>
+> > +#include <ofono/lte.h>
+> > +
+> > +#include "gatchat.h"
+> > +#include "gatresult.h"
+> > +
+> > +#include "gemaltomodem.h"
+> > +
+> > +struct gemalto_lte_driver_data {
+> > +     GAtChat *chat;
+> > +};
+> > +
+> > +struct gemalto_lte_cbd {
+> > +     gint ref_count; /* Ref count */
+> > +     ofono_lte_cb_t cb;
+> > +     void *data;
+> > +     GAtChat *chat;
+> > +     const struct ofono_lte_default_attach_info *info;
+> > +     struct ofono_modem *modem;
+> > +};
+> > +
+> > +static struct gemalto_lte_cbd *gemalto_lte_cb_data_new0(void *cb, void=
+ *data,
+> > +             GAtChat *chat, const struct ofono_lte_default_attach_info=
+ *info,
+> > +             struct ofono_modem *modem)
+> > +{
+> > +     struct gemalto_lte_cbd *cbd =3D g_new0(struct gemalto_lte_cbd, 1);
+> > +
+> > +     cbd->ref_count =3D 1;
+> > +     cbd->cb =3D cb;
+> > +     cbd->data =3D data;
+> > +     cbd->chat =3D chat;
+> > +     cbd->info =3D info;
+> > +     cbd->modem =3D modem;
+> > +
+> > +     return cbd;
+> > +}
+> > +
+> > +static inline struct gemalto_lte_cbd *gemalto_lte_cb_data_ref(
+> > +                                             struct gemalto_lte_cbd *c=
+bd)
+> > +{
+> > +     if (cbd =3D=3D NULL)
+> > +             return NULL;
+> > +
+> > +     g_atomic_int_inc(&cbd->ref_count);
+> > +
+> > +     return cbd;
+> > +}
+> > +
+> > +static void gemalto_lte_cb_data_unref(gpointer user_data)
+> > +{
+> > +     gboolean is_zero;
+> > +     struct gemalto_lte_cbd *cbd =3D user_data;
+> > +
+> > +     if (cbd =3D=3D NULL)
+> > +             return;
+> > +
+> > +     is_zero =3D g_atomic_int_dec_and_test(&cbd->ref_count);
+> > +
+> > +     if (is_zero =3D=3D TRUE)
+> > +             g_free(cbd);
+> > +}
+> > +
+> > +static void gemalto_lte_set_auth_cb(gboolean ok, GAtResult *result,
+> > +                                                     gpointer user_dat=
+a)
+> > +{
+> > +     struct gemalto_lte_cbd *cbd =3D user_data;
+> > +     ofono_lte_cb_t cb =3D cbd->cb;
+> > +     struct ofono_error error;
+> > +
+> > +     decode_at_error(&error, g_at_result_final_response(result));
+> > +     cb(&error, cbd->data);
+> > +}
+> > +
+> > +static void gemalto_lte_set_default_attach_info_cb(gboolean ok,
+> > +                                     GAtResult *result, gpointer user_=
+data)
+> > +{
+> > +     struct gemalto_lte_cbd *cbd =3D user_data;
+> > +     ofono_lte_cb_t cb =3D cbd->cb;
+> > +     void *data =3D cbd->data;
+> > +     struct ofono_error error;
+> > +     char *buf;
+> > +     enum ofono_gprs_auth_method auth_method;
+> > +
+> > +     if (!ok) {
+> > +             gemalto_lte_cb_data_unref(cbd);
+> > +             decode_at_error(&error, g_at_result_final_response(result=
+));
+> > +             cb(&error, data);
+> > +             return;
+> > +     }
+> > +
+> > +     auth_method =3D cbd->info->auth_method;
+> > +
+> > +     /* change the authentication method if the  parameters are invali=
+d */
+> > +     if (!*cbd->info->username || !*cbd->info->password)
+> > +             auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
+> > +
+> > +     buf =3D gemalto_get_auth_command(cbd->modem, 0, auth_method,
+> > +                     cbd->info->username, cbd->info->password);
+> > +     cbd =3D gemalto_lte_cb_data_ref(cbd);
+> > +
+> > +     if (g_at_chat_send(cbd->chat, buf, NULL,
+> > +                             gemalto_lte_set_auth_cb, cbd,
+> > +                             gemalto_lte_cb_data_unref) > 0)
+> > +             goto end;
+> > +
+> > +     gemalto_lte_cb_data_unref(cbd);
+> > +     CALLBACK_WITH_FAILURE(cb, data);
+> > +end:
+> > +     g_free(buf);
+> > +}
+> > +
+> > +static void gemalto_lte_set_default_attach_info(const struct ofono_lte=
+ *lte,
+> > +                     const struct ofono_lte_default_attach_info *info,
+> > +                     ofono_lte_cb_t cb, void *data)
+> > +{
+> > +     struct gemalto_lte_driver_data *ldd =3D ofono_lte_get_data(lte);
+> > +     struct ofono_modem *modem =3D ofono_lte_get_modem(lte);
+> > +     struct gemalto_lte_cbd *cbd =3D gemalto_lte_cb_data_new0(cb, data,
+> > +                                     ldd->chat, info, modem);
+> > +     char *buf =3D gemalto_get_cgdcont_command(modem, 0, info->proto,
+> > +                                                             info->apn=
+);
+> > +
+> > +     if (g_at_chat_send(ldd->chat, buf, NULL,
+> > +                                     gemalto_lte_set_default_attach_in=
+fo_cb,
+> > +                                     cbd, gemalto_lte_cb_data_unref) >=
+ 0)
+> > +             goto end;
+> > +
+> > +     gemalto_lte_cb_data_unref(cbd);
+> > +     CALLBACK_WITH_FAILURE(cb, data);
+> > +end:
+> > +     g_free(buf);
+> > +}
+> > +
+> > +static gboolean gemalto_lte_delayed_register(gpointer user_data)
+> > +{
+> > +     struct ofono_lte *lte =3D user_data;
+> > +
+> > +     ofono_lte_register(lte);
+> > +
+> > +     return FALSE;
+> > +}
+> > +
+> > +static int gemalto_lte_probe(struct ofono_lte *lte, unsigned int vendo=
+r,
+> > +                                                             void *dat=
+a)
+> > +{
+> > +     GAtChat *chat =3D data;
+> > +     struct gemalto_lte_driver_data *ldd;
+> > +
+> > +     ldd =3D g_new0(struct gemalto_lte_driver_data, 1);
+> > +
+> > +     ldd->chat =3D g_at_chat_clone(chat);
+> > +
+> > +     ofono_lte_set_data(lte, ldd);
+> > +
+> > +     g_idle_add(gemalto_lte_delayed_register, lte);
+>
+> Why do you need to delay the registration?
+>
+> > +
+> > +     return 0;
+> > +}
+> > +
+> > +static void gemalto_lte_remove(struct ofono_lte *lte)
+> > +{
+> > +     struct gemalto_lte_driver_data *ldd =3D ofono_lte_get_data(lte);
+> > +
+> > +     g_at_chat_unref(ldd->chat);
+> > +
+> > +     ofono_lte_set_data(lte, NULL);
+> > +
+> > +     g_free(ldd);
+> > +}
+> > +
+> > +static const struct ofono_lte_driver driver =3D {
+> > +     .name                           =3D "gemaltomodem",
+> > +     .probe                          =3D gemalto_lte_probe,
+> > +     .remove                         =3D gemalto_lte_remove,
+> > +     .set_default_attach_info        =3D gemalto_lte_set_default_attac=
+h_info,
+> > +};
+> > +
+> > +void gemalto_lte_init(void)
+> > +{
+> > +     ofono_lte_driver_register(&driver);
+> > +}
+> > +
+> > +void gemalto_lte_exit(void)
+> > +{
+> > +     ofono_lte_driver_unregister(&driver);
+> > +}
+> >
 >
 > /Jonas
 
-Regards,
 Giacinto
 
---===============1332716104363432465==--
+--===============6904831375868854708==--
 
