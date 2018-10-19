@@ -1,55 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============7372377023977411850=="
+Content-Type: multipart/mixed; boundary="===============1332716104363432465=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: Re: [PATCH v7 6/7] gemalto/lte: Gemalto vendor lte atom
-Date: Fri, 19 Oct 2018 01:59:14 +0300
-Message-ID: <85109d4e-0e01-d126-41b0-94a1abef9311@jolla.com>
-In-Reply-To: <cb95ecab-da1e-878d-89d9-a6d3d5a3d321@norrbonn.se>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH v7 7/7] plugins/gemalto: use Gemalto lte atom
+Date: Fri, 19 Oct 2018 05:09:28 +0200
+Message-ID: <CAKSBH7HvP8mPbciSZ845RvyqiEPT1i338QYRLX=8mFqSzf3O2Q@mail.gmail.com>
+In-Reply-To: <51a9f923-bafd-a35a-f02b-efac92fc7f0c@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7372377023977411850==
+--===============1332716104363432465==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 18/10/18 22:32, Jonas Bonn wrote:
-> ...
+Hi Jonas,
+
+On Thu, Oct 18, 2018 at 9:41 PM Jonas Bonn <jonas@norrbonn.se> wrote:
 >
->> +#include <ofono/log.h>
->> +#include <ofono/types.h>
->> +
->> +#include "ofono.h"
->> +#include "gemaltomodem.h"
->> +
->> +enum gemalto_auth_option {
->> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_DEFAULTS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 =3D 0x00,
->> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_USE_SGAUTH=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 =3D 0x01,
->> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_ORDER_PWD_USR=C2=A0=C2=A0=C2=A0 =3D 0x0=
-2,
->> +=C2=A0=C2=A0=C2=A0 GEMALTO_AUTH_ALW_ALL_PARAMS=C2=A0=C2=A0=C2=A0 =3D 0x=
-04,
->> +};
+> Hi Giacinto,
 >
-> Using an enumeration to name flags feels awkward.=C2=A0 I would #define t=
-hese:
+> On 18/10/18 20:49, Giacinto Cifelli wrote:
+> > Switch from atmodem to gemaltomodem for the lte atom, in order to
+> > benefit from the correct syntax for the AT commands.
+> > The current models included in the Gemalto plugin only use one type
+> > of authentication syntax, despite the atom supporting the syntax for
+> > all Gemalto modules.
+> > Therefore for now the variable GemaltoAuthType is set to a fixed value,
+> > independent on the model.
+> > ---
+> >   plugins/gemalto.c | 16 +++++++++++++---
+> >   1 file changed, 13 insertions(+), 3 deletions(-)
+> >
+> > diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+> > index 5d3c77a9..3ca9f2d6 100644
+> > --- a/plugins/gemalto.c
+> > +++ b/plugins/gemalto.c
+> > @@ -63,6 +63,13 @@ static const char *none_prefix[] =3D { NULL };
+> >   static const char *sctm_prefix[] =3D { "^SCTM:", NULL };
+> >   static const char *sbv_prefix[] =3D { "^SBV:", NULL };
+> >
+> > +enum auth_option {
+> > +     GEMALTO_AUTH_DEFAULTS           =3D 0x00,
+> > +     GEMALTO_AUTH_USE_SGAUTH         =3D 0x01,
+> > +     GEMALTO_AUTH_ORDER_PWD_USR      =3D 0x02,
+> > +     GEMALTO_AUTH_ALW_ALL_PARAMS     =3D 0x04,
+> > +};
+> > +
+> >   struct gemalto_hardware_monitor {
+> >       DBusMessage *msg;
+> >       int32_t temperature;
+> > @@ -609,9 +616,12 @@ static void gemalto_post_sim(struct ofono_modem *m=
+odem)
+> >       ofono_call_meter_create(modem, 0, "atmodem", data->app);
+> >       ofono_call_barring_create(modem, 0, "atmodem", data->app);
+> >
+> > -     if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x))
+> > -             ofono_lte_create(modem, OFONO_VENDOR_CINTERION,
+> > -                                             "atmodem", data->app);
+> > +     if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x)) {
+> > +             ofono_modem_set_integer(modem, "GemaltoAuthType",
+> > +                                             GEMALTO_AUTH_USE_SGAUTH |
+> > +                                             GEMALTO_AUTH_ORDER_PWD_US=
+R);
+> > +             ofono_lte_create(modem, 0, "gemaltomodem", data->app);
 >
-> #define AUTH_F_USE_SGATH (1<<0)
-> #define AUTH_F_SWAP_CREDENTIALS (1<<1)
-> #define AUTH_F_ALWAYS_ALL_PARAMS (1<<2)
+> Why not call ofono_modem_get_string(modem, "Model") directly in the LTE
+> atom in order to get the flags?
+
+Because it is not the atom's job.
+There are other flags planned, and not all will be determined by model.
+Beside, remembering to update each atom for each new modem is error-prone.
+
+
 >
+> /Jonas
 
+Regards,
+Giacinto
 
-It may feel awkward but I actually find that (enum'ing flags) quite =
-
-useful for debugging with gdb - it allows the debugger to refer to those =
-
-flags by name.
-
-Cheers,
--Slava
-
---===============7372377023977411850==--
+--===============1332716104363432465==--
 
