@@ -1,79 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============1574329044682831686=="
+Content-Type: multipart/mixed; boundary="===============1960648341305127813=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: commit d37c22be20c83cf370638a9bad243bc5219c5509
-Date: Sat, 20 Oct 2018 12:13:41 +0200
-Message-ID: <CAKSBH7HZJugU5J4vDA6MEzK5EW8aYMKP3k0MgJMmEH1J=4cCOg@mail.gmail.com>
-In-Reply-To: <29b52008-59ee-d168-dc89-1e7de3b7e021@gmail.com>
+Subject: [PATCH] gatchat: export gatchat at_chat_finish_command
+Date: Sat, 20 Oct 2018 12:26:16 +0200
+Message-ID: <20181020102616.26572-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1574329044682831686==
+--===============1960648341305127813==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+added the function g_at_chat_finish_command, in order to be able to
+interrupt a pending command.
+The function is useful in special cases, for example to implement
+a custom g_at_chat_set_wakeup_command. This command will never
+return if the device does not answer, and therefore it is unsuitable
+to probe configurations.
+---
+ gatchat/gatchat.c | 4 ++++
+ gatchat/gatchat.h | 2 ++
+ 2 files changed, 6 insertions(+)
 
-On Mon, Sep 24, 2018 at 11:25 PM Denis Kenzior <denkenz@gmail.com> wrote:
->
-> Hi Giacinto,
->
-> > Besides, several modules use the option linux driver, which blocks in
-> > case the port doesn't answer.
-> > This single call:
-> > g_at_chat_unref(port);
-> > blocks either 30s or 1 minute, depending on the system. I might step
-> > into it twice during my hardware initialization for several 3G models.
-> > It helps to run this line on a separate thread unblocking the rest.
-> >
->
-> What system call blocks (use strace to determine this) ?  If anything
-> inside the option driver blocks for 30-60 seconds, that is unacceptable
-> and needs to be fixed in the kernel.
+diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+index 3f290ac2..edb55efe 100644
+--- a/gatchat/gatchat.c
++++ b/gatchat/gatchat.c
+@@ -465,6 +465,10 @@ static void at_chat_finish_command(struct at_chat *p, =
+gboolean ok, char *final)
+ 	at_command_destroy(cmd);
+ }
+ =
 
-I have finally had time to come back to this.
-It is the close(fd), called in the g_lib that blocks.
-I have further discovered that it is due to the fact that there are
-write pending, and in this case a the closing_wait timeout kicks in.
-I tried to remove this timeout with an udev rule, but it doesn't work.
-I could set - still through udev, a call to the tool setserial, but it
-doesn't seem proper, rules with scripts are heavy, and may also lead
-to a wrong enumeration in udevng because some devices of the USB
-enumeration are made available only after the rule has been executed.
++void g_at_chat_finish_command(GAtChat *chat) {
++	at_chat_finish_command(chat->parent, FALSE, NULL);
++}
++
+ static struct terminator_info terminator_table[] =3D {
+ 	{ "OK", -1, TRUE },
+ 	{ "ERROR", -1, FALSE },
+diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
+index 7290b34f..36fa87f0 100644
+--- a/gatchat/gatchat.h
++++ b/gatchat/gatchat.h
+@@ -167,6 +167,8 @@ void g_at_chat_add_terminator(GAtChat *chat, char *term=
+inator,
+ void g_at_chat_blacklist_terminator(GAtChat *chat,
+ 						GAtChatTerminator terminator);
+ =
 
-So, the code to fix this - in plugins/gemalto.c, would be:
++void g_at_chat_finish_command(GAtChat *chat);
++
+ #ifdef __cplusplus
+ }
+ #endif
+-- =
 
-#include <asm/ioctls.h>
-#include <linux/serial.h>
-
-int ioctl(int, int, void *);
-
-static void closeport(gpointer user_data)
-{
-        GAtChat *port =3D user_data;
-        GIOChannel *channel =3D g_at_chat_get_channel(port);
-        int fd =3D g_io_channel_unix_get_fd(channel);
-        struct serial_struct old, new;
-
-        g_at_chat_cancel_all(port);
-        g_at_chat_unregister_all(port);
-        ioctl(fd, TIOCGSERIAL, &old);
-        new =3D old;
-        new.closing_wait =3D ASYNC_CLOSING_WAIT_NONE;
-        ioctl(fd, TIOCSSERIAL, &new);
-        g_at_chat_unref(port);
-}
-
-do you see a better way to do it?
+2.17.1
 
 
->
-> Regards,
-> -Denis
-
-Regards,
-Giacinto
-
---===============1574329044682831686==--
+--===============1960648341305127813==--
 
