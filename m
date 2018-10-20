@@ -1,72 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============3784844679248984262=="
+Content-Type: multipart/mixed; boundary="===============3970872229161212327=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gatchat: export gatchat at_chat_finish_command
-Date: Sat, 20 Oct 2018 12:20:28 -0500
-Message-ID: <62ada243-c066-56e9-1f10-f2b1d55fe87d@gmail.com>
-In-Reply-To: <CAKSBH7GJN+r88zdqZ=5uMfu-W+ctGt-R0Y8DVW=5qziqZ4TUSw@mail.gmail.com>
+Subject: Re: commit d37c22be20c83cf370638a9bad243bc5219c5509
+Date: Sat, 20 Oct 2018 12:24:52 -0500
+Message-ID: <4db04535-7163-094a-2de5-fd7f1c0f3c77@gmail.com>
+In-Reply-To: <CAKSBH7HZJugU5J4vDA6MEzK5EW8aYMKP3k0MgJMmEH1J=4cCOg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3784844679248984262==
+--===============3970872229161212327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
-> But it is not a reason to close the door entirely:
-> there are strict requirements for starting emergency calls, especially
-> ERA/GLONASS and panEuropean eCall.
+On 10/20/2018 05:13 AM, Giacinto Cifelli wrote:
+> Hi Denis,
+> =
 
-I'm not though.  I'm just saying that exposing at_finish_command is not =
+> On Mon, Sep 24, 2018 at 11:25 PM Denis Kenzior <denkenz@gmail.com> wrot=
+e:
+>>
+>> Hi Giacinto,
+>>
+>>> Besides, several modules use the option linux driver, which blocks in
+>>> case the port doesn't answer.
+>>> This single call:
+>>> g_at_chat_unref(port);
+>>> blocks either 30s or 1 minute, depending on the system. I might step
+>>> into it twice during my hardware initialization for several 3G models.
+>>> It helps to run this line on a separate thread unblocking the rest.
+>>>
+>>
+>> What system call blocks (use strace to determine this) ?  If anything
+>> inside the option driver blocks for 30-60 seconds, that is unacceptable
+>> and needs to be fixed in the kernel.
+> =
 
-actually doing what you want in this particular case anyway.  If you =
+> I have finally had time to come back to this.
+> It is the close(fd), called in the g_lib that blocks.
+> I have further discovered that it is due to the fact that there are
+> write pending, and in this case a the closing_wait timeout kicks in.
+> I tried to remove this timeout with an udev rule, but it doesn't work.
+> I could set - still through udev, a call to the tool setserial, but it
+> doesn't seem proper, rules with scripts are heavy, and may also lead
+> to a wrong enumeration in udevng because some devices of the USB
+> enumeration are made available only after the rule has been executed.
 
-don't have enough AT ports that you need to cancel ongoing SMS, etc, =
+I will study this a bit more.  I'm surprised close can block a =
 
-then you need to implement proper AT command abortion.
+O_NONBLOCK fd...
 
 > =
 
-> Perhaps it should be given in the driver to each manufacturer the
-> possibility to do it, but some support from the core would be good.
-
-The core has no concept of cancelation, it is assumed that any proper =
-
-modem would provide 5-6 independent interpreters or supports a fully =
-
-async protocol.  Then any interpreters that can block for a long time =
-
-are independent of the others.  E.g. ATD, AT+COPS, and a few other =
-
-commands can block the port for a fairly long amount of time, depending =
-
-on the firmware implementation.
-
-I'm open to the idea of adding core support for cancelation of these =
-
-commands.  ATD is a particularly common case, but so is available =
-
-operator scanning via COPS, etc.  But this enters into extremely =
-
-complicated and vendor dependent behavior territory.
-
-> via GAtIO / GIOChannel I can do it, even if suspect quite some effort
-> for something that is already available.
+> So, the code to fix this - in plugins/gemalto.c, would be:
 > =
 
+> #include <asm/ioctls.h>
+> #include <linux/serial.h>
+> =
 
-I've already had this conversation with someone from Gemalto or one of =
+> int ioctl(int, int, void *);
+> =
 
-your customers.  I don't see a reason why you can't use =
+> static void closeport(gpointer user_data)
+> {
+>          GAtChat *port =3D user_data;
+>          GIOChannel *channel =3D g_at_chat_get_channel(port);
+>          int fd =3D g_io_channel_unix_get_fd(channel);
+>          struct serial_struct old, new;
+> =
 
-g_at_chat_set_wakeup_command for this.  With perhaps an extension to =
+>          g_at_chat_cancel_all(port);
+>          g_at_chat_unregister_all(port);
+>          ioctl(fd, TIOCGSERIAL, &old);
+>          new =3D old;
+>          new.closing_wait =3D ASYNC_CLOSING_WAIT_NONE;
+>          ioctl(fd, TIOCSSERIAL, &new);
+>          g_at_chat_unref(port);
+> }
+> =
 
-GAtChat API to reset/cancel the wakeup behavior once you don't need it.
+> do you see a better way to do it?
+
+Can we simply add this setting to g_at_tty_open?
 
 Regards,
 -Denis
 
---===============3784844679248984262==--
+--===============3970872229161212327==--
 
