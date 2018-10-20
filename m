@@ -1,93 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============6317471429706735574=="
+Content-Type: multipart/mixed; boundary="===============7197966562416275435=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH v7 6/7] gemalto/lte: Gemalto vendor lte atom
-Date: Sat, 20 Oct 2018 11:13:47 -0500
-Message-ID: <6a0eb589-2ac3-ea34-db34-0ad1a5999101@gmail.com>
-In-Reply-To: <cb95ecab-da1e-878d-89d9-a6d3d5a3d321@norrbonn.se>
+Date: Sat, 20 Oct 2018 11:18:26 -0500
+Message-ID: <ec6a85f6-f138-f3d3-6171-3237a59e2900@gmail.com>
+In-Reply-To: <CAKSBH7HtY0TCz3FUTscJUOfXPw9NuYCf0WmXz1xgUfzHUDz+pg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6317471429706735574==
+--===============7197966562416275435==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Giacinto,
 
-> Using an enumeration to name flags feels awkward.=C2=A0 I would #define t=
-hese:
+>>> +char *gemalto_get_cgdcont_command(struct ofono_modem *modem, guint cid,
+>>> +                             enum ofono_gprs_proto proto, const char *=
+apn)
+>>> +{
+>>> +     /*
+>>> +      * For future extension: verify if the module supports automatic
+>>> +      * context provisioning and if so, also if there is a manual over=
+ride
+>>> +      * This is an ofono_modem_get_integer property
+>>> +      */
+>>> +
+>>> +     /* for now. Later to consider modules where the LTE attach CID=3D=
+3 */
+>>> +     if (cid=3D=3D0)
+>>> +             cid=3D1;
+>>
+>> I'm a bit confused why cid=3D=3D0 means cid should be 1... is this becau=
+se
+>> the AT network-registration atom assumes CID =3D=3D 0 for the default
+>> context?  This should probably be fixed at the source, in that case, in
+>> atmodem/network-registration.c, with a vendor quirk...???
 > =
 
-> #define AUTH_F_USE_SGATH (1<<0)
-> #define AUTH_F_SWAP_CREDENTIALS (1<<1)
-> #define AUTH_F_ALWAYS_ALL_PARAMS (1<<2)
+> the 3GPP 27.007 says that the LTE attach context ID is 0, but actual
+> modems use other values.
+> For now there are around only models which use CID=3D1, but Gemalto also
+> has models with CID=3D3.
+> I will have to set another variable for this.
+>
 
-Actually we prefer enums for enumerations with multiple related values =
+I still don't get this explanation.  You have a gemalto specific =
 
-or ones that can be extended.  It is fine to use a #define if you have a =
+function, which is being passed the CID directly by the caller.  Why is =
 
-single random value, but if you have a series of related flags, just use =
+there weird logic here to mess with the CID, just have the caller pass =
 
-an enum.  This also forces one to keep naming consistent per item M11 of =
+in the proper CID directly.
 
-doc/coding-style.txt.
+Also note that cid 1 and 3 are by default valid CIDs for context =
 
-The compiler can also treat enums as first class citizens, making them =
+activations.  So your 'default attach' profile can be overridden by the =
 
-available in the debugger, etc.
+core at any time.  So you may want to address this by setting the cid =
 
-> =
-
-> Abbreviating ALWAYS to ALW is awkward...
-
-+1
-
->> +
->> +struct ofono_modem;
-> =
-
-> I think you might as well just pull in modem.h here.
-> =
-
-
-This is bad advice.  If the header file is only using a pointer to a =
-
-structure, a forward declaration is enough.  Including the entire =
-
-modem.h file here would just be extra work for the preprocessor and =
-
-compiler, nothing more.  I prefer my compilation times to be fast ;)
-
->> +static int gemalto_lte_probe(struct ofono_lte *lte, unsigned int vendor,
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 void *data)
->> +{
->> +=C2=A0=C2=A0=C2=A0 GAtChat *chat =3D data;
->> +=C2=A0=C2=A0=C2=A0 struct gemalto_lte_driver_data *ldd;
->> +
->> +=C2=A0=C2=A0=C2=A0 ldd =3D g_new0(struct gemalto_lte_driver_data, 1);
->> +
->> +=C2=A0=C2=A0=C2=A0 ldd->chat =3D g_at_chat_clone(chat);
->> +
->> +=C2=A0=C2=A0=C2=A0 ofono_lte_set_data(lte, ldd);
->> +
->> +=C2=A0=C2=A0=C2=A0 g_idle_add(gemalto_lte_delayed_register, lte);
-> =
-
-> Why do you need to delay the registration?
-
-It is not allowed to call register from within the probe method.  That =
-
-is because register might trigger driver method calls, but until probe() =
-
-returns the driver isn't set.  Some atoms do not do this (yet) and you =
-
-can get away with it, but it is bad practice in general.
+range appropriately.
 
 Regards,
 -Denis
 
---===============6317471429706735574==--
+--===============7197966562416275435==--
 
