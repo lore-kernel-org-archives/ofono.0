@@ -1,50 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============0414963429427624648=="
+Content-Type: multipart/mixed; boundary="===============8176662559405210935=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v8 0/5] lte atom auth and IP protocol
-Date: Mon, 22 Oct 2018 11:48:24 -0500
-Message-ID: <ffec1cfc-cc61-4471-6683-c8fa9b2c100a@gmail.com>
-In-Reply-To: <20181019113141.20734-1-gciofono@gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: airplane mode
+Date: Mon, 22 Oct 2018 18:51:56 +0200
+Message-ID: <CAKSBH7GnR1cMpdARRPxG5SUoir1jU3jaSFYrxYC7NH0m=oFqAg@mail.gmail.com>
+In-Reply-To: <678af256-d651-b427-e3ad-1f61cf1536a6@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0414963429427624648==
+--===============8176662559405210935==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi Denis,
 
-On 10/19/2018 06:31 AM, Giacinto Cifelli wrote:
-> I would like to submit this patch for the lte atom
-> =
+On Mon, Oct 22, 2018 at 5:54 PM Denis Kenzior <denkenz@gmail.com> wrote:
+>
+> Hi Giacinto,
+>
+> On 10/22/2018 12:19 AM, Giacinto Cifelli wrote:
+> > Dear all,
+> >
+> > I have a series of problems with the ofono structure.
+> > When setting Powered=3DTRUE, it sets the module in airplane mode (AT+CF=
+UN=3D4).
+> >
+> > This prevents the use of calls, even emergency, so there would be no
+> > point in creating the atom in pre-sim stage.
+>
+> Sure there is.  Voicecall atom needs to read EFecc, and for that it
+> needs to keep track of sim inserted status & be able to do this even
+> when the PIN has not been entered yet (e.g. pre-sim state).
+>
+> And it is fully possible to make emergency calls.  Just set Online=3DTrue
+> first.
 
-> This patch adds in core atom:
-> -  the protocol for the default LTE APN, ip, ipv6 and both
-> - the authentication handling, with 3 properties:
-> 	method, username, password
-> =
+ahh, like that yes.... but then, wouldn't be better to create the
+voicecall atom where it belongs, in post_online ?
+Or this stage is never reached without a SIM? If not, what handle we
+have that is called for sure after AT+CFUN=3D1 ?
 
-> then these are used in the atmodem atom:
-> =
+>
+> > Additionally, the registration of call URCs for custom voicecall
+> > atoms, might also fail.
+> >
+>
+> Fix your firmware? :)
+>
+> > Also, several test commands fail in airplane mode, e.g.: AT+CLCK=3D?
+>
+> I doubt this has anything to do with airplane mode.  Is it that the SIM
+> is not initialized yet?  But even then, why would the firmware not
+> report all available locks regardless?
+>
 
-> The behavior of the patch is described in the api document (part 1),
-> and in the core atom header (part 2).
-> =
+According to the 27.007 (and our modules) AT+CLCK interrogates the
+network for some locks, and for this it must be online.
+Au passage, the 27.007 mentions explicitly that the command must be
+abortable when network facilities are set or interrogated.
 
-> Related to the previous version, this version:
-> - changes the name of the function at_auth_type_from_method in
->    atmodem/atutils, as suggested by Jonas, and calls it without passing
->    from an intermediate local variable.
-> =
+So, that command is not well placed when the module is in CFUN=3D4.
+I don't know on what insane kind of modules it has been tested, but it
+is wrong ;)
 
+> >
+> > Is there a way to re-initialize all required atoms at the post-inline s=
+tage?
+> > Or should they be destroyed and re-created?
+> >
+>
+> destroying and recreating is a bad idea because they will be moved into
+> a different modem state level.  So the next time you go to airplane mode
+> you will lose your SIM atom.
+>
+> You can always listen to modem state changes in the driver, but I
+> wouldn't recommend it.  The simplest answer is to fix your firmware ;)
 
-I've pushed out the first three patches of this series with a few =
+Let's think about a more reasonable solution.
+Again, if there is an handle that is called after AT+CFUN=3D1,
+regardless of the SIM presence, that would be the perfect place.
 
-trivial tweaks added.  Thanks!
+>
+> Regards,
+> -Denis
 
 Regards,
--Denis
+Giacinto
 
---===============0414963429427624648==--
+--===============8176662559405210935==--
 
