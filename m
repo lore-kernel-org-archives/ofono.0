@@ -1,84 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============6108661585782664724=="
+Content-Type: multipart/mixed; boundary="===============7176294659562339549=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH 1/2] atmodem/atutil: at_util_gprs_proto_to_pdp_type
-Date: Mon, 22 Oct 2018 20:56:07 +0200
-Message-ID: <20181022185608.27760-1-gciofono@gmail.com>
+Subject: [PATCH 2/2] atmodem/atutil: at_util_get_cgdcont_command
+Date: Mon, 22 Oct 2018 20:56:08 +0200
+Message-ID: <20181022185608.27760-2-gciofono@gmail.com>
+In-Reply-To: <20181022185608.27760-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6108661585782664724==
+--===============7176294659562339549==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This function converts the ofono enum ofono_gprs_auth_method
-into the value of the 3GPP 27.007 to pass to the AT command
+The function at_util_get_cgdcont_command computes the AT+CGDCONT
+string, as per 3GPP 27.007.
+It uses a second function, at_util_gprs_proto_to_pdp_type,
+that returns the pdp_type string for the command
 ---
- drivers/atmodem/atutil.c | 16 ++++++++++++++++
- drivers/atmodem/atutil.h |  3 +++
- 2 files changed, 19 insertions(+)
+ drivers/atmodem/atutil.c | 27 +++++++++++++++++++++++++++
+ drivers/atmodem/atutil.h | 13 +++++++++++++
+ 2 files changed, 40 insertions(+)
 
 diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-index 6f4e8a20..ed57b55a 100644
+index ed57b55a..7725513a 100644
 --- a/drivers/atmodem/atutil.c
 +++ b/drivers/atmodem/atutil.c
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2018 Gemalto M2M
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -27,6 +28,7 @@
- #include <gatchat.h>
- #include <string.h>
- #include <stdlib.h>
-+#include <stdio.h>
- #include <errno.h>
+@@ -670,3 +670,30 @@ int at_util_auth_type_from_method(enum ofono_gprs_auth=
+_method auth_method)
  =
 
- #define OFONO_API_SUBJECT_TO_CHANGE
-@@ -654,3 +656,17 @@ int at_util_get_ipv4_address_and_netmask(const char *a=
-ddrnetmask,
- =
-
- 	return ret;
+ 	return 0;
  }
 +
-+int at_util_auth_type_from_method(enum ofono_gprs_auth_method auth_method)
++const char *at_util_gprs_proto_to_pdp_type(enum ofono_gprs_proto proto)
 +{
-+	switch (auth_method) {
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		return 1;
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		return 2;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		return 0;
++	switch (proto) {
++	case OFONO_GPRS_PROTO_IPV6:
++		return "IPV6";
++	case OFONO_GPRS_PROTO_IPV4V6:
++		return "IPV4V6";
++		break;
++	case OFONO_GPRS_PROTO_IP:
++		return "IP";
 +	}
 +
-+	return 0;
++	return NULL;
++}
++
++char *at_util_get_cgdcont_command(guint cid, enum ofono_gprs_proto proto,
++								const char *apn)
++{
++	const char *pdp_type =3D at_util_gprs_proto_to_pdp_type(proto);
++
++	if (!apn)
++		return g_strdup_printf("AT+CGDCONT=3D%u", cid);
++
++	return g_strdup_printf("AT+CGDCONT=3D%u,\"%s\",\"%s\"", cid, pdp_type,
++									apn);
 +}
 diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-index 7113a4cd..006ad65a 100644
+index 006ad65a..a924b6f0 100644
 --- a/drivers/atmodem/atutil.h
 +++ b/drivers/atmodem/atutil.h
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2018 Gemalto M2M
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -86,6 +87,8 @@ void at_util_sim_state_query_free(struct at_util_sim_stat=
-e_query *req);
- int at_util_get_ipv4_address_and_netmask(const char *addrnetmask,
- 						char *address, char *netmask);
+@@ -89,6 +89,19 @@ int at_util_get_ipv4_address_and_netmask(const char *add=
+rnetmask,
  =
 
-+int at_util_auth_type_from_method(enum ofono_gprs_auth_method auth_method);
+ int at_util_auth_type_from_method(enum ofono_gprs_auth_method auth_method);
+ =
+
++const char *at_util_gprs_proto_to_pdp_type(enum ofono_gprs_proto proto);
++
++/*
++ * at_util_get_cgdcont_command
++ * if the apn pointer is NULL, the context will be removed: the resulting
++ * string will be like: AT+CGDCONT=3D7
++ * but if apn pointer is not NULL and the string is empty, then
++ * this function will create a normal context with empty apn, like:
++ * AT+CGDCONT=3D4,"IPV6",""
++ */
++char *at_util_get_cgdcont_command(guint cid, enum ofono_gprs_proto proto,
++							const char *apn);
 +
  struct cb_data {
  	void *cb;
@@ -88,5 +91,5 @@ e_query *req);
 2.17.1
 
 
---===============6108661585782664724==--
+--===============7176294659562339549==--
 
