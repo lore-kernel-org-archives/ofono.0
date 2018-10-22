@@ -1,96 +1,173 @@
-Content-Type: multipart/mixed; boundary="===============4096965272022859595=="
+Content-Type: multipart/mixed; boundary="===============2866388821589021771=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: airplane mode
-Date: Mon, 22 Oct 2018 12:02:29 -0500
-Message-ID: <c264e35a-d7e3-fab0-b307-e3f5dee64ccf@gmail.com>
-In-Reply-To: <CAKSBH7GnR1cMpdARRPxG5SUoir1jU3jaSFYrxYC7NH0m=oFqAg@mail.gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH v8 4/5] atmodem/atutil: shared functions for cgdcont
+Date: Mon, 22 Oct 2018 19:03:20 +0200
+Message-ID: <CAKSBH7ET2rDEX-OLri+yMW9xe9Syj8EEpbcCDuiQ35yhUcrg-A@mail.gmail.com>
+In-Reply-To: <47cbda92-864c-50d8-824c-8f1fcad72db1@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4096965272022859595==
+--===============2866388821589021771==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi Denis,
 
->> And it is fully possible to make emergency calls.  Just set Online=3DTrue
->> first.
-> =
+ok for your comments, except ...
 
-> ahh, like that yes.... but then, wouldn't be better to create the
-> voicecall atom where it belongs, in post_online ?
-> Or this stage is never reached without a SIM? If not, what handle we
-> have that is called for sure after AT+CFUN=3D1 ?
-> =
+On Mon, Oct 22, 2018 at 6:56 PM Denis Kenzior <denkenz@gmail.com> wrote:
+>
+> Hi Giacinto,
+>
+> On 10/19/2018 06:31 AM, Giacinto Cifelli wrote:
+> > included two new functions:
+> >
+> > at_auth_type_from_method: converts the ofono enum ofono_gprs_auth_method
+> >       into the value of the 3GPP 27.007 to pass to the AT command
+> >
+> > at_get_cgdcont_command: computes the AT+CGDCONT string, standard version
+>
+> That just screams for 2 separate commits.
+>
+> Also, everything in atutil.[ch] is prefixed by at_util_, so please
+> follow that convention.
+>
+> > ---
+> >   drivers/atmodem/atutil.c | 49 ++++++++++++++++++++++++++++++++++++++++
+> >   drivers/atmodem/atutil.h |  6 +++++
+> >   2 files changed, 55 insertions(+)
+> >
+> > diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+> > index 6f4e8a20..ed19e91b 100644
+> > --- a/drivers/atmodem/atutil.c
+> > +++ b/drivers/atmodem/atutil.c
+> > @@ -3,6 +3,7 @@
+> >    *  oFono - Open Source Telephony
+> >    *
+> >    *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> > + *  Copyright (C) 2018 Gemalto M2M
+> >    *
+> >    *  This program is free software; you can redistribute it and/or mod=
+ify
+> >    *  it under the terms of the GNU General Public License version 2 as
+> > @@ -27,6 +28,7 @@
+> >   #include <gatchat.h>
+> >   #include <string.h>
+> >   #include <stdlib.h>
+> > +#include <stdio.h>
+> >   #include <errno.h>
+> >
+> >   #define OFONO_API_SUBJECT_TO_CHANGE
+> > @@ -654,3 +656,50 @@ int at_util_get_ipv4_address_and_netmask(const cha=
+r *addrnetmask,
+> >
+> >       return ret;
+> >   }
+> > +
+> > +int at_auth_type_from_method(enum ofono_gprs_auth_method auth_method)
+> > +{
+> > +     switch (auth_method) {
+> > +     case OFONO_GPRS_AUTH_METHOD_PAP:
+> > +             return 1;
+> > +     case OFONO_GPRS_AUTH_METHOD_CHAP:
+> > +             return 2;
+> > +     case OFONO_GPRS_AUTH_METHOD_NONE:
+> > +             return 0;
+> > +     }
+> > +
+> > +     return 0;
+> > +}
+> > +
+> > +char *at_get_cgdcont_command(guint cid, enum ofono_gprs_proto proto,
+> > +                                                     const char *apn)
+> > +{
+> > +     size_t buflen =3D 32 + OFONO_GPRS_MAX_APN_LENGTH + 1;
+> > +     char *buf =3D g_new(char, buflen);
+> > +     int len;
+> > +
+> > +     len =3D snprintf(buf, buflen, "AT+CGDCONT=3D%u", cid);
+> > +     buflen -=3D len;
+> > +
+> > +     /*
+> > +      * if apn is null, it will remove the context.
+> > +      * but if apn is empty, it will create a context with empty apn
+> > +      */
+> > +     if (!apn)
+> > +             goto finished;
+> > +
+> > +     switch (proto) {
+> > +     case OFONO_GPRS_PROTO_IPV6:
+> > +             snprintf(buf+len, buflen, ",\"IPV6\",\"%s\"", apn);
+> > +             break;
+> > +     case OFONO_GPRS_PROTO_IPV4V6:
+> > +             snprintf(buf+len, buflen, ",\"IPV4V6\",\"%s\"", apn);
+> > +             break;
+> > +     case OFONO_GPRS_PROTO_IP:
+> > +             snprintf(buf+len, buflen, ",\"IP\",\"%s\"", apn);
+> > +             break;
+> > +     }
+>
+> Ugh.  Since you're allocating a new string anyway, why not something like:
+>
+> const char *pdp_type =3D at_util_gprs_proto_to_pdp_type(proto);
+>
+> if (!apn || apn[0] =3D=3D '\0')
+>         return g_strdup_printf("AT+CGDCONT=3D%u", cid);
 
+... these are 2 different cases:
+if !apn (null string), then the PDP context is to be deleted, and the
+command is like: AT+CGDCONT=3D7
+but if apn is empty, then the DPD context is to be provisioned with a
+default apn: AT+CGDCONT=3D7,"IP",""
 
-Correct, without a SIM or PIN not unlocked, you'd never get to =
+I will add a comment in the header file to explain that.
 
-post_online, even Online=3DTrue being set.
+>
+> return g_strdup_printf("AT+CGDCONT=3D%u,\"%s\",\"%s\"", cid, pdp_type, ap=
+n);
+>
+> > +
+> > +finished:
+> > +     return buf;
+> > +}
+> > diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
+> > index 7113a4cd..447ce56b 100644
+> > --- a/drivers/atmodem/atutil.h
+> > +++ b/drivers/atmodem/atutil.h
+> > @@ -3,6 +3,7 @@
+> >    *  oFono - Open Source Telephony
+> >    *
+> >    *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> > + *  Copyright (C) 2018 Gemalto M2M
+> >    *
+> >    *  This program is free software; you can redistribute it and/or mod=
+ify
+> >    *  it under the terms of the GNU General Public License version 2 as
+> > @@ -86,6 +87,11 @@ void at_util_sim_state_query_free(struct at_util_sim=
+_state_query *req);
+> >   int at_util_get_ipv4_address_and_netmask(const char *addrnetmask,
+> >                                               char *address, char *netm=
+ask);
+> >
+> > +int at_auth_type_from_method(enum ofono_gprs_auth_method auth_method);
+> > +
+> > +char *at_get_cgdcont_command(guint cid, enum ofono_gprs_proto proto,
+> > +                                                     const char *apn);
+> > +
+> >   struct cb_data {
+> >       void *cb;
+> >       void *data;
+> >
+>
+> Regards,
+> -Denis
 
-You can watch the modem state, but I don't recall that any of our modems =
-
-had this issue...
-
->>> Also, several test commands fail in airplane mode, e.g.: AT+CLCK=3D?
->>
->> I doubt this has anything to do with airplane mode.  Is it that the SIM
->> is not initialized yet?  But even then, why would the firmware not
->> report all available locks regardless?
->>
-> =
-
-> According to the 27.007 (and our modules) AT+CLCK interrogates the
-> network for some locks, and for this it must be online.
-> Au passage, the 27.007 mentions explicitly that the command must be
-> abortable when network facilities are set or interrogated.
-
-Sure, but we're not setting or interrogating any network locks.  We're =
-
-just testing the capability of the modem.  So the above 27.007 part does =
-
-not apply.
-
-> =
-
-> So, that command is not well placed when the module is in CFUN=3D4.
-> I don't know on what insane kind of modules it has been tested, but it
-> is wrong ;)
-
-I would disagree.  We use CLCK to query for SIM locks, facility locks, =
-
-etc...
-
-> =
-
->>>
->>> Is there a way to re-initialize all required atoms at the post-inline s=
-tage?
->>> Or should they be destroyed and re-created?
->>>
->>
->> destroying and recreating is a bad idea because they will be moved into
->> a different modem state level.  So the next time you go to airplane mode
->> you will lose your SIM atom.
->>
->> You can always listen to modem state changes in the driver, but I
->> wouldn't recommend it.  The simplest answer is to fix your firmware ;)
-> =
-
-> Let's think about a more reasonable solution.
-> Again, if there is an handle that is called after AT+CFUN=3D1,
-> regardless of the SIM presence, that would be the perfect place.
-> =
-
-
-You can only listen to modem state changes.  oFono core doesn't know =
-
-anything about CFUN=3D1.
+and I will split them in 2 commits.
 
 Regards,
--Denis
+Giacinto
 
---===============4096965272022859595==--
+--===============2866388821589021771==--
 
