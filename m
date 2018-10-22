@@ -1,157 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============0431914692815144465=="
+Content-Type: multipart/mixed; boundary="===============0738859965521473271=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v8 4/5] atmodem/atutil: shared functions for cgdcont
-Date: Mon, 22 Oct 2018 11:56:14 -0500
-Message-ID: <47cbda92-864c-50d8-824c-8f1fcad72db1@gmail.com>
-In-Reply-To: <20181019113141.20734-5-gciofono@gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: huawei: network attachment unstability
+Date: Mon, 22 Oct 2018 18:57:52 +0200
+Message-ID: <CAKSBH7Fm3bLuXX90bCMogNR_DE3OMCZe84D4u8dcNj3XmBHQkQ@mail.gmail.com>
+In-Reply-To: <4e85a76e-f698-5638-9dff-09b0b0b456c6@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0431914692815144465==
+--===============0738859965521473271==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi Christophe,
 
-On 10/19/2018 06:31 AM, Giacinto Cifelli wrote:
-> included two new functions:
-> =
+On Mon, Oct 22, 2018 at 5:33 PM Christophe Ronco <c.ronco@kerlink.fr> wro=
+te:
+>
+> Hi,
+>
+> I (sometimes) use a huawei USB key named MS2372h-153.
+> With this key, I am sometimes unable to connect. When this happens, here
+> is what I have in traces:
+>
+> t0) Attached to WCDMA network
+> t1) Switch to LTE network
+> t1+xs) Attachment loss reported
+> t1+(x+2)s) Attached to WCDMA network
+> t2) Switch to LTE network
+> t2) Attachment loss reported
+> t2+2s) Attached to WCDMA network
 
-> at_auth_type_from_method: converts the ofono enum ofono_gprs_auth_method
-> 	into the value of the 3GPP 27.007 to pass to the AT command
-> =
+I think it is a problem with the logic of ofono. I have pushed a patch
+or two removing AT+CGATT and mentioning that AT+CGATT is evil for LTE
+modules, but was rejected.
+However Denis asked for a trace, that at the moment I cannot produce
+with a branch of ofono close to the one upstream with the modules I
+have, but it seems you have managed.
 
-> at_get_cgdcont_command: computes the AT+CGDCONT string, standard version
+> ....
+>
+> So I am not able to have a stable network attachment. This does not
+> happen if I have a direct attach to LTE network. In this case, I have a
+> stable connection.
+>
+> I don't know why this key systematically reports a network detach when
+> switching from WCDMA to LTE. But I also don't understand why Ofono sends
+> a AT+CGATT=3D0 each time detach is reported and AT+CGATT=3D1 each time
+> network attachment is back.
+>
+> I tried to remove the call to gprs->driver->set_attached in
+> gprs_netreg_update (src/gprs.c). When problem occurs, with this patch I
+> have:
+> t0) Attached to WCDMA network
+> t1) Switch to LTE network
+> t1+xs) Attachment loss reported
+> t1+(x+2)s) Attached to LTE network
+>
+> And then I have a stable connection.
+>
+> I tried to find where this call come from and traced it back to a very
+> old commit:
+> commit f43efa8a5f24f2aab71f829082cc02a272268986
+> Author: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+> Date:   Mon Oct 12 23:35:59 2009 +0200
+>
+> Please find with this mail two files with Ofono complete traces of the
+> problem (in ofonoTraces.tar.gz):
+> attachmentLossLoop.txt:
+> Oct 22 09:44:35: Attached WCDMA
+> Oct 22 09:48:41: switch to LTE
+> Oct 22 09:48:53: loosing network
+> Oct 22 09:48:53: AT+CGATT=3D0
+> Oct 22 09:48:55: Attached WCDMA
+> Oct 22 09:48:55: AT+CGATT=3D1
+> Oct 22 09:48:58: switch to LTE
+> Oct 22 09:48:58: loosing network
+> Oct 22 09:48:58: AT+CGATT=3D0
+> Oct 22 09:49:12: Attached WCDMA
+> ...
+>
+> attachmentOkWithoutCGATT.txt:
+> Oct 22 14:04:58: WCDMA connection
+> Oct 22 14:05:23: switch to LTE
+> Oct 22 14:05:35: loosing network
+> Oct 22 14:05:36: attached back, directly on LTE
+>
+> My question is: why does ofono core ask driver to detach from PS domain
+> when network attachment is lost?
+>
+> Best Regards,
+>
+> Christophe Ronco
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
 
-That just screams for 2 separate commits.
+Regards.
+Giacinto
 
-Also, everything in atutil.[ch] is prefixed by at_util_, so please =
-
-follow that convention.
-
-> ---
->   drivers/atmodem/atutil.c | 49 ++++++++++++++++++++++++++++++++++++++++
->   drivers/atmodem/atutil.h |  6 +++++
->   2 files changed, 55 insertions(+)
-> =
-
-> diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-> index 6f4e8a20..ed19e91b 100644
-> --- a/drivers/atmodem/atutil.c
-> +++ b/drivers/atmodem/atutil.c
-> @@ -3,6 +3,7 @@
->    *  oFono - Open Source Telephony
->    *
->    *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-> + *  Copyright (C) 2018 Gemalto M2M
->    *
->    *  This program is free software; you can redistribute it and/or modify
->    *  it under the terms of the GNU General Public License version 2 as
-> @@ -27,6 +28,7 @@
->   #include <gatchat.h>
->   #include <string.h>
->   #include <stdlib.h>
-> +#include <stdio.h>
->   #include <errno.h>
->   =
-
->   #define OFONO_API_SUBJECT_TO_CHANGE
-> @@ -654,3 +656,50 @@ int at_util_get_ipv4_address_and_netmask(const char =
-*addrnetmask,
->   =
-
->   	return ret;
->   }
-> +
-> +int at_auth_type_from_method(enum ofono_gprs_auth_method auth_method)
-> +{
-> +	switch (auth_method) {
-> +	case OFONO_GPRS_AUTH_METHOD_PAP:
-> +		return 1;
-> +	case OFONO_GPRS_AUTH_METHOD_CHAP:
-> +		return 2;
-> +	case OFONO_GPRS_AUTH_METHOD_NONE:
-> +		return 0;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +char *at_get_cgdcont_command(guint cid, enum ofono_gprs_proto proto,
-> +							const char *apn)
-> +{
-> +	size_t buflen =3D 32 + OFONO_GPRS_MAX_APN_LENGTH + 1;
-> +	char *buf =3D g_new(char, buflen);
-> +	int len;
-> +
-> +	len =3D snprintf(buf, buflen, "AT+CGDCONT=3D%u", cid);
-> +	buflen -=3D len;
-> +
-> +	/*
-> +	 * if apn is null, it will remove the context.
-> +	 * but if apn is empty, it will create a context with empty apn
-> +	 */
-> +	if (!apn)
-> +		goto finished;
-> +
-> +	switch (proto) {
-> +	case OFONO_GPRS_PROTO_IPV6:
-> +		snprintf(buf+len, buflen, ",\"IPV6\",\"%s\"", apn);
-> +		break;
-> +	case OFONO_GPRS_PROTO_IPV4V6:
-> +		snprintf(buf+len, buflen, ",\"IPV4V6\",\"%s\"", apn);
-> +		break;
-> +	case OFONO_GPRS_PROTO_IP:
-> +		snprintf(buf+len, buflen, ",\"IP\",\"%s\"", apn);
-> +		break;
-> +	}
-
-Ugh.  Since you're allocating a new string anyway, why not something like:
-
-const char *pdp_type =3D at_util_gprs_proto_to_pdp_type(proto);
-
-if (!apn || apn[0] =3D=3D '\0')
-	return g_strdup_printf("AT+CGDCONT=3D%u", cid);
-
-return g_strdup_printf("AT+CGDCONT=3D%u,\"%s\",\"%s\"", cid, pdp_type, apn);
-
-> +
-> +finished:
-> +	return buf;
-> +}
-> diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-> index 7113a4cd..447ce56b 100644
-> --- a/drivers/atmodem/atutil.h
-> +++ b/drivers/atmodem/atutil.h
-> @@ -3,6 +3,7 @@
->    *  oFono - Open Source Telephony
->    *
->    *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-> + *  Copyright (C) 2018 Gemalto M2M
->    *
->    *  This program is free software; you can redistribute it and/or modify
->    *  it under the terms of the GNU General Public License version 2 as
-> @@ -86,6 +87,11 @@ void at_util_sim_state_query_free(struct at_util_sim_s=
-tate_query *req);
->   int at_util_get_ipv4_address_and_netmask(const char *addrnetmask,
->   						char *address, char *netmask);
->   =
-
-> +int at_auth_type_from_method(enum ofono_gprs_auth_method auth_method);
-> +
-> +char *at_get_cgdcont_command(guint cid, enum ofono_gprs_proto proto,
-> +							const char *apn);
-> +
->   struct cb_data {
->   	void *cb;
->   	void *data;
-> =
-
-
-Regards,
--Denis
-
---===============0431914692815144465==--
+--===============0738859965521473271==--
 
