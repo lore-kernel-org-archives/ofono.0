@@ -1,129 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1884884528008709501=="
+Content-Type: multipart/mixed; boundary="===============4174876994168559939=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH] src/modem.c/call_watches null pointer check
-Date: Tue, 23 Oct 2018 19:51:47 +0200
-Message-ID: <CAKSBH7FJ-KC0xu_sxfipeWKHwz1wnFFc6HbWu7KM93M_nFg+AA@mail.gmail.com>
-In-Reply-To: <3f72eb6e-e37b-f7a5-a30c-a13c6110523a@gmail.com>
+Subject: Re: [PATCH] src/modem: connection timeout to 60 seconds
+Date: Tue, 23 Oct 2018 20:34:47 +0200
+Message-ID: <CAKSBH7Gs9aYgv7h9h-Nc7q6rqB3oXDw7+fX8dD9r_5oBPAyDgw@mail.gmail.com>
+In-Reply-To: <8d07caca-7a05-5ad7-c17a-81647a2e6d2e@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1884884528008709501==
+--===============4174876994168559939==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On Tue, Oct 23, 2018 at 7:40 PM Denis Kenzior <denkenz@gmail.com> wrote:
 >
-> Hi Giacinto,
+> In my 10+ years I've never seen a modem do this.  Some take 5 seconds,
+> maybe 10.  I've never seen anything more than that, which is why that 20
+> second value was quite conservative when I added it.
+
+Yes, up to 2 years ago 15 seconds were enough. But with the new LTEA
+and LTEApro chipset, it takes much longer.
+
 >
-> On 10/23/2018 12:30 PM, Giacinto Cifelli wrote:
-> > Hi Denis,
-> >
-> > I didn't know this was a surprise interrogation!
->
-> That's how we roll around here.  Keeps you on your toes.
->
-> >
-> > On Tue, Oct 23, 2018 at 6:50 PM Denis Kenzior <denkenz@gmail.com> wro=
-te:
-> >>
-> >> Hi Giacinto,
-> >>>      0  0x0000563b1842b735 in call_watches
-> >>> (atom=3Datom(a)entry=3D0x563b1a3f07d0,
-> >>> cond=3Dcond(a)entry=3DOFONO_ATOM_WATCH_CONDITION_UNREGISTERED) at
-> >>> src/modem.c:265
-> >>>      1  0x0000563b1842c32e in __ofono_atom_unregister
-> >>> (atom=3Datom(a)entry=3D0x563b1a3f07d0) at src/modem.c:299
-> >>>      2  0x0000563b1842c3ff in __ofono_atom_unregister
-> >>> (atom=3D0x563b1a3f07d0) at src/modem.c:296
-> >>>      3  flush_atoms (modem=3D0x563b1a3f1f50,
-> >>> new_state=3DMODEM_STATE_POWER_OFF) at src/modem.c:448
-> >>>      4  modem_change_state (modem=3D0x563b1a3f1f50,
-> >>> new_state=3DMODEM_STATE_POWER_OFF) at src/modem.c:529
-> >>>      5  0x0000563b1842c577 in set_powered
-> >>> (modem=3Dmodem(a)entry=3D0x563b1a3f1f50, powered=3Dpowered(a)entry=3D=
-0) at
-> >>> src/modem.c:915
-> >>>      6  0x0000563b1842c863 in modem_unregister
-> >>> (modem=3Dmodem(a)entry=3D0x563b1a3f1f50) at src/modem.c:2111
-> >>>      7  0x0000563b1842e6a4 in ofono_modem_remove (modem=3D0x563b1a3f1=
-f50)
-> >>> at src/modem.c:2177
-> >>>      8  0x0000563b183b05d3 in destroy_modem (data=3D0x563b1a3e50a0) at
-> >>> plugins/udevng.c:1408
-> >>>      9  0x00007f42b4bdd091 in ?? () from
-> >>> /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0
-> >>>      10 0x0000563b183b561a in remove_device (device=3D0x563b1a401630)=
- at
-> >>> plugins/udevng.c:1468
-> >>>      11 udev_event (channel=3D<optimized out>, cond=3D<optimized out>,
-> >>> user_data=3D<optimized out>) at plugins/udevng.c:1991
-> >>>      12 0x00007f42b4bef0f5 in g_main_context_dispatch () from
-> >>> /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0
-> >>>      13 0x00007f42b4bef4c0 in ?? () from
-> >>> /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0
-> >>>      14 0x00007f42b4bef7d2 in g_main_loop_run () from
-> >>> /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0
-> >>>      15 0x0000563b183b0397 in main (argc=3D<optimized out>,
-> >>> argv=3D<optimized out>) at src/main.c:294
-> >>>
-> >>> ?
-> >>
-> >> Yes, much better.  So now you can explain to me how you're triggering =
-this.
-> >>
-> >> The only way modem->atom_watches is NULL is if ofono_modem_register
-> >> failed.  So are you trying to use a modem object without registering it
-> >> properly?
-> >
-> > the problem is that I have moved location_information_create, along
-> > with devinfo_create at the gemalto_enable() phase, because these two
-> > are available also offline, and it is a normal use case to monitor the
-> > GNSS signal while offline.
->
-> Well you can't do that.  .enable() callback is to power the modem up or
-> open up the AT command port and brings the modem to RX/TX circuits off
-> stage.  So you cannot be adding any atoms until
-> ofono_modem_set_powered(modem, TRUE) has been called.
->
-> In fact you should not be calling any atom creation functions outside
-> the pre_sim, post_sim or post_online callbacks.  There may be one or two
-> exceptions due to modems taking a while to initialize the SMS/phonebook
-> store, and we still need to fix that.
->
-> However, it still doesn't explain to me why modem->atom_watches are NULL
-> in the first place.  Are you calling ofono_modem_registered first?
->
-> > But when the modem is removed (unplugged or switched off), the
-> > location_reporting atom is not removed, and the modem does not
-> > disappear. devinfo goes away without any issue.
-> >
-> > So in the gemalto_remove I have added:
-> >     lratom =3D __ofono_modem_find_atom(modem,OFONO_ATOM_TYPE_LOCATION_R=
-EPORTING);
-> >     if (lratom)
-> >         __ofono_atom_free(lratom);
->
-> This tells me you're doing something very wrong...
->
-> >
-> > this works fine, but maybe the watch is already destroyed?
-> >
-> > And the whole point is, I wouldn't have to do it manually. What is
-> > missing in this atom?
->
-> Nothing is missing, all atoms are managed automagically.
+> Anyhow, go ahead and add ofono_modem_set_powered_timeout_hint(unsigned
+> int seconds) and have udevng detection fix this.
+
+ok. I'll do it so.
+
 >
 > Regards,
 > -Denis
 
-ok, I keep it in pre-sim.
-
 Regards,
 Giacinto
 
---===============1884884528008709501==--
+--===============4174876994168559939==--
 
