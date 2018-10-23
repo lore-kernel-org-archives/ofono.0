@@ -1,26 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============0013723999678822753=="
+Content-Type: multipart/mixed; boundary="===============7618923849163009105=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Jonas Bonn <jonas@norrbonn.se>
 Subject: Re: [PATCH] src/modem: connection timeout to 60 seconds
-Date: Tue, 23 Oct 2018 13:35:41 +0300
-Message-ID: <bc56f2d1-4cee-38ee-692a-482f5c67f1bf@jolla.com>
-In-Reply-To: <20181023075039.13587-2-gciofono@gmail.com>
+Date: Tue, 23 Oct 2018 12:45:01 +0200
+Message-ID: <d27aeefc-d5fe-5ec6-1af6-650e14deeb68@norrbonn.se>
+In-Reply-To: <CAKSBH7FhE7LKByNODgqqXQTdna37_f6cVxPvSY5PxnG3kwKYfA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0013723999678822753==
+--===============7618923849163009105==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 23/10/18 10:50, Giacinto Cifelli wrote:
-> Changed the connection timeout to 60 seconds (from 20 seconds),
-> to accomodate for chipset that take time to boot-up.
 
-Is it hard to make it configurable?
 
-Cheers,
--Slava
+On 23/10/18 11:26, Giacinto Cifelli wrote:
+> Hi Jonas
+>>
+>> This is where I think adding a data item in udevng would be in order.
+>> ...set_int(..., "PoweredTimeout", 60)... or something like that.  It's a
+>> device quirk, after all.  I've dealt with modems that were slow to boot,
+>> but usually they don't present the USB interfaces until they are ready
+>> to go.
+> =
 
---===============0013723999678822753==--
+> I had in mind a plugin function that would return the timeout it needs
+> (to be called between .probe and .enable), something like .get_params.
+> =
+
+> Your parameter should be set in a udev rule, otherwise it would apply
+> to all modems connected, and so it is marginally better than the
+> current hardcoding.
+> Adding udev rules is tedious, USB devices are supposed to work 'out of
+> the box', without manual tweaks.
+
+No, not in a udev rule.  I was thinking of adding a line like this to =
+
+setup_gemalto() in plugins/udevng.c:
+
+if (g_strcmp0(modem->model, "xxxx"))
+	ofono_modem_set_int(modem->modem, "PoweredTimeout", 60);
+
+('model' is hexadecimal, numeric value, so you could parse it and do a =
+
+switch() on it if you don't like the strcmp...)
+
+Then query the setting in src/modem.c.
+
+/Jonas
+
+--===============7618923849163009105==--
 
