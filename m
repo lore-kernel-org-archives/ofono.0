@@ -1,57 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============9189696491243417853=="
+Content-Type: multipart/mixed; boundary="===============0207238614319617001=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH] atmodem/sms: added Gemalto vendor for CNMI command
-Date: Tue, 23 Oct 2018 10:32:36 +0200
-Message-ID: <CAKSBH7E8WvgnHEbGffcjXXz5AOJuRGMX81Qj_SNoFjaP95geFw@mail.gmail.com>
-In-Reply-To: <7aaec38a-6b31-1e65-ce09-b78aa6807e7b@norrbonn.se>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: Re: [PATCH] src/modem: connection timeout to 60 seconds
+Date: Tue, 23 Oct 2018 10:34:30 +0200
+Message-ID: <b1046725-7e10-8fb1-f654-6e4f4fff3bb2@norrbonn.se>
+In-Reply-To: <20181023075039.13587-2-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9189696491243417853==
+--===============0207238614319617001==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-On Tue, Oct 23, 2018 at 10:29 AM Jonas Bonn <jonas@norrbonn.se> wrote:
->
-> Hi,
->
-> On 23/10/18 10:21, Giacinto Cifelli wrote:
-> > ---
-> >   drivers/atmodem/sms.c | 12 +++++++++++-
-> >   1 file changed, 11 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-> > index 7638885e..380cd763 100644
-> > --- a/drivers/atmodem/sms.c
-> > +++ b/drivers/atmodem/sms.c
-> > @@ -858,8 +858,18 @@ static gboolean build_cnmi_string(char *buf, int *=
-cnmi_opts,
-> >                                       data->cnma_enabled ? "21" : "1", =
-FALSE))
-> >               return FALSE;
-> >
-> > +     switch (data->vendor) {
-> > +     case OFONO_VENDOR_GEMALTO:
-> > +             mode =3D "0";
-> > +             break;
-> > +     default:
-> > +             /* Sounds like 2 is the sanest mode */
->
-> This particular comment doesn't add anything useful so just drop it.
+Do the USB interfaces show up long before the modem is ready to accept =
 
-Not mine... I didn't want my patch rejected because I changed 2 things
-at the same time (add vendor and remove comment).
-From the choice of word (sane), I think this comment is from Denis.
-without even checking with git blame.
+AT commands?  Or do the AT commands take a long time to complete?
 
->
-> /Jonas
+/Jonas
 
-Giacinto
+On 23/10/18 09:50, Giacinto Cifelli wrote:
+> Changed the connection timeout to 60 seconds (from 20 seconds),
+> to accomodate for chipset that take time to boot-up.
+> ---
+>   src/modem.c | 4 ++--
+>   1 file changed, 2 insertions(+), 2 deletions(-)
+> =
 
---===============9189696491243417853==--
+> diff --git a/src/modem.c b/src/modem.c
+> index 124a5192..e7978bb0 100644
+> --- a/src/modem.c
+> +++ b/src/modem.c
+> @@ -1060,7 +1060,7 @@ static DBusMessage *set_property_lockdown(struct of=
+ono_modem *modem,
+>   		}
+>   =
+
+>   		modem->pending =3D dbus_message_ref(msg);
+> -		modem->timeout =3D g_timeout_add_seconds(20,
+> +		modem->timeout =3D g_timeout_add_seconds(60,
+>   						set_powered_timeout, modem);
+>   		return NULL;
+>   	}
+> @@ -1138,7 +1138,7 @@ static DBusMessage *modem_set_property(DBusConnecti=
+on *conn,
+>   				return __ofono_error_failed(msg);
+>   =
+
+>   			modem->pending =3D dbus_message_ref(msg);
+> -			modem->timeout =3D g_timeout_add_seconds(20,
+> +			modem->timeout =3D g_timeout_add_seconds(60,
+>   						set_powered_timeout, modem);
+>   			return NULL;
+>   		}
+>=20
+
+--===============0207238614319617001==--
 
