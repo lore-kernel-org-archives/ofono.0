@@ -1,56 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4590952516067554525=="
+Content-Type: multipart/mixed; boundary="===============1191927207994537516=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: rename of vendor-specific interface?
-Date: Tue, 23 Oct 2018 10:02:28 -0500
-Message-ID: <279b6753-d2c6-e9db-48d5-abc5f8fc1ade@gmail.com>
-In-Reply-To: <CAKSBH7FCNFrDXXH5DiTFe6BfXx5+v7Ax6-XRBe7Bwey=b62n5Q@mail.gmail.com>
+Subject: Re: [PATCH] src/modem: connection timeout to 60 seconds
+Date: Tue, 23 Oct 2018 10:08:29 -0500
+Message-ID: <8d07caca-7a05-5ad7-c17a-81647a2e6d2e@gmail.com>
+In-Reply-To: <CAKSBH7FvFdN4Eiv0pFFgWC5EhjEKwM8Wf77ZMare7UZmpc_XiQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4590952516067554525==
+--===============1191927207994537516==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Giacinto,
 
-On 10/23/2018 03:19 AM, Giacinto Cifelli wrote:
-> Dear all,
+On 10/23/2018 03:40 AM, Giacinto Cifelli wrote:
+> Hi,
 > =
 
-> is it possible to rename the .cinterion.HardwareMonitor interface to
-> .gemalto.HardwareMonitor ?
-
-We have no formal policy about the stability of vendor specific APIs. =
-
-So there's nothing preventing you from changing this.  But it might not =
-
-be nice to simply remove this interface in case someone is actually =
-
-depending on it.  So you might want to consider exposing both versions =
-
-(at least for actual Cinterion modems) for a few releases.
-
+> On Tue, Oct 23, 2018 at 10:34 AM Jonas Bonn <jonas@norrbonn.se> wrote:
+>>
+>> Hi,
+>>
+>> Do the USB interfaces show up long before the modem is ready to accept
+>> AT commands?  Or do the AT commands take a long time to complete?
 > =
 
-> If not, can I keep the old one answering on DBus 'not implemented' for
-> all methods?
-
-That's pointless
-
-> =
-
-> Can I add both?
+> The USB shows up long before the modem is ready to accept AT commands,
+> and - if supported - the MBIM OPEN takes a long time to complete.
 > =
 
 
-That is what I would do, with a plan for removing cinterion version in a =
+So you really need to have a serious talk to your firmware guys about =
 
-N releases (or 6 months or so) to give people a chance to upgrade.
+fixing this.  Why is the modem jumping on the bus before it is ready to =
+
+accept AT commands?
+
+In my 10+ years I've never seen a modem do this.  Some take 5 seconds, =
+
+maybe 10.  I've never seen anything more than that, which is why that 20 =
+
+second value was quite conservative when I added it.
+
+Anyhow, go ahead and add ofono_modem_set_powered_timeout_hint(unsigned =
+
+int seconds) and have udevng detection fix this.
 
 Regards,
 -Denis
 
---===============4590952516067554525==--
+--===============1191927207994537516==--
 
