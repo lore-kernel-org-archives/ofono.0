@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============6336930129058756215=="
+Content-Type: multipart/mixed; boundary="===============3349784725939220030=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH] atmodem/atutil.h: cb_data ref/unref possibility
-Date: Thu, 25 Oct 2018 07:03:03 +0200
-Message-ID: <20181025050303.21401-1-gciofono@gmail.com>
+Subject: [PATCH v2] atmodem/atutil.h: cb_data ref/unref possibility
+Date: Thu, 25 Oct 2018 07:46:27 +0200
+Message-ID: <20181025054627.27462-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6336930129058756215==
+--===============3349784725939220030==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -65,15 +65,27 @@ and then there are two possibilities:
   - called function 2 (at_cgatt_cb):
     like above. no call to g_free or cb_data_unref. The terminal function
     doesn't need to know about the reference scheme.
+
+v2: fixed prototype for cb_data_unref to be compatible with g_free
 ---
- drivers/atmodem/atutil.h | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ drivers/atmodem/atutil.h | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
 
 diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-index f1389a94..190ee17f 100644
+index f1389a94..aa8b619c 100644
 --- a/drivers/atmodem/atutil.h
 +++ b/drivers/atmodem/atutil.h
-@@ -114,12 +114,36 @@ static inline struct cb_data *cb_data_new(void *cb, v=
+@@ -104,6 +104,7 @@ char *at_util_get_cgdcont_command(guint cid, enum ofono=
+_gprs_proto proto,
+ 							const char *apn);
+ =
+
+ struct cb_data {
++	gint ref_count;
+ 	void *cb;
+ 	void *data;
+ 	void *user;
+@@ -114,12 +115,37 @@ static inline struct cb_data *cb_data_new(void *cb, v=
 oid *data)
  	struct cb_data *ret;
  =
@@ -98,8 +110,9 @@ oid *data)
 +	return cbd;
 +}
 +
-+static inline void cb_data_unref(struct cb_data *cbd)
++static inline void cb_data_unref(gpointer user_data)
 +{
++	struct cb_data *cbd =3D user_data;
 +	gboolean is_zero;
 +
 +	if (cbd =3D=3D NULL)
@@ -119,5 +132,5 @@ oid *data)
 2.17.1
 
 
---===============6336930129058756215==--
+--===============3349784725939220030==--
 
