@@ -1,150 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============4791380429376497092=="
+Content-Type: multipart/mixed; boundary="===============7021794500115976932=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: [PATCH v2] atmodem/lte: proto and authentication handling
-Date: Thu, 25 Oct 2018 07:49:21 +0200
-Message-ID: <20181025054921.4803-1-gciofono@gmail.com>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: Re: [PATCH] atmodem/atutil.h: cb_data ref/unref possibility
+Date: Thu, 25 Oct 2018 08:55:42 +0200
+Message-ID: <a3c6c6fc-0af1-f99a-95c3-1d8bb09fed4f@norrbonn.se>
+In-Reply-To: <20181025050303.21401-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4791380429376497092==
+--===============7021794500115976932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The ofono_lte_default_attach_info now handles also the protocol and the
-authentication method, username and password.
-
-Co-authored-by: Martin Baschin <martin.baschin@googlemail.com>
----
- drivers/atmodem/lte.c | 70 ++++++++++++++++++++++++++++++++++---------
- 1 file changed, 56 insertions(+), 14 deletions(-)
-
-diff --git a/drivers/atmodem/lte.c b/drivers/atmodem/lte.c
-index c4866623..f4ac10be 100644
---- a/drivers/atmodem/lte.c
-+++ b/drivers/atmodem/lte.c
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2017  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2018 Gemalto M2M
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -42,43 +43,84 @@
- =
-
- struct lte_driver_data {
- 	GAtChat *chat;
-+	struct ofono_lte_default_attach_info pending_info;
- };
- =
-
--static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *resu=
-lt,
-+static void at_lte_set_auth_cb(gboolean ok, GAtResult *result,
- 							gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
- 	ofono_lte_cb_t cb =3D cbd->cb;
- 	struct ofono_error error;
- =
-
--	DBG("ok %d", ok);
--
- 	decode_at_error(&error, g_at_result_final_response(result));
- 	cb(&error, cbd->data);
- }
- =
-
-+static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *resu=
-lt,
-+							gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_lte_cb_t cb =3D cbd->cb;
-+	void *data =3D cbd->data;
-+	struct lte_driver_data *ldd =3D cbd->user;
-+	struct ofono_error error;
-+	char buf[32 + OFONO_GPRS_MAX_USERNAME_LENGTH +
-+					OFONO_GPRS_MAX_PASSWORD_LENGTH  + 1];
-+	size_t buflen =3D sizeof(buf);
-+	size_t len;
-+	enum ofono_gprs_auth_method auth_method;
-+
-+	if (!ok) {
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		cb(&error, data);
-+		return;
-+	}
-+
-+	auth_method =3D ldd->pending_info.auth_method;
-+
-+	/* change the authentication method if the  parameters are invalid */
-+	if (!*ldd->pending_info.username || !*ldd->pending_info.password)
-+		auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
-+
-+	len =3D snprintf(buf, buflen, "AT+CGAUTH=3D0,%d",
-+			at_util_gprs_auth_method_to_auth_prot(auth_method));
-+	buflen -=3D len;
-+
-+	if (auth_method !=3D OFONO_GPRS_AUTH_METHOD_NONE)
-+		snprintf(buf + len, buflen, ",\"%s\",\"%s\"",
-+				ldd->pending_info.username,
-+				ldd->pending_info.password);
-+
-+	cbd =3D cb_data_ref(cbd);
-+	if (g_at_chat_send(ldd->chat, buf, NULL,
-+			at_lte_set_auth_cb, cbd, cb_data_unref) > 0)
-+		return;
-+
-+	cb_data_unref(cbd);
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
- static void at_lte_set_default_attach_info(const struct ofono_lte *lte,
- 			const struct ofono_lte_default_attach_info *info,
- 			ofono_lte_cb_t cb, void *data)
- {
- 	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
--	char buf[32 + OFONO_GPRS_MAX_APN_LENGTH + 1];
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char *buf =3D at_util_get_cgdcont_command(0, info->proto, info->apn);
- =
-
--	DBG("LTE config with APN: %s", info->apn);
-+	cbd->user =3D ldd;
-+	memcpy(&ldd->pending_info, info, sizeof(ldd->pending_info));
- =
-
--	if (strlen(info->apn) > 0)
--		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\",\"%s\"",
--				info->apn);
--	else
--		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\"");
--
--	/* We can't do much in case of failure so don't check response. */
- 	if (g_at_chat_send(ldd->chat, buf, NULL,
--			at_lte_set_default_attach_info_cb, cbd, g_free) > 0)
--		return;
-+					at_lte_set_default_attach_info_cb,
-+					cbd, cb_data_unref) > 0)
-+		goto end;
- =
-
-+	cb_data_unref(cbd);
- 	CALLBACK_WITH_FAILURE(cb, data);
-+end:
-+	g_free(buf);
- }
- =
-
- static gboolean lte_delayed_register(gpointer user_data)
--- =
-
-2.17.1
+Hi Giacinto,
 
 
---===============4791380429376497092==--
+On 25/10/2018 07:03, Giacinto Cifelli wrote:
+> +static inline struct cb_data *cb_data_ref(struct cb_data *cbd)
+> +{
+> +	if (cbd =3D=3D NULL)
+> +		return NULL;
+> +
+> +	g_atomic_int_inc(&cbd->ref_count);
+> +
+
+Let me just vent my disagreement with using atomic accessors here again:
+
+i)  If I'm a new contributor, unfamiliar with ofono, and I see this then =
+
+I think:  "oh oh, this is a thread-safe library... better be =
+
+careful."... and then I get all confused because nothing else is handled =
+
+in a thread-safe manner.
+
+ii)  The atomic operations introduce an unnecessary memory barrier.
+
+I _presume_ that the code is written this way because it was inherited =
+
+from connman and connman made an early attempt to be thread safe...??? =
+
+I'm not sure that legacy is worth preserving.
+
+Anyway, enough said on the matter.  The implementation is fine aside =
+
+from my reservations.
+
+/Jonas
+
+
+> +	return cbd;
+> +}
+> +
+> +static inline void cb_data_unref(struct cb_data *cbd)
+> +{
+> +	gboolean is_zero;
+> +
+> +	if (cbd =3D=3D NULL)
+> +		return;
+> +
+> +	is_zero =3D g_atomic_int_dec_and_test(&cbd->ref_count);
+> +
+> +	if (is_zero =3D=3D TRUE)
+> +		g_free(cbd);
+> +}
+> +
+>   static inline int at_util_convert_signal_strength(int strength)
+>   {
+>   	int result;
+>=20
+
+--===============7021794500115976932==--
 
