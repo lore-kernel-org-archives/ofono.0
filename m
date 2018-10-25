@@ -1,82 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============7585222708379972458=="
+Content-Type: multipart/mixed; boundary="===============6336930129058756215=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH 1/1] gprs: detach from PS domain only if needed
-Date: Thu, 25 Oct 2018 05:24:23 +0200
-Message-ID: <CAKSBH7Er3-WG609Ekm=Qt=UbD0r4RJshy2kgPrQwaoDVEBwPwA@mail.gmail.com>
-In-Reply-To: <63639d49-4fdf-d4b3-175b-f2aa3ea6d96d@gmail.com>
+Subject: [PATCH] atmodem/atutil.h: cb_data ref/unref possibility
+Date: Thu, 25 Oct 2018 07:03:03 +0200
+Message-ID: <20181025050303.21401-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7585222708379972458==
+--===============6336930129058756215==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+the cb_data can be used by creating the structure with cb_data_new,
+and then there are two possibilities:
+- use it in a single callback function, and destroy it with a call to
+  g_free.
+  Example:
+  - calling function:
+    struct cb_data *cbd =3D cb_data_new(cb, data);
+    if (g_at_chat_send(chat, buf, NULL, at_cgatt_cb, cbd, g_free) > 0)
+	return;
+    g_free(cbd);
+  - called function (here at_cgatt_cb):
+	static void at_cgatt_cb(gboolean ok, GAtResult *result,
+						gpointer user_data)
+	{
+		struct cb_data *cbd =3D user_data;
+		ofono_gprs_cb_t cb =3D cbd->cb;
+		struct ofono_error error;
 
-On Thu, Oct 25, 2018 at 5:15 AM Denis Kenzior <denkenz@gmail.com> wrote:
->
-> Hi Giacinto,
->
-> On 10/24/2018 09:58 PM, Giacinto Cifelli wrote:
-> > Hi Denis,
-> >
-> >>
-> >> So the ideal situation would be to turn all this off for LTE based
-> >> dongles, have the ability to tell the modem not to auto-attach on 3G/2=
-G,
-> >> and maybe even attach only controlling 3G/2G PS domain only, not LTE.
-> >>
-> >
-> > this is not possible, and there are all the Hand-over scenarios, for
-> > example during a CSFB call, or loss of LTE coverage.
->
-> What exactly is impossible?  a CSFB call goes onto the CS domain, so
-> there should be no problem going from LTE -> CS only, no?
+		decode_at_error(&error,
+				g_at_result_final_response(result));
 
-The module and network are supposed to transfer the active PDP
-contexts to the fallback technology.
-I have seen some modem suspending them instead (because of their
-limitations), but it is not what the standard requires.
+		cb(&error, cbd->data);
+	}
+    note the absence of explicit g_free(cbd);
 
->
-> >
-> > It seems strange how LTE works because it is often overlooked that it
-> > is just the GPRS part of 2G/3G,
-> > with a small difference at the registration phase, which also performs
-> > the attach (hence it is called combined attach).
->
-> Yes, but roaming is also completely different with LTE and many of these
-> weird historical billing quirks no longer apply.
->
-> >
-> > Maybe it is really worth to start an ofono 2.x branch and remove this
-> > roaming control on the attach.
->
-> Perhaps, but I wouldn't mind attempting to work around this without
-> major surgery.  If we can't, then we can't, but lets not give up yet.
->
-> > Or, more conservative, add another variable for how to control
-> > roaming: attach or context activation (that can be applied also to
-> > LTE).
->
-> That is along the lines of what I was thinking...
->
-> > And decide globall, in the plug-in for the modem, or
-> > subscription-based how to set this second variable (possibly all 3,
-> > with overrides).
->
-> Feel free to propose something
+- pass it through a train of callback functions, adding a reference at
+  each pass cb_data_ref, and removing it with cb_data_unref.
+  the use of cb_data_ref would replace a new object creation, while the
+  use of cb_data_unref the use of g_free.
+  Example:
+  - calling function:
+	struct cb_data *cbd =3D cb_data_new(cb, data);
+	// no cb_ref at the creation
+	if (g_at_chat_send(chat, buf, NULL,
+				at_lte_set_default_attach_info_cb,
+				cbd, cb_data_unref) > 0)
+		goto end;
+	cb_data_unref(cbd);
+  - called function 1 (at_lte_set_default_attach_info_cb):
+	static void at_lte_set_default_attach_info_cb(gboolean ok,
+				GAtResult *result, gpointer user_data)
+	{
+		struct cb_data *cbd =3D user_data;
 
-Cool, I will work on it soon.
+		cbd =3D cb_data_ref(cbd);
+		if (g_at_chat_send(chat, buf, NULL,
+				at_cgatt_cb, cbd, cb_data_unref) > 0)
+			return;
+		cb_data_unref(cbd);
+	}
+  - called function 2 (at_cgatt_cb):
+    like above. no call to g_free or cb_data_unref. The terminal function
+    doesn't need to know about the reference scheme.
+---
+ drivers/atmodem/atutil.h | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
->
-> Regards,
-> -Denis
+diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
+index f1389a94..190ee17f 100644
+--- a/drivers/atmodem/atutil.h
++++ b/drivers/atmodem/atutil.h
+@@ -114,12 +114,36 @@ static inline struct cb_data *cb_data_new(void *cb, v=
+oid *data)
+ 	struct cb_data *ret;
+ =
 
-Regards,
-Giacinto
+ 	ret =3D g_new0(struct cb_data, 1);
++	ret->ref_count =3D 1;
+ 	ret->cb =3D cb;
+ 	ret->data =3D data;
+ =
 
---===============7585222708379972458==--
+ 	return ret;
+ }
+ =
+
++static inline struct cb_data *cb_data_ref(struct cb_data *cbd)
++{
++	if (cbd =3D=3D NULL)
++		return NULL;
++
++	g_atomic_int_inc(&cbd->ref_count);
++
++	return cbd;
++}
++
++static inline void cb_data_unref(struct cb_data *cbd)
++{
++	gboolean is_zero;
++
++	if (cbd =3D=3D NULL)
++		return;
++
++	is_zero =3D g_atomic_int_dec_and_test(&cbd->ref_count);
++
++	if (is_zero =3D=3D TRUE)
++		g_free(cbd);
++}
++
+ static inline int at_util_convert_signal_strength(int strength)
+ {
+ 	int result;
+-- =
+
+2.17.1
+
+
+--===============6336930129058756215==--
 
