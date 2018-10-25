@@ -1,75 +1,174 @@
-Content-Type: multipart/mixed; boundary="===============0984474409685799179=="
+Content-Type: multipart/mixed; boundary="===============2452506572441154635=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem/atutil.h: cb_data ref/unref possibility
-Date: Thu, 25 Oct 2018 10:58:20 -0500
-Message-ID: <6a056030-2ed3-cab3-1b44-c13dfc157048@gmail.com>
-In-Reply-To: <a3c6c6fc-0af1-f99a-95c3-1d8bb09fed4f@norrbonn.se>
+Subject: Re: [PATCH v2] atmodem/atutil.h: cb_data ref/unref possibility
+Date: Thu, 25 Oct 2018 11:13:44 -0500
+Message-ID: <676b36b1-59a3-11d4-36fb-01189f871491@gmail.com>
+In-Reply-To: <20181025054627.27462-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0984474409685799179==
+--===============2452506572441154635==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Giacinto,
 
-On 10/25/2018 01:55 AM, Jonas Bonn wrote:
-> Hi Giacinto,
+On 10/25/2018 12:46 AM, Giacinto Cifelli wrote:
+> the cb_data can be used by creating the structure with cb_data_new,
+> and then there are two possibilities:
+> - use it in a single callback function, and destroy it with a call to
+>    g_free.
+>    Example:
+>    - calling function:
+>      struct cb_data *cbd =3D cb_data_new(cb, data);
+>      if (g_at_chat_send(chat, buf, NULL, at_cgatt_cb, cbd, g_free) > 0)
+> 	return;
+>      g_free(cbd);
+>    - called function (here at_cgatt_cb):
+> 	static void at_cgatt_cb(gboolean ok, GAtResult *result,
+> 						gpointer user_data)
+> 	{
+> 		struct cb_data *cbd =3D user_data;
+> 		ofono_gprs_cb_t cb =3D cbd->cb;
+> 		struct ofono_error error;
 > =
 
+> 		decode_at_error(&error,
+> 				g_at_result_final_response(result));
 > =
 
-> On 25/10/2018 07:03, Giacinto Cifelli wrote:
->> +static inline struct cb_data *cb_data_ref(struct cb_data *cbd)
->> +{
->> +=C2=A0=C2=A0=C2=A0 if (cbd =3D=3D NULL)
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return NULL;
->> +
->> +=C2=A0=C2=A0=C2=A0 g_atomic_int_inc(&cbd->ref_count);
->> +
+> 		cb(&error, cbd->data);
+> 	}
+>      note the absence of explicit g_free(cbd);
 > =
 
-> Let me just vent my disagreement with using atomic accessors here again:
+> - pass it through a train of callback functions, adding a reference at
+>    each pass cb_data_ref, and removing it with cb_data_unref.
+>    the use of cb_data_ref would replace a new object creation, while the
+>    use of cb_data_unref the use of g_free.
+>    Example:
+>    - calling function:
+> 	struct cb_data *cbd =3D cb_data_new(cb, data);
+> 	// no cb_ref at the creation
+> 	if (g_at_chat_send(chat, buf, NULL,
+> 				at_lte_set_default_attach_info_cb,
+> 				cbd, cb_data_unref) > 0)
+> 		goto end;
+> 	cb_data_unref(cbd);
+>    - called function 1 (at_lte_set_default_attach_info_cb):
+> 	static void at_lte_set_default_attach_info_cb(gboolean ok,
+> 				GAtResult *result, gpointer user_data)
+> 	{
+> 		struct cb_data *cbd =3D user_data;
 > =
 
-> i)=C2=A0 If I'm a new contributor, unfamiliar with ofono, and I see this =
-then =
-
-> I think:=C2=A0 "oh oh, this is a thread-safe library... better be =
-
-> careful."... and then I get all confused because nothing else is handled =
-
-> in a thread-safe manner.
+> 		cbd =3D cb_data_ref(cbd);
+> 		if (g_at_chat_send(chat, buf, NULL,
+> 				at_cgatt_cb, cbd, cb_data_unref) > 0)
+> 			return;
+> 		cb_data_unref(cbd);
+> 	}
+>    - called function 2 (at_cgatt_cb):
+>      like above. no call to g_free or cb_data_unref. The terminal function
+>      doesn't need to know about the reference scheme.
 > =
 
-> ii)=C2=A0 The atomic operations introduce an unnecessary memory barrier.
+
+This is a nice summary of a very common pattern.  I left it in the =
+
+commit description, but perhaps you might want to break this out into a =
+
+separate document (and make it even more digestible) so that we can =
+
+point people to it more easily.
+
+Perhaps something like doc/common-patterns.txt?
+
+> v2: fixed prototype for cb_data_unref to be compatible with g_free
+> ---
+>   drivers/atmodem/atutil.h | 26 ++++++++++++++++++++++++++
+>   1 file changed, 26 insertions(+)
 > =
 
-> I _presume_ that the code is written this way because it was inherited =
+> diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
+> index f1389a94..aa8b619c 100644
+> --- a/drivers/atmodem/atutil.h
+> +++ b/drivers/atmodem/atutil.h
+> @@ -104,6 +104,7 @@ char *at_util_get_cgdcont_command(guint cid, enum ofo=
+no_gprs_proto proto,
+>   							const char *apn);
+>   =
 
-> from connman and connman made an early attempt to be thread safe...??? =
+>   struct cb_data {
+> +	gint ref_count;
+>   	void *cb;
+>   	void *data;
+>   	void *user;
+> @@ -114,12 +115,37 @@ static inline struct cb_data *cb_data_new(void *cb,=
+ void *data)
+>   	struct cb_data *ret;
+>   =
 
-> I'm not sure that legacy is worth preserving.
+>   	ret =3D g_new0(struct cb_data, 1);
+> +	ret->ref_count =3D 1;
+>   	ret->cb =3D cb;
+>   	ret->data =3D data;
+>   =
+
+>   	return ret;
+>   }
+>   =
+
+> +static inline struct cb_data *cb_data_ref(struct cb_data *cbd)
+> +{
+> +	if (cbd =3D=3D NULL)
+> +		return NULL;
+
+I removed this part.  For all private/semi-private APIs I want us to =
+
+crash early.  If someone is making the mistake of passing a NULL to =
+
+cb_data_ref then I don't want it to remain hidden until the bug =
+
+manifests itself in harder to detect ways.
+
+> +
+> +	g_atomic_int_inc(&cbd->ref_count);
+
+And I removed g_atomic stuff as well...
+
+> +
+> +	return cbd;
+> +}
+> +
+> +static inline void cb_data_unref(gpointer user_data)
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	gboolean is_zero;
+> +
+> +	if (cbd =3D=3D NULL)
+> +		return;
+> +
+> +	is_zero =3D g_atomic_int_dec_and_test(&cbd->ref_count);
+> +
+> +	if (is_zero =3D=3D TRUE)
+> +		g_free(cbd);
+> +}
+> +
+>   static inline int at_util_convert_signal_strength(int strength)
+>   {
+>   	int result;
 > =
 
-> Anyway, enough said on the matter.=C2=A0 The implementation is fine aside =
 
-> from my reservations.
+Applied as commit eed785a4d7a2529a5c1ddee8ba20b1c4e2aa7f99.  Please =
 
-So let me make you happy:
-
-For all new code the policy is that g_atomic should not be used.  Once =
-
-we switch to ell for oFono 2.x (or even before that) we should have no =
-
-instances of g_atomic in the codebase.
-
-If someone wants to start removing some of these now, be my guest.
+eyeball and make sure I didn't screw anything up.
 
 Regards,
 -Denis
 
---===============0984474409685799179==--
+--===============2452506572441154635==--
 
