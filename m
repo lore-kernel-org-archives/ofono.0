@@ -1,176 +1,208 @@
-Content-Type: multipart/mixed; boundary="===============5567202907078951777=="
+Content-Type: multipart/mixed; boundary="===============8494310698251602363=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH v2] atmodem/atutil.h: cb_data ref/unref possibility
-Date: Thu, 25 Oct 2018 18:36:03 +0200
-Message-ID: <CAKSBH7EK6N19rz5EXh1q4TEJ33wzdGf6+=Wg33moBRw-eWqkOA@mail.gmail.com>
-In-Reply-To: <676b36b1-59a3-11d4-36fb-01189f871491@gmail.com>
+Subject: [PATCH] doc/common-patterns.txt: initial version
+Date: Thu, 25 Oct 2018 19:22:29 +0200
+Message-ID: <20181025172229.3249-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5567202907078951777==
+--===============8494310698251602363==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ doc/common-patterns.txt | 165 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 165 insertions(+)
+ create mode 100644 doc/common-patterns.txt
+
+diff --git a/doc/common-patterns.txt b/doc/common-patterns.txt
+new file mode 100644
+index 00000000..dd615fcb
+--- /dev/null
++++ b/doc/common-patterns.txt
+@@ -0,0 +1,165 @@
++Every project has its own recursive patterns, and oFono is not an exceptio=
+n.
++This document describes the most common ones found in the code.
++
++
++How do callbacks work
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++Most of the time, the core atom for a given request calls a function in
++the atom, which generally executes some commands against the modem, and
++can then return the results to the core.
++
++For example:
++
++dbus call: lte/SetProperty(DefaultAPN)
++    |
++    v
++core: check APN validity, call the modem atom for execution in the modem
++	|
++	v
++atom: pipes for execution the command: AT+CGDCONT=3D0,"IP","MyNiceAPN"
++	    |
++[ break in the flow: the functions return back to the core, the dbus reque=
+st ]
++[			is not answered at this time			     ]
++ 		...
++[GLibMain event loop schedules the command, it is executed, and modem answ=
+ers]
++  	    |
++            v
++a callback function, registered along with the command, is now called
++	this processes the modem answers, and decides whether it is good or not
++	|
++	v
++a core callback function is now called. This was passed as an argument ear=
+lier,
++when the atom was called, along with some context data (opaque info for the
++atom, but would contain the reference to the modem, the dbus pending call,=
+ etc)
++    |
++    v
++the core can now answer the dbus message
++
++
++In the code, it looks like this:
++
++//core call:
++static DBusMessage *lte_set_property(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_lte *lte =3D data;
++
++	/*
++	 * a block of code here processes the msg and fills the
++	 * lte->pending_info structure
++	 */
++
++	lte->driver->set_default_attach_info(lte, &lte->pending_info,
++					lte_set_default_attach_info_cb, lte);
++
++	return NULL;
++}
++// lte_set_default_attach_info_cb is the core callback function,
++// the lte structure is the parameter that it takes
++
++//atom:
++static void at_lte_set_default_attach_info(const struct ofono_lte *lte,
++			const struct ofono_lte_default_attach_info *info,
++			ofono_lte_cb_t cb, void *data)
++{
++	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
++
++	// next line creates a structure for the in-atom callback
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	if (g_at_chat_send(ldd->chat, "AT", NULL,
++					at_lte_set_default_attach_info_cb,
++					cbd, g_free) > 0)
++		return;
++
++	g_free(cbd);
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++// here the structure is allocate dynamically, and since it is quite commo=
+n,
++// the function g_at_chat_send accepts the last 3 parameters:
++// - in-atom callback function
++// - in-atom callback data
++// - release/disallocation function for dynamically-allocated callback data
++// NOTE: if g_at_chat_send fails, it does not free the memory, so it must =
+be
++// done after the call.
++// Note also the callback to the core directly here if the g_at_chat_send =
+fails.
++
++//atom callback:
++
++static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *resu=
+lt,
++							gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++
++	if (result =3D=3D NULL) {
++		CALLBACK_WITH_FAILURE(cbd->cb, cbd->data);
++		return;
++	}
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cbd->cb(&error, cbd->data);
++}
++// note that here cbd must not be released, it will be done by the function
++// calling at_lte_set_default_attach_info_cb when it returns.
++// note also that the core function will be executed before cbd is release=
+d,
++// so the last line of the code is ok.
++
++
++use of the cb_data structure in the atoms
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++the cb_data can be used by creating the structure with cb_data_new,
++and then there are two possibilities:
++- use it in a single callback function, and destroy it with a call to
++  g_free.
++  Example:
++  - calling function:
++    struct cb_data *cbd =3D cb_data_new(cb, data);
++    if (g_at_chat_send(chat, buf, NULL, at_cgatt_cb, cbd, g_free) > 0)
++	return;
++    g_free(cbd);
++  - called function (here at_cgatt_cb):
++	static void at_cgatt_cb(gboolean ok, GAtResult *result,
++						gpointer user_data)
++	{
++		struct cb_data *cbd =3D user_data;
++		ofono_gprs_cb_t cb =3D cbd->cb;
++		struct ofono_error error;
++
++		decode_at_error(&error,
++				g_at_result_final_response(result));
++
++		cb(&error, cbd->data);
++	}
++    note the absence of explicit g_free(cbd);
++
++- pass it through a train of callback functions, adding a reference at
++  each pass cb_data_ref, and removing it with cb_data_unref.
++  the use of cb_data_ref would replace a new object creation, while the
++  use of cb_data_unref the use of g_free.
++  Example:
++  - calling function:
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	// no cb_ref at the creation
++	if (g_at_chat_send(chat, buf, NULL,
++				at_lte_set_default_attach_info_cb,
++				cbd, cb_data_unref) > 0)
++		goto end;
++	cb_data_unref(cbd);
++  - called function 1 (at_lte_set_default_attach_info_cb):
++	static void at_lte_set_default_attach_info_cb(gboolean ok,
++				GAtResult *result, gpointer user_data)
++	{
++		struct cb_data *cbd =3D user_data;
++
++		cbd =3D cb_data_ref(cbd);
++		if (g_at_chat_send(chat, buf, NULL,
++				at_cgatt_cb, cbd, cb_data_unref) > 0)
++			return;
++		cb_data_unref(cbd);
++	}
++  - called function 2 (at_cgatt_cb):
++    like above. no call to g_free or cb_data_unref. The terminal function
++    doesn't need to know about the reference scheme.
++
++
+-- =
+
+2.17.1
 
 
-On Thu, Oct 25, 2018 at 6:13 PM Denis Kenzior <denkenz@gmail.com> wrote:
->
-> Hi Giacinto,
->
-> On 10/25/2018 12:46 AM, Giacinto Cifelli wrote:
-> > the cb_data can be used by creating the structure with cb_data_new,
-> > and then there are two possibilities:
-> > - use it in a single callback function, and destroy it with a call to
-> >    g_free.
-> >    Example:
-> >    - calling function:
-> >      struct cb_data *cbd =3D cb_data_new(cb, data);
-> >      if (g_at_chat_send(chat, buf, NULL, at_cgatt_cb, cbd, g_free) > 0)
-> >       return;
-> >      g_free(cbd);
-> >    - called function (here at_cgatt_cb):
-> >       static void at_cgatt_cb(gboolean ok, GAtResult *result,
-> >                                               gpointer user_data)
-> >       {
-> >               struct cb_data *cbd =3D user_data;
-> >               ofono_gprs_cb_t cb =3D cbd->cb;
-> >               struct ofono_error error;
-> >
-> >               decode_at_error(&error,
-> >                               g_at_result_final_response(result));
-> >
-> >               cb(&error, cbd->data);
-> >       }
-> >      note the absence of explicit g_free(cbd);
-> >
-> > - pass it through a train of callback functions, adding a reference at
-> >    each pass cb_data_ref, and removing it with cb_data_unref.
-> >    the use of cb_data_ref would replace a new object creation, while the
-> >    use of cb_data_unref the use of g_free.
-> >    Example:
-> >    - calling function:
-> >       struct cb_data *cbd =3D cb_data_new(cb, data);
-> >       // no cb_ref at the creation
-> >       if (g_at_chat_send(chat, buf, NULL,
-> >                               at_lte_set_default_attach_info_cb,
-> >                               cbd, cb_data_unref) > 0)
-> >               goto end;
-> >       cb_data_unref(cbd);
-> >    - called function 1 (at_lte_set_default_attach_info_cb):
-> >       static void at_lte_set_default_attach_info_cb(gboolean ok,
-> >                               GAtResult *result, gpointer user_data)
-> >       {
-> >               struct cb_data *cbd =3D user_data;
-> >
-> >               cbd =3D cb_data_ref(cbd);
-> >               if (g_at_chat_send(chat, buf, NULL,
-> >                               at_cgatt_cb, cbd, cb_data_unref) > 0)
-> >                       return;
-> >               cb_data_unref(cbd);
-> >       }
-> >    - called function 2 (at_cgatt_cb):
-> >      like above. no call to g_free or cb_data_unref. The terminal funct=
-ion
-> >      doesn't need to know about the reference scheme.
-> >
->
-> This is a nice summary of a very common pattern.
-
-yes, I felt very creative this morning :)
-
-> I left it in the
-> commit description, but perhaps you might want to break this out into a
-> separate document (and make it even more digestible) so that we can
-> point people to it more easily.
->
-> Perhaps something like doc/common-patterns.txt?
-
-ok, I will start such a document.
-
->
-> > v2: fixed prototype for cb_data_unref to be compatible with g_free
-> > ---
-> >   drivers/atmodem/atutil.h | 26 ++++++++++++++++++++++++++
-> >   1 file changed, 26 insertions(+)
-> >
-> > diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-> > index f1389a94..aa8b619c 100644
-> > --- a/drivers/atmodem/atutil.h
-> > +++ b/drivers/atmodem/atutil.h
-> > @@ -104,6 +104,7 @@ char *at_util_get_cgdcont_command(guint cid, enum o=
-fono_gprs_proto proto,
-> >                                                       const char *apn);
-> >
-> >   struct cb_data {
-> > +     gint ref_count;
-> >       void *cb;
-> >       void *data;
-> >       void *user;
-> > @@ -114,12 +115,37 @@ static inline struct cb_data *cb_data_new(void *c=
-b, void *data)
-> >       struct cb_data *ret;
-> >
-> >       ret =3D g_new0(struct cb_data, 1);
-> > +     ret->ref_count =3D 1;
-> >       ret->cb =3D cb;
-> >       ret->data =3D data;
-> >
-> >       return ret;
-> >   }
-> >
-> > +static inline struct cb_data *cb_data_ref(struct cb_data *cbd)
-> > +{
-> > +     if (cbd =3D=3D NULL)
-> > +             return NULL;
->
-> I removed this part.  For all private/semi-private APIs I want us to
-> crash early.  If someone is making the mistake of passing a NULL to
-> cb_data_ref then I don't want it to remain hidden until the bug
-> manifests itself in harder to detect ways.
->
-> > +
-> > +     g_atomic_int_inc(&cbd->ref_count);
->
-> And I removed g_atomic stuff as well...
->
-> > +
-> > +     return cbd;
-> > +}
-> > +
-> > +static inline void cb_data_unref(gpointer user_data)
-> > +{
-> > +     struct cb_data *cbd =3D user_data;
-> > +     gboolean is_zero;
-> > +
-> > +     if (cbd =3D=3D NULL)
-> > +             return;
-> > +
-> > +     is_zero =3D g_atomic_int_dec_and_test(&cbd->ref_count);
-> > +
-> > +     if (is_zero =3D=3D TRUE)
-> > +             g_free(cbd);
-> > +}
-> > +
-> >   static inline int at_util_convert_signal_strength(int strength)
-> >   {
-> >       int result;
-> >
->
-> Applied as commit eed785a4d7a2529a5c1ddee8ba20b1c4e2aa7f99.  Please
-> eyeball and make sure I didn't screw anything up.
-
-It looks ok and executes fine (with the gemaltomodem/lte.c that isn't
-yet in the tree).
-
->
-> Regards,
-> -Denis
-
-Regards,
-Giacinto
-
---===============5567202907078951777==--
+--===============8494310698251602363==--
 
