@@ -1,80 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============2225989114097375523=="
+Content-Type: multipart/mixed; boundary="===============6837158412570370675=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: [PATCH 3/6] gobi: modem driver cannot be a plugin
-Date: Fri, 26 Oct 2018 11:54:16 +0200
-Message-ID: <20181026095419.26260-4-jonas@norrbonn.se>
+Subject: [PATCH 2/6] qmimodem: simplify driver registration
+Date: Fri, 26 Oct 2018 11:54:15 +0200
+Message-ID: <20181026095419.26260-3-jonas@norrbonn.se>
 In-Reply-To: <20181026095419.26260-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2225989114097375523==
+--===============6837158412570370675==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch converts the gobi driver from being a 'plugin' to being a
-regular 'modem driver'.
-
-Modem drivers, in general, use a lot of internal ofono functionality and
-cannot be built standalone against just the exported ofono headers.  As
-such, these cannot be built as plugins and therefore should netiher be part
-of the plugins directory nor declared as plugins.
 ---
- Makefile.am                          |  5 ++---
- {plugins =3D> drivers/qmimodem}/gobi.c | 13 +------------
- 2 files changed, 3 insertions(+), 15 deletions(-)
- rename {plugins =3D> drivers/qmimodem}/gobi.c (97%)
+ drivers/qmimodem/gprs-context.c       | 10 +---------
+ drivers/qmimodem/location-reporting.c | 10 +---------
+ drivers/qmimodem/qmimodem.c           |  4 ----
+ drivers/qmimodem/qmimodem.h           |  6 ------
+ 4 files changed, 2 insertions(+), 28 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index e8e4ed95..f7bcb4cd 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -237,10 +237,9 @@ builtin_sources +=3D $(qmi_sources) \
- 			drivers/qmimodem/lte.c \
- 			drivers/qmimodem/radio-settings.c \
- 			drivers/qmimodem/location-reporting.c \
--			drivers/qmimodem/netmon.c
-+			drivers/qmimodem/netmon.c \
-+			drivers/qmimodem/gobi.c
- =
-
--builtin_modules +=3D gobi
--builtin_sources +=3D plugins/gobi.c
- endif
- =
-
- if ATMODEM
-diff --git a/plugins/gobi.c b/drivers/qmimodem/gobi.c
-similarity index 97%
-rename from plugins/gobi.c
-rename to drivers/qmimodem/gobi.c
-index d5a5965e..69a682a8 100644
---- a/plugins/gobi.c
-+++ b/drivers/qmimodem/gobi.c
-@@ -529,15 +529,4 @@ static const struct ofono_modem_driver gobi_driver =3D=
- {
- 	.post_online	=3D gobi_post_online,
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
+t.c
+index dcdf8ae1..0dc33b0f 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -501,12 +501,4 @@ static const struct ofono_gprs_context_driver driver =
+=3D {
+ 	.detach_shutdown	=3D qmi_gprs_context_detach_shutdown,
  };
  =
 
--static int gobi_init(void)
+-void qmi_gprs_context_init(void)
 -{
--	return ofono_modem_driver_register(&gobi_driver);
+-	ofono_gprs_context_driver_register(&driver);
 -}
 -
--static void gobi_exit(void)
+-void qmi_gprs_context_exit(void)
 -{
--	ofono_modem_driver_unregister(&gobi_driver);
+-	ofono_gprs_context_driver_unregister(&driver);
+-}
++OFONO_GPRS_CONTEXT_DRIVER(&driver)
+diff --git a/drivers/qmimodem/location-reporting.c b/drivers/qmimodem/locat=
+ion-reporting.c
+index 90d57db7..2052b460 100644
+--- a/drivers/qmimodem/location-reporting.c
++++ b/drivers/qmimodem/location-reporting.c
+@@ -287,12 +287,4 @@ static const struct ofono_location_reporting_driver dr=
+iver =3D {
+ 	.disable	=3D qmi_location_reporting_disable,
+ };
+ =
+
+-void qmi_location_reporting_init()
+-{
+-	ofono_location_reporting_driver_register(&driver);
 -}
 -
--OFONO_PLUGIN_DEFINE(gobi, "Qualcomm Gobi modem driver", VERSION,
--			OFONO_PLUGIN_PRIORITY_DEFAULT, gobi_init, gobi_exit)
-+OFONO_MODEM_DRIVER(&gobi_driver)
+-void qmi_location_reporting_exit()
+-{
+-	ofono_location_reporting_driver_unregister(&driver);
+-}
++OFONO_LOCATION_REPORTING_DRIVER(&driver)
+diff --git a/drivers/qmimodem/qmimodem.c b/drivers/qmimodem/qmimodem.c
+index 11e68f2e..5f1a267e 100644
+--- a/drivers/qmimodem/qmimodem.c
++++ b/drivers/qmimodem/qmimodem.c
+@@ -38,10 +38,8 @@ static int qmimodem_init(void)
+ 	qmi_sms_init();
+ 	qmi_ussd_init();
+ 	qmi_gprs_init();
+-	qmi_gprs_context_init();
+ 	qmi_lte_init();
+ 	qmi_radio_settings_init();
+-	qmi_location_reporting_init();
+ 	qmi_netmon_init();
+ =
+
+ 	return 0;
+@@ -50,10 +48,8 @@ static int qmimodem_init(void)
+ static void qmimodem_exit(void)
+ {
+ 	qmi_netmon_exit();
+-	qmi_location_reporting_exit();
+ 	qmi_radio_settings_exit();
+ 	qmi_lte_exit();
+-	qmi_gprs_context_exit();
+ 	qmi_gprs_exit();
+ 	qmi_ussd_exit();
+ 	qmi_sms_exit();
+diff --git a/drivers/qmimodem/qmimodem.h b/drivers/qmimodem/qmimodem.h
+index eeb1375a..72e5417d 100644
+--- a/drivers/qmimodem/qmimodem.h
++++ b/drivers/qmimodem/qmimodem.h
+@@ -45,17 +45,11 @@ extern void qmi_ussd_exit(void);
+ extern void qmi_gprs_init(void);
+ extern void qmi_gprs_exit(void);
+ =
+
+-extern void qmi_gprs_context_init(void);
+-extern void qmi_gprs_context_exit(void);
+-
+ extern void qmi_lte_init(void);
+ extern void qmi_lte_exit(void);
+ =
+
+ extern void qmi_radio_settings_init(void);
+ extern void qmi_radio_settings_exit(void);
+ =
+
+-extern void qmi_location_reporting_init(void);
+-extern void qmi_location_reporting_exit(void);
+-
+ extern void qmi_netmon_init(void);
+ extern void qmi_netmon_exit(void);
 -- =
 
 2.17.1
 
 
---===============2225989114097375523==--
+--===============6837158412570370675==--
 
