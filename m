@@ -1,32 +1,3328 @@
-Content-Type: multipart/mixed; boundary="===============6318356230749916783=="
+Content-Type: multipart/mixed; boundary="===============0283468069608977877=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 9/9] modem: global data is pre-zeroed
-Date: Mon, 29 Oct 2018 14:05:19 -0500
-Message-ID: <7584e6b6-b6cf-e822-fb57-29fcaee1a6d0@gmail.com>
-In-Reply-To: <20181026101319.27709-10-jonas@norrbonn.se>
+Subject: Re: [RFC PATCH] new gemalto plugin
+Date: Mon, 29 Oct 2018 14:58:44 -0500
+Message-ID: <e2f340cd-cc8c-fe45-2bd8-ee402d4bf23a@gmail.com>
+In-Reply-To: <20181026061055.18669-1-gciofono@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6318356230749916783==
+--===============0283468069608977877==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Giacinto,
 
-On 10/26/2018 05:13 AM, Jonas Bonn wrote:
-> Module-local and global data are BSS symbols and don't require
-> zero-initialization.
+On 10/26/2018 01:10 AM, Giacinto Cifelli wrote:
+> I would like to submit to your attention the new version of the Gemalto
+> plugin. It is not ready, but would already benefit from some feedback.
+> The purpose of this new plugin is to address most of the Gemalto modules
+> (excluding perhaps some LTE CatM and CatNB), interfaced either via USB
+> or RS232 interface.
+
+So just a cursory look through this, but overall my impression is that =
+
+this code would be utterly unmaintainable.  You need to split this up =
+
+into something without a bazillion if conditions and #ifdefs in it. =
+
+Notice how none of our existing driver code uses #ifdefs.
+
+That means MBIM/QMI/AT logic needs to be separated into separate =
+
+drivers.  If you have a weird QMI/AT or MBIM/AT or QMI over MBIM =
+
+combination stuff going on, then these all need to be separate drivers.
+
+You may want to basically start with the basics.  Get the initial driver =
+
+separation figured out, then you can add fancy stuff like vendor =
+
+specific APIs, etc.  Right now they just clutter the code and are not =
+
+really useful to a wide audience anyway.
+
+> =
+
+> I have included the totality of file plugins/gemalto.c because it is
+> quite different from the current one.
+> =
+
+> I would appreciate a generic comment on how to split it in commits
+> this file.
+> =
+
+> I have added an include/gemalto.h file, as suggested by Jonas Bonn.
+> There isn't much in it yet, but some additional code should be moved into
+> it.
+> =
+
+> The gprs and gprs-context's are perhaps not finished.
+> =
+
+> In udevng there are 3 additional commits, please just comment if you
+> like and find them useful and I will submit separately.
+> =
+
+> There are some review comments, in // format, not part of the code.
+> =
+
 > ---
->   src/modem.c | 14 +++++++-------
->   1 file changed, 7 insertions(+), 7 deletions(-)
+>   include/gemalto.h |   27 +
+>   plugins/gemalto.c | 2715 +++++++++++++++++++++++++++++++++++++++++++++
+>   plugins/udevng.c  |  208 ++--
+>   3 files changed, 2885 insertions(+), 65 deletions(-)
+>   create mode 100644 include/gemalto.h
+>   create mode 100644 plugins/gemalto.c
+> =
 
-Applied, thanks.
+> diff --git a/include/gemalto.h b/include/gemalto.h
+> new file mode 100644
+> index 00000000..26165eb1
+> --- /dev/null
+> +++ b/include/gemalto.h
+> @@ -0,0 +1,27 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2018 Gemalto M2M
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +enum auth_option {
+> +	GEMALTO_AUTH_DEFAULTS		=3D 0,
+> +	GEMALTO_AUTH_USE_SGAUTH		=3D 1<<0,
+> +	GEMALTO_AUTH_ORDER_PWD_USR	=3D 1<<1,
+> +	GEMALTO_AUTH_ALWAYS_ALL_PARAMS	=3D 1<<2,
+> +};
+> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+> new file mode 100644
+> index 00000000..6b208572
+> --- /dev/null
+> +++ b/plugins/gemalto.c
+> @@ -0,0 +1,2715 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2017 Vincent Cesson. All rights reserved.
+> + *  Copyright (C) 2018 Gemalto M2M
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#include <errno.h>
+> +#include <fcntl.h>
+> +#include <sys/types.h>
+> +#include <sys/stat.h>
+> +#include <sys/mman.h>
+> +#include <linux/types.h>
+> +#include <unistd.h>
+> +#include <stdlib.h>
+> +#include <stdio.h>
+> +#include <stdint.h>
+> +#include <glib.h>
+> +#include <gatchat.h>
+> +#include <gattty.h>
+> +#include <gdbus.h>
+> +#include "ofono.h"
+> +#define OFONO_API_SUBJECT_TO_CHANGE
+> +#include <ofono/dbus.h>
+> +#include <ofono/plugin.h>
+> +#include <ofono/log.h>
+> +#include <ofono/modem.h>
+> +#include <ofono/devinfo.h>
+> +#include <ofono/netreg.h>
+> +#include <ofono/phonebook.h>
+> +#include <ofono/sim.h>
+> +#include <ofono/sms.h>
+> +#include <ofono/gprs.h>
+> +#include <ofono/gprs-context.h>
+> +#include <ofono/location-reporting.h>
+> +#include <drivers/atmodem/atutil.h>
+> +#include <drivers/atmodem/vendor.h>
+> +#include <string.h>
+> +
+> +#ifdef HAVE_ELL
+> +#include <ell/ell.h>
+> +#include <drivers/mbimmodem/mbim.h>
+> +#include <drivers/mbimmodem/mbim-message.h>
+> +#include <drivers/mbimmodem/mbim-desc.h>
+> +#endif
+> // some models can use MBIM, but if the option is not included,
+> // they fall back to PPP
+> +
+> +#include <drivers/qmimodem/qmi.h>
+> +#include <src/storage.h>
+> +#include "gemalto.h"
+> +
+> // the next part will not be in the official commit
+> +/* debug utilities - begin */
+> +
+> +#define REDCOLOR "\x1b\x5b\x30\x31\x3b\x33\x31\x6d"
+> +#define NOCOLOR "\x1b\x5b\x30\x30\x6d"
+> +
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <sys/wait.h>
+> +#include <unistd.h>
+> +
+> +void print_trace();
+> +
+> +void print_trace() {
+> +    char pid_buf[30];
+> +    char name_buf[512];
+> +    int child_pid;
+> +    sprintf(pid_buf, "%d", getpid());
+> +    name_buf[readlink("/proc/self/exe", name_buf, 511)]=3D0;
+> +    child_pid =3D fork();
+> +    if (!child_pid) {
+> +        dup2(2,1); // redirect output to stderr
+> +        fprintf(stdout,"stack trace for %s pid=3D%s\n",name_buf,pid_buf);
+> +        execlp("gdb", "gdb", "--batch", "-n", "-ex", "thread", "-ex", "b=
+t", name_buf, pid_buf, NULL);
+> +        abort(); /* If gdb failed to start */
+> +    } else {
+> +        waitpid(child_pid,NULL,0);
+> +    }
+> +}
+> +
+> +/* debug utilities - end */
+> +
+> +enum gemalto_connection_type {
+> +	GEMALTO_CONNECTION_SERIAL =3D 1,
+> +	GEMALTO_CONNECTION_USB =3D 2,
+> +};
+> +
+> +enum gemalto_device_state {
+> +	STATE_ABSENT =3D 0,
+> +	STATE_PROBE =3D 1,
+> +	STATE_PRESENT =3D 2,
+> +};
+> +
+> +enum gprs_option {
+> +	NO_GPRS =3D 0,
+> +	USE_SWWAN =3D 1,
+> +	USE_CTX17 =3D 2,
+> +	USE_CTX3 =3D 3,
+> +	USE_PPP =3D 4,
+> +	USE_SWWAN_INV =3D 5,	/* inverted syntax idx,act */
+> +	USE_CTX_INV =3D 6,	/* inverted syntax idx,act */
+> +};
+> +
+> +static const char *none_prefix[] =3D { NULL };
+> +static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
+> +static const char *sctm_prefix[] =3D { "^SCTM:", NULL };
+> +static const char *sbv_prefix[] =3D { "^SBV:", NULL };
+> +static const char *sqport_prefix[] =3D { "^SQPORT:", NULL };
+> +static const char *sgpsc_prefix[] =3D { "^SGPSC:", NULL };
+> +
+> +typedef void (*OpenResultFunc)(gboolean success, struct ofono_modem *mod=
+em);
+> +
+> +struct gemalto_data {
+> +	gboolean init_done;
+> +	GIOChannel *channel;
+> +	GAtChat *tmp_chat;
+> +	OpenResultFunc open_cb;
+> +	guint read_src;
+> +	GAtChat *app;
+> +	GAtChat *mdm;
+> +	int cfun;
+> +
+> +	struct ofono_sim *sim;
+> +	gboolean have_sim;
+> +	struct at_util_sim_state_query *sim_state_query;
+> +	guint modem_ready_id;
+> +
+> +	char modelstr[32];
+> +	char sqport[32];
+> +
+> +	guint model;
+> +	guint probing_timer;
+> +	guint init_waiting_time;
+> +	guint waiting_time;
+> +
+> +	enum gemalto_connection_type conn;
+> +	enum gemalto_device_state mbim;
+> +	enum gemalto_device_state qmi;
+> +	enum gemalto_device_state ecmncm;
+> +	enum gemalto_device_state gina;
+> +	gboolean inverse_enum;
+> +	gboolean use_mdm_for_app;
+> +	gboolean voice_avail;
+> +	enum auth_option auth_syntax;
+> +	enum gprs_option gprs_opt;
+> +	gboolean has_lte;
+> +	gboolean autoattach;
+> +	gboolean autoconfig;
+> +	gboolean autoactivation;
+> +	gboolean vts_with_quotes;
+> +
+> +	void *device; /* struct mbim_device* or struct qmi_device* */
+> +
+> +	/* mbim data */
+> +	uint16_t max_segment;
+> +	uint8_t max_outstanding;
+> +	uint8_t max_sessions;
+> +
+
+The mbim plugin is not sufficient for this?
+
+> +	/* hardware monitor variables */
+> +	DBusMessage *hm_msg;
+> +	int32_t temperature;
+> +	int32_t voltage;
+> +	/* gnss variables */
+> +	DBusMessage *gnss_msg;
+> +	/* hardware control variables */
+> +	DBusMessage *hc_msg;
+> +	gboolean powersave;
+> +};
+> +
+> +/***********************************************************************=
+********
+> + * Generic functions
+> + ***********************************************************************=
+*******/
+> +
+> +static void gemalto_debug(const char *str, void *user_data)
+> +{
+> +	const char *prefix =3D user_data;
+> +
+> +	ofono_info("%s%s", prefix, str);
+> +}
+> +
+> +static const char *gemalto_get_string(struct ofono_modem *modem, const c=
+har *k)
+> +{
+> +	const char *v;
+> +
+> +	if (!modem || !k || !*k)
+> +		return NULL;
+> +
+> +	v =3D ofono_modem_get_string(modem, k);
+> +
+> +	if (!v || !*v)
+> +		return NULL;
+> +
+> +	return v;
+> +}
+
+Uhh, why?
+
+> +
+> +static void gemalto_signal(const char *iface, const char *name,
+> +	const char *value, struct ofono_modem *modem)
+> +{
+> +	DBusMessageIter sub_iter,iter;
+> +	const char *path =3D ofono_modem_get_path(modem);
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +
+> +	DBusMessage *signal =3D dbus_message_new_signal(path,
+> +					iface,
+> +					name);
+> +
+> +	DBG("");
+> +
+> +	if (signal =3D=3D NULL) {
+> +		DBG("Cannot create new signal message");
+> +		return;
+> +	}
+> +
+> +	dbus_message_iter_init_append(signal, &iter);
+> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+> +							"s", &sub_iter);
+> +	if (!dbus_message_iter_append_basic(&sub_iter,
+> +				DBUS_TYPE_STRING, &value)) {
+> +		DBG("Out of memory!");
+> +		return;
+> +	}
+> +
+> +	dbus_message_iter_close_container(&iter, &sub_iter);
+> +	g_dbus_send_message(conn, signal);
+> +}
+> +
+> +static void executeWithPrompt(GAtChat *port, const char *command,
+> +			const char *prompt, const char *argument, void *cb,
+> +			void *cbd, void *freecall)
+> +{
+> +	char *buf;
+> +	const char *expected_array[2] =3D {0,0};
+> +
+> +	buf =3D g_strdup_printf("%s\r%s", command, argument);
+> +
+> +	if (strlen(argument)>=3D2 && g_str_equal(argument+strlen(argument)-2,
+> +									"^Z"))
+> +		sprintf(buf+strlen(buf)-2,"\x1a");
+> +
+> +	if (strlen(argument)>=3D2 && g_str_equal(argument+strlen(argument)-2,
+> +									"\\r"))
+> +		sprintf(buf+strlen(buf)-2,"\r");
+> +
+> +	expected_array[0]=3Dprompt;
+> +	g_at_chat_send_and_expect_short_prompt(port, buf, expected_array,
+> +							cb, cbd, freecall);
+> +	free(buf);
+> +}
+> +
+> +static void gemalto_exec_stored_cmd(struct ofono_modem *modem,
+> +							const char *filename)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	const char *vid =3D gemalto_get_string(modem, "Vendor");
+> +	const char *pid =3D gemalto_get_string(modem, "Model");
+> +	char store[64];
+> +	int index;
+> +	char *command, *prompt, *argument;
+> +	char key[32];
+> +	GKeyFile *f;
+> +
+> +	sprintf(store,"%s-%s/%s", vid, pid, filename);
+> +	f =3D storage_open(NULL, store);
+> +
+> +	if (!f)
+> +		return;
+> +
+> +	for (index =3D 0; ; index++) {
+> +		sprintf(key, "command_%d", index);
+> +		command =3D g_key_file_get_string(f, "Simple", key, NULL);
+> +
+> +		if (!command)
+> +			break;
+> +
+> +		DBG(REDCOLOR"executing stored command simple: %s"NOCOLOR, command);
+> +		g_at_chat_send(data->app, command, NULL, NULL, NULL, NULL);
+> +	}
+> +
+> +	for (index =3D 0; ; index++) {
+> +		sprintf(key, "command_%d", index);
+> +		command =3D g_key_file_get_string(f, "WithPrompt", key, NULL);
+> +		sprintf(key, "prompt_%d", index);
+> +		prompt =3D g_key_file_get_string(f, "WithPrompt", key, NULL);
+> +		sprintf(key, "argument_%d", index);
+> +		argument =3D g_key_file_get_string(f, "WithPrompt", key, NULL);
+> +
+> +		if (!command || !prompt || !argument)
+> +			break;
+> +
+> +		DBG("executing stored command with prompt: %s", command);
+> +		executeWithPrompt(data->app, command, prompt, argument,
+> +			NULL, NULL, NULL);
+> +	}
+> +
+> +	storage_close(NULL, store, f, FALSE);
+> +}
+
+What is this doing actually?
+
+> +
+> +/***********************************************************************=
+********
+> + * Hardware monitor interface
+> + ***********************************************************************=
+*******/
+> +
+> +#define HARDWARE_MONITOR_INTERFACE OFONO_SERVICE ".gemalto.HardwareMonit=
+or"
+> +#define CINTERION_LEGACY_HWMON_INTERFACE OFONO_SERVICE ".cinterion.Hardw=
+areMonitor"
+> +
+> +static void gemalto_sctmb_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	GAtResultIter iter;
+> +	gint value;
+> +	char *val;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +	g_at_result_iter_next(&iter, "^SCTM_B:");
+> +	g_at_result_iter_next_number(&iter, &value);
+> +
+> +	switch(value) {
+> +	case -1:
+> +		val=3D"Below low temperature alert limit";
+> +		break;
+> +	case 0:
+> +		val=3D"Normal operating temperature";
+> +		break;
+> +	case 1:
+> +		val=3D"Above upper temperature alert limit";
+> +		break;
+> +	case 2:
+> +		val=3D"Above uppermost temperature limit";
+> +		break;
+> +	default: /* unvalid value, do not output signal*/
+> +		return;
+> +	}
+> +
+> +	gemalto_signal(HARDWARE_MONITOR_INTERFACE, "CriticalTemperature", val,
+> +								user_data);
+> +}
+> +
+> +static void gemalto_sbc_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	GAtResultIter iter;
+> +	const char *value;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +	g_at_result_iter_next(&iter, "^SBC:");
+> +	g_at_result_iter_next_unquoted_string(&iter, &value);
+> +	gemalto_signal(HARDWARE_MONITOR_INTERFACE, "CriticalVoltage", value,
+> +								user_data);
+> +}
+> +
+> +static void gemalto_sctm_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+> +{
+> +	struct gemalto_data *data =3D user_data;
+> +	DBusMessage *reply;
+> +	GAtResultIter iter;
+> +	DBusMessageIter dbus_iter;
+> +	DBusMessageIter dbus_dict;
+> +
+> +	if (data->hm_msg =3D=3D NULL)
+> +		return;
+> +
+> +	if (!ok)
+> +		goto error;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "^SCTM:"))
+> +		goto error;
+> +
+> +	if (!g_at_result_iter_skip_next(&iter))
+> +		goto error;
+> +
+> +	if (!g_at_result_iter_skip_next(&iter))
+> +		goto error;
+> +
+> +	if (!g_at_result_iter_next_number(&iter, &data->temperature))
+> +		goto error;
+> +
+> +	reply =3D dbus_message_new_method_return(data->hm_msg);
+> +
+> +	dbus_message_iter_init_append(reply, &dbus_iter);
+> +
+> +	dbus_message_iter_open_container(&dbus_iter, DBUS_TYPE_ARRAY,
+> +			OFONO_PROPERTIES_ARRAY_SIGNATURE,
+> +			&dbus_dict);
+> +
+> +	ofono_dbus_dict_append(&dbus_dict, "Temperature",
+> +			DBUS_TYPE_INT32, &data->temperature);
+> +
+> +	ofono_dbus_dict_append(&dbus_dict, "Voltage",
+> +			DBUS_TYPE_UINT32, &data->voltage);
+> +
+> +	dbus_message_iter_close_container(&dbus_iter, &dbus_dict);
+> +
+> +	__ofono_dbus_pending_reply(&data->hm_msg, reply);
+> +
+> +	return;
+> +
+> +error:
+> +	__ofono_dbus_pending_reply(&data->hm_msg,
+> +			__ofono_error_failed(data->hm_msg));
+> +}
+> +
+> +static void gemalto_sbv_cb(gboolean ok, GAtResult *result, gpointer user=
+_data)
+> +{
+> +	struct gemalto_data *data =3D user_data;
+> +	GAtResultIter iter;
+> +
+> +	if (!ok)
+> +		goto error;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "^SBV:"))
+> +		goto error;
+> +
+> +	if (!g_at_result_iter_next_number(&iter, &data->voltage))
+> +		goto error;
+> +
+> +	if (g_at_chat_send(data->app, "AT^SCTM?", sctm_prefix, gemalto_sctm_cb,
+> +				data, NULL) > 0)
+> +		return;
+> +
+> +error:
+> +	__ofono_dbus_pending_reply(&data->hm_msg,
+> +			__ofono_error_failed(data->hm_msg));
+> +}
+> +
+> +static DBusMessage *hardware_monitor_get_statistics(DBusConnection *conn,
+> +							DBusMessage *msg,
+> +							void *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("");
+> +
+> +	if (data->hm_msg !=3D NULL)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (!g_at_chat_send(data->app, "AT^SBV", sbv_prefix, gemalto_sbv_cb,
+> +			data, NULL))
+> +		return __ofono_error_failed(msg);
+> +
+> +	data->hm_msg =3D dbus_message_ref(msg);
+> +
+> +	return NULL;
+> +}
+> +
+> +static const GDBusMethodTable hardware_monitor_methods[] =3D {
+> +	{ GDBUS_ASYNC_METHOD("GetStatistics",
+> +			NULL, GDBUS_ARGS({ "Statistics", "a{sv}" }),
+> +			hardware_monitor_get_statistics) },
+> +	{}
+> +};
+> +
+> +static const GDBusSignalTable hardware_monitor_signals[] =3D {
+> +	{ GDBUS_SIGNAL("CriticalTemperature",
+> +			GDBUS_ARGS({ "temperature", "a{sv}" }) )},
+> +	{ GDBUS_SIGNAL("CriticalVoltage",
+> +			GDBUS_ARGS({ "voltage", "a{sv}" }) )},
+> +	{}
+> +};
+> +
+> +static void gemalto_hardware_monitor_enable(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D ofono_modem_get_path(modem);
+> +
+> +	/* Listen to over/undertemperature URCs (activated with AT^SCTM) */
+> +	g_at_chat_register(data->app, "^SCTM_B:",
+> +		gemalto_sctmb_notify, FALSE, NULL, NULL);
+> +	/* Listen to over/under voltage URCs (automatic URC) */
+> +	g_at_chat_register(data->app, "^SBC:",
+> +		gemalto_sbc_notify, FALSE, NULL, NULL);
+> +	/* Enable temperature URC and value output */
+> +	g_at_chat_send(data->app, "AT^SCTM=3D1,1", none_prefix, NULL, NULL, NUL=
+L);
+> +
+> +	if (!g_dbus_register_interface(conn, path, HARDWARE_MONITOR_INTERFACE,
+> +					hardware_monitor_methods,
+> +					hardware_monitor_signals,
+> +					NULL,
+> +					modem,
+> +					NULL)) {
+> +		ofono_error("Could not register %s interface under %s",
+> +					HARDWARE_MONITOR_INTERFACE, path);
+> +		return;
+> +	}
+> +
+> +	ofono_modem_add_interface(modem, HARDWARE_MONITOR_INTERFACE);
+> +
+> +	if (!g_dbus_register_interface(conn, path,
+> +					CINTERION_LEGACY_HWMON_INTERFACE,
+> +					hardware_monitor_methods,
+> +					NULL,
+> +					NULL,
+> +					modem,
+> +					NULL)) {
+> +		ofono_error("Could not register %s interface under %s",
+> +					CINTERION_LEGACY_HWMON_INTERFACE, path);
+> +		return;
+> +	}
+> +
+> +	ofono_modem_add_interface(modem, CINTERION_LEGACY_HWMON_INTERFACE);
+> +}
+> +
+> +/***********************************************************************=
+********
+> + * Time services interface
+> + ***********************************************************************=
+*******/
+> +
+> +#define GEMALTO_NITZ_TIME_INTERFACE OFONO_SERVICE ".gemalto.TimeServices"
+> +
+> +static DBusMessage *set_modem_datetime(DBusConnection *conn,
+> +							DBusMessage *msg,
+> +							void *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	time_t t =3D time(NULL);
+> +	struct tm tm;
+> +	gchar cclk_cmd[32];
+> +
+> +	/* Set date and time */
+> +	tm =3D *localtime(&t);
+> +	strftime(cclk_cmd, 32, "AT+CCLK=3D\"%y/%m/%d,%T\"", &tm);
+> +	g_at_chat_send(data->app, cclk_cmd, none_prefix, NULL, NULL, NULL);
+> +	return dbus_message_new_method_return(msg);
+> +}
+> +
+> +static const GDBusMethodTable gsmTime_methods[] =3D {
+> +	{ GDBUS_ASYNC_METHOD("SetModemDatetime",
+> +			NULL, NULL, set_modem_datetime) },
+> +	{}
+> +};
+> +
+
+So first question is, why would you want to do this?  These days most =
+
+systems use the time on the Application processor.  Who cares what the =
+
+modem thinks the time is.
+
+Secondly, why not do this as an actual core atom?
+
+> +static const GDBusSignalTable gsmTime_signals[] =3D {
+> +	{ GDBUS_SIGNAL("NitzUpdated",
+> +			GDBUS_ARGS({ "time", "a{sv}" }) )},
+> +	{}
+> +};
+
+You don't like ofono_netreg_time_notify?
+
+> +
+> +static void gemalto_time_enable(struct ofono_modem *modem)
+> +{
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D ofono_modem_get_path(modem);
+> +
+> +	if (!g_dbus_register_interface(conn, path,
+> +					GEMALTO_NITZ_TIME_INTERFACE,
+> +					gsmTime_methods,
+> +					gsmTime_signals,
+> +					NULL,
+> +					modem,
+> +					NULL)) {
+> +		ofono_error("Could not register %s interface under %s",
+> +					GEMALTO_NITZ_TIME_INTERFACE, path);
+> +		return;
+> +	}
+> +
+> +	ofono_modem_add_interface(modem, GEMALTO_NITZ_TIME_INTERFACE);
+> +}
+> +
+> +/***********************************************************************=
+********
+> + * Command passtrhough interface
+> + ***********************************************************************=
+*******/
+> +
+> +#define COMMAND_PASSTHROUGH_INTERFACE OFONO_SERVICE ".gemalto.CommandPas=
+sthrough"
+> +
+
+No AT command pass through in oFono upstream ;)  We've had this =
+
+conversation many times, if there are useful AT commands that can be =
+
+sent via this interface, then they should be abstracted behind a proper =
+
+API instead.
+
+> +static int command_passthrough_signal_answer(const char *answer,
+> +							gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D ofono_modem_get_path(modem);
+> +	DBusMessage *signal;
+> +	DBusMessageIter iter;
+> +
+> +	if (!conn || !path)
+> +		return -1;
+> +
+> +	signal =3D dbus_message_new_signal(path, COMMAND_PASSTHROUGH_INTERFACE,
+> +								"Answer");
+> +	if (!signal) {
+> +		ofono_error("Unable to allocate new %s.PropertyChanged signal",
+> +						COMMAND_PASSTHROUGH_INTERFACE);
+> +		return -1;
+> +	}
+> +
+> +	dbus_message_iter_init_append(signal, &iter);
+> +
+> +	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &answer);
+> +
+> +	DBG("");
+> +
+> +	return g_dbus_send_message(conn, signal);
+> +}
+> +
+> +static void command_passthrough_cb(gboolean ok, GAtResult *result,
+> +							gpointer user_data)
+> +{
+> +	GAtResultIter iter;
+> +	guint len =3D 0;
+> +	char *answer;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	while (g_at_result_iter_next(&iter, NULL)) {
+> +		len +=3D strlen(g_at_result_iter_raw_line(&iter))+2;
+> +	}
+> +
+> +	len +=3D strlen(g_at_result_final_response(result))+3;
+> +	answer =3D g_new0(char, len);
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	while (g_at_result_iter_next(&iter, NULL)) {
+> +		sprintf(answer+strlen(answer),"%s\r\n",
+> +					g_at_result_iter_raw_line(&iter));
+> +	}
+> +
+> +	sprintf(answer+strlen(answer),"%s\r\n",
+> +					g_at_result_final_response(result));
+> +
+> +	DBG("answer_len: %u, answer_string: %s", len, answer);
+> +	command_passthrough_signal_answer(answer, user_data);
+> +
+> +	g_free(answer);
+> +}
+> +
+> +static DBusMessage *command_passthrough_simple(DBusConnection *conn,
+> +							DBusMessage *msg,
+> +							void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessageIter iter;
+> +	const char *command;
+> +
+> +	if (!dbus_message_iter_init(msg, &iter))
+> +		return g_dbus_create_error(msg, DBUS_ERROR_INVALID_ARGS,
+> +							"No arguments given");
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return g_dbus_create_error(msg, DBUS_ERROR_INVALID_ARGS,
+> +					"Invalid argument type: '%c'",
+> +					dbus_message_iter_get_arg_type(&iter));
+> +
+> +	dbus_message_iter_get_basic(&iter, &command);
+> +
+> +	g_at_chat_send(data->app, command, NULL, command_passthrough_cb,
+> +								modem, NULL);
+> +
+> +	return dbus_message_new_method_return(msg);
+> +}
+> +
+> +static DBusMessage *command_passthrough_with_prompt(DBusConnection *conn,
+> +							DBusMessage *msg,
+> +							void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessageIter iter;
+> +	const char *command, *prompt, *argument;
+> +
+> +	if (!dbus_message_iter_init(msg, &iter))
+> +		return g_dbus_create_error(msg, DBUS_ERROR_INVALID_ARGS,
+> +							"No arguments given");
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return g_dbus_create_error(msg, DBUS_ERROR_INVALID_ARGS,
+> +					"Invalid argument type: '%c'",
+> +					dbus_message_iter_get_arg_type(&iter));
+> +
+> +	dbus_message_iter_get_basic(&iter, &command);
+> +	dbus_message_iter_next(&iter);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return g_dbus_create_error(msg, DBUS_ERROR_INVALID_ARGS,
+> +					"Invalid argument type: '%c'",
+> +					dbus_message_iter_get_arg_type(&iter));
+> +
+> +	dbus_message_iter_get_basic(&iter, &prompt);
+> +	dbus_message_iter_next(&iter);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return g_dbus_create_error(msg, DBUS_ERROR_INVALID_ARGS,
+> +					"Invalid argument type: '%c'",
+> +					dbus_message_iter_get_arg_type(&iter));
+> +
+> +	dbus_message_iter_get_basic(&iter, &argument);
+> +
+> +	executeWithPrompt(data->app, command, prompt, argument,
+> +					command_passthrough_cb, modem, NULL);
+> +
+> +	return dbus_message_new_method_return(msg);
+> +}
+> +
+> +static DBusMessage *command_passthrough_send_break(DBusConnection *conn,
+> +							DBusMessage *msg,
+> +							void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GIOChannel *channel =3D g_at_chat_get_channel(data->app);
+> +
+> +	g_io_channel_write_chars(channel, "\r", 1, NULL, NULL);
+> +
+> +	return dbus_message_new_method_return(msg);
+> +}
+> +
+> +static const GDBusMethodTable command_passthrough_methods[] =3D {
+> +	{ GDBUS_ASYNC_METHOD("Simple",
+> +		GDBUS_ARGS({ "command", "s" }),
+> +		NULL,
+> +		command_passthrough_simple) },
+> +	{ GDBUS_ASYNC_METHOD("WithPrompt",
+> +		GDBUS_ARGS({ "command", "s" }, { "prompt", "s" },
+> +							{ "argument", "s" }),
+> +		NULL,
+> +		command_passthrough_with_prompt) },
+> +	{ GDBUS_ASYNC_METHOD("SendBreak",
+> +		NULL,
+> +		NULL,
+> +		command_passthrough_send_break) },
+> +	{}
+> +};
+> +
+> +static const GDBusSignalTable command_passthrough_signals[] =3D {
+> +	{ GDBUS_SIGNAL("Answer",
+> +		GDBUS_ARGS({ "answer", "s" })) },
+> +	{ }
+> +};
+> +
+> +static void gemalto_command_passthrough_enable(struct ofono_modem *modem)
+> +{
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D ofono_modem_get_path(modem);
+> +
+> +	/* Create Command Passthrough DBus interface */
+> +	if (!g_dbus_register_interface(conn, path, COMMAND_PASSTHROUGH_INTERFAC=
+E,
+> +					command_passthrough_methods,
+> +					command_passthrough_signals,
+> +					NULL,
+> +					modem,
+> +					NULL)) {
+> +		ofono_error("Could not register %s interface under %s",
+> +					COMMAND_PASSTHROUGH_INTERFACE, path);
+> +		return;
+> +	}
+> +
+> +	ofono_modem_add_interface(modem, COMMAND_PASSTHROUGH_INTERFACE);
+> +}
+> +
+> +/***********************************************************************=
+********
+> + * GNSS interface
+> + ***********************************************************************=
+*******/
+> +
+> +#define GNSS_INTERFACE OFONO_SERVICE ".gemalto.GNSS"
+> +
+> +static void gnss_get_properties_cb(gboolean ok, GAtResult *result,
+> +							gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	const char *port =3D ofono_modem_get_string(modem, "GNSS");
+> +	GAtResultIter iter;
+> +	DBusMessage *reply;
+> +	DBusMessageIter dbusiter;
+> +	DBusMessageIter dict;
+> +
+> +	if (data->gnss_msg =3D=3D NULL)
+> +		return;
+> +
+> +	if (!ok)
+> +		goto error;
+> +
+> +	reply =3D dbus_message_new_method_return(data->gnss_msg);
+> +	dbus_message_iter_init_append(reply, &dbusiter);
+> +	dbus_message_iter_open_container(&dbusiter, DBUS_TYPE_ARRAY,
+> +					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+> +					&dict);
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	/* supported format: ^SGPSC: "Nmea/Output","off" */
+> +	while (g_at_result_iter_next(&iter, "^SGPSC:")) {
+> +		const char *name =3D "";
+> +		const char *val =3D "";
+> +
+> +		if (!g_at_result_iter_next_string(&iter, &name))
+> +			continue;
+> +
+> +		/*
+> +		 * skip the "Info" property:
+> +		 * different line format and different usage
+> +		 */
+> +		if (g_str_equal(name,"Info"))
+> +			continue;
+> +
+> +		if (!g_at_result_iter_next_string(&iter, &val))
+> +			continue;
+> +
+> +		ofono_dbus_dict_append(&dict, name, DBUS_TYPE_STRING, &val);
+> +	}
+> +
+> +	ofono_dbus_dict_append(&dict, "Port", DBUS_TYPE_STRING, &port);
+> +	dbus_message_iter_close_container(&dbusiter, &dict);
+> +	__ofono_dbus_pending_reply(&data->gnss_msg, reply);
+> +	return;
+> +
+> +error:
+> +	__ofono_dbus_pending_reply(&data->gnss_msg,
+> +			__ofono_error_failed(data->gnss_msg));
+> +}
+> +
+> +static DBusMessage *gnss_get_properties(DBusConnection *conn,
+> +					DBusMessage *msg, void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	if (data->gnss_msg !=3D NULL)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (!g_at_chat_send(data->app, "AT^SGPSC?", sgpsc_prefix,
+> +					gnss_get_properties_cb, modem, NULL))
+> +		return __ofono_error_failed(msg);
+> +
+> +	data->gnss_msg =3D dbus_message_ref(msg);
+> +
+> +	return NULL;
+> +}
+> +
+> +static void gnss_set_properties_cb(gboolean ok, GAtResult *result,
+> +							gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessage *reply;
+> +
+> +	if (data->gnss_msg =3D=3D NULL)
+> +		return;
+> +
+> +	if (!ok) {
+> +		__ofono_dbus_pending_reply(&data->gnss_msg,
+> +					__ofono_error_failed(data->gnss_msg));
+> +		return;
+> +	}
+> +
+> +	reply =3D dbus_message_new_method_return(data->gnss_msg);
+> +	__ofono_dbus_pending_reply(&data->gnss_msg, reply);
+> +}
+> +
+> +static DBusMessage *gnss_set_property(DBusConnection *conn,
+> +					DBusMessage *msg, void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessageIter iter, var;
+> +	const char *name;
+> +	char *value;
+> +	char buf[256];
+> +
+> +	if (data->gnss_msg !=3D NULL)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_get_basic(&iter, &name);
+> +	dbus_message_iter_next(&iter);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_recurse(&iter, &var);
+> +
+> +	if (dbus_message_iter_get_arg_type(&var) !=3D
+> +					DBUS_TYPE_STRING)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_get_basic(&var, &value);
+> +
+> +	snprintf(buf, sizeof(buf), "AT^SGPSC=3D\"%s\",\"%s\"", name, value);
+> +
+
+So the modem is doing the property validation?  Yeah, not happening ;) =
+
+Why don't you just configure the device into NMEA mode and use =
+
+location_reporting atom ?
+
+> +	if (!g_at_chat_send(data->app, buf, sgpsc_prefix,
+> +					gnss_set_properties_cb, modem, NULL))
+> +		return __ofono_error_failed(msg);
+> +
+> +	data->gnss_msg =3D dbus_message_ref(msg);
+> +	return NULL;
+> +}
+> +
+> +static const GDBusMethodTable gnss_methods[] =3D {
+> +	{ GDBUS_ASYNC_METHOD("GetProperties",
+> +			NULL, GDBUS_ARGS({ "properties", "a{sv}" }),
+> +			gnss_get_properties) },
+> +	{ GDBUS_ASYNC_METHOD("SetProperty",
+> +			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
+> +			NULL, gnss_set_property) },
+> +	{ }
+> +};
+> +
+> +static void gnss_exec_stored_param(struct ofono_modem *modem,
+> +							const char *filename) {
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	const char *vid =3D ofono_modem_get_string(modem, "Vendor");
+> +	const char *pid =3D ofono_modem_get_string(modem, "Model");
+> +	char store[64];
+> +	int index;
+> +	char *property, *value;
+> +	char key[32];
+> +	GKeyFile *f;
+> +	char *command;
+> +
+> +	sprintf(store,"%s-%s/%s", vid, pid, filename);
+> +	f =3D storage_open(NULL, store);
+> +
+> +	if (!f)
+> +		return;
+> +
+> +	for (index=3D0;;index++) {
+> +		sprintf(key, "property_%d", index);
+> +		property =3D g_key_file_get_string(f, "Properties", key, NULL);
+> +
+> +		sprintf(key, "value_%d", index);
+> +		value =3D g_key_file_get_string(f, "Properties", key, NULL);
+> +
+> +		if(!property || !value)
+> +			break;
+> +
+> +		command =3D g_strdup_printf("AT^SGPSC=3D%s,%s", property, value);
+> +		DBG(REDCOLOR"setting GNSS property: %sNOCOLOR", command);
+> +		g_at_chat_send(data->app, command, NULL, NULL, NULL, NULL);
+> +		free(command);
+> +	}
+> +
+> +	storage_close(NULL, store, f, FALSE);
+> +}
+> +
+> +static void gemalto_gnss_enable_cb(gboolean ok, GAtResult *result,
+> +							gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D ofono_modem_get_path(modem);
+> +
+> +	if (!ok)
+> +		return; /* the module does not support GNSS */
+> +
+> +	gnss_exec_stored_param(modem, "gnss_startup");
+> +
+> +	/* Create GNSS DBus interface */
+> +	if (!g_dbus_register_interface(conn, path, GNSS_INTERFACE,
+> +					gnss_methods,
+> +					NULL,
+> +					NULL,
+> +					modem,
+> +					NULL)) {
+> +		ofono_error("Could not register %s interface under %s",
+> +					GNSS_INTERFACE, path);
+> +		return;
+> +	}
+> +
+> +	ofono_modem_add_interface(modem, GNSS_INTERFACE);
+> +}
+> +
+> +static void gemalto_gnss_enable(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	g_at_chat_send(data->app, "AT^SGPSC?", sgpsc_prefix,
+> +					gemalto_gnss_enable_cb, modem, NULL);
+> +}
+> +
+> +/***********************************************************************=
+********
+> + * Hardware control interface
+> + ***********************************************************************=
+*******/
+> +
+> +#define HARDWARE_CONTROL_INTERFACE OFONO_SERVICE ".gemalto.HardwareContr=
+ol"
+> +
+> +static DBusMessage *hc_get_properties(DBusConnection *conn,
+> +					DBusMessage *msg, void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessage *reply;
+> +	DBusMessageIter dbusiter;
+> +	DBusMessageIter dict;
+> +
+> +	reply =3D dbus_message_new_method_return(msg);
+> +	dbus_message_iter_init_append(reply, &dbusiter);
+> +	dbus_message_iter_open_container(&dbusiter, DBUS_TYPE_ARRAY,
+> +					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+> +					&dict);
+> +
+> +	ofono_dbus_dict_append(&dict, "Powersave", DBUS_TYPE_BOOLEAN,
+> +							&data->powersave);
+> +	dbus_message_iter_close_container(&dbusiter, &dict);
+> +
+> +	return reply;
+> +}
+> +
+> +/*
+> + * powersave for older modules:
+> + *	command_0=3DAT+CFUN=3D7
+> + * return:
+> + *	command_0=3DAT+CFUN=3D1
+> + *
+> + * powersave example for modules with GNSS (could also only stop the out=
+put):
+> + *	command_0=3DAT+CREG=3D0
+> + *	command_1=3DAT+CGREG=3D0
+> + *	command_2=3DAT+CEREG=3D0
+> + *	command_3=3DAT^SGPSC=3D"Engine","0"
+> + *	command_4=3DAT^SGPSC=3D"Power/Antenna","off"
+> + * return:
+> + *	command_0=3DAT+CREG=3D2
+> + *	command_1=3DAT+CGREG=3D2
+> + *	command_2=3DAT+CEREG=3D2
+> + *	command_4=3DAT^SGPSC=3D"Power/Antenna","on"
+> + *	command_3=3DAT^SGPSC=3D"Engine","1"
+> + */
+
+How is 'powersave' useful?
+
+> +
+> +static void gemalto_powersave_cb(gboolean ok, GAtResult *result,
+> +				gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessage *reply;
+> +
+> +	/* flip the state in any case */
+> +	data->powersave =3D !data->powersave;
+> +
+> +	if (data->hc_msg =3D=3D NULL)
+> +		return;
+> +
+> +	reply =3D dbus_message_new_method_return(data->hc_msg);
+> +	__ofono_dbus_pending_reply(&data->hc_msg, reply);
+> +}
+> +
+> +static DBusMessage *hc_set_property(DBusConnection *conn,
+> +					DBusMessage *msg, void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessageIter iter, var;
+> +	const char *name;
+> +	gboolean enable;
+> +
+> +	if (data->hc_msg !=3D NULL)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_get_basic(&iter, &name);
+> +
+> +	if (!g_str_equal(name, "Powersave"))
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_next(&iter);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_recurse(&iter, &var);
+> +
+> +	if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_get_basic(&var, &enable);
+> +
+> +	if (data->powersave =3D=3D enable)
+> +		return dbus_message_new_method_return(msg);
+> +
+> +	gemalto_exec_stored_cmd(modem, enable ? "power_mode_powersave" :
+> +							"power_mode_normal");
+> +
+> +	gnss_exec_stored_param(modem, enable ? "gnss_powersave" :
+> +								"gnss_normal");
+> +
+> +	if (!g_at_chat_send(data->app, "AT", none_prefix,
+> +				gemalto_powersave_cb, modem, NULL))
+> +		return __ofono_error_failed(msg);
+> +
+> +	data->hc_msg =3D dbus_message_ref(msg);
+> +	return NULL;
+> +}
+> +
+> +static void gemalto_smso_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessage *reply;
+> +
+> +	if (data->hc_msg =3D=3D NULL)
+> +		return;
+> +
+> +	if (data->conn !=3D GEMALTO_CONNECTION_SERIAL)
+> +		goto finished;
+> +
+> +	if (data->mdm)
+> +		g_at_chat_unref(data->mdm);
+> +	data->mdm =3D NULL;
+> +
+> +	if (data->app)
+> +		g_at_chat_unref(data->app);
+> +	data->app =3D NULL;
+> +
+> +	if (ok)
+> +		ofono_modem_set_powered(modem, FALSE);
+> +
+> +finished:
+> +	reply =3D dbus_message_new_method_return(data->hc_msg);
+> +	__ofono_dbus_pending_reply(&data->hc_msg, reply);
+> +}
+> +
+> +static DBusMessage *hc_shutdown(DBusConnection *conn,
+> +					DBusMessage *msg, void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	if (data->hc_msg !=3D NULL)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (!g_at_chat_send(data->app, "AT^SMSO", none_prefix,
+> +						gemalto_smso_cb, modem, NULL))
+> +		return __ofono_error_failed(msg);
+> +
+> +	data->hc_msg =3D dbus_message_ref(msg);
+> +	return NULL;
+> +}
+> +
+> +static void gemalto_detect_sysstart(GAtResult *result, gpointer user_dat=
+a);
+> +
+> +static void gemalto_reset_cb(gboolean ok, GAtResult *result, gpointer us=
+er_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	DBusMessage *reply;
+> +
+> +	if (data->hc_msg =3D=3D NULL)
+> +		return;
+> +
+> +	if (data->conn !=3D GEMALTO_CONNECTION_SERIAL)
+> +		goto finished;
+> +
+> +	data->modem_ready_id =3D g_at_chat_register(data->app,
+> +		"^SYSSTART", gemalto_detect_sysstart, FALSE,
+> +		modem, NULL);
+> +
+> +finished:
+> +	reply =3D dbus_message_new_method_return(data->hc_msg);
+> +	__ofono_dbus_pending_reply(&data->hc_msg, reply);
+> +}
+> +
+> +static DBusMessage *hc_reset(DBusConnection *conn,
+> +					DBusMessage *msg, void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	if (data->hc_msg !=3D NULL)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (!g_at_chat_send(data->app, "AT+CFUN=3D1,1", none_prefix,
+> +						gemalto_reset_cb, modem, NULL))
+> +		return __ofono_error_failed(msg);
+> +
+> +	data->hc_msg =3D dbus_message_ref(msg);
+> +	return NULL;
+> +}
+> +
+> +static const GDBusMethodTable hardware_control_methods[] =3D {
+> +	{ GDBUS_ASYNC_METHOD("GetProperties",
+> +			NULL, GDBUS_ARGS({ "properties", "a{sv}" }),
+> +			hc_get_properties) },
+> +	{ GDBUS_ASYNC_METHOD("SetProperty",
+> +			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
+> +			NULL, hc_set_property) },
+> +	{ GDBUS_ASYNC_METHOD("Shutdown",
+> +			NULL, NULL, hc_shutdown) },
+> +	{ GDBUS_ASYNC_METHOD("Reset",
+> +			NULL, NULL, hc_reset) },
+> +	{ }
+> +};
+> +
+> +static void gemalto_hardware_control_enable(struct ofono_modem *modem)
+> +{
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D ofono_modem_get_path(modem);
+> +
+> +	/* Create Hardware Control DBus interface */
+> +	if (!g_dbus_register_interface(conn, path, HARDWARE_CONTROL_INTERFACE,
+> +					hardware_control_methods,
+> +					NULL,
+> +					NULL,
+> +					modem,
+> +					NULL)) {
+> +		ofono_error("Could not register %s interface under %s",
+> +					HARDWARE_CONTROL_INTERFACE, path);
+> +		return;
+> +	}
+> +
+> +	ofono_modem_add_interface(modem, HARDWARE_CONTROL_INTERFACE);
+> +}
+> +
+> +/***********************************************************************=
+********
+> + * modem plugin
+> + ***********************************************************************=
+*******/
+> +
+> +#ifdef HAVE_ELL
+> +static int mbim_parse_descriptors(struct gemalto_data *md, const char *f=
+ile)
+
+Why is MBIM driver not enough?
+
+> +{
+> +	void *data;
+> +	size_t len;
+> +	const struct mbim_desc *desc =3D NULL;
+> +	const struct mbim_extended_desc *ext_desc =3D NULL;
+> +
+> +	data =3D l_file_get_contents(file, &len);
+> +	if (!data)
+> +		return -EIO;
+> +
+> +	if (!mbim_find_descriptors(data, len, &desc, &ext_desc)) {
+> +		l_free(data);
+> +		return -ENOENT;
+> +	}
+> +
+> +	if (desc)
+> +		md->max_segment =3D L_LE16_TO_CPU(desc->wMaxControlMessage);
+> +
+> +	if (ext_desc)
+> +		md->max_outstanding =3D ext_desc->bMaxOutstandingCommandMessages;
+> +
+> +	l_free(data);
+> +	return 0;
+> +}
+> +
+> +static int mbim_probe(struct ofono_modem *modem, struct gemalto_data *da=
+ta)
+> +{
+> +	const char *descriptors;
+> +	int err;
+> +
+> +	descriptors =3D gemalto_get_string(modem, "DescriptorFile");
+> +
+> +	if (!descriptors)
+> +		return -EINVAL;
+> +
+> +	data->max_outstanding =3D 1;
+> +
+> +	err =3D mbim_parse_descriptors(data, descriptors);
+> +	if (err < 0) {
+> +		DBG("Warning, unable to load descriptors, setting defaults");
+> +		data->max_segment =3D 512;
+> +	}
+> +
+> +	DBG("MaxSegment: %d, MaxOutstanding: %d",
+> +		data->max_segment, data->max_outstanding);
+> +
+> +	return 0;
+> +}
+> +#endif
+> +
+> +static int gemalto_probe(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data;
+> +
+> +	data =3D g_try_new0(struct gemalto_data, 1);
+> +	if (data =3D=3D NULL)
+> +		return -ENOMEM;
+> +
+> +#ifdef HAVE_ELL
+> +	mbim_probe(modem, data);
+> +#endif
+> +
+> +	ofono_modem_set_data(modem, data);
+> +
+> +	return 0;
+> +}
+> +
+> +static void gemalto_remove(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data;
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path;
+> +
+> +	if (!modem)
+> +		return;
+> +
+> +	data =3D ofono_modem_get_data(modem);
+> +	path =3D ofono_modem_get_path(modem);
+> +
+> +	if (!data)
+> +		return;
+> +
+> +#ifdef HAVE_ELL
+> +	if (data->mbim =3D=3D STATE_PRESENT) {
+> +		mbim_device_shutdown(data->device);
+> +	}
+> +#endif
+> +
+> +	if (data->qmi =3D=3D STATE_PRESENT) {
+> +		qmi_device_unref(data->device);
+> +	}
+> +
+
+No, we're not doing MBIM/QMI/AT all in one driver.  These should =
+
+basically be 3 different drivers or merged into plugins/mbim =
+
+plugins/gobi or whatever.
+
+> +	if (data->app) {
+> +		/* Cleanup potential SIM state polling */
+> +		at_util_sim_state_query_free(data->sim_state_query);
+> +		data->sim_state_query =3D NULL;
+> +
+> +		g_at_chat_cancel_all(data->app);
+> +		g_at_chat_unregister_all(data->app);
+> +		g_at_chat_unref(data->app);
+> +		data->app =3D NULL;
+> +	}
+> +
+> +	if (data->mdm) {
+> +		g_at_chat_cancel_all(data->app);
+> +		g_at_chat_unregister_all(data->mdm);
+> +		g_at_chat_unref(data->mdm);
+> +		data->mdm =3D NULL;
+> +	}
+> +
+> +	if (conn && path) {
+> +		if (g_dbus_unregister_interface(conn, path,
+> +					HARDWARE_MONITOR_INTERFACE))
+> +			ofono_modem_remove_interface(modem,
+> +					HARDWARE_MONITOR_INTERFACE);
+> +
+> +		if (g_dbus_unregister_interface(conn, path,
+> +					CINTERION_LEGACY_HWMON_INTERFACE))
+> +			ofono_modem_remove_interface(modem,
+> +					CINTERION_LEGACY_HWMON_INTERFACE);
+> +
+> +		if (g_dbus_unregister_interface(conn, path,
+> +					GEMALTO_NITZ_TIME_INTERFACE))
+> +			ofono_modem_remove_interface(modem,
+> +					GEMALTO_NITZ_TIME_INTERFACE);
+> +
+> +		if (g_dbus_unregister_interface(conn, path,
+> +					COMMAND_PASSTHROUGH_INTERFACE))
+> +			ofono_modem_remove_interface(modem,
+> +					COMMAND_PASSTHROUGH_INTERFACE);
+> +
+> +		if (g_dbus_unregister_interface(conn, path,
+> +					GNSS_INTERFACE))
+> +			ofono_modem_remove_interface(modem,
+> +					GNSS_INTERFACE);
+> +
+> +		if (g_dbus_unregister_interface(conn, path,
+> +					HARDWARE_CONTROL_INTERFACE))
+> +			ofono_modem_remove_interface(modem,
+> +					HARDWARE_CONTROL_INTERFACE);
+> +	}
+> +
+> +	//if (data->conn =3D=3D GEMALTO_CONNECTION_SERIAL)
+> +	//	return;
+> +
+> +	ofono_modem_set_data(modem, NULL);
+> +	g_free(data);
+> +}
+> +
+> +static void sim_ready_cb(gboolean present, gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	struct ofono_sim *sim =3D data->sim;
+> +
+> +	at_util_sim_state_query_free(data->sim_state_query);
+> +	data->sim_state_query =3D NULL;
+> +
+> +	DBG("sim present: %d", present);
+> +
+> +	ofono_sim_inserted_notify(sim, present);
+> +}
+> +
+> +static void gemalto_ciev_simstatus_notify(GAtResultIter *iter,
+> +					struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	struct ofono_sim *sim =3D data->sim;
+> +	int status;
+> +
+> +	DBG("sim status %d", status);
+> +
+> +	if (!g_at_result_iter_next_number(iter, &status))
+> +		return;
+> +
+> +	switch (status) {
+> +	/* SIM is removed from the holder */
+> +	case 0:
+> +		ofono_sim_inserted_notify(sim, FALSE);
+> +		break;
+> +
+> +	/* SIM is inserted inside the holder */
+> +	case 1:
+> +		/* The SIM won't be ready yet */
+> +		data->sim_state_query =3D at_util_sim_state_query_new(data->app,
+> +					1, 20, sim_ready_cb, modem,
+> +					NULL);
+> +		break;
+> +
+> +	/* USIM initialization completed. UE has finished reading USIM data. */
+> +	case 5:
+> +		ofono_sim_initialized_notify(sim);
+> +		break;
+> +
+> +	default:
+> +		break;
+> +	}
+> +}
+> +
+> +static void gemalto_ciev_nitz_notify(GAtResultIter *iter,
+> +					struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	const char *nitz_data;
+> +	char buf[32];
+> +
+> +	/* Example: +CIEV: nitz,<time>,<timezone>,<daylight> */
+> +	if (!g_at_result_iter_next_string(iter, &nitz_data))
+> +		return;
+> +
+> +	DBG("nitz_data  %s", nitz_data);
+> +
+> +	sprintf(buf, "AT+CCLK=3D\"%s\"", nitz_data);
+> +	g_at_chat_send(data->app, buf, none_prefix, NULL, NULL, NULL);
+> +
+> +	gemalto_signal(GEMALTO_NITZ_TIME_INTERFACE, "NitzUpdated", nitz_data,
+> +									modem);
+> +}
+> +
+> +static void gemalto_ciev_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +
+> +	const char *sim_status =3D "simstatus";
+> +	const char *nitz_status =3D "nitz";
+> +	const char *ind_str;
+> +	GAtResultIter iter;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	/* Example: +CIEV: simstatus,<status> */
+> +	if (!g_at_result_iter_next(&iter, "+CIEV:"))
+> +		return;
+> +
+> +	if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
+> +		return;
+> +
+> +	if (g_str_equal(sim_status, ind_str)) {
+> +		gemalto_ciev_simstatus_notify(&iter, modem);
+> +	} else if (g_str_equal(nitz_status, ind_str)) {
+> +		gemalto_ciev_nitz_notify(&iter, modem);
+> +	}
+> +}
+> +
+> +static void sim_state_cb(gboolean present, gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	at_util_sim_state_query_free(data->sim_state_query);
+> +	data->sim_state_query =3D NULL;
+> +
+> +	data->have_sim =3D present;
+> +	ofono_modem_set_powered(modem, TRUE);
+> +
+> +	/* Register for specific sim status reports */
+> +	g_at_chat_register(data->app, "+CIEV:",
+> +			gemalto_ciev_notify, FALSE, modem, NULL);
+> +
+> +	g_at_chat_send(data->app, "AT^SIND=3D\"simstatus\",1", none_prefix,
+> +			NULL, NULL, NULL);
+> +	g_at_chat_send(data->app, "AT^SIND=3D\"nitz\",1", none_prefix,
+> +			NULL, NULL, NULL);
+> +}
+> +
+> +static void gemalto_exit_urc_notify(GAtResult *result, gpointer user_dat=
+a)
+> +{
+> +	GAtResultIter iter;
+> +	const char *error_message;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +	g_at_result_iter_next(&iter, "^EXIT:");
+> +	g_at_result_iter_next_unquoted_string(&iter, &error_message);
+> +	ofono_error("Modem exited! Cause: %s", error_message);
+> +}
+> +
+> +static void saic_probe(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(user_data);
+> +
+> +	if (ok)
+> +		data->voice_avail =3D TRUE;
+> +	else
+> +		data->voice_avail =3D FALSE;
+> +}
+> +
+> +static void sgauth_probe(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(user_data);
+> +
+> +	if (ok)
+> +		data->auth_syntax =3D GEMALTO_AUTH_USE_SGAUTH |
+> +						GEMALTO_AUTH_ORDER_PWD_USR;
+> +	else
+> +		data->auth_syntax =3D GEMALTO_AUTH_DEFAULTS;
+> +}
+> +
+> +static void gemalto_set_cfun_cb(gboolean ok, GAtResult *result,
+> +					gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	if (!ok || data->cfun =3D=3D 41) {
+> +		g_at_chat_cancel_all(data->app);
+> +		ofono_modem_set_powered(modem, FALSE);
+> +	} else {
+> +		data->sim_state_query =3D at_util_sim_state_query_new(data->app,
+> +					2, 20, sim_state_cb, modem, NULL);
+> +	}
+> +}
+> +
+> +static void gemalto_cfun_query(gboolean ok, GAtResult *result,
+> +							gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(user_data);
+> +	char buf[256];
+> +	GAtResultIter iter;
+> +	int mode;
+> +
+> +	sprintf(buf, "AT+CFUN=3D%d", data->cfun=3D=3D41?4:data->cfun);
+> +
+> +	if (!ok)
+> +		goto error;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+CFUN:"))
+> +		goto error;
+> +
+> +	if (!g_at_result_iter_next_number(&iter, &mode))
+> +		goto error;
+> +
+> +	if (mode =3D=3D data->cfun)
+> +		sprintf(buf, "AT");
+> +
+> +error:
+> +	if (g_at_chat_send(data->app, buf, none_prefix, gemalto_set_cfun_cb,
+> +				modem, NULL) > 0)
+> +		return;
+> +
+> +	if (data->cfun =3D=3D 41)
+> +		ofono_modem_set_powered(modem, FALSE);
+> +}
+> +
+> +static void gemalto_set_cfun(GAtChat *app, int mode, struct ofono_modem =
+*modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	data->cfun=3Dmode;
+> +	g_at_chat_send(app, "AT+CFUN?", cfun_prefix, gemalto_cfun_query, modem,=
+ NULL);
+> +}
+> +
+> +static void gemalto_initialize(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	char *urcdest;
+> +	guint m =3D data->model;
+> +
+> +	DBG("app:%d, mdm:%d, mbim:%d, qmi:%d",
+> +		data->app!=3DNULL,
+> +		data->mdm!=3DNULL,
+> +		data->mbim =3D=3D STATE_PRESENT,
+> +		data->qmi =3D=3D STATE_PRESENT);
+> +
+> +	if (!data->app  && !data->mdm) {
+> +		DBG("no AT interface available. Removing this device.");
+> +		ofono_modem_set_powered(modem, FALSE);
+> +		return;
+> +	}
+> +
+> +	urcdest =3D "AT^SCFG=3D\"URC/DstIfc\",\"app\"";
+> +
+> +	if (!data->app) {
+> +		data->use_mdm_for_app =3D TRUE;
+> +		data->app =3D data->mdm;
+> +		urcdest =3D "AT^SCFG=3D\"URC/DstIfc\",\"mdm\"";
+> +	}
+> +
+> +	if (!data->mdm && (data->gina =3D=3D STATE_PRESENT)) {
+> +		/*these modems can start PPP from any port*/
+> +		data->mdm =3D data->app;
+> +	}
+> +
+> +	if (data->mdm && data->gprs_opt =3D=3D NO_GPRS)
+> +		data->gprs_opt =3D USE_PPP;
+> +
+> +	g_at_chat_set_wakeup_command(data->app, "AT\r", 1000, 5000);
+> +
+> +	g_at_chat_send(data->app, "ATE0", none_prefix, NULL, NULL, NULL);
+> +
+> +	if (data->gina !=3D STATE_PRESENT)
+> +		g_at_chat_send(data->app, urcdest, none_prefix, NULL, NULL,
+> +									NULL);
+> +
+> +	/* numeric error codes are interpreted by atmodem/atutil.c functions */
+> +	g_at_chat_send(data->app, "AT+CMEE=3D1", none_prefix, NULL, NULL, NULL);
+> +
+> +	if (data->mdm)
+> +		g_at_chat_send(data->mdm, "AT&C0", none_prefix, NULL, NULL,
+> +									NULL);
+> +
+> +	g_at_chat_send(data->app, "AT&C0", none_prefix, NULL, NULL, NULL);
+> +
+> +	/* watchdog */
+> +	g_at_chat_register(data->app, "^EXIT", gemalto_exit_urc_notify, FALSE,
+> +								modem, NULL);
+> +	ofono_devinfo_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
+> +	g_at_chat_send(data->app,
+> +		"AT^SCFG=3D\"MEopMode/PwrSave\",\"enabled\",52,50", none_prefix,
+> +							NULL, NULL, NULL);
+> // this command was in some gemalto.c versions, but it would better be
+> // placed in one of the configuration files
+> +
+> +	if (m !=3D 0x5b && m !=3D 0x5c && m !=3D 0x5d && m !=3D 0xa0) {
+> +		g_at_chat_send(data->app, "AT^SGAUTH?", NULL, sgauth_probe,
+> +								modem, NULL);
+> +	}
+> +
+> +	g_at_chat_send(data->app, "AT^SAIC?", NULL, saic_probe, modem, NULL);
+> +
+> +	gemalto_exec_stored_cmd(modem, "enable");
+> +
+> +	gemalto_command_passthrough_enable(modem);
+> +	gemalto_hardware_monitor_enable(modem);
+> +	gemalto_time_enable(modem);
+> +	gemalto_gnss_enable(modem);
+> +	gemalto_hardware_control_enable(modem);
+> +
+> +	gemalto_set_cfun(data->app, 4, modem);
+> +	data->init_done =3D TRUE;
+> +}
+> +
+> +static gboolean gemalto_open_cb(GIOChannel *source, GIOCondition conditi=
+on,
+> +							gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtSyntax *syntax;
+> +
+> +	if (data->channel =3D=3D NULL)
+> +		return TRUE;
+> +
+> +	if ((condition & G_IO_IN) =3D=3D 0)
+> +		return TRUE;
+> +
+> +	g_source_remove(data->probing_timer);
+> +	data->probing_timer =3D 0;
+> +	g_source_remove(data->read_src);
+> +	g_io_channel_flush(data->channel, NULL);
+> +	/* reset channel defaults*/
+> +	g_io_channel_set_buffered(data->channel, TRUE);
+> +	g_io_channel_set_encoding(data->channel, "UTF-8", NULL);
+> +
+> +	syntax =3D g_at_syntax_new_gsm_permissive();
+> +	data->tmp_chat =3D g_at_chat_new(data->channel, syntax);
+> +	g_at_syntax_unref(syntax);
+> +
+> +	if (data->tmp_chat =3D=3D NULL)
+> +		goto failed;
+> +
+> +	g_io_channel_unref(data->channel);
+> +	data->channel =3D NULL;
+> +	g_at_chat_set_debug(data->tmp_chat, gemalto_debug, "App: ");
+> +	data->open_cb(TRUE, modem);
+> +	return TRUE; // finished
+> +failed:
+> +	DBG("chat creation failed. aborting.");
+> +	g_io_channel_unref(data->channel);
+> +	data->channel =3D NULL;
+> +	DBG("aborted.");
+> +	data->open_cb(FALSE, modem);
+> +	return FALSE; // abort
+> +}
+> +
+> +static int gemalto_probe_device(void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GIOStatus status;
+> +
+> +	if (data->channel=3D=3DNULL)
+> +		return FALSE;
+> +
+> +	data->waiting_time++;
+> +	DBG("%d/%d", data->waiting_time, data->init_waiting_time);
+> +
+> +	if (data->waiting_time > data->init_waiting_time) {
+> +		data->waiting_time =3D 0;
+> +		goto failed;
+> +	}
+> +
+> +	status =3D g_io_channel_write_chars(data->channel, "AT\r", 3, NULL, NUL=
+L);
+> +
+> +	if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGAIN)
+> +		goto failed;
+> +
+> +	return TRUE; // to be called again
+> +
+> +failed:
+> +	g_source_remove(data->probing_timer);
+> +	data->probing_timer =3D 0; /* remove the timer reference */
+> +	DBG("timeout: abort");
+> +	g_io_channel_unref(data->channel);
+> +	data->channel =3D NULL;
+> +	data->tmp_chat =3D NULL;
+> +	data->open_cb(FALSE, modem);
+> +	return FALSE; // abort
+> +}
+> +
+> +#include <asm/ioctls.h>
+> +#include <linux/serial.h>
+> +
+> +int ioctl(int, int, void *);
+> // these are temporarily in the middle. Discussed with Denis,
+> // maybe these and their use below is better placed in g_at_tty_open
+> +
+> +static void gemalto_open_device(const char *device,
+> +				OpenResultFunc func, struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GHashTable *options;
+> +	int fd;
+> +	struct serial_struct old, new;
+> +
+> +	if (!device  || !*device) {
+> +		func(FALSE, modem);
+> +		return;
+> +	}
+> +
+> +	options =3D g_hash_table_new(g_str_hash, g_str_equal);
+> +	if (options =3D=3D NULL) {
+> +		func(FALSE, modem);
+> +		return;
+> +	}
+> +
+> +	g_hash_table_insert(options, "Baud", "115200");
+> +	g_hash_table_insert(options, "StopBits", "1");
+> +	g_hash_table_insert(options, "DataBits", "8");
+> +	g_hash_table_insert(options, "Parity", "none");
+> +	g_hash_table_insert(options, "XonXoff", "off");
+> +	g_hash_table_insert(options, "RtsCts", "on");
+> +	g_hash_table_insert(options, "Local", "on");
+> +	g_hash_table_insert(options, "Read", "on");
+> +
+> +	DBG("Opening device %s", device);
+> +
+> +	data->channel =3D g_at_tty_open(device, options);
+> +	g_hash_table_destroy(options);
+> +
+> +	if (!data->channel) {
+> +		func(FALSE, modem);
+> +		return;
+> +	}
+> +
+> +	fd =3D g_io_channel_unix_get_fd(data->channel);
+> +	ioctl(fd, TIOCGSERIAL, &old);
+> +	new =3D old;
+> +	new.closing_wait =3D ASYNC_CLOSING_WAIT_NONE;
+> +	ioctl(fd, TIOCSSERIAL, &new);
+> // without this, even if the g_at_tty_open sets the port non-blocking,
+> // it waits anyway 30 seconds if the port is not responding.
+> +
+> +	g_io_channel_flush(data->channel, NULL);
+> +	/* the channel is set by default to "UTF-8" and buffered */
+> +	g_io_channel_set_encoding(data->channel, NULL, NULL);
+> +	g_io_channel_set_buffered(data->channel, FALSE);
+> +	data->open_cb =3D func;
+> +	data->read_src =3D g_io_add_watch(data->channel, G_IO_IN, gemalto_open_=
+cb,
+> +									modem);
+> +	data->probing_timer =3D g_timeout_add_seconds(1, gemalto_probe_device,
+> +									modem);
+> +}
+> // the 3 functions above:
+> // - open the channel as usual
+> // - test the port with AT once per second until timeout. Maybe this can =
+be an
+> //   additional wakeup function in GAtChat
+> // - attach a GAtChat to it or close it
+> +
+> +static void gemalto_enable_mdm_cb(gboolean success, struct ofono_modem *=
+modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	data->mdm =3D data->tmp_chat;
+> +	data->tmp_chat =3D NULL;
+> +	gemalto_initialize(modem);
+> +}
+> +
+> +static void gemalto_enable_app_cb(gboolean success, struct ofono_modem *=
+modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	const char *mdm =3D gemalto_get_string(modem, "Modem");
+> +
+> +	data->app =3D data->tmp_chat;
+> +	data->tmp_chat =3D NULL;
+> +	gemalto_open_device(mdm, gemalto_enable_mdm_cb, modem);
+> +}
+> +
+> +static int gemalto_enable_app(struct ofono_modem *modem)
+> +{
+> +	const char *app =3D gemalto_get_string(modem, "Application");
+> +
+> +	gemalto_open_device(app, gemalto_enable_app_cb, modem);
+> +	return -EINPROGRESS;
+> +}
+> +
+> +#ifdef HAVE_ELL
+> +static void mbim_device_caps_info_cb(struct mbim_message *message, void =
+*user)
+> +{
+> +	struct ofono_modem *modem =3D user;
+> +	struct gemalto_data *md =3D ofono_modem_get_data(modem);
+> +	uint32_t device_type;
+> +	uint32_t cellular_class;
+> +	uint32_t voice_class;
+> +	uint32_t sim_class;
+> +	uint32_t data_class;
+> +	uint32_t sms_caps;
+> +	uint32_t control_caps;
+> +	uint32_t max_sessions;
+> +	char *custom_data_class;
+> +	char *device_id;
+> +	char *firmware_info;
+> +	char *hardware_info;
+> +	bool r;
+> +
+> +	if (mbim_message_get_error(message) !=3D 0)
+> +		goto error;
+> +
+> +	r =3D mbim_message_get_arguments(message, "uuuuuuuussss",
+> +					&device_type, &cellular_class,
+> +					&voice_class, &sim_class, &data_class,
+> +					&sms_caps, &control_caps, &max_sessions,
+> +					&custom_data_class, &device_id,
+> +					&firmware_info, &hardware_info);
+> +	if (!r)
+> +		goto error;
+> +
+> +	md->max_sessions =3D max_sessions;
+> +
+> +	DBG("DeviceId: %s", device_id);
+> +	DBG("FirmwareInfo: %s", firmware_info);
+> +	DBG("HardwareInfo: %s", hardware_info);
+> +
+> +	ofono_modem_set_string(modem, "DeviceId", device_id);
+> +	ofono_modem_set_string(modem, "FirmwareInfo", firmware_info);
+> +
+> +	l_free(custom_data_class);
+> +	l_free(device_id);
+> +	l_free(firmware_info);
+> +	l_free(hardware_info);
+> +
+> +	message =3D mbim_message_new(mbim_uuid_basic_connect,
+> +					MBIM_CID_DEVICE_SERVICE_SUBSCRIBE_LIST,
+> +					MBIM_COMMAND_TYPE_SET);
+> +
+> +	mbim_message_set_arguments(message, "av", 2,
+> +					"16yuuuuuuu",
+> +					mbim_uuid_basic_connect, 6,
+> +					MBIM_CID_SUBSCRIBER_READY_STATUS,
+> +					MBIM_CID_RADIO_STATE,
+> +					MBIM_CID_REGISTER_STATE,
+> +					MBIM_CID_PACKET_SERVICE,
+> +					MBIM_CID_SIGNAL_STATE,
+> +					MBIM_CID_CONNECT,
+> +					"16yuuuu", mbim_uuid_sms, 3,
+> +					MBIM_CID_SMS_CONFIGURATION,
+> +					MBIM_CID_SMS_READ,
+> +					MBIM_CID_SMS_MESSAGE_STORE_STATUS);
+> +
+> +	if (mbim_device_send(md->device, 0, message,
+> +				NULL, NULL, NULL)) {
+> +		md->mbim =3D STATE_PRESENT;
+> +		goto other_devices;
+> +	}
+> +
+> +
+> +error:
+> +	mbim_device_shutdown(md->device);
+> +
+> +other_devices:
+> +
+> +	if (md->init_done)
+> +		return;
+> +
+> +	gemalto_enable_app(modem);  /* continue with mdm interface */
+> +}
+> +
+> +static void mbim_device_ready(void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *md =3D ofono_modem_get_data(modem);
+> +	struct mbim_message *message =3D
+> +		mbim_message_new(mbim_uuid_basic_connect,
+> +					1, MBIM_COMMAND_TYPE_QUERY);
+> +
+> +	mbim_message_set_arguments(message, "");
+> +	mbim_device_send(md->device, 0, message, mbim_device_caps_info_cb,
+> +		modem, NULL);
+> +}
+> +
+> +static void mbim_device_closed(void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *md =3D ofono_modem_get_data(modem);
+> +
+> +	if (!md)
+> +		return;
+> +
+> +	/*
+> +	 * if state=3Dprobe, it  means that we are in the init phase
+> +	 * and that we have failed the MBIM_OPEN
+> +	 */
+> +	if (md->mbim =3D=3D STATE_PROBE) {
+> +		DBG(REDCOLOR"MBIM OPEN failed!"NOCOLOR);
+> +		gemalto_enable_app(modem); /* continue with other interfaces */
+> +	}
+> +
+> +	/* reset the state for future attempts */
+> +	md->mbim =3D STATE_PROBE;
+> +
+> + 	if(md->device)
+> +		mbim_device_unref(md->device);
+> +
+> +	md->device =3D NULL;
+> +}
+> +
+> +static int mbim_enable(struct ofono_modem *modem)
+> +{
+> +	const char *device;
+> +	int fd;
+> +	struct gemalto_data *md =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("modem struct: %p", modem);
+> +
+> +	device =3D gemalto_get_string(modem, "NetworkControl");
+> +	if (!device)
+> +		goto other_devices;
+> +
+> +	DBG("modem device: %s", device);
+> +	fd =3D open(device, O_EXCL | O_NONBLOCK | O_RDWR);
+> +
+> +	if (fd < 0)
+> +		goto other_devices;
+> +
+> +	DBG("device: %s opened successfully", device);
+> +	md->device =3D mbim_device_new(fd, md->max_segment);
+> +	DBG("created new device %p", md->device);
+> +
+> +	mbim_device_set_close_on_unref(md->device, true);
+> +	mbim_device_set_max_outstanding(md->device, md->max_outstanding);
+> +	mbim_device_set_ready_handler(md->device,
+> +					mbim_device_ready, modem, NULL);
+> +	mbim_device_set_disconnect_handler(md->device,
+> +				mbim_device_closed, modem, NULL);
+> +	mbim_device_set_debug(md->device, gemalto_debug, "MBIM:", NULL);
+> +
+> +	return -EINPROGRESS;
+> +
+> +other_devices:
+> +
+> +	if (md->init_done)
+> +		return 0;
+> +
+> +	return gemalto_enable_app(modem);
+> +}
+> +#endif
+> +
+> +static void qmi_enable_cb(void *user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *md =3D ofono_modem_get_data(modem);
+> +	md->qmi =3D STATE_PRESENT;
+> +	gemalto_enable_app(modem); /* qmi done, continue with app interface */
+> +}
+> +
+> +static int qmi_enable(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	const char *device;
+> +	int fd;
+> +
+> +	DBG("modem struct: %p", modem);
+> +
+> +	device =3D gemalto_get_string(modem, "NetworkControl");
+> +	if (!device)
+> +		return gemalto_enable_app(modem);
+> +
+> +	fd =3D open(device, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+> +	if (fd < 0)
+> +		return gemalto_enable_app(modem);
+> +
+> +	data->device =3D qmi_device_new(fd);
+> +	if (!data->device) {
+> +		close(fd);
+> +		return gemalto_enable_app(modem);
+> +	}
+> +
+> +	qmi_device_set_close_on_unref(data->device, true);
+> +
+> +	qmi_device_set_debug(data->device, gemalto_debug, "QMI: ");
+> +
+> +	qmi_device_discover(data->device, qmi_enable_cb, modem, NULL);
+> +
+> +	return -EINPROGRESS;
+> +}
+> +
+> +static void set_from_model(struct gemalto_data *data) {
+> +	guint m =3D data->model;
+> +
+> +	data->has_lte =3D TRUE; /* default */
+> +
+> +	/* pre-configure non-MBIM network interfaces */
+> +	if (m !=3D 0x62 && m !=3D 0x5d && m !=3D 0x65) {
+> +		/*
+> +		 * note: we probe for ECM/NCM even if the port is not present
+> +		 * (for serial connection type or serial-like)
+> +		 */
+> +		if (m =3D=3D 0x53 || m =3D=3D 0x60 || m =3D=3D 0x63)
+> +			data->qmi =3D STATE_PROBE;
+> +		/*these families have PPP only*/
+> +		else if (m !=3D 0x58 && m !=3D 0x47 && m !=3D 0x54)
+> +			data->ecmncm =3D STATE_PROBE;
+> +	}
+> +
+> +	/* pre-configure SW features */
+> +	if (m =3D=3D 0xa0) {
+> +		data->gprs_opt =3D USE_CTX3;
+> +		data->ecmncm =3D STATE_ABSENT;
+> +	}
+> +	if (m =3D=3D 0x63 || m =3D=3D 0x65 || m =3D=3D 0x5b || m =3D=3D 0x5c ||=
+ m =3D=3D 0x5d)
+> +		data->gina =3D STATE_PRESENT;
+> +
+> +	data->init_waiting_time =3D 30;
+> +
+> +	if (m =3D=3D 0x55 || m =3D=3D 0x47) {
+> +		data->has_lte =3D FALSE;
+> +		data->init_waiting_time =3D 5;
+> +	}
+> +
+> +	if (m =3D=3D 0x58) {
+> +		data->has_lte =3D FALSE;
+> +		data->init_waiting_time =3D 15;
+> +	}
+> +
+> +	data->vts_with_quotes =3D TRUE;
+> +
+> +	if (m =3D=3D 0x5b || m =3D=3D 0x5c || m =3D=3D 0x5d || m =3D=3D 0xa0) {
+> +		data->vts_with_quotes =3D FALSE;
+> +		data->auth_syntax =3D GEMALTO_AUTH_USE_SGAUTH |
+> +						GEMALTO_AUTH_ALWAYS_ALL_PARAMS;
+> +	}
+> +}
+> +
+> +static void store_cgmm(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	char const *model;
+> +	char buf[16];
+> +
+> +	/* if no model, fallback to a basic 2G one */
+> +	data->model =3D 0x47;
+> +	strncpy(data->modelstr, "", sizeof(data->modelstr));
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	while (g_at_result_iter_next(&iter, NULL)) {
+> +		if (!g_at_result_iter_next_unquoted_string(&iter, &model))
+> +			continue;
+> +
+> +		if (model && *model) {
+> +			strncpy(data->modelstr, model, sizeof(data->modelstr));
+> +
+> +			if (g_ascii_strncasecmp(model, "TC", 2) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "MC", 2) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "AC", 2) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "HC", 2) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "HM", 2) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "XT", 2) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "AGS", 3) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "BGS", 3) =3D=3D 0)
+> +				data->model =3D 0x47;
+> +			else if (g_ascii_strncasecmp(model, "AH3", 3) =3D=3D 0)
+> +				data->model =3D 0x55;
+> +			else if (g_ascii_strncasecmp(model, "AHS", 3) =3D=3D 0)
+> +				data->model =3D 0x55;
+> +			else if (g_ascii_strncasecmp(model, "PHS", 3) =3D=3D 0)
+> +				data->model =3D 0x55;
+> +			else if (g_ascii_strncasecmp(model, "PH8", 3) =3D=3D 0)
+> +				data->model =3D 0x55;
+> +			else if (g_ascii_strncasecmp(model, "AHS", 3) =3D=3D 0)
+> +				data->model =3D 0x55;
+> +			else if (g_ascii_strncasecmp(model, "EHS", 3) =3D=3D 0)
+> +				data->model =3D 0x58;
+> +			else if (g_ascii_strncasecmp(model, "ELS31-", 6) =3D=3D 0)
+> +				data->model =3D 0xa0;
+> +			else if (g_ascii_strncasecmp(model, "ELS61-", 6) =3D=3D 0)
+> +				data->model =3D 0x5b;
+> +			else if (g_ascii_strncasecmp(model, "PLS62-", 6) =3D=3D 0)
+> +				data->model =3D 0x5b;
+> +			else if (g_ascii_strncasecmp(model, "PLS8-", 5) =3D=3D 0)
+> +				data->model =3D 0x61;
+> +			else if (g_ascii_strncasecmp(model, "ALS3-", 5) =3D=3D 0)
+> +				data->model =3D 0x61;
+> +			else if (g_ascii_strncasecmp(model, "ALAS5-", 6) =3D=3D 0)
+> +				data->model =3D 0x65;
+> +			return;
+> +		}
+> +	}
+> +
+> +	sprintf(buf, "%04x", data->model);
+> +	ofono_modem_set_string(modem, "Model", buf);
+> +}
+> +
+> +static void store_sqport(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	char const *sqport;
+> +
+> +	/* in case of error, the port is of Modem type */
+> +	strncpy(data->sqport, "Modem", sizeof(data->sqport));
+> +
+> +	if (!ok)
+> +		goto done;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	/* answer format: "^SQPORT: Application" */
+> +	if (!g_at_result_iter_next(&iter, "^SQPORT:"))
+> +		goto done;
+> +
+> +	if (!g_at_result_iter_next_unquoted_string(&iter, &sqport))
+> +		goto done;
+> +
+> +	if (!sqport || !*sqport)
+> +		goto done;
+> +
+> +	strncpy(data->sqport, sqport, sizeof(data->sqport));
+> +
+> +done:
+> +	/* select mdm, app or gina port type */
+> +	data->ecmncm =3D STATE_PROBE;
+> +
+> +	if (g_str_equal(sqport, "Modem")) {
+> +		data->mdm =3D data->app;
+> +		data->app =3D NULL;
+> +		data->ecmncm =3D STATE_ABSENT;
+> +	}
+> +
+> +	if ((*sqport >=3D '0' && *sqport <=3D '9'))
+> +		data->gina =3D STATE_PRESENT;
+> +
+> +	set_from_model(data);
+> +	gemalto_initialize(modem);
+> +}
+> +
+> +static void gemalto_detect_serial(gboolean success, struct ofono_modem *=
+modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	data->app =3D data->tmp_chat;
+> +	data->tmp_chat =3D NULL;
+> +
+> +	g_at_chat_send(data->app, "AT+CGMM", none_prefix, store_cgmm,
+> +								modem, NULL);
+> +	g_at_chat_send(data->app, "AT^SQPORT", sqport_prefix, store_sqport,
+> +								modem, NULL);
+> +}
+> +
+> +static void gemalto_detect_sysstart(GAtResult *result, gpointer user_dat=
+a)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	if (data->modem_ready_id) {
+> +		g_at_chat_unregister(data->app, data->modem_ready_id);
+> +		data->modem_ready_id =3D 0;
+> +	}
+> +
+> +	data->tmp_chat =3D data->app;
+> +	gemalto_detect_serial(TRUE, modem);
+> +}
+> +
+> +static int gemalto_enable_serial(struct ofono_modem *modem)
+> +{
+> +	const char *device =3D ofono_modem_get_string(modem, "ATport");
+> +
+> +	if (!device)
+> +		return -EINVAL;
+> +
+> +	gemalto_open_device(device, gemalto_detect_serial, modem);
+> +	return -EINPROGRESS;
+> +}
+> +
+> +static int gemalto_enable(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	const char *model =3D gemalto_get_string(modem, "Model"),
+> +		   *conn_type =3D gemalto_get_string(modem, "ConnType");
+> +	const char
+> +		*ctl =3D gemalto_get_string(modem, "NetworkControl"),
+> +		*net =3D gemalto_get_string(modem, "NetworkInterface");
+> +	guint m =3D 0;
+> +
+> +	if (!modem || !data)
+> +		return -EINVAL;
+> +
+> +	data->conn =3D g_str_equal(conn_type,"Serial") ? GEMALTO_CONNECTION_SER=
+IAL
+> +						: GEMALTO_CONNECTION_USB;
+> +
+> +	if (data->conn =3D=3D GEMALTO_CONNECTION_SERIAL)
+> +		return gemalto_enable_serial(modem);
+> +
+> +	DBG("modem struct: %p, gemalto_data: %p", modem, data);
+> +
+> +	if (data->init_done) {
+> +		gemalto_set_cfun(data->app, 4, modem);
+> +
+> +#ifdef HAVE_ELL
+> +		if (data->mbim !=3D STATE_ABSENT)
+> +			mbim_enable(modem);
+> +#endif
+> +
+> +		return -EINPROGRESS;
+> +	}
+> +
+> +	if (model) {
+> +		data->model =3D strtoul(model, NULL, 16);
+> +		m =3D data->model;
+> +	}
+> +
+> +	/* single ACM interface 02: assign application to modem */
+> +	if (m =3D=3D 0xa0) {
+> +		const char *app =3D gemalto_get_string(modem, "Application");
+> +		ofono_modem_set_string(modem, "Modem", app);
+> +	}
+> +
+> +	if (m =3D=3D 0x60) {
+> +		const char *app =3D gemalto_get_string(modem, "Diag");
+> +		ofono_modem_set_string(modem, "Modem", app);
+> +	}
+> +
+> +	/* if single ACM interface, remove possible extra devices */
+> +	if (m =3D=3D 0x58 || m =3D=3D 0x47 || m =3D=3D 0x54 || m =3D=3D 0xa0 ||=
+ m =3D=3D 0x60) {
+> +		ofono_modem_set_string(modem, "Application", NULL);
+> +		ofono_modem_set_string(modem, "GNSS", NULL);
+> +		ofono_modem_set_string(modem, "RSA", NULL);
+> +		ofono_modem_set_string(modem, "Diag", NULL);
+> +	}
+
+This really belongs in udevng...
+
+> +
+> +#ifdef HAVE_ELL
+> +	/* pre-configure MBIM network interface */
+> +	if (m =3D=3D 0x62 || m =3D=3D 0x5d || m =3D=3D 0x65) {
+> +		data->mbim =3D STATE_PROBE;
+> +	}
+> +#endif
+> +
+> +	set_from_model(data);
+> +
+> +#ifdef HAVE_ELL
+> +	if ((data->mbim =3D=3D STATE_PROBE) && ctl && net) {
+> +		data->init_waiting_time =3D 3;
+> +		return mbim_enable(modem);
+> +	}
+> +#endif
+> +
+> +	if ((data->qmi =3D=3D STATE_PROBE) && ctl && net) {
+> +		data->init_waiting_time =3D 10;
+> +		return qmi_enable(modem);
+> +	}
+> +
+> +	return gemalto_enable_app(modem);
+> +}
+> +
+> +#ifdef HAVE_ELL
+> +static int mbim_sim_probe(void *device)
+> +{
+> +	struct mbim_message *message;
+> +	/* SIM_GROUP is defined in mbimmodem.h that cannot be included */
+> +	uint32_t SIM_GROUP =3D 1;
+> +
+> +	message =3D mbim_message_new(mbim_uuid_basic_connect,
+> +					MBIM_CID_SUBSCRIBER_READY_STATUS,
+> +					MBIM_COMMAND_TYPE_QUERY);
+> +	if (!message)
+> +		return -ENOMEM;
+> +
+> +	mbim_message_set_arguments(message, "");
+> +
+> +	if (!mbim_device_send(device, SIM_GROUP, message,
+> +				NULL, NULL, NULL)) {
+> +		mbim_message_unref(message);
+> +		return -EIO;
+> +	}
+> +	return 0;
+> +}
+> +#endif
+> +
+> +static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	ofono_modem_online_cb_t cb =3D cbd->cb;
+> +	struct ofono_error error;
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +
+> +	cb(&error, cbd->data);
+> +}
+> +
+> +static void gemalto_set_online_serial(struct ofono_modem *modem,
+> +			ofono_bool_t online, ofono_modem_online_cb_t cb,
+> +			void *user_data)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+> +	char const *command;
+> +
+> +	gemalto_exec_stored_cmd(modem, "set_online");
+> +
+> +	if (data->model =3D=3D 0x47) {
+> +		command =3D online ? "AT^SCFG=3D\"MEopMode/Airplane\",\"off\"" :
+> +					"AT^SCFG=3D\"MEopMode/Airplane\",\"on\"";
+> +	} else {
+> +		command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
+> +	}
+> +
+> +	DBG("modem %p %s", modem, online ? "online" : "offline");
+> +
+> +	if (g_at_chat_send(data->app, command, NULL, set_online_cb, cbd,
+> +									g_free))
+> +		return;
+> +
+> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +	g_free(cbd);
+> +}
+> +
+> +static void gemalto_set_online(struct ofono_modem *modem, ofono_bool_t o=
+nline,
+> +				ofono_modem_online_cb_t cb, void *user_data)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+> +	char const *cmd =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
+> +
+> +	if (data->conn =3D=3D GEMALTO_CONNECTION_SERIAL) {
+> +		gemalto_set_online_serial(modem, online, cb, user_data);
+> +		return;
+> +	}
+> +
+> +	DBG("modem %p %s", modem, online ? "online" : "offline");
+> +
+> +	if (g_at_chat_send(data->app, cmd, NULL, set_online_cb, cbd, g_free))
+> +		return;
+> +
+> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +
+> +	g_free(cbd);
+> +}
+> +
+> +static void gemalto_pre_sim(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("%p", modem);
+> +
+> +	gemalto_exec_stored_cmd(modem, "pre_sim");
+> +
+> +	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
+> +
+> +	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_GEMALTO,
+> +		"atmodem", data->app);
+> +
+> +	if (data->sim && data->have_sim =3D=3D TRUE)
+> +		ofono_sim_inserted_notify(data->sim, TRUE);
+> +}
+> +
+> +static void gemalto_post_sim(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	gemalto_exec_stored_cmd(modem, "post_sim");
+> +
+> +#ifdef HAVE_ELL
+> +	if (data->mbim =3D=3D STATE_PRESENT) {
+> +		/* very important to set the interface ready */
+> +		mbim_sim_probe(data->device);
+> +	}
+> +#endif
+> +
+> +	ofono_phonebook_create(modem, 0, "atmodem", data->app);
+> +	ofono_modem_set_integer(modem, "GemaltoAuthType", data->auth_syntax);
+> +
+> +	if (data->has_lte)
+> +		ofono_lte_create(modem, 0, "gemaltomodem", data->app);
+> +}
+> +
+> +static void cgdcont17_probe(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(user_data);
+> +
+> +	if (ok)
+> +		data->gprs_opt =3D USE_CTX17;
+> +}
+> +
+> +static void swwan_probe(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(user_data);
+> +
+> +	if (ok)
+> +		data->gprs_opt =3D USE_SWWAN;
+> +}
+> +
+> +static void autoattach_probe_and_continue(gboolean ok, GAtResult *result,
+> +							gpointer user_data)
+> +{
+> +	struct ofono_modem* modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	struct ofono_message_waiting *mw;
+> +	struct ofono_gprs *gprs =3D NULL;
+> +	struct ofono_gprs_context *gc =3D NULL;
+> +
+> +	data->autoattach =3D FALSE;
+> +	ofono_modem_set_integer(modem, "GemaltoAutoAttach", 0);
+> +
+> +	if (ok) {
+> +		g_at_result_iter_init(&iter, result);
+> +		while (g_at_result_iter_next(&iter, NULL)) {
+> +			if (strstr(g_at_result_iter_raw_line(&iter),
+> +					"\"enabled\"")) {
+> +				data->autoattach =3D TRUE;
+> +				ofono_modem_set_integer(modem,
+> +					"GemaltoAutoAttach", 1);
+> +
+> +			}
+> +		}
+> +	}
+> +
+> +	// TODO: the ofono_gprs_create may require gemaltomodem instead of atmo=
+dem
+> // for now this code works with a modified version of atmodem/gprs.c,
+> // where the ofono_gprs_set_cid_range is not called, so it can be called =
+below
+> +
+> +#ifdef HAVE_ELL
+> +	if (data->mbim =3D=3D STATE_PRESENT) {
+> +		gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
+> +								data->app);
+> +		ofono_gprs_set_cid_range(gprs, 0, data->max_sessions);
+> +		if (data->model =3D=3D 0x62 || data->model =3D=3D 0x65) {
+> +			struct gemalto_mbim_composite comp;
+> +			comp.device =3D data->device;
+> +			comp.chat =3D data->app;
+> +			comp.at_cid =3D 4;
+> +			gc =3D ofono_gprs_context_create(modem, 0, "gemaltomodemmbim", &comp);
+> +		} else /* model =3D=3D 0x5d */
+> +			gc =3D ofono_gprs_context_create(modem, 0, "mbim", data->device);
+> +	} else
+> +#endif
+> +		if (data->qmi =3D=3D STATE_PRESENT) {
+> +		gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
+> +								data->app);
+> +		// TODO: verify if need be to create the contexts and auth params befo=
+rehand
+> +		// if so, may need a gprs-context gemaltomodem-at-qmi
+> +
+> +		/* on QMI devices, only a single context is supported */
+> +		// TODO: Is 1 ok for attach_APN !=3D context_APN?
+> +		ofono_gprs_set_cid_range(gprs, 1, 1);
+> +		gc =3D ofono_gprs_context_create(modem, 0, "qmimodem",
+> +								data->device);
+> +	} else if (data->gprs_opt =3D=3D USE_SWWAN || data->gprs_opt =3D=3D USE=
+_CTX17 ||
+> +						data->gprs_opt =3D=3D USE_CTX3) {
+> +		ofono_modem_set_integer(modem, "GemaltoWwan",
+> +						data->gprs_opt =3D=3D USE_SWWAN);
+> +		gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
+> +								data->app);
+> +		if (data->gprs_opt =3D=3D USE_CTX3)
+> +			ofono_gprs_set_cid_range(gprs, 3, 3);
+> +		else if (data->model =3D=3D 0x5b)
+> +			/*
+> +			 * limitation: same APN as for attach
+> +			 * in this case create more contexts
+> +			 */
+> +			ofono_gprs_set_cid_range(gprs, 1, 11);
+> +		else
+> +			ofono_gprs_set_cid_range(gprs, 4, 16);
+> +		// maybe rename the next to gemaltomodem-wwan
+> +		gc =3D ofono_gprs_context_create(modem, 0, "gemaltomodemswwan",
+> +								data->app);
+> +	} else if (data->gprs_opt =3D=3D USE_PPP) {
+> +		/* plain PPP only works from mdm ports */
+> +		gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
+> +								data->app);
+> +		if (data->model =3D=3D 0x47)
+> +			ofono_gprs_set_cid_range(gprs, 1, 2);
+> +		else if (data->has_lte)
+> +			ofono_gprs_set_cid_range(gprs, 4, 16);
+> +		else
+> +			ofono_gprs_set_cid_range(gprs, 1, 16);
+> +
+> +		gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->mdm);
+> +
+> +	} /*
+> +	   * in case of no match above, we have no gprs possibilities
+> +	   * this is common when using the module through serial interfaces
+> +	   * nevertheless other services (voice, gpio, gnss) could be available
+> +	   */
+> +
+> +	if (gc)
+> +		ofono_gprs_context_set_type(gc,
+> +					OFONO_GPRS_CONTEXT_TYPE_INTERNET);
+> +
+> +	if (gprs && gc)
+> +		ofono_gprs_add_context(gprs, gc);
+> +
+> +	/* might have also without voicecall support  */
+> +	ofono_ussd_create(modem, 0, "atmodem", data->app);
+> +
+> +	/*
+> +	 * Call support is technically possible only after sim insertion
+> +	 * with the module online. However the EMERGENCY_SETUP procedure of
+> +	 * the 3GPP TS_24.008 is triggered by the same AT command,
+> +	 * and namely 'ATD112;', 'ATD911;', etc.
+> +	 * On the other hand, in airplane-mode it is not possible to do it, nor
+> +	 * to create all relevant URCs for the atom.
+> +	 *
+> +	 * Ofono does not make a distinction between no-sim and
+> +	 * airplane-mode scenarios, so we create the voicecall in post-online.
+> +	 * This is half-compatible with the European directives that require
+> +	 * a SIM inserted also for emergency setup.
+> +	 */
+> // this needs further thinking
+> +
+> +	if (data->voice_avail) {
+> +		ofono_modem_set_integer(modem, "GemaltoVtsQuotes",
+> +						data->vts_with_quotes);
+> +		ofono_voicecall_create(modem, 0, "gemaltomodem", data->app);
+> +
+> +		ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
+> +		ofono_call_settings_create(modem, 0, "atmodem", data->app);
+> +		ofono_call_meter_create(modem, 0, "atmodem", data->app);
+> +		ofono_call_barring_create(modem, 0, "atmodem", data->app);
+> +	}
+> +
+> +	/* modules require to be online to accept at+cnmi */
+> +	ofono_sms_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
+> +	mw =3D ofono_message_waiting_create(modem);
+> +
+> +	if (mw)
+> +		ofono_message_waiting_register(mw);
+> +
+> +	ofono_netreg_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
+> +}
+> +
+> +static int gemalto_post_online_delayed(void *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	/*
+> +	 * check module capabilities once online and SIM really ready.
+> +	 *
+> +	 * Note: the g_at_chat_send calls only insert the commands in a list:
+> +	 * they are not executed synchronously
+> +	 *
+> +	 * Note: ofono executes each AT commands and the related callback before
+> +	 * proceeding with the next. So continuing on the last AT command is all
+> +	 * it takes
+> +	 */
+> +
+> +	gemalto_exec_stored_cmd(modem, "post_online");
+> +
+> +	if (data->ecmncm =3D=3D STATE_PROBE) {
+> +		data->gprs_opt =3D USE_PPP; /* fallback */
+> +		g_at_chat_send(data->app, "AT+CGDCONT=3D17", NULL,
+> +						cgdcont17_probe, modem, NULL);
+> +		g_at_chat_send(data->app, "AT^SWWAN?", NULL, swwan_probe, modem,
+> +									NULL);
+> +	}
+> +
+> +	g_at_chat_send(data->app, "AT^SCFG=3D\"GPRS/AutoAttach\"", NULL,
+> +				autoattach_probe_and_continue, modem, NULL);
+> +
+> +	return FALSE; /* to kill the timer */
+> +}
+> +
+> +static void gemalto_post_online(struct ofono_modem *modem)
+> +{
+> +	/*
+> +	 * in this version of ofono we must wait for SIM 'really-ready'
+> +	 * can be avoided when capturing the right URCs
+> // waiting for the URC (like '+PBREADY') is anyway not risk-free
+> // because if ofono is started when the module is already initialized
+> // the URC is missing, and on some models cannot be queried.
+> // This needs further thinking.
+> +	 */
+> +	g_timeout_add_seconds(5, gemalto_post_online_delayed, modem);
+> +}
+> +
+> +#ifdef HAVE_ELL
+> +static void mbim_radio_off_for_disable(struct mbim_message *message, voi=
+d *user)
+> +{
+> +	struct ofono_modem *modem =3D user;
+> +	struct gemalto_data *md =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("%p", modem);
+> +
+> +	mbim_device_shutdown(md->device);
+> +}
+> +#endif
+> +
+> +static int gemalto_disable_serial(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	if (data->app !=3D NULL) {
+> +		if (data->model =3D=3D 0x47) {
+> +			g_at_chat_send(data->app,
+> +				"AT^SCFG=3D\"MEopMode/Airplane\",\"on\"",
+> +				NULL, NULL, NULL, NULL);
+> +		} else {
+> +			gemalto_set_cfun(data->app, 41, modem);
+> +			return -EINPROGRESS;
+> +		}
+> +		g_at_chat_cancel_all(data->app);
+> +	}
+> +
+> +	ofono_modem_set_powered(modem, FALSE);
+> +	return 0;
+> +}
+> +
+> +static int gemalto_disable(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +#ifdef HAVE_ELL
+> +	struct mbim_message *message;
+> +#endif
+> +
+> +	DBG("%p", modem);
+> +
+> +	if (data->conn =3D=3D GEMALTO_CONNECTION_SERIAL)
+> +		return gemalto_disable_serial(modem);
+> +
+> +#ifdef HAVE_ELL
+> +	if (data->mbim =3D=3D STATE_PRESENT) {
+> +		message =3D mbim_message_new(mbim_uuid_basic_connect,
+> +						MBIM_CID_RADIO_STATE,
+> +						MBIM_COMMAND_TYPE_SET);
+> +		mbim_message_set_arguments(message, "u", 0);
+> +
+> +		if (mbim_device_send(data->device, 0, message,
+> +				mbim_radio_off_for_disable, modem, NULL)=3D=3D0)
+> +			mbim_device_closed(modem);
+> +	}
+> +#endif
+
+All these #ifdefs need to go away.  The only place that should be using =
+
+HAVE_ELL is main.c.  All the other mbim stuff needs to be merged into =
+
+the mbim driver.
+
+> +
+> +	if (data->app =3D=3D NULL)
+> +		return 0;
+> +
+> +	gemalto_exec_stored_cmd(modem, "disable");
+> +
+> +	gemalto_set_cfun(data->app, 41, modem);
+> +
+> +	return -EINPROGRESS;
+> +}
+> +
+> +static struct ofono_modem_driver gemalto_driver =3D {
+> +	.name		=3D "gemalto",
+> +	.probe		=3D gemalto_probe,
+> +	.remove		=3D gemalto_remove,
+> +	.enable		=3D gemalto_enable,
+> +	.disable	=3D gemalto_disable,
+> +	.set_online	=3D gemalto_set_online,
+> +	.pre_sim	=3D gemalto_pre_sim,
+> +	.post_sim	=3D gemalto_post_sim,
+> +	.post_online	=3D gemalto_post_online,
+> +};
+> +
+> +static int gemalto_init(void)
+> +{
+> +	return ofono_modem_driver_register(&gemalto_driver);
+> +}
+> +
+> +static void gemalto_exit(void)
+> +{
+> +	ofono_modem_driver_unregister(&gemalto_driver);
+> +}
+> +
+> +OFONO_PLUGIN_DEFINE(gemalto, "Gemalto modem plugin", VERSION,
+> +		OFONO_PLUGIN_PRIORITY_DEFAULT, gemalto_init, gemalto_exit)
+> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index 3c39e681..6c82eb81 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -3,6 +3,7 @@
+>    *  oFono - Open Source Telephony
+>    *
+>    *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *  Copyright (C) 2018 Gemalto M2M
+>    *
+>    *  This program is free software; you can redistribute it and/or modify
+>    *  it under the terms of the GNU General Public License version 2 as
+> @@ -979,20 +980,6 @@ static gboolean setup_serial_modem(struct modem_info=
+* modem)
+>   	return TRUE;
+>   }
+>   =
+
+> -static gboolean setup_tc65(struct modem_info* modem)
+> -{
+> -	ofono_modem_set_driver(modem->modem, "cinterion");
+> -
+> -	return setup_serial_modem(modem);
+> -}
+> -
+> -static gboolean setup_ehs6(struct modem_info* modem)
+> -{
+> -	ofono_modem_set_driver(modem->modem, "cinterion");
+> -
+> -	return setup_serial_modem(modem);
+> -}
+> -
+>   static gboolean setup_ifx(struct modem_info* modem)
+>   {
+>   	struct serial_device_info* info;
+> @@ -1121,60 +1108,133 @@ static gboolean setup_ublox(struct modem_info *m=
+odem)
+>   =
+
+>   static gboolean setup_gemalto(struct modem_info* modem)
+>   {
+> -	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL,
+> -		*net =3D NULL, *qmi =3D NULL;
+> +	const char *mdm =3D NULL, *app =3D NULL, *gnss =3D NULL, *rsa =3D NULL,
+> +		*diag =3D NULL,
+> +		*ctl =3D NULL, *net =3D NULL, *net2 =3D NULL;
+> +	char descriptors[PATH_MAX];
+> +	guint m;
+> +	const char *prevNet =3D NULL;
+>   =
+
+>   	GSList *list;
+>   =
+
+> -	DBG("%s", modem->syspath);
+> +	DBG("type:%d, syspath:%s [%s:%s]", modem->type, modem->syspath,
+> +						modem->vendor, modem->model);
+> +
+> +	if (modem->type=3D=3DMODEM_TYPE_SERIAL) {
+> +		struct serial_device_info* info =3D modem->serial;
+> +		ofono_modem_set_string(modem->modem, "ConnType", "Serial");
+> +		ofono_modem_set_string(modem->modem, "ATport", info->devnode);
+> +		ofono_modem_set_string(modem->modem, "Vendor", "gemalto");
+> +		ofono_modem_set_string(modem->modem, "Model", "0000");
+> +		return TRUE;
+> +
+> +	}
+> +
+> +	m =3D strtoul(modem->model, NULL, 16);
+>   =
+
+> +	/* map devices */
+>   	for (list =3D modem->devices; list; list =3D list->next) {
+>   		struct device_info *info =3D list->data;
+>   =
+
+> -		DBG("%s %s %s %s %s", info->devnode, info->interface,
+> -				info->number, info->label, info->subsystem);
+> -
+> -		/* PHS8-P */
+> -		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
+> -			if (g_strcmp0(info->number, "01") =3D=3D 0)
+> -				gps =3D info->devnode;
+> -			else if (g_strcmp0(info->number, "02") =3D=3D 0)
+> -				app =3D info->devnode;
+> -			else if (g_strcmp0(info->number, "03") =3D=3D 0)
+> -				mdm =3D info->devnode;
+> -			else if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
+> -				net =3D info->devnode;
+> -			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
+> -				qmi =3D info->devnode;
+> +		DBG("node:%s, sub:%s, interface:%s, number:%s, sysattr:%s",
+> +			info->devnode, info->subsystem, info->interface,
+> +			info->number, info->sysattr);
+> +
+> +		if (g_str_equal(info->subsystem,"tty")) {
+> +			/* option devices (ttyUSBx) */
+> +			/* note: option devices order in VMs under windows may vary */
+> +			if (g_str_equal(info->interface, "255/255/255") ||
+> +					g_str_equal(info->interface, "255/66/1") ||
+> +					g_str_equal(info->interface, "255/0/0")) {
+> +				if (g_str_equal(info->number, "00"))	{
+> +					app =3D info->devnode;
+> +				} else if (g_str_equal(info->number, "01")) {
+> +					gnss =3D rsa =3D info->devnode;
+> +				} else if (g_str_equal(info->number, "02")) {
+> +					diag =3D info->devnode;
+> +				} else if (g_str_equal(info->number, "03")) {
+> +					mdm =3D info->devnode;
+> +				}
+> +			/* cdc-acm devices (ttyACMx) */
+> +			} else if (g_str_equal(info->interface,"2/2/0") ||
+> +					g_str_equal(info->interface,"2/2/1")) {
+> +				if (g_str_equal(info->number, "00")) {
+> +					mdm =3D info->devnode;
+> +				} else if (g_str_equal(info->number, "02")) {
+> +					app =3D info->devnode;
+> +				} else if (g_str_equal(info->number, "04")) {
+> +					gnss =3D info->devnode;
+> +				} else if (g_str_equal(info->number, "06")) {
+> +					rsa =3D info->devnode;
+> +				} else if (g_str_equal(info->number, "08")) {
+> +					diag =3D info->devnode;
+> +				}
+> +			}
+>   		}
+>   =
+
+> -		/* Cinterion ALS3, PLS8-E, PLS8-X */
+> -		if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
+> -			if (g_strcmp0(info->number, "00") =3D=3D 0)
+> -				mdm =3D info->devnode;
+> -			else if (g_strcmp0(info->number, "02") =3D=3D 0)
+> -				app =3D info->devnode;
+> -			else if (g_strcmp0(info->number, "04") =3D=3D 0)
+> -				gps =3D info->devnode;
+> -		}
+> -		if (g_strcmp0(info->interface, "2/6/0") =3D=3D 0) {
+> -			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
+> -				net =3D info->devnode;
+> +		if (g_str_equal(info->subsystem,"usbmisc"))
+> +			/* control device for qmi/mbim:  /dev/cdc-wdmX */
+> +			ctl =3D info->devnode;
+> +
+> +		/* network interfaces */
+> +		if (g_str_equal(info->subsystem,"net")) {
+> +			/* cdc-mbim */
+> +			if (g_str_equal(info->interface,"2/14/0") ||
+> +				  /* qmi-wwan */
+> +				  g_str_equal(info->interface,"255/255/255")) {
+> +				net =3D info->devnode; /* wwanX */
+> +			/* cdc-ecm */
+> +			} else if (g_str_equal(info->interface, "2/6/0") ||
+> +				  /* cdc-ncm */
+> +				  g_str_equal(info->interface, "2/13/0")) {
+> +				 /*
+> +				  * there could be 2 interfaces in this case,
+> +				  * and need to have them sorted to be sure to
+> +				  * report the right interface to activate
+> +				  */
+> +				if (!prevNet ||
+> +					  g_strcmp0(info->number,prevNet)<0) {
+> +					prevNet =3D info->number;
+> +					net2 =3D net; /* can be NULL, ok */
+> +					net =3D info->devnode; /* usbX */
+> +				} else { // invert
+> +					net2 =3D info->devnode; /* usbX */
+> // not sure this logic of sorting the network interfaces is needed
+> // but I don't see another way of being sure of having them in order
+> +				}
+> +			}
+>   		}
+>   	}
+>   =
+
+> -	DBG("application=3D%s gps=3D%s modem=3D%s network=3D%s qmi=3D%s",
+> -			app, gps, mdm, net, qmi);
+> +	sprintf(descriptors, "%s/descriptors", modem->syspath);
+> +	ofono_modem_set_string(modem->modem, "ConnType", "Usb");
+> +	ofono_modem_set_string(modem->modem, "DescriptorFile", descriptors);
+> +	ofono_modem_set_string(modem->modem, "Vendor", modem->vendor);
+> +	ofono_modem_set_string(modem->modem, "Model", modem->model);
+>   =
+
+> -	if (app =3D=3D NULL || mdm =3D=3D NULL)
+> -		return FALSE;
+> +	/*
+> +	 * special cases.
+> +	 * TODO: selected by external parameters:
+> +	 *   GEMALTO_CONFIG_MBIM_ONLY -> _set_driver(modem->modem, "mbim");
+> +	 *   GEMALTO_CONFIG_QMI_ONLY -> _set_driver(modem->modem, "gobi");
+> +	 *   ...
+> +	 */
+> +	if (m=3D=3D0x64) {
+> +		ofono_modem_set_string(modem->modem, "Device", ctl);
+> +		ofono_modem_set_string(modem->modem, "NetworkInterface", net);
+> +		ofono_modem_set_driver(modem->modem, "mbim");
+> +		return TRUE;
+> +	}
+>   =
+
+> -	ofono_modem_set_string(modem->modem, "Application", app);
+> -	ofono_modem_set_string(modem->modem, "GPS", gps);
+>   	ofono_modem_set_string(modem->modem, "Modem", mdm);
+> -	ofono_modem_set_string(modem->modem, "Device", qmi);
+> -	ofono_modem_set_string(modem->modem, "Model", modem->model);
+> +	ofono_modem_set_string(modem->modem, "Application", app);
+> +	ofono_modem_set_string(modem->modem, "GNSS", gnss);
+> +	ofono_modem_set_string(modem->modem, "RSA", rsa);
+> +	ofono_modem_set_string(modem->modem, "Diag", diag);
+> +
+> +	ofono_modem_set_string(modem->modem, "NetworkControl", ctl);
+>   	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
+> +	ofono_modem_set_string(modem->modem, "NetworkInterface2", net2);
+> +
+> +	ofono_modem_set_powered_timeout_hint(modem->modem, 60);
+>   =
+
+>   	return TRUE;
+>   }
+> @@ -1290,7 +1350,7 @@ static struct {
+>   	{ "quectel",	setup_quectel	},
+>   	{ "quectelqmi",	setup_quectelqmi},
+>   	{ "ublox",	setup_ublox	},
+> -	{ "gemalto",	setup_gemalto	},
+> +	{ "gemalto",	setup_gemalto,	"device/interface"	},
+>   	{ "xmm7xxx",	setup_xmm7xxx	},
+>   	{ "mbim",	setup_mbim	},
+>   	/* Following are non-USB modems */
+> @@ -1298,12 +1358,12 @@ static struct {
+>   	{ "u8500",	setup_isi_serial	},
+>   	{ "n900",	setup_isi_serial	},
+>   	{ "calypso",	setup_serial_modem	},
+> -	{ "cinterion",	setup_serial_modem	},
+> +	{ "cinterion",	setup_gemalto },
+>   	{ "nokiacdma",	setup_serial_modem	},
+>   	{ "sim900",	setup_serial_modem	},
+>   	{ "wavecom",	setup_wavecom		},
+> -	{ "tc65",	setup_tc65		},
+> -	{ "ehs6",	setup_ehs6		},
+> +	{ "tc65",	setup_gemalto },
+> +	{ "ehs6",	setup_gemalto },
+>   	{ }
+>   };
+>   =
+
+> @@ -1464,11 +1524,10 @@ static void add_serial_device(struct udev_device =
+*dev)
+>   	struct udev_device* mdev;
+>   	const char* driver;
+>   =
+
+> +	/* discard if the device doesn't have the property OFONO_DRIVER */
+>   	mdev =3D get_serial_modem_device(dev);
+> -	if (!mdev) {
+> -		DBG("Device is missing required OFONO_DRIVER property");
+> +	if (!mdev)
+> // separate commit to remove this polluting message. On some systems
+> // it can emit the line 256 times.
+> // By default a typical linux distro presents 64 ttySx ports, so even if a
+> // few are used, there are too many unneeded notifications.
+>   		return;
+> -	}
+>   =
+
+>   	driver =3D udev_device_get_property_value(mdev, "OFONO_DRIVER");
+>   =
+
+> @@ -1674,11 +1733,13 @@ static struct {
+>   	{ "ublox",	"cdc_acm",	"1546", "1102"	},
+>   	{ "ublox",	"rndis_host",	"1546", "1146"	},
+>   	{ "ublox",	"cdc_acm",	"1546", "1146"	},
+> -	{ "gemalto",	"option",	"1e2d",	"0053"	},
+> -	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
+> -	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
+> -	{ "gemalto",	"cdc_acm",	"1e2d",	"0061"	},
+> -	{ "gemalto",	"cdc_ether",	"1e2d",	"0061"	},
+> +	{ "gemalto",	"cdc_acm",	"1e2d"		},
+> +	{ "gemalto",	"option",	"1e2d"		},
+> +	{ "gemalto",	"cdc_wdm",	"1e2d"		},
+> +	{ "gemalto",	"qmi_wwan",	"1e2d"		},
+> +	{ "gemalto",	"cdc_ether",	"1e2d",		},
+> +	{ "gemalto",	"cdc_mbim",	"1e2d",		},
+> +	{ "gemalto",	"cdc_ncm",	"1e2d",		},
+>   	{ "telit",	"cdc_ncm",	"1bc7", "0036"	},
+>   	{ "telit",	"cdc_acm",	"1bc7", "0036"	},
+>   	{ "xmm7xxx",	"cdc_acm",	"8087"		},
+> @@ -1708,6 +1769,7 @@ static void check_usb_device(struct udev_device *de=
+vice)
+>   	vendor =3D udev_device_get_property_value(usb_device, "ID_VENDOR_ID");
+>   	model =3D udev_device_get_property_value(usb_device, "ID_MODEL_ID");
+>   =
+
+> +	/* for serial2usb-like devices, enum as usb/usb_device */
+> // separate commit or discard
+>   	driver =3D udev_device_get_property_value(usb_device, "OFONO_DRIVER");
+>   	if (!driver) {
+>   		struct udev_device *usb_interface =3D
+> @@ -1719,7 +1781,17 @@ static void check_usb_device(struct udev_device *d=
+evice)
+>   					usb_interface, "OFONO_DRIVER");
+>   	}
+>   =
+
+> -	if (driver =3D=3D NULL) {
+> +	if (!driver)
+> +	{
+> +		/* for serial2usb devices (enum as tty/generic) */
+> +		const char *serialdriver =3D
+> +			udev_device_get_property_value(device, "OFONO_DRIVER");
+> +		DBG("vId=3D%s, pId=3D%s, driver=3D%s", vendor, model, serialdriver);
+> +		if (serialdriver)
+> +			add_serial_device(device);
+> +	}
+> // separate commit to match the devices connected through an FDMI chip
+> +
+> +	if (!driver) { /* use linux driver */
+>   		const char *drv;
+>   		unsigned int i;
+>   =
+
+> @@ -1772,6 +1844,7 @@ static void check_usb_device(struct udev_device *de=
+vice)
+>   static void check_device(struct udev_device *device)
+>   {
+>   	const char *bus;
+> +	const char *ofono_ignore_device;
+>   =
+
+>   	bus =3D udev_device_get_property_value(device, "ID_BUS");
+>   	if (bus =3D=3D NULL) {
+> @@ -1780,6 +1853,11 @@ static void check_device(struct udev_device *devic=
+e)
+>   			return;
+>   	}
+>   =
+
+> +	ofono_ignore_device =3D udev_device_get_property_value(device,
+> +							"OFONO_IGNORE_DEVICE");
+> +		if (ofono_ignore_device)
+> +			return; /* skip this device */
+> +
+> // separate commit to ignore some devices
+>   	if ((g_str_equal(bus, "usb") =3D=3D TRUE) ||
+>   			(g_str_equal(bus, "usbmisc") =3D=3D TRUE))
+>   		check_usb_device(device);
+> =
+
 
 Regards,
 -Denis
 
-
---===============6318356230749916783==--
+--===============0283468069608977877==--
 
