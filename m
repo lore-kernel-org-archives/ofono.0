@@ -1,46 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5929278085346066118=="
+Content-Type: multipart/mixed; boundary="===============8933262153750280971=="
 MIME-Version: 1.0
 From: Giacinto Cifelli <gciofono@gmail.com>
 Subject: Re: [RFC PATCH] new gemalto plugin
-Date: Wed, 31 Oct 2018 20:44:45 +0100
-Message-ID: <CAKSBH7Hb2VFSgMQSRYY07uDAw5ngXCRgvi2B2WjaMF+q6vWsTw@mail.gmail.com>
-In-Reply-To: <a8e95031-ad54-e727-c4d4-dea6440e9432@gmail.com>
+Date: Wed, 31 Oct 2018 20:45:27 +0100
+Message-ID: <CAKSBH7EOruFp9egdH1fUPTe4pRbwGJX4ZJwW7EmWq5GkLYWwAg@mail.gmail.com>
+In-Reply-To: <20181031180322.GA29388@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5929278085346066118==
+--===============8933262153750280971==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+H Pavel,
 
-On Wed, Oct 31, 2018 at 8:23 PM Denis Kenzior <denkenz@gmail.com> wrote:
+On Wed, Oct 31, 2018 at 7:03 PM Pavel Machek <pavel@ucw.cz> wrote:
 >
-> Hi Marcel,
+> Hi!
 >
+> > > Also, there are security and interference aspects to consider.  One c=
+an
+> > > send some AT command that interferes with the functioning of an atom
+> > > driver for example and then your entire system breaks.  Trust me, it =
+is
+> > > just not a good idea.  If you want to shoot yourself in the foot, be =
+my
+> > > guest.  But it isn't going upstream ;)
 > >
-> > I think that MBIM (and even QMI) have AT passthrough options. So by all=
- means, the main transport suppose to be MBIM here. I always prefer if only=
- one hardware port is opened and there is no need to open more.
+> > it's ok, GPLv2 just requires me to publish the changes I have done to
+> > the code, not to fight to get them upstream.
 >
-> I've seen QMI over MBIM some vendor extended service UIDs.  Not sure
-> about AT over MBIM.  If someone knows more, feel free to educate me.
+> Actually, GPLv2 does not you require to publish your changes.
 >
-> Isn't AT over QMI also possible?  And in theory AT over QMI over MBIM, lo=
-l.
+> It just (approximately) means that if you give binaries to someone, you g=
+ive them
+> sources, too...
 >
 
-AT over MBIM is possible, but we decided not to implement it.
-The big advantage of MBIM is a ready-made driver on Windows and on
-MM/ofono. Adding AT over it would mean reworking the driver, so no
-more advantages.
-Over QMI I don't know.
-QMI over MBIM is also possible, but with the same disadvantage as AT over M=
-BIM.
+even better!
 
-> Regards,
-> -Denis
+> Best regards,
+>                                                                         P=
+avel
+>
+> --
+> (english) http://www.livejournal.com/~pavelmachek
+> (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/b=
+log.html
 
---===============5929278085346066118==--
+Regards,
+Giacinto
+
+--===============8933262153750280971==--
 
