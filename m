@@ -1,67 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============3335903054610979331=="
+Content-Type: multipart/mixed; boundary="===============6125535651675304342=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH] new gemalto plugin
-Date: Wed, 31 Oct 2018 16:16:35 -0500
-Message-ID: <b7408a62-0231-3416-89ce-68b1010678eb@gmail.com>
-In-Reply-To: <CAKSBH7Fij7KHtPdkd5x2KXx3joCt7kH4S3VdfMwZCB96omsOiw@mail.gmail.com>
+Subject: Re: [PATCH 2/3] sim800: add documentation and modify AUTHORS file
+Date: Thu, 01 Nov 2018 09:48:24 -0500
+Message-ID: <2552d5a0-6bfc-26c8-14f0-ee93b8ea8f03@gmail.com>
+In-Reply-To: <1539624449-12221-2-git-send-email-vielclement@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3335903054610979331==
+--===============6125535651675304342==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi Clement,
 
-> Thank you for the explanation. Is the glib going to be removed
-> completely then, or both will coexist?
+On 10/15/2018 12:27 PM, Clement Viel wrote:
+> ---
+>   AUTHORS              |  1 +
+
+Please don't include AUTHORS changes.  One of the maintainers will take =
+
+care of it.
+
+>   doc/sim800-modem.txt | 11 +++++++++++
+>   2 files changed, 12 insertions(+)
+>   create mode 100644 doc/sim800-modem.txt
+> =
+
+> diff --git a/AUTHORS b/AUTHORS
+> index 2d360e6..a8362c8 100644
+> --- a/AUTHORS
+> +++ b/AUTHORS
+> @@ -138,3 +138,4 @@ Florent Beillonnet <florent.beillonnet@gmail.com>
+>   Martin Hundeb=C3=B8ll <martin@geanix.com>
+>   Julien Tournier <tournier.julien@gmail.com>
+>   Nandini Rebello <nandini.rebello@intel.com>
+> +Clement Viel <vielclement@gmail.com>
+> diff --git a/doc/sim800-modem.txt b/doc/sim800-modem.txt
+> new file mode 100644
+> index 0000000..7220cb8
+> --- /dev/null
+> +++ b/doc/sim800-modem.txt
+> @@ -0,0 +1,11 @@
+> +SIM800 modem usage
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +To enable SIM800 module support you need to put the following
+> +udev rule into appropriate file in /{etc,lib}/udev/rules.d:
+> +
+> +KERNEL=3D=3D"ttyS2", ENV{OFONO_DRIVER}=3D"sim800"
+> +
+> +Sim800 driver code is merged with sim900's. So, to add modifications to =
+sim800 driver, sim900.c file must be edited
+> +accordingly.
+> +To differentiate the two modems, developpers must use the "modem_type" f=
+ield of sim900_data =
+
+typo
+
+structure.
 > =
 
 
-oFono is a large project, so eradicating use of glib cannot happen =
+Also, we can't have people hand-editing driver code to distinguish =
 
-overnight.  For the foreseeable future we will have both coexist.  I =
+between one device and another.  You've already went to the trouble of =
 
-will start 'encouraging' people to start using ell instead of glib. =
+creating a separate sim800 driver (which I do not think is the right =
 
-Especially for new code that does not depend on GAtChat, etc.
+approach at all), why not take advantage of that fact with an =
 
-> Denis pointed that the atom-configuration tests can be done in the
-> atoms themselves, except that then I am asked to maintain my own atom
-> when I want to add more than a couple lines (see the lte atom story).
-> Nevertheless this is an excellent suggestion to reduce the complexity
-> in the plugin.
+appropriate probe() function or something?
 
-You will end up writing many of your own atom drivers anyway.  voicecall =
+Anyway, I still think you should be querying +CGMM or ATI or whatever to =
 
-for example.  For others we will figure this out, I've some ideas I need =
+figure out the modem model automatically and not rely on the user to set =
 
-to play with.
-
-> =
-
-> Often MBIM can be turned on or off or changed for some other interface
-> for the same (Gemalto) modem, depending on the application wishes, so
-> if the plugin is split, all its settings are just duplicated.
-> =
-
-
-This also implies having the modem reconfigure itself on the USB =
-
-interface, no?  E.g. a hot-unplug and hot-plug.  I doubt many users will =
-
-be doing this anyway.
-
-If you're worried about duplicating vendor specific API code between =
-
-multiple modem drivers, then don't.  This code can be shared easily and =
-
-I've already given you a few ideas.
+this up.
 
 Regards,
 -Denis
 
---===============3335903054610979331==--
+--===============6125535651675304342==--
 
