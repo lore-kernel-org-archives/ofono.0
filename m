@@ -1,44 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7790738241734102765=="
+Content-Type: multipart/mixed; boundary="===============5993709712380991040=="
 MIME-Version: 1.0
-From: Clement Viel <vielclement@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 3/3] sim800: add udev detection.
-Date: Mon, 12 Nov 2018 15:21:51 +0100
-Message-ID: <20181112142151.GB5978@turing>
-In-Reply-To: <334c45c5-065c-dca1-d4bc-2f7c75cfae8f@gmail.com>
+Date: Mon, 12 Nov 2018 10:34:40 -0600
+Message-ID: <541d1d0f-32f7-fcb9-fbf3-9c3d567ba6e6@gmail.com>
+In-Reply-To: <20181112141648.GA5978@turing>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7790738241734102765==
+--===============5993709712380991040==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Nov 08, 2018 at 10:59:30AM -0600, Denis Kenzior wrote:
-> Hi Clement,
-> >>>+	{ "sim800",	setup_serial_modem	}, > I think I must keep this line
-> >>>because the udev rule added by the user
-> will specify that modem is "OFONO_DRIVER=3Dsim800" so udevng.c must know =
-what
-> to do with that.
-> This is kind of weird that we have a driver line for a modem driver that
-> doesn't exist.  We never do things this way.  Why don't you just modify t=
-he
-> driver instructions to have OFONO_DRIVER=3Dsim900 instead?
-> =
+Hi Clement,
 
-> Also, we could simply rename the sim900 driver into sim_x00 or simcom_ser=
-ial
-> or something too.  That could make things a bit more clear.
-> =
+> Just tell me whether I should add mention of sim800 in sim900.txt or rena=
+me sim900.txt
+> in simcom.txt to mention the two drivers. Then I'll upload the patchset w=
+ith doc in it.
 
-> Regards,
-> -Denis
+I don't feel strongly either way, but if I had to pick, I say lets =
+
+rename sim900.txt into simcom.txt and maintain all driver instructions =
+
+there.
+
+Regards,
+-Denis
 
 
-Moreover if we go for the OFONO_DRIVER=3Dsim900 solution, plugins/udevng.c =
-will stay =
-
-the same.
-
---===============7790738241734102765==--
+--===============5993709712380991040==--
 
