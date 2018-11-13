@@ -1,33 +1,203 @@
-Content-Type: multipart/mixed; boundary="===============6919230577752615206=="
+Content-Type: multipart/mixed; boundary="===============2308845789915506999=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] sim800: merge sim800 and sim900 documentation.
-Date: Mon, 12 Nov 2018 19:25:03 -0600
-Message-ID: <2d1fe03e-03f5-5310-af86-96d9117a39bb@gmail.com>
-In-Reply-To: <1542054775-10576-2-git-send-email-vielclement@gmail.com>
+From: Clement Viel <vielclement@gmail.com>
+Subject: [PATCH 1/3] sim800: add sim800 support.
+Date: Tue, 13 Nov 2018 10:29:41 +0100
+Message-ID: <1542101383-3220-1-git-send-email-vielclement@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6919230577752615206==
+--===============2308845789915506999==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Clement,
+---
+ plugins/sim900.c | 91 ++++++++++++++++++++++++++++++++++++++++++++++++++--=
+----
+ 1 file changed, 82 insertions(+), 9 deletions(-)
 
-On 11/12/2018 02:32 PM, Clement Viel wrote:
-> ---
->   doc/sim900-modem.txt | 12 ------------
->   doc/simcom-modem.txt | 22 ++++++++++++++++++++++
->   2 files changed, 22 insertions(+), 12 deletions(-)
->   delete mode 100644 doc/sim900-modem.txt
->   create mode 100644 doc/simcom-modem.txt
+diff --git a/plugins/sim900.c b/plugins/sim900.c
+index a7728cd..bf7b9ec 100644
+--- a/plugins/sim900.c
++++ b/plugins/sim900.c
+@@ -24,6 +24,7 @@
+ #endif
+ =
 
-Applied, thanks.
+ #include <errno.h>
++#include <string.h>
+ #include <stdlib.h>
+ #include <glib.h>
+ #include <gatchat.h>
+@@ -60,13 +61,77 @@ static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Ne=
+t: ", "SMS: ",
+ =
 
-Regards,
--Denis
+ static const char *none_prefix[] =3D { NULL };
+ =
+
++typedef enum type {
++	SIM800,
++	SIM900,
++	SIM_UNKNOWN,
++} type_t;
++
+ struct sim900_data {
+ 	GIOChannel *device;
+ 	GAtMux *mux;
+ 	GAtChat * dlcs[NUM_DLC];
+ 	guint frame_size;
++	type_t modem_type;
+ };
+ =
+
++static void set_modem_type (const char *type, struct ofono_modem *modem)
++{
++	struct sim900_data *data =3D ofono_modem_get_data(modem);
++
++	if (strcmp(type, "sim800") =3D=3D 0)
++		data->modem_type =3D SIM800;
++	else if (strcmp(type, "sim900") =3D=3D 0)
++		data->modem_type =3D SIM900;
++	else
++		data->modem_type =3D SIM_UNKNOWN;
++	DBG("modem type is %d",data->modem_type);
++}
++
++static void mux_ready_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct sim900_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_gprs *gprs =3D NULL;
++	struct ofono_gprs_context *gc;
++
++	ofono_sms_create(modem, OFONO_VENDOR_SIMCOM, "atmodem",
++					data->dlcs[SMS_DLC]);
++
++	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->dlcs[GPRS_DLC]);
++	if (gprs =3D=3D NULL)
++		return;
++
++	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_SIMCOM,
++									"atmodem", data->dlcs[GPRS_DLC]);
++	if (gc)
++		ofono_gprs_add_context(gprs, gc);
++	=
+
++
++}
++
++static void check_model(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	GAtResultIter iter;
++	char const *model;
++
++	DBG("");
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, NULL)) {
++		if (!g_at_result_iter_next_unquoted_string(&iter, &model))
++			continue;
++
++		DBG("setting type %s", model);
++		if (strstr(model, "SIM800"))
++			set_modem_type("sim800", modem);
++		else if (strstr(model, "SIM900"))
++			set_modem_type("sim900", modem);
++	}
++}
++
+ static int sim900_probe(struct ofono_modem *modem)
+ {
+ 	struct sim900_data *data;
+@@ -78,7 +143,6 @@ static int sim900_probe(struct ofono_modem *modem)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+-
+ 	return 0;
+ }
+ =
+
+@@ -111,6 +175,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	GHashTable *options;
+ =
+
+ 	device =3D ofono_modem_get_string(modem, key);
++
+ 	if (device =3D=3D NULL)
+ 		return NULL;
+ =
+
+@@ -232,6 +297,11 @@ static void setup_internal_mux(struct ofono_modem *mod=
+em)
+ 			goto error;
+ 		}
+ 	}
++	if (data->modem_type =3D=3D SIM800) {
++		for (i =3D 0; i<NUM_DLC; i++) {
++			g_at_chat_register(data->dlcs[i], "SMS Ready", mux_ready_notify, FALSE,=
+ modem, NULL);
++		}
++	}
+ =
+
+ 	ofono_modem_set_powered(modem, TRUE);
+ =
+
+@@ -294,6 +364,7 @@ static int sim900_enable(struct ofono_modem *modem)
+ 		return -EINVAL;
+ =
+
+ 	g_at_chat_send(data->dlcs[SETUP_DLC], "ATE0", NULL, NULL, NULL, NULL);
++	g_at_chat_send(data->dlcs[SETUP_DLC], "AT+CGMM", NULL,check_model, modem,=
+ NULL);
+ =
+
+ 	/* For obtain correct sms service number */
+ 	g_at_chat_send(data->dlcs[SETUP_DLC], "AT+CSCS=3D\"GSM\"", NULL,
+@@ -353,18 +424,20 @@ static void sim900_post_sim(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	ofono_phonebook_create(modem, 0, "atmodem", data->dlcs[VOICE_DLC]);
+-	ofono_sms_create(modem, OFONO_VENDOR_SIMCOM, "atmodem",
++	if (data->modem_type !=3D SIM800) {
++		ofono_phonebook_create(modem, 0, "atmodem", data->dlcs[VOICE_DLC]);
++		ofono_sms_create(modem, OFONO_VENDOR_SIMCOM, "atmodem",
+ 						data->dlcs[SMS_DLC]);
+ =
+
+-	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->dlcs[GPRS_DLC]);
+-	if (gprs =3D=3D NULL)
+-		return;
++		gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->dlcs[GPRS_DLC]);
++		if (gprs =3D=3D NULL)
++			return;
+ =
+
+-	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_SIMCOM_SIM900,
++		gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_SIMCOM_SIM900,
+ 					"atmodem", data->dlcs[GPRS_DLC]);
+-	if (gc)
+-		ofono_gprs_add_context(gprs, gc);
++		if (gc)
++			ofono_gprs_add_context(gprs, gc);
++	}
+ }
+ =
+
+ static void sim900_post_online(struct ofono_modem *modem)
+-- =
+
+2.7.4
 
 
---===============6919230577752615206==--
+--===============2308845789915506999==--
 
