@@ -1,230 +1,243 @@
-Content-Type: multipart/mixed; boundary="===============6901161152537238546=="
+Content-Type: multipart/mixed; boundary="===============0771202061607310077=="
 MIME-Version: 1.0
-From: Eswaran Vinothkumar (BEG/PJ-IOT-EL) <Vinothkumar.Eswaran@de.bosch.com>
-Subject: Issue with SIM7100E pcie module 
-Date: Wed, 14 Nov 2018 14:40:05 +0000
-Message-ID: <c678f985dd3c4056854ee615df457e38@de.bosch.com>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: Re: Issue with SIM7100E pcie module
+Date: Wed, 14 Nov 2018 15:53:08 +0100
+Message-ID: <332b9d5f-5625-278b-d7d9-b00a0a771765@norrbonn.se>
+In-Reply-To: <c678f985dd3c4056854ee615df457e38@de.bosch.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6901161152537238546==
+--===============0771202061607310077==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-                For one of the IOT project, I am using SIM7100E mini PCIe m=
-odule. I am using connman(1.36) and ofono(1.26) to establish cellular conne=
-ction. I am seeing that the same module is sometimes identified as gobi and=
- sometimes as sim7100 by ofono.  Attached the logs for reference:
+On 14/11/2018 15:40, Eswaran Vinothkumar (BEG/PJ-IOT-EL) wrote:
+> Hi,
+> =
 
-# lsusb
-Bus 003 Device 008: ID 1e0e:9001 Qualcomm / Option
+>  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 For one of the IOT project, I am using SIM7100E mini =
 
-# /usr/lib/ofono/test/list-modems
-[ /sim7100_0 ]
-    Type =3D hardware
-    Emergency =3D 0
-    Model =3D SIMCOM_SIM7100E
-    Serial =3D 866802021517042
-    Interfaces =3D org.ofono.SmartMessaging org.ofono.PushNotification org.=
-ofono.MessageManager org.ofono.NetworkRegistration org.ofono.ConnectionMana=
-ger org.ofono.Phonebook org.ofono.CallMeter org.ofono.SupplementaryServices=
- org.ofono.CallBarring org.ofono.CallSettings org.ofono.CallForwarding org.=
-ofono.MessageWaiting org.ofono.AllowedAccessPoints org.ofono.VoiceCallManag=
-er org.ofono.SimManager
-    SystemPath =3D /sys/devices/soc0/soc/30800000.aips-bus/30b30000.usb/ci_=
-hdrc.2/usb3/3-1/3-1.3
-    Manufacturer =3D SIMCOM INCORPORATED
-    Online =3D 1
-    Powered =3D 1
-    Features =3D sms net gprs ussd sim
-    Revision =3D 4534B06SIM7100E
-    Lockdown =3D 0
+> PCIe module. I am using connman(1.36) and ofono(1.26) to establish =
 
-# /usr/lib/ofono/test/list-modems
-[ /gobi_0 ]
-    Serial =3D 866802021517042
-    Interfaces =3D org.ofono.LongTermEvolution org.ofono.SmartMessaging org=
-.ofono.PushNotification org.ofono.MessageManager org.ofono.NetworkRegistrat=
-ion org.ofono.ConnectionManager org.ofono.SupplementaryServices org.ofono.N=
-etworkMonitor org.ofono.RadioSettings org.ofono.MessageWaiting org.ofono.Al=
-lowedAccessPoints org.ofono.SimManager org.ofono.VoiceCallManager
-    Online =3D 1
-    Emergency =3D 0
-    Features =3D sms net gprs ussd rat sim
-    Revision =3D M9615A-CETWTBZM-6.0.15255  1  [May 13 2016 01:00:00]
-    Type =3D hardware
-    Manufacturer =3D QUALCOMM INCORPORATED
-    Powered =3D 1
-    Model =3D SIMCOM_SIM7100E
-    SystemPath =3D /sys/devices/soc0/soc/30800000.aips-bus/30b30000.usb/ci_=
-hdrc.2/usb3/3-1/3-1.3
-    Lockdown =3D 0
+> cellular connection. I am seeing that the same module is sometimes =
 
-I looked into the source code of ofono. Gobi and sim7100 both are implement=
-ed as plugin. From the source code (plugins/udevng.c) it looks like the mod=
-ule should use sim7100 plugin. But it is not always the case for me.
+> identified as gobi and sometimes as sim7100 by ofono. =C2=A0Attached the =
+logs =
 
-{ "gobi",               "qmi_wwan"                                     },
-{ "gobi",               "qcserial"                                         =
-    },
+> for reference:
+> =
+
+> # lsusb
+> =
+
+> Bus 003 Device 008: ID 1e0e:9001 Qualcomm / Option
+> =
+
+> # /usr/lib/ofono/test/list-modems
+> =
+
+> [ /sim7100_0 ]
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Type =3D hardware
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Emergency =3D 0
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Model =3D SIMCOM_SIM7100E
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Serial =3D 866802021517042
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Interfaces =3D org.ofono.SmartMessaging org.ofono.Pus=
+hNotification =
+
+> org.ofono.MessageManager org.ofono.NetworkRegistration =
+
+> org.ofono.ConnectionManager org.ofono.Phonebook org.ofono.CallMeter =
+
+> org.ofono.SupplementaryServices org.ofono.CallBarring =
+
+> org.ofono.CallSettings org.ofono.CallForwarding org.ofono.MessageWaiting =
+
+> org.ofono.AllowedAccessPoints org.ofono.VoiceCallManager =
+
+> org.ofono.SimManager
+> =
+
+>  =C2=A0=C2=A0=C2=A0=C2=A0SystemPath =3D =
+
+> /sys/devices/soc0/soc/30800000.aips-bus/30b30000.usb/ci_hdrc.2/usb3/3-1/3=
+-1.3
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Manufacturer =3D SIMCOM INCORPORATED
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Online =3D 1
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Powered =3D 1
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Features =3D sms net gprs ussd sim
+> =
+
+>  =C2=A0=C2=A0=C2=A0=C2=A0Revision =3D 4534B06SIM7100E
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Lockdown =3D 0
+> =
+
+> # /usr/lib/ofono/test/list-modems
+> =
+
+> [ /gobi_0 ]
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Serial =3D 866802021517042
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Interfaces =3D org.ofono.LongTermEvolution org.ofono.=
+SmartMessaging =
+
+> org.ofono.PushNotification org.ofono.MessageManager =
+
+> org.ofono.NetworkRegistration org.ofono.ConnectionManager =
+
+> org.ofono.SupplementaryServices org.ofono.NetworkMonitor =
+
+> org.ofono.RadioSettings org.ofono.MessageWaiting =
+
+> org.ofono.AllowedAccessPoints org.ofono.SimManager =
+
+> org.ofono.VoiceCallManager
+> =
+
+>  =C2=A0=C2=A0=C2=A0=C2=A0Online =3D 1
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Emergency =3D 0
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Features =3D sms net gprs ussd rat sim
+> =
+
+>  =C2=A0=C2=A0=C2=A0=C2=A0Revision =3D M9615A-CETWTBZM-6.0.15255=C2=A0 1=
+=C2=A0 [May 13 2016 01:00:00]
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Type =3D hardware
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Manufacturer =3D QUALCOMM INCORPORATED
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Powered =3D 1
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Model =3D SIMCOM_SIM7100E
+> =
+
+>  =C2=A0=C2=A0=C2=A0 SystemPath =3D =
+
+> /sys/devices/soc0/soc/30800000.aips-bus/30b30000.usb/ci_hdrc.2/usb3/3-1/3=
+-1.3
+> =
+
+>  =C2=A0=C2=A0=C2=A0 Lockdown =3D 0
+> =
+
+> I looked into the source code of ofono. Gobi and sim7100 both are =
+
+> implemented as plugin. From the source code (plugins/udevng.c) it looks =
+
+> like the module should use sim7100 plugin. But it is not always the case =
+
+> for me.
+> =
+
+> { "gobi",=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 "qmi_wwan"=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 },
+> =
+
+> { "gobi",               =
+
+> "qcserial"=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 },
+> =
+
+> { "sim7100",=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 "option",=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 "1e0e", "90=
+01"=C2=A0 },
+> =
+
+> Further if the module is identified as gobi, I am able to connect to the =
+
+> internet. If it is identified as sim7100, the module gets disconnected =
+
+> and connected again (reset) whenever I am trying to activate the context.
+> =
+
+
+So it seems that the device provides interfaces that attach to "option" =
+
+and "qmi_wwan" drivers.  The ordering of these interfaces being =
+
+announced by the kernel isn't defined, so ofono ends up picking the =
+
+driver that matches the first interface that it recognizes... hence you =
+
+get sometimes sim7100 and sometimes gobi.
+
+You'll want to add something like this:
+
 { "sim7100",        "option",             "1e0e", "9001"  },
+{ "sim7100",        "qmi_wwan",           "1e0e", "9001"  },
 
-Further if the module is identified as gobi, I am able to connect to the in=
-ternet. If it is identified as sim7100, the module gets disconnected and co=
-nnected again (reset) whenever I am trying to activate the context.
+With that you'll be prevented from being directed to the gobi driver. =
 
-May I know what is the issue here and any idea on how to fix this issue wil=
-l be helpful.
+After that you'll need to fiddle a bit with setup_sim7100 in order to =
 
+get it to pass the qmi interfaces through to the gobi driver.  See =
 
-Mit freundlichen Gr=C3=BC=C3=9Fen / Best regards
+setup_quectelqmi for something similar.
 
-Vinothkumar Eswaran
-BEG-PT/PJ-EL
-
+Hope that helps,
+Jonas
 
 
---===============6901161152537238546==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+> May I know what is the issue here and any idea on how to fix this issue =
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
-bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD1pc28tODg1OS0xIj4KPG1ldGEgbmFtZT0iR2VuZXJh
-dG9yIiBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxNSAoZmlsdGVyZWQgbWVkaXVtKSI+CjxzdHls
-ZT48IS0tCi8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OiJD
-YW1icmlhIE1hdGgiOwoJcGFub3NlLTE6MiA0IDUgMyA1IDQgNiAzIDIgNDt9CkBmb250LWZhY2UK
-CXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQov
-KiBTdHlsZSBEZWZpbml0aW9ucyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNv
-Tm9ybWFsCgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZTox
-MS4wcHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsc2Fucy1zZXJpZjt9CmE6bGluaywgc3Bhbi5N
-c29IeXBlcmxpbmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjojMDU2M0MxOwoJdGV4
-dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xs
-b3dlZAoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOiM5NTRGNzI7Cgl0ZXh0LWRlY29y
-YXRpb246dW5kZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlwZTpwZXJz
-b25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLHNhbnMtc2VyaWY7Cgljb2xvcjp3
-aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9
-CkBwYWdlIFdvcmRTZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBw
-dCA3Mi4wcHQgNzIuMHB0IDcyLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0
-aW9uMTt9Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlZGVmYXVs
-dHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1b
-aWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CjxvOmlkbWFw
-IHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZd
-LS0+CjwvaGVhZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9IiMwNTYzQzEiIHZsaW5rPSIjOTU0
-RjcyIj4KPGRpdiBjbGFzcz0iV29yZFNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+SGks
-PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsg
-Rm9yIG9uZSBvZiB0aGUgSU9UIHByb2plY3QsIEkgYW0gdXNpbmcgU0lNNzEwMEUgbWluaSBQQ0ll
-IG1vZHVsZS4gSSBhbSB1c2luZyBjb25ubWFuKDEuMzYpIGFuZCBvZm9ubygxLjI2KSB0byBlc3Rh
-Ymxpc2ggY2VsbHVsYXIgY29ubmVjdGlvbi4gSSBhbSBzZWVpbmcgdGhhdCB0aGUgc2FtZSBtb2R1
-bGUgaXMgc29tZXRpbWVzIGlkZW50aWZpZWQgYXMgZ29iaSBhbmQgc29tZXRpbWVzCiBhcyBzaW03
-MTAwIGJ5IG9mb25vLiAmbmJzcDtBdHRhY2hlZCB0aGUgbG9ncyBmb3IgcmVmZXJlbmNlOjxvOnA+
-PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+IyBsc3VzYjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9y
-bWFsIj5CdXMgMDAzIERldmljZSAwMDg6IElEIDFlMGU6OTAwMSBRdWFsY29tbSAvIE9wdGlvbjxv
-OnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvcD4K
-PHAgY2xhc3M9Ik1zb05vcm1hbCI+IyAvdXNyL2xpYi9vZm9uby90ZXN0L2xpc3QtbW9kZW1zPG86
-cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPlsgL3NpbTcxMDBfMCBdPG86cD48L286
-cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBUeXBlID0gaGFy
-ZHdhcmU8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5i
-c3A7IEVtZXJnZW5jeSA9IDA8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5i
-c3A7Jm5ic3A7Jm5ic3A7IE1vZGVsID0gU0lNQ09NX1NJTTcxMDBFPG86cD48L286cD48L3A+Cjxw
-IGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBTZXJpYWwgPSA4NjY4MDIwMjE1
-MTcwNDI8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5i
-c3A7IEludGVyZmFjZXMgPSBvcmcub2Zvbm8uU21hcnRNZXNzYWdpbmcgb3JnLm9mb25vLlB1c2hO
-b3RpZmljYXRpb24gb3JnLm9mb25vLk1lc3NhZ2VNYW5hZ2VyIG9yZy5vZm9uby5OZXR3b3JrUmVn
-aXN0cmF0aW9uIG9yZy5vZm9uby5Db25uZWN0aW9uTWFuYWdlciBvcmcub2Zvbm8uUGhvbmVib29r
-IG9yZy5vZm9uby5DYWxsTWV0ZXIgb3JnLm9mb25vLlN1cHBsZW1lbnRhcnlTZXJ2aWNlcyBvcmcu
-b2Zvbm8uQ2FsbEJhcnJpbmcKIG9yZy5vZm9uby5DYWxsU2V0dGluZ3Mgb3JnLm9mb25vLkNhbGxG
-b3J3YXJkaW5nIG9yZy5vZm9uby5NZXNzYWdlV2FpdGluZyBvcmcub2Zvbm8uQWxsb3dlZEFjY2Vz
-c1BvaW50cyBvcmcub2Zvbm8uVm9pY2VDYWxsTWFuYWdlciBvcmcub2Zvbm8uU2ltTWFuYWdlcgo8
-bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7U3lzdGVtUGF0aCA9IC9zeXMvZGV2aWNlcy9zb2MwL3NvYy8zMDgwMDAwMC5haXBzLWJ1cy8z
-MGIzMDAwMC51c2IvY2lfaGRyYy4yL3VzYjMvMy0xLzMtMS4zPG86cD48L286cD48L3A+CjxwIGNs
-YXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBNYW51ZmFjdHVyZXIgPSBTSU1DT00g
-SU5DT1JQT1JBVEVEPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZu
-YnNwOyZuYnNwOyBPbmxpbmUgPSAxPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwi
-PiZuYnNwOyZuYnNwOyZuYnNwOyBQb3dlcmVkID0gMTxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0i
-TXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgRmVhdHVyZXMgPSBzbXMgbmV0IGdwcnMgdXNz
-ZCBzaW0gPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZu
-YnNwOyZuYnNwO1JldmlzaW9uID0gNDUzNEIwNlNJTTcxMDBFPG86cD48L286cD48L3A+CjxwIGNs
-YXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBMb2NrZG93biA9IDA8bzpwPjwvbzpw
-PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNz
-PSJNc29Ob3JtYWwiPiMgL3Vzci9saWIvb2Zvbm8vdGVzdC9saXN0LW1vZGVtczxvOnA+PC9vOnA+
-PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5bIC9nb2JpXzAgXTxvOnA+PC9vOnA+PC9wPgo8cCBj
-bGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgU2VyaWFsID0gODY2ODAyMDIxNTE3
-MDQyPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNw
-OyBJbnRlcmZhY2VzID0gb3JnLm9mb25vLkxvbmdUZXJtRXZvbHV0aW9uIG9yZy5vZm9uby5TbWFy
-dE1lc3NhZ2luZyBvcmcub2Zvbm8uUHVzaE5vdGlmaWNhdGlvbiBvcmcub2Zvbm8uTWVzc2FnZU1h
-bmFnZXIgb3JnLm9mb25vLk5ldHdvcmtSZWdpc3RyYXRpb24gb3JnLm9mb25vLkNvbm5lY3Rpb25N
-YW5hZ2VyIG9yZy5vZm9uby5TdXBwbGVtZW50YXJ5U2VydmljZXMgb3JnLm9mb25vLk5ldHdvcmtN
-b25pdG9yCiBvcmcub2Zvbm8uUmFkaW9TZXR0aW5ncyBvcmcub2Zvbm8uTWVzc2FnZVdhaXRpbmcg
-b3JnLm9mb25vLkFsbG93ZWRBY2Nlc3NQb2ludHMgb3JnLm9mb25vLlNpbU1hbmFnZXIgb3JnLm9m
-b25vLlZvaWNlQ2FsbE1hbmFnZXIKPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwi
-PiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwO09ubGluZSA9IDE8bzpwPjwvbzpwPjwvcD4KPHAgY2xh
-c3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IEVtZXJnZW5jeSA9IDA8bzpwPjwvbzpw
-PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IEZlYXR1cmVzID0g
-c21zIG5ldCBncHJzIHVzc2QgcmF0IHNpbSA8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7UmV2aXNpb24gPSBNOTYxNUEtQ0VUV1RCWk0t
-Ni4wLjE1MjU1Jm5ic3A7IDEmbmJzcDsgW01heSAxMyAyMDE2IDAxOjAwOjAwXTxvOnA+PC9vOnA+
-PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgVHlwZSA9IGhhcmR3
-YXJlPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNw
-OyBNYW51ZmFjdHVyZXIgPSBRVUFMQ09NTSBJTkNPUlBPUkFURUQ8bzpwPjwvbzpwPjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IFBvd2VyZWQgPSAxPG86cD48L286
-cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBNb2RlbCA9IFNJ
-TUNPTV9TSU03MTAwRTxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsm
-bmJzcDsmbmJzcDsgU3lzdGVtUGF0aCA9IC9zeXMvZGV2aWNlcy9zb2MwL3NvYy8zMDgwMDAwMC5h
-aXBzLWJ1cy8zMGIzMDAwMC51c2IvY2lfaGRyYy4yL3VzYjMvMy0xLzMtMS4zPG86cD48L286cD48
-L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBMb2NrZG93biA9IDA8
-bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+
-CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkkgbG9va2VkIGludG8gdGhlIHNvdXJjZSBjb2RlIG9mIG9m
-b25vLiBHb2JpIGFuZCBzaW03MTAwIGJvdGggYXJlIGltcGxlbWVudGVkIGFzIHBsdWdpbi4gRnJv
-bSB0aGUgc291cmNlIGNvZGUgKHBsdWdpbnMvdWRldm5nLmMpIGl0IGxvb2tzIGxpa2UgdGhlIG1v
-ZHVsZSBzaG91bGQgdXNlIHNpbTcxMDAgcGx1Z2luLiBCdXQgaXQgaXMgbm90IGFsd2F5cyB0aGUg
-Y2FzZSBmb3IgbWUuPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5i
-c3A7PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj57ICZxdW90O2dvYmkmcXVvdDssJm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ICZxdW90O3FtaV93d2FuJnF1b3Q7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IH0sPG86cD48L286cD48L3A+CjxwIGNs
-YXNzPSJNc29Ob3JtYWwiPnsgJnF1b3Q7Z29iaSZxdW90OywmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsgJnF1b3Q7cWNzZXJpYWwmcXVvdDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsgfSw8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+eyAmcXVvdDtzaW03
-MTAwJnF1b3Q7LCZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyAmcXVv
-dDtvcHRpb24mcXVvdDssJm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ICZxdW90OzFlMGUmcXVvdDssICZxdW90Ozkw
-MDEmcXVvdDsmbmJzcDsgfSw8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86
-cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkZ1cnRoZXIgaWYgdGhlIG1v
-ZHVsZSBpcyBpZGVudGlmaWVkIGFzIGdvYmksIEkgYW0gYWJsZSB0byBjb25uZWN0IHRvIHRoZSBp
-bnRlcm5ldC4gSWYgaXQgaXMgaWRlbnRpZmllZCBhcyBzaW03MTAwLCB0aGUgbW9kdWxlIGdldHMg
-ZGlzY29ubmVjdGVkIGFuZCBjb25uZWN0ZWQgYWdhaW4gKHJlc2V0KSB3aGVuZXZlciBJIGFtIHRy
-eWluZyB0byBhY3RpdmF0ZSB0aGUgY29udGV4dC48bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPk1heSBJ
-IGtub3cgd2hhdCBpcyB0aGUgaXNzdWUgaGVyZSBhbmQgYW55IGlkZWEgb24gaG93IHRvIGZpeCB0
-aGlzIGlzc3VlIHdpbGwgYmUgaGVscGZ1bC48bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5i
-c3A7PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXpl
-OjEwLjBwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OyxzYW5zLXNlcmlmO2NvbG9yOmJs
-YWNrIj5NaXQgZnJldW5kbGljaGVuIEdy/N9lbiAvIEJlc3QgcmVnYXJkcwo8YnI+Cjxicj4KPGI+
-Vmlub3Roa3VtYXIgRXN3YXJhbjxicj4KQkVHLVBUL1BKLUVMPC9iPjxicj4KPGJyPgo8L3NwYW4+
-PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9w
-Pgo8L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+Cg==
+> will be helpful.
+> =
 
---===============6901161152537238546==--
+> Mit freundlichen Gr=C3=BC=C3=9Fen / Best regards
+> =
+
+> *Vinothkumar Eswaran
+> BEG-PT/PJ-EL*
+> =
+
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+>=20
+
+--===============0771202061607310077==--
 
