@@ -1,39 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============0844359281692275929=="
+Content-Type: multipart/mixed; boundary="===============8055056261713438779=="
 MIME-Version: 1.0
-From: Nandini Rebello <nandini.rebello@intel.com>
-Subject: [PATCH] test: Fix number of arguments check in change-pin
-Date: Tue, 27 Nov 2018 15:22:46 +0530
-Message-ID: <1543312366-24613-1-git-send-email-nandini.rebello@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] xmm7xxx: Adding case for SIM PIN locked state
+Date: Tue, 27 Nov 2018 08:44:39 -0600
+Message-ID: <c0bd01d1-f00b-26ee-968a-78d29507b62b@gmail.com>
+In-Reply-To: <1543311511-24386-1-git-send-email-nandini.rebello@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0844359281692275929==
+--===============8055056261713438779==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fix the number of arguments checked in second case of change-pin.
----
- test/change-pin | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Nandini,
 
-diff --git a/test/change-pin b/test/change-pin
-index 301c6ce..b8b1ad7 100755
---- a/test/change-pin
-+++ b/test/change-pin
-@@ -10,7 +10,7 @@ if len(sys.argv) =3D=3D 5:
- 	pin_type =3D sys.argv[2]
- 	old_pin =3D sys.argv[3]
- 	new_pin =3D sys.argv[4]
--elif len(sys.argv) =3D=3D 3:
-+elif len(sys.argv) =3D=3D 4:
- 	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
- 					'org.ofono.Manager')
- 	modems =3D manager.GetModems()
--- =
-
-2.7.4
+On 11/27/2018 03:38 AM, Nandini Rebello wrote:
+> Handling the case when SIM PIN is enabled for xmm7xxx modem.
+> ---
+>   plugins/xmm7xxx.c | 6 ++++++
+>   1 file changed, 6 insertions(+)
+> =
 
 
---===============0844359281692275929==--
+Applied, thanks.
+
+Regards,
+-Denis
+
+--===============8055056261713438779==--
 
