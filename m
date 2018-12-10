@@ -1,41 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============2880993763408943159=="
+Content-Type: multipart/mixed; boundary="===============5541694761368677160=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 2/2] coex: modified ofono.conf for coex agent
-Date: Sun, 09 Dec 2018 18:57:13 +0530
-Message-ID: <1544362033-26966-1-git-send-email-antara.borwankar@intel.com>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: GPIO power management
+Date: Mon, 10 Dec 2018 15:14:02 +0100
+Message-ID: <a3c380cc-9431-248f-2de6-9a5328432027@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2880993763408943159==
+--===============5541694761368677160==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Antara <antara.borwankar@intel.com>
+Hi,
 
-Added coex agent interface to ofono.conf
----
- src/ofono.conf | 1 +
- 1 file changed, 1 insertion(+)
+I previously submitted pacthes[1] for the Quectel M95 modem, and now =
 
-diff --git a/src/ofono.conf b/src/ofono.conf
-index 61e0bde..45cb15c 100644
---- a/src/ofono.conf
-+++ b/src/ofono.conf
-@@ -16,6 +16,7 @@
-     <allow send_interface=3D"org.ofono.PositioningRequestAgent"/>
-     <allow send_interface=3D"org.ofono.HandsfreeAudioAgent"/>
-     <allow send_interface=3D"org.ofono.NetworkMonitorAgent"/>
-+    <allow send_interface=3D"org.ofono.intel.LteCoexistenceAgent"/>
-   </policy>
- =
+finally have the time needed to address the review comments.
 
-   <policy at_console=3D"true">
+In the meantime, my hardware has changed (modem chip remains the same =
+
+though), and so I would like to add more generic power management the =
+
+ofono driver.
+
+I would assume that I cannot be the first with the urge to control modem =
+
+power using GPIOs (found one example in ofono/plugins/nokia-gpio.c), so =
+
+it might make sense to add GPIO helper in a common object, and use =
+
+libgpiod in there?
+
+If that would be acceptable, a way to configure such GPIO numbers/names =
+
+is needed. Should this be done with an OFONO_CONFIG env attribute in the =
+
+udev rules?
+
+Actually, I face a similar configuration issue with UART flow control. =
+
+My first board uses the M95 modem without flow control, and the new =
+
+board enables flow control. This should also be a configuration =
+
+parameter somewhere in the stack.
+
+[1] https://lists.ofono.org/pipermail/ofono/2018-August/018293.html
+
 -- =
 
-1.9.1
+Kind regards,
+Martin Hundeb=C3=B8ll
 
-
---===============2880993763408943159==--
+--===============5541694761368677160==--
 
