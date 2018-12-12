@@ -1,48 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============4315434391637155207=="
+Content-Type: multipart/mixed; boundary="===============6163945331115132696=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: CAT-M1 and NB-IoT features support in ofono
-Date: Wed, 12 Dec 2018 09:37:52 -0600
-Message-ID: <9c446640-a545-c90d-8b36-c4872c73a9de@gmail.com>
-In-Reply-To: <VI1PR08MB37101D219233D9326338267FEBA70@VI1PR08MB3710.eurprd08.prod.outlook.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH] sim: Sim PIN1 cache upon modem reset/crash
+Date: Wed, 12 Dec 2018 17:22:26 +0100
+Message-ID: <CAKSBH7Fb3c9bpkRM3GGYypowLR_1yo8PzBa8LeDDtzenEWvPFQ@mail.gmail.com>
+In-Reply-To: <9f667c8d-02bf-e3e9-cec2-5408035dd699@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4315434391637155207==
+--===============6163945331115132696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lauri,
+Hi Denis,
 
-On 12/12/2018 05:46 AM, Lauri Piikivi wrote:
-> =
+On Wed, Dec 12, 2018 at 4:35 PM Denis Kenzior <denkenz@gmail.com> wrote:
+>
+> Hi Giacinto,
+>
+> No top-posting on this mailing list please.
+>
+> On 12/12/2018 01:59 AM, Giacinto Cifelli wrote:
+> > No, absolutely not!
+> > It is forbidden to do this by the 3GPP!
+> >
+>
+> Can you cite the 3GPP specification number and section that this would
+> be violating?
 
-> Hi,
-> =
+I will check this, but I remember that it is forbidden for at least two rea=
+sons:
+- the PIN can be changed (in another phone/application), and then it
+would be blocked
+  this would make the pin cache feature also quite complicated,
+because it must be deleted when the presentation is wrong, and if the
+SIM is blocked, then also the application is more complicated because
+it must consider that it needs to unblock the PIN under some
+conditions. Also, if the PIN is changed by ofono, it must also be
+tracked by the caching feature.
+- the PIN presentation is prerogative and privilege of the user. It
+cannot be delegated to the ME. Otherwise there would be no need for a
+PIN at all. I have to say, I have seen several SIM with the PIN
+disabled (especially in the US), but the user can always enable it if
+he likes, and then wouldn't welcome that the device can be used
+without his consent.
+  from an operator point of view, it attributes the responsibility to
+network access and use to the user, just like with the credit cards
+chip&pin.
 
-> I wanted to verify whether ofono has implementation, or has plans, to =
+>
+> Regards,
+> -Denis
 
-> support the 3GPP CAT-M1 and NB-IoT features? I could not find this on a =
-
-> quick browse of the API.
-> =
-
-> Especially the power-save-mode, adjusting active time and eDRX and the =
-
-> rate control support are of interest.
-> A bit further in future the need for control plane data, both IP and =
-
-> non-IP, seems to grow. Non-IP might be a bit wider issue than just ofono =
-
-> adaptation, is there any work being done on that in some other projects?
-> =
-
-
-I'm not aware of anyone working on the above features.
-
-Regards,
--Denis
-
---===============4315434391637155207==--
+--===============6163945331115132696==--
 
