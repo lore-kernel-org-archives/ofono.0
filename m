@@ -1,39 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============6712878007191145976=="
+Content-Type: multipart/mixed; boundary="===============3400066392332239136=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 2/2] xmm7modem: modified ofono.conf for coex agent
-Date: Wed, 12 Dec 2018 15:45:00 +0530
-Message-ID: <1544609700-14214-1-git-send-email-antara.borwankar@intel.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: [PATCH] sim: Sim PIN1 cache upon modem reset/crash
+Date: Wed, 12 Dec 2018 11:12:21 +0100
+Message-ID: <CAKSBH7HVvHBwLAyTo_a15n7-8XqmY+igK9pA0z7A-GcwxMcJsg@mail.gmail.com>
+In-Reply-To: <20181212100443.GB13437@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6712878007191145976==
+--===============3400066392332239136==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Added coex agent interface to ofono.conf
----
- src/ofono.conf | 1 +
- 1 file changed, 1 insertion(+)
+On Wed, Dec 12, 2018 at 11:04 AM Pavel Machek <pavel@ucw.cz> wrote:
+>
+> On Wed 2018-12-12 08:59:34, Giacinto Cifelli wrote:
+> > No, absolutely not!
+> > It is forbidden to do this by the 3GPP!
+>
+> Checking if 3GPP is allowed to make laws in this country.... no.
+>
+> :-)
+>
+> I'm not sure if it makes sense by default, but... I don't think 3GPP
+> has or should have power over ofono project.
 
-diff --git a/src/ofono.conf b/src/ofono.conf
-index 61e0bde..45cb15c 100644
---- a/src/ofono.conf
-+++ b/src/ofono.conf
-@@ -16,6 +16,7 @@
-     <allow send_interface=3D"org.ofono.PositioningRequestAgent"/>
-     <allow send_interface=3D"org.ofono.HandsfreeAudioAgent"/>
-     <allow send_interface=3D"org.ofono.NetworkMonitorAgent"/>
-+    <allow send_interface=3D"org.ofono.intel.LteCoexistenceAgent"/>
-   </policy>
- =
+the user owns the pin, not ofono, and can decide to disable it -
+that's the mechanism.
+Besides, patching in ofono modem bugs is not the way: fix the bugs instead.
 
-   <policy at_console=3D"true">
--- =
+3GPP is constituted by operators and countries, who have also devised
+lots of certifications.
+If ofono goes against these, then it cannot be used in any
+3GPP-compliant network.
 
-1.9.1
+>                                                                 Pavel
 
+Rgds,
+Giacinto
 
---===============6712878007191145976==--
+>
+>
+> > On Wed, Dec 12, 2018 at 7:46 AM Nandini Rebello
+> > <nandini.rebello@intel.com> wrote:
+> > >
+> > > Adding SIM PIN caching feature to oFono. oFono now caches the SIM PIN=
+1 type
+> > > against the ICCID throughout its lifetime in a link list and enters
+> > > implicitly upon modem reset/crash.
+> > >
+> > > Handles cases of incorrect pin and sim pin changed externally.
+> > >
+> > > Adding to all modems by default.
+
+--===============3400066392332239136==--
 
