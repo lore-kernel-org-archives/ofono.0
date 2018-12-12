@@ -1,58 +1,165 @@
-Content-Type: multipart/mixed; boundary="===============3400066392332239136=="
+Content-Type: multipart/mixed; boundary="===============5503247237720921162=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH] sim: Sim PIN1 cache upon modem reset/crash
-Date: Wed, 12 Dec 2018 11:12:21 +0100
-Message-ID: <CAKSBH7HVvHBwLAyTo_a15n7-8XqmY+igK9pA0z7A-GcwxMcJsg@mail.gmail.com>
-In-Reply-To: <20181212100443.GB13437@amd>
+From: Lauri Piikivi <Lauri.Piikivi@arm.com>
+Subject: CAT-M1 and NB-IoT features support in ofono
+Date: Wed, 12 Dec 2018 11:46:55 +0000
+Message-ID: <VI1PR08MB37101D219233D9326338267FEBA70@VI1PR08MB3710.eurprd08.prod.outlook.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3400066392332239136==
+--===============5503247237720921162==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Dec 12, 2018 at 11:04 AM Pavel Machek <pavel@ucw.cz> wrote:
->
-> On Wed 2018-12-12 08:59:34, Giacinto Cifelli wrote:
-> > No, absolutely not!
-> > It is forbidden to do this by the 3GPP!
->
-> Checking if 3GPP is allowed to make laws in this country.... no.
->
-> :-)
->
-> I'm not sure if it makes sense by default, but... I don't think 3GPP
-> has or should have power over ofono project.
 
-the user owns the pin, not ofono, and can decide to disable it -
-that's the mechanism.
-Besides, patching in ofono modem bugs is not the way: fix the bugs instead.
+Hi,
 
-3GPP is constituted by operators and countries, who have also devised
-lots of certifications.
-If ofono goes against these, then it cannot be used in any
-3GPP-compliant network.
+I wanted to verify whether ofono has implementation, or has plans, to suppo=
+rt the 3GPP CAT-M1 and NB-IoT features? I could not find this on a quick br=
+owse of the API.
 
->                                                                 Pavel
+Especially the power-save-mode, adjusting active time and eDRX and the rate=
+ control support are of interest.
+A bit further in future the need for control plane data, both IP and non-IP=
+, seems to grow. Non-IP might be a bit wider issue than just ofono adaptati=
+on, is there any work being done on that in some other projects?
 
-Rgds,
-Giacinto
+BR
+-Lauri Piikivi
 
->
->
-> > On Wed, Dec 12, 2018 at 7:46 AM Nandini Rebello
-> > <nandini.rebello@intel.com> wrote:
-> > >
-> > > Adding SIM PIN caching feature to oFono. oFono now caches the SIM PIN=
-1 type
-> > > against the ICCID throughout its lifetime in a link list and enters
-> > > implicitly upon modem reset/crash.
-> > >
-> > > Handles cases of incorrect pin and sim pin changed externally.
-> > >
-> > > Adding to all modems by default.
 
---===============3400066392332239136==--
+
+IMPORTANT NOTICE: The contents of this email and any attachments are confid=
+ential and may also be privileged. If you are not the intended recipient, p=
+lease notify the sender immediately and do not disclose the contents to any=
+ other person, use it for any purpose, or store or copy the information in =
+any medium. Thank you.
+
+--===============5503247237720921162==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
+b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8c3R5bGUgaWQ9Im1zLW91dGxv
+b2staW9zLXN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+aHRtbCB7CmJhY2tncm91bmQtY29sb3I6IHRy
+YW5zcGFyZW50Owp9Cgpib2R5IHsKY29sb3I6ICMzMzM7CmxpbmUtaGVpZ2h0OiAxNTAlOwpmb250
+LWZhbWlseTogIi1hcHBsZS1zeXN0ZW0iLCAiSGVsdmV0aWNhTmV1ZSI7Cm1hcmdpbjogMDsKfQoK
+Lm1zLW91dGxvb2staW9zLXJlZmVyZW5jZS1leHBhbmQgewpkaXNwbGF5OiBibG9jazsKY29sb3I6
+ICM5OTk7CnBhZGRpbmc6IDIwcHggMHB4Owp0ZXh0LWRlY29yYXRpb246IG5vbmU7Cn0KCi5tcy1v
+dXRsb29rLWlvcy1hdmFpbGFiaWxpdHktY29udGFpbmVyIHsKbWF4LXdpZHRoOiA1MDBweDsKbWFy
+Z2luOiBhdXRvOwpwYWRkaW5nOiAxMnB4IDE1cHggMTVweCAxNXB4Owpib3JkZXI6IDFweCBzb2xp
+ZCAjQzdFMEY0Owpib3JkZXItcmFkaXVzOiA0cHg7Cn0KCi5tcy1vdXRsb29rLWlvcy1hdmFpbGFi
+aWxpdHktY29udGFpbmVyID4gLm1zLW91dGxvb2staW9zLWF2YWlsYWJpbGl0eS1kZWxldGUtYnV0
+dG9uIHsKd2lkdGg6IDI1cHg7CmhlaWdodDogMjVweDsKcmlnaHQ6IC0xMnB4Owp0b3A6IC0xMnB4
+OwpiYWNrZ3JvdW5kLWltYWdlOiB1cmwoImRhdGE6aW1hZ2UvcG5nO2Jhc2U2NCxpVkJPUncwS0dn
+b0FBQUFOU1VoRVVnQUFBRXNBQUFCTENBWUFBQUE0VG5ycUFBQUFBWE5TUjBJQXJzNGM2UUFBQ3hw
+SlJFRlVlQUhsbkZ1TVhsVVZ4L2ZjT3pOdHAweW5GMFU3aFdLckVtS0xvc1pFalVaOU1nWklRQk5D
+MHVBdEpyNzQ1b09KSVQ3NHhnc2tKa1FiQWxRTkptQk1mTkRFRzBZakVDN0dJQlFaNklBSTAwNUw3
+OU81Ky8rZGZ1dDBmNWR6enQ3bnU4dzM3VXJXdDg5M3p0NXJyL1UvZTYrekwrdWNIcmNHdExxNjJx
+OXFkNGdueFRlS2I2a2NjMjY3ZUVJOEt6NG1uaEZQaTU4UnYxZzVudW5wNlZuUzhaVkhBcWRIUENr
+K0tQNnp1QldFSE9STmludldOV29ZSU40cS9vNzRtTGlkaEh6cW9iNzFBeHpLaWo4Zy9wMTRMWWg2
+cWI5N1FVTTU4VDd4MzhUZFFPaUJQdDBGbWhRYUVmOU0zSTJFWGlOcjd0T2tCSzNwVnZHQ3VKc0ov
+ZEN6cVZiV1d4WnhWVHlnc28rSW54QnozTTJFZnVqNVNFWHZVcnFXUWxvVjdsUnRUNHZmWDZyV3RT
+MzBwcXIvdU1acDc4U3FFUTJXZ1BxUUt2bW51S1d0YVduRnVhV1ZWYmNpWGw1MXJrK2E5ZmIydVA2
+RVk4MHF6TCtvSEI4UllDOFY1dlF5UklFbG9ENnRzazk2NVVzZEFzeVorV1YzNXVLeU96Ky80dVow
+WWdtRU1xaGZ5QTMzOTdyUm9WNjNlVU9mMnp6VUp4QXpNc2VkL293QSsydG9rV0N3bWdWS0RjYWR2
+TERzWnM4dnV0TVhWNXpraGVwWWwwOEd1ckVOdlc1aWRNQ05qL1E1TmI1bUtCaXdvR29xWGUvZlpU
+UUNrbU5ubDl4L1R5KzR4WnpXMHllTEI5V0M2SHAwUWJMU0pSZDBzQXpTR1RTZ3pPOGJHM1RiTi9X
+N0lHTWF5L2x3U0pjc2xDK2djT1p2aUtOOUZDM3BqVk1MN3VLaStsME5EYWtmMFNxMkRQZTVrWUZl
+aDlGWkJNZ1hKT1BVM0hMU091ZnB4elcwUVRKMmJSbE1aTlpjQ3ZtTEQ5c2x3SEtkZnJhR0tpMmdB
+R2hLSFBYVW0xdGNkVk1uNXQwNStTV2ZNR2piYUwrN1JpQUJVRmtDdUhkMUk0NmZYNnE3RVJ2bHov
+WnNIWExEQTdtbU5hcWFwK1FlQVFad0RTbFRvb0RpR3VPb3V4cVd6RGpKM1g5MWRqNTVzbGtXV3My
+MTZpbzdtdXNxSmk1TjZad3o2dUp2MVhSeG5xQTNUQXdsclRiTkhIWndXTm51Rm1BTiszMGVXTGVx
+SUFPNVlIcjd6S0s2M1dMcXZQRkRPemNOdVBlT0RTUitLRmhRWkViODIvOU9MN3Azemk2bS9rMEdx
+MXNPdVBkc2p2WWV0Nm5zcnh1cDBCQXN0U3JtVXFmRVFUVnhHMTQ3c2VDT243dmNndWx5KzdadEtO
+TWRHdWtaZEk3dWYrVDR4YXF1dVczamdMdCs2MkNNODhlSUxRTHNRbTJsZFk2ajB2M3VWOFlnb0JC
+WUM5U1l4a0kzN1J6dUtGRG9nWitpWHVvMzRnYWlYd1JoOS8wVkhLcUsxYlVzWmRxbkhDOVg1Y3I1
+UTllYmZ2ZXlNblM3M2VPRE9TVTZjK25veVlXa1cxcHRrOWNNeG5iSkQ2cDFIYkh5cEZVdHE0TG1J
+VDlEM2pIT0hCOWwxQzFBb1E4M0RIMk0wQk45SStoUWJldXFBa3VDYmhCL0trUWcvb0dubmdRbTJX
+bjYzZENpZk4zUng3b2tlcUl2ZWdjU09JQkhTaWxZRlJRZlNLOFVIRENPWXVJTDRjejN5cGwzSTZF
+WCtrSG9pOTRSOUlEZnVsS3dKR0JjL0tVUVFZek1iY0RKOElDblhwOHZLVVJJaC9LZzF5WDlMcmxu
+OUViL1FBSVBjRW5JTi9GT081bVgwcGFZd2hqaEYwcU1scTE0UjFMMHEvWmZDeTY0TXpxWDRwS0FW
+V2xxOTRab3pxVFk1bnFNekJsd3JnZENUNXQvb2o5MkJOSzkxaFd0WmUxU3dXMUZoWEZSckI0WU1Z
+WEptZjlhdGlSbDd2dno1MmZkNC84NkdYTlhxMlRZSDFvRmNoNTlibForeU03bXAraUp2a2JZa2JP
+WVlkbEl3UVY4SE52bzBPY3VKZm0vOUhWYlpzRnBNdGNMcFYrK01PdnVQdnlmSlBzOW45anVmbnJu
+bnBoUmRWb05RSDNqc1NsMzZDbDI5bDBpNDY2YjJlMHZKdlJsU2tUTHdnN3NtUmk5UElETmtRQStE
+MW5MK25aT3h2UVNDM2RHckI3b1pnWFRjT1dKUkFFTXhlQUl2NUhVVXdzVUozMjVTYWFjSC9SRmJ5
+UGZIanVYa1I3a2ZLLzZJMDNzay96Skk1bzdLNXhHTExQRTBPMDNqVHRhbEZFc1lJMkFRdDV0a2h0
+RHZ0N1lFOWlOUHl1Y2twWHNqNFZVeG5xNUNpUlpXYmlMWFkvaXJ0TDF5Z0NXQlZTWnJvemU2QTlo
+RDNZRjBnNUtNUmNzSkRZWWpGamhMRU5sQUdzbFVLYXpyNzl2bDEzUFNDZUR3V0lYeG9pbDRMSVVB
+MWc3Z0VKdlgzL2ZyZ0tiYmdTc3ZRV1prc3RzVnhuRmRrRXJaMmtJWU8wQ0NoMTgvWDI3VEwrTTlC
+YkEycHB4TVQwTlRyYXZ4L1RHQm5kcGhoSUhlWUN4OHVrUER4RGZ6SENqVmozMHh3NEl1N3gyVUp2
+Vi96L0pjM1NUZjZiUnNVMll1Y1oyVmF2SUFFT2VqWnRJbjV3NnF4V0N1YlNhVmdKbFFyRmpyaklx
+eFQ3VzdRc29jZkNGWVBuN2RuWkhDZ1FIWHpiQS9LZGt1NEZDT2Q4TzM3NGN4WGZTRFlkek1pU1gv
+R2xCOFEwb2tsWi9IY0FldkdPUGRtU3FWZUUvNXd2dmViM0l3ak8rSGI1OU9RWEhBYXR1WWI2MlFB
+bkJ0U0p5LytQTXYvV3JxYXF1UndGYUdPZTUzbXJDTHhvRmVwWlp3RHBuaGJMU0VrMDJTMVRkZVhT
+dWRlWitDNHNkNmRkVmtIR0MwQUFqUWdZQzZCaGduUzNLNkRzL1lnOWFSWTJBd25lOS9QMzlwVWI2
+TVhyNWR2ajI1Y2lZQWF3VE9SbVNTOHdPQ1B1QmNJYTI4cENjS1BtVEJSUlRHS29xT3pVS1VRZjl6
+YWxqVjJYMlUxUjBHckJlS2NyRmRlS2pqSWcxYUlieWdMSU9RZG91d0h6OWZic0tiSG9HQktyMnhy
+SUtFRWhtRkxtbFpNV1NOQVFvSzlBdXdIejlmYnVzM296MHhXQ3dpTFl6aWxqd3R5SkpHZ09VRld3
+SFlMNytSQklHVXRJTm53M0pqRkNDTFNEaW8veW1IRksrREZBbXQ1V0FvYmZGZDJHUDN3aXN2b3gw
+cGxjRnBuWHh0WXdNNldsY0ZxR0pSc1JIeGRBVFdqTzNLUTNsWXFjd1dZQWhONFo4dmJISGM4VjVZ
+djRpbkpiTStqL2w1YlJyeEhBYUVVaEdhd21sT2UraEVBdVUxZEVJTUYrdTVjdEswUmU5alh4NzdG
+eEcraERucVo4Vnc2OHArUVhIZWNRNDd2bTNMcVJEaDkzalE5cVB1N3ltblZlV21UMmJGcXlaczhT
+Y1ZKeFhJT2NhUnRPaUFPcXIreWRDVzRjMks1YmMwWk9YZHFSWmVUaHc3VWhvOE81dWVxQ0J0Vkgx
+RTA4NW1xTmpjb2xJdTllOUN2ZXJ3c29Rcktqb21sNW5MUDJDZDZPdjA0ME8zSjA2THNWM0NLelZw
+QnZxZ0NsUFVKUWZVY0VXTzhEZ2pvaTc5VURvYVlOcDlNZU9RUG9oUUpIWGZCYkhEL05UUkRSRm9v
+S04ySWVMaUV5eFloMU4wZTl0NldtRS9oRnU0REVyNTRQMUI1ME1HczJ6NEU5VU1NUzBnZERFNWVZ
+RzlZbXNkdnlnRi9yWnhCbTkvUTJMZ2pwL3IrdnA0ellGUzAwTmMzOWNVRGk5VFBpMFRVRFo0WDFG
+Q25Vam9aZkZacUF2ZWtmUWQ2MExVaVlGcXlMZ1VhWFRsZVBjaE1nVXdxY2xMTWwzV3Z0dmhDWjJF
+NkVQZWtIb2liNFJFVDkvVjdGWGs4S1ZueXF3SkpCQnlJLzhESG5IYkNrUlBtMkUvK29Xd0dwalN0
+SFQzd0l6blhQU2UveFdSYjRxc0NvRkR5bDlxbkpjbUJCblR2aTBFWUM5TkxOMlBnd2ZSZjNvWVlS
+K2tmSHdZRkRudnhzK0ZEUklQYURNZkhRaWFKYkpjN1Uydkp2SDg1VVdCOThRTE5uT3FQNCtKZC9q
+T0pUVytnMExoZ2YyMU1OSGRlUU5DOEFSV0F5bWNISWY1WDhvc1ZaMDFiMjdBemdDN0hvbHo0bkgr
+QjlLREFLdnFyZkNEQmdCOWhVZFB5NE84bDlXanBSRnRxdm1mVU16WElCOVU4Y1AyditZRk9jZjh5
+WXIyMjdzVExIQ3dleGdYYjNKYXNBSXNCL29PSGdNWnVVc3hYaGEyaFgvanJRWjNDeGdKb2UxTFNM
+dUNDU0xmdnRlY3p1V3VBTlhPSzNLckRUNFpYSUVaQTRkc3FSWHV1UlBkRDNhaDJYSjVEd0FFczFD
+MTZNVjBoWHBrc3puV2dTTVh6MGoxdlorMThGcUUyQTQvWWZGVVU5Sks3L0c2WnVxdjlRWFF4cE5k
+d3B0MFlEdk44cDBzemhvWjZoUVlPY3lIRlpWdkRTZSs1WjlXOVJSQ3hzVTN5ZGVFbmN6dGVRclJ5
+MEJVU2dkRVAralM5SHFqdTluK1VnTEtMNmw5WFh4MFM0QnJUdS96RllEV3IvQU9pZytza2FnZGY4
+My8zekFPQlpRdk9yeVJURWYrRG9uYmlkMTVHdVMwZU9zV2xCQy9nc2w5aVcvTFA2QytQUGk2OFRO
+MHVzUzhFY3hINno0YmUycVpyUENHNVh2Q0ZpMUZRdThTWjFqNllkWFllQzlZdUx4aVp5R2ljUWx0
+cHVvUlBpRW1KVkx3cVBnWndYT3ROS08wdjhCelJBUFNGTk03SEVBQUFBQVNVVk9SSzVDWUlJPSIp
+OwpiYWNrZ3JvdW5kLXNpemU6IDI1cHggMjVweDsKYmFja2dyb3VuZC1wb3NpdGlvbjogY2VudGVy
+Owp9CgojbXMtb3V0bG9vay1pb3MtbWFpbi1jb250YWluZXIgewptYXJnaW46IDAgMCAwIDA7Cm1h
+cmdpbi10b3A6IDEyMDsKcGFkZGluZzogODsKfQoKI21zLW91dGxvb2staW9zLWNvbnRlbnQtY29u
+dGFpbmVyIHsKcGFkZGluZzogMDsKcGFkZGluZy10b3A6IDEyOwpwYWRkaW5nLWJvdHRvbTogMjA7
+Cn0KCi5tcy1vdXRsb29rLWlvcy1tZW50aW9uIHsKY29sb3I6ICMzMzM7CmJhY2tncm91bmQtY29s
+b3I6ICNmMWYxZjE7CmJvcmRlci1yYWRpdXM6IDRweDsKcGFkZGluZzogMCAycHggMCAycHg7CnBv
+aW50ZXItZXZlbnRzOiBub25lOwp0ZXh0LWRlY29yYXRpb246IG5vbmU7Cn0KCi5tcy1vdXRsb29r
+LWlvcy1tZW50aW9uLWV4dGVybmFsIHsKY29sb3I6ICNiYThmMGQ7CmJhY2tncm91bmQtY29sb3I6
+ICNmZGY3ZTc7Cn0KCi5tcy1vdXRsb29rLWlvcy1tZW50aW9uLWV4dGVybmFsLWNsZWFyLWRlc2ln
+biB7CmNvbG9yOiAjYmE4ZjBkOwpiYWNrZ3JvdW5kLWNvbG9yOiAjZjFmMWYxOwp9PC9zdHlsZT4K
+PG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgdXNlci1z
+Y2FsYWJsZT1ubywgaW5pdGlhbC1zY2FsZT0xLjAiPgo8L2hlYWQ+Cjxib2R5IHN0eWxlPSItd2Vi
+a2l0LXRhcC1oaWdobGlnaHQtY29sb3I6IHJnYmEoMCwgMCwgMCwgMCk7Ij4KPGRpdiBzdHlsZT0i
+ZGlyZWN0aW9uOiBsdHI7Ij4KPGRpdj48YnI+CjwvZGl2Pgo8ZGl2IHN0eWxlPSJkaXJlY3Rpb246
+IGx0cjsiPkhpLDwvZGl2Pgo8ZGl2IHN0eWxlPSJkaXJlY3Rpb246IGx0cjsiPjxicj4KPC9kaXY+
+CjxkaXYgc3R5bGU9ImRpcmVjdGlvbjogbHRyOyI+SSB3YW50ZWQgdG8gdmVyaWZ5IHdoZXRoZXIg
+b2Zvbm8gaGFzIGltcGxlbWVudGF0aW9uLCBvciBoYXMgcGxhbnMsIHRvIHN1cHBvcnQgdGhlIDNH
+UFAgQ0FULU0xIGFuZCBOQi1Jb1QgZmVhdHVyZXM/IEkgY291bGQgbm90IGZpbmQgdGhpcyBvbiBh
+IHF1aWNrIGJyb3dzZSBvZiB0aGUgQVBJLiZuYnNwOzwvZGl2Pgo8ZGl2IHN0eWxlPSJkaXJlY3Rp
+b246IGx0cjsiPjxicj4KPC9kaXY+CjxkaXYgc3R5bGU9ImRpcmVjdGlvbjogbHRyOyI+RXNwZWNp
+YWxseSB0aGUgcG93ZXItc2F2ZS1tb2RlLCBhZGp1c3RpbmcgYWN0aXZlIHRpbWUgYW5kIGVEUlgg
+YW5kIHRoZSByYXRlIGNvbnRyb2wgc3VwcG9ydCBhcmUgb2YgaW50ZXJlc3QuJm5ic3A7PC9kaXY+
+CjxkaXYgc3R5bGU9ImRpcmVjdGlvbjogbHRyOyI+QSBiaXQgZnVydGhlciBpbiBmdXR1cmUgdGhl
+IG5lZWQgZm9yIGNvbnRyb2wgcGxhbmUgZGF0YSwgYm90aCBJUCBhbmQgbm9uLUlQLCBzZWVtcyB0
+byBncm93LiBOb24tSVAgbWlnaHQgYmUgYSBiaXQgd2lkZXIgaXNzdWUgdGhhbiBqdXN0IG9mb25v
+IGFkYXB0YXRpb24sIGlzIHRoZXJlIGFueSB3b3JrIGJlaW5nIGRvbmUgb24gdGhhdCBpbiBzb21l
+IG90aGVyIHByb2plY3RzPzwvZGl2Pgo8ZGl2IHN0eWxlPSJkaXJlY3Rpb246IGx0cjsiPjxicj4K
+PC9kaXY+CjxkaXYgc3R5bGU9ImRpcmVjdGlvbjogbHRyOyI+QlI8L2Rpdj4KPGRpdiBzdHlsZT0i
+ZGlyZWN0aW9uOiBsdHI7Ij4tTGF1cmkgUGlpa2l2aTwvZGl2Pgo8ZGl2IHN0eWxlPSJkaXJlY3Rp
+b246IGx0cjsiPjxicj4KPC9kaXY+CjxkaXYgc3R5bGU9ImRpcmVjdGlvbjogbHRyOyI+PGJyPgo8
+L2Rpdj4KPGRpdj48YnI+CjwvZGl2Pgo8L2Rpdj4KSU1QT1JUQU5UIE5PVElDRTogVGhlIGNvbnRl
+bnRzIG9mIHRoaXMgZW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBhcmUgY29uZmlkZW50aWFsIGFu
+ZCBtYXkgYWxzbyBiZSBwcml2aWxlZ2VkLiBJZiB5b3UgYXJlIG5vdCB0aGUgaW50ZW5kZWQgcmVj
+aXBpZW50LCBwbGVhc2Ugbm90aWZ5IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRvIG5vdCBk
+aXNjbG9zZSB0aGUgY29udGVudHMgdG8gYW55IG90aGVyIHBlcnNvbiwgdXNlIGl0IGZvciBhbnkg
+cHVycG9zZSwKIG9yIHN0b3JlIG9yIGNvcHkgdGhlIGluZm9ybWF0aW9uIGluIGFueSBtZWRpdW0u
+IFRoYW5rIHlvdS4KPC9ib2R5Pgo8L2h0bWw+Cg==
+
+--===============5503247237720921162==--
 
