@@ -1,83 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============5378057870436327251=="
+Content-Type: multipart/mixed; boundary="===============0901435707611489213=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] sim: Sim PIN1 cache upon modem reset/crash
-Date: Thu, 13 Dec 2018 17:42:45 +0100
-Message-ID: <CAKSBH7EkFXpKCKxKwRZ8WmxGyOm7a4DjZYQecnA77crnYCwiew@mail.gmail.com>
-In-Reply-To: <b8877863-c2bf-84af-cf9b-307a942351dd@gmail.com>
+Date: Thu, 13 Dec 2018 11:31:03 -0600
+Message-ID: <47a977c9-5c9f-54e5-0a19-432b61a0abed@gmail.com>
+In-Reply-To: <CAKSBH7EkFXpKCKxKwRZ8WmxGyOm7a4DjZYQecnA77crnYCwiew@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5378057870436327251==
+--===============0901435707611489213==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Giacinto,
 
-On Thu, Dec 13, 2018 at 5:28 PM Denis Kenzior <denkenz@gmail.com> wrote:
->
-> Hi Giacinto,
->
-> >>>> Can you cite the 3GPP specification number and section that this wou=
-ld
->>>> be violating?
+> on the other hand, the sessions will be lost anyway, downloads and
+> streaming interrupted, due to the change of mobile IP, even if
+> the reboot would be fast.
+
+Hey, I'm not fully convinced this is a good idea either ;)
+
+But then to play devil's advocate:
+- TCP can already deal with network interruptions
+- Sane networks should issue the same IP
+- This has already been done before with good success
+
+Whether this is a good idea to do on the application processor is =
+
+another question.
+
+> =
+
 >>
->> 21.111 (USIM and IC card requirements), or
->> predecessors/successors.> I have taken the rel.7, whose paragraph 5.3
->> (User Data Stored in ME) mentions:
->>
->> "User related security codes such
->> as PIN and Unblock PIN may only be
->> stored by the ME during the
->> procedures involving such a code and shall
->> be discarded by the ME
->> immediately after completion of the procedure."
+>> So if we do proceed with this feature, it should try pretty hard to
+>> comply with the spirit of the cited section, even if it isn't complying
+>> with it in a literal sense.
+> =
 
-> Thanks for digging that up, this section should definitely be mentioned
-> in a comment in the patch or the commit description.
->
-> The question is really what to do and I can see both sides of the
-> argument.  So let me play devil's advocate:
->
-> If a firmware crashes on a device with a PIN lock and the user was
-> browsing the internet at that time, it would be quite intrusive to
-> interrupt the user and prompt them for a PIN (after all, they already
-> entered the PIN).  Additionally, if the PIN was stored for just this
-> case and the firmware reboots fast enough, a crash might not even be
-> noticed by the user at all.  Now one can argue that the firmware
-> shouldn't crash, and I agree, but realistically the chances of that
-> never happening are NIL.
+> I don't agree with this.
+> In the original intents, the PIN is shared through DBus,
+> with quite some risk to disclose it to still other applications.
 
-on the other hand, the sessions will be lost anyway, downloads and
-streaming interrupted, due to the change of mobile IP, even if
-the reboot would be fast.
+Please stop going off on tangents.  There is no more risk of exposing =
 
->
-> So if we do proceed with this feature, it should try pretty hard to
-> comply with the spirit of the cited section, even if it isn't complying
-> with it in a literal sense.
+the PIN through D-Bus with a properly setup D-Bus security policy than =
 
-I don't agree with this.
-In the original intents, the PIN is shared through DBus,
-with quite some risk to disclose it to still other applications.
+any other IPC mechanism you can think of.  In fact it is probably safer =
 
-And then, if you want to restore the status as before the reboot,
-maybe there were other PINs or keys presented.
-Should they be stored and managed too?
+than any IPC you can roll on your own.  If you want to discuss D-Bus =
 
-And in case of USB devices, they disappear and re-enum later.
-Should we think about storing the PIN non-volatile
-for supporting the feature for these devices???
+security issues, take it to the D-Bus mailing list.
 
-And should we have a timeout for the reboot?
+> =
 
->
-> Regards,
-> -Denis
+> And then, if you want to restore the status as before the reboot,
+> maybe there were other PINs or keys presented.
+> Should they be stored and managed too?
+
+Maybe? That is a question for the modem guys.
+
+> =
+
+> And in case of USB devices, they disappear and re-enum later.
+> Should we think about storing the PIN non-volatile
+> for supporting the feature for these devices???
+> =
+
+> And should we have a timeout for the reboot?
+> =
+
+
+timeouts are generally a bad idea since you can't control how long =
+
+something takes.  But yes, maybe the cache should also have an =
+
+expiration time set when the device is removed as well as the IMEI of =
+
+the device such that only one IMEI/ICCID/PIN combination can exist.
 
 Regards,
-Giacinto
+-Denis
 
---===============5378057870436327251==--
+--===============0901435707611489213==--
 
