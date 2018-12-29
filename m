@@ -1,78 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============1067124639012621000=="
+Content-Type: multipart/mixed; boundary="===============3167817779257128226=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Trouble compiling ... Re: ofono fails to compile on gcc-6.3
-Date: Sat, 29 Dec 2018 15:08:56 -0600
-Message-ID: <4bfc197c-f75c-89b3-09c2-2795978a33a4@gmail.com>
-In-Reply-To: <20181229203046.GA1949@amd>
+Subject: Re: Motorola motmdm support
+Date: Sat, 29 Dec 2018 15:16:08 -0600
+Message-ID: <e959006f-5f8d-8d25-b9d2-dbbcb6a5b073@gmail.com>
+In-Reply-To: <20181229094953.GA15358@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1067124639012621000==
+--===============3167817779257128226==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pavel,
 
-On 12/29/2018 02:30 PM, Pavel Machek wrote:
+On 12/29/2018 03:49 AM, Pavel Machek wrote:
 > Hi!
 > =
 
->>>>    CC       drivers/rilmodem/network-registration.o
->>>>    drivers/rilmodem/network-registration.c:40:32: error: unknown option
->>>>    after =E2=80=98#pragma GCC diagnostic=E2=80=99 kind [-Werror=3Dprag=
-mas]
->>>>     #pragma GCC diagnostic ignored "-Wrestrict"
->>>> cc1: error: unrecognized command line option =E2=80=98-Wno-format-trun=
-cation=E2=80=99
->>>>    [-Werror]
->>>>    cc1: all warnings being treated as errors
->>>>
->>>> I commented out #pragma, and this allows compilation to
->>>> continue... until I hit same issue in
->>>> drivers/rilmodem/call-forwarding.c:41:32:
->>
->> Yeah, I'm not sure what to do with these.  Marcel put in the #pragmas to
->> silence some warnings on GCC 8.x, but it seems GCC 6 doesn't know about
->> these #pragma directives and complains.
+> Motorola phones use "interesting" setup.
 > =
 
-> /* Test for GCC > 3.2.0 */
-> #if __GNUC__ > 3 || \
->      (__GNUC__ =3D=3D 3 && (__GNUC_MINOR__ > 2 || \
->                             (__GNUC_MINOR__ =3D=3D 2 && \
-> 			                           __GNUC_PATCHLEVEL__
-> 						   > 0))
-> #pragma...
-> #endif
+> There's qmi and "normal" (but very buggy) AT interface on
+> them. Unfortunately that uses USB and uses too much power (which is a
+> problem on phone).
 > =
 
-> ?
+> Plus there's /dev/motmdm1, motmdm3 and motmdm9, multiplexed over
+> serial line.
 
-Marcel is taking care of the build system so I let him comment, but that =
+Kernel 27.010 multiplexer or something else entirely?
 
-would be fine with me.  Maybe you want to send something like this to =
-
-the list as a patch?
-
-Of course the real fix is to rewrite rilmodem properly so none of this =
-
-is needed...
-
-> Would it be possible to get reasonable error message when ell is not
-> found?
 > =
 
-> "ell not found, you need to install it, please see README file"? It
-> took me a while to figure out...
+> It uses subset of AT commands (good) with slightly modified
+> protocol... it says ":OK" instead of "OK" and puts ~ before
+> unsolicited messages.
+
+Funny
+
+> =
+
+> Other major difference is that commands need to be sent to the right
+> device. It seems motmdm1 is for status and call control, and motmdm9
+> is for incoming sms.
+> =
+
+> I guess that right way to do this is to introduce
+> drivers/motorolamodem (or can we just have drivers/motorola?).
 > =
 
 
-Sounds like a good idea.  Marcel?
+For some weird historic reason we called the atom drivers and thus the =
+
+subdirectory housing the relevant sources with the 'modem' suffix.  So I =
+
+guess we should stick to that just to be consistent.
+
+We can have a separate discussion on whether it makes sense to drop the =
+
+'modem' suffix and what the implications are (probably none).  If we =
+
+decide to drop the suffix, then we should/will do it for all drivers.
 
 Regards,
 -Denis
 
---===============1067124639012621000==--
+--===============3167817779257128226==--
 
