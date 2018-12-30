@@ -1,92 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6640643162254277419=="
+Content-Type: multipart/mixed; boundary="===============2222973904813647874=="
 MIME-Version: 1.0
 From: Pavel Machek <pavel@ucw.cz>
 Subject: Re: Motorola motmdm support
-Date: Sun, 30 Dec 2018 23:33:30 +0100
-Message-ID: <20181230223330.GA31362@amd>
-In-Reply-To: <5950f965-effa-25ca-3533-de1b95923aa5@gmail.com>
+Date: Sun, 30 Dec 2018 23:39:59 +0100
+Message-ID: <20181230223958.GA32627@amd>
+In-Reply-To: <20181229094953.GA15358@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6640643162254277419==
+--===============2222973904813647874==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi!
 
-> >>How are you handling data connections?  PPP? Or is there some other pro=
-tocol
-> >>to transfer packets back and forth?
-> >
-> >All the data connections in this case are done using QMI over USB.
-> >
-> >And that probably explains why I have not seen any data related
-> >stuff on ts 27.010.
+> Motorola phones use "interesting" setup.
 > =
 
-> Ew.  So is everything related to packet services is running over QMI?
+> There's qmi and "normal" (but very buggy) AT interface on
+> them. Unfortunately that uses USB and uses too much power (which is a
+> problem on phone).
 > =
 
-> When Pavel explained that he wanted to use the weird squiggly AT commands=
-, I
-> assumed you wanted to run the packet services over AT as well.
-
-No idea about packet data for now. I currently run them over
-qmi... which means increased power consumption, I guess that's ok if
-data are active.
-
-
-> >>>>- GNSS/GPS is intended to be handled via oFono LocationReporting API.=
-  I
-> >>>>would recommend integrating this as intended...
-> >>>
-> >>>We have a standard kernel GNSS API now :) And we have /dev/gnss0
-> >>>already working for droid 4.
-> >>
-> >>That's great.  But I think my recommendation still stands.  You want GPS
-> >>state to be synchronized with the overall modem state, etc...
-> >
-> >Hmm sounds like ofono would benefit from using /dev/gnss0 in the
-> >long run though. I guess the situation is similar to having
-> >multiple computer mouse drivers earlier with their own interfaces
-> >vs standard /dev/input :)
+> Plus there's /dev/motmdm1, motmdm3 and motmdm9, multiplexed over
+> serial line.
 > =
 
-> Yep, agreed.  I already tried to nudge Pavel to propose something.
+> It uses subset of AT commands (good) with slightly modified
+> protocol... it says ":OK" instead of "OK" and puts ~ before
+> unsolicited messages.
 
-?
+Ok, turns out the setup is not that unusual, calypso also uses few
+different channels.
 
-I believe that kernel doing the multiplexing and "normal" /dev/gnss0
-being available to userspace is actually very nice solution.
-
-> >Oh, I think I forgot to answer your question regarding PM,
-> >there's nothing that the user space needs to except to avoid
-> >polling the /dev/motmdm* devices unnecessarily. And to type
-> >AT+SCRN=3D0 on /dev/motmdm1 when no notifications for signal
-> >strength and network status are needed.
-> >
-> =
-
-> Right, but since /dev/motmdm1 would in theory belong exclusively to oFono,
-> you probably still need some way of sending the screen 'off' command.  So=
- in
-> effect you're integrating power management with the telephony stack.
-
-I don't understand. Display power management should be separate from
-ofono?
-
-Tony: are there expected to be differences between motmdm1 and other
-ttys? It does not gatchat seems to work ok with ttyUSB4, but does not
-quite behave with motmdm1. Are the settings like ctsrts and baudrates
-used for something?
-
-Plus, it seems has its own subsystem, so
-this is needed:
-
-+       udev_enumerate_add_match_subsystem(enumerate, "motmdm");
-
-Best regards,
+This is where I got so far; yes, I'm probably doing everything wrong,
+but hey, at least motmdm1 is detected and in some cases I even get
+status messages...
 
 									Pavel
 -- =
@@ -95,16 +45,128 @@ Best regards,
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
 g.html
 
---===============6640643162254277419==
+--===============2222973904813647874==
+Content-Type: application/gzip
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="delme2.gz"
+
+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
+--===============2222973904813647874==
 Content-Type: application/pgp-signature
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="signature.asc"
 
 LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFsd3BSN29BQ2drUU1PZndhcFhiK3ZKNnpnQ2VKVUxRYThKNFltZzhWNHZxN1UzeS8wYUgK
-N3lJQW4zdUlWMUJPK2RxM0hkTkxFOG1CSXJPdVh2dG0KPWVSSHUKLS0tLS1FTkQgUEdQIFNJR05B
+QUFZRkFsd3BTVDRBQ2drUU1PZndhcFhiK3ZKL29BQ2dqNUNBU3NTWHZ4by9Od2s5WEVJMTQweDIK
+NTEwQW5qK01EOEt2WldXbmp4Q3hkam9pWDFyTHNHUDgKPWlaODIKLS0tLS1FTkQgUEdQIFNJR05B
 VFVSRS0tLS0tCg==
 
---===============6640643162254277419==--
+--===============2222973904813647874==--
 
