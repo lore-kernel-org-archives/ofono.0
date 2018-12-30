@@ -1,82 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============1870582134140037860=="
+Content-Type: multipart/mixed; boundary="===============9145119705663120897=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: [PATCH] document getting of ell, point people at useful docs
-Date: Sat, 29 Dec 2018 23:47:04 +0100
-Message-ID: <20181229224704.GA4451@amd>
-In-Reply-To: <20181229222430.GB28688@amd>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Motorola motmdm support
+Date: Sat, 29 Dec 2018 18:14:06 -0600
+Message-ID: <2e54ecb4-e104-5d1d-5e5c-274ee13b7d73@gmail.com>
+In-Reply-To: <20181229220856.GA28688@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1870582134140037860==
+--===============9145119705663120897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Currently there's README and HACKING... each describing part of what
-needs to be done to build ofono.
+Hi Pavel,
 
-Provide some cross-links and fix build example.
+>> Kernel 27.010 multiplexer or something else entirely?
+> =
 
-diff --git a/HACKING b/HACKING
-index 15ea291..b1bd599 100644
---- a/HACKING
-+++ b/HACKING
-@@ -45,7 +45,8 @@ bootstrap-configure since it could export development spe=
-cific settings.
- So the normal steps to checkout, build and install such a repository is
- like this:
- =
-
--  Checkout repository
-+  Checkout repositories
-+    # git clone git://git.kernel.org/pub/scm/libs/ell/ell.git
-     # git clone git://git.kernel.org/pub/scm/network/ofono/ofono.git
-     # cd ofono
- =
-
-diff --git a/README b/README
-index 45bb2e9..04a50a5 100644
---- a/README
-+++ b/README
-@@ -16,11 +16,14 @@ To configure run:
- 	./configure --prefix=3D/usr --mandir=3D/usr/share/man \
- 				--sysconfdir=3D/etc --localstatedir=3D/var
- =
-
--Configure automatically searches for all required components and packages.
-+Configure automatically searches for all required components and
-+packages, except ell, mentioned below.
- =
-
- To compile and install run:
- 	make && make install
- =
-
-+See "HACKING" file for details and step-by-step examples.
-+
- =
-
- Embedded Linux library
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> Kernel 27.010 multiplexer, AFAICT. Some of the endpoints are handled
+> in kernel (gps, audio mixer control).
+> =
 
 
--- =
+Who sets up the multiplexer? Kernel?
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+It might make your job easier if the oFono driver itself invoked the =
 
---===============1870582134140037860==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
+necessary magic to setup the multiplexer and handed off the devices as =
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFsd24rV2NBQ2drUU1PZndhcFhiK3ZJeVR3Q2ZZVG9WSHJ5MUYvMytEOUtHRHl6cGdYQWsK
-SlMwQW4xS00wNXVJeEJXb0N5amR5RHErWlE0RmlXRTgKPXlwbTIKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
+needed.  We used to have a driver like this, but not sure if it ever =
 
---===============1870582134140037860==--
+made it upstream.
+
+> =
+
+> One more question: I guess I'll need to implement this... Is there
+> another example of driver doing AT commands but on multiple file
+> descriptors? I could really use something to look at as a template..
+
+Any driver for a USB based device would be setup this way.  Each AT port =
+
+is a separate file, e.g. ttyUSB1, ttyACM2, etc.  The discovery is done =
+
+via udev.  See plugins/mbm.c or plugins/ublox.c or plugins/telit.c, etc.
+
+Assuming you don't want to setup the multiplexer in oFono, then the only =
+
+tricky part is the port setup.  udevng.c setup_serial_modem() assumes a =
+
+single port, so you might need to add some extra logic to setup the =
+
+ports via udev rules.
+
+Alternatively, simply use a config file specific to your driver.  See =
+
+for example how plugins/phonesim.c does this.
+
+Or, if it is an extremely platform specific driver, then just hardcode =
+
+it.  E.g. like plugins/calypso.c, which only works for the Freerunner.
+
+Regards,
+-Denis
+
+
+--===============9145119705663120897==--
 
