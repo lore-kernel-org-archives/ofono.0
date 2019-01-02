@@ -1,51 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============6795930169687802957=="
+Content-Type: multipart/mixed; boundary="===============3347677961771564423=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] provision: allow duplicate apn's from mbpi
-Date: Wed, 02 Jan 2019 12:36:59 -0600
-Message-ID: <f0ac37c3-3fcd-829d-fba2-e82d98ffaeb3@gmail.com>
-In-Reply-To: <20190102115053.79191-2-martin@geanix.com>
+Subject: Re: [PATCH v0] Fix voice call initialization problem
+Date: Wed, 02 Jan 2019 12:44:18 -0600
+Message-ID: <6741daac-090a-2fc8-50e4-f20e085558d9@gmail.com>
+In-Reply-To: <1546444142-28813-1-git-send-email-khaled.romdhani@ardia.com.tn>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6795930169687802957==
+--===============3347677961771564423==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Khaled,
 
-On 01/02/2019 05:50 AM, Martin Hundeb=C3=B8ll wrote:
-> Let the user/connection-manager decide what to do with duplicate apn
-> entries instead of bailing out with an error.
+On 01/02/2019 09:49 AM, Khaled ROMDHANI wrote:
+> when the voice call driver is probing, I noticed sometimes
+> a CME Error with the code =3D 4 (operation not supported)
+> related to AT commands "AT+CSSN=3D1,1" and "AT^SLCC=3D1".
+> =
+
+> In the current voice call implementation for Gemalto modems
+> the ofono_voicecall_create() is called on the gemalto_pre_sim().
+> The sim is not totaly readed by the module, it is not yet
+> online which is causing a sporadic problem at driver
+> intialization also when launching some outgoing/incoming calls.
+> =
+
+> This change moves the ofono_voicecall_create() to the
+> gemalto_post_online() to be sure that sim is well registred
+> and online.
+> =
+
+> Signed-off-by: khaled romdhani <khaled.romdhani@ardia.com.tn>
+
+No Signed-off-by for oFono please...
+
 > ---
->   plugins/provision.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>   plugins/gemalto.c | 16 ++++++++--------
+>   1 file changed, 8 insertions(+), 8 deletions(-)
+> =
 
-While seemingly trivial, this actually has a huge impact on user =
+> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+> index 2f84258..eb782a7 100644
+> --- a/plugins/gemalto.c
+> +++ b/plugins/gemalto.c
+> @@ -573,9 +573,6 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
+>   	ofono_devinfo_create(modem, 0, "atmodem", data->app);
+>   	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
+>   =
 
-experience.  The problem is that there's no good meta-data for the user =
+> -	ofono_modem_set_integer(modem, "GemaltoVtsQuotes", 1);
+> -	ofono_voicecall_create(modem, 0, "gemaltomodem", data->app);
+> -
+>   	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
+>   						data->app);
+>   =
 
-to make the decision as to which service is the one they want.
+> @@ -604,11 +601,6 @@ static void gemalto_post_sim(struct ofono_modem *mod=
+em)
+>   =
 
-Also, I'm not sure how this impacts connman?  In theory it is supposed =
+>   	ofono_ussd_create(modem, 0, "atmodem", data->app);
+>   =
 
-to auto-activate the internet context, and if there are multiple one of =
+> -	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
 
-these, I'm not sure if it gets confused?
+Do note that call_forwarding can be post_sim, but either works...
 
-The typical guidance is that if a database contains potential =
+> -	ofono_call_settings_create(modem, 0, "atmodem", data->app);
+> -	ofono_call_meter_create(modem, 0, "atmodem", data->app);
+> -	ofono_call_barring_create(modem, 0, "atmodem", data->app);
+> -
+>   	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x))
+>   		ofono_lte_create(modem, OFONO_VENDOR_GEMALTO,
+>   						"atmodem", data->app);
+> @@ -621,6 +613,14 @@ static void gemalto_post_online(struct ofono_modem *=
+modem)
+>   	DBG("%p", modem);
+>   =
 
-duplicates, then a UI Wizard is needed to guide the user to choose the =
+>   	ofono_netreg_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
+> +	=
 
-appropriate one and provision the context that way.
+> +	ofono_modem_set_integer(modem, "GemaltoVtsQuotes", 1);
+> +	ofono_voicecall_create(modem, 0, "gemaltomodem", data->app);
 
-Alternatively, provide a provisioning database without conflicts, =
+This does imply that no emergency calls are possible when no SIM is =
 
-perhaps specific to the users / operators you're targeting.
+inserted or the PIN not in 'READY' state.
+
+> +
+> +	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
+> +	ofono_call_settings_create(modem, 0, "atmodem", data->app);
+> +	ofono_call_meter_create(modem, 0, "atmodem", data->app);
+> +	ofono_call_barring_create(modem, 0, "atmodem", data->app);
+>   }
+>   =
+
+>   static struct ofono_modem_driver gemalto_driver =3D {
+> =
+
 
 Regards,
 -Denis
 
---===============6795930169687802957==--
+--===============3347677961771564423==--
 
