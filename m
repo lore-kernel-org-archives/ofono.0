@@ -1,41 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============8095907136167380134=="
+Content-Type: multipart/mixed; boundary="===============3823613535996120472=="
 MIME-Version: 1.0
-From: BOUBAKER Bassem <bassem.boubaker@actia.fr>
-Subject: [PATCH] plugins/udevng.c : Add support for cinterion PXS8 ACM mode
-Date: Thu, 03 Jan 2019 13:04:40 +0000
-Message-ID: <1546520666-11447-1-git-send-email-bassem.boubaker@actia.fr>
+From: khaled romdhani <khaledromdhani216@gmail.com>
+Subject: [PATCH] Fix voice call initialization problem
+Date: Thu, 03 Jan 2019 17:05:40 +0100
+Message-ID: <1546531540-31621-1-git-send-email-khaled.romdhani@ardia.com.tn>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8095907136167380134==
+--===============3823613535996120472==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This module can be enumerated in 2 modes. The first is ttyUSB* (currently s=
-upported by ofono).
-The second mode is that interfaces appears as ttyACM* . This implies enumer=
-ation using different pid.
----
- plugins/udevng.c | 1 +
- 1 file changed, 1 insertion(+)
+when the voice call driver is probing, I noticed sometimes
+a CME Error with the code =3D 4 (operation not supported)
+related to AT commands "AT+CSSN=3D1,1" and "AT^SLCC=3D1".
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index ff6e1fc..68d1748 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1685,6 +1685,7 @@ static struct {
- 	{ "gemalto",	"option",	"1e2d",	"0053"	},
- 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
- 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
-+	{ "gemalto",	"cdc_acm",	"1e2d",	"0054"  },
- 	{ "gemalto",	"cdc_acm",	"1e2d",	"0061"	},
- 	{ "gemalto",	"cdc_ether",	"1e2d",	"0061"	},
- 	{ "telit",	"cdc_ncm",	"1bc7", "0036"	},
+In the current voice call implementation for Gemalto modems
+the ofono_voicecall_create() is called on the gemalto_pre_sim().
+The sim is not totaly readed by the module, it is not yet
+online which is causing a sporadic problem at driver
+intialization also when launching some outgoing/incoming calls.
+
+This change moves the ofono_voicecall_create() to the
+gemalto_post_online() to be sure that sim is well registred
+and online.
+---
+ plugins/gemalto.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index 2f84258..eb782a7 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -573,9 +573,6 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->app);
+ 	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
+ =
+
+-	ofono_modem_set_integer(modem, "GemaltoVtsQuotes", 1);
+-	ofono_voicecall_create(modem, 0, "gemaltomodem", data->app);
+-
+ 	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
+ 						data->app);
+ =
+
+@@ -604,11 +601,6 @@ static void gemalto_post_sim(struct ofono_modem *modem)
+ =
+
+ 	ofono_ussd_create(modem, 0, "atmodem", data->app);
+ =
+
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
+-	ofono_call_settings_create(modem, 0, "atmodem", data->app);
+-	ofono_call_meter_create(modem, 0, "atmodem", data->app);
+-	ofono_call_barring_create(modem, 0, "atmodem", data->app);
+-
+ 	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x))
+ 		ofono_lte_create(modem, OFONO_VENDOR_GEMALTO,
+ 						"atmodem", data->app);
+@@ -621,6 +613,14 @@ static void gemalto_post_online(struct ofono_modem *mo=
+dem)
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_netreg_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
++	=
+
++	ofono_modem_set_integer(modem, "GemaltoVtsQuotes", 1);
++	ofono_voicecall_create(modem, 0, "gemaltomodem", data->app);
++
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
++	ofono_call_settings_create(modem, 0, "atmodem", data->app);
++	ofono_call_meter_create(modem, 0, "atmodem", data->app);
++	ofono_call_barring_create(modem, 0, "atmodem", data->app);
+ }
+ =
+
+ static struct ofono_modem_driver gemalto_driver =3D {
 -- =
 
-2.7.4
+1.9.1
 
 
---===============8095907136167380134==--
+--===============3823613535996120472==--
 
