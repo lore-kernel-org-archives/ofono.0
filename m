@@ -1,46 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8703992908701861465=="
+Content-Type: multipart/mixed; boundary="===============8095907136167380134=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: sd-bus
-Date: Thu, 03 Jan 2019 13:51:45 +0100
-Message-ID: <8724974F-FE39-4E9A-878C-4B76FD2044F1@holtmann.org>
-In-Reply-To: <CAKSBH7HqFbg64sjtcz=Y=dm82mWS=4qpRMU0r_G-Z-Yjv9jpiw@mail.gmail.com>
+From: BOUBAKER Bassem <bassem.boubaker@actia.fr>
+Subject: [PATCH] plugins/udevng.c : Add support for cinterion PXS8 ACM mode
+Date: Thu, 03 Jan 2019 13:04:40 +0000
+Message-ID: <1546520666-11447-1-git-send-email-bassem.boubaker@actia.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8703992908701861465==
+--===============8095907136167380134==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+This module can be enumerated in 2 modes. The first is ttyUSB* (currently s=
+upported by ofono).
+The second mode is that interfaces appears as ttyACM* . This implies enumer=
+ation using different pid.
+---
+ plugins/udevng.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-> > would it be interesting to port ofono from GDBus, which comes with the
-> > huge GLib dependency, to sd-bus?
-> > It is a lot of work, but the main question is whether we can assume
-> > that systemd is deployed enough to allow the switch.
-> =
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index ff6e1fc..68d1748 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1685,6 +1685,7 @@ static struct {
+ 	{ "gemalto",	"option",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
++	{ "gemalto",	"cdc_acm",	"1e2d",	"0054"  },
+ 	{ "gemalto",	"cdc_acm",	"1e2d",	"0061"	},
+ 	{ "gemalto",	"cdc_ether",	"1e2d",	"0061"	},
+ 	{ "telit",	"cdc_ncm",	"1bc7", "0036"	},
+-- =
 
-> actually ELL provides its own D-Bus support. So the switch should towards=
- ELL D-Bus and not sd-bus. oFono already links against ELL and at some poin=
-t that should be its only dependency. We also want to remove the GLib depen=
-dency as well. Newer projects like iwd for example solely use ELL.
-> =
-
-> thank you for this information. I didn't notice the dbus in ELL, at least=
- not in the part currently in ofono.
-> Is this another implementation than glib or a part of it, or is it a wrap=
-per for the libdbus?
-
-it is a from-scratch and clean implementation of the D-Bus protocol. You cu=
-rrently don=E2=80=99t see it since the build magic in oFono only copies ELL=
- pieces that it currently needs. However it is simple change in Makefile.am=
- to also include ELL D-Bus.
-
-Regards
-
-Marcel
+2.7.4
 
 
---===============8703992908701861465==--
+--===============8095907136167380134==--
 
