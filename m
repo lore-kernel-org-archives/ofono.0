@@ -1,87 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============3823613535996120472=="
+Content-Type: multipart/mixed; boundary="===============1383908885447464280=="
 MIME-Version: 1.0
-From: khaled romdhani <khaledromdhani216@gmail.com>
-Subject: [PATCH] Fix voice call initialization problem
-Date: Thu, 03 Jan 2019 17:05:40 +0100
-Message-ID: <1546531540-31621-1-git-send-email-khaled.romdhani@ardia.com.tn>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: sd-bus
+Date: Thu, 03 Jan 2019 21:34:23 +0100
+Message-ID: <20190103203422.GA21861@amd>
+In-Reply-To: <CAKSBH7E66=jEZE4+ByY1zDm0bN5RD-DeT+B3S5OK=4gb-qyz1g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3823613535996120472==
+--===============1383908885447464280==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-when the voice call driver is probing, I noticed sometimes
-a CME Error with the code =3D 4 (operation not supported)
-related to AT commands "AT+CSSN=3D1,1" and "AT^SLCC=3D1".
+Hi!
 
-In the current voice call implementation for Gemalto modems
-the ofono_voicecall_create() is called on the gemalto_pre_sim().
-The sim is not totaly readed by the module, it is not yet
-online which is causing a sporadic problem at driver
-intialization also when launching some outgoing/incoming calls.
+> would it be interesting to port ofono from GDBus, which comes with the
+> huge GLib dependency, to sd-bus?
+> It is a lot of work, but the main question is whether we can assume
+> that systemd is deployed enough to allow the switch.
 
-This change moves the ofono_voicecall_create() to the
-gemalto_post_online() to be sure that sim is well registred
-and online.
----
- plugins/gemalto.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+As someone said, ell already has dbus support.
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 2f84258..eb782a7 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -573,9 +573,6 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
- 	ofono_devinfo_create(modem, 0, "atmodem", data->app);
- 	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
- =
+But dependency on systemd would be bad -- I (and maemo leste project)
+am running ofonod on Devuan -- which is Debian w/o systemd.
 
--	ofono_modem_set_integer(modem, "GemaltoVtsQuotes", 1);
--	ofono_voicecall_create(modem, 0, "gemaltomodem", data->app);
--
- 	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_GEMALTO, "atmodem",
- 						data->app);
- =
+Best regards,
+									Pavel
 
-@@ -604,11 +601,6 @@ static void gemalto_post_sim(struct ofono_modem *modem)
- =
-
- 	ofono_ussd_create(modem, 0, "atmodem", data->app);
- =
-
--	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
--	ofono_call_settings_create(modem, 0, "atmodem", data->app);
--	ofono_call_meter_create(modem, 0, "atmodem", data->app);
--	ofono_call_barring_create(modem, 0, "atmodem", data->app);
--
- 	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x))
- 		ofono_lte_create(modem, OFONO_VENDOR_GEMALTO,
- 						"atmodem", data->app);
-@@ -621,6 +613,14 @@ static void gemalto_post_online(struct ofono_modem *mo=
-dem)
- 	DBG("%p", modem);
- =
-
- 	ofono_netreg_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
-+	=
-
-+	ofono_modem_set_integer(modem, "GemaltoVtsQuotes", 1);
-+	ofono_voicecall_create(modem, 0, "gemaltomodem", data->app);
-+
-+	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
-+	ofono_call_settings_create(modem, 0, "atmodem", data->app);
-+	ofono_call_meter_create(modem, 0, "atmodem", data->app);
-+	ofono_call_barring_create(modem, 0, "atmodem", data->app);
- }
- =
-
- static struct ofono_modem_driver gemalto_driver =3D {
 -- =
 
-1.9.1
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============1383908885447464280==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============3823613535996120472==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsd3VjYzRBQ2drUU1PZndhcFhiK3ZMRWtRQ2d0a2doNFNEWkIvY2FLS0lrL0dvb2hxdEsK
+dVl3QW9JZmVJQTdOK2NFVWI2SDVVelVlYlB1c3p1clIKPWdwOHIKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============1383908885447464280==--
 
