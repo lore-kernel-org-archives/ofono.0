@@ -1,147 +1,168 @@
-Content-Type: multipart/mixed; boundary="===============2725958661141742471=="
+Content-Type: multipart/mixed; boundary="===============6465811721377347933=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: Re: [PATCH] provision: allow duplicate apn's from mbpi
-Date: Fri, 04 Jan 2019 15:03:10 +0100
-Message-ID: <8970d85f-7b98-e3a3-f152-81a5084fb74a@geanix.com>
-In-Reply-To: <f0ac37c3-3fcd-829d-fba2-e82d98ffaeb3@gmail.com>
+From: Philippe De Swert <philippedeswert@gmail.com>
+Subject: PPP broken by 6fc119d9eaee5f9cc37a5a7198d1c55ef98fd645
+Date: Fri, 04 Jan 2019 16:13:38 +0200
+Message-ID: <CAPsFW+SiqLAn=KZ+f2kTOgJi5y+G2yTKW14+V5M3XA7jwjpdUQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2725958661141742471==
+--===============6465811721377347933==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-On 02/01/2019 19.36, Denis Kenzior wrote:
-> On 01/02/2019 05:50 AM, Martin Hundeb=C3=B8ll wrote:
->> Let the user/connection-manager decide what to do with duplicate apn
->> entries instead of bailing out with an error.
->> ---
->> =C2=A0 plugins/provision.c | 2 +-
->> =C2=A0 1 file changed, 1 insertion(+), 1 deletion(-)
-> =
+Seems commit  6fc119d9eaee5f9cc37a5a7198d1c55ef98fd645 broke PPP for
+me in 1.27 (updating from 1.24) After reverting the commit (without
+removing the header file include to not break compilation) PPP was
+back to working for me.
 
-> While seemingly trivial, this actually has a huge impact on user =
+The comments for a88662d23c45f49d9af5a508d4d0a778950b2420 made me
+suspect it is this part of the patch that broke it:
 
-> experience.=C2=A0 The problem is that there's no good meta-data for the u=
-ser =
+diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+index df9cd0ef..3fe38217 100644
+--- a/gatchat/ppp_lcp.c
++++ b/gatchat/ppp_lcp.c
+@@ -279,6 +279,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
+                                *new_len =3D 4;
 
-> to make the decision as to which service is the one they want.
-
-Yes. The lack of meta-data makes it difficult to make a good decision. =
-
-In the case of the mobile-broadband-provider-info the <name> element =
-
-from the parent provider element would be helpful:
-
-diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-index 433f1b55..69ffea8a 100644
---- a/plugins/mbpi.c
-+++ b/plugins/mbpi.c
-@@ -56,6 +56,7 @@ struct gsm_data {
-         GSList *apns;
-         gboolean match_found;
-         gboolean allow_duplicates;
-+       char *current_name;
-  };
-
-  struct cdma_data {
-@@ -401,6 +402,9 @@ static void gsm_end(GMarkupParseContext *context, =
-
-const gchar *element_name,
-         if (!ap->username || !ap->password)
-                 ap->auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
-
-+       if (!ap->name && gsm->current_name)
-+               ap->name =3D g_strdup(gsm->current_name);
+                                return RCR_NAK;
 +
-         if (gsm->allow_duplicates =3D=3D FALSE) {
-                 GSList *l;
-
-@@ -503,7 +507,12 @@ static void toplevel_gsm_start(GMarkupParseContext =
-
-*context,
-  {
-         struct gsm_data *gsm =3D userdata;
-
--       if (g_str_equal(element_name, "gsm")) {
-+       if (g_str_equal(element_name, "name")) {
-+               g_free(gsm->current_name);
-+               gsm->current_name =3D NULL;
-+               g_markup_parse_context_push(context, &text_parser,
-+                                               &gsm->current_name);
-+       } else if (g_str_equal(element_name, "gsm")) {
-                 gsm->match_found =3D FALSE;
-                 g_markup_parse_context_push(context, &gsm_parser, gsm);
-         } else if (g_str_equal(element_name, "cdma"))
-@@ -514,9 +523,16 @@ static void toplevel_gsm_end(GMarkupParseContext =
-
-*context,
-                                         const gchar *element_name,
-                                         gpointer userdata, GError **error)
-  {
-+       struct gsm_data *gsm =3D userdata;
-+
-         if (g_str_equal(element_name, "gsm") ||
--                       g_str_equal(element_name, "cdma"))
-+                       g_str_equal(element_name, "cdma") ||
-+                       g_str_equal(element_name, "name"))
-                 g_markup_parse_context_pop(context);
-+       else if (g_str_equal(element_name, "provider")) {
-+               g_free(gsm->current_name);
-+               gsm->current_name =3D NULL;
-+       }
-  }
-
-  static const GMarkupParser toplevel_gsm_parser =3D {
++                       case G_AT_PPP_AUTH_METHOD_NONE:
++                               return RCR_REJECT;
+                        }
+                        break;
+                }
 
 
-> Also, I'm not sure how this impacts connman?=C2=A0 In theory it is suppos=
-ed =
+As I got the following log when it was not working:
+ofonod[1069]: Setup: > AT+CGDCONT=3D1,"IP","internet"\r
+ofonod[1069]: Setup: < \r\nO
+ofonod[1069]: Setup: < K\r\n
+ofonod[1069]: ../ofono-1.27/drivers/atmodem/gprs-context.c:at_cgdcont_cb() =
+ok 1
+ofonod[1069]: Setup: > ATD*99***1#\r
+ofonod[1069]: Setup: < \r\nC
+ofonod[1069]: Setup: < ONNECT 150
+ofonod[1069]: Setup: < 000000\r
+ofonod[1069]: ../ofono-1.27/drivers/atmodem/gprs-context.c:at_cgdata_cb() o=
+k 1
+ofonod[1069]: ../ofono-1.27/drivers/atmodem/gprs-context.c:setup_ppp()
+ofonod[1069]: PPP: lcp: pppcp_generate_event: current state 0:INITIAL
+ofonod[1069]: PPP: event: 0 (Up), action: 2, new_state: 2 (CLOSED)
+ofonod[1069]: PPP: lcp: pppcp_generate_event: current state 2:CLOSED
+ofonod[1069]: PPP: event: 2 (Open), action: 1026, new_state: 6 (REQSENT)
+ofonod[1069]: PPP: lcp: pppcp_initialize_restart_count: current state 2:CLO=
+SED
+ofonod[1069]: PPP: lcp: pppcp_send_configure_request: current state 2:CLOSED
+ofonod[1069]: PPP: ../ofono-1.27/gatchat/gatppp.c:ppp_enter_phase() 1
+ofonod[1069]: PPP: lcp: pppcp_process_configure_request: current state 6:RE=
+QSENT
+ofonod[1069]: PPP: lcp: pppcp_generate_event: current state 6:REQSENT
+ofonod[1069]: PPP: event: 7 (RCR-), action: 4006, new_state: 6 (REQSENT)
+ofonod[1069]: PPP: lcp: pppcp_send_configure_nak: current state 6:REQSENT
+ofonod[1069]: PPP: lcp: pppcp_process_configure_ack: current state 6:REQSENT
+ofonod[1069]: PPP: lcp: pppcp_generate_event: current state 6:REQSENT
+ofonod[1069]: PPP: event: 8 (RCA), action: 27, new_state: 7 (ACKRCVD)
+ofonod[1069]: PPP: lcp: pppcp_initialize_restart_count: current state 6:REQ=
+SENT
+ofonod[1069]: PPP: lcp: pppcp_process_configure_request: current state 7:AC=
+KRCVD
+ofonod[1069]: PPP: lcp: pppcp_generate_event: current state 7:ACKRCVD
+ofonod[1069]: PPP: event: 7 (RCR-), action: 4007, new_state: 7 (ACKRCVD)
+....
 
-> to auto-activate the internet context, and if there are multiple one of =
+And it kept looping with those RCR-...
 
-> these, I'm not sure if it gets confused?
+After reverting:
 
-I haven't looked at connman (yet). Couldn't connman create an empty =
 
-internet context if it gets confused? (just like the one ofono creates =
+ofonod[1034]: Setup: > AT+CGDCONT=3D1,"IP","internet"\r
+ofonod[1034]: Setup: < \r\nO
+ofonod[1034]: Setup: < K\r\n
+ofonod[1034]: ../ofono-1.27/drivers/atmodem/gprs-context.c:at_cgdcont_cb() =
+ok 1
+ofonod[1034]: Setup: > ATD*99***1#\r
+ofonod[1034]: Setup: < \r\nC
+ofonod[1034]: Setup: < ONNECT 15
+ofonod[1034]: Setup: < 0000000\r
+ofonod[1034]: ../ofono-1.27/drivers/atmodem/gprs-context.c:at_cgdata_cb() o=
+k 1
+ofonod[1034]: ../ofono-1.27/drivers/atmodem/gprs-context.c:setup_ppp()
+ofonod[1034]: PPP: lcp: pppcp_generate_event: current state 0:INITIAL
+ofonod[1034]: PPP: event: 0 (Up), action: 2, new_state: 2 (CLOSED)
+ofonod[1034]: PPP: lcp: pppcp_generate_event: current state 2:CLOSED
+ofonod[1034]: PPP: event: 2 (Open), action: 1026, new_state: 6 (REQSENT)
+ofonod[1034]: PPP: lcp: pppcp_initialize_restart_count: current state 2:CLO=
+SED
+ofonod[1034]: PPP: lcp: pppcp_send_configure_request: current state 2:CLOSED
+ofonod[1034]: PPP: ../ofono-1.27/gatchat/gatppp.c:ppp_enter_phase() 1
+ofonod[1034]: PPP: lcp: pppcp_process_configure_request: current state 6:RE=
+QSENT
+ofonod[1034]: PPP: lcp: pppcp_generate_event: current state 6:REQSENT
+ofonod[1034]: PPP: event: 6 (RCR+), action: 2008, new_state: 8 (ACKSENT)
+ofonod[1034]: PPP: lcp: pppcp_send_configure_ack: current state 6:REQSENT
+ofonod[1034]: PPP: lcp: pppcp_process_configure_ack: current state 8:ACKSENT
+ofonod[1034]: PPP: lcp: pppcp_generate_event: current state 8:ACKSENT
+ofonod[1034]: PPP: event: 8 (RCA), action: 129, new_state: 9 (OPENED)
+ofonod[1034]: PPP: lcp: pppcp_initialize_restart_count: current state 8:ACK=
+SENT
+ofonod[1034]: PPP: ../ofono-1.27/gatchat/gatppp.c:ppp_enter_phase() 2
+ofonod[1034]: PPP: ../ofono-1.27/gatchat/gatppp.c:ppp_enter_phase() 3
+ofonod[1034]: PPP: ipcp: pppcp_generate_event: current state 0:INITIAL
+ofonod[1034]: PPP: event: 2 (Open), action: 401, new_state: 1 (STARTING)
+ofonod[1034]: PPP: ipcp: pppcp_generate_event: current state 1:STARTING
+ofonod[1034]: PPP: event: 0 (Up), action: 1026, new_state: 6 (REQSENT)
+ofonod[1034]: PPP: ipcp: pppcp_initialize_restart_count: current state
+1:STARTING
+ofonod[1034]: PPP: ipcp: pppcp_send_configure_request: current state 1:STAR=
+TING
+ofonod[1034]: PPP: ipcp: pppcp_process_configure_request: current
+state 6:REQSENT
+ofonod[1034]: PPP: ipcp: pppcp_generate_event: current state 6:REQSENT
+ofonod[1034]: PPP: event: 6 (RCR+), action: 2008, new_state: 8 (ACKSENT)
+ofonod[1034]: PPP: ipcp: pppcp_send_configure_ack: current state 6:REQSENT
+ofonod[1034]: PPP: ipcp: pppcp_process_configure_reject: current state 8:AC=
+KSENT
+ofonod[1034]: PPP: ipcp: pppcp_generate_event: current state 8:ACKSENT
+ofonod[1034]: PPP: event: 9 (RCN), action: 1028, new_state: 8 (ACKSENT)
+ofonod[1034]: PPP: ipcp: pppcp_initialize_restart_count: current state 8:AC=
+KSENT
+ofonod[1034]: PPP: ipcp: pppcp_send_configure_request: current state 8:ACKS=
+ENT
+ofonod[1034]: PPP: ipcp: pppcp_process_configure_nak: current state 8:ACKSE=
+NT
+ofonod[1034]: PPP: ipcp: pppcp_generate_event: current state 8:ACKSENT
+ofonod[1034]: PPP: event: 9 (RCN), action: 1028, new_state: 8 (ACKSENT)
+ofonod[1034]: PPP: ipcp: pppcp_initialize_restart_count: current state 8:AC=
+KSENT
+ofonod[1034]: PPP: ipcp: pppcp_send_configure_request: current state 8:ACKS=
+ENT
+ofonod[1034]: PPP: ipcp: pppcp_process_configure_ack: current state 8:ACKSE=
+NT
+ofonod[1034]: PPP: ipcp: pppcp_generate_event: current state 8:ACKSENT
+ofonod[1034]: PPP: event: 8 (RCA), action: 129, new_state: 9 (OPENED)
+ofonod[1034]: PPP: ipcp: pppcp_initialize_restart_count: current state 8:AC=
+KSENT
+ofonod[1034]: PPP: ../ofono-1.27/gatchat/gatppp.c:ppp_enter_phase() 4
+ofonod[1034]: ../ofono-1.27/drivers/atmodem/gprs-context.c:ppp_connect()
+ofonod[1034]: IP: *.*.*.*
+ofonod[1034]: DNS: *.*.*.* *.*.*.*
+ofonod[1034]: ../ofono-1.27/src/gprs.c:pri_activate_callback() 0x13fbad0
+ofonod[1034]: ../ofono-1.27/plugins/udevng.c:add_serial_device()
+Device is missing required OFONO_DRIVER property
+ofonod[1034]: ../ofono-1.27/plugins/udevng.c:check_modem_list()
 
-when provision fails.)
+We can see no RCR- coming and it works now. (IP and DNS anonymized)
 
-> The typical guidance is that if a database contains potential =
+Hope this is enough info to fix this issue.
 
-> duplicates, then a UI Wizard is needed to guide the user to choose the =
+Regards,
 
-> appropriate one and provision the context that way.
+Philippe
 
-Yes, but wouldn't that require access to the duplicate entries to be =
-
-able to create the wizard?
-
-> Alternatively, provide a provisioning database without conflicts, =
-
-> perhaps specific to the users / operators you're targeting.
-
-That removes the convenience from relying on the =
-
-mobile-broadband-provider-info maintained by upstream.
-
--- =
-
-Kind regards,
-Martin Hundeb=C3=B8ll
-Embedded Linux Consultant
-
-+45 61 65 54 61
-martin(a)geanix.com
-
-Geanix IVS
-https://geanix.com
-DK39600706
-
---===============2725958661141742471==--
+--===============6465811721377347933==--
 
