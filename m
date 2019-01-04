@@ -1,70 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============3732263215943231388=="
+Content-Type: multipart/mixed; boundary="===============7015525213897639565=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2] gprs: fix allocation of context id
-Date: Fri, 04 Jan 2019 14:44:53 -0600
-Message-ID: <e9ed51c3-8b86-d5a2-70f8-b02935087a37@gmail.com>
-In-Reply-To: <20190104154440.61531-1-martin@geanix.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: PPP broken by 6fc119d9eaee5f9cc37a5a7198d1c55ef98fd645
+Date: Fri, 04 Jan 2019 21:54:42 +0100
+Message-ID: <CAKSBH7FNWdrCZm42YZRdSZCYCvoGGJ8AiLvS7HY9AqA_zCfjkQ@mail.gmail.com>
+In-Reply-To: <b7e415c0-e006-ebad-8d10-387b8a2b2916@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3732263215943231388==
+--===============7015525213897639565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Martin, Denis,
 
-On 01/04/2019 09:44 AM, Martin Hundeb=C3=B8ll wrote:
-> After the convertion to l_uintset, the creation of new contexts fails
-> due to a range error being returned from l_uintset_find_unused().
-> =
+On Fri, Jan 4, 2019 at 4:22 PM Martin Hundeb=C3=B8ll <martin@geanix.com> =
+wrote:
+>
+> Hi Giacinto,
+>
+> On 04/01/2019 15.48, Giacinto Cifelli wrote:
+> >> On 04/01/2019, Giacinto Cifelli <gciofono@gmail.com> wrote:
+> >>>> The comments for a88662d23c45f49d9af5a508d4d0a778950b2420 made me
+> >>>> suspect it is this part of the patch that broke it:
+> >>>>
+> >>>> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+> >>>> index df9cd0ef..3fe38217 100644
+> >>>> --- a/gatchat/ppp_lcp.c
+> >>>> +++ b/gatchat/ppp_lcp.c
+> >>>> @@ -279,6 +279,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data
+> >>>> *pppcp,
+> >>>>                                  *new_len =3D 4;
+> >>>>
+> >>>>                                  return RCR_NAK;
+> >>>> +
+> >>>> +                       case G_AT_PPP_AUTH_METHOD_NONE:
+> >>>> +                               return RCR_REJECT;
+> >
+> > can you change your code to:
+> >       return RCR_ACCEPT;
+> >
+> > this is what I posted in the first attempt to commit, but Denis
+> > objected that a reject would be in order.
+> > I still believe that an accept would select as before the default
+> > operation at the end of the function, which is just... return
+> > RCR_ACCEPT; (line 354 on the latest commit as of today)
+> >
+> > If this works, I can submit a new patch, or you can do it.
+>
+> It doesn't work, because the early return skips the call to
+> ppp_set_auth() in the last switch block.
+>
+> Calling the function before returning works though:
+>
+> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+> index 3fe38217..4aa63207 100644
+> --- a/gatchat/ppp_lcp.c
+> +++ b/gatchat/ppp_lcp.c
+> @@ -281,7 +281,8 @@ static enum rcr_result lcp_rcr(struct pppcp_data *ppp=
+cp,
+>                                  return RCR_NAK;
+>
+>                          case G_AT_PPP_AUTH_METHOD_NONE:
+> -                               return RCR_REJECT;
+> +                               ppp_set_auth(ppp,
+> ppp_option_iter_get_data(&iter));
+> +                               return RCR_ACCEPT;
 
-> The error happens because the uinset is created with a min-value of 1,
-> but the start-value passed to l_uintset_find_unused() is initialized as
-> 0.
-> =
+what if we turn a blind eye and skip the case
+G_AT_PPP_AUTH_METHOD_NONE, as proposed by Philippe at the beginning of
+this thread?
+Then the code should run onto the ppp_set_auth, and also strange
+network behaviors can be handled.
 
-> Fix this by using the minimum id when last used id is not yet
-> initialized.
-> ---
->   src/gprs.c | 6 +++++-
->   1 file changed, 5 insertions(+), 1 deletion(-)
-> =
-
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 58a998ca..92820e60 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -2334,7 +2334,11 @@ static void provision_context(const struct ofono_g=
-prs_provision_data *ap,
->   			strlen(ap->message_center) > MAX_MESSAGE_CENTER_LENGTH)
->   		return;
->   =
-
-> -	id =3D l_uintset_find_unused(gprs->used_pids, gprs->last_context_id);
-> +	if (!gprs->last_context_id)
-> +		id =3D l_uintset_get_min(gprs->used_pids);
-
-You actually want find_unused_min here.
-
-> +	else
-> +		id =3D l_uintset_find_unused(gprs->used_pids,
-> +						gprs->last_context_id);
->   	if (id > l_uintset_get_max(gprs->used_pids))
->   		return;
->   =
-
-> =
-
-
-Anyway, I pushed my own version of this patch earlier as commit:
-c3fdf6a7c567a7507c3558a27006b6f9559493d6
-
-I did steal the commit description from you :)
+>                          }
+>                          break;
+>                  }
+>
+>
+>
+> // Martin
 
 Regards,
--Denis
+GIacinto
 
---===============3732263215943231388==--
+--===============7015525213897639565==--
 
