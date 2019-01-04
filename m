@@ -1,78 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5162967353853882600=="
+Content-Type: multipart/mixed; boundary="===============7155642546663967576=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: Re: PPP broken by 6fc119d9eaee5f9cc37a5a7198d1c55ef98fd645
-Date: Fri, 04 Jan 2019 16:22:44 +0100
-Message-ID: <b7e415c0-e006-ebad-8d10-387b8a2b2916@geanix.com>
-In-Reply-To: <CAKSBH7HcbAF=-APHV7O-C7a6ZnFegCPJtkf4Li6rqG7VG7kLmw@mail.gmail.com>
+Subject: [PATCHv2] gprs: fix allocation of context id
+Date: Fri, 04 Jan 2019 16:44:40 +0100
+Message-ID: <20190104154440.61531-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5162967353853882600==
+--===============7155642546663967576==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+After the convertion to l_uintset, the creation of new contexts fails
+due to a range error being returned from l_uintset_find_unused().
 
-On 04/01/2019 15.48, Giacinto Cifelli wrote:
->> On 04/01/2019, Giacinto Cifelli <gciofono@gmail.com> wrote:
->>>> The comments for a88662d23c45f49d9af5a508d4d0a778950b2420 made me
->>>> suspect it is this part of the patch that broke it:
->>>>
->>>> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
->>>> index df9cd0ef..3fe38217 100644
->>>> --- a/gatchat/ppp_lcp.c
->>>> +++ b/gatchat/ppp_lcp.c
->>>> @@ -279,6 +279,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data
->>>> *pppcp,
->>>>                                  *new_len =3D 4;
->>>>
->>>>                                  return RCR_NAK;
->>>> +
->>>> +                       case G_AT_PPP_AUTH_METHOD_NONE:
->>>> +                               return RCR_REJECT;
-> =
+The error happens because the uinset is created with a min-value of 1,
+but the start-value passed to l_uintset_find_unused() is initialized as
+0.
 
-> can you change your code to:
->       return RCR_ACCEPT;
-> =
+Fix this by using the minimum id when last used id is not yet
+initialized.
+---
+ src/gprs.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-> this is what I posted in the first attempt to commit, but Denis
-> objected that a reject would be in order.
-> I still believe that an accept would select as before the default
-> operation at the end of the function, which is just... return
-> RCR_ACCEPT; (line 354 on the latest commit as of today)
-> =
+diff --git a/src/gprs.c b/src/gprs.c
+index 58a998ca..92820e60 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2334,7 +2334,11 @@ static void provision_context(const struct ofono_gpr=
+s_provision_data *ap,
+ 			strlen(ap->message_center) > MAX_MESSAGE_CENTER_LENGTH)
+ 		return;
+ =
 
-> If this works, I can submit a new patch, or you can do it.
+-	id =3D l_uintset_find_unused(gprs->used_pids, gprs->last_context_id);
++	if (!gprs->last_context_id)
++		id =3D l_uintset_get_min(gprs->used_pids);
++	else
++		id =3D l_uintset_find_unused(gprs->used_pids,
++						gprs->last_context_id);
+ 	if (id > l_uintset_get_max(gprs->used_pids))
+ 		return;
+ =
 
-It doesn't work, because the early return skips the call to =
+-- =
 
-ppp_set_auth() in the last switch block.
-
-Calling the function before returning works though:
-
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index 3fe38217..4aa63207 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -281,7 +281,8 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
-                                 return RCR_NAK;
-
-                         case G_AT_PPP_AUTH_METHOD_NONE:
--                               return RCR_REJECT;
-+                               ppp_set_auth(ppp, =
-
-ppp_option_iter_get_data(&iter));
-+                               return RCR_ACCEPT;
-                         }
-                         break;
-                 }
+2.20.1
 
 
-
-// Martin
-
---===============5162967353853882600==--
+--===============7155642546663967576==--
 
