@@ -1,212 +1,147 @@
-Content-Type: multipart/mixed; boundary="===============7925324494212976693=="
+Content-Type: multipart/mixed; boundary="===============2725958661141742471=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: Sim PIN1 cache upon modem reset/crash
-Date: Thu, 03 Jan 2019 18:09:54 -0600
-Message-ID: <e3bda6a9-f878-f615-ae0f-27f382b8ab47@gmail.com>
-In-Reply-To: <1546513282-13190-1-git-send-email-nandini.rebello@intel.com>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: Re: [PATCH] provision: allow duplicate apn's from mbpi
+Date: Fri, 04 Jan 2019 15:03:10 +0100
+Message-ID: <8970d85f-7b98-e3a3-f152-81a5084fb74a@geanix.com>
+In-Reply-To: <f0ac37c3-3fcd-829d-fba2-e82d98ffaeb3@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7925324494212976693==
+--===============2725958661141742471==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nandini,
+Hi Denis,
 
-On 01/03/2019 05:01 AM, Nandini Rebello wrote:
-> Adding SIM PIN caching feature to oFono. oFono now caches the SIM PIN1 ty=
-pe
-> against the ICCID throughout its lifetime in a link list and enters
-> implicitly upon modem reset/crash.
+On 02/01/2019 19.36, Denis Kenzior wrote:
+> On 01/02/2019 05:50 AM, Martin Hundeb=C3=B8ll wrote:
+>> Let the user/connection-manager decide what to do with duplicate apn
+>> entries instead of bailing out with an error.
+>> ---
+>> =C2=A0 plugins/provision.c | 2 +-
+>> =C2=A0 1 file changed, 1 insertion(+), 1 deletion(-)
 > =
 
-> Violates 3GPP spec 21.111, section 5.3 - User Data stored in ME. Helps
-> in user experience by not barring out cellular services unless pin is ent=
-ered
-> manually.
-> =
+> While seemingly trivial, this actually has a huge impact on user =
 
-> Handles cases of incorrect pin and sim pin changed externally.
-> Clears all cached PINs incase modem disabled manually and selectively when
-> sim is removed.
-> =
+> experience.=C2=A0 The problem is that there's no good meta-data for the u=
+ser =
 
-> Adding to all modems by default.
-> ---
->   src/sim.c | 128 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 128 insertions(+)
-> =
+> to make the decision as to which service is the one they want.
 
+Yes. The lack of meta-data makes it difficult to make a good decision. =
 
-<snip>
+In the case of the mobile-broadband-provider-info the <name> element =
 
-> +static void pin_cache_enter_cb(const struct ofono_error *error, void *da=
-ta)
-> +{
-> +	struct ofono_sim *sim =3D data;
-> +
-> +	/* If PIN entry fails, then remove cached PIN*/
-> +	if (sim->initialized || error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+from the parent provider element would be helpful:
 
-Hm, I just noticed that this if condition is incorrect.  You shouldn't =
+diff --git a/plugins/mbpi.c b/plugins/mbpi.c
+index 433f1b55..69ffea8a 100644
+--- a/plugins/mbpi.c
++++ b/plugins/mbpi.c
+@@ -56,6 +56,7 @@ struct gsm_data {
+         GSList *apns;
+         gboolean match_found;
+         gboolean allow_duplicates;
++       char *current_name;
+  };
 
-be removing the pin if sim->initialized is true.  This would break =
+  struct cdma_data {
+@@ -401,6 +402,9 @@ static void gsm_end(GMarkupParseContext *context, =
 
-drivers that call ofono_sim_initialized right after ofono_sim_inserted. =
+const gchar *element_name,
+         if (!ap->username || !ap->password)
+                 ap->auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
 
-See commit 54d56d763e40bc44c99a9b24aa0477bd373ea085 for details.
++       if (!ap->name && gsm->current_name)
++               ap->name =3D g_strdup(gsm->current_name);
++
+         if (gsm->allow_duplicates =3D=3D FALSE) {
+                 GSList *l;
 
-> +		pin_cache_remove(sim->iccid);
-> +		goto recheck;
-> +	}
-> +
-> +	if (sim->pin_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN ||
-> +			sim->pin_type =3D=3D OFONO_SIM_PASSWORD_SIM_PUK) {
-> +		sim->wait_initialized =3D true;
-> +		DBG("Waiting for ofono_sim_initialized_notify");
-> +		return;
-> +	}
-> +
-> +recheck:
-> +	__ofono_sim_recheck_pin(sim);
+@@ -503,7 +507,12 @@ static void toplevel_gsm_start(GMarkupParseContext =
 
-Actually this whole function might be better written as:
+*context,
+  {
+         struct gsm_data *gsm =3D userdata;
 
-if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
-	pin_cache_remove(sim->iccid);
+-       if (g_str_equal(element_name, "gsm")) {
++       if (g_str_equal(element_name, "name")) {
++               g_free(gsm->current_name);
++               gsm->current_name =3D NULL;
++               g_markup_parse_context_push(context, &text_parser,
++                                               &gsm->current_name);
++       } else if (g_str_equal(element_name, "gsm")) {
+                 gsm->match_found =3D FALSE;
+                 g_markup_parse_context_push(context, &gsm_parser, gsm);
+         } else if (g_str_equal(element_name, "cdma"))
+@@ -514,9 +523,16 @@ static void toplevel_gsm_end(GMarkupParseContext =
 
-sim_enter_pin_cb(...);
+*context,
+                                         const gchar *element_name,
+                                         gpointer userdata, GError **error)
+  {
++       struct gsm_data *gsm =3D userdata;
++
+         if (g_str_equal(element_name, "gsm") ||
+-                       g_str_equal(element_name, "cdma"))
++                       g_str_equal(element_name, "cdma") ||
++                       g_str_equal(element_name, "name"))
+                 g_markup_parse_context_pop(context);
++       else if (g_str_equal(element_name, "provider")) {
++               g_free(gsm->current_name);
++               gsm->current_name =3D NULL;
++       }
+  }
 
-> +}
-> +
->   static void sim_pin_retries_query_cb(const struct ofono_error *error,
->   					int retries[OFONO_SIM_PASSWORD_INVALID],
->   					void *data)
-> @@ -683,6 +762,13 @@ static void sim_locked_cb(struct ofono_sim *sim, gbo=
-olean locked)
->   						OFONO_SIM_MANAGER_INTERFACE,
->   						"LockedPins", DBUS_TYPE_STRING,
->   						&locked_pins);
-> +
-> +	/*Cache pin only for SIM PIN type*/
-> +	if (g_strcmp0(typestr, "pin") =3D=3D 0) {
-> +		if (!pin_cache_update(sim->iccid, pin))
-> +			ofono_error("Failed to cache PIN.");
-
-pin_cache_update really cannot fail since g_new0 will never fail...
-
-> +	}
-> +
->   	g_strfreev(locked_pins);
->   =
-
->   	sim_pin_retries_check(sim);
-> @@ -778,6 +864,14 @@ static DBusMessage *sim_unlock_pin(DBusConnection *c=
-onn, DBusMessage *msg,
->   static void sim_change_pin_cb(const struct ofono_error *error, void *da=
-ta)
->   {
->   	struct ofono_sim *sim =3D data;
-> +	const char *typestr;
-> +	const char *old;
-> +	const char *new;
-> +
-> +	dbus_message_get_args(sim->pending, NULL, DBUS_TYPE_STRING, &typestr,
-> +					     DBUS_TYPE_STRING, &old,
-> +					     DBUS_TYPE_STRING, &new,
-> +				             DBUS_TYPE_INVALID);
->   =
-
->   	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
->   		__ofono_dbus_pending_reply(&sim->pending,
-> @@ -788,6 +882,12 @@ static void sim_change_pin_cb(const struct ofono_err=
-or *error, void *data)
->   		return;
->   	}
->   =
-
-> +	/*Cache pin only for SIM PIN type*/
-> +	if (g_strcmp0(typestr, "pin") =3D=3D 0) {
-> +		if (!pin_cache_update(sim->iccid, new))
-> +			ofono_error("Failed to cache PIN.");
-
-As above
-
-> +	}
-> +
->   	__ofono_dbus_pending_reply(&sim->pending,
->   				dbus_message_new_method_return(sim->pending));
->   =
-
-> @@ -839,8 +939,14 @@ static DBusMessage *sim_change_pin(DBusConnection *c=
-onn, DBusMessage *msg,
->   static void sim_enter_pin_cb(const struct ofono_error *error, void *dat=
-a)
->   {
->   	struct ofono_sim *sim =3D data;
-> +	const char *typestr;
-> +	const char *pin;
->   	DBusMessage *reply;
->   =
-
-> +	dbus_message_get_args(sim->pending, NULL, DBUS_TYPE_STRING, &typestr,
-> +					     DBUS_TYPE_STRING, &pin,
-> +					     DBUS_TYPE_INVALID);
-> +
->   	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
->   		reply =3D __ofono_error_failed(sim->pending);
->   	else
-> @@ -852,6 +958,12 @@ static void sim_enter_pin_cb(const struct ofono_erro=
-r *error, void *data)
->   	if (sim->initialized || error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
->   		goto recheck;
->   =
-
-> +	/*Cache pin only for SIM PIN type*/
-> +	if (g_strcmp0(typestr, "pin") =3D=3D 0) {
-> +		if (!pin_cache_update(sim->iccid, pin))
-> +			ofono_error("Failed to cache PIN.");
-
-And here
-
-> +	}
-> +
->   	if (sim->pin_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN ||
->   			sim->pin_type =3D=3D OFONO_SIM_PASSWORD_SIM_PUK) {
->   		sim->wait_initialized =3D true;
-
-<snip>
-
-> @@ -3301,6 +3420,15 @@ void ofono_sim_register(struct ofono_sim *sim)
->   	__ofono_atom_register(sim->atom, sim_unregister);
->   }
->   =
-
-> +void ofono_sim_clear_cached_pins(void)
-> +{
-> +	if (cached_pins =3D=3D NULL)
-> +		return;
-> +
-> +	g_slist_free_full(cached_pins, g_free);
-> +	cached_pins =3D NULL;
-
-Why would you clear the entire cache?  Don't you want to clear only the =
-
-currently inserted iccid?
-
-> +}
-> +
->   void ofono_sim_remove(struct ofono_sim *sim)
->   {
->   	__ofono_atom_free(sim->atom);
-> =
+  static const GMarkupParser toplevel_gsm_parser =3D {
 
 
-Regards,
--Denis
+> Also, I'm not sure how this impacts connman?=C2=A0 In theory it is suppos=
+ed =
 
---===============7925324494212976693==--
+> to auto-activate the internet context, and if there are multiple one of =
+
+> these, I'm not sure if it gets confused?
+
+I haven't looked at connman (yet). Couldn't connman create an empty =
+
+internet context if it gets confused? (just like the one ofono creates =
+
+when provision fails.)
+
+> The typical guidance is that if a database contains potential =
+
+> duplicates, then a UI Wizard is needed to guide the user to choose the =
+
+> appropriate one and provision the context that way.
+
+Yes, but wouldn't that require access to the duplicate entries to be =
+
+able to create the wizard?
+
+> Alternatively, provide a provisioning database without conflicts, =
+
+> perhaps specific to the users / operators you're targeting.
+
+That removes the convenience from relying on the =
+
+mobile-broadband-provider-info maintained by upstream.
+
+-- =
+
+Kind regards,
+Martin Hundeb=C3=B8ll
+Embedded Linux Consultant
+
++45 61 65 54 61
+martin(a)geanix.com
+
+Geanix IVS
+https://geanix.com
+DK39600706
+
+--===============2725958661141742471==--
 
