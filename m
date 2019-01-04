@@ -1,54 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7155642546663967576=="
+Content-Type: multipart/mixed; boundary="===============0658955699952485901=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCHv2] gprs: fix allocation of context id
-Date: Fri, 04 Jan 2019 16:44:40 +0100
-Message-ID: <20190104154440.61531-1-martin@geanix.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: PPP broken by 6fc119d9eaee5f9cc37a5a7198d1c55ef98fd645
+Date: Fri, 04 Jan 2019 10:56:16 -0600
+Message-ID: <ad6e869c-4c38-8bd8-52ec-fdcaf54c33ff@gmail.com>
+In-Reply-To: <b7e415c0-e006-ebad-8d10-387b8a2b2916@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7155642546663967576==
+--===============0658955699952485901==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-After the convertion to l_uintset, the creation of new contexts fails
-due to a range error being returned from l_uintset_find_unused().
+Hi Martin,
 
-The error happens because the uinset is created with a min-value of 1,
-but the start-value passed to l_uintset_find_unused() is initialized as
-0.
+> It doesn't work, because the early return skips the call to =
 
-Fix this by using the minimum id when last used id is not yet
-initialized.
----
- src/gprs.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+> ppp_set_auth() in the last switch block.
+> =
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 58a998ca..92820e60 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -2334,7 +2334,11 @@ static void provision_context(const struct ofono_gpr=
-s_provision_data *ap,
- 			strlen(ap->message_center) > MAX_MESSAGE_CENTER_LENGTH)
- 		return;
- =
+> Calling the function before returning works though:
 
--	id =3D l_uintset_find_unused(gprs->used_pids, gprs->last_context_id);
-+	if (!gprs->last_context_id)
-+		id =3D l_uintset_get_min(gprs->used_pids);
-+	else
-+		id =3D l_uintset_find_unused(gprs->used_pids,
-+						gprs->last_context_id);
- 	if (id > l_uintset_get_max(gprs->used_pids))
- 		return;
- =
+This is still wrong.  lcp_rcr processes many options, AUTH_PROTO being =
 
--- =
+only a small subset.  So you can't simply return RCR_ACCEPT here.
 
-2.20.1
+rfc1661 doesn't seem to allow one to reject authentication besides using =
 
+an RCR_REJECT.  Maybe someone can play with sending a RCR_NAK and =
 
---===============7155642546663967576==--
+suggesting 0 as the AUTH_PROTO.
+
+I suspect the real fix is to force G_AT_PPP_METHOD_CHAP in =
+
+at_gprs_activate_primary even if OFONO_GPRS_AUTH_METHOD_NONE is given in =
+
+the context configuration.
+
+Unless of course the modem firmware supports taking the username / =
+
+password via AT commands or can understand an RCR_REJECT without going =
+
+into an infinite loop.
+
+Regards,
+-Denis
+
+--===============0658955699952485901==--
 
