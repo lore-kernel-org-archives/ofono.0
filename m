@@ -1,29 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============4584967292603091689=="
+Content-Type: multipart/mixed; boundary="===============6741899359118503607=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] provision: allow duplicate apn's from mbpi
-Date: Tue, 08 Jan 2019 11:50:19 -0600
-Message-ID: <64485be7-e77c-b6fc-55b8-29826e036de3@gmail.com>
-In-Reply-To: <7e743401-800d-973f-30ff-5092c5345011@geanix.com>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH] ifxmodem: removing TAP/TUN support check for XMM vendor
+Date: Fri, 11 Jan 2019 16:05:47 +0530
+Message-ID: <1547202947-2741-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4584967292603091689==
+--===============6741899359118503607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+skipping TAP/TUN support check from gprs-context probe for
+xmm vendor. xmm modem does not require TAP/TUN support. Also
+it is not enabled by default in enbedded yocto bsp.
+---
+ drivers/ifxmodem/gprs-context.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
-> I can send the mbpi name diff as a regular patch if you will take it,  > =
-and drop my original patch.
-Sure, I can take it as long as it doesn't mess with the duplicate =
+diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
+t.c
+index 5d1da2d..7f3628b 100644
+--- a/drivers/ifxmodem/gprs-context.c
++++ b/drivers/ifxmodem/gprs-context.c
+@@ -616,9 +616,11 @@ static int ifx_gprs_context_probe(struct ofono_gprs_co=
+ntext *gc,
+ =
 
-handling behavior.
+ 	DBG("");
+ =
 
-Regards,
--Denis
+-	if (stat(TUN_DEV, &st) < 0) {
+-		ofono_error("Missing support for TUN/TAP devices");
+-		return -ENODEV;
++	if (vendor !=3D OFONO_VENDOR_XMM) {
++		if (stat(TUN_DEV, &st) < 0) {
++			ofono_error("Missing support for TUN/TAP devices");
++			return -ENODEV;
++		}
+ 	}
+ =
+
+ 	if (vendor !=3D OFONO_VENDOR_XMM) {
+-- =
+
+1.9.1
 
 
---===============4584967292603091689==--
+--===============6741899359118503607==--
 
