@@ -1,52 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============6741899359118503607=="
+Content-Type: multipart/mixed; boundary="===============3565827196856227284=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH] ifxmodem: removing TAP/TUN support check for XMM vendor
-Date: Fri, 11 Jan 2019 16:05:47 +0530
-Message-ID: <1547202947-2741-1-git-send-email-antara.borwankar@intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH] document getting of ell, point people at useful docs
+Date: Mon, 14 Jan 2019 12:17:23 +0100
+Message-ID: <20190114111723.GA21544@amd>
+In-Reply-To: <20181229224704.GA4451@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6741899359118503607==
+--===============3565827196856227284==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-skipping TAP/TUN support check from gprs-context probe for
-xmm vendor. xmm modem does not require TAP/TUN support. Also
-it is not enabled by default in enbedded yocto bsp.
----
- drivers/ifxmodem/gprs-context.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+On Sat 2018-12-29 23:47:04, Pavel Machek wrote:
+> Currently there's README and HACKING... each describing part of what
+> needs to be done to build ofono.
+> =
 
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 5d1da2d..7f3628b 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -616,9 +616,11 @@ static int ifx_gprs_context_probe(struct ofono_gprs_co=
-ntext *gc,
- =
+> Provide some cross-links and fix build example.
 
- 	DBG("");
- =
+Any news about this and parent patch? I don't see them in
+https://git.kernel.org/pub/scm/network/ofono/ofono.git/log/ .
 
--	if (stat(TUN_DEV, &st) < 0) {
--		ofono_error("Missing support for TUN/TAP devices");
--		return -ENODEV;
-+	if (vendor !=3D OFONO_VENDOR_XMM) {
-+		if (stat(TUN_DEV, &st) < 0) {
-+			ofono_error("Missing support for TUN/TAP devices");
-+			return -ENODEV;
-+		}
- 	}
- =
+Best regards,
 
- 	if (vendor !=3D OFONO_VENDOR_XMM) {
+								Pavel
+
+> diff --git a/HACKING b/HACKING
+> index 15ea291..b1bd599 100644
+> --- a/HACKING
+> +++ b/HACKING
+> @@ -45,7 +45,8 @@ bootstrap-configure since it could export development s=
+pecific settings.
+>  So the normal steps to checkout, build and install such a repository is
+>  like this:
+>  =
+
+> -  Checkout repository
+> +  Checkout repositories
+> +    # git clone git://git.kernel.org/pub/scm/libs/ell/ell.git
+>      # git clone git://git.kernel.org/pub/scm/network/ofono/ofono.git
+>      # cd ofono
+>  =
+
+> diff --git a/README b/README
+> index 45bb2e9..04a50a5 100644
+> --- a/README
+> +++ b/README
+> @@ -16,11 +16,14 @@ To configure run:
+>  	./configure --prefix=3D/usr --mandir=3D/usr/share/man \
+>  				--sysconfdir=3D/etc --localstatedir=3D/var
+>  =
+
+> -Configure automatically searches for all required components and package=
+s.
+> +Configure automatically searches for all required components and
+> +packages, except ell, mentioned below.
+>  =
+
+>  To compile and install run:
+>  	make && make install
+>  =
+
+> +See "HACKING" file for details and step-by-step examples.
+> +
+>  =
+
+>  Embedded Linux library
+>  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> =
+
+> =
+
+
+
 -- =
 
-1.9.1
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============3565827196856227284==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============6741899359118503607==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsdzhiOE1BQ2drUU1PZndhcFhiK3ZMc1lBQ2RHUFZqZmpHUVJTczNIR2I4R04vNFZJZkwK
+dDdJQW9JdmxteHE5VGNnUlk2RmxJcFFXTjlkNklJcGQKPVBab1UKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============3565827196856227284==--
 
