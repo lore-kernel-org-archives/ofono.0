@@ -1,42 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6482290857192935318=="
+Content-Type: multipart/mixed; boundary="===============3497000088510391760=="
 MIME-Version: 1.0
 From: Nandini Rebello <nandini.rebello@intel.com>
-Subject: [PATCH] sim: Add support to clear cached PINs
-Date: Wed, 16 Jan 2019 12:12:00 +0530
-Message-ID: <1547620920-7524-1-git-send-email-nandini.rebello@intel.com>
+Subject: [PATCH] modem: add support to clear cached pins.
+Date: Wed, 16 Jan 2019 12:15:31 +0530
+Message-ID: <1547621131-7600-1-git-send-email-nandini.rebello@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6482290857192935318==
+--===============3497000088510391760==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Adding function to clear cached pins in case modem is disabled.
+Adding support to clear cached pins when modem is powered off.
 ---
- include/sim.h | 2 ++
- 1 file changed, 2 insertions(+)
+ src/modem.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/include/sim.h b/include/sim.h
-index fad4c0d..e00e213 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -262,6 +262,8 @@ void ofono_sim_inserted_notify(struct ofono_sim *sim, o=
-fono_bool_t inserted);
-  */
- void ofono_sim_initialized_notify(struct ofono_sim *sim);
+diff --git a/src/modem.c b/src/modem.c
+index bc46275..baacdc8 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -1130,6 +1130,9 @@ static DBusMessage *modem_set_property(DBusConnection=
+ *conn,
+ 		if (modem->lockdown)
+ 			return __ofono_error_access_denied(msg);
  =
 
-+void ofono_sim_clear_cached_pins(struct ofono_sim *sim);
++		if (!powered)
++			ofono_sim_clear_cached_pins(modem->sim);
 +
- struct ofono_sim_context *ofono_sim_context_create(struct ofono_sim *sim);
- =
-
- struct ofono_sim_context *ofono_sim_context_create_isim(
+ 		err =3D set_powered(modem, powered);
+ 		if (err < 0) {
+ 			if (err !=3D -EINPROGRESS)
 -- =
 
 2.7.4
 
 
---===============6482290857192935318==--
+--===============3497000088510391760==--
 
