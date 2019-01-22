@@ -1,60 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============5184144888919828779=="
+Content-Type: multipart/mixed; boundary="===============3937541307135752210=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH] modem: add support to clear cached pins.
-Date: Wed, 16 Jan 2019 07:52:08 +0100
-Message-ID: <CAKSBH7HnhfkkxGL8+-Y8hhKm_W8dRt8FV_3-YgAifypvExhwjQ@mail.gmail.com>
-In-Reply-To: <1547621131-7600-1-git-send-email-nandini.rebello@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] document getting of ell, point people at useful docs
+Date: Tue, 22 Jan 2019 17:50:34 +0100
+Message-ID: <4ED57398-61D8-4F54-865A-9CCD09E9ED55@holtmann.org>
+In-Reply-To: <20181229224704.GA4451@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5184144888919828779==
+--===============3937541307135752210==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nandini,
+Hi Pavel,
 
-On Wed, Jan 16, 2019 at 7:45 AM Nandini Rebello
-<nandini.rebello@intel.com> wrote:
->
-> Adding support to clear cached pins when modem is powered off.
+> Currently there's README and HACKING... each describing part of what
+> needs to be done to build ofono.
+> =
 
-but then this whole feature is useless because most of the modems
-disappear from the bus when crashing and restarting,
-and when they re-enumerate they are automatically Powered=3Dfalse
+> Provide some cross-links and fix build example.
+> =
 
-how do you go round this for your template modem?
+> diff --git a/HACKING b/HACKING
+> index 15ea291..b1bd599 100644
+> --- a/HACKING
+> +++ b/HACKING
+> @@ -45,7 +45,8 @@ bootstrap-configure since it could export development s=
+pecific settings.
+> So the normal steps to checkout, build and install such a repository is
+> like this:
+> =
 
-> ---
->  src/modem.c | 3 +++
->  1 file changed, 3 insertions(+)
->
-> diff --git a/src/modem.c b/src/modem.c
-> index bc46275..baacdc8 100644
-> --- a/src/modem.c
-> +++ b/src/modem.c
-> @@ -1130,6 +1130,9 @@ static DBusMessage *modem_set_property(DBusConnecti=
-on *conn,
->                 if (modem->lockdown)
->                         return __ofono_error_access_denied(msg);
->
-> +               if (!powered)
-> +                       ofono_sim_clear_cached_pins(modem->sim);
+> -  Checkout repository
+> +  Checkout repositories
+> +    # git clone git://git.kernel.org/pub/scm/libs/ell/ell.git
+>     # git clone git://git.kernel.org/pub/scm/network/ofono/ofono.git
+>     # cd ofono
+> =
+
+
+so coming to think about it, I would actually make this a pre-step.
+
+	Checkout Embedded Linux Library
+	  # git clone ..
+
+Also this documentation is primarily for maintainers and the few that deal =
+with making the tarballs. Which is pretty much just me.
+
+> diff --git a/README b/README
+> index 45bb2e9..04a50a5 100644
+> --- a/README
+> +++ b/README
+> @@ -16,11 +16,14 @@ To configure run:
+> 	./configure --prefix=3D/usr --mandir=3D/usr/share/man \
+> 				--sysconfdir=3D/etc --localstatedir=3D/var
+> =
+
+> -Configure automatically searches for all required components and package=
+s.
+> +Configure automatically searches for all required components and
+> +packages, except ell, mentioned below.
+> =
+
+
+Nope. Since ELL is actually optional. It is clearly described just a few li=
+nes below.
+
+> To compile and install run:
+> 	make && make install
+> =
+
+> +See "HACKING" file for details and step-by-step examples.
 > +
->                 err =3D set_powered(modem, powered);
->                 if (err < 0) {
->                         if (err !=3D -EINPROGRESS)
-> --
-> 2.7.4
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
 
-Regards,
-Giacinto
+And that is wrong as well. HACKING is for the developers and people just in=
+stalling oFono should not look at that. In addition HACKING is not included=
+ in the tarballs (while README is) and so you not reference a file from REA=
+DME that is not in the tarballs.
 
---===============5184144888919828779==--
+Regards
+
+Marcel
+
+
+--===============3937541307135752210==--
 
