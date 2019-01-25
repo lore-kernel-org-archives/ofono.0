@@ -1,33 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7959056216460679137=="
+Content-Type: multipart/mixed; boundary="===============9221171745038857606=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] modem: add support to clear cached pins.
-Date: Wed, 23 Jan 2019 17:50:22 -0600
-Message-ID: <491c6600-edf4-6643-4407-588cb8f40ff0@gmail.com>
-In-Reply-To: <1547621131-7600-1-git-send-email-nandini.rebello@intel.com>
+From: Nicolas Serafini <nicolas.serafini@sensefly.com>
+Subject: [PATCH] qmimodem: Notify when SIM is initialized
+Date: Fri, 25 Jan 2019 13:15:02 +0000
+Message-ID: <20190125131436.982-1-nicolas.serafini@sensefly.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7959056216460679137==
+--===============9221171745038857606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nandini,
+Since the commit that introduced the notification API of a SIM inserted
+and initialized I can not unlock the SIM card on a WP7607 modem.
 
-On 01/16/2019 12:45 AM, Nandini Rebello wrote:
-> Adding support to clear cached pins when modem is powered off.
-> ---
->   src/modem.c | 3 +++
->   1 file changed, 3 insertions(+)
-> =
+The previously mentioned commit: 54d56d763e40bc44c99a9b24aa0477bd373ea085
+
+Signed-off-by: Nicolas Serafini <nicolas.serafini@sensefly.com>
+---
+ drivers/qmimodem/sim-legacy.c | 1 +
+ drivers/qmimodem/sim.c        | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/drivers/qmimodem/sim-legacy.c b/drivers/qmimodem/sim-legacy.c
+index af857693..30eb4613 100644
+--- a/drivers/qmimodem/sim-legacy.c
++++ b/drivers/qmimodem/sim-legacy.c
+@@ -250,6 +250,7 @@ static void process_uim_state(struct ofono_sim *sim, ui=
+nt8_t state)
+ 	switch (state) {
+ 	case QMI_DMS_UIM_STATE_INIT_COMPLETE:
+ 		ofono_sim_inserted_notify(sim, TRUE);
++		ofono_sim_initialized_notify(sim);
+ 		break;
+ 	case QMI_DMS_UIM_STATE_INIT_FAILED:
+ 	case QMI_DMS_UIM_STATE_NOT_PRESENT:
+diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
+index 8edabb80..e91c6578 100644
+--- a/drivers/qmimodem/sim.c
++++ b/drivers/qmimodem/sim.c
+@@ -791,6 +791,7 @@ static void get_card_status_cb(struct qmi_result *resul=
+t, void *user_data)
+ 		break;
+ 	case 0x01:	/* Present */
+ 		ofono_sim_inserted_notify(sim, TRUE);
++		ofono_sim_initialized_notify(sim);
+ 		break;
+ 	}
+ }
+-- =
+
+2.20.1
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
-
---===============7959056216460679137==--
+--===============9221171745038857606==--
 
