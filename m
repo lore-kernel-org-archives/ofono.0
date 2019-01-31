@@ -1,71 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============7190809517613686307=="
+Content-Type: multipart/mixed; boundary="===============3610589615971546097=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 1/2] xmm7modem: Change in xmm7mode plugin for multi PDP
- handling
-Date: Thu, 31 Jan 2019 11:48:47 +0530
-Message-ID: <1548915527-4815-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 2/2] xmm7modem: chnage to assign datapath for activated PDP
+ context
+Date: Thu, 31 Jan 2019 11:49:30 +0530
+Message-ID: <1548915570-4856-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7190809517613686307==
+--===============3610589615971546097==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Made changes in xmm7modem plugin to allow mutiple PDP context
-activation and to assign correct network interface to the
-activated PDP context.
+Changed the handling of CGCONTRDP AT command reply in ifxmodem
+modem driver for XMM7MODEM vendor for assigning network interface
+to context settings and routing data over the selected path.
 ---
- plugins/udevng.c  |  2 ++
- plugins/xmm7xxx.c | 12 ++++++++++++
- 2 files changed, 14 insertions(+)
+ drivers/ifxmodem/gprs-context.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index ff6e1fc..353a7dd 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1219,6 +1219,8 @@ static gboolean setup_xmm7xxx(struct modem_info *mode=
-m)
+diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
+t.c
+index 7f3628b..6cadb47 100644
+--- a/drivers/ifxmodem/gprs-context.c
++++ b/drivers/ifxmodem/gprs-context.c
+@@ -271,6 +271,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	const char *gw =3D NULL;
+ 	const char *interface;
+ 	const char *dns[3];
++	const char *ctrlpath;
++	const char *datapath;
++	char buf[64];
  =
 
- 	ofono_modem_set_string(modem->modem, "Modem", mdm);
- 	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
-+	ofono_modem_set_string(modem->modem, "CtrlPath", "/USBCDC/0");
-+	ofono_modem_set_string(modem->modem, "DataPath", "/USBHS/NCM/");
+ 	DBG("ok %d", ok);
  =
 
- 	return TRUE;
+@@ -328,8 +331,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	DBG("Gateway: %s\n", gcd->gateway);
+ =
+
+ 	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
++	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
++	datapath =3D ofono_modem_get_string(modem, "DataPath");
+ =
+
+-	ofono_gprs_context_set_interface(gc, interface);
+ 	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
+ =
+
+ 	if (gcd->netmask[0])
+@@ -340,6 +344,15 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ =
+
+ 	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
+ =
+
++	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s%u\",2,%u", ctrlpath,
++				datapath, gcd->active_context, gcd->active_context);
++	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
++	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
++	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
++
++	sprintf(buf, "%s\b%u", interface, gcd->active_context);
++	ofono_gprs_context_set_interface(gc, buf);
++
+ 	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
  }
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index 237c62c..8b775e0 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -1282,6 +1282,18 @@ static void xmm7xxx_post_online(struct ofono_modem *=
-modem)
- 	if (gprs && gc)
- 		ofono_gprs_add_context(gprs, gc);
  =
 
-+	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
-+					data->chat);
-+
-+	if (gprs && gc)
-+		ofono_gprs_add_context(gprs, gc);
-+
-+	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
-+					data->chat);
-+
-+	if (gprs && gc)
-+		ofono_gprs_add_context(gprs, gc);
-+
- 	ofono_ims_create(modem, "xmm7modem", data->chat);
- 	ofono_netmon_create(modem, 0, "xmm7modem", data->chat);
- }
 -- =
 
 1.9.1
 
 
---===============7190809517613686307==--
+--===============3610589615971546097==--
 
