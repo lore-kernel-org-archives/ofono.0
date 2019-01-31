@@ -1,89 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============8780373686405104314=="
+Content-Type: multipart/mixed; boundary="===============5059738426975758642=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] xmm7modem: Change in xmm7mode plugin for multi PDP
- handling
-Date: Thu, 31 Jan 2019 12:45:19 -0600
-Message-ID: <8797a9c8-58ed-6107-5407-3568425526d1@gmail.com>
-In-Reply-To: <1548915527-4815-1-git-send-email-antara.borwankar@intel.com>
+Subject: Re: [PATCH 2/2] xmm7modem: chnage to assign datapath for activated
+ PDP context
+Date: Thu, 31 Jan 2019 12:58:52 -0600
+Message-ID: <df37aefb-0629-0790-ba3a-c390417b8ba8@gmail.com>
+In-Reply-To: <1548915570-4856-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8780373686405104314==
+--===============5059738426975758642==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Antara,
 
-On 01/31/2019 12:18 AM, Antara Borwankar wrote:
-> Made changes in xmm7modem plugin to allow mutiple PDP context
-> activation and to assign correct network interface to the
-> activated PDP context.
+On 01/31/2019 12:19 AM, Antara Borwankar wrote:
+> Changed the handling of CGCONTRDP AT command reply in ifxmodem
+> modem driver for XMM7MODEM vendor for assigning network interface
+> to context settings and routing data over the selected path.
 > ---
->   plugins/udevng.c  |  2 ++
->   plugins/xmm7xxx.c | 12 ++++++++++++
->   2 files changed, 14 insertions(+)
+>   drivers/ifxmodem/gprs-context.c | 15 ++++++++++++++-
+>   1 file changed, 14 insertions(+), 1 deletion(-)
 > =
 
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index ff6e1fc..353a7dd 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -1219,6 +1219,8 @@ static gboolean setup_xmm7xxx(struct modem_info *mo=
-dem)
+> diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-cont=
+ext.c
+> index 7f3628b..6cadb47 100644
+> --- a/drivers/ifxmodem/gprs-context.c
+> +++ b/drivers/ifxmodem/gprs-context.c
+> @@ -271,6 +271,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+>   	const char *gw =3D NULL;
+>   	const char *interface;
+>   	const char *dns[3];
+> +	const char *ctrlpath;
+> +	const char *datapath;
+> +	char buf[64];
 >   =
 
->   	ofono_modem_set_string(modem->modem, "Modem", mdm);
->   	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
-> +	ofono_modem_set_string(modem->modem, "CtrlPath", "/USBCDC/0");
-> +	ofono_modem_set_string(modem->modem, "DataPath", "/USBHS/NCM/");
-
-These seem hard-coded.  What happens if you plug in multiple XMM7xxx usb =
-
-modems into a system?
-
+>   	DBG("ok %d", ok);
 >   =
 
->   	return TRUE;
->   }
-> diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-> index 237c62c..8b775e0 100644
-> --- a/plugins/xmm7xxx.c
-> +++ b/plugins/xmm7xxx.c
-> @@ -1282,6 +1282,18 @@ static void xmm7xxx_post_online(struct ofono_modem=
- *modem)
->   	if (gprs && gc)
->   		ofono_gprs_add_context(gprs, gc);
+> @@ -328,8 +331,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+>   	DBG("Gateway: %s\n", gcd->gateway);
 >   =
 
-> +	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
-> +					data->chat);
-> +
-> +	if (gprs && gc)
-> +		ofono_gprs_add_context(gprs, gc);
-> +
-> +	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
-> +					data->chat);
-> +
-> +	if (gprs && gc)
-> +		ofono_gprs_add_context(gprs, gc);
-> +
+>   	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
+> +	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
+> +	datapath =3D ofono_modem_get_string(modem, "DataPath");
+>   =
 
-Okay, but how does a context driver know which interface to use?  For =
+> -	ofono_gprs_context_set_interface(gc, interface);
+>   	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
+>   =
 
-ifxmodem we used a different DLC for each context driver for example. =
+>   	if (gcd->netmask[0])
+> @@ -340,6 +344,15 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+>   =
 
-It is unclear how things would work under your setup?
+>   	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
+>   =
 
->   	ofono_ims_create(modem, "xmm7modem", data->chat);
->   	ofono_netmon_create(modem, 0, "xmm7modem", data->chat);
->   }
+> +	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s%u\",2,%u", ctrlpath,
+> +				datapath, gcd->active_context, gcd->active_context);
+> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
+> +	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
+> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
+> +
+> +	sprintf(buf, "%s\b%u", interface, gcd->active_context);
+
+I'd have to look up the standard, but isn't using backspace like this is =
+
+a bit dangerous.  E.g. won't the results possibly vary depending on the =
+
+terminal set?
+
+If there are multiple interfaces, why aren't they detected by udevng?  I =
+
+think you need to provide a more detailed explanation of what is =
+
+actually happening here...
+
+> +	ofono_gprs_context_set_interface(gc, buf);
 > =
-
 
 Regards,
 -Denis
 
---===============8780373686405104314==--
+--===============5059738426975758642==--
 
