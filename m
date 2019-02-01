@@ -1,95 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5059738426975758642=="
+Content-Type: multipart/mixed; boundary="===============5627310597918118844=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] xmm7modem: chnage to assign datapath for activated
- PDP context
-Date: Thu, 31 Jan 2019 12:58:52 -0600
-Message-ID: <df37aefb-0629-0790-ba3a-c390417b8ba8@gmail.com>
-In-Reply-To: <1548915570-4856-1-git-send-email-antara.borwankar@intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Droid 4 modem support in kernel & ofono
+Date: Fri, 01 Feb 2019 21:36:16 +0100
+Message-ID: <20190201203616.GA2087@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5059738426975758642==
+--===============5627310597918118844==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+Hi!
 
-On 01/31/2019 12:19 AM, Antara Borwankar wrote:
-> Changed the handling of CGCONTRDP AT command reply in ifxmodem
-> modem driver for XMM7MODEM vendor for assigning network interface
-> to context settings and routing data over the selected path.
-> ---
->   drivers/ifxmodem/gprs-context.c | 15 ++++++++++++++-
->   1 file changed, 14 insertions(+), 1 deletion(-)
-> =
+Ok, so I got calls and smses somehow working in kernel&ofono ... which
+is really all I need.
 
-> diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-cont=
-ext.c
-> index 7f3628b..6cadb47 100644
-> --- a/drivers/ifxmodem/gprs-context.c
-> +++ b/drivers/ifxmodem/gprs-context.c
-> @@ -271,6 +271,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->   	const char *gw =3D NULL;
->   	const char *interface;
->   	const char *dns[3];
-> +	const char *ctrlpath;
-> +	const char *datapath;
-> +	char buf[64];
->   =
+I pushed the tree to git(a)github.com:pavelmachek/ofono.git , branch
+d4... But I had to do some "rather interesting" hacks. D4 modem
+expects packets and current kernel drivers rely on write() boundaries
+and flush(). .. which is a bit of problem for in ofonod, as it expects
+to work with bytestream with no explicit packet boundaries.
 
->   	DBG("ok %d", ok);
->   =
+However D4 still uses normal AT commands, so... it would be good to be
+able to use AT parsing framework in ofono.
 
-> @@ -328,8 +331,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->   	DBG("Gateway: %s\n", gcd->gateway);
->   =
+I believe easiest solution would be to automatically do the packet
+splitting in kernel, it should be as easy as splitting on \r and
+^Z. (Currently packets are only generated when \r or ^Z is seen on
+write boundary, but that does not work well for ofono).
 
->   	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-> +	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
-> +	datapath =3D ofono_modem_get_string(modem, "DataPath");
->   =
+Best regards,
+									Pavel
+-- =
 
-> -	ofono_gprs_context_set_interface(gc, interface);
->   	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
->   =
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
->   	if (gcd->netmask[0])
-> @@ -340,6 +344,15 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->   =
+--===============5627310597918118844==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
->   	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
->   =
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFseFVyYjhBQ2drUU1PZndhcFhiK3ZMOURRQ2dyNHV2eHIreWdaNlUvellMb2dlUXFkVjMK
+NkFJQW4wbFd6dWFlOGY1SXJRUVdmUHAyV0ZQM0hlMHAKPUNxV1EKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
 
-> +	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s%u\",2,%u", ctrlpath,
-> +				datapath, gcd->active_context, gcd->active_context);
-> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
-> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +
-> +	sprintf(buf, "%s\b%u", interface, gcd->active_context);
-
-I'd have to look up the standard, but isn't using backspace like this is =
-
-a bit dangerous.  E.g. won't the results possibly vary depending on the =
-
-terminal set?
-
-If there are multiple interfaces, why aren't they detected by udevng?  I =
-
-think you need to provide a more detailed explanation of what is =
-
-actually happening here...
-
-> +	ofono_gprs_context_set_interface(gc, buf);
-> =
-
-Regards,
--Denis
-
---===============5059738426975758642==--
+--===============5627310597918118844==--
 
