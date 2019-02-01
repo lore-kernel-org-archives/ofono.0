@@ -1,54 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============5627310597918118844=="
+Content-Type: multipart/mixed; boundary="===============3624185198308736957=="
 MIME-Version: 1.0
 From: Pavel Machek <pavel@ucw.cz>
-Subject: Droid 4 modem support in kernel & ofono
-Date: Fri, 01 Feb 2019 21:36:16 +0100
-Message-ID: <20190201203616.GA2087@amd>
+Subject: Better help text for dial-number
+Date: Fri, 01 Feb 2019 22:00:56 +0100
+Message-ID: <20190201210056.GA10509@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5627310597918118844==
+--===============3624185198308736957==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
 
-Ok, so I got calls and smses somehow working in kernel&ofono ... which
-is really all I need.
+Better help text for "dial-number". Without details, user may be
+tempted to pass 0|1 (as send-sms uses) or true|false.
 
-I pushed the tree to git(a)github.com:pavelmachek/ofono.git , branch
-d4... But I had to do some "rather interesting" hacks. D4 modem
-expects packets and current kernel drivers rely on write() boundaries
-and flush(). .. which is a bit of problem for in ofonod, as it expects
-to work with bytestream with no explicit packet boundaries.
+diff --git a/test/dial-number b/test/dial-number
+index fe5adad3..4c0ee142 100755
+--- a/test/dial-number
++++ b/test/dial-number
+@@ -4,7 +4,8 @@ import sys
+ import dbus
+ =
 
-However D4 still uses normal AT commands, so... it would be good to be
-able to use AT parsing framework in ofono.
+ if (len(sys.argv) < 2):
+-	print("Usage: %s [modem] <number> [hide_callerid]" % (sys.argv[0]))
++	print("Usage: %s [modem] <number> [enabled|disabled|default]" % (sys.argv=
+[0]))
++	print("Last argument enables/disables callerid")
+ 	sys.exit(1)
+ =
 
-I believe easiest solution would be to automatically do the packet
-splitting in kernel, it should be as easy as splitting on \r and
-^Z. (Currently packets are only generated when \r or ^Z is seen on
-write boundary, but that does not work well for ofono).
+ bus =3D dbus.SystemBus()
 
-Best regards,
-									Pavel
 -- =
 
 (english) http://www.livejournal.com/~pavelmachek
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
 g.html
 
---===============5627310597918118844==
+--===============3624185198308736957==
 Content-Type: application/pgp-signature
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="signature.asc"
 
 LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFseFVyYjhBQ2drUU1PZndhcFhiK3ZMOURRQ2dyNHV2eHIreWdaNlUvellMb2dlUXFkVjMK
-NkFJQW4wbFd6dWFlOGY1SXJRUVdmUHAyV0ZQM0hlMHAKPUNxV1EKLS0tLS1FTkQgUEdQIFNJR05B
+QUFZRkFseFVzNGdBQ2drUU1PZndhcFhiK3ZKeUV3Q2ZkT2x3MG1oeEpSV0dIMTBaQ2V4c2NzN2wK
+MFVBQW5BdXd4Q0JCc1NnOERqVlh1TlA2V2huYmFQSUgKPStQcWsKLS0tLS1FTkQgUEdQIFNJR05B
 VFVSRS0tLS0tCg==
 
---===============5627310597918118844==--
+--===============3624185198308736957==--
 
