@@ -1,55 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============3624185198308736957=="
+Content-Type: multipart/mixed; boundary="===============2789329485656325919=="
 MIME-Version: 1.0
 From: Pavel Machek <pavel@ucw.cz>
-Subject: Better help text for dial-number
-Date: Fri, 01 Feb 2019 22:00:56 +0100
-Message-ID: <20190201210056.GA10509@amd>
+Subject: Reliable SMS receive
+Date: Fri, 01 Feb 2019 23:05:54 +0100
+Message-ID: <20190201220554.GB13090@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3624185198308736957==
+--===============2789329485656325919==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi!
 
-Better help text for "dial-number". Without details, user may be
-tempted to pass 0|1 (as send-sms uses) or true|false.
+I see that great care is taken not to lose outgoing message: "
+Persisting of outgoing SMS messages.  Whenever oFono is asked to send
+an SMS message, it adds it to an internal queue and persists it on
+disk.  The queue is persistent across reboots of oFono and allows to
+queue SMS messages even while the modem is offline."
 
-diff --git a/test/dial-number b/test/dial-number
-index fe5adad3..4c0ee142 100755
---- a/test/dial-number
-+++ b/test/dial-number
-@@ -4,7 +4,8 @@ import sys
- import dbus
- =
+Is there something similar possible for incoming messages? I really
+hate losing those... Best think would be if
 
- if (len(sys.argv) < 2):
--	print("Usage: %s [modem] <number> [hide_callerid]" % (sys.argv[0]))
-+	print("Usage: %s [modem] <number> [enabled|disabled|default]" % (sys.argv=
-[0]))
-+	print("Last argument enables/disables callerid")
- 	sys.exit(1)
- =
+a) SMS comes from the modem
 
- bus =3D dbus.SystemBus()
+b) ofono sends the SMS over the dbus
 
--- =
+c) application writes it to stable storage, and confirms that back on
+dbus
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+d) ofono confirms reception of SMS to the modem.
 
---===============3624185198308736957==
+e) modem confirms it to the network.
+
+If something goes wrong, network will retransmit message and it will
+be delivered on the next boot.
+
+(Other schemes would work for me, too...)
+
+Ideas?
+								Pavel
+
+
+
+--===============2789329485656325919==
 Content-Type: application/pgp-signature
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="signature.asc"
 
 LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFseFVzNGdBQ2drUU1PZndhcFhiK3ZKeUV3Q2ZkT2x3MG1oeEpSV0dIMTBaQ2V4c2NzN2wK
-MFVBQW5BdXd4Q0JCc1NnOERqVlh1TlA2V2huYmFQSUgKPStQcWsKLS0tLS1FTkQgUEdQIFNJR05B
+QUFZRkFseFV3c0lBQ2drUU1PZndhcFhiK3ZKMDJBQ2VJVlh6d2VWTGxBczdPbURUOW1TYVlwb3YK
+b1ZjQW9KbnBmRHdFaStrcXhpeVAyWnlLY3pqZDdLWFIKPWVDNHcKLS0tLS1FTkQgUEdQIFNJR05B
 VFVSRS0tLS0tCg==
 
---===============3624185198308736957==--
+--===============2789329485656325919==--
 
