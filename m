@@ -1,44 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============7319112221155207796=="
+Content-Type: multipart/mixed; boundary="===============7919958764600516716=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Pi=C4=8Dugins?= Arsenijs <crimier@yandex.ru>
-Subject: Compiling: error: cast increases required alignment of target type
- [-Werror=cast-align]
-Date: Tue, 05 Feb 2019 00:28:46 +0200
-Message-ID: <2123041549319326@iva3-2961a207771d.qloud-c.yandex.net>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH 1/2] xmm7modem: Change in xmm7mode plugin for multi PDP
+ handling
+Date: Tue, 05 Feb 2019 18:27:18 +0530
+Message-ID: <1549371438-27766-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7319112221155207796==
+--===============7919958764600516716==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Made changes in xmm7modem plugin to allow mutiple PDP context
+activation and to assign correct network interface to the
+activated PDP context.
+---
+ plugins/udevng.c  | 14 ++++++++++++--
+ plugins/xmm7xxx.c | 21 +++++++++++++++++++++
+ 2 files changed, 33 insertions(+), 2 deletions(-)
 
---===============7319112221155207796==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index ff6e1fc..b14369c 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1,4 +1,4 @@
+-/*
++
+  *
+  *  oFono - Open Source Telephony
+  *
+@@ -1179,7 +1179,7 @@ static gboolean setup_gemalto(struct modem_info* mode=
+m)
+ =
 
-PGRpdiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCI+PGRpdj7CoCBDQyDCoCDC
-oCDCoCBkcml2ZXJzL21iaW1tb2RlbS9tYmltLW1lc3NhZ2UubzwvZGl2PjxkaXY+ZHJpdmVycy9t
-YmltbW9kZW0vbWJpbS1tZXNzYWdlLmM6IEluIGZ1bmN0aW9uIOKAmF9pdGVyX2NvcHlfc3RyaW5n
-4oCZOjwvZGl2PjxkaXY+ZHJpdmVycy9tYmltbW9kZW0vbWJpbS1tZXNzYWdlLmM6MTk5OjE4OiBl
-cnJvcjogY2FzdCBpbmNyZWFzZXMgcmVxdWlyZWQgYWxpZ25tZW50IG9mIHRhcmdldCB0eXBlIFst
-V2Vycm9yPWNhc3QtYWxpZ25dPC9kaXY+PGRpdj7CoCDCoHVpbnQxNl90ICpsZSA9ICh1aW50MTZf
-dCAqKSBidWY7PC9kaXY+PGRpdj7CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBePC9kaXY+PGRp
-dj5kcml2ZXJzL21iaW1tb2RlbS9tYmltLW1lc3NhZ2UuYzogQXQgdG9wIGxldmVsOjwvZGl2Pjxk
-aXY+Y2MxOiBlcnJvcjogdW5yZWNvZ25pemVkIGNvbW1hbmQgbGluZSBvcHRpb24g4oCYLVduby1m
-b3JtYXQtdHJ1bmNhdGlvbuKAmSBbLVdlcnJvcl08L2Rpdj48ZGl2PmNjMTogYWxsIHdhcm5pbmdz
-IGJlaW5nIHRyZWF0ZWQgYXMgZXJyb3JzPC9kaXY+PGRpdj5NYWtlZmlsZTozNzYzOiByZWNpcGUg
-Zm9yIHRhcmdldCAnZHJpdmVycy9tYmltbW9kZW0vbWJpbS1tZXNzYWdlLm8nIGZhaWxlZDwvZGl2
-PjxkaXY+bWFrZVsxXTogKioqIFtkcml2ZXJzL21iaW1tb2RlbS9tYmltLW1lc3NhZ2Uub10gRXJy
-b3IgMTwvZGl2PjxkaXY+TWFrZWZpbGU6MjA4MDogcmVjaXBlIGZvciB0YXJnZXQgJ2FsbCcgZmFp
-bGVkPC9kaXY+PGRpdj5tYWtlOiAqKiogW2FsbF0gRXJyb3IgMjwvZGl2PjxkaXY+wqA8L2Rpdj48
-ZGl2PlRoZSAnLVduby1mb3JtYXQtdHJ1bmNhdGlvbicgcHJvYmxlbSBzZWVtcyB0byBoYXZlIGJl
-ZW4gbWVudGlvbmVkIGhlcmUgYWxyZWFkeSwgYnV0IHRoZSAnLVdlcnJvcj1jYXN0LWFsaWduJyBz
-ZWVtcyB0byBiZSBzb21ldGhpbmcgbmV3LjwvZGl2PjxkaXY+wqA8L2Rpdj48ZGl2PmdjYyB2ZXJz
-aW9uIDYuMy4wIDIwMTcwNTE2IChSYXNwYmlhbiA2LjMuMC0xOCtycGkxK2RlYjl1MSk8L2Rpdj48
-L2Rpdj4=
---===============7319112221155207796==--
+ static gboolean setup_xmm7xxx(struct modem_info *modem)
+ {
+-	const char *mdm =3D NULL, *net =3D NULL;
++	const char *mdm =3D NULL, *net =3D NULL, *net2 =3D NULL, *net3 =3D NULL;
+ 	GSList *list;
+ =
+
+ 	DBG("%s %s\n", __DATE__, __TIME__);
+@@ -1200,6 +1200,10 @@ static gboolean setup_xmm7xxx(struct modem_info *mod=
+em)
+ 			} else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
+ 				if (g_strcmp0(info->number, "06") =3D=3D 0)
+ 					net =3D info->devnode;
++				if (g_strcmp0(info->number, "08") =3D=3D 0)
++					net2 =3D info->devnode;
++				if (g_strcmp0(info->number, "0a") =3D=3D 0)
++					net3 =3D info->devnode;
+ 			}
+ 		} else {
+ 			if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
+@@ -1219,6 +1223,12 @@ static gboolean setup_xmm7xxx(struct modem_info *mod=
+em)
+ =
+
+ 	ofono_modem_set_string(modem->modem, "Modem", mdm);
+ 	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
++	if (net2)
++		ofono_modem_set_string(modem->modem, "NetworkInterface2", net2);
++	if (net3)
++		ofono_modem_set_string(modem->modem, "NetworkInterface3", net3);
++	ofono_modem_set_string(modem->modem, "CtrlPath", "/USBCDC/0");
++	ofono_modem_set_string(modem->modem, "DataPath", "/USBHS/NCM/");
+ =
+
+ 	return TRUE;
+ }
+diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
+index 237c62c..eaae4ad 100644
+--- a/plugins/xmm7xxx.c
++++ b/plugins/xmm7xxx.c
+@@ -1269,6 +1269,7 @@ static void xmm7xxx_post_online(struct ofono_modem *m=
+odem)
+ 	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
++	const char *interface =3D NULL;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+@@ -1282,6 +1283,26 @@ static void xmm7xxx_post_online(struct ofono_modem *=
+modem)
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
+ =
+
++	interface =3D ofono_modem_get_string(modem, "NetworkInterface2");
++
++	if (interface) {
++		gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
++					data->chat);
++
++		if (gprs && gc)
++			ofono_gprs_add_context(gprs, gc);
++	}
++
++	interface =3D ofono_modem_get_string(modem, "NetworkInterface3");
++
++	if (interface) {
++		gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
++					data->chat);
++
++		if (gprs && gc)
++			ofono_gprs_add_context(gprs, gc);
++	}
++
+ 	ofono_ims_create(modem, "xmm7modem", data->chat);
+ 	ofono_netmon_create(modem, 0, "xmm7modem", data->chat);
+ }
+-- =
+
+1.9.1
+
+
+--===============7919958764600516716==--
 
