@@ -1,90 +1,118 @@
-Content-Type: multipart/mixed; boundary="===============0179442761542851862=="
+Content-Type: multipart/mixed; boundary="===============4171666584360796411=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 2/2] xmm7modem: chnage to assign datapath for activated PDP
- context
-Date: Tue, 05 Feb 2019 18:28:13 +0530
-Message-ID: <1549371493-27808-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 1/2] xmm7modem: Change in xmm7mode plugin for multi PDP
+ handling
+Date: Wed, 06 Feb 2019 14:07:01 +0530
+Message-ID: <1549442221-29806-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0179442761542851862==
+--===============4171666584360796411==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changed the handling of CGCONTRDP AT command reply in ifxmodem
-modem driver for XMM7MODEM vendor for assigning network interface
-to context settings and routing data over the selected path.
+Made changes in xmm7modem plugin to allow mutiple PDP context
+activation and to assign correct network interface to the
+activated PDP context.
 ---
- drivers/ifxmodem/gprs-context.c | 15 ++++++++++++++-
- 1 file changed, 14 insertions(+), 1 deletion(-)
+ plugins/udevng.c  | 12 +++++++++++-
+ plugins/xmm7xxx.c | 21 +++++++++++++++++++++
+ 2 files changed, 32 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 7f3628b..676bbfa 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -49,6 +49,8 @@ static const char *none_prefix[] =3D { NULL };
- static const char *xdns_prefix[] =3D { "+XDNS:", NULL };
- static const char *cgpaddr_prefix[] =3D { "+CGPADDR:", NULL };
- static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
-+static const char *net_interface[] =3D { "NetworkInterface", "NetworkInter=
-face2",
-+					"NetworkInterface3", NULL };
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index ff6e1fc..e00b6ac 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1179,7 +1179,7 @@ static gboolean setup_gemalto(struct modem_info* mode=
+m)
  =
 
- enum state {
- 	STATE_IDLE,
-@@ -271,6 +273,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	const char *gw =3D NULL;
- 	const char *interface;
- 	const char *dns[3];
-+	const char *ctrlpath;
-+	const char *datapath;
-+	char buf[64];
+ static gboolean setup_xmm7xxx(struct modem_info *modem)
+ {
+-	const char *mdm =3D NULL, *net =3D NULL;
++	const char *mdm =3D NULL, *net =3D NULL, *net2 =3D NULL, *net3 =3D NULL;
+ 	GSList *list;
  =
 
- 	DBG("ok %d", ok);
+ 	DBG("%s %s\n", __DATE__, __TIME__);
+@@ -1200,6 +1200,10 @@ static gboolean setup_xmm7xxx(struct modem_info *mod=
+em)
+ 			} else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
+ 				if (g_strcmp0(info->number, "06") =3D=3D 0)
+ 					net =3D info->devnode;
++				if (g_strcmp0(info->number, "08") =3D=3D 0)
++					net2 =3D info->devnode;
++				if (g_strcmp0(info->number, "0a") =3D=3D 0)
++					net3 =3D info->devnode;
+ 			}
+ 		} else {
+ 			if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
+@@ -1219,6 +1223,12 @@ static gboolean setup_xmm7xxx(struct modem_info *mod=
+em)
  =
 
-@@ -327,7 +332,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	DBG("DNS2: %s\n", gcd->dns2);
- 	DBG("Gateway: %s\n", gcd->gateway);
+ 	ofono_modem_set_string(modem->modem, "Modem", mdm);
+ 	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
++	if (net2)
++		ofono_modem_set_string(modem->modem, "NetworkInterface2", net2);
++	if (net3)
++		ofono_modem_set_string(modem->modem, "NetworkInterface3", net3);
++	ofono_modem_set_string(modem->modem, "CtrlPath", "/USBCDC/0");
++	ofono_modem_set_string(modem->modem, "DataPath", "/USBHS/NCM/");
  =
 
--	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-+	interface =3D ofono_modem_get_string(modem, net_interface[gcd->active_con=
-text]);
-+	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
-+	datapath =3D ofono_modem_get_string(modem, "DataPath");
- =
-
- 	ofono_gprs_context_set_interface(gc, interface);
- 	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
-@@ -340,6 +347,12 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
- =
-
-+	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s%u\",2,%u", ctrlpath,
-+				datapath, gcd->active_context, gcd->active_context);
-+	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
-+	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+
- 	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
+ 	return TRUE;
  }
+diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
+index 237c62c..eaae4ad 100644
+--- a/plugins/xmm7xxx.c
++++ b/plugins/xmm7xxx.c
+@@ -1269,6 +1269,7 @@ static void xmm7xxx_post_online(struct ofono_modem *m=
+odem)
+ 	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
++	const char *interface =3D NULL;
  =
 
+ 	DBG("%p", modem);
+ =
+
+@@ -1282,6 +1283,26 @@ static void xmm7xxx_post_online(struct ofono_modem *=
+modem)
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
+ =
+
++	interface =3D ofono_modem_get_string(modem, "NetworkInterface2");
++
++	if (interface) {
++		gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
++					data->chat);
++
++		if (gprs && gc)
++			ofono_gprs_add_context(gprs, gc);
++	}
++
++	interface =3D ofono_modem_get_string(modem, "NetworkInterface3");
++
++	if (interface) {
++		gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
++					data->chat);
++
++		if (gprs && gc)
++			ofono_gprs_add_context(gprs, gc);
++	}
++
+ 	ofono_ims_create(modem, "xmm7modem", data->chat);
+ 	ofono_netmon_create(modem, 0, "xmm7modem", data->chat);
+ }
 -- =
 
 1.9.1
 
 
---===============0179442761542851862==--
+--===============4171666584360796411==--
 
