@@ -1,82 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============4705023460968013443=="
+Content-Type: multipart/mixed; boundary="===============3399224950354589412=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 3/3] xmm7modem: change to assign datapath for activated PDP
-Date: Tue, 12 Feb 2019 17:22:11 +0530
-Message-ID: <1549972331-2259-1-git-send-email-antara.borwankar@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/3] xmm7modem: Change in xmm7mode plugin for multiple PDP
+Date: Wed, 13 Feb 2019 08:39:12 -0600
+Message-ID: <ecea2e60-74ac-993f-18d4-90ca1092cba7@gmail.com>
+In-Reply-To: <1549972295-2217-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4705023460968013443==
+--===============3399224950354589412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changed the handling of +CGCONTRDP AT command reply in ifxmodem
-modem driver for XMM7MODEM vendor for routing data over the
-selected path.
----
- drivers/ifxmodem/gprs-context.c | 14 +++++++++++---
- 1 file changed, 11 insertions(+), 3 deletions(-)
+Hi Antara,
 
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 7f3628b..70d10af 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -269,8 +269,10 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	const char *laddrnetmask =3D NULL;
- 	const char *gw =3D NULL;
--	const char *interface;
- 	const char *dns[3];
-+	const char *ctrlpath;
-+	const char *datapath;
-+	char buf[64];
- =
-
- 	DBG("ok %d", ok);
- =
-
-@@ -327,9 +329,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	DBG("DNS2: %s\n", gcd->dns2);
- 	DBG("Gateway: %s\n", gcd->gateway);
- =
-
--	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-+	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
-+	datapath =3D ofono_modem_get_string(modem, "DataPath");
- =
-
--	ofono_gprs_context_set_interface(gc, interface);
- 	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
- =
-
- 	if (gcd->netmask[0])
-@@ -340,6 +342,12 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
- =
-
-+	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s%u\",2,%u", ctrlpath,
-+				datapath, gcd->active_context, gcd->active_context);
-+	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
-+	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+
- 	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
- }
- =
-
--- =
-
-1.9.1
+On 02/12/2019 05:51 AM, Antara Borwankar wrote:
+> Made changes in xmm7modem plugin to allow mutiple PDP context
+> activation and to assign correct network interface to the
+> activated PDP context.
+> ---
+>   plugins/udevng.c  | 15 ++++++++++++++-
+>   plugins/xmm7xxx.c | 28 ++++++++++++++++++++++++++++
+>   2 files changed, 42 insertions(+), 1 deletion(-)
+> =
 
 
---===============4705023460968013443==--
+I split this patch up into two commits, and applied.  I did tweak a few =
+
+things, see below:
+
+> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index ff6e1fc..ce8cdee 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -1179,7 +1179,7 @@ static gboolean setup_gemalto(struct modem_info* mo=
+dem)
+>   =
+
+>   static gboolean setup_xmm7xxx(struct modem_info *modem)
+>   {
+> -	const char *mdm =3D NULL, *net =3D NULL;
+> +	const char *mdm =3D NULL, *net =3D NULL, *net2 =3D NULL, *net3 =3D NULL;
+>   	GSList *list;
+>   =
+
+>   	DBG("%s %s\n", __DATE__, __TIME__);
+> @@ -1200,6 +1200,10 @@ static gboolean setup_xmm7xxx(struct modem_info *m=
+odem)
+>   			} else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
+>   				if (g_strcmp0(info->number, "06") =3D=3D 0)
+>   					net =3D info->devnode;
+> +				if (g_strcmp0(info->number, "08") =3D=3D 0)
+> +					net2 =3D info->devnode;
+> +				if (g_strcmp0(info->number, "0a") =3D=3D 0)
+> +					net3 =3D info->devnode;
+>   			}
+>   		} else {
+>   			if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
+> @@ -1220,6 +1224,15 @@ static gboolean setup_xmm7xxx(struct modem_info *m=
+odem)
+>   	ofono_modem_set_string(modem->modem, "Modem", mdm);
+>   	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
+>   =
+
+> +	if (net2)
+> +		ofono_modem_set_string(modem->modem, "NetworkInterface2", net2);
+> +
+> +	if (net3)
+> +		ofono_modem_set_string(modem->modem, "NetworkInterface3", net3);
+> +
+> +	ofono_modem_set_string(modem->modem, "CtrlPath", "/USBCDC/0");
+> +	ofono_modem_set_string(modem->modem, "DataPath", "/USBHS/NCM/");
+> +
+>   	return TRUE;
+>   }
+>   =
+
+> @@ -1282,6 +1283,33 @@ static void xmm7xxx_post_online(struct ofono_modem=
+ *modem)
+>   	if (gprs && gc)
+>   		ofono_gprs_add_context(gprs, gc);
+>   =
+
+> +	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
+> +	ofono_gprs_context_set_interface(gc, interface);
+
+Since ofono_gprs_context_set_interface doesn't perform NULL check on gc, =
+
+I put this and other instances behind the if (gprs && gc) statement
+
+Regards,
+-Denis
+
+--===============3399224950354589412==--
 
