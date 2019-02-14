@@ -1,217 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============3396408446945899419=="
+Content-Type: multipart/mixed; boundary="===============6164591526832347795=="
 MIME-Version: 1.0
-From: wajdi zairi <wajdi.zairi@gmail.com>
-Subject: [OFONO][Gemalto] Sent SMS status
-Date: Thu, 14 Feb 2019 11:49:29 +0100
-Message-ID: <CAJTQovY9yXoUsTW=_Sox_r7o2r1kvqMu6Ju_jWp85bP6AeCe7Q@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [OFONO][Gemalto] Sent SMS status
+Date: Thu, 14 Feb 2019 11:07:41 -0600
+Message-ID: <10642a14-441f-862a-61f0-22bd6275ea1b@gmail.com>
+In-Reply-To: <CAJTQovY9yXoUsTW=_Sox_r7o2r1kvqMu6Ju_jWp85bP6AeCe7Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3396408446945899419==
+--===============6164591526832347795==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all ,
+Hi Wajdi,
+
+On 02/14/2019 04:49 AM, wajdi zairi wrote:
+> Hi all ,
+> =
+
+> =
+
+> We are planning to add a feature to handle sent SMS status . The =
+
+> available OFONO APIs to use seems provided by *org.ofono.Message*=C2=A0bu=
+t =
+
+> when i made some tests
+> to catch the *PropertyChanged*=C2=A0signal on a sent=C2=A0SMS i notes tha=
+t the =
+
+> result is always "sent" (when out from TX) even on a wrong destination =
+
+> number .
+> =
 
 
-We are planning to add a feature to handle sent SMS status . The available
-OFONO APIs to use seems provided by *org.ofono.Message* but when i made
-some tests
-to catch the *PropertyChanged* signal on a sent SMS i notes that the result
-is always "sent" (when out from TX) even on a wrong destination number .
+Can you elaborate?  If the destination number is still a valid number, =
 
-# signal sender=3D:1.12 -> dest=3D(null destination) serial=3D105
-path=3D/gemalto_0/message_2F3426EAC5E3EBA365FA626347886C0EC4DC5323;
-interface=3Dorg.ofond
-   string "State"
-   variant       string "sent"
+then this wouldn't be surprising.
 
-Also the call of *org.ofono.Message.GetProperties*() on given message
-object path will fail since ofono is removing to object after sending
-(sms_tx_queue_remove_entry) .
+> # signal sender=3D:1.12 -> dest=3D(null destination) serial=3D105 =
 
-So here the "sent" means that the message was treated and out from TX but
-does not give the real state if it was delivered or not .
-I made a try by adding History driver to our Gemalto drivers and it gives a
-better result regarding SMS delivery status which meet our requirements.
+> path=3D/gemalto_0/message_2F3426EAC5E3EBA365FA626347886C0EC4DC5323; =
 
-To keep our ofono aligned with latest ofono updates, we want to upstream
-our contributions so i want to get your opinion about a propasal upstream
-candidate :
+> interface=3Dorg.ofond
+>  =C2=A0 =C2=A0string "State"
+>  =C2=A0 =C2=A0variant=C2=A0 =C2=A0 =C2=A0 =C2=A0string "sent"
+> =
 
-- Add history driver implementation to drivers/gemaltomodems/
-- Add signal in plugins/gemalto.c  to notify the different sent messages
-status  (indicated on enum*ofono_history_sms_status* )
-- Then the signal can be consumed by any client after sending an SMS .
+> Also the call of *org.ofono.Message.GetProperties*() on given message =
 
-Please correct me if something wrong and if you have any sugesstion.
+> object path will fail since ofono is removing to object after sending =
 
-Thank you in advance !
+> (sms_tx_queue_remove_entry) .
 
-Kind Regards,
-Wajdi ZAIRI
-Embedded Software Engineer
+Yes, this is expected behavior and somewhat documented in the =
 
---===============3396408446945899419==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+messagemanager-api.txt.  However, D-Bus API is not meant to be used for =
 
-PGRpdiBkaXI9Imx0ciI+PHAgc3R5bGU9Im1hcmdpbi10b3A6MHB4O21hcmdpbi1ib3R0b206MHB4
-O2NvbG9yOnJnYigwLDAsMCk7Zm9udC1mYW1pbHk6Q2FsaWJyaSxIZWx2ZXRpY2Esc2Fucy1zZXJp
-ZixFbW9qaUZvbnQsJnF1b3Q7QXBwbGUgQ29sb3IgRW1vamkmcXVvdDssJnF1b3Q7U2Vnb2UgVUkg
-RW1vamkmcXVvdDssTm90b0NvbG9yRW1vamksJnF1b3Q7U2Vnb2UgVUkgU3ltYm9sJnF1b3Q7LCZx
-dW90O0FuZHJvaWQgRW1vamkmcXVvdDssRW1vamlTeW1ib2xzO2ZvbnQtc2l6ZToxNnB4Ij48c3Bh
-biBzdHlsZT0iZm9udC1zaXplOjEycHQiPkhpIGFsbCAsPC9zcGFuPjxicj48L3A+PHAgc3R5bGU9
-Im1hcmdpbi10b3A6MHB4O21hcmdpbi1ib3R0b206MHB4O2NvbG9yOnJnYigwLDAsMCk7Zm9udC1m
-YW1pbHk6Q2FsaWJyaSxIZWx2ZXRpY2Esc2Fucy1zZXJpZixFbW9qaUZvbnQsJnF1b3Q7QXBwbGUg
-Q29sb3IgRW1vamkmcXVvdDssJnF1b3Q7U2Vnb2UgVUkgRW1vamkmcXVvdDssTm90b0NvbG9yRW1v
-amksJnF1b3Q7U2Vnb2UgVUkgU3ltYm9sJnF1b3Q7LCZxdW90O0FuZHJvaWQgRW1vamkmcXVvdDss
-RW1vamlTeW1ib2xzO2ZvbnQtc2l6ZToxNnB4Ij48L3A+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAs
-MCwwKTtmb250LWZhbWlseTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmLEVtb2ppRm9udCwm
-cXVvdDtBcHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVvdDtTZWdvZSBVSSBFbW9qaSZxdW90OyxO
-b3RvQ29sb3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBF
-bW9qaSZxdW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2cHgiPjxicj48L2Rpdj48ZGl2IHN0
-eWxlPSJjb2xvcjpyZ2IoMCwwLDApO2ZvbnQtZmFtaWx5OkNhbGlicmksSGVsdmV0aWNhLHNhbnMt
-c2VyaWYsRW1vamlGb250LCZxdW90O0FwcGxlIENvbG9yIEVtb2ppJnF1b3Q7LCZxdW90O1NlZ29l
-IFVJIEVtb2ppJnF1b3Q7LE5vdG9Db2xvckVtb2ppLCZxdW90O1NlZ29lIFVJIFN5bWJvbCZxdW90
-OywmcXVvdDtBbmRyb2lkIEVtb2ppJnF1b3Q7LEVtb2ppU3ltYm9scztmb250LXNpemU6MTZweCI+
-V2UgYXJlIHBsYW5uaW5nIHRvIGFkZCBhIGZlYXR1cmUgdG8gaGFuZGxlIHNlbnQgU01TIHN0YXR1
-cyAuIFRoZSBhdmFpbGFibGUgT0ZPTk8gQVBJcyB0byB1c2Ugc2VlbXMgcHJvdmlkZWQgYnnCoDxi
-Pm9yZy5vZm9uby5NZXNzYWdlPC9iPsKgYnV0IHdoZW4gaSBtYWRlIHNvbWUgdGVzdHPCoDwvZGl2
-PjxkaXYgc3R5bGU9ImNvbG9yOnJnYigwLDAsMCk7Zm9udC1mYW1pbHk6Q2FsaWJyaSxIZWx2ZXRp
-Y2Esc2Fucy1zZXJpZixFbW9qaUZvbnQsJnF1b3Q7QXBwbGUgQ29sb3IgRW1vamkmcXVvdDssJnF1
-b3Q7U2Vnb2UgVUkgRW1vamkmcXVvdDssTm90b0NvbG9yRW1vamksJnF1b3Q7U2Vnb2UgVUkgU3lt
-Ym9sJnF1b3Q7LCZxdW90O0FuZHJvaWQgRW1vamkmcXVvdDssRW1vamlTeW1ib2xzO2ZvbnQtc2l6
-ZToxNnB4Ij50byBjYXRjaCB0aGXCoDxiPlByb3BlcnR5Q2hhbmdlZDwvYj7CoHNpZ25hbCBvbiBh
-IHNlbnTCoFNNUyBpIG5vdGVzIHRoYXQgdGhlIHJlc3VsdCBpcyBhbHdheXMgJnF1b3Q7c2VudCZx
-dW90OyAod2hlbiBvdXQgZnJvbSBUWCkgZXZlbiBvbiBhIHdyb25nIGRlc3RpbmF0aW9uIG51bWJl
-ciAuPC9kaXY+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAsMCwwKTtmb250LWZhbWlseTpDYWxpYnJp
-LEhlbHZldGljYSxzYW5zLXNlcmlmLEVtb2ppRm9udCwmcXVvdDtBcHBsZSBDb2xvciBFbW9qaSZx
-dW90OywmcXVvdDtTZWdvZSBVSSBFbW9qaSZxdW90OyxOb3RvQ29sb3JFbW9qaSwmcXVvdDtTZWdv
-ZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBFbW9qaSZxdW90OyxFbW9qaVN5bWJvbHM7
-Zm9udC1zaXplOjE2cHgiPjxicj48L2Rpdj48ZGl2IHN0eWxlPSJjb2xvcjpyZ2IoMCwwLDApO2Zv
-bnQtZmFtaWx5OkNhbGlicmksSGVsdmV0aWNhLHNhbnMtc2VyaWYsRW1vamlGb250LCZxdW90O0Fw
-cGxlIENvbG9yIEVtb2ppJnF1b3Q7LCZxdW90O1NlZ29lIFVJIEVtb2ppJnF1b3Q7LE5vdG9Db2xv
-ckVtb2ppLCZxdW90O1NlZ29lIFVJIFN5bWJvbCZxdW90OywmcXVvdDtBbmRyb2lkIEVtb2ppJnF1
-b3Q7LEVtb2ppU3ltYm9scztmb250LXNpemU6MTZweCI+PHNwYW4gc3R5bGU9ImJhY2tncm91bmQt
-Y29sb3I6cmdiKDE5MCwxOTAsMTkwKSI+IyBzaWduYWwgc2VuZGVyPToxLjEyIC0mZ3Q7IGRlc3Q9
-KG51bGwgZGVzdGluYXRpb24pIHNlcmlhbD0xMDUgcGF0aD0vZ2VtYWx0b18wL21lc3NhZ2VfMkYz
-NDI2RUFDNUUzRUJBMzY1RkE2MjYzNDc4ODZDMEVDNERDNTMyMzsgaW50ZXJmYWNlPW9yZy5vZm9u
-ZDwvc3Bhbj48L2Rpdj48ZGl2IHN0eWxlPSJjb2xvcjpyZ2IoMCwwLDApO2ZvbnQtZmFtaWx5OkNh
-bGlicmksSGVsdmV0aWNhLHNhbnMtc2VyaWYsRW1vamlGb250LCZxdW90O0FwcGxlIENvbG9yIEVt
-b2ppJnF1b3Q7LCZxdW90O1NlZ29lIFVJIEVtb2ppJnF1b3Q7LE5vdG9Db2xvckVtb2ppLCZxdW90
-O1NlZ29lIFVJIFN5bWJvbCZxdW90OywmcXVvdDtBbmRyb2lkIEVtb2ppJnF1b3Q7LEVtb2ppU3lt
-Ym9scztmb250LXNpemU6MTZweCI+PHNwYW4gc3R5bGU9ImJhY2tncm91bmQtY29sb3I6cmdiKDE5
-MCwxOTAsMTkwKSI+wqAgwqBzdHJpbmcgJnF1b3Q7U3RhdGUmcXVvdDs8L3NwYW4+PC9kaXY+PGRp
-diBzdHlsZT0iY29sb3I6cmdiKDAsMCwwKTtmb250LWZhbWlseTpDYWxpYnJpLEhlbHZldGljYSxz
-YW5zLXNlcmlmLEVtb2ppRm9udCwmcXVvdDtBcHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVvdDtT
-ZWdvZSBVSSBFbW9qaSZxdW90OyxOb3RvQ29sb3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wm
-cXVvdDssJnF1b3Q7QW5kcm9pZCBFbW9qaSZxdW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2
-cHgiPjxzcGFuIHN0eWxlPSJiYWNrZ3JvdW5kLWNvbG9yOnJnYigxOTAsMTkwLDE5MCkiPsKgIMKg
-dmFyaWFudMKgIMKgIMKgIMKgc3RyaW5nICZxdW90O3NlbnQmcXVvdDvCoDwvc3Bhbj48L2Rpdj48
-ZGl2IHN0eWxlPSJjb2xvcjpyZ2IoMCwwLDApO2ZvbnQtZmFtaWx5OkNhbGlicmksSGVsdmV0aWNh
-LHNhbnMtc2VyaWYsRW1vamlGb250LCZxdW90O0FwcGxlIENvbG9yIEVtb2ppJnF1b3Q7LCZxdW90
-O1NlZ29lIFVJIEVtb2ppJnF1b3Q7LE5vdG9Db2xvckVtb2ppLCZxdW90O1NlZ29lIFVJIFN5bWJv
-bCZxdW90OywmcXVvdDtBbmRyb2lkIEVtb2ppJnF1b3Q7LEVtb2ppU3ltYm9scztmb250LXNpemU6
-MTZweCI+PGJyPjwvZGl2PjxkaXYgc3R5bGU9ImNvbG9yOnJnYigwLDAsMCk7Zm9udC1mYW1pbHk6
-Q2FsaWJyaSxIZWx2ZXRpY2Esc2Fucy1zZXJpZixFbW9qaUZvbnQsJnF1b3Q7QXBwbGUgQ29sb3Ig
-RW1vamkmcXVvdDssJnF1b3Q7U2Vnb2UgVUkgRW1vamkmcXVvdDssTm90b0NvbG9yRW1vamksJnF1
-b3Q7U2Vnb2UgVUkgU3ltYm9sJnF1b3Q7LCZxdW90O0FuZHJvaWQgRW1vamkmcXVvdDssRW1vamlT
-eW1ib2xzO2ZvbnQtc2l6ZToxNnB4Ij5BbHNvIHRoZSBjYWxsIG9mwqA8Yj5vcmcub2Zvbm8uTWVz
-c2FnZS5HZXRQcm9wZXJ0aWVzPC9iPigpIG9uIGdpdmVuIG1lc3NhZ2Ugb2JqZWN0IHBhdGggd2ls
-bCBmYWlsIHNpbmNlIG9mb25vIGlzIHJlbW92aW5nIHRvIG9iamVjdCBhZnRlciBzZW5kaW5nIChz
-bXNfdHhfcXVldWVfcmVtb3ZlX2VudHJ5KSAuPC9kaXY+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAs
-MCwwKTtmb250LWZhbWlseTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmLEVtb2ppRm9udCwm
-cXVvdDtBcHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVvdDtTZWdvZSBVSSBFbW9qaSZxdW90OyxO
-b3RvQ29sb3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBF
-bW9qaSZxdW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2cHgiPjxicj48L2Rpdj48ZGl2IHN0
-eWxlPSJjb2xvcjpyZ2IoMCwwLDApO2ZvbnQtZmFtaWx5OkNhbGlicmksSGVsdmV0aWNhLHNhbnMt
-c2VyaWYsRW1vamlGb250LCZxdW90O0FwcGxlIENvbG9yIEVtb2ppJnF1b3Q7LCZxdW90O1NlZ29l
-IFVJIEVtb2ppJnF1b3Q7LE5vdG9Db2xvckVtb2ppLCZxdW90O1NlZ29lIFVJIFN5bWJvbCZxdW90
-OywmcXVvdDtBbmRyb2lkIEVtb2ppJnF1b3Q7LEVtb2ppU3ltYm9scztmb250LXNpemU6MTZweCI+
-U28gaGVyZSB0aGUgJnF1b3Q7c2VudCZxdW90OyBtZWFucyB0aGF0IHRoZSBtZXNzYWdlIHdhcyB0
-cmVhdGVkIGFuZCBvdXQgZnJvbSBUWCBidXQgZG9lcyBub3QgZ2l2ZSB0aGUgcmVhbCBzdGF0ZSBp
-ZiBpdCB3YXMgZGVsaXZlcmVkIG9yIG5vdCAuwqA8L2Rpdj48ZGl2IHN0eWxlPSJjb2xvcjpyZ2Io
-MCwwLDApO2ZvbnQtZmFtaWx5OkNhbGlicmksSGVsdmV0aWNhLHNhbnMtc2VyaWYsRW1vamlGb250
-LCZxdW90O0FwcGxlIENvbG9yIEVtb2ppJnF1b3Q7LCZxdW90O1NlZ29lIFVJIEVtb2ppJnF1b3Q7
-LE5vdG9Db2xvckVtb2ppLCZxdW90O1NlZ29lIFVJIFN5bWJvbCZxdW90OywmcXVvdDtBbmRyb2lk
-IEVtb2ppJnF1b3Q7LEVtb2ppU3ltYm9scztmb250LXNpemU6MTZweCI+SSBtYWRlIGEgdHJ5IGJ5
-IGFkZGluZyBIaXN0b3J5IGRyaXZlciB0byBvdXIgR2VtYWx0byBkcml2ZXJzIGFuZCBpdCBnaXZl
-cyBhIGJldHRlciByZXN1bHQgcmVnYXJkaW5nIFNNUyBkZWxpdmVyeSBzdGF0dXMgd2hpY2ggbWVl
-dCBvdXIgcmVxdWlyZW1lbnRzLjwvZGl2PjxkaXYgc3R5bGU9ImNvbG9yOnJnYigwLDAsMCk7Zm9u
-dC1mYW1pbHk6Q2FsaWJyaSxIZWx2ZXRpY2Esc2Fucy1zZXJpZixFbW9qaUZvbnQsJnF1b3Q7QXBw
-bGUgQ29sb3IgRW1vamkmcXVvdDssJnF1b3Q7U2Vnb2UgVUkgRW1vamkmcXVvdDssTm90b0NvbG9y
-RW1vamksJnF1b3Q7U2Vnb2UgVUkgU3ltYm9sJnF1b3Q7LCZxdW90O0FuZHJvaWQgRW1vamkmcXVv
-dDssRW1vamlTeW1ib2xzO2ZvbnQtc2l6ZToxNnB4Ij48YnI+PC9kaXY+PGRpdiBzdHlsZT0iY29s
-b3I6cmdiKDAsMCwwKTtmb250LWZhbWlseTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmLEVt
-b2ppRm9udCwmcXVvdDtBcHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVvdDtTZWdvZSBVSSBFbW9q
-aSZxdW90OyxOb3RvQ29sb3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7
-QW5kcm9pZCBFbW9qaSZxdW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2cHgiPlRvIGtlZXAg
-b3VyIG9mb25vIGFsaWduZWQgd2l0aCBsYXRlc3Qgb2Zvbm8gdXBkYXRlcywgd2Ugd2FudCB0byB1
-cHN0cmVhbSBvdXIgY29udHJpYnV0aW9ucyBzbyBpIHdhbnQgdG8gZ2V0IHlvdXIgb3BpbmlvbiBh
-Ym91dCBhIHByb3Bhc2FsIHVwc3RyZWFtIGNhbmRpZGF0ZSA6wqA8L2Rpdj48ZGl2IHN0eWxlPSJj
-b2xvcjpyZ2IoMCwwLDApO2ZvbnQtZmFtaWx5OkNhbGlicmksSGVsdmV0aWNhLHNhbnMtc2VyaWYs
-RW1vamlGb250LCZxdW90O0FwcGxlIENvbG9yIEVtb2ppJnF1b3Q7LCZxdW90O1NlZ29lIFVJIEVt
-b2ppJnF1b3Q7LE5vdG9Db2xvckVtb2ppLCZxdW90O1NlZ29lIFVJIFN5bWJvbCZxdW90OywmcXVv
-dDtBbmRyb2lkIEVtb2ppJnF1b3Q7LEVtb2ppU3ltYm9scztmb250LXNpemU6MTZweCI+PGJyPjwv
-ZGl2PjxkaXYgc3R5bGU9ImNvbG9yOnJnYigwLDAsMCk7Zm9udC1mYW1pbHk6Q2FsaWJyaSxIZWx2
-ZXRpY2Esc2Fucy1zZXJpZixFbW9qaUZvbnQsJnF1b3Q7QXBwbGUgQ29sb3IgRW1vamkmcXVvdDss
-JnF1b3Q7U2Vnb2UgVUkgRW1vamkmcXVvdDssTm90b0NvbG9yRW1vamksJnF1b3Q7U2Vnb2UgVUkg
-U3ltYm9sJnF1b3Q7LCZxdW90O0FuZHJvaWQgRW1vamkmcXVvdDssRW1vamlTeW1ib2xzO2ZvbnQt
-c2l6ZToxNnB4Ij4tIEFkZCBoaXN0b3J5IGRyaXZlciBpbXBsZW1lbnRhdGlvbiB0byBkcml2ZXJz
-L2dlbWFsdG9tb2RlbXMvPC9kaXY+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAsMCwwKTtmb250LWZh
-bWlseTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmLEVtb2ppRm9udCwmcXVvdDtBcHBsZSBD
-b2xvciBFbW9qaSZxdW90OywmcXVvdDtTZWdvZSBVSSBFbW9qaSZxdW90OyxOb3RvQ29sb3JFbW9q
-aSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBFbW9qaSZxdW90OyxF
-bW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2cHgiPi0gQWRkIHNpZ25hbCBpbiBwbHVnaW5zL2dlbWFs
-dG8uY8KgIHRvIG5vdGlmeSB0aGUgZGlmZmVyZW50IHNlbnQgbWVzc2FnZXMgc3RhdHVzwqAgKGlu
-ZGljYXRlZCBvbiBlbnVtPGI+b2Zvbm9faGlzdG9yeV9zbXNfc3RhdHVzPC9iPsKgKcKgPC9kaXY+
-PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAsMCwwKTtmb250LWZhbWlseTpDYWxpYnJpLEhlbHZldGlj
-YSxzYW5zLXNlcmlmLEVtb2ppRm9udCwmcXVvdDtBcHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVv
-dDtTZWdvZSBVSSBFbW9qaSZxdW90OyxOb3RvQ29sb3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1i
-b2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBFbW9qaSZxdW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXpl
-OjE2cHgiPi0gVGhlbiB0aGUgc2lnbmFsIGNhbiBiZSBjb25zdW1lZCBieSBhbnkgY2xpZW50IGFm
-dGVywqBzZW5kaW5nIGFuIFNNUyAuPC9kaXY+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAsMCwwKTtm
-b250LWZhbWlseTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmLEVtb2ppRm9udCwmcXVvdDtB
-cHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVvdDtTZWdvZSBVSSBFbW9qaSZxdW90OyxOb3RvQ29s
-b3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBFbW9qaSZx
-dW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2cHgiPjxicj48L2Rpdj48ZGl2IHN0eWxlPSJj
-b2xvcjpyZ2IoMCwwLDApO2ZvbnQtZmFtaWx5OkNhbGlicmksSGVsdmV0aWNhLHNhbnMtc2VyaWYs
-RW1vamlGb250LCZxdW90O0FwcGxlIENvbG9yIEVtb2ppJnF1b3Q7LCZxdW90O1NlZ29lIFVJIEVt
-b2ppJnF1b3Q7LE5vdG9Db2xvckVtb2ppLCZxdW90O1NlZ29lIFVJIFN5bWJvbCZxdW90OywmcXVv
-dDtBbmRyb2lkIEVtb2ppJnF1b3Q7LEVtb2ppU3ltYm9scztmb250LXNpemU6MTZweCI+UGxlYXNl
-IGNvcnJlY3QgbWUgaWYgc29tZXRoaW5nIHdyb25nIGFuZCBpZiB5b3UgaGF2ZSBhbnkgc3VnZXNz
-dGlvbi7CoDwvZGl2PjxkaXYgc3R5bGU9ImNvbG9yOnJnYigwLDAsMCk7Zm9udC1mYW1pbHk6Q2Fs
-aWJyaSxIZWx2ZXRpY2Esc2Fucy1zZXJpZixFbW9qaUZvbnQsJnF1b3Q7QXBwbGUgQ29sb3IgRW1v
-amkmcXVvdDssJnF1b3Q7U2Vnb2UgVUkgRW1vamkmcXVvdDssTm90b0NvbG9yRW1vamksJnF1b3Q7
-U2Vnb2UgVUkgU3ltYm9sJnF1b3Q7LCZxdW90O0FuZHJvaWQgRW1vamkmcXVvdDssRW1vamlTeW1i
-b2xzO2ZvbnQtc2l6ZToxNnB4Ij48YnI+PC9kaXY+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAsMCww
-KTtmb250LWZhbWlseTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmLEVtb2ppRm9udCwmcXVv
-dDtBcHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVvdDtTZWdvZSBVSSBFbW9qaSZxdW90OyxOb3Rv
-Q29sb3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBFbW9q
-aSZxdW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2cHgiPlRoYW5rIHlvdSBpbiBhZHZhbmNl
-ICE8L2Rpdj48ZGl2IHN0eWxlPSJjb2xvcjpyZ2IoMCwwLDApO2ZvbnQtZmFtaWx5OkNhbGlicmks
-SGVsdmV0aWNhLHNhbnMtc2VyaWYsRW1vamlGb250LCZxdW90O0FwcGxlIENvbG9yIEVtb2ppJnF1
-b3Q7LCZxdW90O1NlZ29lIFVJIEVtb2ppJnF1b3Q7LE5vdG9Db2xvckVtb2ppLCZxdW90O1NlZ29l
-IFVJIFN5bWJvbCZxdW90OywmcXVvdDtBbmRyb2lkIEVtb2ppJnF1b3Q7LEVtb2ppU3ltYm9scztm
-b250LXNpemU6MTZweCI+PGJyPjwvZGl2PjxkaXYgc3R5bGU9ImNvbG9yOnJnYigwLDAsMCk7Zm9u
-dC1mYW1pbHk6Q2FsaWJyaSxIZWx2ZXRpY2Esc2Fucy1zZXJpZixFbW9qaUZvbnQsJnF1b3Q7QXBw
-bGUgQ29sb3IgRW1vamkmcXVvdDssJnF1b3Q7U2Vnb2UgVUkgRW1vamkmcXVvdDssTm90b0NvbG9y
-RW1vamksJnF1b3Q7U2Vnb2UgVUkgU3ltYm9sJnF1b3Q7LCZxdW90O0FuZHJvaWQgRW1vamkmcXVv
-dDssRW1vamlTeW1ib2xzO2ZvbnQtc2l6ZToxNnB4Ij5LaW5kIFJlZ2FyZHMsPC9kaXY+PGRpdiBz
-dHlsZT0iY29sb3I6cmdiKDAsMCwwKTtmb250LWZhbWlseTpDYWxpYnJpLEhlbHZldGljYSxzYW5z
-LXNlcmlmLEVtb2ppRm9udCwmcXVvdDtBcHBsZSBDb2xvciBFbW9qaSZxdW90OywmcXVvdDtTZWdv
-ZSBVSSBFbW9qaSZxdW90OyxOb3RvQ29sb3JFbW9qaSwmcXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVv
-dDssJnF1b3Q7QW5kcm9pZCBFbW9qaSZxdW90OyxFbW9qaVN5bWJvbHM7Zm9udC1zaXplOjE2cHgi
-PldhamRpIFpBSVJJPC9kaXY+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAsMCwwKTtmb250LWZhbWls
-eTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmLEVtb2ppRm9udCwmcXVvdDtBcHBsZSBDb2xv
-ciBFbW9qaSZxdW90OywmcXVvdDtTZWdvZSBVSSBFbW9qaSZxdW90OyxOb3RvQ29sb3JFbW9qaSwm
-cXVvdDtTZWdvZSBVSSBTeW1ib2wmcXVvdDssJnF1b3Q7QW5kcm9pZCBFbW9qaSZxdW90OyxFbW9q
-aVN5bWJvbHM7Zm9udC1zaXplOjE2cHgiPkVtYmVkZGVkIFNvZnR3YXJlIEVuZ2luZWVywqA8L2Rp
-dj48L2Rpdj4K
+tracking message history; in fact delivery reports are not even signaled =
 
---===============3396408446945899419==--
+via D-Bus.  This is on purpose, since we cannot easily guarantee any =
+
+sort of reliability via any IPC mechanism, and implementing a protocol =
+
+between a history client (using acks or other mechanisms) over D-Bus was =
+
+deemed to be too complicated.  The history plugin is probably what you want.
+
+> =
+
+> So here the "sent" means that the message was treated and out from TX =
+
+> but does not give the real state if it was delivered or not .
+> I made a try by adding History driver to our Gemalto drivers and it =
+
+> gives a better result regarding SMS delivery status which meet our =
+
+> requirements.
+
+I'm guessing using status reports?
+
+> =
+
+> To keep our ofono aligned with latest ofono updates, we want to upstream =
+
+> our contributions so i want to get your opinion about a propasal =
+
+> upstream candidate :
+> =
+
+> - Add history driver implementation to drivers/gemaltomodems/
+
+Why would SMS history be specific to Gemalto modems?
+
+> - Add signal in plugins/gemalto.c=C2=A0 to notify the different sent mess=
+ages =
+
+> status=C2=A0 (indicated on enum*ofono_history_sms_status*=C2=A0)
+> - Then the signal can be consumed by any client after=C2=A0sending an SMS=
+ .
+> =
+
+
+The reason why we don't have such an API is already covered above. =
+
+Ideally, you want the history plugin to directly update the history in =
+
+your database of choice, or simply call your call/sms history tracking =
+
+service directly.  There's really no reason to broadcast this =
+
+information via a different API.
+
+Regards,
+-Denis
+
+--===============6164591526832347795==--
 
