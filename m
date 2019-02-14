@@ -1,107 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============4922277464423778785=="
+Content-Type: multipart/mixed; boundary="===============6574506953094715454=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] xmm7modem: change to assign datapath for activated PDP
-Date: Wed, 13 Feb 2019 08:49:59 -0600
-Message-ID: <b6fe8129-e54d-0dd1-f35c-c52d40a3690e@gmail.com>
-In-Reply-To: <1549972331-2259-1-git-send-email-antara.borwankar@intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Test clients for ofono: rfone, Unicsy Demo 
+Date: Thu, 14 Feb 2019 11:11:18 +0100
+Message-ID: <20190214101117.GA6132@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4922277464423778785==
+--===============6574506953094715454==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+Hi!
 
-On 02/12/2019 05:52 AM, Antara Borwankar wrote:
-> Changed the handling of +CGCONTRDP AT command reply in ifxmodem
-> modem driver for XMM7MODEM vendor for routing data over the
-> selected path.
-> ---
->   drivers/ifxmodem/gprs-context.c | 14 +++++++++++---
->   1 file changed, 11 insertions(+), 3 deletions(-)
-> =
+What ofono client are you using for development.. and for real usage
+on a cellphone?
 
-> diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-cont=
-ext.c
-> index 7f3628b..70d10af 100644
-> --- a/drivers/ifxmodem/gprs-context.c
-> +++ b/drivers/ifxmodem/gprs-context.c
-> @@ -269,8 +269,10 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->   =
+There are scripts in test/ which are suitable for early development,
+but not really for real use or 'does everything work?' testing.
 
->   	const char *laddrnetmask =3D NULL;
->   	const char *gw =3D NULL;
-> -	const char *interface;
->   	const char *dns[3];
-> +	const char *ctrlpath;
-> +	const char *datapath;
-> +	char buf[64];
+Anyway, I created some.
 
-Is this buffer large enough to hold the required AT commands?  It seems =
+RFone -- https://gitlab.com/tui/tui/tree/master/rfone -- command line
+tool written in Rust, by default monitors interesting events
+(incomming call, sms, signal changes, registration changes), and has
+command-line options for making/answering calls and sending sms. I'm
+starting gtk support.
 
-like it might easily overflow?
+Unicsy Demo -- https://github.com/pavelmachek/unicsy_demo -- gtk phone
+application meant for a phone, written in Python so a bit slow on
+Nokia N900. But it has integrated phonebook, log of sms messages, is
+fully graphical so possible to control from touchscreen, and actually
+plays melody on incoming call. [Few GPL compatible melodies would
+be good.] Quite basic, but should be useable.
 
->   =
+Is there any other software I should look at?
 
->   	DBG("ok %d", ok);
->   =
+Best regards,
+									Pavel
+-- =
 
-> @@ -327,9 +329,9 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->   	DBG("DNS2: %s\n", gcd->dns2);
->   	DBG("Gateway: %s\n", gcd->gateway);
->   =
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
-> -	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-> +	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
-> +	datapath =3D ofono_modem_get_string(modem, "DataPath");
->   =
+--===============6574506953094715454==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
-> -	ofono_gprs_context_set_interface(gc, interface);
->   	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
->   =
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFseGxQc1VBQ2drUU1PZndhcFhiK3ZMS1N3Q2VLWk9hUlhKUmVmM1B0dlpzUjJjMmdTWUUK
+RW1FQW4zSXN6NDlFMHh0YXA3OEJyYkdZUDloeFUwWUMKPWtXbUgKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
 
->   	if (gcd->netmask[0])
-> @@ -340,6 +342,12 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->   =
-
->   	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
->   =
-
-> +	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s%u\",2,%u", ctrlpath,
-> +				datapath, gcd->active_context, gcd->active_context);
-
-e.g. here
-
-Also, as I mentioned previously, mapping interfaces based on =
-
-active_context id is not a good idea.  Can we use =
-
-ofono_gprs_context->interface for this directly somehow?
-
-> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
-> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +
->   	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-
-To be pedantic, since you're issuing 2 other commands, you should call =
-
-this only once those succeed.
-
->   }
->   =
-
-> =
-
-
-Regards,
--Denis
-
---===============4922277464423778785==--
+--===============6574506953094715454==--
 
