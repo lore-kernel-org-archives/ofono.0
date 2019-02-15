@@ -1,56 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============5740942475796466810=="
+Content-Type: multipart/mixed; boundary="===============8681341038533535459=="
 MIME-Version: 1.0
 From: philippedeswert@gmail.com
-Subject: [PATCH 6/8] gprs-context : Force use of atd99
-Date: Fri, 15 Feb 2019 14:11:40 +0200
-Message-ID: <20190215121142.28163-7-philippedeswert@gmail.com>
+Subject: [PATCH 7/8] common: Add new NB-IoT technologies
+Date: Fri, 15 Feb 2019 14:11:41 +0200
+Message-ID: <20190215121142.28163-8-philippedeswert@gmail.com>
 In-Reply-To: <20190215121142.28163-1-philippedeswert@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5740942475796466810==
+--===============8681341038533535459==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Philippe De Swert <philippe.deswert@digitalistgroup.com>
 
-QUIRCK: For some reason I really need to force the use of the atd99 command=
- here.
+Add lte-cat-m1 and lte-cat-nb1 technology identifiers.
 ---
- drivers/atmodem/gprs-context.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ src/common.c | 4 ++++
+ src/common.h | 2 ++
+ 2 files changed, 6 insertions(+)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 93894efd..a0776f2a 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -214,7 +214,7 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- 		return;
+diff --git a/src/common.c b/src/common.c
+index ea7842cc..4dcbc835 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -697,6 +697,10 @@ const char *registration_tech_to_string(int tech)
+ 		return "hspa";
+ 	case ACCESS_TECHNOLOGY_EUTRAN:
+ 		return "lte";
++	case ACCESS_TECHNOLOGY_NB_IOT_M1:
++		return "lte-cat-m1";
++	case ACCESS_TECHNOLOGY_NB_IOT_NB1:
++		return "lte-cat-nb1";
+ 	default:
+ 		return "";
  	}
+diff --git a/src/common.h b/src/common.h
+index dc618942..8fef4432 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -33,6 +33,8 @@ enum access_technology {
+ 	ACCESS_TECHNOLOGY_UTRAN_HSUPA =3D		5,
+ 	ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA =3D	6,
+ 	ACCESS_TECHNOLOGY_EUTRAN =3D		7,
++	ACCESS_TECHNOLOGY_NB_IOT_M1 =3D		8,
++	ACCESS_TECHNOLOGY_NB_IOT_NB1 =3D		9,
+ };
  =
 
--	if (gcd->use_atd99)
-+	if (gcd->use_atd99 || gcd->vendor =3D=3D OFONO_VENDOR_UBLOX)
- 		sprintf(buf, "ATD*99***%u#", gcd->active_context);
- 	else
- 		sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-@@ -457,6 +457,9 @@ static int at_gprs_context_probe(struct ofono_gprs_cont=
-ext *gc,
- 	case OFONO_VENDOR_SIMCOM_SIM900:
- 		gcd->use_atd99 =3D FALSE;
- 		break;
-+	case OFONO_VENDOR_UBLOX:
-+		gcd->use_atd99 =3D TRUE;
-+		break;
- 	default:
- 		g_at_chat_send(chat, "AT+CGDATA=3D?", cgdata_prefix,
- 						at_cgdata_test_cb, gc, NULL);
+ /* 27.007 Section 7.2 <stat> */
 -- =
 
 2.20.1
 
 
---===============5740942475796466810==--
+--===============8681341038533535459==--
 
