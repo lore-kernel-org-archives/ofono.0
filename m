@@ -1,74 +1,132 @@
-Content-Type: multipart/mixed; boundary="===============4573655660079172852=="
+Content-Type: multipart/mixed; boundary="===============6623165358321582696=="
 MIME-Version: 1.0
-From: Reinhard Speyerer <rspmn@arcor.de>
-Subject: Re: [PATCH 6/8] gprs-context : Force use of atd99
-Date: Mon, 18 Feb 2019 17:42:04 +0100
-Message-ID: <20190218164204.GA8209@arcor.de>
-In-Reply-To: <b1c57503-11b3-4eab-56c8-eb94fa475df8@gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: Test clients for ofono: rfone, Unicsy Demo
+Date: Tue, 19 Feb 2019 12:41:50 +0100
+Message-ID: <20190219114150.GA845@amd>
+In-Reply-To: <5c1f3935-3b97-745c-93ab-66dfb3583f8f@wizzup.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4573655660079172852==
+--===============6623165358321582696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Sun, Feb 17, 2019 at 09:08:12PM -0600, Denis Kenzior wrote:
-> Hi Philippe,
-> =
+Hi!
 
-> On 02/15/2019 06:11 AM, philippedeswert(a)gmail.com wrote:
-> > From: Philippe De Swert <philippe.deswert@digitalistgroup.com>
+> > What ofono client are you using for development.. and for real usage
+> > on a cellphone?
 > > =
 
-> > QUIRCK: For some reason I really need to force the use of the atd99 com=
-mand here.
-> > ---
-> >   drivers/atmodem/gprs-context.c | 5 ++++-
-> >   1 file changed, 4 insertions(+), 1 deletion(-)
+> > There are scripts in test/ which are suitable for early development,
+> > but not really for real use or 'does everything work?' testing.
 > > =
 
-> > diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-cont=
-ext.c
-> > index 93894efd..a0776f2a 100644
-> > --- a/drivers/atmodem/gprs-context.c
-> > +++ b/drivers/atmodem/gprs-context.c
-> > @@ -214,7 +214,7 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
-> >   		return;
-> >   	}
-> > -	if (gcd->use_atd99)
-> > +	if (gcd->use_atd99 || gcd->vendor =3D=3D OFONO_VENDOR_UBLOX)
-> >   		sprintf(buf, "ATD*99***%u#", gcd->active_context);
-> >   	else
-> >   		sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-> > @@ -457,6 +457,9 @@ static int at_gprs_context_probe(struct ofono_gprs_=
-context *gc,
-> >   	case OFONO_VENDOR_SIMCOM_SIM900:
-> >   		gcd->use_atd99 =3D FALSE;
-> >   		break;
-> > +	case OFONO_VENDOR_UBLOX:
-> > +		gcd->use_atd99 =3D TRUE;
-> > +		break;
+> > Anyway, I created some.
+> > =
+
+> > RFone -- https://gitlab.com/tui/tui/tree/master/rfone -- command line
+> > tool written in Rust, by default monitors interesting events
+> > (incomming call, sms, signal changes, registration changes), and has
+> > command-line options for making/answering calls and sending sms. I'm
+> > starting gtk support.
 > =
 
-> So why use both use_atd99 and a vendor quirk above?  Also, you're affecti=
-ng
-> other uBlox users, so do you want to introduce a different VENDOR quirk
-> instead?
+> This looks like fun!
 
-Hi Denis,
+Yes, it is fun :-). But I'm a bit busy.
 
-the effect observed by Philippe is caused by the fact that Qualcomm
-firmwares typically do not support the use of AT+CGDATA=3D"PPP",<cid>
-for contexts which have already been activated with AT+CGACT although
-they respond with +CGDATA: ("PPP") to AT+CGDATA=3D?.
+> > Is there any other software I should look at?
+> =
 
-To minimize changes for other uBlox users it might make sense to limit
-the use of ATD*99# to Qualcomm-based devices like their SARA R4 series.
+> I am also wondering about this. For Maemo Leste we also want a gtk or qt
+> (likely gtk2 for now) ofono phone UI, and I was also not able to find
+> much. Would like it to be written in C, C++ or Rust though (not Python
+> for performance and ram/memory usage concerns).
+> =
 
-Regards,
-Reinhard
+> If we can agree on some general architectural/UI direction and goals I
+> could try to help out. (In the end I probably want something that
+> monitors ofono but is not shown all the time, as on Maemo Fremantle)
 
---===============4573655660079172852==--
+I agree that Python needs too much RAM; I tried with Vala, but I
+believe Rust is really a better solution.
+
+And yes, the long running stuff (ph monitor) should probably not
+display window all the time, but work with the system tray to show the
+signal. But I did not do too much investigation into that.
+
+My design goals are described below. Help would be certainly welcome.
+
+Best regards,
+								Pavel
+
+# Goals
+
+One day, this should turn into "Unicsy Phone", phone support that
+integrates well with the rest of the Unix system. Phone functionality
+should be available both from command-line and from simple
+GUI. Important data should be stored in plain-text formats that are
+easy to access with common software.
+
+SMS messages should be handled in similar way e-mails currently are --
+stored in maildir or mailbox formats, and accessible by common email
+clients. Access by two or more clients at the same time should be
+possible. Of course, special GUI client should be provided to work
+with SMS (using same maildir backend).
+
+Simple text format should be supported for contacts -- probably as
+simple as number '\t' name. Many users will want something a bit more
+advanced, I'd prefer hierarchical structure offered by emacs "org"
+mode, allowing me to group contacts together. We should call external
+program to list contacts for us, allowing easy merging of contacts
+from multiple sources. "ph book" should provide the merged list.
+
+# Design
+
+Non-GUI component should be responsible for maintaining call log and
+incoming SMSes. History plugin in ofono can probably do this. Ideally,
+GSM should go offline when this component fails, so that SMSes are
+queued by the network.
+
+There should be "ph primary" component responsible for calls and
+incoming SMSes -- mostly for actions not initiated by local user. On
+incoming events, it should play a melody. For calls, it should set up
+mixers, and display a window allowing user to manipulate volume,
+answer, reject and terminate the call. For incoming message,
+notification window should be displayed.
+
+"ph monitor" should be usable for monitoring phone status from the
+command line, displaying current network and signal status, any
+incoming calls and messages.
+
+There should be a GUI component for doing actions for local user. It
+should allow basic control (online/airplane mode, starting data
+connection), allow placing phone calls (but audio will be controlled
+and call window will still be displayed by "ph primary"), and sending
+SMS messages.
+
+								Pavel
+
+
+
+-- =
+
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--===============6623165358321582696==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
+
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFseHI2MzRBQ2drUU1PZndhcFhiK3ZKaXJRQ2dtU3g2L0pubFM4MHRRTkRKOUZvaHF6enMK
+OGFVQW9KcENSK0ZuckpUZkszVFd4eDg4ams2enIxT2MKPU9haVoKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============6623165358321582696==--
 
