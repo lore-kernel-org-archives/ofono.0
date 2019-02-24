@@ -1,203 +1,170 @@
-Content-Type: multipart/mixed; boundary="===============4246553566931173955=="
+Content-Type: multipart/mixed; boundary="===============1542151752722552293=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] xmm7modem: data channel setup for xmm7modem
-Date: Thu, 21 Feb 2019 11:26:29 -0600
-Message-ID: <62375416-c7e8-f012-4ea1-1428462090f4@gmail.com>
-In-Reply-To: <1550231039-28842-1-git-send-email-antara.borwankar@intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: Test clients for ofono: rfone, Unicsy Demo
+Date: Sun, 24 Feb 2019 23:46:26 +0100
+Message-ID: <20190224224626.GA16589@amd>
+In-Reply-To: <20190219150638.GL5717@atomide.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4246553566931173955==
+--===============1542151752722552293==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+Hi!
 
-On 02/15/2019 05:43 AM, Antara Borwankar wrote:
-> Added the implementation required to setup data channel in
-> ifxmodem gprs-context driver for xmm7modem vendor
-> ---
->   drivers/ifxmodem/gprs-context.c | 43 ++++++++++++++++++++++++++++++++++=
-+++----
->   1 file changed, 39 insertions(+), 4 deletions(-)
+> > >SMS messages should be handled in similar way e-mails currently are --
+> > >stored in maildir or mailbox formats, and accessible by common email
+> > >clients. Access by two or more clients at the same time should be
+> > >possible. Of course, special GUI client should be provided to work
+> > >with SMS (using same maildir backend).
 > =
 
-> diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-cont=
-ext.c
-> index 7f3628b..278d507 100644
-> --- a/drivers/ifxmodem/gprs-context.c
-> +++ b/drivers/ifxmodem/gprs-context.c
-> @@ -260,6 +260,22 @@ error:
->   	failed_setup(gc, NULL, TRUE);
->   }
->   =
-
-> +static void cgdata_cb(gboolean ok, GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_gprs_context *gc =3D user_data;
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	if (!ok) {
-> +		ofono_error("Failed to establish session");
-> +		failed_setup(gc, result, TRUE);
-> +		return;
-> +	}
-> +
-> +	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-> +}
-> +
->   static void cgcontrdp_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
->   {
->   	struct ofono_gprs_context *gc =3D user_data;
-> @@ -269,8 +285,11 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->   =
-
->   	const char *laddrnetmask =3D NULL;
->   	const char *gw =3D NULL;
-> -	const char *interface;
->   	const char *dns[3];
-> +	const char *ctrlpath;
-> +	char *datapath;
-> +	char buf[100];
-> +	const char *interface;
->   =
-
->   	DBG("ok %d", ok);
->   =
-
-> @@ -327,9 +346,13 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->   	DBG("DNS2: %s\n", gcd->dns2);
->   	DBG("Gateway: %s\n", gcd->gateway);
->   =
-
-> -	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-> +	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
-> +	interface =3D ofono_gprs_context_get_interface(gc);
-> +
-> +	sprintf(buf, "%s%c", ofono_modem_get_string(modem, "DataPath"),
-> +					interface[strlen(interface)-1]);
-
-Wouldn't this fail if multiple modems are plugged in?  It seems like =
-
-just basing this off the interface name is not enough.
-
-See attached patches for an idea of how to handle this.  Not fully happy =
-
-with it, so if you have other ideas please suggest.
-
-> +	datapath =3D g_strdup(buf);
-
-Why do you need this strdup?  Just make your life easier and use =
-
-g_strdup_printf instead of sprintf above.
-
-Or better yet, simply use a different buffer on the stack for this.
-
->   =
-
-> -	ofono_gprs_context_set_interface(gc, interface);
->   	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
->   =
-
->   	if (gcd->netmask[0])
-> @@ -340,7 +363,19 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->   =
-
->   	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
->   =
-
-> -	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-> +	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s\",2,%u", ctrlpath,
-> +				datapath, gcd->active_context);
-
-You can free datapath here actually instead of repeating the g_free =
-
-twice below.
-
-> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
-> +
-> +	if (g_at_chat_send(gcd->chat, buf, none_prefix, cgdata_cb,
-> +						gc, NULL) > 0) {
-> +		g_free(datapath);
-> +		return;
-> +	}
-> +
-> +	g_free(datapath);
-> +	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
->   }
->   =
-
->   static void ifx_read_settings(struct ofono_gprs_context *gc)
+> That works nice based on my experiments over past few months :)
+> The issues I've noticed so far are:
 > =
 
+> 1. There's no subject line for sms, so getting threading to
+>    work needs some work with headers and some invented subject
+>    line
 
-Regards,
--Denis
+I agree it is quite good fit, but there are more issues. It would be
+nice to be able to handle calls in similar way, for example... and
+delivery reports. I believe it is best solution, but it is not _too_
+great fit.
 
---===============4246553566931173955==
-Content-Type: text/x-patch
+> 2. Starting any scripting language (other than perl?) can be
+>    super slow for sending sms for example.. Just starting ruby
+>    to run a script to send sms with droid4-sms-tools takes
+>    several seconds :) So yeah, sounds like rust should work
+>    well here assuming it does not have start-up time and memory
+>    bloatedness issues
+
+Rust produces rather big binaries, but should be fast enough.
+
+But... other scripting languages should not be too slow, either. Yes,
+python is slow on N900 (but that's because I'm using gtk etc...) but
+it is much better on Droid4. Maybe it is Ruby that is slow, or maybe
+the pdu tools pull in a lot of code or something?
+
+user(a)devuan:~$ time echo "3*3" | python
+0.07user 0.03system 0.18 (0m0.183s) elapsed 57.43%CPU
+user(a)devuan:~$ time echo "3*3" | python
+0.07user 0.01system 0.08 (0m0.084s) elapsed 101.01%CPU
+user(a)devuan:~$ time echo "3*3" | python3
+0.14user 0.01system 0.17 (0m0.174s) elapsed 93.15%CPU
+
+Ugh. Ok. Something is definitely wrong there. _Without_ background
+load, python is actually slower:
+
+user(a)devuan:~$ time echo "3*3" | python3
+0.19user 0.02system 0.28 (0m0.280s) elapsed 77.84%CPU
+
+yes > /dev/null gets it fast again:
+
+user(a)devuan:~$ time echo "3*3" | python3
+0.16user 0.00system 0.19 (0m0.193s) elapsed 84.19%CPU
+
+Something wrong with power management?
+
+Aha. But ruby is worse...:
+
+user(a)devuan:~$ time echo "3*3" | ruby
+0.46user 0.08system 1.09 (0m1.092s) elapsed 50.25%CPU
+user(a)devuan:~$ time echo "3*3" | ruby
+0.45user 0.06system 0.73 (0m0.731s) elapsed 70.22%CPU
+
+> > >Simple text format should be supported for contacts -- probably as
+> > >simple as number '\t' name. Many users will want something a bit more
+> > >advanced, I'd prefer hierarchical structure offered by emacs "org"
+> > >mode, allowing me to group contacts together. We should call external
+> > >program to list contacts for us, allowing easy merging of contacts
+> > >from multiple sources. "ph book" should provide the merged list.
+> =
+
+> I've been using just using ~/aliases file with the following
+> format with ".phone" in the alias:
+> =
+
+> alias foo.phone Foo Bar <+1234567890>
+
+So I already store my contacts in emacs org file... it looks like
+this:
+
+*** free Telecom
+:PROPERTIES:
+:VERSION: 3.0
+:N: Telecom;free;;;
+:PHONE: +420800123456
+:END:
+
+Advantage of org is that it is hierarchical. Anyway, I guess this
+should be consumer of whatever phonebook format we give to it, as
+different users may have different preferences there.
+
+> > >There should be "ph primary" component responsible for calls and
+> > >incoming SMSes -- mostly for actions not initiated by local user. On
+> > >incoming events, it should play a melody. For calls, it should set up
+> > >mixers, and display a window allowing user to manipulate volume,
+> > >answer, reject and terminate the call. For incoming message,
+> > >notification window should be displayed.
+> =
+
+> Yeah I wonder if something like this already exists.. And I wonder
+> if this component should also take care of setting up clock
+> alarms as at jobs or something?
+
+While I would like to have solution for alarms and calendar, I believe
+that's separate project. I do have working alarm clock in tui/10f,
+but...
+
+> For reference, here's what I'm currently using for notifications
+> (droid 4 specific):
+> =
+
+> #!/bin/sh
+> =
+
+> cat /dev/motmdm1 | while read -r line; do
+>         echo "${line}"
+> =
+
+>         if echo "${line}" | grep WAKEUP; then
+> 		sudo rumble-test /dev/input/by-path/platform-vibrator-event 0xb000
+>         fi
+> done
+> =
+
+> Where rumble-test is Sebastian's tool for thw pwm-vibrator.
+
+Hehe, quite clever :-).
+
+> Or maybe any GUI you care to use :)
+
+Yep, different people are starting to write more GUIs now. Hopefully
+some of them survive, and hopefully we get some not needing 3d
+acceleration.
+
+Best regards,
+									Pavel
+-- =
+
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--===============1542151752722552293==
+Content-Type: application/pgp-signature
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-include-Add-ofono_gprs_context_get_ordinal.patch"
+Content-Disposition: attachment; filename="signature.asc"
 
-PkZyb20gNDk3ZGExMDNhNmVjMGQxNzQ0MGZkZjhkMDBjNGYyMjM3NDI0ZGE0ZSBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogRGVuaXMgS2VuemlvciA8ZGVua2VuekBnbWFpbC5jb20+CkRh
-dGU6IFRodSwgMjEgRmViIDIwMTkgMTE6MDc6MzAgLTA2MDAKU3ViamVjdDogW1BBVENIIDEvMl0g
-aW5jbHVkZTogQWRkIG9mb25vX2dwcnNfY29udGV4dF9nZXRfb3JkaW5hbAoKLS0tCiBpbmNsdWRl
-L2dwcnMtY29udGV4dC5oIHwgMSArCiAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKykKCmRp
-ZmYgLS1naXQgYS9pbmNsdWRlL2dwcnMtY29udGV4dC5oIGIvaW5jbHVkZS9ncHJzLWNvbnRleHQu
-aAppbmRleCBhZDA4NzJmNC4uOGMwMjI2ZWUgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvZ3Bycy1jb250
-ZXh0LmgKKysrIGIvaW5jbHVkZS9ncHJzLWNvbnRleHQuaApAQCAtODYsNiArODYsNyBAQCB2b2lk
-IG9mb25vX2dwcnNfY29udGV4dF9zZXRfZGF0YShzdHJ1Y3Qgb2Zvbm9fZ3Byc19jb250ZXh0ICpn
-Yywgdm9pZCAqZGF0YSk7CiB2b2lkICpvZm9ub19ncHJzX2NvbnRleHRfZ2V0X2RhdGEoc3RydWN0
-IG9mb25vX2dwcnNfY29udGV4dCAqZ2MpOwogCiBzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm9mb25vX2dw
-cnNfY29udGV4dF9nZXRfbW9kZW0oc3RydWN0IG9mb25vX2dwcnNfY29udGV4dCAqZ2MpOwordW5z
-aWduZWQgaW50IG9mb25vX2dwcnNfY29udGV4dF9nZXRfb3JkaW5hbChzdHJ1Y3Qgb2Zvbm9fZ3By
-c19jb250ZXh0ICpnYyk7CiAKIHZvaWQgb2Zvbm9fZ3Byc19jb250ZXh0X3NldF90eXBlKHN0cnVj
-dCBvZm9ub19ncHJzX2NvbnRleHQgKmdjLAogCQkJCQllbnVtIG9mb25vX2dwcnNfY29udGV4dF90
-eXBlIHR5cGUpOwotLSAKMi4xMy41Cgo=
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFseHpIc0lBQ2drUU1PZndhcFhiK3ZJMGJRQ2dyL29nTUw0dnFWNWtBUThaOXFkOGpkdTgK
+WXY4QW5BekJlUTRnS3JSa0h2MWh2N2ZnSFJ5dzhZL0oKPS9pK00KLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
 
---===============4246553566931173955==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-gprs-implement-ofono_gprs_context_get_ordinal.patch"
-
-PkZyb20gOGIwNmQyYmMyMDNlZTQ3Mzc2MjBlNGRmZWY5NTNlZDEzYThiYmY4MSBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogRGVuaXMgS2VuemlvciA8ZGVua2VuekBnbWFpbC5jb20+CkRh
-dGU6IFRodSwgMjEgRmViIDIwMTkgMTE6MjE6MzggLTA2MDAKU3ViamVjdDogW1BBVENIIDIvMl0g
-Z3ByczogaW1wbGVtZW50IG9mb25vX2dwcnNfY29udGV4dF9nZXRfb3JkaW5hbAoKLS0tCiBzcmMv
-Z3Bycy5jIHwgMTkgKysrKysrKysrKysrKysrKysrKwogMSBmaWxlIGNoYW5nZWQsIDE5IGluc2Vy
-dGlvbnMoKykKCmRpZmYgLS1naXQgYS9zcmMvZ3Bycy5jIGIvc3JjL2dwcnMuYwppbmRleCBiMGQ1
-NmUxZS4uYmEyYTQ3Y2IgMTAwNjQ0Ci0tLSBhL3NyYy9ncHJzLmMKKysrIGIvc3JjL2dwcnMuYwpA
-QCAtMjc5Nyw2ICsyNzk3LDI1IEBAIHN0cnVjdCBvZm9ub19tb2RlbSAqb2Zvbm9fZ3Byc19jb250
-ZXh0X2dldF9tb2RlbShzdHJ1Y3Qgb2Zvbm9fZ3Byc19jb250ZXh0ICpnYykKIAlyZXR1cm4gX19v
-Zm9ub19hdG9tX2dldF9tb2RlbShnYy0+YXRvbSk7CiB9CiAKKy8qCisgKiBSZXR1cm5zIHRoZSBv
-cmRpbmFsIHBvc2l0aW9uIG9mIHRoaXMgY29udGV4dCAodGhlIG9yZGVyIGlzIHVzdWFsbHkgdGhl
-IHNhbWUKKyAqIGFzIHRoZSBzZXF1ZW5jZSBvZiBvZm9ub19ncHJzX2FkZF9jb250ZXh0IGNhbGxz
-KSBzdGFydGluZyBmcm9tIDEuICBOb3RlIHRoYXQKKyAqIGlmIG9uZSBvZiB0aGUgY29udGV4dCBk
-cml2ZXJzIGZhaWxzIHRvIHByb2JlIG9yIGNhbGxzCisgKiBvZm9ub19ncHJzX2NvbnRleHRfcmVt
-b3ZlLCB0aGVuIHRoaXMgZnVuY3Rpb24gd2lsbCByZXR1cm4gYW4gaW5kZXggdGhhdAorICogZGlm
-ZmVycyBmcm9tIHRoZSBvZm9ub19ncHJzX2FkZF9jb250ZXh0IG9yZGVyLiAgVGhpcyBzaG91bGQg
-Z2VuZXJhbGx5IG5vdAorICogaGFwcGVuLCBhcyB0aGUgYWJvdmUgc2l0dWF0aW9uIGdlbmVyYWxs
-eSBpbmRpY2F0ZXMgYSBiaWdnZXIgcHJvYmxlbQorICovCit1bnNpZ25lZCBpbnQgb2Zvbm9fZ3By
-c19jb250ZXh0X2dldF9vcmRpbmFsKHN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQgKmdjKQorewor
-CWlmICghZ2MpCisJCXJldHVybiAwOworCisJaWYgKCFfX29mb25vX2F0b21fZ2V0X3JlZ2lzdGVy
-ZWQoZ2MtPmF0b20pKQorCQlyZXR1cm4gMDsKKworCXJldHVybiBnX3NsaXN0X2luZGV4KGdjLT5n
-cHJzLT5jb250ZXh0X2RyaXZlcnMsIGdjKSArIDE7Cit9CisKIHZvaWQgb2Zvbm9fZ3Byc19jb250
-ZXh0X3NldF90eXBlKHN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQgKmdjLAogCQkJCQllbnVtIG9m
-b25vX2dwcnNfY29udGV4dF90eXBlIHR5cGUpCiB7Ci0tIAoyLjEzLjUKCg==
-
---===============4246553566931173955==--
+--===============1542151752722552293==--
 
