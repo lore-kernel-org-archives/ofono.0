@@ -1,75 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============7976229513648457082=="
+Content-Type: multipart/mixed; boundary="===============0655620409932554958=="
 MIME-Version: 1.0
-From: JH <jupiter.hce@gmail.com>
-Subject: Re: ofono vs modemmanager
-Date: Wed, 27 Feb 2019 11:41:20 +1100
-Message-ID: <CAA=hcWRQ_q1X9ypkeF_6iCjjVLsnc8GTTT7ujLoUxsLrHrrgNw@mail.gmail.com>
-In-Reply-To: <da3e2dab-ea03-8b60-1bb4-10c2a40205c5@gmail.com>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH] xmm7modem: data channel setup for xmm7modem
+Date: Wed, 27 Feb 2019 15:33:22 +0530
+Message-ID: <1551261802-31126-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7976229513648457082==
+--===============0655620409932554958==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 2/27/19, Denis Kenzior <denkenz@gmail.com> wrote:
+Added the implementation required to setup data channel
+in ifxmodem gprs-context driver for xmm7modem vendor
+---
+ drivers/ifxmodem/gprs-context.c | 51 +++++++++++++++++++++++++++++++++++++=
+----
+ 1 file changed, 47 insertions(+), 4 deletions(-)
 
-> The two projects are related, and there is a lot of overlap between the
-> two.  However, they each focused on different aspects of the ecosystem.
-> ModemManager was mostly about making WWAN broadband work for laptops,
-> desktops and other devices.  Since it has been traditionally well
-> integrated with NetworkManager, it has a large install base.  It has
-> good support for various WWAN devices, arguably better than oFono in
-> this regard.
+diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
+t.c
+index 7f3628b..b36740d 100644
+--- a/drivers/ifxmodem/gprs-context.c
++++ b/drivers/ifxmodem/gprs-context.c
+@@ -260,6 +260,36 @@ error:
+ 	failed_setup(gc, NULL, TRUE);
+ }
+ =
 
-I am not using WWAN and it is an embedded Linux using WiFi (client and
-AP) and LTE, the NM is too large to be installed in Linux embedded
-system, I'll use ConnMan instead. It'll make sense to use oFono.
++static void cgdata_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		ofono_error("Failed to establish session");
++		failed_setup(gc, result, TRUE);
++		return;
++	}
++
++	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
++}
++
++static void get_datapath(struct ofono_modem *modem, const char *interface,
++								char* datapath)
++{
++	if (!datapath)
++		return;
++
++	if (!strcmp(interface, ofono_modem_get_string(modem, "NetworkInterface")))
++		sprintf(datapath, "%s0", ofono_modem_get_string(modem, "DataPath"));
++	else if (!strcmp(interface, ofono_modem_get_string(modem, "NetworkInterfa=
+ce2")))
++		sprintf(datapath, "%s1", ofono_modem_get_string(modem, "DataPath"));
++	else if (!strcmp(interface, ofono_modem_get_string(modem, "NetworkInterfa=
+ce3")))
++		sprintf(datapath, "%s2", ofono_modem_get_string(modem, "DataPath"));
++}
++
+ static void cgcontrdp_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+ {
+ 	struct ofono_gprs_context *gc =3D user_data;
+@@ -269,8 +299,11 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ =
 
-> On the flip side, oFono was driven mostly by embedded phone use cases.
-> So it is/was much more focused on being a traditional telephony stack
-> and includes features like fully-featured voice call state machine,
-> multiple active PDP contexts, SIM filesystem reading/updating, SMS
-> (including various regional SMS language dialects), Supplementary
-> Services, Sim Toolkit, MMI code parsing, USSDs, and general
-> certification aspects.  oFono based devices have been certified /
-> pre-certified multiple times by GCF and there were (are?) still
-> companies selling phones with oFono (or variant thereof) as the
-> telephony stack.  I have not followed ModemManager development closely
-> in some time, so some of these may also now be available there as well.
+ 	const char *laddrnetmask =3D NULL;
+ 	const char *gw =3D NULL;
+-	const char *interface;
+ 	const char *dns[3];
++	const char *ctrlpath;
++	char datapath[50];
++	char buf[100];
++	const char *interface;
+ =
 
-The device is for data communication either via WiFi or LTE, SIM
-reading / updating is definitely needed. The application is programmed
-in C++, I think SIM reading / updating and other set up funcations can
-be done via C API, is it right place to learn the oFono C API from the
-test program in tools directory?
+ 	DBG("ok %d", ok);
+ =
 
-> So it sort of depends on your needs as to which project is more
-> suitable.  If you need to make a device that makes voice calls and has a
-> built-in modem, oFono is likely better suited to your needs.  If you
-> need to support a wide variety of devices (e.g. furnished by end-user)
-> and all you care about is WWAN broadband, then ModemManager probably has
-> an edge.
+@@ -327,9 +360,10 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ 	DBG("DNS2: %s\n", gcd->dns2);
+ 	DBG("Gateway: %s\n", gcd->gateway);
+ =
 
-Both WiFi/BLE modem and LTE modem is built in the hardware, the main
-functions are to set up WiFi client and AP and set up LTE both likely
-to be implemented via C API in program, and to switch network
-interfaces between LTE and WiFi very much like the mobile phone except
-it is stationary much simpler, LTE is the default connection, when the
-WiFi is available, switching to WiFi automatically. I believe ConnMan
-can do the network interface automatically.
+-	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
++	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
++	interface =3D ofono_gprs_context_get_interface(gc);
++	get_datapath(modem, interface, datapath);
+ =
 
-> Perform your own due diligence and compare features side-by-side.
+-	ofono_gprs_context_set_interface(gc, interface);
+ 	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
+ =
 
-Thanks for you advice, I've already decided to use oFono, I am going
-to learn, to build, to install the oFono.
+ 	if (gcd->netmask[0])
+@@ -340,7 +374,16 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ =
 
-Thank you very much Denis
+ 	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
+ =
 
-Kind regards,
+-	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
++	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s\",2,%u", ctrlpath,
++				datapath, gcd->active_context);
++	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
++	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
++
++	if (g_at_chat_send(gcd->chat, buf, none_prefix, cgdata_cb,
++						gc, NULL) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
+ }
+ =
 
-- jupiter
+ static void ifx_read_settings(struct ofono_gprs_context *gc)
+-- =
 
---===============7976229513648457082==--
+1.9.1
+
+
+--===============0655620409932554958==--
 
