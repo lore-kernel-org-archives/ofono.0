@@ -1,130 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============0655620409932554958=="
+Content-Type: multipart/mixed; boundary="===============5582228052370585450=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH] xmm7modem: data channel setup for xmm7modem
-Date: Wed, 27 Feb 2019 15:33:22 +0530
-Message-ID: <1551261802-31126-1-git-send-email-antara.borwankar@intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Manually packetizing data for motorola modem was Re: Test clients for
+ ofono: rfone, Unicsy Demo
+Date: Sun, 03 Mar 2019 23:49:27 +0100
+Message-ID: <20190303224927.GA12652@amd>
+In-Reply-To: <20190214101117.GA6132@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0655620409932554958==
+--===============5582228052370585450==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Added the implementation required to setup data channel
-in ifxmodem gprs-context driver for xmm7modem vendor
----
- drivers/ifxmodem/gprs-context.c | 51 +++++++++++++++++++++++++++++++++++++=
-----
- 1 file changed, 47 insertions(+), 4 deletions(-)
+Hi!
 
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 7f3628b..b36740d 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -260,6 +260,36 @@ error:
- 	failed_setup(gc, NULL, TRUE);
- }
- =
+I'm still fighting with SMS sending on Motorola Droid 4. Yes, its
+kernel driver is somehow interesting... and work in progress.
 
-+static void cgdata_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		ofono_error("Failed to establish session");
-+		failed_setup(gc, result, TRUE);
-+		return;
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-+}
-+
-+static void get_datapath(struct ofono_modem *modem, const char *interface,
-+								char* datapath)
-+{
-+	if (!datapath)
-+		return;
-+
-+	if (!strcmp(interface, ofono_modem_get_string(modem, "NetworkInterface")))
-+		sprintf(datapath, "%s0", ofono_modem_get_string(modem, "DataPath"));
-+	else if (!strcmp(interface, ofono_modem_get_string(modem, "NetworkInterfa=
-ce2")))
-+		sprintf(datapath, "%s1", ofono_modem_get_string(modem, "DataPath"));
-+	else if (!strcmp(interface, ofono_modem_get_string(modem, "NetworkInterfa=
-ce3")))
-+		sprintf(datapath, "%s2", ofono_modem_get_string(modem, "DataPath"));
-+}
-+
- static void cgcontrdp_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
- {
- 	struct ofono_gprs_context *gc =3D user_data;
-@@ -269,8 +299,11 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
+If packets are split correctly, SMS sending works. =
 
- 	const char *laddrnetmask =3D NULL;
- 	const char *gw =3D NULL;
--	const char *interface;
- 	const char *dns[3];
-+	const char *ctrlpath;
-+	char datapath[50];
-+	char buf[100];
-+	const char *interface;
- =
 
- 	DBG("ok %d", ok);
- =
+ofonod[2900]: OutSMS: > AT+GCMGS=3D\r
+ofonod[2900]: OutSMS: > 3100098106343401F30000A70A73F45B4E07D1CB733A<CtrlZ>
+ofonod[2900]: OutSMS: < +GCMGS=3D10,"00/00/00,01:00:00+00"\r\n
 
-@@ -327,9 +360,10 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- 	DBG("DNS2: %s\n", gcd->dns2);
- 	DBG("Gateway: %s\n", gcd->gateway);
- =
+But if data are sent in one write, it does not... (and even this
+is not easy to do with ofono).
 
--	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-+	ctrlpath =3D ofono_modem_get_string(modem, "CtrlPath");
-+	interface =3D ofono_gprs_context_get_interface(gc);
-+	get_datapath(modem, interface, datapath);
- =
+ofonod[3131]: OutSMS: > AT+GCMGS=3D\r3100098106343401F30000A70A73F45B4E07D1=
+CB733A<CtrlZ>
+ofonod[3131]: OutSMS: < :ERROR=3D18\r\n
+Handle command response: :ERROR=3D18
+Handle terminator list
 
--	ofono_gprs_context_set_interface(gc, interface);
- 	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
- =
+Is there easy way to do the splitting? I can do
 
- 	if (gcd->netmask[0])
-@@ -340,7 +374,16 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
+        g_at_io_write(data->send_chat->parent->io, buf, strlen(buf));
+ 	g_io_channel_flush(data->send_chat->parent->io->channel, NULL);
+						   =
 
- 	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
- =
+But that needs exporting functions I guess you'd rather not have
+exported.
 
--	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-+	sprintf(buf, "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s\",2,%u", ctrlpath,
-+				datapath, gcd->active_context);
-+	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%u", gcd->active_context);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix, cgdata_cb,
-+						gc, NULL) > 0)
-+		return;
-+
-+	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
- }
- =
+Is there better way?
 
- static void ifx_read_settings(struct ofono_gprs_context *gc)
+Best regards,
+									Pavel
 -- =
 
-1.9.1
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============5582228052370585450==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============0655620409932554958==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFseDhXZmNBQ2drUU1PZndhcFhiK3ZJVkRBQ2dqL21OZzFxVytmMFY1MGVrWG55Z0dYRVQK
+Sk9FQW4zU2ErLzQ4eE5TRUM1d3FIMlFEbWF5Yk9tdG0KPVFRMDMKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============5582228052370585450==--
 
