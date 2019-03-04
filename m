@@ -1,52 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1221677631903088846=="
+Content-Type: multipart/mixed; boundary="===============3811520202558373782=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
+From: JH <jupiter.hce@gmail.com>
 Subject: Re: Modem supports
-Date: Mon, 04 Mar 2019 08:48:54 +0100
-Message-ID: <be44fcc5-502e-fca6-954e-6faa1b2bc8c9@norrbonn.se>
-In-Reply-To: <CAA=hcWSfVho=cpp1pMAHbT6_znFK14Vfv0sc4WM3K+Utn+CZuA@mail.gmail.com>
+Date: Mon, 04 Mar 2019 19:42:41 +1100
+Message-ID: <CAA=hcWTdANsra3w3iNFJ5rLZG+aNHKoKkDjV_+d7sKcy+4WsuA@mail.gmail.com>
+In-Reply-To: <be44fcc5-502e-fca6-954e-6faa1b2bc8c9@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1221677631903088846==
+--===============3811520202558373782==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Jonas,
 
-On 04/03/2019 07:10, JH wrote:
-> Hi,
-> =
+On 3/4/19, Jonas Bonn <jonas@norrbonn.se> wrote:
+>> Does oFono supports Ublox SARA LTE modem? I read the
+>> hardware-support.txt, could not find it. Appreciate your
+>> clarification.
+>
+> Not out of the box... there's a bit of work to do there.  There were a
+> couple of patches for that modem posted a few weeks ago so there are
+> some people working on it now.  But the support is 98% there... it's
+> just a matter of a couple of tweaks.
 
-> Does oFono supports Ublox SARA LTE modem? I read the
-> hardware-support.txt, could not find it. Appreciate your
-> clarification.
+Will it be able to download in couple of weeks?
 
-Not out of the box... there's a bit of work to do there.  There were a =
+Thanks Jonas,
 
-couple of patches for that modem posted a few weeks ago so there are =
+- jupiter
 
-some people working on it now.  But the support is 98% there... it's =
-
-just a matter of a couple of tweaks.
-
-/Jonas
-
-> =
-
-> Thank you.
-> =
-
-> Kind regards,
-> =
-
-> - jh
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
->=20
-
---===============1221677631903088846==--
+--===============3811520202558373782==--
 
