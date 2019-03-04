@@ -1,47 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4274490282653349817=="
+Content-Type: multipart/mixed; boundary="===============7667905808236929950=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: Modem supports
-Date: Mon, 04 Mar 2019 10:00:23 +0100
-Message-ID: <01ea89d7-72aa-1719-fb4b-05534bc98992@norrbonn.se>
-In-Reply-To: <CAA=hcWTdANsra3w3iNFJ5rLZG+aNHKoKkDjV_+d7sKcy+4WsuA@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] xmm7modem: data channel setup for xmm7modem
+Date: Mon, 04 Mar 2019 13:37:44 -0600
+Message-ID: <5b100962-7b9d-a95d-c5d8-802b76ba54bc@gmail.com>
+In-Reply-To: <1551261802-31126-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4274490282653349817==
+--===============7667905808236929950==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Antara,
 
-
-On 04/03/2019 09:42, JH wrote:
-> Hi Jonas,
+On 02/27/2019 04:03 AM, Antara Borwankar wrote:
+> Added the implementation required to setup data channel
+> in ifxmodem gprs-context driver for xmm7modem vendor
+> ---
+>   drivers/ifxmodem/gprs-context.c | 51 ++++++++++++++++++++++++++++++++++=
++++----
+>   1 file changed, 47 insertions(+), 4 deletions(-)
 > =
 
-> On 3/4/19, Jonas Bonn <jonas@norrbonn.se> wrote:
->>> Does oFono supports Ublox SARA LTE modem? I read the
->>> hardware-support.txt, could not find it. Appreciate your
->>> clarification.
->>
->> Not out of the box... there's a bit of work to do there.  There were a
->> couple of patches for that modem posted a few weeks ago so there are
->> some people working on it now.  But the support is 98% there... it's
->> just a matter of a couple of tweaks.
-> =
 
-> Will it be able to download in couple of weeks?
+Yes, this approach was much simpler and more understandable than what I =
 
-That depends... :)
-/Jonas
+came up with.  So applied, thanks!
 
-> =
+I did push a follow-up commit that refactored things slightly, mostly to =
 
-> Thanks Jonas,
-> =
+address style issues.  Please review and make sure I didn't screw =
 
-> - jupiter
->=20
+anything up.
 
---===============4274490282653349817==--
+Regards,
+-Denis
+
+
+--===============7667905808236929950==--
 
