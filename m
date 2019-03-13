@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0866564083496214198=="
+Content-Type: multipart/mixed; boundary="===============5574390259951229866=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: [PATCH v2 03/10] ublox: query USBCONF for applicable devices
-Date: Wed, 13 Mar 2019 21:30:39 +0100
-Message-ID: <0ffaa16f-7be2-9c77-7542-f87c3223443e@norrbonn.se>
-In-Reply-To: <20190313202324.16369-3-jonas@norrbonn.se>
+Subject: Re: [PATCH v2 09/10] ublox: extend LTE driver
+Date: Wed, 13 Mar 2019 21:32:01 +0100
+Message-ID: <f6f3b6f7-70da-3d4d-a0a6-b26a5c1aa940@norrbonn.se>
+In-Reply-To: <20190313202324.16369-9-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0866564083496214198==
+--===============5574390259951229866==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,49 +16,35 @@ Content-Transfer-Encoding: quoted-printable
 
 
 On 13/03/2019 21:23, Jonas Bonn wrote:
-> The TOBY L2 series of modems presents a number of different
-> configurations with different throughtput characteristics.  These
-> configurations are packaged up as USB profiles; moreover, changing the
-> profile actually changes the USB model ID so this is even more like
-> selecting a different "device" altogether.  Nonetheless, all we need to
-> know is which profile is selected in order to set things up correctly
-> and this can be queried directly.
+> There are a couple of semi-independent changes here:
 > =
 
-> This patch adds a call to UUSBCONF for applicable modems in order to
-> query the USB configuration to find out which profile is active.
+> * use the 'vendor' parameter to pass the modem 'model'
+> * support TOBY L4 modem which uses a fixed CID for configuring the EPS
+> default bearer
+> * add the setup of authentication parameters that was recently added to
+> the atmodem LTE driver
 > ---
->   plugins/ublox.c | 86 +++++++++++++++++++++++++++++++++++--------------
->   1 file changed, 62 insertions(+), 24 deletions(-)
+>   drivers/ubloxmodem/lte.c | 101 ++++++++++++++++++++++++++++++++++-----
+>   1 file changed, 89 insertions(+), 12 deletions(-)
 > =
 
-> diff --git a/plugins/ublox.c b/plugins/ublox.c
-> index 20e20567..e6891f21 100644
-> --- a/plugins/ublox.c
-> +++ b/plugins/ublox.c
-> @@ -46,7 +46,8 @@
+> diff --git a/drivers/ubloxmodem/lte.c b/drivers/ubloxmodem/lte.c
+> index 34397dfe..e0f419b6 100644
+> --- a/drivers/ubloxmodem/lte.c
+> +++ b/drivers/ubloxmodem/lte.c
+> @@ -39,24 +39,85 @@
 >   =
 
->   #include <drivers/ubloxmodem/ubloxmodem.h>
+>   #include "ubloxmodem.h"
 >   =
 
-> -static const char *none_prefix[] =3D { NULL };
-> +static const char * const uusbconf_prefix[] =3D { "+UUSBCONF:", NULL };
+> -static const char *ucgdflt_prefix[] =3D { "+UCGDFLT:", NULL };
 > +static const char * const none_prefix[] =3D { NULL };
 
-Of course, I got conned by checkpatch into making this change... it's =
-
-certainly correct but making the pointer const doesn't play well with =
-
-the rest of ofono so it's not sane to actually change this now.
-
-I'll let you review the rest of the series before resubmitting... if you =
-
-want to get past this, though, just drop the const from the pointer.
-
-Sorry for the noise... my bad.
+Same here, the const on the pointer here is no good.
 
 /Jonas
 
---===============0866564083496214198==--
+--===============5574390259951229866==--
 
