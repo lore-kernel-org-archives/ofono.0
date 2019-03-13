@@ -1,96 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============6184616021421341532=="
+Content-Type: multipart/mixed; boundary="===============9171522613026312648=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: [PATCH v2 06/10] ublox: add TOBY L4 models
-Date: Wed, 13 Mar 2019 21:23:20 +0100
-Message-ID: <20190313202324.16369-6-jonas@norrbonn.se>
+Subject: [PATCH v2 07/10] udevng: detect ublox TOBY L4
+Date: Wed, 13 Mar 2019 21:23:21 +0100
+Message-ID: <20190313202324.16369-7-jonas@norrbonn.se>
 In-Reply-To: <20190313202324.16369-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6184616021421341532==
+--===============9171522613026312648==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+ttyACM0 (USB interface 02) is reportedly unreliable (breaking DHCP setup)
+so the recommended approach is to use ttyACM2 (USB interface 06)
+exclusively.
 ---
- drivers/ubloxmodem/ubloxmodem.c | 23 +++++++++++++++++++++++
- drivers/ubloxmodem/ubloxmodem.h |  2 ++
- 2 files changed, 25 insertions(+)
+ plugins/udevng.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/ubloxmodem/ubloxmodem.c b/drivers/ubloxmodem/ubloxmode=
-m.c
-index 0630fcdf..9e0781f0 100644
---- a/drivers/ubloxmodem/ubloxmodem.c
-+++ b/drivers/ubloxmodem/ubloxmodem.c
-@@ -60,6 +60,23 @@ const struct ublox_model ublox_models[] =3D {
- 		.name =3D "TOBY-L280",
- 		.flags =3D UBLOX_F_TOBY_L2|UBLOX_F_HAVE_USBCONF,
- 	},
-+	/* TOBY L4 series */
-+	{
-+		.name =3D "TOBY-L4006",
-+		.flags =3D UBLOX_F_TOBY_L4,
-+	},
-+	{
-+		.name =3D "TOBY-L4106",
-+		.flags =3D UBLOX_F_TOBY_L4,
-+	},
-+	{
-+		.name =3D "TOBY-L4206",
-+		.flags =3D UBLOX_F_TOBY_L4,
-+	},
-+	{
-+		.name =3D "TOBY-L4906",
-+		.flags =3D UBLOX_F_TOBY_L4,
-+	},
- 	{ /* sentinel */ },
- };
- =
-
-@@ -90,6 +107,12 @@ int ublox_is_toby_l2(const struct ublox_model *model)
- 	return model->flags & UBLOX_F_TOBY_L2;
- }
- =
-
-+int ublox_is_toby_l4(const struct ublox_model *model)
-+{
-+	return model->flags & UBLOX_F_TOBY_L4;
-+}
-+
-+
- static int ubloxmodem_init(void)
- {
- 	ublox_gprs_context_init();
-diff --git a/drivers/ubloxmodem/ubloxmodem.h b/drivers/ubloxmodem/ubloxmode=
-m.h
-index 1f5b6493..2c5b7433 100644
---- a/drivers/ubloxmodem/ubloxmodem.h
-+++ b/drivers/ubloxmodem/ubloxmodem.h
-@@ -25,6 +25,7 @@
- =
-
- enum ublox_flags {
- 	UBLOX_F_TOBY_L2		=3D (1 << 0),
-+	UBLOX_F_TOBY_L4		=3D (1 << 1),
- 	UBLOX_F_HAVE_USBCONF	=3D (1 << 2),
- };
- =
-
-@@ -37,6 +38,7 @@ const struct ublox_model *ublox_model_from_name(const cha=
-r *name);
- const struct ublox_model *ublox_model_from_id(int id);
- int ublox_model_to_id(const struct ublox_model *model);
- int ublox_is_toby_l2(const struct ublox_model *model);
-+int ublox_is_toby_l4(const struct ublox_model *model);
- =
-
- extern void ublox_gprs_context_init(void);
- extern void ublox_gprs_context_exit(void);
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 4473c0a6..f689b756 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1090,11 +1090,17 @@ static gboolean setup_ublox(struct modem_info *mode=
+m)
+ 		 *  - high throughput profile : 224/1/3
+ 		 */
+ 		} else if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
+-			if (g_strcmp0(info->number, "02") =3D=3D 0)
+-				aux =3D info->devnode;
+-			else if (g_strcmp0(info->number, "00") =3D=3D 0)
++			if (!g_strcmp0(modem->model, "1010")) {
++				if (g_strcmp0(info->number, "06") =3D=3D 0)
++					aux =3D info->devnode;
++			} else {
++				if (g_strcmp0(info->number, "02") =3D=3D 0)
++					aux =3D info->devnode;
++			}
++			if (g_strcmp0(info->number, "00") =3D=3D 0)
+ 				mdm =3D info->devnode;
+ 		} else if (g_strcmp0(info->interface, "2/6/0") =3D=3D 0 ||
++				g_strcmp0(info->interface, "2/13/0") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "10/0/0") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "224/1/3") =3D=3D 0) {
+ 			net =3D info->devnode;
+@@ -1691,6 +1697,8 @@ static struct {
+ 	{ "quectelqmi",	"qcserial",	"2c7c", "0121"	},
+ 	{ "quectelqmi",	"qmi_wwan",	"2c7c", "0125"	},
+ 	{ "quectelqmi",	"qcserial",	"2c7c", "0125"	},
++	{ "ublox",	"cdc_acm",	"1546", "1010"	},
++	{ "ublox",	"cdc_ncm",	"1546", "1010"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1102"	},
+ 	{ "ublox",	"rndis_host",	"1546", "1146"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1146"	},
 -- =
 
 2.19.1
 
 
---===============6184616021421341532==--
+--===============9171522613026312648==--
 
