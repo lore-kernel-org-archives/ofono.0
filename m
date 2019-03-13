@@ -1,164 +1,201 @@
-Content-Type: multipart/mixed; boundary="===============5924362122964924616=="
+Content-Type: multipart/mixed; boundary="===============3155849424721550793=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: [PATCH v3 03/10] ublox: query USBCONF for applicable devices
-Date: Wed, 13 Mar 2019 21:46:57 +0100
-Message-ID: <20190313204657.22395-1-jonas@norrbonn.se>
-In-Reply-To: <20190313202324.16369-3-jonas@norrbonn.se>
+Subject: [PATCH v3 09/10] ublox: extend LTE driver
+Date: Wed, 13 Mar 2019 21:48:32 +0100
+Message-ID: <20190313204832.22502-1-jonas@norrbonn.se>
+In-Reply-To: <20190313202324.16369-9-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5924362122964924616==
+--===============3155849424721550793==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The TOBY L2 series of modems presents a number of different
-configurations with different throughtput characteristics.  These
-configurations are packaged up as USB profiles; moreover, changing the
-profile actually changes the USB model ID so this is even more like
-selecting a different "device" altogether.  Nonetheless, all we need to
-know is which profile is selected in order to set things up correctly
-and this can be queried directly.
+There are a couple of semi-independent changes here:
 
-This patch adds a call to UUSBCONF for applicable modems in order to
-query the USB configuration to find out which profile is active.
+* use the 'vendor' parameter to pass the modem 'model'
+* support TOBY L4 modem which uses a fixed CID for configuring the EPS
+default bearer
+* add the setup of authentication parameters that was recently added to
+the atmodem LTE driver
 ---
- plugins/ublox.c | 84 +++++++++++++++++++++++++++++++++++--------------
- 1 file changed, 61 insertions(+), 23 deletions(-)
+ drivers/ubloxmodem/lte.c | 101 ++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 89 insertions(+), 12 deletions(-)
 
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 20e20567..2425620f 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -46,6 +46,7 @@
+diff --git a/drivers/ubloxmodem/lte.c b/drivers/ubloxmodem/lte.c
+index 34397dfe..eb9062d9 100644
+--- a/drivers/ubloxmodem/lte.c
++++ b/drivers/ubloxmodem/lte.c
+@@ -39,24 +39,85 @@
  =
 
- #include <drivers/ubloxmodem/ubloxmodem.h>
+ #include "ubloxmodem.h"
  =
 
-+static const char *uusbconf_prefix[] =3D { "+UUSBCONF:", NULL };
- static const char *none_prefix[] =3D { NULL };
+-static const char *ucgdflt_prefix[] =3D { "+UCGDFLT:", NULL };
++static const char *none_prefix[] =3D { NULL };
  =
 
- enum supported_models {
-@@ -155,6 +156,59 @@ static void cfun_enable(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	ofono_modem_set_powered(modem, TRUE);
+ struct lte_driver_data {
+ 	GAtChat *chat;
++	const struct ublox_model *model;
++	struct ofono_lte_default_attach_info pending_info;
+ };
+ =
+
+-static void ucgdflt_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static void at_lte_set_auth_cb(gboolean ok, GAtResult *result,
++							gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+ 	ofono_lte_cb_t cb =3D cbd->cb;
+ 	struct ofono_error error;
+ =
+
+-	DBG("ok %d", ok);
+-
+ 	decode_at_error(&error, g_at_result_final_response(result));
+ 	cb(&error, cbd->data);
  }
  =
 
-+static void query_usbconf_cb(gboolean ok,
-+				GAtResult *result, gpointer user_data)
++static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *resu=
+lt,
++							gpointer user_data)
 +{
-+	struct ofono_modem *modem =3D user_data;
-+	struct ublox_data *data =3D ofono_modem_get_data(modem);
-+	GAtResultIter iter;
-+	int profile;
++	struct cb_data *cbd =3D user_data;
++	ofono_lte_cb_t cb =3D cbd->cb;
++	void *data =3D cbd->data;
++	struct lte_driver_data *ldd =3D cbd->user;
++	struct ofono_error error;
++	char buf[32 + OFONO_GPRS_MAX_USERNAME_LENGTH +
++					OFONO_GPRS_MAX_PASSWORD_LENGTH  + 1];
++	enum ofono_gprs_auth_method auth_method;
++	int cid;
 +
 +	if (!ok) {
-+		ofono_error("Unable to query USB configuration");
-+		goto error;
++		decode_at_error(&error, g_at_result_final_response(result));
++		cb(&error, data);
++		return;
 +	}
 +
-+	g_at_result_iter_init(&iter, result);
-+
-+retry:
-+	if (!g_at_result_iter_next(&iter, "+UUSBCONF")) {
-+		ofono_error("Unable to query USB configuration");
-+		goto error;
++	if (ublox_is_toby_l2(ldd->model)) {
++		/* If CGDCONT has already been used to set up cid 4 then
++		 * the EPS default bearer will be configured from another
++		 * cid (see documentation for how this is selected).  Avoid
++		 * doing so as this assumes as much...
++		 */
++		cid =3D 4;
++	} else if (ublox_is_toby_l4(ldd->model)) {
++		cid =3D 1;
++	} else {
++		ofono_error("Unknown model; "
++			"unable to determine EPS default bearer CID");
++		goto out;
 +	}
 +
-+	if (!g_at_result_iter_next_number(&iter, &profile))
-+		goto retry;
++	auth_method =3D ldd->pending_info.auth_method;
 +
-+	switch (profile) {
-+	case 0: /* Fairly back compatible */
-+	case 1: /* Fairly back compatible plus audio */
-+		data->model_id =3D  TOBYL2_COMPATIBLE_MODE;
-+		break;
-+	case 2: /* Low/medium throughput */
-+		data->model_id =3D TOBYL2_MEDIUM_THROUGHPUT_MODE;
-+		break;
-+	case 3: /* High throughput mode */
-+		data->model_id =3D TOBYL2_HIGH_THROUGHPUT_MODE;
-+		break;
-+	default:
-+		ofono_error("Unexpected USB profile: %d", profile);
-+		goto error;
-+	}
++	/* change the authentication method if the  parameters are invalid */
++	if (!*ldd->pending_info.username || !*ldd->pending_info.password)
++		auth_method =3D OFONO_GPRS_AUTH_METHOD_NONE;
 +
-+	if (g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix,
-+					cfun_enable, modem, NULL))
++	/* In contrast to CGAUTH, all four parameters are _required_ here;
++	 * if auth type is NONE then username and password must be set to
++	 * empty strings.
++	 */
++	sprintf(buf, "AT+UAUTHREQ=3D%d,%d,\"%s\",\"%s\"",
++			cid,
++			at_util_gprs_auth_method_to_auth_prot(auth_method),
++			ldd->pending_info.username,
++			ldd->pending_info.password);
++
++	cbd =3D cb_data_ref(cbd);
++	if (g_at_chat_send(ldd->chat, buf, none_prefix,
++			at_lte_set_auth_cb, cbd, cb_data_unref) > 0)
 +		return;
 +
-+error:
-+	g_at_chat_unref(data->aux);
-+	data->aux =3D NULL;
-+	g_at_chat_unref(data->modem);
-+	data->modem =3D NULL;
-+	ofono_modem_set_powered(modem, FALSE);
++out:
++	cb_data_unref(cbd);
++	CALLBACK_WITH_FAILURE(cb, data);
 +}
 +
+ static void ublox_lte_set_default_attach_info(const struct ofono_lte *lte,
+ 			const struct ofono_lte_default_attach_info *info,
+ 			ofono_lte_cb_t cb, void *data)
+@@ -67,17 +128,32 @@ static void ublox_lte_set_default_attach_info(const st=
+ruct ofono_lte *lte,
+ =
+
+ 	DBG("LTE config with APN: %s", info->apn);
+ =
+
+-	if (strlen(info->apn) > 0)
+-		snprintf(buf, sizeof(buf), "AT+UCGDFLT=3D0,\"IP\",\"%s\"",
++	cbd->user =3D ldd;
++	memcpy(&ldd->pending_info, info, sizeof(ldd->pending_info));
 +
- static void query_model_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
++	if (ublox_is_toby_l2(ldd->model)) {
++		if (strlen(info->apn) > 0)
++			snprintf(buf, sizeof(buf), "AT+UCGDFLT=3D0,%s,\"%s\"",
++				at_util_gprs_proto_to_pdp_type(info->proto),
++				info->apn);
++		else
++			snprintf(buf, sizeof(buf), "AT+UCGDFLT=3D0");
++
++	} else if (ublox_is_toby_l4(ldd->model)) {
++		if (strlen(info->apn) > 0)
++			snprintf(buf, sizeof(buf), "AT+CGDCONT=3D1,%s,\"%s\"",
++				at_util_gprs_proto_to_pdp_type(info->proto),
+ 				info->apn);
+-	else
+-		snprintf(buf, sizeof(buf), "AT+UCGDFLT=3D0");
++		else
++			snprintf(buf, sizeof(buf), "AT+CGDCONT=3D1");
++	}
+ =
+
+-	/* We can't do much in case of failure so don't check response. */
+-	if (g_at_chat_send(ldd->chat, buf, ucgdflt_prefix,
+-				ucgdflt_cb, cbd, g_free) > 0)
++	if (g_at_chat_send(ldd->chat, buf, none_prefix,
++			at_lte_set_default_attach_info_cb,
++			cbd, cb_data_unref) > 0)
+ 		return;
+ =
+
++	cb_data_unref(cbd);
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
+ =
+
+@@ -91,7 +167,7 @@ static gboolean lte_delayed_register(gpointer user_data)
+ }
+ =
+
+ static int ublox_lte_probe(struct ofono_lte *lte,
+-					unsigned int vendor, void *data)
++					unsigned int model_id, void *data)
  {
- 	struct ofono_modem *modem =3D user_data;
-@@ -162,7 +216,6 @@ static void query_model_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- 	struct ofono_error error;
- 	const char *model;
- 	const struct ublox_model *m;
--	const char *model_str;
+ 	GAtChat *chat =3D data;
+ 	struct lte_driver_data *ldd;
+@@ -103,6 +179,7 @@ static int ublox_lte_probe(struct ofono_lte *lte,
+ 		return -ENOMEM;
  =
 
- 	decode_at_error(&error, g_at_result_final_response(result));
+ 	ldd->chat =3D g_at_chat_clone(chat);
++	ldd->model =3D ublox_model_from_id(model_id);
  =
 
-@@ -184,28 +237,13 @@ static void query_model_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
+ 	ofono_lte_set_data(lte, ldd);
  =
 
- 	DBG("Model: %s", data->model->name);
- =
-
--	if (data->model->flags & UBLOX_F_TOBY_L2) {
--		model_str =3D ofono_modem_get_string(modem, "Model");
--		if (!model_str)
--			goto fail;
--
--		/*
--		 * Toby L2 devices are more complex and special than previously
--		 * supported U-Blox devices. So they need a vendor of their own.
--		 */
--		data->model_id =3D strtoul(model_str, NULL, 10);
--
--		switch (data->model_id) {
--		case TOBYL2_COMPATIBLE_MODE:
--		case TOBYL2_HIGH_THROUGHPUT_MODE:
--			break;
--		case TOBYL2_MEDIUM_THROUGHPUT_MODE:
--			DBG("low/medium throughtput profile unsupported");
--			break;
--		default:
--			DBG("unknown ublox model id %d", data->model_id);
--			goto fail;
--		}
-+	if (data->model->flags & UBLOX_F_HAVE_USBCONF) {
-+		if (g_at_chat_send(data->aux, "AT+UUSBCONF?", uusbconf_prefix,
-+					query_usbconf_cb, modem, NULL))
-+			return;
-+
-+		ofono_error("Unable to query USB configuration");
-+		goto fail;
- 	} else {
- 		data->vendor_family =3D OFONO_VENDOR_UBLOX;
- 	}
 -- =
 
 2.19.1
 
 
---===============5924362122964924616==--
+--===============3155849424721550793==--
 
