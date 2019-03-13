@@ -1,43 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4414978348766386545=="
+Content-Type: multipart/mixed; boundary="===============1287706192619679302=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 03/10] ublox: query USBCONF for applicable devices
-Date: Wed, 13 Mar 2019 16:30:36 -0500
-Message-ID: <3ca8bdc5-fdf4-2442-4632-e257bf1cd367@gmail.com>
-In-Reply-To: <20190313204657.22395-1-jonas@norrbonn.se>
+Subject: Re: [PATCH v2 03/10] ublox: query USBCONF for applicable devices
+Date: Wed, 13 Mar 2019 16:34:23 -0500
+Message-ID: <1d076805-ca86-f4ff-55ed-16a1cce27390@gmail.com>
+In-Reply-To: <0ffaa16f-7be2-9c77-7542-f87c3223443e@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4414978348766386545==
+--===============1287706192619679302==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 03/13/2019 03:46 PM, Jonas Bonn wrote:
-> The TOBY L2 series of modems presents a number of different
-> configurations with different throughtput characteristics.  These
-> configurations are packaged up as USB profiles; moreover, changing the
-> profile actually changes the USB model ID so this is even more like
-> selecting a different "device" altogether.  Nonetheless, all we need to
-> know is which profile is selected in order to set things up correctly
-> and this can be queried directly.
+Hi Jonas,
+
+
+>> +static const char * const uusbconf_prefix[] =3D { "+UUSBCONF:", NULL };
+>> +static const char * const none_prefix[] =3D { NULL };
 > =
 
-> This patch adds a call to UUSBCONF for applicable modems in order to
-> query the USB configuration to find out which profile is active.
-> ---
->   plugins/ublox.c | 84 +++++++++++++++++++++++++++++++++++--------------
->   1 file changed, 61 insertions(+), 23 deletions(-)
-> =
+> Of course, I got conned by checkpatch into making this change... it's =
 
+> certainly correct but making the pointer const doesn't play well with =
 
-Okay, I applied v2 patches 1, 2, 4 and v3 patch 3.
+> the rest of ofono so it's not sane to actually change this now.
 
-Patch 5 no longer applies, so please re-submit.
+Yes, at some point we should use this pattern and change these =
+
+wholesale.  Maybe someone strong in coccinelle-fu can do this for us?
 
 Regards,
 -Denis
 
-
---===============4414978348766386545==--
+--===============1287706192619679302==--
 
