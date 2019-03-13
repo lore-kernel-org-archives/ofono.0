@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5992656434102436386=="
+Content-Type: multipart/mixed; boundary="===============4984864438628023979=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/14] Fix whitespace weirdness
-Date: Wed, 13 Mar 2019 13:14:29 -0500
-Message-ID: <f9272b3c-2955-4d26-4330-f5792e346040@gmail.com>
-In-Reply-To: <20190312111008.29258-2-jonas@norrbonn.se>
+Subject: Re: [PATCH 02/14] ublox: drop vendor type for Toby L2 model
+Date: Wed, 13 Mar 2019 13:21:39 -0500
+Message-ID: <9ea72390-6eae-6c46-483a-f934125e29dd@gmail.com>
+In-Reply-To: <20190312111008.29258-3-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5992656434102436386==
+--===============4984864438628023979==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,48 +16,31 @@ Content-Transfer-Encoding: quoted-printable
 Hi Jonas,
 
 On 03/12/2019 06:09 AM, Jonas Bonn wrote:
+> The 'Toby L2'-specific vendor type is used only to prevent the CMER
+> command from attempting to set mode '3'.  For all u-blox models, mode
+> '3' is just an alias for mode '1'.  As such, mode '1' can be used in
+> place of mode '3', removing the model-specific quirk in favour of a
+> vendor-specific quirk.
+> =
+
+> With this change, the L2-specific vendor type is no longer needed.
 > ---
->   drivers/atmodem/network-registration.c | 12 ++++++------
->   1 file changed, 6 insertions(+), 6 deletions(-)
+>   drivers/atmodem/gprs.c                 | 1 -
+>   drivers/atmodem/network-registration.c | 7 +++++--
+>   drivers/atmodem/sim.c                  | 1 -
+>   drivers/atmodem/vendor.h               | 1 -
+>   plugins/ublox.c                        | 7 +++----
+>   5 files changed, 8 insertions(+), 9 deletions(-)
 > =
 
-> diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/net=
-work-registration.c
-> index 2482dfc3..1704f98c 100644
-> --- a/drivers/atmodem/network-registration.c
-> +++ b/drivers/atmodem/network-registration.c
-> @@ -1559,12 +1559,12 @@ static void creg_notify(GAtResult *result, gpoint=
-er user_data)
->   					option_query_tech_cb, tq, g_free) > 0)
->   			return;
->   		break;
-> -    case OFONO_VENDOR_GEMALTO:
-> -              if (g_at_chat_send(nd->chat, "AT^SMONI",
-> -                                      smoni_prefix,
-> -                                      gemalto_query_tech_cb, tq, g_free)=
- > 0)
-> -                      return;
-> -              break;
-> +	case OFONO_VENDOR_GEMALTO:
-> +		if (g_at_chat_send(nd->chat, "AT^SMONI",
-> +			      smoni_prefix,
-> +			      gemalto_query_tech_cb, tq, g_free) > 0)
 
-You still left some spaces in here.  Anyway I fixed this up for you and =
+I split this up into 3 commits in line with our patch submission guidelines.
 
-applied.
-
-> +			return;
-> +		break;
->   	}
->   =
-
->   	g_free(tq);
-> =
-
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============5992656434102436386==--
+
+--===============4984864438628023979==--
 
