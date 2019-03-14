@@ -1,113 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============9048031595541168465=="
+Content-Type: multipart/mixed; boundary="===============4278201964564128154=="
 MIME-Version: 1.0
-From: Ayoub Zaki <ayoub.zaki@embexus.com>
-Subject: Re: ublox toby L210 support in ofono
-Date: Thu, 14 Mar 2019 19:46:37 +0100
-Message-ID: <22639f72-68a6-cd7a-3162-25d1e04f5d99@embexus.com>
-In-Reply-To: <4b0540a9-a897-da35-a628-c93853381b9d@gmail.com>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: [PATCH 1/5] ublox: gprs-context: take model parameter
+Date: Thu, 14 Mar 2019 23:28:39 +0100
+Message-ID: <20190314222843.9232-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9048031595541168465==
+--===============4278201964564128154==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ drivers/ubloxmodem/gprs-context.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
+diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
+ntext.c
+index 1b4e17f5..bbf8627a 100644
+--- a/drivers/ubloxmodem/gprs-context.c
++++ b/drivers/ubloxmodem/gprs-context.c
+@@ -45,6 +45,7 @@ static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:"=
+, NULL };
+ static const char *uipaddr_prefix[] =3D { "+UIPADDR:", NULL };
+ =
 
-On 14.03.19 19:27, Denis Kenzior wrote:
-> Hi Ayoub,
->
->> [ /ublox_0 ]
->> =C2=A0=C2=A0 =C2=A0 [ /ublox_0/context1 ]
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 Type =3D internet
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 Protocol =3D ip
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 Name =3D Internet
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 IPv6.Settings =3D { }
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 AuthenticationMethod =3D chap
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 Username =3D
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 AccessPointName =3D mtm.tag.com.mnc001=
-.mcc232.gprs
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 Active =3D 1
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 Settings =3D { Address=3D10.3.26.101 N=
-etmask=3D255.255.255.0 =
+ struct gprs_context_data {
++	const struct ublox_model *model;
+ 	GAtChat *chat;
+ 	unsigned int active_context;
+ 	ofono_gprs_context_cb_t cb;
+@@ -462,7 +463,7 @@ static void cgev_notify(GAtResult *result, gpointer use=
+r_data)
+ }
+ =
 
->> DomainNameServers=3D194.48.139.254,194.48.128.199, Gateway=3D10.3.26.154 =
+ static int ublox_gprs_context_probe(struct ofono_gprs_context *gc,
+-					unsigned int vendor, void *data)
++					unsigned int model_id, void *data)
+ {
+ 	GAtChat *chat =3D data;
+ 	struct gprs_context_data *gcd;
+@@ -473,6 +474,10 @@ static int ublox_gprs_context_probe(struct ofono_gprs_=
+context *gc,
+ 	if (gcd =3D=3D NULL)
+ 		return -ENOMEM;
+ =
 
->> Method=3Dstatic }
->> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 Password =3D
->
-> So, looks like you're connected, but the driver has not provided the =
++	gcd->model =3D ublox_model_from_id(model_id);
++	if (!gcd->model)
++		return -EINVAL;
++
+ 	gcd->chat =3D g_at_chat_clone(chat);
+ =
 
-> network interface string.=C2=A0 Most likely something is missing in =
-
-> plugins/udevng.c and it isn't properly setting the net devnode.
->
-> ofonod[228]: ../ofono-1.22/plugins/udevng.c:create_modem() =
-
-> /sys/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1/usb1/1-1
-> ofonod[228]: ../ofono-1.22/plugins/udevng.c:create_modem() driver=3Dublox
-> ofonod[228]: ../ofono-1.22/src/modem.c:ofono_modem_create() name: =
-
-> (null), type: ublox
-> ofonod[228]: ../ofono-1.22/plugins/udevng.c:setup_ublox() =
-
-> /sys/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1/usb1/1-1
-> ofonod[228]: ../ofono-1.22/plugins/udevng.c:setup_ublox() /dev/ttyACM0 =
-
-> 2/2/1 02 (null)
-> ofonod[228]: ../ofono-1.22/plugins/udevng.c:setup_ublox() =
-
-> aux=3D/dev/ttyACM0 modem=3D(null) net=3D(null)
->
-> As you can see, net is NULL here...
->
-> <snip>
->
->>
->> It looks like the modem is online but there is no ppp interface =
-
->> associated with it
-> According to plugins/udevng.c & plugins/ublox.c, this modem could be =
-
-> be using a high-speed interface, depending on the profile.
-
-
-I checked with lsusb:
-
-root(a)beaglebone-yocto:~# lsusb
-Bus 001 Device 002: ID 1546:1146 U-Blox AG
-
-In plugins/udevng.c I can see that it support both rndis_host and cdc_acm
-
- =C2=A0=C2=A0=C2=A0 { "ublox",=C2=A0=C2=A0 =C2=A0"rndis_host",=C2=A0=C2=A0 =
-=C2=A0"1546", "1146"=C2=A0=C2=A0 =C2=A0},
- =C2=A0=C2=A0 =C2=A0{ "ublox",=C2=A0=C2=A0 =C2=A0"cdc_acm",=C2=A0=C2=A0 =C2=
-=A0"1546", "1146"=C2=A0=C2=A0 =C2=A0},
-
-
-What should I do to make it work ?
-
-
-So basically that modem is not supported ?!
-
-
-Mit freundlichen Gr=C3=BC=C3=9Fen / Kind regards
-
+ 	ofono_gprs_context_set_data(gc, gcd);
 -- =
 
-Ayoub Zaki
-Embedded Systems Consultant
-
-Vaihinger Stra=C3=9Fe 2/1
-D-71634 Ludwigsburg
-
-Mobile   : +4917662901545
-Email    : ayoub.zaki(a)embexus.com
-Homepage : https://embexus.com
-VAT No.  : DE313902634
+2.19.1
 
 
---===============9048031595541168465==--
+--===============4278201964564128154==--
 
