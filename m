@@ -1,78 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============5689649932415495019=="
+Content-Type: multipart/mixed; boundary="===============3201080827698662885=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: [PATCH 2/5] ublox: pass model_id to gprs-context driver
-Date: Thu, 14 Mar 2019 23:28:40 +0100
-Message-ID: <20190314222843.9232-2-jonas@norrbonn.se>
+Subject: [PATCH 3/5] ublox: TOBY L4 supports only router mode
+Date: Thu, 14 Mar 2019 23:28:41 +0100
+Message-ID: <20190314222843.9232-3-jonas@norrbonn.se>
 In-Reply-To: <20190314222843.9232-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5689649932415495019==
+--===============3201080827698662885==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Depending on the transport used on the data connection we want either
-the "atmodem" (PPP) driver or the "ubloxmodem".  For the "ubloxmodem",
-we want to pass the model data so this patch wrangles some parameters to
-make sure that right driver and right variant data are passed.
+The TOBY L4 supports only "router mode" where the modem presents a
+network interface that one can run a DHCP client against.  Behind this
+interface, the modem takes care of routing packets via NAT by:
+
+i)  selecting the relevant context based on destination IP
+ii) using the first activated context as the default route
+
+In order to have the connection manager, thus, do the right thing, the
+context only needs to report itself as being active and with the IP
+settings set to method "dhcp".  There's no need for the connection manager
+to know details like what IP address the context was assigned.
+
+Tested with connman that does the right thing when it finds an active
+"dhcp" context.
 ---
- plugins/ublox.c | 23 +++++++++++++++++++----
- 1 file changed, 19 insertions(+), 4 deletions(-)
+ drivers/ubloxmodem/gprs-context.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 1c74fe09..8100dfba 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -388,19 +388,34 @@ static void ublox_post_sim(struct ofono_modem *modem)
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
- 	GAtChat *chat =3D data->modem ? data->modem : data->aux;
--	const char *driver =3D data->flags & UBLOX_DEVICE_F_HIGH_THROUGHPUT_MODE ?
--						"ubloxmodem" : "atmodem";
-+	const char *driver;
- 	/* Toby L2: Create same number of contexts as supported PDP contexts. */
- 	int ncontexts =3D data->flags & UBLOX_DEVICE_F_HIGH_THROUGHPUT_MODE ? 8 :=
- 1;
-+	int variant;
+diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
+ntext.c
+index bbf8627a..389868c1 100644
+--- a/drivers/ubloxmodem/gprs-context.c
++++ b/drivers/ubloxmodem/gprs-context.c
+@@ -240,6 +240,15 @@ static void ublox_gprs_read_settings(struct ofono_gprs=
+_context *gc,
  =
 
- 	DBG("%p", modem);
+ 	DBG("cid %u", cid);
  =
 
- 	gprs =3D ofono_gprs_create(modem, data->vendor_family, "atmodem",
- 					data->aux);
- =
-
-+	if (ublox_is_toby_l4(data->model)) {
-+		driver =3D "ubloxmodem";
-+		variant =3D ublox_model_to_id(data->model);
-+	} else if (ublox_is_toby_l2(data->model)) {
-+		if (data->flags & UBLOX_DEVICE_F_HIGH_THROUGHPUT_MODE) {
-+			driver =3D "ubloxmodem";
-+			variant =3D ublox_model_to_id(data->model);
-+		} else {
-+			driver =3D "atmodem";
-+			variant =3D OFONO_VENDOR_UBLOX;
-+		}
-+	} else {
-+		driver =3D "atmodem";
-+		variant =3D OFONO_VENDOR_UBLOX;
++	if (ublox_is_toby_l4(gcd->model)) {
++		/* Use DHCP */
++		gcd->active_context =3D cid;
++		set_gprs_context_interface(gc);
++		ofono_gprs_context_set_ipv4_address(gc, NULL, 0);
++		CALLBACK_WITH_SUCCESS(cb, data);
++		return;
 +	}
 +
- 	while (ncontexts) {
--		gc =3D ofono_gprs_context_create(modem, data->vendor_family,
--						driver, chat);
-+		gc =3D ofono_gprs_context_create(modem, variant, driver, chat);
- =
-
- 		if (gprs && gc)
- 			ofono_gprs_add_context(gprs, gc);
+ 	gcd->active_context =3D cid;
+ 	gcd->cb =3D cb;
+ 	gcd->cb_data =3D data;
 -- =
 
 2.19.1
 
 
---===============5689649932415495019==--
+--===============3201080827698662885==--
 
