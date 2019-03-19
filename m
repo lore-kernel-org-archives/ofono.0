@@ -1,130 +1,163 @@
-Content-Type: multipart/mixed; boundary="===============5116551349710796831=="
+Content-Type: multipart/mixed; boundary="===============5489449006725965442=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [RFC PATCH 1/1] ublox: create only 1 gprs context
-Date: Sat, 16 Mar 2019 07:41:46 +0100
-Message-ID: <398bcef8-2d47-3bed-5d7b-223d016180c7@norrbonn.se>
-In-Reply-To: <e3343eef-12ff-4f9f-10dd-5ec0a3392e21@gmail.com>
+Date: Tue, 19 Mar 2019 10:26:38 -0500
+Message-ID: <0fa17476-69a4-71bc-6ccb-2a7aaffba701@gmail.com>
+In-Reply-To: <398bcef8-2d47-3bed-5d7b-223d016180c7@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5116551349710796831==
+--===============5489449006725965442==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jonas,
 
-On 15/03/2019 17:28, Denis Kenzior wrote:
+> OK, thanks for digging that out despite the cobwebs!
 
-<snip>
+No worries.  Sorry I forgot to reply to this earlier.
 
 > =
 
-> uBlox is just being too smart here.=C2=A0 The whole bridged vs router stu=
-ff =
-
-> was never intended by 27.007.=C2=A0 They made this all up themselves. Nei=
-ther =
-
-> oFono nor ConnMan were designed to handle such a setup.
+> So, this is where I end up then:
 > =
 
-> The main issue will be for contexts used for MMS / OMA DM.=C2=A0 My memor=
-y =
+> i)=C2=A0 MMS (and other) contexts are just IP endpoints, but they are all =
 
-> from the Meego / Tizen days is fuzzy, but from what I recall we designed =
+> identified by a "type"
 
-> oFono with the assumption that we will always get an IP address and a =
+Right now yes.  In theory you could have a DNS, routing, etc for these =
 
-> separate interface for the MMS context.
+contexts as well.  In fact, once we introduce IMS contexts, this has to =
+
+be done anyway.
+
+> ii)=C2=A0 connman handles "Internet" contexts and ignores everything else=
+...
+
+Correct.
+
+> iii) other applications (like mmsd) handle contexts of other types
+> iv)=C2=A0 mmsd, unlike connman, expects the network interface associated =
+with =
+
+> the context to be fully configured... IP address, route, etc.
+
+Correct, at least at the moment
+
 > =
 
-> There's also the proxy.=C2=A0 MMS contexts frequently have a proxy associ=
-ated =
+> ofono is designed to expect a network interface for each context.=C2=A0 F=
+or =
 
-> with them.=C2=A0 Again, we assumed that if a proxy is set, then it is als=
-o in =
+> this reason, it's pretty heavy-handed in its setup of the interface:=C2=
+=A0 it =
 
-> a form of an IP address.=C2=A0 The proxy is then added as a route on the =
+> assumes the interface isn't shared by other contexts and isn't careful =
 
-> interface by oFono (see pri_setproxy for details).=C2=A0 And in practical =
+> about maintaining settings coming from other contexts.
 
-> terms there is no domain name resolution for these contexts.=C2=A0 Everyt=
-hing =
+This is also what 3GPP intended, at least back in the multiplexing / =
 
-> just goes to the proxy.
+27.010 days.  Now things become a bit more complex as you can tell. =
+
+Intel modems do actually expose multiple pseudo-ethernet devices for this.
+
 > =
 
-> This was how e.g. mmsd was designed to work.=C2=A0 See =
+> So the real impedance mismatch here for the case where a modem puts =
 
-> https://git.kernel.org/pub/scm/network/ofono/mmsd.git.=C2=A0 That project=
- has =
+> multiple contexts behind a single network interface is the way ofono is =
 
-> not been touched in some time though, but there are others that act very =
+> implemented.
 
-> similar.
+Correct.
+
+> =
+
+> ofono could be re-implemented here to add multiple IP addresses to a =
+
+> single interface and to set routing accordingly (for MMS contexts only, =
+
+> apparently... it looks like ofono does nothing currently for other =
+
+> context types).
+
+This gets tricky, but I assume that for 'bridged' mode we would need to =
+
+do this yes.
+
+With router mode things become a bit simpler.  Likely the only thing =
+
+needed on these is to just automagically setup routing for MMS/SIP =
+
+proxies.  The only difference from what we have today would be that we =
+
+need to remove the corresponding routes when the MMS context goes down =
+
+(today oFono assumes that the entire interface is brought down) So it =
+
+wouldn't be that hard to implement actually.  And since ConnMan ignores =
+
+non-Internet contexts, things would probably just work.
+
+Someone needs to test that theory though.  I don't have any ublox devices.
+
+> =
+
+> Another alternative is to have the gprs-context driver for affected =
+
+> devices create "virtual network devices" (is this still a thing?) with =
+
+> static IP addresses for all contexts.=C2=A0 For the u-blox "router mode" =
+
+> case, though, I can't figure out who runs the DHCP client... (and the =
+
+> TOBY L4 is router-mode-only, so requiring bridge-mode is not an option).
+
+We have been contemplating for a long time that DHCP needs to move out =
+
+of ConnMan and into the individual daemons, e.g. BlueZ, iwd, oFono.  I =
+
+already started moving bits of DHCP into ell, but higher priority tasks =
+
+came up.
+
+There was an earlier thread where weird device behaviors were described =
+
+(by Giacinto, I think?).  E.g. a device would not succeed in context =
+
+activation until DHCP was run against the interface.  So supporting such =
+
+devices with DHCP in ConnMan is a bit problematic and we have a fighting =
+
+chance with DHCP in oFono.
+
+> =
+
+> Either way, this is a reasonably big undertaking.=C2=A0 I don't think I w=
+ant =
+
+> to take this on without a concrete use-case presenting itself, first! :)
 > =
 
 
-OK, thanks for digging that out despite the cobwebs!
+Device Provisioning, Firmware update, MMS, IMS :)
 
-So, this is where I end up then:
+> So given that, the right thing to do here is probably to just drop =
 
-i)  MMS (and other) contexts are just IP endpoints, but they are all =
+> multiple context support from the u-blox driver until ofono is modified =
 
-identified by a "type"
-ii)  connman handles "Internet" contexts and ignores everything else...
-iii) other applications (like mmsd) handle contexts of other types
-iv)  mmsd, unlike connman, expects the network interface associated with =
+> (someday) to handle multiple contexts behind a single network interface. =
 
-the context to be fully configured... IP address, route, etc.
+>  =C2=A0I will send a patch.
 
-ofono is designed to expect a network interface for each context.  For =
+For now I think that is the right approach.
 
-this reason, it's pretty heavy-handed in its setup of the interface:  it =
+Regards,
+-Denis
 
-assumes the interface isn't shared by other contexts and isn't careful =
-
-about maintaining settings coming from other contexts.
-
-So the real impedance mismatch here for the case where a modem puts =
-
-multiple contexts behind a single network interface is the way ofono is =
-
-implemented.
-
-ofono could be re-implemented here to add multiple IP addresses to a =
-
-single interface and to set routing accordingly (for MMS contexts only, =
-
-apparently... it looks like ofono does nothing currently for other =
-
-context types).
-
-Another alternative is to have the gprs-context driver for affected =
-
-devices create "virtual network devices" (is this still a thing?) with =
-
-static IP addresses for all contexts.  For the u-blox "router mode" =
-
-case, though, I can't figure out who runs the DHCP client... (and the =
-
-TOBY L4 is router-mode-only, so requiring bridge-mode is not an option).
-
-Either way, this is a reasonably big undertaking.  I don't think I want =
-
-to take this on without a concrete use-case presenting itself, first! :)
-
-So given that, the right thing to do here is probably to just drop =
-
-multiple context support from the u-blox driver until ofono is modified =
-
-(someday) to handle multiple contexts behind a single network interface. =
-
-  I will send a patch.
-
-/Jonas
-
---===============5116551349710796831==--
+--===============5489449006725965442==--
 
