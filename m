@@ -1,112 +1,111 @@
-Content-Type: multipart/mixed; boundary="===============4822693987893522665=="
+Content-Type: multipart/mixed; boundary="===============0773571189063339820=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] xmm7modem: handling of IPv6 address for activated context
-Date: Wed, 20 Mar 2019 20:28:36 -0500
-Message-ID: <410132eb-c2c3-38aa-e9fa-aba0514085f5@gmail.com>
-In-Reply-To: <1553073329-32420-1-git-send-email-antara.borwankar@intel.com>
+From: Krishna <krishnaks@iwavesystems.com>
+Subject: Ofono for ublox LARA-R211
+Date: Fri, 22 Mar 2019 20:08:52 +0530
+Message-ID: <002501d4e0bc$f8bd8370$ea388a50$@iwavesystems.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4822693987893522665==
+--===============0773571189063339820==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+Hi All,
 
-On 03/20/2019 04:15 AM, Antara Borwankar wrote:
-> Handled IPv6 address after activating PDP context
-> ---
->   drivers/ifxmodem/gprs-context.c | 33 +++++++++++++++++++++++----------
->   1 file changed, 23 insertions(+), 10 deletions(-)
-> =
+ =
 
-> diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-cont=
-ext.c
-> index 6042004..55d72a6 100644
-> --- a/drivers/ifxmodem/gprs-context.c
-> +++ b/drivers/ifxmodem/gprs-context.c
-> @@ -352,10 +352,12 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->   =
 
->   	DBG("DNS: %s, %s\n", gcd->dns1, gcd->dns2);
->   =
+Whether I can use ofono for LARA-R211 or LARA-202?
 
-> -	if (!laddrnetmask || at_util_get_ipv4_address_and_netmask(laddrnetmask,
-> -					gcd->address, gcd->netmask) < 0) {
-> -		failed_setup(gc, NULL, TRUE);
-> -		return;
-> +	if(gcd->proto =3D=3D OFONO_GPRS_PROTO_IP) {
+I have added ofono package to the yocto and enabled required configurations
+in Linux kernel.
 
-There really should be a space after 'if' here.
+I have referred below link for the configuration.
 
-> +		if (!laddrnetmask || at_util_get_ipv4_address_and_netmask(laddrnetmask,
-> +						gcd->address, gcd->netmask) < 0) {
-> +			failed_setup(gc, NULL, TRUE);
-> +			return;
-> +		}
->   	}
->   =
+https://embexus.com/2017/06/04/add-a-mobile-broadband-connectivity-to-embedd
+ed-linux/
 
->   	if (gw)
-> @@ -373,15 +375,26 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->   	interface =3D ofono_gprs_context_get_interface(gc);
->   	datapath =3D get_datapath(modem, interface);
->   =
+ =
 
-> -	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
-> +	if(gcd->proto =3D=3D OFONO_GPRS_PROTO_IP) {
 
-And here
+However ./list-modem is not returning anything.
 
-> +		ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
->   =
+Let me know if I am missing any configuration.
 
-> -	if (gcd->netmask[0])
-> -		ofono_gprs_context_set_ipv4_netmask(gc, gcd->netmask);
-> +		if (gcd->netmask[0])
-> +			ofono_gprs_context_set_ipv4_netmask(gc, gcd->netmask);
->   =
-
-> -	if (gcd->gateway[0])
-> -		ofono_gprs_context_set_ipv4_gateway(gc, gcd->gateway);
-> +		if (gcd->gateway[0])
-> +			ofono_gprs_context_set_ipv4_gateway(gc, gcd->gateway);
->   =
-
-> -	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-> +		ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-> +	}
-> +
-> +	if(gcd->proto =3D=3D OFONO_GPRS_PROTO_IPV6) {
-> +		ofono_gprs_context_set_ipv6_address(gc, gcd->address);
-
-So I'm not sure I understand what is happening here.  gcd->address is =
-
-only set when gcd->proto is OFONO_GPRS_PROTO_IP.  E.g. when it is =
-
-extracted by at_util_get_ipv4_address_and_netmask.  How are you =
-
-obtaining it for IPV6?
-
-> +
-> +		if (gcd->gateway[0])
-> +			ofono_gprs_context_set_ipv6_gateway(gc, gcd->gateway);
-> +
-> +		ofono_gprs_context_set_ipv6_dns_servers(gc, dns);
-> +	}
->   =
-
->   	snprintf(buf, sizeof(buf), "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s\",2,%u",
->   			ctrlpath, datapath, gcd->active_context);
-> =
+ =
 
 
 Regards,
--Denis
 
---===============4822693987893522665==--
+Krishna
+
+
+--===============0773571189063339820==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PE1FVEEgSFRUUC1FUVVJVj0iQ29udGVudC1UeXBlIiBDT05U
+RU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPjxtZXRhIG5hbWU9R2VuZXJhdG9yIGNv
+bnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDE1IChmaWx0ZXJlZCBtZWRpdW0pIj48c3R5bGU+PCEtLQov
+KiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseToiXEZGMkRcRkYz
+MyBcMzBCNFwzMEI3XDMwQzNcMzBBRiI7CglwYW5vc2UtMToyIDExIDYgOSA3IDIgNSA4IDIgNDt9
+CkBmb250LWZhY2UKCXtmb250LWZhbWlseToiQ2FtYnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1
+IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IlxAXEZGMkRcRkYzMyBc
+MzBCNFwzMEI3XDMwQzNcMzBBRiI7CglwYW5vc2UtMToyIDExIDYgOSA3IDIgNSA4IDIgNDt9Ci8q
+IFN0eWxlIERlZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29O
+b3JtYWwKCXttYXJnaW46MG1tOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJdGV4dC1hbGlnbjpq
+dXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZvbnQtc2l6ZToxMC41cHQ7
+Cglmb250LWZhbWlseToiQXJpYWwiLHNhbnMtc2VyaWY7fQphOmxpbmssIHNwYW4uTXNvSHlwZXJs
+aW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6IzA1NjNDMTsKCXRleHQtZGVjb3Jh
+dGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXtt
+c28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjojOTU0RjcyOwoJdGV4dC1kZWNvcmF0aW9uOnVu
+ZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29t
+cG9zZTsKCWZvbnQtZmFtaWx5OiJBcmlhbCIsc2Fucy1zZXJpZjsKCWNvbG9yOndpbmRvd3RleHQ7
+fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5OwoJZm9udC1mYW1p
+bHk6IkFyaWFsIixzYW5zLXNlcmlmO30KLyogUGFnZSBEZWZpbml0aW9ucyAqLwpAcGFnZSBXb3Jk
+U2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo5OS4yNXB0IDMwLjBtbSAz
+MC4wbW0gMzAuMG1tO30KZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+
+PC9zdHlsZT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0i
+ZWRpdCIgc3BpZG1heD0iMTAyNiI+Cjx2OnRleHRib3ggaW5zZXQ9IjUuODVwdCwuN3B0LDUuODVw
+dCwuN3B0IiAvPgo8L286c2hhcGVkZWZhdWx0cz48L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0
+ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgo8bzppZG1hcCB2OmV4
+dD0iZWRpdCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPjwv
+aGVhZD48Ym9keSBsYW5nPUpBIGxpbms9IiMwNTYzQzEiIHZsaW5rPSIjOTU0RjcyIiBzdHlsZT0n
+dGV4dC1qdXN0aWZ5LXRyaW06cHVuY3R1YXRpb24nPjxkaXYgY2xhc3M9V29yZFNlY3Rpb24xPjxw
+IGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0
+Jz5IaSBBbGwsPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBs
+YW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
+bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6
+ZToxMC4wcHQnPldoZXRoZXIgSSBjYW4gdXNlIG9mb25vIGZvciBMQVJBLVIyMTEgb3IgTEFSQS0y
+MDI/PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVO
+LVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5JIGhhdmUgYWRkZWQgb2Zvbm8gcGFja2FnZSB0
+byB0aGUgeW9jdG8gYW5kIGVuYWJsZWQgcmVxdWlyZWQgY29uZmlndXJhdGlvbnMgaW4gTGludXgg
+a2VybmVsLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFu
+Zz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+SSBoYXZlIHJlZmVycmVkIGJlbG93IGxp
+bmsgZm9yIHRoZSBjb25maWd1cmF0aW9uLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1N
+c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+PGEgaHJl
+Zj0iaHR0cHM6Ly9lbWJleHVzLmNvbS8yMDE3LzA2LzA0L2FkZC1hLW1vYmlsZS1icm9hZGJhbmQt
+Y29ubmVjdGl2aXR5LXRvLWVtYmVkZGVkLWxpbnV4LyI+aHR0cHM6Ly9lbWJleHVzLmNvbS8yMDE3
+LzA2LzA0L2FkZC1hLW1vYmlsZS1icm9hZGJhbmQtY29ubmVjdGl2aXR5LXRvLWVtYmVkZGVkLWxp
+bnV4LzwvYT48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
+bmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFu
+PjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXpl
+OjEwLjBwdCc+SG93ZXZlciAuL2xpc3QtbW9kZW0gaXMgbm90IHJldHVybmluZyBhbnl0aGluZy48
+bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMg
+c3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkxldCBtZSBrbm93IGlmIEkgYW0gbWlzc2luZyBhbnkg
+Y29uZmlndXJhdGlvbi48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxz
+cGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+
+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9u
+dC1zaXplOjEwLjBwdCc+UmVnYXJkcyw8bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNv
+Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPktyaXNobmE8
+bzpwPjwvbzpwPjwvc3Bhbj48L3A+PC9kaXY+PC9ib2R5PjwvaHRtbD4=
+--===============0773571189063339820==--
 
