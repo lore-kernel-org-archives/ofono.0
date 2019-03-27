@@ -1,170 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6479945800591163157=="
+Content-Type: multipart/mixed; boundary="===============6794095107997831208=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 5/6] xmm7modem: handling of dual sim single active feature
-Date: Wed, 27 Mar 2019 17:41:16 +0530
-Message-ID: <1553688676-25628-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 6/6] xmm7modem: Changes in plugin for DSSA functionality
+Date: Wed, 27 Mar 2019 17:41:41 +0530
+Message-ID: <1553688701-26794-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6479945800591163157==
+--===============6794095107997831208==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handled DSSA use case for xmm7modem. Added driver function
-to switch between available card slots for SIM.
-
-Only one SIM will be active at a given time. On calling this
-function the active SIM will be removed and the card slot made
-inactive and SIM in the other card slot will be made active.
-
-Use case is similar to a SIM swap/change where one SIM is replaced
-another SIM in the same slot.
+Changed the sim driver vendor for xmm7modem from
+OFONO_VENDOR_IFX to OFONO_VENDOR_XMM to handle DSSA functionality.
 ---
- drivers/atmodem/sim.c | 80 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 79 insertions(+), 1 deletion(-)
+ plugins/xmm7xxx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 5f66a09..88e3898 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -75,6 +75,7 @@ static const char *cuad_prefix[] =3D { "+CUAD:", NULL };
- static const char *ccho_prefix[] =3D { "+CCHO:", NULL };
- static const char *crla_prefix[] =3D { "+CRLA:", NULL };
- static const char *cgla_prefix[] =3D { "+CGLA:", NULL };
-+static const char *csus_prefix[] =3D { "+CSUS:", NULL};
- static const char *none_prefix[] =3D { NULL };
+diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
+index 90e52fb..23a7d4e 100644
+--- a/plugins/xmm7xxx.c
++++ b/plugins/xmm7xxx.c
+@@ -1223,7 +1223,7 @@ static void xmm7xxx_pre_sim(struct ofono_modem *modem)
+ 	DBG("%p", modem);
  =
 
- static void append_file_path(char *buf, const unsigned char *path,
-@@ -1160,6 +1161,7 @@ static void at_pin_retries_query(struct ofono_sim *si=
-m,
- 	DBG("");
- =
-
- 	switch (sd->vendor) {
-+	case OFONO_VENDOR_XMM:
- 	case OFONO_VENDOR_IFX:
- 		if (g_at_chat_send(sd->chat, "AT+XPINCNT", xpincnt_prefix,
- 					xpincnt_cb, cbd, g_free) > 0)
-@@ -1920,6 +1922,41 @@ static void at_logical_access(struct ofono_sim *sim,=
- int session_id,
- 	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
+ 	ofono_devinfo_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
+-	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_IFX, "atmodem",
++	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_XMM, "atmodem",
+ 					data->chat);
  }
  =
 
-+static void at_csus_query_cb(gboolean ok, GAtResult *result, gpointer user)
-+{
-+	struct ofono_sim *sim =3D user;
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	GAtResultIter iter;
-+	int num_slots;
-+
-+	if (!ok)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CSUS:"))
-+		goto done;
-+
-+	/* Set num slots */
-+	g_at_result_iter_next_number(&iter, &num_slots);
-+
-+	ofono_sim_set_card_slot_num(sim, num_slots);
-+
-+	/* SIM1 slot will be active by default */
-+	ofono_sim_set_active_card_slot_num(sim, 1);
-+
-+	/* enable reporting of MSIM remap status information
-+	   and enable automatic acceptance of MSIM Remap
-+	   acknowledgement. */
-+	g_at_chat_send(sd->chat, "AT+XCMSRS=3D2", none_prefix,
-+					NULL, NULL, NULL);
-+
-+done:
-+	/* Query supported <fac>s */
-+	g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
-+				at_clck_query_cb, sim, NULL);
-+}
-+
- static int at_sim_probe(struct ofono_sim *sim, unsigned int vendor,
- 				void *data)
- {
-@@ -1938,6 +1975,10 @@ static int at_sim_probe(struct ofono_sim *sim, unsig=
-ned int vendor,
- 		if (at_clck_cpwd_fac[i])
- 			sd->passwd_type_mask |=3D (1 << i);
- =
-
-+	if (sd->vendor =3D=3D OFONO_VENDOR_XMM)
-+		return g_at_chat_send(sd->chat, "AT+CSUS=3D?", csus_prefix,
-+			at_csus_query_cb, sim, NULL) ? 0 : -1;
-+
- 	/* Query supported <fac>s */
- 	return g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
- 				at_clck_query_cb, sim, NULL) ? 0 : -1;
-@@ -1957,6 +1998,42 @@ static void at_sim_remove(struct ofono_sim *sim)
- 	g_free(sd);
- }
- =
-
-+static void at_set_active_sim_cb(gboolean ok, GAtResult *result,
-+		gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_sim_active_slot_change_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (cb)
-+		cb(&error, cbd->data);
-+}
-+
-+static void at_set_active_sim(struct ofono_sim *sim, unsigned int index,
-+			ofono_sim_active_slot_change_cb_t cb, void *data)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char cmd[43];
-+
-+	/* AT+XCMSCSC=3D[<n>][,<mode>,<slot_id>,<power_options>]
-+	   <n> Enable +XCMSCSCI URC reporting,
-+	   <mode> single sim modem (SSIM),
-+	   <slot_id> Indicates SIM slot id,
-+	   <power_options> keep both slots powered.	*/
-+	snprintf(cmd, sizeof(cmd), "AT+XCMSCSC=3D1,0,%u,1", index);
-+
-+	if (g_at_chat_send(sd->chat, cmd, none_prefix, at_set_active_sim_cb,
-+			cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
- static const struct ofono_sim_driver driver =3D {
- 	.name			=3D "atmodem",
- 	.probe			=3D at_sim_probe,
-@@ -1982,7 +2059,8 @@ static const struct ofono_sim_driver driver =3D {
- 	.session_read_binary	=3D at_session_read_binary,
- 	.session_read_record	=3D at_session_read_record,
- 	.session_read_info	=3D at_session_read_info,
--	.logical_access		=3D at_logical_access
-+	.logical_access		=3D at_logical_access,
-+	.set_active_sim		=3D at_set_active_sim
- };
- =
-
- static const struct ofono_sim_driver driver_noef =3D {
 -- =
 
 1.9.1
 
 
---===============6479945800591163157==--
+--===============6794095107997831208==--
 
