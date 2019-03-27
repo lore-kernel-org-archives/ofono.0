@@ -1,111 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============0773571189063339820=="
+Content-Type: multipart/mixed; boundary="===============8865932426028979310=="
 MIME-Version: 1.0
-From: Krishna <krishnaks@iwavesystems.com>
-Subject: Ofono for ublox LARA-R211
-Date: Fri, 22 Mar 2019 20:08:52 +0530
-Message-ID: <002501d4e0bc$f8bd8370$ea388a50$@iwavesystems.com>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH 2/6] sim: Added new properties to simmanager for DSSA
+Date: Wed, 27 Mar 2019 17:39:12 +0530
+Message-ID: <1553688552-22144-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0773571189063339820==
+--===============8865932426028979310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi All,
+Adding two new properties to sim manager interface to handle
+dual SIM single active use case.
 
+CardSlotCount [readonly]
+Contains the count of number of SIM card slots available.
+
+ActiveCardSlot [readwrite]
+Contains the index of the currently active SIM card slot
+for dual SIM single active mode.
+---
+ doc/sim-api.txt | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/doc/sim-api.txt b/doc/sim-api.txt
+index bce47c1..c69cc74 100644
+--- a/doc/sim-api.txt
++++ b/doc/sim-api.txt
+@@ -205,3 +205,15 @@ Properties	boolean Present [readonly]
  =
 
+ 			Contains the SIM's ImsPrivateIdentity, read from the
+ 			ISIM.
++
++		uint32 CardSlotCount [readonly]
++
++			Contains the count of number of SIM card slots available.
++
++		uint32 ActiveCardSlot [readwrite]
++
++			Contains the index of the currently active SIM card slot
++			for dual SIM single active mode.
++
++			This property will range from 1 (default) to
++			CardSlotCount (max) value.
+-- =
 
-Whether I can use ofono for LARA-R211 or LARA-202?
-
-I have added ofono package to the yocto and enabled required configurations
-in Linux kernel.
-
-I have referred below link for the configuration.
-
-https://embexus.com/2017/06/04/add-a-mobile-broadband-connectivity-to-embedd
-ed-linux/
-
- =
-
-
-However ./list-modem is not returning anything.
-
-Let me know if I am missing any configuration.
-
- =
+1.9.1
 
 
-Regards,
-
-Krishna
-
-
---===============0773571189063339820==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PE1FVEEgSFRUUC1FUVVJVj0iQ29udGVudC1UeXBlIiBDT05U
-RU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPjxtZXRhIG5hbWU9R2VuZXJhdG9yIGNv
-bnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDE1IChmaWx0ZXJlZCBtZWRpdW0pIj48c3R5bGU+PCEtLQov
-KiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseToiXEZGMkRcRkYz
-MyBcMzBCNFwzMEI3XDMwQzNcMzBBRiI7CglwYW5vc2UtMToyIDExIDYgOSA3IDIgNSA4IDIgNDt9
-CkBmb250LWZhY2UKCXtmb250LWZhbWlseToiQ2FtYnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1
-IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IlxAXEZGMkRcRkYzMyBc
-MzBCNFwzMEI3XDMwQzNcMzBBRiI7CglwYW5vc2UtMToyIDExIDYgOSA3IDIgNSA4IDIgNDt9Ci8q
-IFN0eWxlIERlZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29O
-b3JtYWwKCXttYXJnaW46MG1tOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJdGV4dC1hbGlnbjpq
-dXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZvbnQtc2l6ZToxMC41cHQ7
-Cglmb250LWZhbWlseToiQXJpYWwiLHNhbnMtc2VyaWY7fQphOmxpbmssIHNwYW4uTXNvSHlwZXJs
-aW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6IzA1NjNDMTsKCXRleHQtZGVjb3Jh
-dGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXtt
-c28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjojOTU0RjcyOwoJdGV4dC1kZWNvcmF0aW9uOnVu
-ZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29t
-cG9zZTsKCWZvbnQtZmFtaWx5OiJBcmlhbCIsc2Fucy1zZXJpZjsKCWNvbG9yOndpbmRvd3RleHQ7
-fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5OwoJZm9udC1mYW1p
-bHk6IkFyaWFsIixzYW5zLXNlcmlmO30KLyogUGFnZSBEZWZpbml0aW9ucyAqLwpAcGFnZSBXb3Jk
-U2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo5OS4yNXB0IDMwLjBtbSAz
-MC4wbW0gMzAuMG1tO30KZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+
-PC9zdHlsZT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0i
-ZWRpdCIgc3BpZG1heD0iMTAyNiI+Cjx2OnRleHRib3ggaW5zZXQ9IjUuODVwdCwuN3B0LDUuODVw
-dCwuN3B0IiAvPgo8L286c2hhcGVkZWZhdWx0cz48L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0
-ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgo8bzppZG1hcCB2OmV4
-dD0iZWRpdCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPjwv
-aGVhZD48Ym9keSBsYW5nPUpBIGxpbms9IiMwNTYzQzEiIHZsaW5rPSIjOTU0RjcyIiBzdHlsZT0n
-dGV4dC1qdXN0aWZ5LXRyaW06cHVuY3R1YXRpb24nPjxkaXYgY2xhc3M9V29yZFNlY3Rpb24xPjxw
-IGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0
-Jz5IaSBBbGwsPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBs
-YW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
-bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6
-ZToxMC4wcHQnPldoZXRoZXIgSSBjYW4gdXNlIG9mb25vIGZvciBMQVJBLVIyMTEgb3IgTEFSQS0y
-MDI/PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVO
-LVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5JIGhhdmUgYWRkZWQgb2Zvbm8gcGFja2FnZSB0
-byB0aGUgeW9jdG8gYW5kIGVuYWJsZWQgcmVxdWlyZWQgY29uZmlndXJhdGlvbnMgaW4gTGludXgg
-a2VybmVsLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFu
-Zz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+SSBoYXZlIHJlZmVycmVkIGJlbG93IGxp
-bmsgZm9yIHRoZSBjb25maWd1cmF0aW9uLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1N
-c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+PGEgaHJl
-Zj0iaHR0cHM6Ly9lbWJleHVzLmNvbS8yMDE3LzA2LzA0L2FkZC1hLW1vYmlsZS1icm9hZGJhbmQt
-Y29ubmVjdGl2aXR5LXRvLWVtYmVkZGVkLWxpbnV4LyI+aHR0cHM6Ly9lbWJleHVzLmNvbS8yMDE3
-LzA2LzA0L2FkZC1hLW1vYmlsZS1icm9hZGJhbmQtY29ubmVjdGl2aXR5LXRvLWVtYmVkZGVkLWxp
-bnV4LzwvYT48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
-bmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFu
-PjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXpl
-OjEwLjBwdCc+SG93ZXZlciAuL2xpc3QtbW9kZW0gaXMgbm90IHJldHVybmluZyBhbnl0aGluZy48
-bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMg
-c3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkxldCBtZSBrbm93IGlmIEkgYW0gbWlzc2luZyBhbnkg
-Y29uZmlndXJhdGlvbi48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxz
-cGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+
-PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9u
-dC1zaXplOjEwLjBwdCc+UmVnYXJkcyw8bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNv
-Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPktyaXNobmE8
-bzpwPjwvbzpwPjwvc3Bhbj48L3A+PC9kaXY+PC9ib2R5PjwvaHRtbD4=
---===============0773571189063339820==--
+--===============8865932426028979310==--
 
