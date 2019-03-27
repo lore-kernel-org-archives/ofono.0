@@ -1,42 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6794095107997831208=="
+Content-Type: multipart/mixed; boundary="===============2715624025517702109=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 6/6] xmm7modem: Changes in plugin for DSSA functionality
-Date: Wed, 27 Mar 2019 17:41:41 +0530
-Message-ID: <1553688701-26794-1-git-send-email-antara.borwankar@intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 2/6] sim: Added new properties to simmanager for DSSA
+Date: Wed, 27 Mar 2019 13:25:45 +0100
+Message-ID: <20190327122545.GA2737@amd>
+In-Reply-To: <1553688552-22144-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6794095107997831208==
+--===============2715624025517702109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changed the sim driver vendor for xmm7modem from
-OFONO_VENDOR_IFX to OFONO_VENDOR_XMM to handle DSSA functionality.
----
- plugins/xmm7xxx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On Wed 2019-03-27 17:39:12, Antara Borwankar wrote:
+> Adding two new properties to sim manager interface to handle
+> dual SIM single active use case.
+> =
 
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index 90e52fb..23a7d4e 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -1223,7 +1223,7 @@ static void xmm7xxx_pre_sim(struct ofono_modem *modem)
- 	DBG("%p", modem);
- =
+> CardSlotCount [readonly]
+> Contains the count of number of SIM card slots available.
+> =
 
- 	ofono_devinfo_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
--	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_IFX, "atmodem",
-+	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_XMM, "atmodem",
- 					data->chat);
- }
- =
+> ActiveCardSlot [readwrite]
+> Contains the index of the currently active SIM card slot
+> for dual SIM single active mode.
 
+Hmm. There are already modems which can have both SIMs active at the
+same time. Would it make sense to have the APIs ready for that?
+
+								Pavel
 -- =
 
-1.9.1
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============2715624025517702109==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============6794095107997831208==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFseWJhOGtBQ2drUU1PZndhcFhiK3ZLYit3Q2dsZDUya3VIc2laYVFuVHY2NXg4YUdoRzIK
+dnhnQW5qMXlTMFI5Y0dDSXR5b0RhT2dSR0ZhOEE4eXYKPUxCcnoKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============2715624025517702109==--
 
