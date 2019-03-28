@@ -1,87 +1,213 @@
-Content-Type: multipart/mixed; boundary="===============3378550152836913877=="
+Content-Type: multipart/mixed; boundary="===============3094342815810645142=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] sim: Added set function for CardSlotCount and
- ActiveCardSlot
-Date: Wed, 27 Mar 2019 21:20:56 -0500
-Message-ID: <97703cc4-d2fe-d3ad-cd3c-a60155deef9c@gmail.com>
-In-Reply-To: <1553688589-23308-1-git-send-email-antara.borwankar@intel.com>
+Subject: Re: [PATCH 5/6] xmm7modem: handling of dual sim single active feature
+Date: Wed, 27 Mar 2019 21:31:04 -0500
+Message-ID: <de1aaa43-c1a2-bc4f-90c1-3210048dde10@gmail.com>
+In-Reply-To: <1553688676-25628-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3378550152836913877==
+--===============3094342815810645142==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Antara,
 
-On 03/27/2019 07:09 AM, Antara Borwankar wrote:
-> Adding set function definition for CardSlotCount and ActiveCardSlot
-> properties.
-> ---
->   include/sim.h | 8 ++++++++
->   1 file changed, 8 insertions(+)
+On 03/27/2019 07:11 AM, Antara Borwankar wrote:
+> Handled DSSA use case for xmm7modem. Added driver function
+> to switch between available card slots for SIM.
 > =
 
-> diff --git a/include/sim.h b/include/sim.h
-> index fad4c0d..be5d82f 100644
-> --- a/include/sim.h
-> +++ b/include/sim.h
-> @@ -132,6 +132,9 @@ typedef void (*ofono_sim_close_channel_cb_t)(const st=
-ruct ofono_error *error,
->   typedef void (*ofono_sim_logical_access_cb_t)(const struct ofono_error =
-*error,
->   		const unsigned char *resp, unsigned int len, void *data);
+> Only one SIM will be active at a given time. On calling this
+> function the active SIM will be removed and the card slot made
+> inactive and SIM in the other card slot will be made active.
+> =
+
+> Use case is similar to a SIM swap/change where one SIM is replaced
+> another SIM in the same slot.
+> ---
+>   drivers/atmodem/sim.c | 80 ++++++++++++++++++++++++++++++++++++++++++++=
+++++++-
+>   1 file changed, 79 insertions(+), 1 deletion(-)
+> =
+
+> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+> index 5f66a09..88e3898 100644
+> --- a/drivers/atmodem/sim.c
+> +++ b/drivers/atmodem/sim.c
+> @@ -75,6 +75,7 @@ static const char *cuad_prefix[] =3D { "+CUAD:", NULL };
+>   static const char *ccho_prefix[] =3D { "+CCHO:", NULL };
+>   static const char *crla_prefix[] =3D { "+CRLA:", NULL };
+>   static const char *cgla_prefix[] =3D { "+CGLA:", NULL };
+> +static const char *csus_prefix[] =3D { "+CSUS:", NULL};
+>   static const char *none_prefix[] =3D { NULL };
 >   =
 
-> +typedef void (*ofono_sim_active_slot_change_cb_t)(const struct ofono_err=
-or *error,
-> +					void *data);
+>   static void append_file_path(char *buf, const unsigned char *path,
+> @@ -1160,6 +1161,7 @@ static void at_pin_retries_query(struct ofono_sim *=
+sim,
+>   	DBG("");
+>   =
+
+>   	switch (sd->vendor) {
+> +	case OFONO_VENDOR_XMM:
+>   	case OFONO_VENDOR_IFX:
+>   		if (g_at_chat_send(sd->chat, "AT+XPINCNT", xpincnt_prefix,
+>   					xpincnt_cb, cbd, g_free) > 0)
+> @@ -1920,6 +1922,41 @@ static void at_logical_access(struct ofono_sim *si=
+m, int session_id,
+>   	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
+>   }
+>   =
+
+> +static void at_csus_query_cb(gboolean ok, GAtResult *result, gpointer us=
+er)
+> +{
+> +	struct ofono_sim *sim =3D user;
+> +	struct sim_data *sd =3D ofono_sim_get_data(sim);
+> +	GAtResultIter iter;
+> +	int num_slots;
+> +
+> +	if (!ok)
+> +		goto done;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+CSUS:"))
+> +		goto done;
+> +
+> +	/* Set num slots */
+> +	g_at_result_iter_next_number(&iter, &num_slots);
+> +
+> +	ofono_sim_set_card_slot_num(sim, num_slots);
+> +
+> +	/* SIM1 slot will be active by default */
+> +	ofono_sim_set_active_card_slot_num(sim, 1);
+
+Why not just run 'AT+CSUS?' and make sure that we get the info fresh =
+
+from the modem.
+
+> +
+> +	/* enable reporting of MSIM remap status information
+> +	   and enable automatic acceptance of MSIM Remap
+> +	   acknowledgement. */
+> +	g_at_chat_send(sd->chat, "AT+XCMSRS=3D2", none_prefix,
+> +					NULL, NULL, NULL);
+> +
+> +done:
+> +	/* Query supported <fac>s */
+> +	g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
+> +				at_clck_query_cb, sim, NULL);
+> +}
+> +
+>   static int at_sim_probe(struct ofono_sim *sim, unsigned int vendor,
+>   				void *data)
+>   {
+> @@ -1938,6 +1975,10 @@ static int at_sim_probe(struct ofono_sim *sim, uns=
+igned int vendor,
+>   		if (at_clck_cpwd_fac[i])
+>   			sd->passwd_type_mask |=3D (1 << i);
+>   =
+
+> +	if (sd->vendor =3D=3D OFONO_VENDOR_XMM)
+> +		return g_at_chat_send(sd->chat, "AT+CSUS=3D?", csus_prefix,
+> +			at_csus_query_cb, sim, NULL) ? 0 : -1;
 > +
 
-ofono_sim_set_active_card_slot_cb_t
+Given that this is a standard command, do you really want to hide it =
 
->   struct ofono_sim_driver {
->   	const char *name;
->   	int (*probe)(struct ofono_sim *sim, unsigned int vendor, void *data);
-> @@ -205,6 +208,8 @@ struct ofono_sim_driver {
->   	void (*logical_access)(struct ofono_sim *sim, int session_id,
->   			const unsigned char *pdu, unsigned int len,
->   			ofono_sim_logical_access_cb_t cb, void *data);
-> +	void (*set_active_sim)(struct ofono_sim *sim, unsigned int index,
+behind VENDOR_XMM?
 
-Lets call this set_active_card_slot to be consistent with the D-Bus API
+>   	/* Query supported <fac>s */
+>   	return g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
+>   				at_clck_query_cb, sim, NULL) ? 0 : -1;
+> @@ -1957,6 +1998,42 @@ static void at_sim_remove(struct ofono_sim *sim)
+>   	g_free(sd);
+>   }
+>   =
 
-> +			ofono_sim_active_slot_change_cb_t cb, void *data);
+> +static void at_set_active_sim_cb(gboolean ok, GAtResult *result,
+
+Since this is a vendor command response, name it after the vendor =
+
+command issues.  E.g. something like xcmscsc_cb
+
+> +		gpointer user_data)
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	ofono_sim_active_slot_change_cb_t cb =3D cbd->cb;
+> +	struct ofono_error error;
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +
+> +	if (cb)
+> +		cb(&error, cbd->data);
+> +}
+> +
+> +static void at_set_active_sim(struct ofono_sim *sim, unsigned int index,
+> +			ofono_sim_active_slot_change_cb_t cb, void *data)
+> +{
+> +	struct sim_data *sd =3D ofono_sim_get_data(sim);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +	char cmd[43];
+> +
+> +	/* AT+XCMSCSC=3D[<n>][,<mode>,<slot_id>,<power_options>]
+
+doc/coding-style.txt item M2
+
+> +	   <n> Enable +XCMSCSCI URC reporting,
+> +	   <mode> single sim modem (SSIM),
+> +	   <slot_id> Indicates SIM slot id,
+> +	   <power_options> keep both slots powered.	*/
+
+What does keeping both slots powered do?
+
+> +	snprintf(cmd, sizeof(cmd), "AT+XCMSCSC=3D1,0,%u,1", index);
+
+Can we use AT+CSUS=3Dfoo here?
+
+Also, you really need to make sure that this callback will still do the =
+
+right thing when vendor !=3D XMM_VENDOR.  So that means returning a not =
+
+supported error code for vendors other than XMM_VENDOR, or better yet =
+
+falling back to AT+CSUS (if probed successfully as part of the =
+
+at_sim_probe sequence)
+
+> +
+> +	if (g_at_chat_send(sd->chat, cmd, none_prefix, at_set_active_sim_cb,
+> +			cbd, g_free) > 0)
+> +		return;
+> +
+> +	g_free(cbd);
+> +
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +}
+> +
+>   static const struct ofono_sim_driver driver =3D {
+>   	.name			=3D "atmodem",
+>   	.probe			=3D at_sim_probe,
+> @@ -1982,7 +2059,8 @@ static const struct ofono_sim_driver driver =3D {
+>   	.session_read_binary	=3D at_session_read_binary,
+>   	.session_read_record	=3D at_session_read_record,
+>   	.session_read_info	=3D at_session_read_info,
+> -	.logical_access		=3D at_logical_access
+> +	.logical_access		=3D at_logical_access,
+> +	.set_active_sim		=3D at_set_active_sim
 >   };
 >   =
 
->   int ofono_sim_driver_register(const struct ofono_sim_driver *d);
-> @@ -219,6 +224,9 @@ void ofono_sim_remove(struct ofono_sim *sim);
->   =
-
->   void ofono_sim_set_data(struct ofono_sim *sim, void *data);
->   void *ofono_sim_get_data(struct ofono_sim *sim);
-> +void ofono_sim_set_card_slot_num(struct ofono_sim *sim, unsigned int val=
-);
-
-ofono_sim_set_card_slot_count
-
-> +void ofono_sim_set_active_card_slot_num(struct ofono_sim *sim,
-> +					unsigned int val);
-
-ofono_sim_set_active_card_slot
-
->   =
-
->   const char *ofono_sim_get_imsi(struct ofono_sim *sim);
->   const char *ofono_sim_get_mcc(struct ofono_sim *sim);
+>   static const struct ofono_sim_driver driver_noef =3D {
 > =
 
 
 Regards,
 -Denis
 
---===============3378550152836913877==--
+--===============3094342815810645142==--
 
