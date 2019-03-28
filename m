@@ -1,69 +1,152 @@
-Content-Type: multipart/mixed; boundary="===============6355845406330512101=="
+Content-Type: multipart/mixed; boundary="===============7191157320082264048=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 2/5] sim: Added set function for CardSlotCount and
- ActiveCardSlot
-Date: Thu, 28 Mar 2019 17:35:21 +0530
-Message-ID: <1553774721-18375-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 3/5] sim: handling of dual sim single active feature
+Date: Thu, 28 Mar 2019 17:36:02 +0530
+Message-ID: <1553774762-18520-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6355845406330512101==
+--===============7191157320082264048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Adding set function definition for CardSlotCount and ActiveCardSlot
-properties.
+Added implementation for handling CardSlotCount and ActiveCardSlot
+properties for DSSA use case.
 ---
- include/sim.h | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ src/sim.c | 76 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 76 insertions(+)
 
-diff --git a/include/sim.h b/include/sim.h
-index fad4c0d..0a6b879 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -132,6 +132,9 @@ typedef void (*ofono_sim_close_channel_cb_t)(const stru=
-ct ofono_error *error,
- typedef void (*ofono_sim_logical_access_cb_t)(const struct ofono_error *er=
-ror,
- 		const unsigned char *resp, unsigned int len, void *data);
+diff --git a/src/sim.c b/src/sim.c
+index c6ea4b0..7750f99 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -131,6 +131,10 @@ struct ofono_sim {
+ 	struct ofono_atom *atom;
+ 	unsigned int hfp_watch;
  =
 
-+typedef void (*ofono_sim_set_active_card_slot_cb_t)(const struct ofono_err=
-or *error,
-+					void *data);
++	unsigned int card_slot_count;
++	unsigned int active_card_slot;
++	unsigned int pending_active_card_slot;
 +
- struct ofono_sim_driver {
- 	const char *name;
- 	int (*probe)(struct ofono_sim *sim, unsigned int vendor, void *data);
-@@ -205,6 +208,8 @@ struct ofono_sim_driver {
- 	void (*logical_access)(struct ofono_sim *sim, int session_id,
- 			const unsigned char *pdu, unsigned int len,
- 			ofono_sim_logical_access_cb_t cb, void *data);
-+	void (*set_active_card_slot)(struct ofono_sim *sim, unsigned int index,
-+			ofono_sim_set_active_card_slot_cb_t cb, void *data);
- };
+ 	GSList *aid_sessions;
+ 	GSList *aid_list;
+ 	char *impi;
+@@ -473,6 +477,13 @@ static DBusMessage *sim_get_properties(DBusConnection =
+*conn,
+ 	get_pin_retries(sim, &pin_retries_dict, &dbus_retries);
+ 	ofono_dbus_dict_append_dict(&dict, "Retries", DBUS_TYPE_BYTE,
+ 							&pin_retries_dict);
++
++	ofono_dbus_dict_append(&dict, "CardSlotCount", DBUS_TYPE_UINT32,
++							&sim->card_slot_count);
++
++	ofono_dbus_dict_append(&dict, "ActiveCardSlot", DBUS_TYPE_UINT32,
++							&sim->active_card_slot);
++
+ 	g_free(pin_retries_dict);
+ 	g_free(dbus_retries);
  =
 
- int ofono_sim_driver_register(const struct ofono_sim_driver *d);
-@@ -219,6 +224,9 @@ void ofono_sim_remove(struct ofono_sim *sim);
+@@ -657,6 +668,28 @@ static gboolean set_own_numbers(struct ofono_sim *sim,
+ 	return TRUE;
+ }
  =
 
- void ofono_sim_set_data(struct ofono_sim *sim, void *data);
- void *ofono_sim_get_data(struct ofono_sim *sim);
-+void ofono_sim_set_card_slot_count(struct ofono_sim *sim, unsigned int val=
-);
-+void ofono_sim_set_active_card_slot(struct ofono_sim *sim,
-+					unsigned int val);
++static void sim_set_slot_callback(const struct ofono_error *error, void *d=
+ata)
++{
++	struct ofono_sim *sim =3D data;
++	DBusMessage *reply;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		DBG("Error setting radio access mode");
++
++		sim->pending_active_card_slot =3D sim->active_card_slot;
++
++		reply =3D __ofono_error_failed(sim->pending);
++		__ofono_dbus_pending_reply(&sim->pending, reply);
++
++		return;
++	}
++
++	sim->active_card_slot =3D sim->pending_active_card_slot;
++
++	reply =3D dbus_message_new_method_return(sim->pending);
++	__ofono_dbus_pending_reply(&sim->pending, reply);
++}
++
+ static DBusMessage *sim_set_property(DBusConnection *conn, DBusMessage *ms=
+g,
+ 					void *data)
+ {
+@@ -724,6 +757,36 @@ error:
  =
 
- const char *ofono_sim_get_imsi(struct ofono_sim *sim);
- const char *ofono_sim_get_mcc(struct ofono_sim *sim);
+ 		if (set_ok)
+ 			return NULL;
++	} else if (!strcmp(name, "ActiveCardSlot")) {
++		dbus_uint32_t value;
++
++		dbus_message_iter_next(&iter);
++
++		if (sim->driver->set_active_card_slot =3D=3D NULL)
++			return __ofono_error_not_implemented(msg);
++
++		if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_recurse(&iter, &var);
++
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_UINT32)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++
++		if (value <=3D 0 || value > sim->card_slot_count)
++			return __ofono_error_invalid_args(msg);
++
++		if (sim->active_card_slot =3D=3D value)
++			return dbus_message_new_method_return(msg);
++
++		sim->pending =3D dbus_message_ref(msg);
++		sim->pending_active_card_slot =3D value;
++
++		sim->driver->set_active_card_slot(sim, value-1, sim_set_slot_callback, s=
+im);
++		/* will be saved in simmanager on success response*/
++		return NULL;
+ 	}
+ =
+
+ 	return __ofono_error_invalid_args(msg);
+@@ -3803,3 +3866,16 @@ int ofono_sim_logical_access(struct ofono_sim *sim, =
+int session_id,
+ =
+
+ 	return 0;
+ }
++
++void ofono_sim_set_card_slot_count(struct ofono_sim *sim, unsigned int val)
++{
++	if (sim)
++		sim->card_slot_count =3D val;
++}
++
++void ofono_sim_set_active_card_slot(struct ofono_sim *sim, unsigned int va=
+l)
++{
++	if (sim)
++		sim->active_card_slot =3D val;
++}
++
 -- =
 
 1.9.1
 
 
---===============6355845406330512101==--
+--===============7191157320082264048==--
 
