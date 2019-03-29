@@ -1,35 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0854679329020250881=="
+Content-Type: multipart/mixed; boundary="===============3597759200328308159=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/5] sim: Added set function for CardSlotCount and
- ActiveCardSlot
-Date: Thu, 28 Mar 2019 21:13:42 -0500
-Message-ID: <47356d72-e807-6d44-e71d-71e3d8869cda@gmail.com>
-In-Reply-To: <1553774721-18375-1-git-send-email-antara.borwankar@intel.com>
+Subject: Re: [PATCH 3/5] sim: handling of dual sim single active feature
+Date: Thu, 28 Mar 2019 21:14:33 -0500
+Message-ID: <1c406260-7b8a-8f8f-ffd7-af434ef8662c@gmail.com>
+In-Reply-To: <1553774762-18520-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0854679329020250881==
+--===============3597759200328308159==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Antara,
 
-On 03/28/2019 07:05 AM, Antara Borwankar wrote:
-> Adding set function definition for CardSlotCount and ActiveCardSlot
-> properties.
+On 03/28/2019 07:06 AM, Antara Borwankar wrote:
+> Added implementation for handling CardSlotCount and ActiveCardSlot
+> properties for DSSA use case.
 > ---
->   include/sim.h | 8 ++++++++
->   1 file changed, 8 insertions(+)
+>   src/sim.c | 76 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 76 insertions(+)
 > =
 
 
-Applied, thanks.
+Went ahead and applied this one with a couple of follow on commits =
+
+afterwards.
 
 Regards,
 -Denis
 
 
---===============0854679329020250881==--
+--===============3597759200328308159==--
 
