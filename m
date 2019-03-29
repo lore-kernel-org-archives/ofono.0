@@ -1,42 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============4601055208090810984=="
+Content-Type: multipart/mixed; boundary="===============5314289190957233234=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 5/5] xmm7modem: Changes in plugin for DSSA functionality
-Date: Thu, 28 Mar 2019 17:37:14 +0530
-Message-ID: <1553774834-18757-1-git-send-email-antara.borwankar@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/5] sim: Added new properties to simmanager for DSSA
+Date: Thu, 28 Mar 2019 21:13:23 -0500
+Message-ID: <571a866e-3e68-bc14-1435-12bf6c0896a4@gmail.com>
+In-Reply-To: <1553774676-18183-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4601055208090810984==
+--===============5314289190957233234==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changed the sim driver vendor for xmm7modem from
-OFONO_VENDOR_IFX to OFONO_VENDOR_XMM to handle DSSA functionality.
----
- plugins/xmm7xxx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Antara,
 
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index 90e52fb..23a7d4e 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -1223,7 +1223,7 @@ static void xmm7xxx_pre_sim(struct ofono_modem *modem)
- 	DBG("%p", modem);
- =
+On 03/28/2019 07:04 AM, Antara Borwankar wrote:
+> Adding two new properties to sim manager interface to handle
+> dual SIM single active use case.
+> =
 
- 	ofono_devinfo_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
--	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_IFX, "atmodem",
-+	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_XMM, "atmodem",
- 					data->chat);
- }
- =
+> CardSlotCount [readonly]
+> Contains the count of number of SIM card slots available.
+> =
 
--- =
+> ActiveCardSlot [readwrite]
+> Contains the index of the currently active SIM card slot
+> for dual SIM single active mode.
+> ---
+>   doc/sim-api.txt | 12 ++++++++++++
+>   1 file changed, 12 insertions(+)
+> =
 
-1.9.1
+> diff --git a/doc/sim-api.txt b/doc/sim-api.txt
+> index bce47c1..c69cc74 100644
+> --- a/doc/sim-api.txt
+> +++ b/doc/sim-api.txt
+> @@ -205,3 +205,15 @@ Properties	boolean Present [readonly]
+>   =
+
+>   			Contains the SIM's ImsPrivateIdentity, read from the
+>   			ISIM.
+> +
+> +		uint32 CardSlotCount [readonly]
+> +
+> +			Contains the count of number of SIM card slots available.
+> +
+> +		uint32 ActiveCardSlot [readwrite]
+> +
+> +			Contains the index of the currently active SIM card slot
+> +			for dual SIM single active mode.
+> +
+> +			This property will range from 1 (default) to
+> +			CardSlotCount (max) value.
+> =
 
 
---===============4601055208090810984==--
+I amended this patch to mark both of these properties [experimental] and =
+
+applied, thanks!
+
+Regards,
+-Denis
+
+--===============5314289190957233234==--
 
