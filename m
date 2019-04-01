@@ -1,54 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============9203768959870999767=="
+Content-Type: multipart/mixed; boundary="===============4675956371939618217=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 2/3] sim: added error handling in set slot callback
-Date: Mon, 01 Apr 2019 17:17:50 +0530
-Message-ID: <1554119270-19388-1-git-send-email-antara.borwankar@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] ublox: Do not leave vendor_family unset
+Date: Mon, 01 Apr 2019 09:53:33 -0500
+Message-ID: <3d8eb9ea-51e0-6bda-3e66-9dba77a85699@gmail.com>
+In-Reply-To: <20190331211919.10720-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9203768959870999767==
+--===============4675956371939618217==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Adding the handling of error when the driver returns
-CME ERROR:4.
+Hi Richard,
 
-This error will be returned for non xmm vendor modems
-using ifxmodem driver for sim.
----
- src/sim.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+On 03/31/2019 04:19 PM, richard.rojfors(a)gmail.com wrote:
+> From: Richard R=C3=B6jfors <richard@puffinpack.se>
+> =
 
-diff --git a/src/sim.c b/src/sim.c
-index 9f0183f..1943989 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -680,8 +680,13 @@ static void sim_set_slot_callback(const struct ofono_e=
-rror *error, void *data)
- =
-
- 		sim->pending_active_card_slot =3D sim->active_card_slot;
- =
-
--		reply =3D __ofono_error_failed(sim->pending);
--		__ofono_dbus_pending_reply(&sim->pending, reply);
-+		if (error->type =3D=3D OFONO_ERROR_TYPE_CME && error->error =3D=3D 4) {
-+			reply =3D __ofono_error_not_implemented(sim->pending);
-+			__ofono_dbus_pending_reply(&sim->pending, reply);
-+		} else {
-+			reply =3D __ofono_error_failed(sim->pending);
-+			__ofono_dbus_pending_reply(&sim->pending, reply);
-+		}
- =
-
- 		return;
- 	}
--- =
-
-1.9.1
+> In a recent patch vendor family was only set if the device
+> did not support USBCONF, but that resulted in drivers
+> being registered the "generic" vendor. That caused
+> for instance netreg to use incorrect cmer mode and fail
+> on TOBY-L210.
+> ---
+>   plugins/ublox.c | 4 ++--
+>   1 file changed, 2 insertions(+), 2 deletions(-)
+> =
 
 
---===============9203768959870999767==--
+Applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============4675956371939618217==--
 
