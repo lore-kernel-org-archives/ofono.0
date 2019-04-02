@@ -1,47 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============7252777289379053558=="
+Content-Type: multipart/mixed; boundary="===============0232296368725386281=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 3/3] sim: added error handling in set slot callback
-Date: Tue, 02 Apr 2019 11:55:25 +0530
-Message-ID: <1554186325-31643-1-git-send-email-antara.borwankar@intel.com>
+From: richard.rojfors@gmail.com
+Subject: [PATCH] gprs: Fix allocation of context id read from settings
+Date: Tue, 02 Apr 2019 09:28:53 +0200
+Message-ID: <20190402072853.7793-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7252777289379053558==
+--===============0232296368725386281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Adding the handling of error when the driver returns
-CME ERROR:4.
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-This error will be returned for non xmm vendor modems
-using ifxmodem driver for sim.
+This fix is similar to the one in the following commit,
+but fixes allocation for context ids after ap's are
+read from settings.
+
+commit c3fdf6a7c567a7507c3558a27006b6f9559493d6
+Author: Denis Kenzior <denkenz@gmail.com>
+Date:   Thu Jan 3 17:17:21 2019 -0600
+
+    gprs: Fix allocation of context id
 ---
- src/sim.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ src/gprs.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/src/sim.c b/src/sim.c
-index 9f0183f..a178cb8 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -680,7 +680,7 @@ static void sim_set_slot_callback(const struct ofono_er=
-ror *error, void *data)
- =
-
- 		sim->pending_active_card_slot =3D sim->active_card_slot;
- =
-
--		reply =3D __ofono_error_failed(sim->pending);
-+		reply =3D __ofono_error_from_error(error, sim->pending);
- 		__ofono_dbus_pending_reply(&sim->pending, reply);
- =
-
+diff --git a/src/gprs.c b/src/gprs.c
+index b0d56e1e..d432c9fd 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2340,7 +2340,11 @@ static void provision_context(const struct ofono_gpr=
+s_provision_data *ap,
+ 			strlen(ap->message_center) > MAX_MESSAGE_CENTER_LENGTH)
  		return;
+ =
+
+-	id =3D l_uintset_find_unused(gprs->used_pids, gprs->last_context_id);
++	if (gprs->last_context_id)
++		id =3D l_uintset_find_unused(gprs->used_pids,
++							gprs->last_context_id);
++	else
++		id =3D l_uintset_find_unused_min(gprs->used_pids);
+ 	if (id > l_uintset_get_max(gprs->used_pids))
+ 		return;
+ =
+
 -- =
 
-1.9.1
+2.19.1
 
 
---===============7252777289379053558==--
+--===============0232296368725386281==--
 
