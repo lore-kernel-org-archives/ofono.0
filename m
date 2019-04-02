@@ -1,174 +1,216 @@
-Content-Type: multipart/mixed; boundary="===============3185840179111532476=="
+Content-Type: multipart/mixed; boundary="===============0932782569167498233=="
 MIME-Version: 1.0
-From: Pau Espin Pedrol <pespin@sysmocom.de>
-Subject: [PATCH 2/2] udevng: Catch network interface renames
-Date: Mon, 01 Apr 2019 20:31:39 +0200
-Message-ID: <20190401183139.4710-2-pespin@sysmocom.de>
-In-Reply-To: <20190401183139.4710-1-pespin@sysmocom.de>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH 1/3] xmm7modem: handling of dual sim single active feature
+Date: Tue, 02 Apr 2019 11:54:02 +0530
+Message-ID: <1554186242-31487-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3185840179111532476==
+--===============0932782569167498233==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If for whatever reason a network interface belonging to a modem is
-renamed after ofono startup, ofono then keeps advertising the old
-non-existing interface name instead of the new one.
-To catch the changes we use udev's "move" action together with
-DEVPATH_OLD variable, which points to the old devpath of the device.
+Handled DSSA use case for xmm7modem. Added driver function
+to switch between available card slots for SIM.
 
-Unfortunately current debian9 systemd version contains systemd bug which
-prevents this feature to work fine if the iface is renamed more than
-once, see [1] for more information.
+Only one SIM will be active at a given time. On calling this
+function the active SIM will be removed and the card slot made
+inactive and SIM in the other card slot will be made active.
 
-[1] https://github.com/systemd/systemd/issues/9426
+Use case is similar to a SIM swap/change where one SIM is replaced
+another SIM in the same slot.
 ---
- plugins/udevng.c | 84 +++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 83 insertions(+), 1 deletion(-)
+ drivers/atmodem/sim.c | 124 ++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 file changed, 123 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index c518553a..8338927b 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -56,6 +56,7 @@ struct modem_info {
- 	};
- 	struct ofono_modem *modem;
- 	const char *sysattr;
-+	gboolean needs_update;
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 5f66a09..9c80f2e 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -75,6 +75,7 @@ static const char *cuad_prefix[] =3D { "+CUAD:", NULL };
+ static const char *ccho_prefix[] =3D { "+CCHO:", NULL };
+ static const char *crla_prefix[] =3D { "+CRLA:", NULL };
+ static const char *cgla_prefix[] =3D { "+CGLA:", NULL };
++static const char *xcmscsc_prefix[] =3D { "+XCMSCSC:", NULL};
+ static const char *none_prefix[] =3D { NULL };
+ =
+
+ static void append_file_path(char *buf, const unsigned char *path,
+@@ -1160,6 +1161,7 @@ static void at_pin_retries_query(struct ofono_sim *si=
+m,
+ 	DBG("");
+ =
+
+ 	switch (sd->vendor) {
++	case OFONO_VENDOR_XMM:
+ 	case OFONO_VENDOR_IFX:
+ 		if (g_at_chat_send(sd->chat, "AT+XPINCNT", xpincnt_prefix,
+ 					xpincnt_cb, cbd, g_free) > 0)
+@@ -1920,6 +1922,80 @@ static void at_logical_access(struct ofono_sim *sim,=
+ int session_id,
+ 	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
+ }
+ =
+
++static void xcmscsc_query_cb(gboolean ok, GAtResult *result, gpointer user)
++{
++	struct ofono_sim *sim =3D user;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++	GAtResultIter iter;
++	int active_slot;
++
++	if (!ok)
++		goto done;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+XCMSCSC:"))
++		goto done;
++
++	g_at_result_iter_skip_next(&iter);
++	g_at_result_iter_skip_next(&iter);
++
++	g_at_result_iter_next_number(&iter, &active_slot);
++
++	/* set active SIM slot */
++	ofono_sim_set_active_card_slot(sim, active_slot+1);
++
++done:
++	/* Query supported <fac>s */
++	g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
++				at_clck_query_cb, sim, NULL);
++}
++
++static void at_xcmscsc_test_cb(gboolean ok, GAtResult *result, gpointer us=
+er)
++{
++	struct ofono_sim *sim =3D user;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++	GAtResultIter iter;
++	int card_slot_count;
++
++	if (!ok)
++		goto done;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+XCMSCSC:"))
++		goto done;
++
++	g_at_result_iter_skip_next(&iter);
++	g_at_result_iter_skip_next(&iter);
++
++	if (!g_at_result_iter_open_list(&iter))
++		goto done;
++
++	g_at_result_iter_skip_next(&iter);
++
++	if (!g_at_result_iter_next_number(&iter, &card_slot_count))
++		goto done;
++
++	/* Set num slots */
++	ofono_sim_set_card_slot_count(sim, card_slot_count+1);
++
++	/* enable reporting of MSIM remap status information
++	   and enable automatic acceptance of MSIM Remap
++	   acknowledgement. */
++	g_at_chat_send(sd->chat, "AT+XCMSRS=3D2", none_prefix,
++					NULL, NULL, NULL);
++
++	/* Query active card slot */
++	g_at_chat_send(sd->chat, "AT+XCMSCSC?", xcmscsc_prefix,
++				xcmscsc_query_cb, sim, NULL);
++
++done:
++	/* Query supported <fac>s */
++	g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
++				at_clck_query_cb, sim, NULL);
++}
++
+ static int at_sim_probe(struct ofono_sim *sim, unsigned int vendor,
+ 				void *data)
+ {
+@@ -1938,6 +2014,10 @@ static int at_sim_probe(struct ofono_sim *sim, unsig=
+ned int vendor,
+ 		if (at_clck_cpwd_fac[i])
+ 			sd->passwd_type_mask |=3D (1 << i);
+ =
+
++	if (sd->vendor =3D=3D OFONO_VENDOR_XMM)
++		return g_at_chat_send(sd->chat, "AT+XCMSCSC=3D?", xcmscsc_prefix,
++			at_xcmscsc_test_cb, sim, NULL) ? 0 : -1;
++
+ 	/* Query supported <fac>s */
+ 	return g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
+ 				at_clck_query_cb, sim, NULL) ? 0 : -1;
+@@ -1957,6 +2037,47 @@ static void at_sim_remove(struct ofono_sim *sim)
+ 	g_free(sd);
+ }
+ =
+
++static void xcmscsc_cb(gboolean ok, GAtResult *result,
++		gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_set_active_card_slot_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (cb)
++		cb(&error, cbd->data);
++}
++
++static void at_set_active_card_slot(struct ofono_sim *sim, unsigned int in=
+dex,
++			ofono_sim_set_active_card_slot_cb_t cb, void *data)
++{
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char cmd[43];
++
++	if (sd->vendor !=3D OFONO_VENDOR_XMM) {
++		struct ofono_error error;
++		error.type =3D OFONO_ERROR_TYPE_CME;
++		error.error =3D 4;
++
++		cb(&error, data);
++		return;
++	}
++
++	/* Enable single SIM mode for indicated card slot id */
++	snprintf(cmd, sizeof(cmd), "AT+XCMSCSC=3D1,0,%u,1", index);
++
++	if (g_at_chat_send(sd->chat, cmd, none_prefix, xcmscsc_cb,
++			cbd, g_free) > 0)
++		return;
++
++	g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
+ static const struct ofono_sim_driver driver =3D {
+ 	.name			=3D "atmodem",
+ 	.probe			=3D at_sim_probe,
+@@ -1982,7 +2103,8 @@ static const struct ofono_sim_driver driver =3D {
+ 	.session_read_binary	=3D at_session_read_binary,
+ 	.session_read_record	=3D at_session_read_record,
+ 	.session_read_info	=3D at_session_read_info,
+-	.logical_access		=3D at_logical_access
++	.logical_access		=3D at_logical_access,
++	.set_active_card_slot	=3D at_set_active_card_slot
  };
  =
 
- struct device_info {
-@@ -1630,6 +1631,7 @@ static void add_device(const char *syspath, const cha=
-r *devname,
- =
-
- 	modem->devices =3D g_slist_insert_sorted(modem->devices, info,
- 							compare_device);
-+	modem->needs_update =3D TRUE;
- }
- =
-
- static struct {
-@@ -1822,6 +1824,8 @@ static gboolean create_modem(gpointer key, gpointer v=
-alue, gpointer user_data)
- 	const char *syspath =3D key;
- 	unsigned int i;
- =
-
-+	modem->needs_update =3D FALSE;
-+
- 	if (modem->modem !=3D NULL)
- 		return FALSE;
- =
-
-@@ -1909,6 +1913,81 @@ static gboolean check_modem_list(gpointer user_data)
- 	return FALSE;
- }
- =
-
-+static void drop_old_device(gpointer key, gpointer value, gpointer user_da=
-ta)
-+{
-+	const char *syspath =3D key;
-+	struct modem_info *modem =3D value;
-+	struct udev_device *device =3D user_data;
-+	const char *devpath_old;
-+	GSList *list;
-+
-+	devpath_old =3D udev_device_get_property_value(device, "DEVPATH_OLD");
-+	if (!devpath_old)
-+		return;
-+
-+	for (list =3D modem->devices; list; list =3D list->next) {
-+		struct device_info *info =3D list->data;
-+		struct udev_device *dev;
-+
-+		if (g_strcmp0(info->subsystem, "net") !=3D 0)
-+			continue;
-+
-+		if (g_strcmp0(info->devpath, devpath_old) !=3D 0)
-+			continue;
-+
-+		/* Drop no longer existing net iface device */
-+		DBG("Dropping lost device %s", info->devpath);
-+		modem->devices =3D g_slist_remove_link(modem->devices, list);
-+		g_slist_free_1 (list);
-+		device_info_free(info);
-+		udev_device_unref(dev);
-+		modem->needs_update =3D TRUE;
-+	}
-+}
-+
-+
-+static void update_modem(gpointer key, gpointer value, gpointer user_data)
-+{
-+	const char *syspath =3D key;
-+	struct modem_info *modem =3D value;
-+	unsigned int i;
-+
-+	if (!modem->needs_update)
-+		return;
-+
-+	DBG("Updating modem %s", syspath);
-+
-+	for (i =3D 0; driver_list[i].name; i++) {
-+		if (g_str_equal(driver_list[i].name, modem->driver) =3D=3D FALSE)
-+			continue;
-+		if (driver_list[i].setup(modem) =3D=3D FALSE)
-+			continue;
-+	}
-+}
-+static void update_device(struct udev_device *device)
-+{
-+	const char *syspath;
-+
-+	syspath =3D udev_device_get_syspath(device);
-+	if (syspath =3D=3D NULL)
-+		return;
-+
-+	DBG("%s", syspath);
-+
-+	/* We only care about net iface renames for now */
-+	if (g_strcmp0(udev_device_get_subsystem(device), "net") !=3D 0)
-+		return;
-+
-+	/* Drop old device from modem */
-+	g_hash_table_foreach(modem_list, drop_old_device, device);
-+
-+	/* Add new device to modem */
-+	check_device(device);
-+
-+	/* Update modified modems */
-+	g_hash_table_foreach(modem_list, update_modem, NULL);
-+}
-+
- static gboolean udev_event(GIOChannel *channel, GIOCondition cond,
- 							gpointer user_data)
- {
-@@ -1936,8 +2015,11 @@ static gboolean udev_event(GIOChannel *channel, GIOC=
-ondition cond,
- 		check_device(device);
- =
-
- 		udev_delay =3D g_timeout_add_seconds(1, check_modem_list, NULL);
--	} else if (g_str_equal(action, "remove") =3D=3D TRUE)
-+	} else if (g_str_equal(action, "remove") =3D=3D TRUE) {
- 		remove_device(device);
-+	} else if (g_str_equal(action, "move") =3D=3D TRUE) {
-+		update_device(device);
-+	}
- =
-
- 	udev_device_unref(device);
- =
-
+ static const struct ofono_sim_driver driver_noef =3D {
 -- =
 
-2.21.0
+1.9.1
 
 
---===============3185840179111532476==--
+--===============0932782569167498233==--
 
