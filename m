@@ -1,56 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============0232296368725386281=="
+Content-Type: multipart/mixed; boundary="===============5155244619239184662=="
 MIME-Version: 1.0
-From: richard.rojfors@gmail.com
-Subject: [PATCH] gprs: Fix allocation of context id read from settings
-Date: Tue, 02 Apr 2019 09:28:53 +0200
-Message-ID: <20190402072853.7793-1-richard.rojfors@gmail.com>
+From: techi eth <techieth@gmail.com>
+Subject: Gemalto PLS62 W Family Modem Support
+Date: Tue, 02 Apr 2019 15:12:55 +0530
+Message-ID: <CAJw2sSDpPoNEK5j9RniiHqsfdop=H=vfn9-VfU+1mNxnhrDf6Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0232296368725386281==
+--===============5155244619239184662==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Richard R=C3=B6jfors <richard@puffinpack.se>
+Hi,
+I would like to know does any ofono versions have support for Gemalto PLS62
+(W Family).
 
-This fix is similar to the one in the following commit,
-but fixes allocation for context ids after ap's are
-read from settings.
+Thanks
 
-commit c3fdf6a7c567a7507c3558a27006b6f9559493d6
-Author: Denis Kenzior <denkenz@gmail.com>
-Date:   Thu Jan 3 17:17:21 2019 -0600
+--===============5155244619239184662==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-    gprs: Fix allocation of context id
----
- src/gprs.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+SGksPGRpdj5JIHdvdWxkIGxpa2UgdG8ga25v
+dyBkb2VzIGFueSBvZm9ubyB2ZXJzaW9ucyBoYXZlIHN1cHBvcnQgZm9ywqBHZW1hbHRvIFBMUzYy
+IChXIEZhbWlseSkuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5UaGFua3M8L2Rpdj48L2Rpdj48
+L2Rpdj4K
 
-diff --git a/src/gprs.c b/src/gprs.c
-index b0d56e1e..d432c9fd 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -2340,7 +2340,11 @@ static void provision_context(const struct ofono_gpr=
-s_provision_data *ap,
- 			strlen(ap->message_center) > MAX_MESSAGE_CENTER_LENGTH)
- 		return;
- =
-
--	id =3D l_uintset_find_unused(gprs->used_pids, gprs->last_context_id);
-+	if (gprs->last_context_id)
-+		id =3D l_uintset_find_unused(gprs->used_pids,
-+							gprs->last_context_id);
-+	else
-+		id =3D l_uintset_find_unused_min(gprs->used_pids);
- 	if (id > l_uintset_get_max(gprs->used_pids))
- 		return;
- =
-
--- =
-
-2.19.1
-
-
---===============0232296368725386281==--
+--===============5155244619239184662==--
 
