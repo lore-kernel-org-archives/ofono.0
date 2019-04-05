@@ -1,120 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============7460812014049813427=="
+Content-Type: multipart/mixed; boundary="===============8491668008442769857=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] xmm7modem: handling of IPv6 address for activated context
-Date: Thu, 04 Apr 2019 11:42:27 -0500
-Message-ID: <f152b013-ac5b-fa69-761c-1d6e39c85ea6@gmail.com>
-In-Reply-To: <1554281174-27190-1-git-send-email-antara.borwankar@intel.com>
+From: Joshua Watt <jpewhacker@gmail.com>
+Subject: [PATCH] qmimodem: return all serial numbers
+Date: Fri, 05 Apr 2019 11:15:25 -0500
+Message-ID: <20190405161525.7342-1-JPEWhacker@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7460812014049813427==
+--===============8491668008442769857==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+From: Tom Nguyen <tom.nguyen@garmin.com>
 
-On 04/03/2019 03:46 AM, Antara Borwankar wrote:
-> Handled IPv6 address after activating PDP context
-> ---
->   drivers/ifxmodem/gprs-context.c | 38 ++++++++++++++++++++++++++++------=
-----
->   1 file changed, 28 insertions(+), 10 deletions(-)
-> =
+ESN and MEID are used for CDMA devices. IMEI is used for GSM devices.
+Some modems, eg. Quectel EC25E, have variants that support each network
+for in various regions. So, the modems may return the ESN, MEID, and
+IMEI regardless of the variant. To support this case, the ESN, MEID,
+and IMEI should all be reported. Then the user application can decide
+which to use.
+---
+ drivers/qmimodem/devinfo.c | 33 +++++++++++++++++++--------------
+ 1 file changed, 19 insertions(+), 14 deletions(-)
 
-> diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-cont=
-ext.c
-> index 6042004..2c5456b 100644
-> --- a/drivers/ifxmodem/gprs-context.c
-> +++ b/drivers/ifxmodem/gprs-context.c
-> @@ -352,10 +352,17 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->   =
+diff --git a/drivers/qmimodem/devinfo.c b/drivers/qmimodem/devinfo.c
+index af976b77..08e71fdf 100644
+--- a/drivers/qmimodem/devinfo.c
++++ b/drivers/qmimodem/devinfo.c
+@@ -117,7 +117,10 @@ static void get_ids_cb(struct qmi_result *result, void=
+ *user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+ 	ofono_devinfo_query_cb_t cb =3D cbd->cb;
+-	char *str;
++	char *esn;
++	char *imei;
++	char *meid;
++	char buf[64];
+ =
 
->   	DBG("DNS: %s, %s\n", gcd->dns1, gcd->dns2);
->   =
+ 	DBG("");
+ =
 
-> -	if (!laddrnetmask || at_util_get_ipv4_address_and_netmask(laddrnetmask,
-> -					gcd->address, gcd->netmask) < 0) {
-> -		failed_setup(gc, NULL, TRUE);
-> -		return;
-> +	if (gcd->proto =3D=3D OFONO_GPRS_PROTO_IP) {
-> +		if (!laddrnetmask || at_util_get_ipv4_address_and_netmask(laddrnetmask,
-> +						gcd->address, gcd->netmask) < 0) {
-> +			failed_setup(gc, NULL, TRUE);
-> +			return;
-> +		}
-> +	}
-> +
-> +	if (gcd->proto =3D=3D OFONO_GPRS_PROTO_IPV6) {
-> +		if (laddrnetmask)
-> +			strncpy(gcd->address, laddrnetmask, sizeof(gcd->address));
+@@ -126,20 +129,22 @@ static void get_ids_cb(struct qmi_result *result, voi=
+d *user_data)
+ 		return;
+ 	}
+ =
 
-So what +CGPIAF setting is being assumed here?  If =
+-	str =3D qmi_result_get_string(result, QMI_DMS_RESULT_ESN);
+-	/* Telit qmi modems return a "0" string when ESN is not available. */
+-	if (!str || strcmp(str, "0") =3D=3D 0) {
+-		qmi_free(str);
+-		str =3D qmi_result_get_string(result, QMI_DMS_RESULT_IMEI);
+-		if (!str) {
+-			CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+-			return;
+-		}
+-	}
+-
+-	CALLBACK_WITH_SUCCESS(cb, str, cbd->data);
++	esn =3D qmi_result_get_string(result, QMI_DMS_RESULT_ESN);
++	imei =3D qmi_result_get_string(result, QMI_DMS_RESULT_IMEI);
++	meid =3D qmi_result_get_string(result, QMI_DMS_RESULT_MEID);
++
++	if (esn || imei || meid) {
++		sprintf(buf, "ESN:%s,IMEI:%s,MEID:%s",
++					(esn) ? esn : "unknown",
++					(imei) ? imei : "unknown",
++					(meid) ? meid : "unknown");
++		CALLBACK_WITH_SUCCESS(cb, buf, cbd->data);
++	} else
++		CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+ =
 
-IPv6_AddressFormat=3D=3D0, then aren't you also copying parts of the netmas=
-k =
+-	qmi_free(str);
++	qmi_free(esn);
++	qmi_free(imei);
++	qmi_free(meid);
+ }
+ =
 
-into gcd->address?  FYI, the core doesn't validate the ipv6 address from =
+ static void qmi_query_serial(struct ofono_devinfo *devinfo,
+-- =
 
-the driver and broadcasts it directly over D-Bus.
+2.20.1
 
->   	}
->   =
 
->   	if (gw)
-> @@ -373,15 +380,26 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->   	interface =3D ofono_gprs_context_get_interface(gc);
->   	datapath =3D get_datapath(modem, interface);
->   =
-
-> -	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
-> +	if (gcd->proto =3D=3D OFONO_GPRS_PROTO_IP) {
-> +		ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
->   =
-
-> -	if (gcd->netmask[0])
-> -		ofono_gprs_context_set_ipv4_netmask(gc, gcd->netmask);
-> +		if (gcd->netmask[0])
-> +			ofono_gprs_context_set_ipv4_netmask(gc, gcd->netmask);
->   =
-
-> -	if (gcd->gateway[0])
-> -		ofono_gprs_context_set_ipv4_gateway(gc, gcd->gateway);
-> +		if (gcd->gateway[0])
-> +			ofono_gprs_context_set_ipv4_gateway(gc, gcd->gateway);
->   =
-
-> -	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-> +		ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-> +	}
-> +
-> +	if (gcd->proto =3D=3D OFONO_GPRS_PROTO_IPV6) {
-> +		ofono_gprs_context_set_ipv6_address(gc, gcd->address);
-> +
-
-What about the prefix length?
-
-> +		if (gcd->gateway[0])
-> +			ofono_gprs_context_set_ipv6_gateway(gc, gcd->gateway);
-> +
-> +		ofono_gprs_context_set_ipv6_dns_servers(gc, dns);
-> +	}
-
-Also, I think we're ending up with too many if statements.  They should =
-
-be combined and the DBG statements moved into the relevant if block.
-
->   =
-
->   	snprintf(buf, sizeof(buf), "AT+XDATACHANNEL=3D1,1,\"%s\",\"%s\",2,%u",
->   			ctrlpath, datapath, gcd->active_context);
->
-
-Regards,
--Denis
-
---===============7460812014049813427==--
+--===============8491668008442769857==--
 
