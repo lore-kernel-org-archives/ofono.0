@@ -1,80 +1,159 @@
-Content-Type: multipart/mixed; boundary="===============4488070046473767256=="
+Content-Type: multipart/mixed; boundary="===============1049520531129238112=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] qmimodem: support wake on SMS receive
-Date: Fri, 05 Apr 2019 17:17:56 -0500
-Message-ID: <a3abb549-9a64-d826-e327-bb4b67c38302@gmail.com>
-In-Reply-To: <20190405161545.7394-1-JPEWhacker@gmail.com>
+From: Krishna <krishnaks@iwavesystems.com>
+Subject: RE: Ofono for ublox LARA-R211
+Date: Thu, 11 Apr 2019 17:17:59 +0530
+Message-ID: <00bd01d4f05c$69debed0$3d9c3c70$@iwavesystems.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4488070046473767256==
+--===============1049520531129238112==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tom/Joshua,
+Hi All,
 
-On 04/05/2019 11:15 AM, Joshua Watt wrote:
-> From: Tom Nguyen <tom.nguyen@garmin.com>
-> =
-
-> Some modems, like Quectel EC25, support waking the host platform from
-> a suspend state upon an SMS reception. Current SMS handling configures
-> the modem to not save incoming messages. On platforms where the modem's
-> interfaces (eg, cdc-wdm, wwan, etc) disconnect on suspend and reconnect
-> on resume, oFono will re-initialize. This can cause lost messages
-> upon resume because the QMI indication is sent before oFono is ready.
-
-So doesn't this also cause us to bring the modem offline when we wake up =
-
-from resume?
-
-> =
-
-> Changes to support suspend/resume with wake on SMS:
-> - On startup:
->    1. Configure modem to save messages to NV and notify for class NONE.
->    2. Delete all processed messages in modem memory to free space.
->    3. Get list of unread messages, then get and delete each.
-> - After startup:
->    1. Process message upon event indication and delete.
->    2. Then check for possibly more messages to process.
-> ---
->   drivers/qmimodem/sms.c | 338 ++++++++++++++++++++++++++++++++++-------
->   drivers/qmimodem/wms.h |  77 +++++++---
->   2 files changed, 341 insertions(+), 74 deletions(-)
-> =
+ =
 
 
-Anyway, just some high-level comments based on a very quick =
+Whether anyone tried ofono framework with u-blox LARA-R211 or LARA-202?
 
-glance-through review:
+ =
 
-> diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c
-> index 1e930396..0a85138a 100644
-> --- a/drivers/qmimodem/sms.c
-> +++ b/drivers/qmimodem/sms.c
-> @@ -41,6 +41,14 @@ struct sms_data {
->   	uint16_t minor;
->   };
->   =
-
-> +static struct qmi_wms_read_msg_id rd_msg_id =3D { 0 };
-> +static uint8_t msg_mode =3D QMI_WMS_MESSAGE_MODE_GSMWCDMA;
-> +static bool msg_chk_all;
-> +static bool msg_list_chk;
-
-You can't really do this since there might be multiple drivers active in =
-
-a given oFono process. E.g. multiple QMI modems online at the same time =
-
-(and yes, people do this today).  So any state data must be allocated as =
-
-part of the driver data.
 
 Regards,
--Denis
 
---===============4488070046473767256==--
+Krishna
+
+From: Krishna [mailto:krishnaks(a)iwavesystems.com] =
+
+Sent: Friday, March 22, 2019 08:09 PM
+To: 'ofono(a)ofono.org' <ofono@ofono.org>
+Subject: Ofono for ublox LARA-R211
+
+ =
+
+
+Hi All,
+
+ =
+
+
+Whether I can use ofono for LARA-R211 or LARA-202?
+
+I have added ofono package to the yocto and enabled required configurations
+in Linux kernel.
+
+I have referred below link for the configuration.
+
+https://embexus.com/2017/06/04/add-a-mobile-broadband-connectivity-to-embedd
+ed-linux/
+
+ =
+
+
+However ./list-modem is not returning anything.
+
+Let me know if I am missing any configuration.
+
+ =
+
+
+Regards,
+
+Krishna
+
+
+--===============1049520531129238112==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
+dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
+ZW50PSJNaWNyb3NvZnQgV29yZCAxNSAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
+Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Ik1TIEdvdGhpYyI7
+CglwYW5vc2UtMToyIDExIDYgOSA3IDIgNSA4IDIgNDt9CkBmb250LWZhY2UKCXtmb250LWZhbWls
+eToiQ2FtYnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1m
+YWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0
+O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OiJNUyBHb3RoaWMiOwoJcGFub3NlLTE6MiAxMSA2
+IDkgNyAyIDUgOCAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9ucyAqLwpwLk1zb05vcm1hbCwgbGku
+TXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBtbTsKCW1hcmdpbi1ib3R0b206LjAw
+MDFwdDsKCXRleHQtYWxpZ246anVzdGlmeTsKCXRleHQtanVzdGlmeTppbnRlci1pZGVvZ3JhcGg7
+Cglmb250LXNpemU6MTAuNXB0OwoJZm9udC1mYW1pbHk6IkFyaWFsIixzYW5zLXNlcmlmO30KYTps
+aW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOiMw
+NTYzQzE7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5
+cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Izk1NEY3MjsK
+CXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHls
+ZS10eXBlOnBlcnNvbmFsOwoJZm9udC1mYW1pbHk6IkFyaWFsIixzYW5zLXNlcmlmOwoJY29sb3I6
+d2luZG93dGV4dDt9CnNwYW4uRW1haWxTdHlsZTE4Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwt
+cmVwbHk7Cglmb250LWZhbWlseToiQXJpYWwiLHNhbnMtc2VyaWY7Cgljb2xvcjojMUY0OTdEO30K
+Lk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZvbnQtc2l6ZTox
+MC4wcHQ7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdp
+bjo5OS4yNXB0IDMwLjBtbSAzMC4wbW0gMzAuMG1tO30KZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6
+V29yZFNlY3Rpb24xO30KLS0+PC9zdHlsZT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hh
+cGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAyNiI+Cjx2OnRleHRib3ggaW5zZXQ9
+IjUuODVwdCwuN3B0LDUuODVwdCwuN3B0IiAvPgo8L286c2hhcGVkZWZhdWx0cz48L3htbD48IVtl
+bmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVk
+aXQiPgo8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBlbGF5b3V0Pjwv
+eG1sPjwhW2VuZGlmXS0tPjwvaGVhZD48Ym9keSBsYW5nPUpBIGxpbms9IiMwNTYzQzEiIHZsaW5r
+PSIjOTU0RjcyIiBzdHlsZT0ndGV4dC1qdXN0aWZ5LXRyaW06cHVuY3R1YXRpb24nPjxkaXYgY2xh
+c3M9V29yZFNlY3Rpb24xPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxl
+PSdmb250LXNpemU6MTAuMHB0O2NvbG9yOiMxRjQ5N0QnPkhpIEFsbCw8bzpwPjwvbzpwPjwvc3Bh
+bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6
+ZToxMC4wcHQ7Y29sb3I6IzFGNDk3RCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPjxwIGNs
+YXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0O2Nv
+bG9yOiMxRjQ5N0QnPldoZXRoZXIgYW55b25lIHRyaWVkIG9mb25vIGZyYW1ld29yayB3aXRoIHUt
+YmxveCBMQVJBLVIyMTEgb3IgTEFSQS0yMDI/PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNz
+PU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0O2NvbG9y
+OiMxRjQ5N0QnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+
+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDtjb2xvcjojMUY0OTdEJz5S
+ZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFu
+Zz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDtjb2xvcjojMUY0OTdEJz5LcmlzaG5hPG86
+cD48L286cD48L3NwYW4+PC9wPjxkaXY+PGRpdiBzdHlsZT0nYm9yZGVyOm5vbmU7Ym9yZGVyLXRv
+cDpzb2xpZCAjRTFFMUUxIDEuMHB0O3BhZGRpbmc6My4wcHQgMG1tIDBtbSAwbW0nPjxwIGNsYXNz
+PU1zb05vcm1hbCBhbGlnbj1sZWZ0IHN0eWxlPSd0ZXh0LWFsaWduOmxlZnQnPjxiPjxzcGFuIGxh
+bmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9udC1mYW1pbHk6IkNhbGlicmkiLHNh
+bnMtc2VyaWYnPkZyb206PC9zcGFuPjwvYj48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNp
+emU6MTEuMHB0O2ZvbnQtZmFtaWx5OiJDYWxpYnJpIixzYW5zLXNlcmlmJz4gS3Jpc2huYSBbbWFp
+bHRvOmtyaXNobmFrc0Bpd2F2ZXN5c3RlbXMuY29tXSA8YnI+PGI+U2VudDo8L2I+IEZyaWRheSwg
+TWFyY2ggMjIsIDIwMTkgMDg6MDkgUE08YnI+PGI+VG86PC9iPiAnb2Zvbm9Ab2Zvbm8ub3JnJyAm
+bHQ7b2Zvbm9Ab2Zvbm8ub3JnJmd0Ozxicj48Yj5TdWJqZWN0OjwvYj4gT2Zvbm8gZm9yIHVibG94
+IExBUkEtUjIxMTxvOnA+PC9vOnA+PC9zcGFuPjwvcD48L2Rpdj48L2Rpdj48cCBjbGFzcz1Nc29O
+b3JtYWwgYWxpZ249bGVmdCBzdHlsZT0ndGV4dC1hbGlnbjpsZWZ0Jz48c3BhbiBsYW5nPUVOLVVT
+PjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFu
+Zz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+SGkgQWxsLDxvOnA+PC9vOnA+PC9zcGFu
+PjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXpl
+OjEwLjBwdCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48
+c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5XaGV0aGVyIEkgY2FuIHVz
+ZSBvZm9ubyBmb3IgTEFSQS1SMjExIG9yIExBUkEtMjAyPzxvOnA+PC9vOnA+PC9zcGFuPjwvcD48
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBw
+dCc+SSBoYXZlIGFkZGVkIG9mb25vIHBhY2thZ2UgdG8gdGhlIHlvY3RvIGFuZCBlbmFibGVkIHJl
+cXVpcmVkIGNvbmZpZ3VyYXRpb25zIGluIExpbnV4IGtlcm5lbC48bzpwPjwvbzpwPjwvc3Bhbj48
+L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZTox
+MC4wcHQnPkkgaGF2ZSByZWZlcnJlZCBiZWxvdyBsaW5rIGZvciB0aGUgY29uZmlndXJhdGlvbi48
+bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMg
+c3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxhIGhyZWY9Imh0dHBzOi8vZW1iZXh1cy5jb20vMjAx
+Ny8wNi8wNC9hZGQtYS1tb2JpbGUtYnJvYWRiYW5kLWNvbm5lY3Rpdml0eS10by1lbWJlZGRlZC1s
+aW51eC8iPmh0dHBzOi8vZW1iZXh1cy5jb20vMjAxNy8wNi8wNC9hZGQtYS1tb2JpbGUtYnJvYWRi
+YW5kLWNvbm5lY3Rpdml0eS10by1lbWJlZGRlZC1saW51eC88L2E+PG86cD48L286cD48L3NwYW4+
+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6
+MTAuMHB0Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxz
+cGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkhvd2V2ZXIgLi9saXN0LW1v
+ZGVtIGlzIG5vdCByZXR1cm5pbmcgYW55dGhpbmcuPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNs
+YXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5M
+ZXQgbWUga25vdyBpZiBJIGFtIG1pc3NpbmcgYW55IGNvbmZpZ3VyYXRpb24uPG86cD48L286cD48
+L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250
+LXNpemU6MTAuMHB0Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9y
+bWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPlJlZ2FyZHMsPG86
+cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0
+eWxlPSdmb250LXNpemU6MTAuMHB0Jz5LcmlzaG5hPG86cD48L286cD48L3NwYW4+PC9wPjwvZGl2
+PjwvYm9keT48L2h0bWw+
+--===============1049520531129238112==--
 
