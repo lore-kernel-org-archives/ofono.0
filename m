@@ -1,89 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============3056975868840973368=="
+Content-Type: multipart/mixed; boundary="===============5171388288916590193=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: Ofono for ublox LARA-R211
-Date: Sat, 13 Apr 2019 07:18:08 +0200
-Message-ID: <b1704e97-d41f-0538-4d9b-7764fc7eb3d1@norrbonn.se>
-In-Reply-To: <00bd01d4f05c$69debed0$3d9c3c70$@iwavesystems.com>
+Subject: [PATCH 1/1] ublox: detect and support LARA R2 series
+Date: Sat, 13 Apr 2019 07:29:15 +0200
+Message-ID: <20190413052915.8561-1-jonas@norrbonn.se>
+In-Reply-To: <00bd01d4f05c9debed0d9c3c70iwavesystems.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3056975868840973368==
+--===============5171388288916590193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+
 Hi Krishna,
 
-On 11/04/2019 13:47, Krishna wrote:
-> Hi All,
-> =
+This patch isn't tested, but this is roughly what you'd need to get the
+LARA R2 detected and running.  After that, it's just a matter of going
+through the details of where ofono has issues.
 
-> Whether anyone tried ofono framework with u-blox LARA-R211 or LARA-202?
+From what I can see at a quick glance at the documentation, there's
+nothing that particularly stands out here so I suspect things will
+mostly just work.  Give the patch a try and let me know how it goes.
 
-ofono currently does not support these modems, but looking quickly at =
+Regards,
+Jonas
 
-the documentation I don't see any difficulty at all in getting this to =
+ drivers/ubloxmodem/ubloxmodem.c | 9 +++++++++
+ drivers/ubloxmodem/ubloxmodem.h | 1 +
+ plugins/udevng.c                | 2 ++
+ 3 files changed, 12 insertions(+)
 
-work.  You just need to add the USB model ID ('110a') to =
+diff --git a/drivers/ubloxmodem/ubloxmodem.c b/drivers/ubloxmodem/ubloxmode=
+m.c
+index a52a67ea..85d72684 100644
+--- a/drivers/ubloxmodem/ubloxmodem.c
++++ b/drivers/ubloxmodem/ubloxmodem.c
+@@ -77,6 +77,15 @@ const struct ublox_model ublox_models[] =3D {
+ 		.name =3D "TOBY-L4906",
+ 		.flags =3D UBLOX_F_TOBY_L4,
+ 	},
++	/* LARA L2 series */
++	{
++		.name =3D "LARA-R202",
++		.flags =3D UBLOX_F_LARA_R2,
++	},
++	{
++		.name =3D "LARA-R211",
++		.flags =3D UBLOX_F_LARA_R2,
++	},
+ 	{ /* sentinel */ },
+ };
+ =
 
-plugins/udevng.c and the modem identifiers to plugins/ublox.c (the model =
+diff --git a/drivers/ubloxmodem/ubloxmodem.h b/drivers/ubloxmodem/ubloxmode=
+m.h
+index 2c5b7433..7fe58df3 100644
+--- a/drivers/ubloxmodem/ubloxmodem.h
++++ b/drivers/ubloxmodem/ubloxmodem.h
+@@ -27,6 +27,7 @@ enum ublox_flags {
+ 	UBLOX_F_TOBY_L2		=3D (1 << 0),
+ 	UBLOX_F_TOBY_L4		=3D (1 << 1),
+ 	UBLOX_F_HAVE_USBCONF	=3D (1 << 2),
++	UBLOX_F_LARA_R2		=3D (1 << 3),
+ };
+ =
 
-ID strings).
+ struct ublox_model {
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index f689b756..397ac931 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1700,6 +1700,8 @@ static struct {
+ 	{ "ublox",	"cdc_acm",	"1546", "1010"	},
+ 	{ "ublox",	"cdc_ncm",	"1546", "1010"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1102"	},
++	{ "ublox",	"cdc_acm",	"1546", "110a"	},
++	{ "ublox",	"cdc_ncm",	"1546", "110a"	},
+ 	{ "ublox",	"rndis_host",	"1546", "1146"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1146"	},
+ 	{ "gemalto",	"option",	"1e2d",	"0053"	},
+-- =
 
-/Jonas
+2.20.1
 
-> =
 
-> Regards,
-> =
-
-> Krishna
-> =
-
-> *From:*Krishna [mailto:krishnaks(a)iwavesystems.com]
-> *Sent:* Friday, March 22, 2019 08:09 PM
-> *To:* 'ofono(a)ofono.org' <ofono@ofono.org>
-> *Subject:* Ofono for ublox LARA-R211
-> =
-
-> Hi All,
-> =
-
-> Whether I can use ofono for LARA-R211 or LARA-202?
-> =
-
-> I have added ofono package to the yocto and enabled required =
-
-> configurations in Linux kernel.
-> =
-
-> I have referred below link for the configuration.
-> =
-
-> https://embexus.com/2017/06/04/add-a-mobile-broadband-connectivity-to-emb=
-edded-linux/
-> =
-
-> However ./list-modem is not returning anything.
-> =
-
-> Let me know if I am missing any configuration.
-> =
-
-> Regards,
-> =
-
-> Krishna
-> =
-
-> =
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
->=20
-
---===============3056975868840973368==--
+--===============5171388288916590193==--
 
