@@ -1,37 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0705118866186961186=="
+Content-Type: multipart/mixed; boundary="===============7915183218160486330=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gprs: Always store RoamingAllowed as a boolean.
-Date: Tue, 16 Apr 2019 11:46:33 -0500
-Message-ID: <d93ad775-f2cd-39e5-a089-e22d6b64d242@gmail.com>
-In-Reply-To: <20190416060926.9021-1-richard.rojfors@gmail.com>
+Subject: Re: [PATCH v2] qmimodem: return all serial numbers
+Date: Tue, 16 Apr 2019 11:52:34 -0500
+Message-ID: <fcdbb935-1806-2e5c-fe5a-d1dfc8f38d65@gmail.com>
+In-Reply-To: <2097825122.6387.1555084361605@wamui-cinderella.atl.sa.earthlink.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0705118866186961186==
+--===============7915183218160486330==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Richard,
+Hi Tom,
 
-On 04/16/2019 01:09 AM, richard.rojfors(a)gmail.com wrote:
-> From: Richard R=C3=B6jfors <richard@puffinpack.se>
+On 04/12/2019 10:52 AM, Tom Nguyen wrote:
+> Some modems, eg. Quectel EC25E, return the ESN, IMEI, and MEID even
+> though they support only one network type in a region. Current serial
+> number query gives precedence to the ESN if it exists, and does not
+> consider the IMEI and MEID.
 > =
 
-> In one instance it was stored as boolean and another as int.
-> Since its always parsed as a boolean and it is a boolean,
-> always store it as boolean.
+> Add a check of the supported radio interfaces in deciding which
+> serial number to return. If radio interfaces are 3GPP based, then
+> return the IMEI, else return the ESN. If neither exist, return MEID
+> if available, else fail.
 > ---
->   src/gprs.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>   drivers/qmimodem/devinfo.c | 88 +++++++++++++++++++++++++++++++++++++++=
+-------
+>   1 file changed, 75 insertions(+), 13 deletions(-)
 > =
 
 
-Applied, thanks.
+Applied with a minor tweak:
+
+> @@ -150,6 +164,8 @@ static void qmi_query_serial(struct ofono_devinfo *de=
+vinfo,
+>   =
+
+>   	DBG("");
+>   =
+
+> +	cbd->user =3D (void *) devinfo;
+> +
+
+cbd->user is void, so the explicit cast isn't necessary.
+
+>   	if (qmi_service_send(data->dms, QMI_DMS_GET_IDS, NULL,
+>   					get_ids_cb, cbd, g_free) > 0)
+>   		return;
 
 Regards,
 -Denis
 
---===============0705118866186961186==--
+--===============7915183218160486330==--
 
