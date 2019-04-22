@@ -1,58 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============7915183218160486330=="
+Content-Type: multipart/mixed; boundary="===============7918073259838111526=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] qmimodem: return all serial numbers
-Date: Tue, 16 Apr 2019 11:52:34 -0500
-Message-ID: <fcdbb935-1806-2e5c-fe5a-d1dfc8f38d65@gmail.com>
-In-Reply-To: <2097825122.6387.1555084361605@wamui-cinderella.atl.sa.earthlink.net>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: [RFC at-export 0/2] Export AT-modem functions to other drivers
+Date: Mon, 22 Apr 2019 09:44:39 +0200
+Message-ID: <20190422074441.11854-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7915183218160486330==
+--===============7918073259838111526==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tom,
+Hi Denis,
 
-On 04/12/2019 10:52 AM, Tom Nguyen wrote:
-> Some modems, eg. Quectel EC25E, return the ESN, IMEI, and MEID even
-> though they support only one network type in a region. Current serial
-> number query gives precedence to the ESN if it exists, and does not
-> consider the IMEI and MEID.
-> =
+I'm writing a custom network-registration driver for uBlox modems and
+I'd like to know if you will choke on the following approach:
 
-> Add a check of the supported radio interfaces in deciding which
-> serial number to return. If radio interfaces are 3GPP based, then
-> return the IMEI, else return the ESN. If neither exist, return MEID
-> if available, else fail.
-> ---
->   drivers/qmimodem/devinfo.c | 88 +++++++++++++++++++++++++++++++++++++++=
--------
->   1 file changed, 75 insertions(+), 13 deletions(-)
-> =
+i)  export method implementations from atmodem driver
+ii) set up uBlox netreg vtable with custom probe method and exported
+atmodem implementations for rest
+
+If you can't accept this approach, please let me know of an alternative
+method that would be preferable that (hopefully) doesn't entail just
+copying all the code from one driver to the other (1000+ lines to keep
+in sync going forward).
+
+Best regards,
+Jonas
+
+PS:  This is an RFC... patches are not quite done.  That said, feel free
+to patch review if you've got a moment; the final result shouldn't
+differ all that much from what's here.
+
+Jonas Bonn (2):
+  atmodem: export generic netreg funcs
+  ublox: network-registration atom
+
+ drivers/atmodem/network-registration.c    |  16 +-
+ drivers/atmodem/network-registration.h    |  17 +
+ drivers/ubloxmodem/network-registration.c | 413 ++++++++++++++++++++++
+ drivers/ubloxmodem/ubloxmodem.c           |   2 +
+ drivers/ubloxmodem/ubloxmodem.h           |   3 +
+ 5 files changed, 444 insertions(+), 7 deletions(-)
+ create mode 100644 drivers/atmodem/network-registration.h
+ create mode 100644 drivers/ubloxmodem/network-registration.c
+
+-- =
+
+2.20.1
 
 
-Applied with a minor tweak:
-
-> @@ -150,6 +164,8 @@ static void qmi_query_serial(struct ofono_devinfo *de=
-vinfo,
->   =
-
->   	DBG("");
->   =
-
-> +	cbd->user =3D (void *) devinfo;
-> +
-
-cbd->user is void, so the explicit cast isn't necessary.
-
->   	if (qmi_service_send(data->dms, QMI_DMS_GET_IDS, NULL,
->   					get_ids_cb, cbd, g_free) > 0)
->   		return;
-
-Regards,
--Denis
-
---===============7915183218160486330==--
+--===============7918073259838111526==--
 
