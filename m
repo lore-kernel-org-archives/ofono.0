@@ -1,62 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5969432280856886272=="
+Content-Type: multipart/mixed; boundary="===============2738005623729299289=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Jonas Bonn <jonas@norrbonn.se>
 Subject: Re: [RFC at-export 0/2] Export AT-modem functions to other drivers
-Date: Mon, 22 Apr 2019 10:52:02 -0500
-Message-ID: <ed150a98-08f4-28c4-4fba-e3e1e316e46b@gmail.com>
-In-Reply-To: <20190422074441.11854-1-jonas@norrbonn.se>
+Date: Mon, 22 Apr 2019 19:33:23 +0200
+Message-ID: <e1c7344a-2bd8-1258-4eb7-24a1f308a590@norrbonn.se>
+In-Reply-To: <ed150a98-08f4-28c4-4fba-e3e1e316e46b@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5969432280856886272==
+--===============2738005623729299289==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Denis,
 
-On 04/22/2019 02:44 AM, Jonas Bonn wrote:
-> Hi Denis,
-> =
+On 22/04/2019 17:52, Denis Kenzior wrote:
 
-> I'm writing a custom network-registration driver for uBlox modems and
-> I'd like to know if you will choke on the following approach:
-> =
+> What is actually different for uBlox that requires such a drastic =
 
-> i)  export method implementations from atmodem driver
+> approach?=C2=A0 Right now I'm seeing a duplication of CMER/CIEV and NITZ =
 
-This idea is really not new.  Every time I tried it the result was worse =
+> logic.=C2=A0 Not much else.
 
-than maintaining a single netreg driver with the vendor logic.  netreg =
+For the TOBY L4 I hit this:
+ofono_error("This driver is not setup with Signal Strength reporting"
+             " via CIND indications, please write proper netreg"
+             " handling for this device");
 
-is by far the worst case scenario for this since 3GPP failed to =
+This device requires _polling_ ECSQ to get this info (no async signal =
 
-standardize these commands (and voice management) until late in the game.
+strenght reporting).  Other uBlox models don't have this issue.
 
-> ii) set up uBlox netreg vtable with custom probe method and exported
-> atmodem implementations for rest
+So we need to have UBLOX_TOBY_L4, UBLOX_TOBY_L2, etc. "vendor" types to =
 
-Except I hate your 'keep netreg data in sync' idea.  Not happening.  Use =
+differentiate not only the vendor but the model.  Is that ok?  Not =
 
-l_container_of instead and use composition by value for your driver =
+enough to warrant a custom driver?
 
-specific structure.
+Is NITZ really a thing?  I interpreted it as "No immediate timezone"...
 
-> =
+/Jonas
 
-> If you can't accept this approach, please let me know of an alternative
-> method that would be preferable that (hopefully) doesn't entail just
-> copying all the code from one driver to the other (1000+ lines to keep
-> in sync going forward).
-
-What is actually different for uBlox that requires such a drastic =
-
-approach?  Right now I'm seeing a duplication of CMER/CIEV and NITZ =
-
-logic.  Not much else.
-
-Regards,
--Denis
-
---===============5969432280856886272==--
+--===============2738005623729299289==--
 
