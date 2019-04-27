@@ -1,64 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6895305589809287264=="
+Content-Type: multipart/mixed; boundary="===============7823673162637904462=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] qmimodem: support wake on SMS receive
-Date: Wed, 24 Apr 2019 10:32:44 -0500
-Message-ID: <0f5c5196-10a4-2a8a-69dd-e7848b0e6c03@gmail.com>
-In-Reply-To: <234ec7e06d284810a11ffab4b6f7376c@garmin.com>
+From: Alexander Couzens <lynxis@fe80.eu>
+Subject: [PATCH 1/2] network/ofono_netreg_status_notify: debug log the lac and
+ ci
+Date: Sat, 27 Apr 2019 16:16:48 +0200
+Message-ID: <20190427141649.12587-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6895305589809287264==
+--===============7823673162637904462==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tom,
+---
+ src/network.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-On 04/23/2019 07:42 AM, Nguyen, Tom wrote:
-> Hi Denis,
-> =
+diff --git a/src/network.c b/src/network.c
+index ae3175d4a7e9..19e7e7824067 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -1351,8 +1351,8 @@ void ofono_netreg_status_notify(struct ofono_netreg *=
+netreg, int status,
+ 	if (netreg =3D=3D NULL)
+ 		return;
+ =
 
-> Per question, "So doesn't this also cause us to bring the modem offline w=
-hen we wake up from resume?"
-> Yes, it does. While this modem is capable of waking the host CPU via GPIO=
- upon SMS reception, it doesn't have a handshake mechanism for the host to =
-signal that it's ready to communicate with the modem, which would allow the=
- host to prevent the modem from sending the QMI indication too early. Frust=
-ratingly, this handshake does exist if the modem is used with the AT interf=
-ace. I tried to convince the vendor that the handshake should be applied to=
- the QMI interface too, but...
+-	DBG("%s status %d tech %d", __ofono_atom_get_path(netreg->atom),
+-							status, tech);
++	DBG("%s status %d tech %d lac %d ci %d",
++	    __ofono_atom_get_path(netreg->atom), status, tech, lac, ci);
+ =
 
-That sounds horrible.
+ 	if (netreg->status !=3D status) {
+ 		struct ofono_modem *modem;
+-- =
 
-> =
-
-> Per comment, "So any state data must be allocated as part of the driver d=
-ata."
-> Thanks for the insight. Are you referring to "struct sms_data"?
-> =
-
-
-Yes, correct.  Anything that contains state must be allocated on the =
-
-heap.  For oFono drivers this is typically the driver specific data =
-
-structure setup in the .probe method.
-
-> I've copied my other email, so hopefully my future responses won't break =
-this chain.
-> Also, thank you for helping with the IMEI patch.
-> =
+2.21.0
 
 
-No worries.  Just FYI, when responding to the list, please refrain from =
-
-top-posting.  The common open source mailing list etiquette is to =
-
-respond in-line.
-
-Regards,
--Denis
-
---===============6895305589809287264==--
+--===============7823673162637904462==--
 
