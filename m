@@ -1,44 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7823673162637904462=="
+Content-Type: multipart/mixed; boundary="===============1525455523397531392=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 1/2] network/ofono_netreg_status_notify: debug log the lac and
- ci
-Date: Sat, 27 Apr 2019 16:16:48 +0200
-Message-ID: <20190427141649.12587-1-lynxis@fe80.eu>
+Subject: [PATCH 2/2] network: debug log the network time on update
+Date: Sat, 27 Apr 2019 16:16:49 +0200
+Message-ID: <20190427141649.12587-2-lynxis@fe80.eu>
+In-Reply-To: <20190427141649.12587-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7823673162637904462==
+--===============1525455523397531392==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/network.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ src/network.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
 diff --git a/src/network.c b/src/network.c
-index ae3175d4a7e9..19e7e7824067 100644
+index 19e7e7824067..2824eae6c35e 100644
 --- a/src/network.c
 +++ b/src/network.c
-@@ -1351,8 +1351,8 @@ void ofono_netreg_status_notify(struct ofono_netreg *=
-netreg, int status,
- 	if (netreg =3D=3D NULL)
+@@ -1407,6 +1407,11 @@ void ofono_netreg_time_notify(struct ofono_netreg *n=
+etreg,
+ 	if (info =3D=3D NULL)
  		return;
  =
 
--	DBG("%s status %d tech %d", __ofono_atom_get_path(netreg->atom),
--							status, tech);
-+	DBG("%s status %d tech %d lac %d ci %d",
-+	    __ofono_atom_get_path(netreg->atom), status, tech, lac, ci);
++	DBG("net time %d-%02d-%02d %02d:%02d:%02d utcoff %d dst %d",
++	    info->year, info->mon, info->mday,
++	    info->hour, info->min, info->sec,
++	    info->utcoff, info->dst);
++
+ 	__ofono_nettime_info_received(modem, info);
+ }
  =
 
- 	if (netreg->status !=3D status) {
- 		struct ofono_modem *modem;
 -- =
 
 2.21.0
 
 
---===============7823673162637904462==--
+--===============1525455523397531392==--
 
