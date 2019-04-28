@@ -1,39 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============1525455523397531392=="
+Content-Type: multipart/mixed; boundary="===============7573657669071650633=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 2/2] network: debug log the network time on update
-Date: Sat, 27 Apr 2019 16:16:49 +0200
-Message-ID: <20190427141649.12587-2-lynxis@fe80.eu>
-In-Reply-To: <20190427141649.12587-1-lynxis@fe80.eu>
+Subject: [PATCH 1/2] gprs: netreg_status_changed: output the status as human
+ readable string
+Date: Sun, 28 Apr 2019 13:28:14 +0200
+Message-ID: <20190428112815.1407-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1525455523397531392==
+--===============7573657669071650633==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/network.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ src/gprs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/network.c b/src/network.c
-index 19e7e7824067..2824eae6c35e 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -1407,6 +1407,11 @@ void ofono_netreg_time_notify(struct ofono_netreg *n=
-etreg,
- 	if (info =3D=3D NULL)
- 		return;
+diff --git a/src/gprs.c b/src/gprs.c
+index 148cbc979dfb..5f66cad591c1 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1700,7 +1700,7 @@ static void netreg_status_changed(int status, int lac=
+, int ci, int tech,
+ {
+ 	struct ofono_gprs *gprs =3D data;
  =
 
-+	DBG("net time %d-%02d-%02d %02d:%02d:%02d utcoff %d dst %d",
-+	    info->year, info->mon, info->mday,
-+	    info->hour, info->min, info->sec,
-+	    info->utcoff, info->dst);
-+
- 	__ofono_nettime_info_received(modem, info);
- }
+-	DBG("%d", status);
++	DBG("%d (%s)", status, registration_status_to_string(status));
+ =
+
+ 	gprs->netreg_status =3D status;
  =
 
 -- =
@@ -41,5 +39,5 @@ etreg,
 2.21.0
 
 
---===============1525455523397531392==--
+--===============7573657669071650633==--
 
