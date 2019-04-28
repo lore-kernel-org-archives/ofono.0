@@ -1,58 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============3358109921985389594=="
+Content-Type: multipart/mixed; boundary="===============4946157321510068304=="
 MIME-Version: 1.0
-From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 2/2] qmi: netmon: fix crashs on get_rssi_cb when BER or RSSI
- are empty
-Date: Sun, 28 Apr 2019 13:28:15 +0200
-Message-ID: <20190428112815.1407-2-lynxis@fe80.eu>
-In-Reply-To: <20190428112815.1407-1-lynxis@fe80.eu>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] network/ofono_netreg_status_notify: debug log the lac
+ and ci
+Date: Sun, 28 Apr 2019 10:13:30 -0500
+Message-ID: <5e5643f4-f958-8c38-d0ba-9a698f860a96@gmail.com>
+In-Reply-To: <20190427141649.12587-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3358109921985389594==
+--===============4946157321510068304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The message can be emitted without the fields being present. In this case b=
-er or rssi are 0
-resulting in a null pointer deref.
----
- drivers/qmimodem/netmon.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Hi Alexander,
 
-diff --git a/drivers/qmimodem/netmon.c b/drivers/qmimodem/netmon.c
-index 14a55632e8a6..729879ce73d8 100644
---- a/drivers/qmimodem/netmon.c
-+++ b/drivers/qmimodem/netmon.c
-@@ -89,8 +89,8 @@ static void get_rssi_cb(struct qmi_result *result, void *=
-user_data)
- =
-
- 	/* RSSI */
- 	rssi =3D qmi_result_get(result, 0x11, &len);
--	num =3D GUINT16_FROM_LE(rssi->count);
- 	if (rssi) {
-+		num =3D GUINT16_FROM_LE(rssi->count);
- 		for (i =3D 0; i < num; i++) {
- 			DBG("RSSI: %hhu on RAT %hhd",
- 				rssi->info[i].rssi,
-@@ -126,8 +126,8 @@ static void get_rssi_cb(struct qmi_result *result, void=
- *user_data)
- =
-
- 	/* Bit error rate */
- 	ber =3D qmi_result_get(result, 0x15, &len);
--	num =3D GUINT16_FROM_LE(ber->count);
- 	if (ber) {
-+		num =3D GUINT16_FROM_LE(ber->count);
- 		for (i =3D 0; i < ber->count; i++) {
- 			DBG("Bit error rate: %hu on RAT %hhd",
- 				GUINT16_FROM_LE(ber->info[i].rate),
--- =
-
-2.21.0
+On 04/27/2019 09:16 AM, Alexander Couzens wrote:
+> ---
+>   src/network.c | 4 ++--
+>   1 file changed, 2 insertions(+), 2 deletions(-)
+> =
 
 
---===============3358109921985389594==--
+Both applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============4946157321510068304==--
 
