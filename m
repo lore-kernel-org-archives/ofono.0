@@ -1,27 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============4946157321510068304=="
+Content-Type: multipart/mixed; boundary="===============0844290337830165278=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] network/ofono_netreg_status_notify: debug log the lac
- and ci
-Date: Sun, 28 Apr 2019 10:13:30 -0500
-Message-ID: <5e5643f4-f958-8c38-d0ba-9a698f860a96@gmail.com>
-In-Reply-To: <20190427141649.12587-1-lynxis@fe80.eu>
+Subject: Re: [PATCH 1/2] gprs: netreg_status_changed: output the status as
+ human readable string
+Date: Sun, 28 Apr 2019 10:14:16 -0500
+Message-ID: <978a78da-1b42-6c72-001e-0c82419e9f74@gmail.com>
+In-Reply-To: <20190428112815.1407-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4946157321510068304==
+--===============0844290337830165278==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Alexander,
 
-On 04/27/2019 09:16 AM, Alexander Couzens wrote:
+On 04/28/2019 06:28 AM, Alexander Couzens wrote:
 > ---
->   src/network.c | 4 ++--
->   1 file changed, 2 insertions(+), 2 deletions(-)
-> =
-
+>   src/gprs.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 
 Both applied, thanks.
 
@@ -29,5 +27,5 @@ Regards,
 -Denis
 
 
---===============4946157321510068304==--
+--===============0844290337830165278==--
 
