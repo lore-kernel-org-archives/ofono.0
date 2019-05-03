@@ -1,55 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4597641270541752052=="
+Content-Type: multipart/mixed; boundary="===============5697306109310838902=="
 MIME-Version: 1.0
-From: Philippe De Swert <philippedeswert@gmail.com>
-Subject: [PATCH] Makefile.am : Fix compilation with ell
-Date: Fri, 03 May 2019 12:59:53 +0300
-Message-ID: <20190503095953.26994-1-philippedeswert@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Makefile.am : Fix compilation with ell
+Date: Fri, 03 May 2019 10:19:07 -0500
+Message-ID: <78b61c6a-2388-477c-735e-2f88920c3b3b@gmail.com>
+In-Reply-To: <20190503095953.26994-1-philippedeswert@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4597641270541752052==
+--===============5697306109310838902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fix compilation issue with newer ell, which seems to have some
-extra timeout handling.
+Hi Philippe,
 
-  CC       ell/main.lo
-ell/main.c:44:21: fatal error: timeout.h: No such file or directory
- #include "timeout.h"
-                     ^
-compilation terminated.
-make[1]: *** [Makefile:4068: ell/main.lo] Error 1
-make: *** [Makefile:2357: all] Error 2
----
- Makefile.am | 2 ++
- 1 file changed, 2 insertions(+)
+On 05/03/2019 04:59 AM, Philippe De Swert wrote:
+> Fix compilation issue with newer ell, which seems to have some
+> extra timeout handling.
+> =
 
-diff --git a/Makefile.am b/Makefile.am
-index 21f776b6..f5453bed 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -21,6 +21,7 @@ ell_headers =3D ell/util.h \
- 			ell/strv.h \
- 			ell/utf8.h \
- 			ell/queue.h \
-+			ell/timeout.h \
- 			ell/main.h \
- 			ell/idle.h \
- 			ell/signal.h \
-@@ -38,6 +39,7 @@ ell_sources =3D ell/private.h \
- 			ell/strv.c \
- 			ell/utf8.c \
- 			ell/queue.c \
-+			ell/timeout.c \
- 			ell/main.c \
- 			ell/idle.c \
- 			ell/signal.c \
--- =
+>    CC       ell/main.lo
+> ell/main.c:44:21: fatal error: timeout.h: No such file or directory
+>   #include "timeout.h"
+>                       ^
+> compilation terminated.
+> make[1]: *** [Makefile:4068: ell/main.lo] Error 1
+> make: *** [Makefile:2357: all] Error 2
+> ---
+>   Makefile.am | 2 ++
+>   1 file changed, 2 insertions(+)
 
-2.20.1
+Applied, thanks.
+
+Regards,
+-Denis
 
 
---===============4597641270541752052==--
+--===============5697306109310838902==--
 
