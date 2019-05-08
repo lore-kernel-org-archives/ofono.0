@@ -1,164 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============1841687101784267172=="
+Content-Type: multipart/mixed; boundary="===============2417216339644562809=="
 MIME-Version: 1.0
-From: Funktionspostfach Herbrechtsmeier OSS <stefan.herbrechtsmeier-oss@weidmueller.com>
-Subject: [PATCH] udevng: add SIMCom SIM7600 modem support
-Date: Wed, 08 May 2019 14:01:12 +0000
-Message-ID: <20190508140058.190372-1-stefan.herbrechtsmeier-oss@weidmueller.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC at-export 2/2] ublox: network-registration atom
+Date: Wed, 08 May 2019 09:37:14 -0500
+Message-ID: <d87fb647-af8c-cb0c-2462-aba49d45533c@gmail.com>
+In-Reply-To: <CAHB-Pj=9Tt08vYyLDEa46JeF5SyXvjCUphJ9U3ckV1+k=G5_pw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1841687101784267172==
+--===============2417216339644562809==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Stefan Herbrechtsmeier <stefan.herbrechtsmeier@weidmueller.com>
+Hi Richard,
 
-The SIMCom SIM7100 and SIM7600 modem use the same vendor and product id
-but require different drivers (sim7100 vs gobi).
----
- plugins/udevng.c | 70 ++++++++++++++++++++++++++++++++++++++--------------=
-----
- 1 file changed, 48 insertions(+), 22 deletions(-)
+On 05/04/2019 02:06 PM, Richard R=C3=B6jfors wrote:
+> Hi,
+> =
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index f689b756..2b6f6701 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1241,9 +1241,11 @@ static gboolean setup_xmm7xxx(struct modem_info *mod=
-em)
- 	return TRUE;
- }
- =
+> Den m=C3=A5n 22 apr. 2019 kl 09:44 skrev Jonas Bonn <jonas@norrbonn.se>:
+>> +
+>> +static void creg_notify(GAtResult *result, gpointer user_data)
+>> +{
+>> +       struct ofono_netreg *netreg =3D user_data;
+>> +       int status, lac, ci, tech;
+>> +       struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+>> +       struct tech_query *tq;
+>> +
+>> +       if (at_util_parse_reg_unsolicited(result, "+CREG:", &status,
+>> +                               &lac, &ci, &tech, nd->vendor) =3D=3D FAL=
+SE)
+>> +               return;
+>> +
+>> +       if (status !=3D 1 && status !=3D 5)
+>> +               goto notify;
+> =
 
--static gboolean setup_sim7100(struct modem_info *modem)
-+static gboolean setup_sim7x00(struct modem_info *modem)
- {
--	const char *at =3D NULL, *ppp =3D NULL, *gps =3D NULL, *diag =3D NULL, *a=
-udio =3D NULL;
-+	const char *audio =3D NULL, *diag =3D NULL, *gps =3D NULL;
-+	const char *mdm =3D NULL, *net =3D NULL, *ppp =3D NULL;
-+	const char *qmi =3D NULL;
- 	GSList *list;
- =
+> Just wants to check your thoughts about CREG and LTE only...
+> If the modem only has 4g coverage it might set the status to 4 (unknown),
+> but ureg would indicate LTE(7).
+> I have done a local patch for this in gprs, do not go to de-attached
+> state in that case.
 
- 	DBG("%s", modem->syspath);
-@@ -1251,10 +1253,12 @@ static gboolean setup_sim7100(struct modem_info *mo=
-dem)
- 	for (list =3D modem->devices; list; list =3D list->next) {
- 		struct device_info *info =3D list->data;
- =
+It seems a bunch of devices have this problem.  By my reading of 27.007, =
 
--		DBG("%s %s", info->devnode, info->number);
-+		DBG("%s %s %s %s %s %s", info->devnode, info->interface,
-+						info->number, info->label,
-+						info->sysattr, info->subsystem);
- =
+CREG should not report status 4 unless there is no coverage whatsoever, =
 
- 		/*
--		 * Serial port layout:
-+		 * SIM7100 serial port layout:
- 		 * 0: QCDM/DIAG
- 		 * 1: NMEA
- 		 * 2: AT
-@@ -1263,29 +1267,50 @@ static gboolean setup_sim7100(struct modem_info *mo=
-dem)
- 		 *
- 		 * -- https://www.spinics.net/lists/linux-usb/msg135728.html
- 		 */
--		if (g_strcmp0(info->number, "00") =3D=3D 0)
--			diag =3D info->devnode;
--		else if (g_strcmp0(info->number, "01") =3D=3D 0)
--			gps =3D info->devnode;
--		else if (g_strcmp0(info->number, "02") =3D=3D 0)
--			at =3D info->devnode;
--		else if (g_strcmp0(info->number, "03") =3D=3D 0)
--			ppp =3D info->devnode;
--		else if (g_strcmp0(info->number, "04") =3D=3D 0)
--			audio =3D info->devnode;
-+		if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0) /* cdc-wdm */
-+			qmi =3D info->devnode; /* SIM7600 */
-+		else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) /* wwan */
-+			net =3D info->devnode; /* SIM7600 */
-+		else if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
-+			if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
-+				if (g_strcmp0(info->number, "00") =3D=3D 0)
-+					diag =3D info->devnode; /* SIM7x00 */
-+			} else if (g_strcmp0(info->interface, "255/0/0") =3D=3D 0) {
-+				if (g_strcmp0(info->number, "01") =3D=3D 0)
-+					gps =3D info->devnode; /* SIM7x00 */
-+				else if (g_strcmp0(info->number, "02") =3D=3D 0)
-+					mdm =3D info->devnode; /* SIM7x00 */
-+				else if (g_strcmp0(info->number, "03") =3D=3D 0)
-+					ppp =3D info->devnode; /* SIM7100 */
-+				else if (g_strcmp0(info->number, "04") =3D=3D 0)
-+					audio =3D info->devnode; /* SIM7100 */
-+			}
-+		}
- 	}
- =
+e.g.:
 
--	if (at =3D=3D NULL)
-+	if (mdm =3D=3D NULL)
- 		return FALSE;
- =
+"4	unknown (e.g. out of GERAN/UTRAN/E-UTRAN coverage)"
 
--	DBG("at=3D%s ppp=3D%s gps=3D%s diag=3D%s, audio=3D%s", at, ppp, gps, diag=
-, audio);
-+	if (qmi !=3D NULL && net !=3D NULL) {
-+		DBG("qmi=3D%s net=3D%s mdm=3D%s gps=3D%s diag=3D%s", qmi, net, mdm, gps,=
- diag);
-+
-+		ofono_modem_set_driver(modem->modem, "gobi");
-+
-+		ofono_modem_set_string(modem->modem, "Device", qmi);
-+		ofono_modem_set_string(modem->modem, "Modem", mdm);
-+		ofono_modem_set_string(modem->modem, "NetworkInterface", net);
-+	} else {
-+		DBG("at=3D%s ppp=3D%s gps=3D%s diag=3D%s, audio=3D%s", mdm, ppp, gps, di=
-ag, audio);
-+
-+		ofono_modem_set_driver(modem->modem, "sim7100");
-+
-+		ofono_modem_set_string(modem->modem, "AT", mdm);
-+		ofono_modem_set_string(modem->modem, "PPP", ppp);
-+		ofono_modem_set_string(modem->modem, "Audio", audio);
-+	}
- =
+> =
 
--	ofono_modem_set_string(modem->modem, "AT", at);
--	ofono_modem_set_string(modem->modem, "PPP", ppp);
- 	ofono_modem_set_string(modem->modem, "GPS", gps);
- 	ofono_modem_set_string(modem->modem, "Diag", diag);
--	ofono_modem_set_string(modem->modem, "Audio", audio);
--
- 	return TRUE;
- }
- =
+> Just wondering if we should combine the CREG and UREG status
+> in some way, the problem is that UREG is not indicating roaming or not...
 
-@@ -1309,7 +1334,7 @@ static struct {
- 	{ "telit",	setup_telit,	"device/interface"	},
- 	{ "telitqmi",	setup_telitqmi	},
- 	{ "simcom",	setup_simcom	},
--	{ "sim7100",	setup_sim7100	},
-+	{ "sim7x00",	setup_sim7x00	},
- 	{ "zte",	setup_zte	},
- 	{ "icera",	setup_icera	},
- 	{ "samsung",	setup_samsung	},
-@@ -1682,7 +1707,8 @@ static struct {
- 	{ "novatel",	"option",	"1410"		},
- 	{ "zte",	"option",	"19d2"		},
- 	{ "simcom",	"option",	"05c6", "9000"	},
--	{ "sim7100",	"option",	"1e0e", "9001"	},
-+	{ "sim7x00",	"option",	"1e0e", "9001"	},
-+	{ "sim7x00",	"qmi_wwan",	"1e0e",	"9001"	},
- 	{ "telit",	"usbserial",	"1bc7"		},
- 	{ "telit",	"option",	"1bc7"		},
- 	{ "telit",	"cdc_acm",	"1bc7", "0021"	},
--- =
+So that sounds like a bug in the firmware.  Does ublox support +CEREG?
 
-2.16.2.windows.1
+Regards,
+-Denis
 
-
---===============1841687101784267172==--
+--===============2417216339644562809==--
 
