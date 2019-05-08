@@ -1,32 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============6455516857503507424=="
+Content-Type: multipart/mixed; boundary="===============0198095876807877326=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: Fix a race if a context get deactivated while
- read
-Date: Wed, 08 May 2019 09:41:06 -0500
-Message-ID: <5a234683-1eb6-c51b-1145-776760f4c5aa@gmail.com>
-In-Reply-To: <20190508072756.6093-1-richard.rojfors@gmail.com>
+Subject: Re: [PATCH] udevng: add SIMCom SIM7600 modem support
+Date: Wed, 08 May 2019 09:47:47 -0500
+Message-ID: <15dada0a-f69d-b5d7-fec8-4c9c72051a3d@gmail.com>
+In-Reply-To: <20190508140058.190372-1-stefan.herbrechtsmeier-oss@weidmueller.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6455516857503507424==
+--===============0198095876807877326==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Richard,
+Hi Stefan,
 
-On 05/08/2019 02:27 AM, richard.rojfors(a)gmail.com wrote:
-> From: Richard R=C3=B6jfors <richard@puffinpack.se>
+On 05/08/2019 09:01 AM, Funktionspostfach Herbrechtsmeier OSS wrote:
+> From: Stefan Herbrechtsmeier <stefan.herbrechtsmeier@weidmueller.com>
 > =
 
-> When a context gets activated we read its settings, but
-> if the context gets deactivated during this time we should
-> not indicate that the context is activated when the settings
-> are received.
+> The SIMCom SIM7100 and SIM7600 modem use the same vendor and product id
+> but require different drivers (sim7100 vs gobi).
 > ---
->   drivers/atmodem/gprs.c | 11 +++++++++++
->   1 file changed, 11 insertions(+)
+>   plugins/udevng.c | 70 ++++++++++++++++++++++++++++++++++++++-----------=
+-------
+>   1 file changed, 48 insertions(+), 22 deletions(-)
 > =
 
 
@@ -36,5 +34,5 @@ Regards,
 -Denis
 
 
---===============6455516857503507424==--
+--===============0198095876807877326==--
 
