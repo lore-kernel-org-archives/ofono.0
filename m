@@ -1,47 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============0143860186128548129=="
+Content-Type: multipart/mixed; boundary="===============1601818373371418537=="
 MIME-Version: 1.0
-From: Richard =?unknown-8bit?q?R=C3=B6jfors?= <richard.rojfors@gmail.com>
-Subject: Re: [RFC at-export 2/2] ublox: network-registration atom
-Date: Sat, 04 May 2019 21:06:53 +0200
-Message-ID: <CAHB-Pj=9Tt08vYyLDEa46JeF5SyXvjCUphJ9U3ckV1+k=G5_pw@mail.gmail.com>
-In-Reply-To: <20190422074441.11854-3-jonas@norrbonn.se>
+From: richard.rojfors@gmail.com
+Subject: [PATCH] atmodem: Fix a race if a context get deactivated while read
+Date: Wed, 08 May 2019 09:27:56 +0200
+Message-ID: <20190508072756.6093-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0143860186128548129==
+--===============1601818373371418537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-Den m=C3=A5n 22 apr. 2019 kl 09:44 skrev Jonas Bonn <jonas@norrbonn.se>:
-> +
-> +static void creg_notify(GAtResult *result, gpointer user_data)
-> +{
-> +       struct ofono_netreg *netreg =3D user_data;
-> +       int status, lac, ci, tech;
-> +       struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-> +       struct tech_query *tq;
-> +
-> +       if (at_util_parse_reg_unsolicited(result, "+CREG:", &status,
-> +                               &lac, &ci, &tech, nd->vendor) =3D=3D FALS=
-E)
-> +               return;
-> +
-> +       if (status !=3D 1 && status !=3D 5)
-> +               goto notify;
+When a context gets activated we read its settings, but
+if the context gets deactivated during this time we should
+not indicate that the context is activated when the settings
+are received.
+---
+ drivers/atmodem/gprs.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-Just wants to check your thoughts about CREG and LTE only...
-If the modem only has 4g coverage it might set the status to 4 (unknown),
-but ureg would indicate LTE(7).
-I have done a local patch for this in gprs, do not go to de-attached
-state in that case.
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index d3fd893c..dd734585 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -161,6 +161,11 @@ static void at_cgdcont_read_cb(gboolean ok, GAtResult =
+*result,
+ 		return;
+ 	}
+ =
 
-Just wondering if we should combine the CREG and UREG status
-in some way, the problem is that UREG is not indicating roaming or not...
++	if (gd->last_auto_context_id =3D=3D 0) {
++		DBG("Context got deactivated while calling CGDCONT");
++		return;
++	}
++
+ 	g_at_result_iter_init(&iter, result);
+ =
 
---Richard
+ 	while (g_at_result_iter_next(&iter, "+CGDCONT:")) {
+@@ -251,6 +256,12 @@ static void cgev_notify(GAtResult *result, gpointer us=
+er_data)
+ =
 
---===============0143860186128548129==--
+ 		g_at_chat_send(gd->chat, "AT+CGDCONT?", cgdcont_prefix,
+ 				at_cgdcont_read_cb, gprs, NULL);
++	} else if (g_str_has_prefix(event, "ME PDN DEACT")) {
++		unsigned int context_id;
++		sscanf(event, "%*s %*s %*s %u", &context_id);
++		/* Indicate that this cid is not activated anymore */
++		if (gd->last_auto_context_id =3D=3D context_id)
++			gd->last_auto_context_id =3D 0;
+ 	}
+ }
+ =
+
+-- =
+
+2.20.1
+
+
+--===============1601818373371418537==--
 
