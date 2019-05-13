@@ -1,67 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============2738284855066460893=="
+Content-Type: multipart/mixed; boundary="===============6632645848515766581=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 2/3] radio-settings: handling of dual mode technology
- preference
-Date: Mon, 13 May 2019 14:20:12 +0530
-Message-ID: <1557737412-25456-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 3/3] xmm7modem: handling of dual mode technology preference
+Date: Mon, 13 May 2019 14:20:43 +0530
+Message-ID: <1557737443-25498-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2738284855066460893==
+--===============6632645848515766581==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handled two new dual mode technology preferences
-"umts,gsm" and "lte,umts".
+Handled dual mode technology preference "umts,gsm" and
+"lte,umts" for xmm7modem.
 ---
- src/radio-settings.c | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
+ drivers/xmm7modem/radio-settings.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
 
-diff --git a/src/radio-settings.c b/src/radio-settings.c
-index 7fd92df..7283aa9 100644
---- a/src/radio-settings.c
-+++ b/src/radio-settings.c
-@@ -71,9 +71,15 @@ static const char *radio_access_mode_to_string(enum ofon=
-o_radio_access_mode m)
- 		return "umts";
- 	case OFONO_RADIO_ACCESS_MODE_LTE:
- 		return "lte";
--	default:
--		return NULL;
- 	}
-+
-+	if (m =3D=3D (OFONO_RADIO_ACCESS_MODE_UMTS|OFONO_RADIO_ACCESS_MODE_GSM))
-+		return "umts,gsm";
-+
-+	if (m =3D=3D (OFONO_RADIO_ACCESS_MODE_LTE|OFONO_RADIO_ACCESS_MODE_UMTS))
-+		return "lte,umts";
-+
-+	return NULL;
- }
- =
-
- static gboolean radio_access_mode_from_string(const char *str,
-@@ -92,6 +98,12 @@ static gboolean radio_access_mode_from_string(const char=
- *str,
- 	} else if (g_str_equal(str, "lte")) {
- 		*mode =3D OFONO_RADIO_ACCESS_MODE_LTE;
- 		return TRUE;
-+	} else if (g_str_equal(str, "umts,gsm")) {
-+		*mode =3D OFONO_RADIO_ACCESS_MODE_UMTS|OFONO_RADIO_ACCESS_MODE_GSM;
-+		return TRUE;
-+	} else if (g_str_equal(str, "lte,umts")) {
-+		*mode =3D OFONO_RADIO_ACCESS_MODE_LTE|OFONO_RADIO_ACCESS_MODE_UMTS;
-+		return TRUE;
+diff --git a/drivers/xmm7modem/radio-settings.c b/drivers/xmm7modem/radio-s=
+ettings.c
+index f1eb1aa..c7c2ce0 100644
+--- a/drivers/xmm7modem/radio-settings.c
++++ b/drivers/xmm7modem/radio-settings.c
+@@ -84,10 +84,10 @@ static void xact_query_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ 		mode =3D OFONO_RADIO_ACCESS_MODE_LTE;
+ 		break;
+ 	case 3:
+-		mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
++		mode =3D OFONO_RADIO_ACCESS_MODE_UMTS|OFONO_RADIO_ACCESS_MODE_GSM;
+ 		break;
+ 	case 4:
+-		mode =3D OFONO_RADIO_ACCESS_MODE_LTE;
++		mode =3D OFONO_RADIO_ACCESS_MODE_LTE|OFONO_RADIO_ACCESS_MODE_UMTS;
+ 		break;
+ 	case 5:
+ 		mode =3D OFONO_RADIO_ACCESS_MODE_LTE;
+@@ -158,7 +158,16 @@ static void xmm_set_rat_mode(struct ofono_radio_settin=
+gs *rs,
+ 		break;
  	}
  =
 
- 	return FALSE;
+-	if (value =3D=3D 6)
++	if (mode =3D=3D
++		(OFONO_RADIO_ACCESS_MODE_UMTS|OFONO_RADIO_ACCESS_MODE_GSM)) {
++		value =3D 3;
++		preferred =3D 1;
++	}
++
++	if (mode =3D=3D (OFONO_RADIO_ACCESS_MODE_LTE|OFONO_RADIO_ACCESS_MODE_UMTS=
+))
++		value =3D 4;
++
++	if (value =3D=3D 6 || value =3D=3D 3 || value =3D=3D 4)
+ 		snprintf(buf, sizeof(buf), "AT+XACT=3D%u,%u", value, preferred);
+ 	else
+ 		snprintf(buf, sizeof(buf), "AT+XACT=3D%u", value);
 -- =
 
 1.9.1
 
 
---===============2738284855066460893==--
+--===============6632645848515766581==--
 
