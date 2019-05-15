@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============8678055964357554446=="
+Content-Type: multipart/mixed; boundary="===============5356594404203132307=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Makefile.am: Fix a race condition where ell/ell.h was
- written before ell/ existed
-Date: Wed, 15 May 2019 12:57:52 -0500
-Message-ID: <997c348d-d0da-84a8-caac-09d0ff489e0a@gmail.com>
-In-Reply-To: <20190509091952.17075-1-bunk@kernel.org>
+Subject: Re: [PATCH] configure.ac: HAVE_EXPLICIT_BZERO is needed for internal
+ ell
+Date: Wed, 15 May 2019 12:58:56 -0500
+Message-ID: <3d810255-9e4a-7caa-d085-5241d6cc79b1@gmail.com>
+In-Reply-To: <20190509091952.17075-2-bunk@kernel.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8678055964357554446==
+--===============5356594404203132307==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,16 +18,16 @@ Hi Adrian,
 
 On 05/09/2019 04:19 AM, Adrian Bunk wrote:
 > ---
->   Makefile.am | 1 +
->   1 file changed, 1 insertion(+)
+>   configure.ac | 2 ++
+>   1 file changed, 2 insertions(+)
 > =
 
 
-Applied with a slightly tweaked commit message. Thanks!
+Looks like Marcel pushed a slightly different fix for this as commit:
+dff595671bf5a46f7c9231966a6cd7d2a0183076
 
 Regards,
 -Denis
 
-
---===============8678055964357554446==--
+--===============5356594404203132307==--
 
