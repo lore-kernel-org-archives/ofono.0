@@ -1,49 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7443187212772716403=="
+Content-Type: multipart/mixed; boundary="===============1366275255214079547=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Simcom SIM800 gprs data connection not working
-Date: Thu, 16 May 2019 10:39:59 -0500
-Message-ID: <cbedc417-1540-937a-357d-e91d56e33661@gmail.com>
-In-Reply-To: <1f4ad17d-10d6-a0cf-5b6d-aa1abf12e198@springtech.it>
+Subject: Re: [PATCH 3/3] xmm7modem: handling of dual mode technology preference
+Date: Thu, 16 May 2019 10:43:45 -0500
+Message-ID: <6467afb3-f2aa-3853-6544-749506632845@gmail.com>
+In-Reply-To: <1557737443-25498-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7443187212772716403==
+--===============1366275255214079547==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Riccardo,
+Hi Antara,
 
+On 05/13/2019 03:50 AM, Antara Borwankar wrote:
+> Handled dual mode technology preference "umts,gsm" and
+> "lte,umts" for xmm7modem.
+> ---
+>   drivers/xmm7modem/radio-settings.c | 15 ++++++++++++---
+>   1 file changed, 12 insertions(+), 3 deletions(-)
 > =
 
-> # dbus-send --system --print-reply --dest=3Dorg.ofono /sim900_0/context1 =
 
-> org.ofono.ConnectionContext.SetProperty string:"Active" =
-
-> variant:boolean:true
-> Error org.ofono.Error.NotImplemented: Implementation not provided
-
-This basically means that no gprs_context atom has been created by the =
-
-modem driver or the driver initialization has failed.  Briefly looking =
-
-at plugins/sim900.c, I can see that only sim900 (not sim800) supports =
-
-gprs.  Given that you get this far, I assume you hacked this part to =
-
-create gprs/gprs_context...
-
-The other place to look is to see whether the 'atmodem' gprs_context =
-
-driver is working properly.  Perhaps you're missing the TUN/TAP support =
-
-in your kernel?  Run 'sudo modprobe tun' and see if that fixes things.
-
-See drivers/atmodem/gprs-context.c for more details.
+All applied, thanks.
 
 Regards,
 -Denis
 
---===============7443187212772716403==--
+
+--===============1366275255214079547==--
 
