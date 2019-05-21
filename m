@@ -1,77 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============2811663485255679053=="
+Content-Type: multipart/mixed; boundary="===============8746548629911173728=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [RFC at-export 2/2] ublox: network-registration atom
-Date: Tue, 21 May 2019 05:49:09 +0200
-Message-ID: <CAKSBH7FBrDDwdfv42jP-Edb9Z-AFfK91a+9YP1Q4S8UwZbB16A@mail.gmail.com>
-In-Reply-To: <10f25d6c-bfdf-9efe-c315-bea6fc03fc90@gmail.com>
+From: Adrian Bunk <bunk@kernel.org>
+Subject: [PATCH] Makefile.am: Don't overwrite src_ofonod_DEPENDENCIES
+Date: Tue, 21 May 2019 14:35:40 +0300
+Message-ID: <20190521113540.24373-1-bunk@kernel.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2811663485255679053==
+--===============8746548629911173728==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+src_ofonod_DEPENDENCIES did overwrite the dependencies
+automatically generated from src_ofonod_LDADD with
+incomplete dependencies.
 
-On Tue, May 21, 2019 at 5:43 AM Denis Kenzior <denkenz@gmail.com> wrote:
->
-> Hi Richard,
->
-> > ...and we have the issue that the indications seems to be sent in rando=
-m order.
->
-> Figured..
->
-> Try looking at the strategy we employed when dealing with the 27.007
-> voice calling (another nightmare) commands.  E.g. +CLIP, +CNAP, +CDIP,
-> +CRING/RING, +CCWA, +CLCC, etc.  It might possibly give you some ideas.
-> The general strategy is to start a timer, but not perform any queries
-> right away and give the modem some time to send in all the unsolicited
-> notifications.  Most of the time the modem will send us everything we
-> need in one quick (temporal) burst.  But this is not guaranteed of course.
->
-> If the timer expires with no additional info received, then perform the
-> query/poll, which might end up being redundant due to timing, etc.  In
-> general using timers like this is quite racy and can lead to quite ugly
-> code.
->
+This fixes the following build error:
+...
+  CCLD     src/ofonod
+libtool:   error: cannot find the library 'gdbus/libgdbus-internal.la' or u=
+nhandled argument 'gdbus/libgdbus-internal.la'
+make: *** [Makefile:3448: src/ofonod] Error 1
+---
+ Makefile.am | 4 ----
+ 1 file changed, 4 deletions(-)
 
-the timer might not work well, because several stacks report a
-detach/out-of-service only after an internal timeout. This happens
-when another part of the stack, uncoordinated, has registered to
-another technology.
+diff --git a/Makefile.am b/Makefile.am
+index d2e310d5..5edc4488 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -6,12 +6,10 @@ noinst_LTLIBRARIES =3D
+ if EXTERNAL_ELL
+ ell_cflags =3D @ELL_CFLAGS@
+ ell_ldadd =3D @ELL_LIBS@
+-ell_dependencies =3D
+ ell_built_sources =3D
+ else
+ ell_cflags =3D
+ ell_ldadd =3D ell/libell-internal.la
+-ell_dependencies =3D $(ell_ldadd)
+ ell_built_sources =3D ell/internal ell/ell.h
+ =
+
+ noinst_LTLIBRARIES +=3D ell/libell-internal.la
+@@ -729,8 +727,6 @@ src_ofonod_LDADD =3D gdbus/libgdbus-internal.la $(built=
+in_libadd) $(ell_ldadd) \
+ src_ofonod_LDFLAGS =3D -Wl,--export-dynamic \
+ 				-Wl,--version-script=3D$(srcdir)/src/ofono.ver
+ =
+
+-src_ofonod_DEPENDENCIES =3D $(ell_dependencies)
+-
+ BUILT_SOURCES =3D $(local_headers) $(ell_built_sources) src/builtin.h
+ =
+
+ CLEANFILES =3D $(BUILT_SOURCES) $(rules_DATA)
+-- =
+
+2.20.1
 
 
-> >
-> > So what about when a c?reg indication is received from the modem.
-> > Start a "poll" of all the supported c?reg and set a flag, so multiple
-> > polls are not started in case of an additional indication is received.
-> > When the poll of all the supported c?reg statuses returns -> update
-> > the gprs "core" with the combined status?
->
-> Are you talking about doing this in the gprs driver?  I would bite the
-> bullet and do this in the core.  I would also assume the core has to
-> perform its own 'combining of the status'.
->
-> >
-> > .. and the attached_status callback should also poll all supported c?re=
-g...
->
-> But essentially yes, you're stuck doing that whenever gprs_status has
-> changed to searching/unknown.
->
-> Regards,
-> -Denis
-
-Regards,
-Giacinto
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
-
---===============2811663485255679053==--
+--===============8746548629911173728==--
 
