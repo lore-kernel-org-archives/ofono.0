@@ -1,51 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5737243111495137157=="
+Content-Type: multipart/mixed; boundary="===============0002800582258324780=="
 MIME-Version: 1.0
-From: Khem Raj <raj.khem@gmail.com>
-Subject: [PATCH] mbim: add an optional TEMP_FAILURE_RETRY macro copy
-Date: Thu, 23 May 2019 18:20:30 -0700
-Message-ID: <20190524012030.28913-1-raj.khem@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] mbim: add an optional TEMP_FAILURE_RETRY macro copy
+Date: Fri, 24 May 2019 11:57:18 -0500
+Message-ID: <d2308267-d504-8b6d-20bf-cdf016138317@gmail.com>
+In-Reply-To: <20190524012030.28913-1-raj.khem@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5737243111495137157==
+--===============0002800582258324780==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fixes build on musl which does not provide this macro
+Hi,
 
-Signed-off-by: Khem Raj <raj.khem@gmail.com>
----
- drivers/mbimmodem/mbim-private.h | 9 +++++++++
- 1 file changed, 9 insertions(+)
+On 05/23/2019 08:20 PM, Khem Raj wrote:
+> Fixes build on musl which does not provide this macro
+> =
 
-diff --git a/drivers/mbimmodem/mbim-private.h b/drivers/mbimmodem/mbim-priv=
-ate.h
-index e159235..51693ea 100644
---- a/drivers/mbimmodem/mbim-private.h
-+++ b/drivers/mbimmodem/mbim-private.h
-@@ -21,6 +21,15 @@
- =
+> Signed-off-by: Khem Raj <raj.khem@gmail.com>
 
- #define align_len(len, boundary) (((len)+(boundary)-1) & ~((boundary)-1))
- =
+No Signed-off-by for oFono patch submissions please
 
-+#ifndef TEMP_FAILURE_RETRY
-+#define TEMP_FAILURE_RETRY(expression) ({     \
-+  __typeof(expression) __result;              \
-+  do {                                        \
-+    __result =3D (expression);                  \
-+  } while (__result =3D=3D -1 && errno =3D=3D EINTR); \
-+  __result; })
-+#endif
-+
- enum mbim_control_message {
- 	MBIM_OPEN_MSG =3D 0x1,
- 	MBIM_CLOSE_MSG =3D 0x2,
--- =
-
-2.21.0
+> ---
+>   drivers/mbimmodem/mbim-private.h | 9 +++++++++
+>   1 file changed, 9 insertions(+)
+> =
 
 
---===============5737243111495137157==--
+I solved this by introducing L_TFR in ell, commit:
+8198b3689490eb81fdc7ce42f4ec1ac7321a1e3c
+
+And reworked all use of TFR/TEMP_FAILURE_RETRY to use that instead.
+
+Regards,
+-Denis
+
+--===============0002800582258324780==--
 
