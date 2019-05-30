@@ -1,57 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============4304524354058084029=="
+Content-Type: multipart/mixed; boundary="===============3487564117059734293=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 1/4] netmon: adding method to fetch neighbouring cell
- mesurement
-Date: Thu, 30 May 2019 14:50:31 +0530
-Message-ID: <1559208031-3447-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 2/4] netmon: adding get function for neighbouring cell
+ information
+Date: Thu, 30 May 2019 14:51:28 +0530
+Message-ID: <1559208088-3510-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4304524354058084029==
+--===============3487564117059734293==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Added new method to fetch neighbouring cell information.
+Added declaration of functions and structures required for getting
+neighbouring cell information.
 ---
- doc/networkmonitor-api.txt | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
+ include/netmon.h | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-diff --git a/doc/networkmonitor-api.txt b/doc/networkmonitor-api.txt
-index f8cc1c2..1cc73d2 100644
---- a/doc/networkmonitor-api.txt
-+++ b/doc/networkmonitor-api.txt
-@@ -22,6 +22,23 @@ Methods		a{sv} GetServingCellInformation()
- 			are available, their valid value ranges and
- 			applicability to different cell types.
+diff --git a/include/netmon.h b/include/netmon.h
+index c8fcafa..8847b82 100644
+--- a/include/netmon.h
++++ b/include/netmon.h
+@@ -43,6 +43,8 @@ struct ofono_netmon_driver {
+ 					unsigned int enable,
+ 					unsigned int period,
+ 					ofono_netmon_cb_t cb, void *data);
++	void (*neighbouring_cell_update)(struct ofono_netmon *netmon,
++					ofono_netmon_cb_t cb, void *data);
+ };
  =
 
-+			a{a{sv}} GetNeighbouringCellsInformation()
-+
-+			Requests the neighbouring cells information and basic
-+			measurements from oFono.  The returned value is a
-+			dictionary with the possible key / values documented
-+			below.  The type of cell is given by the 'Technology'
-+			property.
-+
-+			Based on the type of cell, the dictionary will contain
-+			additional key/value pairs.  If a given key/value pair
-+			is not present, then it is not known or unsupported
-+			by the underlying driver.
-+
-+			Refer to the sections below for which property types
-+			are available, their valid value ranges and
-+			applicability to different cell types.
-+
- 		void RegisterAgent(object path)
+ enum ofono_netmon_cell_type {
+@@ -73,6 +75,28 @@ enum ofono_netmon_info {
+ 	OFONO_NETMON_INFO_INVALID,
+ };
  =
 
- 			Registers an agent which will be called whenever the
++struct ofono_netmon_neighbouring_cell
++{
++	enum ofono_netmon_cell_type cell_type;
++	int mcc;
++	int mnc;
++	int cell_id;
++	union {
++		struct lte_cell {
++			int rsrq;
++			int rsrp;
++		} lte;
++		struct umts_cell {
++			int rscp;
++			int ecno;
++		} umts;
++		struct gsm_cell {
++			int rssi;
++			int ber;
++		} gsm;
++	} cell_meas;
++};
++
+ /*
+  * Examples:
+  * ofono_netmon_serving_cell_notify(netmon, OFONO_NETMON_CELL_TYPE_GSM,
+@@ -104,6 +128,9 @@ void ofono_netmon_set_data(struct ofono_netmon *netmon,=
+ void *data);
+ =
+
+ void *ofono_netmon_get_data(struct ofono_netmon *netmon);
+ =
+
++void ofono_netmon_neighbouring_cell_notify(struct ofono_netmon *netmon,
++					void *cell_list);
++
+ #ifdef __cplusplus
+ }
+ #endif
 -- =
 
 1.9.1
 
 
---===============4304524354058084029==--
+--===============3487564117059734293==--
 
