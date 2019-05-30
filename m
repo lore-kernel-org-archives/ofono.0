@@ -1,34 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6194061834858798088=="
+Content-Type: multipart/mixed; boundary="===============7049621549094628654=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/4] netmon: adding method to fetch neighbouring cell
- mesurement
-Date: Thu, 30 May 2019 11:07:35 -0500
-Message-ID: <74f4d9cf-4fb1-a9ed-0e66-897857149ee5@gmail.com>
-In-Reply-To: <1559208031-3447-1-git-send-email-antara.borwankar@intel.com>
+From: Philippe De Swert <philippedeswert@gmail.com>
+Subject: [PATCH] ppp: Allow to set-up ppp connection without authentification
+Date: Thu, 30 May 2019 19:26:28 +0300
+Message-ID: <20190530162628.30041-1-philippe.deswert@digitalistgroup.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6194061834858798088==
+--===============7049621549094628654==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+When using RCR_REJECT no ppp connection will be established. It used to wor=
+k before, and
+this was a side-effect of commit 6fc119d9eaee5f9cc37a5a7198d1c55ef98fd645
 
-On 05/30/2019 04:20 AM, Antara Borwankar wrote:
-> Added new method to fetch neighbouring cell information.
-> ---
->   doc/networkmonitor-api.txt | 17 +++++++++++++++++
->   1 file changed, 17 insertions(+)
-> =
+See also this thread: https://lists.ofono.org/pipermail/ofono/2019-January/=
+019067.html
+---
+ gatchat/ppp_lcp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+index 3fe38217..252b3cdc 100644
+--- a/gatchat/ppp_lcp.c
++++ b/gatchat/ppp_lcp.c
+@@ -281,7 +281,7 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
+ 				return RCR_NAK;
+ =
+
+ 			case G_AT_PPP_AUTH_METHOD_NONE:
+-				return RCR_REJECT;
++				break;
+ 			}
+ 			break;
+ 		}
+-- =
+
+2.20.1
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
-
---===============6194061834858798088==--
+--===============7049621549094628654==--
 
