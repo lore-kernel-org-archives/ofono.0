@@ -1,187 +1,210 @@
-Content-Type: multipart/mixed; boundary="===============3278379200468907221=="
+Content-Type: multipart/mixed; boundary="===============1673427833712034478=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 3/4] netmon: adding get functionality for neighbouring cell
- information
-Date: Thu, 30 May 2019 14:52:21 +0530
-Message-ID: <1559208141-3588-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 4/4] xmm7modem: adding netmon changes for reporting
+ neighbouring cell
+Date: Thu, 30 May 2019 14:53:00 +0530
+Message-ID: <1559208180-3654-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3278379200468907221==
+--===============1673427833712034478==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handled the get neighbouring cell information function which returns
-an array of signal strength of all neighbouring cells.
+Added netmon changes for xmm7modem driver to fetch neighbouring
+cell information.
 ---
- src/netmon.c | 136 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ drivers/xmm7modem/netmon.c | 160 +++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 file changed, 136 insertions(+)
+ 1 file changed, 160 insertions(+)
 
-diff --git a/src/netmon.c b/src/netmon.c
-index 6c19df5..5896089 100644
---- a/src/netmon.c
-+++ b/src/netmon.c
-@@ -403,6 +403,139 @@ static DBusMessage *netmon_unregister_agent(DBusConne=
-ction *conn,
- 	return dbus_message_new_method_return(msg);
+diff --git a/drivers/xmm7modem/netmon.c b/drivers/xmm7modem/netmon.c
+index ba70e2b..b9aac3e 100644
+--- a/drivers/xmm7modem/netmon.c
++++ b/drivers/xmm7modem/netmon.c
+@@ -205,6 +205,165 @@ static void xmm7modem_netmon_request_update(struct of=
+ono_netmon *netmon,
+ 	CALLBACK_WITH_FAILURE(cb, data);
  }
  =
 
-+
-+void ofono_netmon_neighbouring_cell_notify(struct ofono_netmon *netmon,
-+					void *cell_list)
++static void xmci_neighbouring_cell_cb
++		(gboolean ok, GAtResult *result, gpointer user_data)
 +{
-+	DBusMessageIter iter;
-+	DBusMessageIter arr;
-+	GSList *l;
++	struct cb_data *cbd =3D user_data;
++	struct ofono_netmon *netmon =3D cbd->data;
++	ofono_netmon_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++	GAtResultIter iter;
++	int number;
++	int rxlev =3D -1;
++	int ber =3D -1;
++	int rscp =3D -1;
++	int rsrp =3D -1;
++	int ecn0 =3D -1;
++	int rsrq =3D -1;
++	int tech =3D -1;
++	int mcc =3D -1;
++	int mnc =3D -1;
++	int ci =3D -1;
++	GList *list =3D NULL;
++	struct ofono_netmon_neighbouring_cell *cell;
++	int list_size =3D 0;
 +
-+	if (netmon->pending =3D=3D NULL)
++	DBG("ok %d", ok);
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, cbd->data);
 +		return;
++	}
 +
-+	netmon->reply =3D dbus_message_new_method_return(netmon->pending);
-+	dbus_message_iter_init_append(netmon->reply, &iter);
++	g_at_result_iter_init(&iter, result);
 +
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					DBUS_STRUCT_BEGIN_CHAR_AS_STRING
-+					DBUS_TYPE_ARRAY_AS_STRING
-+					DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
-+					DBUS_TYPE_STRING_AS_STRING
-+					DBUS_TYPE_VARIANT_AS_STRING
-+					DBUS_DICT_ENTRY_END_CHAR_AS_STRING
-+					DBUS_STRUCT_END_CHAR_AS_STRING,
-+					&arr);
-+
-+	for (l =3D cell_list; l; l =3D l->next) {
-+		DBusMessageIter dict;
-+		DBusMessageIter strct;
-+		struct ofono_netmon_neighbouring_cell *cell =3D l->data;
-+		const char *tech =3D cell_type_to_tech_name(cell->cell_type);
-+
-+		dbus_message_iter_open_container(&arr, DBUS_TYPE_STRUCT,
-+					NULL, &strct);
-+		dbus_message_iter_open_container(&strct, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+
-+		ofono_dbus_dict_append(&dict, "Technology",
-+					DBUS_TYPE_STRING, &tech);
-+		ofono_dbus_dict_append(&dict, "MobileCountryCode",
-+					DBUS_TYPE_UINT16, &cell->mcc);
-+		ofono_dbus_dict_append(&dict, "MobileNetworkCode",
-+					DBUS_TYPE_UINT16, &cell->mnc);
-+		ofono_dbus_dict_append(&dict, "CellId",
-+					DBUS_TYPE_UINT16, &cell->cell_id);
-+
-+		switch (cell->cell_type) {
-+		case OFONO_NETMON_CELL_TYPE_GSM:
-+			ofono_dbus_dict_append(&dict,
-+					"Strength",
-+					DBUS_TYPE_UINT16,
-+					&cell->cell_meas.gsm.rssi);
-+			ofono_dbus_dict_append(&dict,
-+					"BitErrorRate",
-+					DBUS_TYPE_UINT16,
-+					&cell->cell_meas.gsm.ber);
++	while (g_at_result_iter_next(&iter, "+XMCI:")) {
++		if (!g_at_result_iter_next_number(&iter, &number))
 +			break;
 +
-+		case OFONO_NETMON_CELL_TYPE_UMTS:
-+			ofono_dbus_dict_append(&dict,
-+					"ReceivedSignalCodePower",
-+					DBUS_TYPE_UINT16,
-+					&cell->cell_meas.umts.rscp);
-+			ofono_dbus_dict_append(&dict,
-+					"ReceivedEnergyRatio",
-+					DBUS_TYPE_UINT16,
-+					&cell->cell_meas.umts.ecno);
-+			break;
++		tech =3D xmm7modem_map_radio_access_technology(number);
 +
-+		case OFONO_NETMON_CELL_TYPE_LTE:
-+			ofono_dbus_dict_append(&dict,
-+					"ReferenceSignalReceivedQuality",
-+					DBUS_TYPE_UINT16,
-+					&cell->cell_meas.lte.rsrq);
-+			ofono_dbus_dict_append(&dict,
-+					"ReferenceSignalReceivedPower",
-+					DBUS_TYPE_UINT16,
-+					&cell->cell_meas.lte.rsrp);
++		switch (number) {
++		case XMCI_GSM_NEIGH_CELL:
++			/* skip <MCC>,<MNC>,<LAC>,<CI>,<BSIC> */
++			g_at_result_iter_next_number(&iter, &mcc);
++			g_at_result_iter_next_number(&iter, &mnc);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_next_number(&iter, &ci);
++			g_at_result_iter_skip_next(&iter);
++
++			g_at_result_iter_next_number(&iter, &number);
++			rxlev =3D number !=3D 99 ? number : rxlev;
++
++			g_at_result_iter_next_number(&iter, &number);
++			ber =3D number !=3D 99 ? number : ber;
++
++			cell =3D g_new0(struct ofono_netmon_neighbouring_cell,
++					1);
++			cell->cell_type =3D tech;
++			cell->mcc =3D mcc;
++			cell->mnc =3D mnc;
++			cell->cell_id =3D ci;
++			cell->cell_meas.gsm.rssi =3D rxlev;
++			cell->cell_meas.gsm.ber =3D ber;
++
++			list =3D g_list_append(list, cell);
++			break;
++		case XMCI_UMTS_NEIGH_CELL:
++			/*
++			 * skip <MCC>,<MNC>,<LAC>,<CI><PSC>,<DLUARFNC>,
++			 * <ULUARFCN>,<PATHLOSS>,<RSSI>
++			 */
++			g_at_result_iter_next_number(&iter, &mcc);
++			g_at_result_iter_next_number(&iter, &mnc);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_next_number(&iter, &ci);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++
++			g_at_result_iter_next_number(&iter, &number);
++			rscp =3D number !=3D 255 ? number : rscp;
++
++			g_at_result_iter_next_number(&iter, &number);
++			ecn0 =3D number !=3D 255 ? number : ecn0;
++
++			cell =3D g_new0(struct ofono_netmon_neighbouring_cell,
++					1);
++			cell->cell_type =3D tech;
++			cell->mcc =3D mcc;
++			cell->mnc =3D mnc;
++			cell->cell_id =3D ci;
++			cell->cell_meas.umts.rscp =3D rscp;
++			cell->cell_meas.umts.ecno =3D ecn0;
++
++			list =3D g_list_append(list, cell);
++			break;
++		case XMCI_LTE_NEIGH_CELL:
++			/*
++			 * skip <MCC>,<MNC>,<TAC>,<CI>,<PCI>,<DLUARFNC>,
++			 * <ULUARFCN>,<PATHLOSS_LTE>
++			 */
++			g_at_result_iter_next_number(&iter, &mcc);
++			g_at_result_iter_next_number(&iter, &mnc);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_next_number(&iter, &ci);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++			g_at_result_iter_skip_next(&iter);
++
++			g_at_result_iter_next_number(&iter, &number);
++			rsrq =3D number !=3D 255 ? number : rsrq;
++
++			g_at_result_iter_next_number(&iter, &number);
++			rsrp =3D number !=3D 255 ? number : rsrp;
++
++			cell =3D g_new0(struct ofono_netmon_neighbouring_cell,
++					1);
++			cell->cell_type =3D tech;
++			cell->mcc =3D mcc;
++			cell->mnc =3D mnc;
++			cell->cell_id =3D ci;
++			cell->cell_meas.lte.rsrq =3D rsrq;
++			cell->cell_meas.lte.rsrp =3D rsrp;
++
++			list =3D g_list_append(list, cell);
++			break;
++		default:
 +			break;
 +		}
-+
-+		dbus_message_iter_close_container(&strct, &dict);
-+		dbus_message_iter_close_container(&arr, &strct);
 +	}
 +
-+	dbus_message_iter_close_container(&iter, &arr);
++	list_size =3D g_list_length(list);
++
++	if(list_size)
++		ofono_netmon_neighbouring_cell_notify(netmon, list);
++
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	g_list_free(list);
 +}
 +
-+static void neighbouring_cell_info_callback(const struct ofono_error *erro=
-r,
-+		void *data)
++static void xmm7modem_neighbouring_cell_update(struct ofono_netmon *netmon,
++					ofono_netmon_cb_t cb, void *data)
 +{
-+	struct ofono_netmon *netmon =3D data;
-+	DBusMessage *reply =3D netmon->reply;
++	struct netmon_driver_data *nmd =3D ofono_netmon_get_data(netmon);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
 +
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		if (reply)
-+			dbus_message_unref(reply);
++	DBG("xmm7modem netmon request neighbouring cell update");
 +
-+		reply =3D __ofono_error_failed(netmon->pending);
-+        } else if (!reply) {
-+		DBusMessageIter iter;
-+		DBusMessageIter dict;
++	if (g_at_chat_send(nmd->chat, "AT+XMCI=3D0", xmci_prefix,
++			xmci_neighbouring_cell_cb, cbd, g_free) > 0)
++		return;
 +
-+		reply =3D dbus_message_new_method_return(netmon->pending);
-+		dbus_message_iter_init_append(reply, &iter);
-+		dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+		dbus_message_iter_close_container(&iter, &dict);
-+	}
-+
-+	netmon->reply =3D NULL;
-+	__ofono_dbus_pending_reply(&netmon->pending, reply);
++	g_free(cbd);
++	CALLBACK_WITH_FAILURE(cb, data);
 +}
 +
-+static DBusMessage *netmon_get_neighbouring_cell_info(DBusConnection *conn,
-+			DBusMessage *msg, void *data)
-+{
-+	struct ofono_netmon *netmon =3D data;
-+
-+	if (!netmon->driver->neighbouring_cell_update)
-+		return __ofono_error_not_implemented(msg);
-+
-+	if (netmon->pending)
-+		return __ofono_error_busy(msg);
-+
-+	netmon->pending =3D dbus_message_ref(msg);
-+
-+	netmon->driver->neighbouring_cell_update(netmon,
-+				neighbouring_cell_info_callback, netmon);
-+
-+	return NULL;
-+}
-+
- static const GDBusMethodTable netmon_methods[] =3D {
- 	{ GDBUS_ASYNC_METHOD("GetServingCellInformation",
- 			NULL, GDBUS_ARGS({ "cellinfo", "a{sv}" }),
-@@ -413,6 +546,9 @@ static const GDBusMethodTable netmon_methods[] =3D {
- 	{ GDBUS_METHOD("UnregisterAgent",
- 			GDBUS_ARGS({ "agent", "o" }), NULL,
- 			netmon_unregister_agent) },
-+	{ GDBUS_ASYNC_METHOD("GetNeighbouringCellInformation",
-+			NULL, GDBUS_ARGS({ "cellinfo", "a(a{sv})" }),
-+			netmon_get_neighbouring_cell_info) },
- 	{ }
+ static gboolean ril_delayed_register(gpointer user_data)
+ {
+ 	struct ofono_netmon *netmon =3D user_data;
+@@ -250,6 +409,7 @@ static const struct ofono_netmon_driver driver =3D {
+ 	.probe			=3D xmm7modem_netmon_probe,
+ 	.remove			=3D xmm7modem_netmon_remove,
+ 	.request_update		=3D xmm7modem_netmon_request_update,
++	.neighbouring_cell_update =3D xmm7modem_neighbouring_cell_update,
  };
  =
 
+ void xmm_netmon_init(void)
 -- =
 
 1.9.1
 
 
---===============3278379200468907221==--
+--===============1673427833712034478==--
 
