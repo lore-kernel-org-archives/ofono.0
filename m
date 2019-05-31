@@ -1,59 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============3478665500962062125=="
+Content-Type: multipart/mixed; boundary="===============0635717897999156086=="
 MIME-Version: 1.0
 From: Philippe De Swert <philippedeswert@gmail.com>
-Subject: Re: [PATCH] ppp: Allow to set-up ppp connection without
- authentification
-Date: Fri, 31 May 2019 12:51:00 +0300
-Message-ID: <CAPsFW+Ty+qJwOZp+GSjbwxrW1eU_UfDsNtOGQNdxk-v=bywjgg@mail.gmail.com>
-In-Reply-To: <ca4656c1-5506-93bd-26da-5c497d6c1970@gmail.com>
+Subject: [PATCH 0/4] RFC2: ublox serial modem support
+Date: Fri, 31 May 2019 14:44:17 +0300
+Message-ID: <20190531114421.21092-1-philippe.deswert@digitalistgroup.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3478665500962062125==
+--===============0635717897999156086==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hei Denis,
+After the comments on the last patchset, as requested I tried to take
+the approach where the serial support is merged into the existing ublox dri=
+ver.
 
-On 30/05/2019, Denis Kenzior <denkenz@gmail.com> wrote:
->> --- a/gatchat/ppp_lcp.c
->> +++ b/gatchat/ppp_lcp.c
->> @@ -281,7 +281,7 @@ static enum rcr_result lcp_rcr(struct pppcp_data
->> *pppcp,
->>   				return RCR_NAK;
->>
->>   			case G_AT_PPP_AUTH_METHOD_NONE:
->> -				return RCR_REJECT;
->> +				break;
->
-> What this in effect does is ignore whatever setting we told GAtPPP to
-> use and uses the one from the server.  You're effectively doing what I
-> suggested in
-> https://lists.ofono.org/pipermail/ofono/2019-January/019074.html but in
-> a "lets hack this until it works for me" kind of way.
+Some notes/caveats:
+1. Not sure if filtering on device path is the right approach to identify a=
+ serial modem
+2. This will not really work unless we fix the CEREG/CREG mess
+3. There is still the CHAP NO_AUTH ppp issue also
+4. There is an issue with missing support for AT+CGDATA for SARA ublox mode=
+ms. Did not =
 
-Sorry I missed that comment. Will need to dig a bit to understand what
-you mean. I just wanted to revive this as probably many people could
-potentially be running into this issue and discussion just stopped
-earlier.
+   find a better way than mandate atd99 for all ublox modems based on vendo=
+r. Maybe there
+   is a cleaner/better way?
 
-> Essentially it seems that your firmware blindly negotiates CHAP even
-> though it has no intention of actually using it.  So just tell GAtPPP
-> that it should configure itself for CHAP and be done with it instead of
-> trying to set G_AT_PPP_AUTH_METHOD_NONE.
->
-> Maybe we should just revert that patch completely instead and force PPP
-> based drivers to always use CHAP even if no authentication is
-> configured, the way it used to be.
->
 
-Might be an option too, anyway the important thing is that this gets
-fixed. I'll dig into it again a bit when I have time.
+Philippe De Swert (4):
+  ubloxmodem: pre-eliminary support for ublox SARA serial modems
+  plugins/ublox: Enable serial connection for an ublox modem
+  udev: Recognize ublox serial modems
+  atmodem: Use atd99 as ppp command for ublox
 
-Cheers,
+ drivers/atmodem/gprs-context.c  | 11 ++++---
+ drivers/ubloxmodem/lte.c        |  9 ++++++
+ drivers/ubloxmodem/netmon.c     |  2 ++
+ drivers/ubloxmodem/ubloxmodem.c | 14 +++++++++
+ drivers/ubloxmodem/ubloxmodem.h |  2 ++
+ plugins/ublox.c                 | 55 ++++++++++++++++++++++++++++++++-
+ plugins/udevng.c                |  7 +++++
+ 7 files changed, 95 insertions(+), 5 deletions(-)
 
-Philippe
+-- =
 
---===============3478665500962062125==--
+2.20.1
+
+
+--===============0635717897999156086==--
 
