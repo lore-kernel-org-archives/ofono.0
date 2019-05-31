@@ -1,102 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============5889193527017245383=="
+Content-Type: multipart/mixed; boundary="===============7213818571560481460=="
 MIME-Version: 1.0
 From: Philippe De Swert <philippedeswert@gmail.com>
-Subject: [PATCH 2/4] plugins/ublox: Enable serial connection for an ublox modem
-Date: Fri, 31 May 2019 14:44:19 +0300
-Message-ID: <20190531114421.21092-3-philippe.deswert@digitalistgroup.com>
+Subject: [PATCH 3/4] udev: Recognize ublox serial modems
+Date: Fri, 31 May 2019 14:44:20 +0300
+Message-ID: <20190531114421.21092-4-philippe.deswert@digitalistgroup.com>
 In-Reply-To: <20190531114421.21092-1-philippe.deswert@digitalistgroup.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5889193527017245383==
+--===============7213818571560481460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Some ublox modems can be connected over a serial port. Add support
-for this connection method.
+Call the serial modem setup method for ublox modems that are
+connected to a serial port instead of USB.
 ---
- plugins/ublox.c | 55 ++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 54 insertions(+), 1 deletion(-)
+ plugins/udevng.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 1ca0030a..a2ed8133 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -129,6 +129,59 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 	return chat;
- }
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 4b420dc0..0d475da0 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1063,8 +1063,15 @@ static gboolean setup_ublox(struct modem_info *modem)
+ 	const char *aux =3D NULL, *mdm =3D NULL, *net =3D NULL;
+ 	GSList *list;
  =
 
-+static GAtChat *open_serial_device(struct ofono_modem *modem,
-+                                const char *key, char *debug)
-+{
-+	DBG(" open_serial_device %p", modem);
 +
-+        const char *device;
-+        GAtSyntax *syntax;
-+        GIOChannel *channel;
-+        GAtChat *chat;
-+        GHashTable *options;
+ 	DBG("%s", modem->syspath);
+ =
+
++	if(strstr(modem->syspath, "serial"))
++	{
++		setup_serial_modem(modem);
++		return TRUE;
++	}
 +
-+        device =3D ofono_modem_get_string(modem, key);
-+        if (device =3D=3D NULL)
-+        {
-+                DBG("device =3D NULL");
-+                return NULL;
-+        }
-+        DBG("%s %s", key, device);
-+
-+        options =3D g_hash_table_new(g_str_hash, g_str_equal);
-+        if (options =3D=3D NULL)
-+                return NULL;
-+
-+        g_hash_table_insert(options, "Baud", "115200");
-+        g_hash_table_insert(options, "Parity", "none");
-+        g_hash_table_insert(options, "StopBits", "1");
-+        g_hash_table_insert(options, "DataBits", "8");
-+        g_hash_table_insert(options, "XonXoff", "on");
-+        g_hash_table_insert(options, "Local", "on");
-+        g_hash_table_insert(options, "RtsCts", "off");
-+        g_hash_table_insert(options, "Read", "on");
-+
-+        channel =3D g_at_tty_open(device, options);
-+        g_hash_table_destroy(options);
-+
-+        if (channel =3D=3D NULL)
-+                return NULL;
-+
-+        syntax =3D g_at_syntax_new_gsm_permissive();
-+        chat =3D g_at_chat_new(channel, syntax);
-+        g_at_syntax_unref(syntax);
-+
-+        g_io_channel_unref(channel);
-+
-+        if (chat =3D=3D NULL)
-+                return NULL;
-+
-+        if (getenv("OFONO_AT_DEBUG"))
-+                g_at_chat_set_debug(chat, ublox_debug, debug);
-+
-+        return chat;
-+}
-+
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -261,7 +314,7 @@ static int ublox_enable(struct ofono_modem *modem)
- 	 * the 'Device' attribute instead...
- 	 */
- 	if (data->aux =3D=3D NULL) {
--		data->aux =3D open_device(modem, "Device", "Aux: ");
-+		data->aux =3D open_serial_device(modem, "Device", "Aux: ");
- 		if (data->aux =3D=3D NULL)
- 			return -EINVAL;
- 	}
+ 	for (list =3D modem->devices; list; list =3D list->next) {
+ 		struct device_info *info =3D list->data;
+ =
+
 -- =
 
 2.20.1
 
 
---===============5889193527017245383==--
+--===============7213818571560481460==--
 
