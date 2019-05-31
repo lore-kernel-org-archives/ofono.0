@@ -1,79 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============4009054166388184504=="
+Content-Type: multipart/mixed; boundary="===============1724921495114070551=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ppp: Allow to set-up ppp connection without
- authentification
-Date: Thu, 30 May 2019 11:55:33 -0500
-Message-ID: <ca4656c1-5506-93bd-26da-5c497d6c1970@gmail.com>
-In-Reply-To: <20190530162628.30041-1-philippe.deswert@digitalistgroup.com>
+From: Borwankar, Antara <antara.borwankar@intel.com>
+Subject: RE: [PATCH 2/2] xmm7modem: enabling simtoolkit for xmm7modem
+Date: Fri, 31 May 2019 05:25:07 +0000
+Message-ID: <9BCC1739A7EADA4790E1FFF4123FB3268BB0FC01@BGSMSX101.gar.corp.intel.com>
+In-Reply-To: <1d974e87-77c3-7361-31b9-462fbc48e607@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4009054166388184504==
+--===============1724921495114070551==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Denis,
 
-On 05/30/2019 11:26 AM, Philippe De Swert wrote:
-> When using RCR_REJECT no ppp connection will be established. It used to w=
-ork before, and
-> this was a side-effect of commit 6fc119d9eaee5f9cc37a5a7198d1c55ef98fd645
-> =
+Xmm modem send proactive command for set up menu only at sim initialization=
+, also depending upon if stk is enabled. So before sim initialization we ha=
+ve to make sure the stk is enabled otherwise proactive command is missed.
 
-> See also this thread: https://lists.ofono.org/pipermail/ofono/2019-Januar=
-y/019067.html
+Regards
+Antara
+
+-----Original Message-----
+From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
+
+Sent: Thursday, May 30, 2019 9:37 PM
+To: Borwankar, Antara <antara.borwankar@intel.com>; ofono(a)ofono.org
+Subject: Re: [PATCH 2/2] xmm7modem: enabling simtoolkit for xmm7modem
+
+Hi Antara,
+
+On 05/30/2019 04:25 AM, Antara Borwankar wrote:
+> added code to create stk atom in xmm7modem plugin
 > ---
->   gatchat/ppp_lcp.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>   plugins/xmm7xxx.c | 1 +
+>   1 file changed, 1 insertion(+)
 > =
 
-> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-> index 3fe38217..252b3cdc 100644
-> --- a/gatchat/ppp_lcp.c
-> +++ b/gatchat/ppp_lcp.c
-> @@ -281,7 +281,7 @@ static enum rcr_result lcp_rcr(struct pppcp_data *ppp=
-cp,
->   				return RCR_NAK;
+> diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c index =
+
+> 23a7d4e..da6622b 100644
+> --- a/plugins/xmm7xxx.c
+> +++ b/plugins/xmm7xxx.c
+> @@ -1225,6 +1225,7 @@ static void xmm7xxx_pre_sim(struct ofono_modem *mod=
+em)
+>   	ofono_devinfo_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
+>   	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_XMM, "atmodem",
+>   					data->chat);
+> +	ofono_stk_create(modem, OFONO_VENDOR_XMM, "atmodem", data->chat);
+
+Why pre_sim?  Generally the SIM needs to be initialized before any part of =
+STK makes sense...  Also, that atom isn't really setup to be used when no S=
+IM is inserted for example.
+
+>   }
 >   =
 
->   			case G_AT_PPP_AUTH_METHOD_NONE:
-> -				return RCR_REJECT;
-> +				break;
+>   static void set_online_cb(gboolean ok, GAtResult *result, gpointer =
 
-What this in effect does is ignore whatever setting we told GAtPPP to =
-
-use and uses the one from the server.  You're effectively doing what I =
-
-suggested in =
-
-https://lists.ofono.org/pipermail/ofono/2019-January/019074.html but in =
-
-a "lets hack this until it works for me" kind of way.
-
-Essentially it seems that your firmware blindly negotiates CHAP even =
-
-though it has no intention of actually using it.  So just tell GAtPPP =
-
-that it should configure itself for CHAP and be done with it instead of =
-
-trying to set G_AT_PPP_AUTH_METHOD_NONE.
-
-Maybe we should just revert that patch completely instead and force PPP =
-
-based drivers to always use CHAP even if no authentication is =
-
-configured, the way it used to be.
-
->   			}
->   			break;
->   		}
+> user_data)
 > =
 
 
 Regards,
 -Denis
 
---===============4009054166388184504==--
+--===============1724921495114070551==--
 
