@@ -1,88 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============6681362454765708548=="
+Content-Type: multipart/mixed; boundary="===============1498326646621353690=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] plugins/ublox: Enable serial connection for an ublox
- modem
-Date: Wed, 05 Jun 2019 09:55:45 -0500
-Message-ID: <4544b439-20af-faf3-5f74-52d2172b2a37@gmail.com>
-In-Reply-To: <CAPsFW+SSg_1W84S2P-0krYNbqAkDkeRT3WmvQ=g39X=RN8wu3Q@mail.gmail.com>
+Subject: Re: [PATCH v3] qmimodem: support wake on SMS receive
+Date: Wed, 05 Jun 2019 10:09:55 -0500
+Message-ID: <6b881449-6cfc-c951-f8ce-06e94cb4674c@gmail.com>
+In-Reply-To: <1507338948.2591.1559746007437@wamui-aurora.atl.sa.earthlink.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6681362454765708548==
+--===============1498326646621353690==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Tom,
 
-On 06/05/2019 07:37 AM, Philippe De Swert wrote:
-> Hi Denis,
-> =
-
-> On 31/05/2019, Denis Kenzior <denkenz@gmail.com> wrote:
->> Hi Philippe,
+>>> Also, it may be clearer if the introduction of raw_read and the
+>>> refactoring of this function are done as a separate commit.
+>>>
 >>
->> Your indentation and coding style is all wrong here.
-> =
+>> Hmm, looking at the "Quectel EC21" comment again, looks like the origina=
+l code was done to address a quirk (ie, bug???) with that modem. I'll rever=
+t to reading both.
 
-> Well it was an RFC as in my cover letter I explained there were many
-> open issues I wondered about. Will clean it up when that  is clear
-> ofc.
+Jonas was the one who introduced that, so he would be the one to ask :)
 
-We (like other major projects, which are even more so) are very =
-
-particular about coding style.  And it is good form (and to your =
-
-advantage) to have your submissions follow that, regardless of whether =
-
-they're RFC or not.
-
-> =
-
->>>    static void cfun_enable(gboolean ok, GAtResult *result, gpointer
->>> user_data)
->>>    {
->>>    	struct ofono_modem *modem =3D user_data;
->>> @@ -261,7 +314,7 @@ static int ublox_enable(struct ofono_modem *modem)
->>>    	 * the 'Device' attribute instead...
->>>    	 */
->>>    	if (data->aux =3D=3D NULL) {
->>> -		data->aux =3D open_device(modem, "Device", "Aux: ");
->>> +		data->aux =3D open_serial_device(modem, "Device", "Aux: ");
 >>
->> Tell me how you're driving a serial device without setting up a
->> multiplexer.
+>> But, per spec, the 2 message TLVs are mutually exclusive, depending on t=
+he route action configuration. I'm referring to setting "new_list->route[0]=
+.action =3D" in get_routes_cb(). So, we shouldn't need to always read both =
+since one is guaranteed to fail.
+>>
+>> Also, the original code, if somehow both "notify" and "message" are NULL=
+, it'll erroneously use a null notify. I'll address this in the revert.
 >>
 > =
 
-> Seems to work fine. Trying to set up a mux freezes the modem so... it
-> could however be I have misunderstood something though.
-> =
+> On 2nd thought, my change is still ok per that "Quectel EC21" comment. I'=
+ll keep my changes and add =
 
 
-'Seems to work' isn't the right answer :)  In short: you need a =
+Yes, it looked like it would work even for the quirky ec21, but I don't =
 
-multiplexer for a serial device with a single tty.
+have enough context to say for sure.  Nor do I have a EC21 to test
 
-The reason for that is that once you enter data mode (PPP or whatever) =
+comment to explain the 2 TLV that are being queried. Also, I introduced =
 
-on your serial port, all other AT command communication with the modem =
+raw_read because I need to pull QMI_WMS_RAW_READ out of event_notify to =
 
-stops.  So you are not sending SMSs, receiving signal strength updates, etc.
+service both event_notify and the message list. So, I'd like to keep =
 
-So unless I'm missing something, the first step for you is to figure out =
+this in the same commit.
 
-how to get the multiplexer going first.  Since you intend to use PPP, =
+Yes exactly my point.  You can have the first commit simply perform the =
 
-there has to be at least two logical AT command ports for the device to =
+'pull QMI_WMS_RAW_READ out of event_notify' transformation, which is =
 
-be useful (one for PPP and one for AT commands).  More if you want to =
+more or less self-contained.  And then the second commit would use that =
 
-support multiple context activations, though with PPP that is unlikely.
+new utility function in your message list code.
+
+Smaller commits are easier to review.  When I mentor new contributors I =
+
+always encourage them to split up their code as much as possible.  In =
+
+this particular instance I won't insist too hard since it is likely fine =
+
+either way :)
 
 Regards,
 -Denis
 
---===============6681362454765708548==--
+--===============1498326646621353690==--
 
