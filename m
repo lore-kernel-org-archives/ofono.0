@@ -1,61 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5046730292121850201=="
+Content-Type: multipart/mixed; boundary="===============4555016286167589950=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4] qmimodem: change msg class none to store/notify
-Date: Wed, 05 Jun 2019 14:55:37 -0500
-Message-ID: <1d808d21-4c97-d2d6-f348-78da73a2ea5f@gmail.com>
-In-Reply-To: <1530553207.4266.1559751983478@wamui-aurora.atl.sa.earthlink.net>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH 1/3] netmon: adding get function for neighbouring cell
+ information
+Date: Thu, 06 Jun 2019 14:32:08 +0530
+Message-ID: <1559811728-31583-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5046730292121850201==
+--===============4555016286167589950==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tom,
+Added declaration of functions and structures required for getting
+neighbouring cell information.
+---
+ include/netmon.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-On 06/05/2019 11:26 AM, Tom Nguyen wrote:
-> Change message class none configuration from directly delivering a new
-> message in the event indication to storing it in the modem's NV then
-> sending an event indication identifying the new message. Also, add
-> checking for stored, unread messages at boot up.
-> =
+diff --git a/include/netmon.h b/include/netmon.h
+index c8fcafa..a99d6ca 100644
+--- a/include/netmon.h
++++ b/include/netmon.h
+@@ -43,6 +43,8 @@ struct ofono_netmon_driver {
+ 					unsigned int enable,
+ 					unsigned int period,
+ 					ofono_netmon_cb_t cb, void *data);
++	void (*neighbouring_cell_update)(struct ofono_netmon *netmon,
++					ofono_netmon_cb_t cb, void *data);
+ };
+ =
 
-> This fixes a scenario where the modem powers on, automatically
-> connects to the network, receives a message, and sends an indication
-> before oFono has fully initialized. Now, the message is saved and
-> retrieved after initialization.
-> =
+ enum ofono_netmon_cell_type {
+@@ -104,6 +106,10 @@ void ofono_netmon_set_data(struct ofono_netmon *netmon=
+, void *data);
+ =
 
-> This also helps with suspend/resume on platforms where the modem,
-> supports waking the host CPU upon SMS reception. And, the platform
-> design limitation is that the modem's interfaces (eg, cdc-wdm, wwan,
-> etc) disconnect on suspend and reconnect on resume. This causes oFono
-> to re-initialize and miss the message indication because it was sent
-> before oFono is ready. Now, the wake up message is saved and retrieved
-> after initialization.
-> ---
->   drivers/qmimodem/sms.c | 367 ++++++++++++++++++++++++++++++++++++++++++=
--------
->   drivers/qmimodem/wms.h |  77 ++++++++---
->   2 files changed, 376 insertions(+), 68 deletions(-)
-> =
+ void *ofono_netmon_get_data(struct ofono_netmon *netmon);
+ =
 
++void ofono_netmon_neighbouring_cell_notify(struct ofono_netmon *netmon,
++					enum ofono_netmon_cell_type type,
++					int info_type, ...);
++
+ #ifdef __cplusplus
+ }
+ #endif
+-- =
 
-Went ahead and applied.  I did have:
-drivers/qmimodem/sms.c: In function =E2=80=98get_msg_list_cb=E2=80=99:
-drivers/qmimodem/sms.c:483:20: error: unused variable =E2=80=98param=E2=80=
-=99 =
-
-[-Werror=3Dunused-variable]
-   struct qmi_param *param;
+1.9.1
 
 
-So I amended the commit to squash that.
-
-Regards,
--Denis
-
---===============5046730292121850201==--
+--===============4555016286167589950==--
 
