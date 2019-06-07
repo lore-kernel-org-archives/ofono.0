@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8325749496448013998=="
+Content-Type: multipart/mixed; boundary="===============3182952387039791907=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH] netmon: adding get functionality for neighbouring cell
+Subject: [PATCH 2/3] netmon: adding get functionality for neighbouring cell
  information
-Date: Fri, 07 Jun 2019 11:17:29 +0530
-Message-ID: <1559886449-5853-1-git-send-email-antara.borwankar@intel.com>
+Date: Fri, 07 Jun 2019 11:17:52 +0530
+Message-ID: <1559886472-5903-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8325749496448013998==
+--===============3182952387039791907==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,12 +16,12 @@ Content-Transfer-Encoding: quoted-printable
 Handled the get neighbouring cell information function which returns
 an array of signal strength of all neighbouring cells.
 ---
- src/netmon.c | 258 +++++++++++++++++++++++++++++++++++++++++++------------=
+ src/netmon.c | 253 +++++++++++++++++++++++++++++++++++++++++++------------=
 ----
- 1 file changed, 188 insertions(+), 70 deletions(-)
+ 1 file changed, 184 insertions(+), 69 deletions(-)
 
 diff --git a/src/netmon.c b/src/netmon.c
-index 6c19df5..4596450 100644
+index 6c19df5..f383911 100644
 --- a/src/netmon.c
 +++ b/src/netmon.c
 @@ -50,6 +50,8 @@ struct ofono_netmon {
@@ -33,7 +33,7 @@ index 6c19df5..4596450 100644
  	void *driver_data;
  	struct ofono_atom *atom;
  	struct netmon_agent *agent;
-@@ -69,174 +71,148 @@ static const char *cell_type_to_tech_name(enum ofono_=
+@@ -69,174 +71,145 @@ static const char *cell_type_to_tech_name(enum ofono_=
 netmon_cell_type type)
  	return NULL;
  }
@@ -53,7 +53,6 @@ netmon_cell_type type)
 -	const char *technology =3D cell_type_to_tech_name(type);
  	char *mcc;
  	char *mnc;
-+	char *cell_id;
  	int intval;
 -
 -	if (netmon->pending !=3D NULL) {
@@ -122,15 +121,12 @@ netmon_cell_type type)
 
  		case OFONO_NETMON_INFO_CI:
 -			intval =3D va_arg(arglist, int);
-+			cell_id =3D va_arg(*arglist, char *);
++			intval =3D va_arg(*arglist, int);
  =
 
 -			CELL_INFO_DICT_APPEND(&dict, "CellId",
--					intval, uint32_t, DBUS_TYPE_UINT32);
-+			if (cell_id && strlen(cell_id))
-+					ofono_dbus_dict_append(dict,
-+					"CellId",
-+					DBUS_TYPE_STRING, &cell_id);
++			CELL_INFO_DICT_APPEND(dict, "CellId",
+ 					intval, uint32_t, DBUS_TYPE_UINT32);
  			break;
  =
 
@@ -290,7 +286,7 @@ netmon_cell_type type)
  			break;
  =
 
-@@ -244,8 +220,44 @@ void ofono_netmon_serving_cell_notify(struct ofono_net=
+@@ -244,8 +217,44 @@ void ofono_netmon_serving_cell_notify(struct ofono_net=
 mon *netmon,
  			break;
  		}
@@ -339,7 +335,7 @@ mon *netmon,
 
  done:
  	va_end(arglist);
-@@ -403,6 +415,109 @@ static DBusMessage *netmon_unregister_agent(DBusConne=
+@@ -403,6 +412,109 @@ static DBusMessage *netmon_unregister_agent(DBusConne=
 ction *conn,
  	return dbus_message_new_method_return(msg);
  }
@@ -452,7 +448,7 @@ r,
  static const GDBusMethodTable netmon_methods[] =3D {
  	{ GDBUS_ASYNC_METHOD("GetServingCellInformation",
  			NULL, GDBUS_ARGS({ "cellinfo", "a{sv}" }),
-@@ -413,6 +528,9 @@ static const GDBusMethodTable netmon_methods[] =3D {
+@@ -413,6 +525,9 @@ static const GDBusMethodTable netmon_methods[] =3D {
  	{ GDBUS_METHOD("UnregisterAgent",
  			GDBUS_ARGS({ "agent", "o" }), NULL,
  			netmon_unregister_agent) },
@@ -468,5 +464,5 @@ r,
 1.9.1
 
 
---===============8325749496448013998==--
+--===============3182952387039791907==--
 
