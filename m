@@ -1,64 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3933582238043931276=="
+Content-Type: multipart/mixed; boundary="===============8258311563477550498=="
 MIME-Version: 1.0
-From: Borwankar, Antara <antara.borwankar@intel.com>
-Subject: RE: [PATCH 2/2] xmm7modem: enabling simtoolkit for xmm7modem
-Date: Fri, 07 Jun 2019 06:15:24 +0000
-Message-ID: <9BCC1739A7EADA4790E1FFF4123FB3268BB1DF1B@BGSMSX101.gar.corp.intel.com>
-In-Reply-To: <b2b58870-7577-37a0-0d9b-f64e559d7280@gmail.com>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH 1/3] netmon: adding get function for neighbouring cell
+ information
+Date: Fri, 07 Jun 2019 11:56:55 +0530
+Message-ID: <1559888815-6348-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3933582238043931276==
+--===============8258311563477550498==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Added declaration of functions and structures required for getting
+neighbouring cell information.
+---
+ include/netmon.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-xmm needs a sim reset after enabling stk otherwise proactive command for se=
-t up menu is not received. =
+diff --git a/include/netmon.h b/include/netmon.h
+index c8fcafa..a99d6ca 100644
+--- a/include/netmon.h
++++ b/include/netmon.h
+@@ -43,6 +43,8 @@ struct ofono_netmon_driver {
+ 					unsigned int enable,
+ 					unsigned int period,
+ 					ofono_netmon_cb_t cb, void *data);
++	void (*neighbouring_cell_update)(struct ofono_netmon *netmon,
++					ofono_netmon_cb_t cb, void *data);
+ };
+ =
+
+ enum ofono_netmon_cell_type {
+@@ -104,6 +106,10 @@ void ofono_netmon_set_data(struct ofono_netmon *netmon=
+, void *data);
+ =
+
+ void *ofono_netmon_get_data(struct ofono_netmon *netmon);
+ =
+
++void ofono_netmon_neighbouring_cell_notify(struct ofono_netmon *netmon,
++					enum ofono_netmon_cell_type type,
++					int info_type, ...);
++
+ #ifdef __cplusplus
+ }
+ #endif
+-- =
+
+1.9.1
 
 
-When I put ofono_stk_create in post sim, on performing sim reset the contro=
-l went into infinite loop of pre_sim and post_sim function calls.
-
-Regards
-Antara
-
------Original Message-----
-From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
-
-Sent: Friday, May 31, 2019 8:52 PM
-To: Borwankar, Antara <antara.borwankar@intel.com>; ofono(a)ofono.org
-Subject: Re: [PATCH 2/2] xmm7modem: enabling simtoolkit for xmm7modem
-
-Hi Antara,
-
-On 05/31/2019 12:25 AM, Borwankar, Antara wrote:
-> Hi Denis,
-> =
-
-> Xmm modem send proactive command for set up menu only at sim initializati=
-on, also depending upon if stk is enabled. So before sim initialization we =
-have to make sure the stk is enabled otherwise proactive command is missed.
-> =
-
-
-Yes, I get that STK is initialized right after SIM is unlocked/initialized.=
-  That is just the nature of usat is done and every modem works about the s=
-ame way.  I'm just warning you that stk was never meant to work in pre_sim.=
-  It was only pre-certified with a 6160 in post_sim; so you run the risk of=
- causing issues elsewhere.
-
-In the end it is your driver, so I can take the patch if you insist, but I =
-really would recommend you solve this properly.
-
-Every modem we had in the past had no issue with stk being in post_sim.
-Maybe you want to provide an AT trace showing why STK needs to be in pre_si=
-m?
-
-Regards,
--Denis
-
---===============3933582238043931276==--
+--===============8258311563477550498==--
 
