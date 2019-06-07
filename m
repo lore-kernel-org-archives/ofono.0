@@ -1,39 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5009077932314568818=="
+Content-Type: multipart/mixed; boundary="===============4652096185525441833=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] netmon: adding get functionality for neighbouring cell
+Subject: Re: [PATCH 1/3] netmon: adding get function for neighbouring cell
  information
-Date: Fri, 07 Jun 2019 11:18:16 -0500
-Message-ID: <82316e4a-0421-edd6-14a7-218421de0d72@gmail.com>
-In-Reply-To: <9BCC1739A7EADA4790E1FFF4123FB3268BB1CEC5@BGSMSX101.gar.corp.intel.com>
+Date: Fri, 07 Jun 2019 11:37:01 -0500
+Message-ID: <efec8c47-feac-1304-8800-d40176dc835a@gmail.com>
+In-Reply-To: <1559888815-6348-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5009077932314568818==
+--===============4652096185525441833==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Antara,
 
-On 06/07/2019 12:48 AM, Borwankar, Antara wrote:
-> Hi Denis,
+On 06/07/2019 01:26 AM, Antara Borwankar wrote:
+> Added declaration of functions and structures required for getting
+> neighbouring cell information.
+> ---
+>   include/netmon.h | 6 ++++++
+>   1 file changed, 6 insertions(+)
 > =
 
-> Actually right now xmm modem is returning "0xFFFFFFFF" for most of the ce=
-ll id for neighbouring cells.
-> I am following this issue with my modem team.
-> I had changed it not realising netmon is being used by ril modem also. I =
-have changed it back to UINT32.
 
-*Please* don't introduce such easter eggs in the future.  If you have a =
-
-reason to change the API, then lets discuss that in a separate commit =
-
-with a paper trail as to why you're doing that.
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============5009077932314568818==--
+
+--===============4652096185525441833==--
 
