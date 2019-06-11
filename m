@@ -1,78 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5277715762062971361=="
+Content-Type: multipart/mixed; boundary="===============3966846362361295628=="
 MIME-Version: 1.0
 From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH 1/2] xmm7modem: fix to activate context with cid zero
-Date: Tue, 11 Jun 2019 15:01:25 +0530
-Message-ID: <1560245485-18836-1-git-send-email-antara.borwankar@intel.com>
+Subject: [PATCH 2/2] xmm7modem: changed gprs driver vendor for xmm7modem
+Date: Tue, 11 Jun 2019 15:01:58 +0530
+Message-ID: <1560245518-18914-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5277715762062971361==
+--===============3966846362361295628==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-xmm7modem returns 0 as cid for default pdp context. Thus removing
-check for last_auto_context_id so that context actvation can be
-successful.
+Changed gprs driver vendor from "OFONO_VENDOR_IFX" to
+"OFONO_VENDOR_XMM" for xmm7modem specific behavior.
 ---
- drivers/atmodem/gprs.c | 18 ++++++++++++------
- 1 file changed, 12 insertions(+), 6 deletions(-)
+ plugins/xmm7xxx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index dd73458..d9192b3 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -161,9 +161,11 @@ static void at_cgdcont_read_cb(gboolean ok, GAtResult =
-*result,
- 		return;
- 	}
+diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
+index a544798..aade18f 100644
+--- a/plugins/xmm7xxx.c
++++ b/plugins/xmm7xxx.c
+@@ -1243,7 +1243,7 @@ static void xmm7xxx_post_online(struct ofono_modem *m=
+odem)
  =
 
--	if (gd->last_auto_context_id =3D=3D 0) {
--		DBG("Context got deactivated while calling CGDCONT");
--		return;
-+	if (gd->vendor !=3D OFONO_VENDOR_XMM) {
-+		if (gd->last_auto_context_id =3D=3D 0) {
-+			DBG("Context got deactivated while calling CGDCONT");
-+			return;
-+		}
- 	}
+ 	ofono_netreg_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
  =
 
- 	g_at_result_iter_init(&iter, result);
-@@ -259,9 +261,12 @@ static void cgev_notify(GAtResult *result, gpointer us=
-er_data)
- 	} else if (g_str_has_prefix(event, "ME PDN DEACT")) {
- 		unsigned int context_id;
- 		sscanf(event, "%*s %*s %*s %u", &context_id);
--		/* Indicate that this cid is not activated anymore */
--		if (gd->last_auto_context_id =3D=3D context_id)
--			gd->last_auto_context_id =3D 0;
-+
-+		if(gd->vendor !=3D OFONO_VENDOR_XMM) {
-+			/* Indicate that this cid is not activated anymore */
-+			if (gd->last_auto_context_id =3D=3D context_id)
-+				gd->last_auto_context_id =3D 0;
-+		}
- 	}
- }
+-	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_IFX, "atmodem",
++	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_XMM, "atmodem",
+ 					data->chat);
  =
 
-@@ -487,6 +492,7 @@ static void gprs_initialized(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- =
-
- 	switch (gd->vendor) {
- 	case OFONO_VENDOR_IFX:
-+	case OFONO_VENDOR_XMM:
- 		/* Register for GPRS suspend notifications */
- 		g_at_chat_register(gd->chat, "+XDATASTAT:", xdatastat_notify,
- 						FALSE, gprs, NULL);
+ 	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
 -- =
 
 1.9.1
 
 
---===============5277715762062971361==--
+--===============3966846362361295628==--
 
