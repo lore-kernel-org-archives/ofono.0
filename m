@@ -1,35 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8654555697114293525=="
+Content-Type: multipart/mixed; boundary="===============8095592160652029925=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] xmm7modem: fix to activate context with cid zero
-Date: Fri, 14 Jun 2019 11:44:01 -0500
-Message-ID: <ecdba5e5-ac5d-9e9b-53df-50dc4610270d@gmail.com>
-In-Reply-To: <1560504396-8891-1-git-send-email-antara.borwankar@intel.com>
+From: James Prestwood <james.prestwood@linux.intel.com>
+Subject: [PATCH 1/2] isimodem: gprs-context: properly null terminate
+ cd->password
+Date: Mon, 17 Jun 2019 14:38:04 -0400
+Message-ID: <20190617183805.32599-1-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8654555697114293525==
+--===============8095592160652029925==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+It looks like a previous line was copied and cd->username was re-terminated
+instead of password. This also fixes a compiler error when using GCC 9:
 
-On 06/14/2019 04:26 AM, Antara Borwankar wrote:
-> xmm7modem returns 0 as cid for default pdp context. Thus
-> initializing last_auto_context_id to -1 to indicate a deactivated
-> context.
-> ---
->   drivers/atmodem/gprs.c | 9 +++++----
->   1 file changed, 5 insertions(+), 4 deletions(-)
-> =
+In function =E2=80=98strncpy=E2=80=99,
+    inlined from =E2=80=98isi_gprs_activate_primary=E2=80=99 at drivers/isi=
+modem/gprs-context.c:546:3:
+/usr/include/bits/string_fortified.h:106:10: error: =E2=80=98__builtin_strn=
+cpy=E2=80=99 output may be truncated copying 53 bytes from a string of leng=
+th 255 [-Werror=3Dstringop-truncation]
+  106 |   return __builtin___strncpy_chk (__dest, __src, __len, __bos (__de=
+st));
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~=
+~~~~
+---
+ drivers/isimodem/gprs-context.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/isimodem/gprs-context.c b/drivers/isimodem/gprs-contex=
+t.c
+index 9ccc7f15..4076ed8b 100644
+--- a/drivers/isimodem/gprs-context.c
++++ b/drivers/isimodem/gprs-context.c
+@@ -544,7 +544,7 @@ static void isi_gprs_activate_primary(struct ofono_gprs=
+_context *gc,
+ 		strncpy(cd->username, ctx->username, GPDS_MAX_USERNAME_LENGTH);
+ 		cd->username[GPDS_MAX_USERNAME_LENGTH] =3D '\0';
+ 		strncpy(cd->password, ctx->password, GPDS_MAX_PASSWORD_LENGTH);
+-		cd->username[GPDS_MAX_PASSWORD_LENGTH] =3D '\0';
++		cd->password[GPDS_MAX_PASSWORD_LENGTH] =3D '\0';
+ 	}
+ =
+
+ 	cd->pep =3D g_isi_pep_create(cd->idx, NULL, NULL);
+-- =
+
+2.21.0
 
 
-Applied with a tweaked commit description.
-
-Regards,
--Denis
-
-
---===============8654555697114293525==--
+--===============8095592160652029925==--
 
