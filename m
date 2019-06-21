@@ -1,56 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3553370592668041015=="
+Content-Type: multipart/mixed; boundary="===============7178234637909810883=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH] ubloxmodem: fix maybe-unitialized error
-Date: Fri, 21 Jun 2019 11:56:08 +0200
-Message-ID: <20190621095608.39463-1-martin@geanix.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Compiling: error: cast increases required alignment of target
+ type [-Werror=cast-align]
+Date: Fri, 21 Jun 2019 12:48:36 -0500
+Message-ID: <d075be62-954d-fb03-f639-0bf53e985201@gmail.com>
+In-Reply-To: <aacda8dd-61a9-2bc6-cf6e-13fee5e32b76@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3553370592668041015==
+--===============7178234637909810883==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fixes:
+Hi Martin,
 
-../git/drivers/ubloxmodem/gprs-context.c: In function =E2=80=98ublox_gprs_a=
-ctivate_primary=E2=80=99:
-../git/drivers/ubloxmodem/gprs-context.c:339:2: error: =E2=80=98auth=E2=80=
-=99 may be used uninitialized in this function [-Werror=3Dmaybe-uninitializ=
-ed]
-  snprintf(buf, sizeof(buf), "AT+UAUTHREQ=3D%u,%u,\"%s\",\"%s\"",
-  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    gcd->active_context, auth, username, password);
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-../git/drivers/ubloxmodem/gprs-context.c:324:11: note: =E2=80=98auth=E2=80=
-=99 was declared here
-  unsigned auth;
-           ^~~~
----
- drivers/ubloxmodem/gprs-context.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On 06/21/2019 04:52 AM, Martin Hundeb=C3=B8ll wrote:
+> Hi Denis,
+> =
 
-diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
-ntext.c
-index 489f31e8..c5b789b6 100644
---- a/drivers/ubloxmodem/gprs-context.c
-+++ b/drivers/ubloxmodem/gprs-context.c
-@@ -321,7 +321,7 @@ static void ublox_send_uauthreq(struct ofono_gprs_conte=
-xt *gc,
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	char buf[UBLOX_MAX_USER_LEN + UBLOX_MAX_PASS_LEN + 32];
--	unsigned auth;
-+	unsigned auth =3D 0;
- =
+> On 08/02/2019 21.15, Denis Kenzior wrote:
+>> Hi,
+>>
+>> On 02/04/2019 04:28 PM, Pi=C4=8Dugins Arsenijs wrote:
+>>> =C2=A0=C2=A0 CC =C2=A0 =C2=A0 =C2=A0 drivers/mbimmodem/mbim-message.o
+>>> drivers/mbimmodem/mbim-message.c: In function =E2=80=98_iter_copy_strin=
+g=E2=80=99:
+>>> drivers/mbimmodem/mbim-message.c:199:18: error: cast increases =
 
- 	switch (auth_method) {
- 	case OFONO_GPRS_AUTH_METHOD_PAP:
--- =
+>>> required alignment of target type [-Werror=3Dcast-align]
+>>> =C2=A0=C2=A0 =C2=A0uint16_t *le =3D (uint16_t *) buf;
+>>> =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ^
+>>
+>> Does the attached patch fix this?
+> =
 
-2.22.0
+> It fixes it for me. Please apply.
+> =
 
+> // Martin
 
---===============3553370592668041015==--
+All right, applied.
+
+Regards,
+-Denis
+
+--===============7178234637909810883==--
 
