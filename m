@@ -1,63 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============7807881810173504912=="
+Content-Type: multipart/mixed; boundary="===============0705230777471015413=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH 06/10] quectel: unwrap call to at_util_open_device()
-Date: Wed, 03 Jul 2019 20:09:51 +0200
-Message-ID: <20190703180955.18246-7-martin@geanix.com>
+Subject: [PATCH 07/10] quectel: replace glib uses with ell
+Date: Wed, 03 Jul 2019 20:09:52 +0200
+Message-ID: <20190703180955.18246-8-martin@geanix.com>
 In-Reply-To: <20190703180955.18246-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7807881810173504912==
+--===============0705230777471015413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/quectel.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ plugins/quectel.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
 
 diff --git a/plugins/quectel.c b/plugins/quectel.c
-index 3b57e06d..83197991 100644
+index 83197991..3c6b9d9f 100644
 --- a/plugins/quectel.c
 +++ b/plugins/quectel.c
-@@ -92,12 +92,6 @@ static void quectel_remove(struct ofono_modem *modem)
- 	g_free(data);
- }
+@@ -27,7 +27,7 @@
+ #include <stdlib.h>
+ #include <stdbool.h>
  =
 
--static GAtChat *open_device(struct ofono_modem *modem, const char *key,
--				char *debug)
--{
--	return at_util_open_device(modem, key, quectel_debug, debug, NULL);
--}
--
- static void cpin_notify(GAtResult *result, void *user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -200,11 +194,13 @@ static int quectel_enable(struct ofono_modem *modem)
+-#include <glib.h>
++#include <ell/ell.h>
+ #include <gatchat.h>
+ #include <gattty.h>
+ =
+
+@@ -68,9 +68,7 @@ static int quectel_probe(struct ofono_modem *modem)
  =
 
  	DBG("%p", modem);
  =
 
--	data->modem =3D open_device(modem, "Modem", "Modem: ");
-+	data->modem =3D at_util_open_device(modem, "Modem", quectel_debug,
-+						"Modem: ", NULL);
- 	if (data->modem =3D=3D NULL)
- 		return -EINVAL;
+-	data =3D g_try_new0(struct quectel_data, 1);
+-	if (data =3D=3D NULL)
+-		return -ENOMEM;
++	data =3D l_new(struct quectel_data, 1);
  =
 
--	data->aux =3D open_device(modem, "Aux", "Aux: ");
-+	data->aux =3D at_util_open_device(modem, "Aux", quectel_debug, "Aux: ",
-+					NULL);
- 	if (data->aux =3D=3D NULL) {
- 		g_at_chat_unref(data->modem);
- 		data->modem =3D NULL;
+ 	ofono_modem_set_data(modem, data);
+ =
+
+@@ -89,7 +87,7 @@ static void quectel_remove(struct ofono_modem *modem)
+ 	ofono_modem_set_data(modem, NULL);
+ 	g_at_chat_unref(data->aux);
+ 	g_at_chat_unref(data->modem);
+-	g_free(data);
++	l_free(data);
+ }
+ =
+
+ static void cpin_notify(GAtResult *result, void *user_data)
+@@ -281,7 +279,7 @@ static void quectel_set_online(struct ofono_modem *mode=
+m, int online,
+ =
+
+ 	CALLBACK_WITH_FAILURE(cb, cbd->data);
+ =
+
+-	g_free(cbd);
++	l_free(cbd);
+ }
+ =
+
+ static void quectel_pre_sim(struct ofono_modem *modem)
 -- =
 
 2.22.0
 
 
---===============7807881810173504912==--
+--===============0705230777471015413==--
 
