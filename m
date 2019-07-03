@@ -1,52 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8893420585835516013=="
+Content-Type: multipart/mixed; boundary="===============2028322407125598558=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH 00/10] quectel serial support
-Date: Wed, 03 Jul 2019 20:09:45 +0200
-Message-ID: <20190703180955.18246-1-martin@geanix.com>
+Subject: [PATCH 01/10] gatresult: include glib header
+Date: Wed, 03 Jul 2019 20:09:46 +0200
+Message-ID: <20190703180955.18246-2-martin@geanix.com>
+In-Reply-To: <20190703180955.18246-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8893420585835516013==
+--===============2028322407125598558==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is a complete rework of the quectel m95 plugin posted[1] almost a
-year ago. Instead of doing a new plugin, it now hooks in serial support
-into the existing quectel driver, and it uses the kernel line discipline
-for the gsm 07.10 multiplexing. It also adds gpio power control using
-the gpio support in ell.
+The gatresult data types embeds GSList members, and the function
+prototypes uses glib types.
 
-The cleanups are mostly done to obey my OCD wrt. coding style.
+Add include of glib.h to allow use of gatresult.h without also including
+glib.h
+---
+ gatchat/gatresult.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Expect to see further patches adding tweaks as I get around to test
-pin unlocking, sms texting, calls, etc.
+diff --git a/gatchat/gatresult.h b/gatchat/gatresult.h
+index 589dd3dd..e92d38ba 100644
+--- a/gatchat/gatresult.h
++++ b/gatchat/gatresult.h
+@@ -22,6 +22,8 @@
+ #ifndef __GATCHAT_RESULT_H
+ #define __GATCHAT_RESULT_H
+ =
 
-[1] https://lists.01.org/pipermail/ofono/2018-August/018293.html
-
-Martin Hundeb=C3=B8ll (10):
-  gatresult: include glib header
-  atutil: guard call to g_hash_table_destroy()
-  quectel: improve coding style
-  quectel: use plain c-types over glib/ofono typedefs
-  quectel: always print modem pointer in debug messages
-  quectel: unwrap call to at_util_open_device()
-  quectel: replace glib uses with ell
-  quectel: split up initial channel/device configuration
-  quectel: add basic support for serial connected modems
-  quectel: support gpio to power on/off the modem
-
- drivers/atmodem/atutil.c |   4 +-
- gatchat/gatresult.h      |   2 +
- plugins/quectel.c        | 358 +++++++++++++++++++++++++++++++++------
- plugins/udevng.c         |  42 ++++-
- 4 files changed, 351 insertions(+), 55 deletions(-)
-
++#include <glib.h>
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
 -- =
 
 2.22.0
 
 
---===============8893420585835516013==--
+--===============2028322407125598558==--
 
