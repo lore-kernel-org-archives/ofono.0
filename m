@@ -1,45 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============2028322407125598558=="
+Content-Type: multipart/mixed; boundary="===============8673413295623998827=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH 01/10] gatresult: include glib header
-Date: Wed, 03 Jul 2019 20:09:46 +0200
-Message-ID: <20190703180955.18246-2-martin@geanix.com>
+Subject: [PATCH 02/10] atutil: guard call to g_hash_table_destroy()
+Date: Wed, 03 Jul 2019 20:09:47 +0200
+Message-ID: <20190703180955.18246-3-martin@geanix.com>
 In-Reply-To: <20190703180955.18246-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2028322407125598558==
+--===============8673413295623998827==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The gatresult data types embeds GSList members, and the function
-prototypes uses glib types.
+Glib emits a warning when g_hash_table_destroy() is called on a NULL
+pointer:
 
-Add include of glib.h to allow use of gatresult.h without also including
-glib.h
+  GLib-CRITICAL **: 13:27:40.269: g_hash_table_destroy: assertion 'hash_tab=
+le !=3D NULL' failed
+
+Add a check to avoid this warning.
 ---
- gatchat/gatresult.h | 2 ++
- 1 file changed, 2 insertions(+)
+ drivers/atmodem/atutil.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/gatchat/gatresult.h b/gatchat/gatresult.h
-index 589dd3dd..e92d38ba 100644
---- a/gatchat/gatresult.h
-+++ b/gatchat/gatresult.h
-@@ -22,6 +22,8 @@
- #ifndef __GATCHAT_RESULT_H
- #define __GATCHAT_RESULT_H
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index 1db524e3..bbdb01c4 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -769,7 +769,9 @@ GAtChat *at_util_open_device(struct ofono_modem *modem,=
+ const char *key,
+ 	}
  =
 
-+#include <glib.h>
+ 	channel =3D g_at_tty_open(device, options);
+-	g_hash_table_destroy(options);
 +
- #ifdef __cplusplus
- extern "C" {
- #endif
++	if (options)
++		g_hash_table_destroy(options);
+ =
+
+ 	if (channel =3D=3D NULL)
+ 		return NULL;
 -- =
 
 2.22.0
 
 
---===============2028322407125598558==--
+--===============8673413295623998827==--
 
