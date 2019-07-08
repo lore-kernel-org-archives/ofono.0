@@ -1,241 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============8348717161249231930=="
+Content-Type: multipart/mixed; boundary="===============7415659287408116408=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2 10/10] quectel: support gpio to power on/off the modem
-Date: Fri, 05 Jul 2019 18:05:07 -0500
-Message-ID: <3568206b-84a3-25ba-4ead-7822d19a4d8e@gmail.com>
-In-Reply-To: <20190704110351.47831-2-martin@geanix.com>
+From: Lars Poeschel <poeschel@lemonage.de>
+Subject: Re: [PATCH 09/10] quectel: add basic support for serial connected
+ modems
+Date: Mon, 08 Jul 2019 11:05:09 +0200
+Message-ID: <20190708090509.GA30143@lem-wkst-02.lemonage>
+In-Reply-To: <15c6e931-6629-432c-0400-fbdfe6c2a65f@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8348717161249231930==
+--===============7415659287408116408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
-
-On 07/04/2019 06:03 AM, Martin Hundeb=C3=B8ll wrote:
-> This adds support for configuring a gpio in udev to control the modem
-> power.
+On Fri, Jul 05, 2019 at 05:57:05PM -0500, Denis Kenzior wrote:
+> Hi Martin,
 > =
 
-> To enable gpio control, specify OFONO_QUECTEL_GPIO_CHIP and
-> OFONO_QUECTEL_GPIO_OFFSET in the udev environment, for example:
+> On 07/03/2019 01:09 PM, Martin Hundeb=C3=B8ll wrote:
+> > Setup GSM 07.10 multiplexing using the kernel n_gsm line discpline
+> > driver, and use the virtual tty devices as Aux and Modem channels.
+> > =
+
+> > The driver supports rts/cts on the underlying serial device. This is
+> > enabled with OFONO_QUECTED_RTSCTS udev environment, e.g.:
+> > =
+
+> > KERNEL=3D=3D"ttymxc0", ENV{OFONO_DRIVER}=3D"quectel", \
+> >          ENV{OFONO_QUECTEL_RTSCTS}=3D"on"
 > =
 
-> KERNEL=3D=3D"ttymxc0", ENV{OFONO_DRIVER}=3D"quectel", \
->          ENV{OFONO_QUECTEL_GPIO_CHIP}=3D"gpiochip2", \
->          ENV{OFONO_QUECTEL_GPIO_OFFSET}=3D"26"
-> ---
->   plugins/quectel.c | 70 +++++++++++++++++++++++++++++++++++++++++++----
->   plugins/udevng.c  | 10 ++++++-
->   2 files changed, 73 insertions(+), 7 deletions(-)
+> So from what I recall the kernel multiplexer was pretty much hard-coded as
+> to how many DLCs you could request and it was up to the driver to do that.
+> GAtMux has no such limitations...  We tried it with the ifx driver, but in
+> the end GAtMux was more flexible.  Plus you actually get support for
+> multiple devices...
 > =
 
-> diff --git a/plugins/quectel.c b/plugins/quectel.c
-> index b993af85..af9d0308 100644
-> --- a/plugins/quectel.c
-> +++ b/plugins/quectel.c
-> @@ -75,6 +75,7 @@ struct quectel_data {
->   	struct l_timeout *mux_ready_timer;
->   	int mux_ready_count;
->   	int initial_ldisc;
-> +	struct l_gpio_writer *gpio;
->   };
->   =
+> So are you sure you want to use the kernel one?
 
->   static void quectel_debug(const char *str, void *user_data)
-> @@ -84,6 +85,41 @@ static void quectel_debug(const char *str, void *user_=
-data)
->   	ofono_info("%s%s", prefix, str);
->   }
->   =
+I would also opt for a way to use the kernel multiplexer. This does not
+mean to make the ofono GAtMux obsolete.
+Some time ago I also wrote a patch for ofono to use the kernel
+multiplexer and it worked quite well. Unfortunately I did not find the
+time to clean it up properly for submission.
+I choose to use the kernel multiplexer because I had some experience
+with it and - well - the ofono one was not flexible enough. ;-) It did
+not support the mux parameters I needed.
+The number of DLCs in the kernel multiplexer is not hardcoded. It
+presents all possible DLCs to userspace (/dev/gsmtty1 - /dev/gsmtty64)
+and as soon as an application tries to open that specific file it sets
+up the DLC on mux level.
 
-> +static int quectel_probe_gpio(struct ofono_modem *modem)
-> +{
-> +	struct quectel_data *data =3D ofono_modem_get_data(modem);
-> +	struct l_gpio_chip *gpiochip;
-> +	uint32_t offset;
-> +	const char *chip_name, *offset_str;
+So, besides from the code review comments, count this as my vote for the
+kernel multiplexer.
 
-Kernel style wants each variable on a separate line...
+Thanks,
+Lars
 
-> +	uint32_t value =3D 0;
-> +
-> +	chip_name =3D ofono_modem_get_string(modem, "GpioChip");
-> +	if (!chip_name)
-> +		return 0;
-> +
-> +	offset_str =3D ofono_modem_get_string(modem, "GpioOffset");
-> +	if (!offset_str)
-> +		return -EINVAL;
-> +
-> +	gpiochip =3D l_gpio_chip_new(chip_name);
-> +	if (!gpiochip)
-> +		return -ENODEV;
-> +
-> +	offset =3D strtoul(offset_str, NULL, 0);
-> +	if (!offset)
-> +		return -EINVAL;
-
-memory leak?
-
-> +
-> +	data->gpio =3D l_gpio_writer_new(gpiochip, "ofono", 1, &offset,
-> +						&value);
-> +
-> +	l_gpio_chip_free(gpiochip);
-> +
-> +	if (!data->gpio)
-> +		return -EIO;
-> +
-> +	return 0;
-> +}
-> +
->   static int quectel_probe(struct ofono_modem *modem)
->   {
->   	struct quectel_data *data;
-> @@ -94,7 +130,7 @@ static int quectel_probe(struct ofono_modem *modem)
->   =
-
->   	ofono_modem_set_data(modem, data);
->   =
-
-> -	return 0;
-> +	return quectel_probe_gpio(modem);
->   }
->   =
-
->   static void quectel_remove(struct ofono_modem *modem)
-> @@ -107,6 +143,7 @@ static void quectel_remove(struct ofono_modem *modem)
->   		g_at_chat_unregister(data->aux, data->cpin_ready);
->   =
-
->   	ofono_modem_set_data(modem, NULL);
-> +	l_gpio_writer_free(data->gpio);
->   	g_at_chat_unref(data->aux);
->   	g_at_chat_unref(data->modem);
->   	g_at_chat_unref(data->uart);
-> @@ -245,6 +282,7 @@ static void close_serial(struct ofono_modem *modem)
->   	struct quectel_data *data =3D ofono_modem_get_data(modem);
->   	GIOChannel *device;
->   	ssize_t write_count;
-> +	uint32_t gpio_value =3D 0;
->   	int fd;
->   =
-
->   	DBG("%p", modem);
-> @@ -264,6 +302,7 @@ static void close_serial(struct ofono_modem *modem)
->   	g_at_chat_unref(data->uart);
->   	data->uart =3D NULL;
->   =
-
-> +	l_gpio_writer_set(data->gpio, 1, &gpio_value);
-
-you allow gpio to be NULL if GpioChip is NULL...  Does calling this make =
-
-sense then?
-
->   	ofono_modem_set_powered(modem, false);
->   }
->   =
-
-> @@ -356,9 +395,20 @@ static void cmux_cb(int ok, GAtResult *result, void =
-*user_data)
->   	}
->   }
->   =
-
-> +static void ate_cb(int ok, GAtResult *result, void *user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct quectel_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	g_at_chat_set_wakeup_command(data->uart, NULL, 0, 0);
-> +	g_at_chat_send(data->uart, "AT+CMUX=3D0,0,5,127,10,3,30,10,2", NULL,
-> +			cmux_cb, modem, NULL);
-> +}
-> +
->   static int open_serial(struct ofono_modem *modem)
->   {
->   	struct quectel_data *data =3D ofono_modem_get_data(modem);
-> +	const uint32_t gpio_value =3D 1;
->   	const char *rts_cts;
->   =
-
->   	DBG("%p", modem);
-> @@ -379,12 +429,20 @@ static int open_serial(struct ofono_modem *modem)
->   	if (data->uart =3D=3D NULL)
->   		return -EINVAL;
->   =
-
-> -	g_at_chat_send(data->uart, "ATE0", none_prefix, NULL, NULL,
-> -			NULL);
-> +	if (data->gpio && !l_gpio_writer_set(data->gpio, 1, &gpio_value)) {
-> +		close_serial(modem);
-> +		return -EIO;
-> +	}
->   =
-
-> -	/* setup multiplexing */
-> -	g_at_chat_send(data->uart, "AT+CMUX=3D0,0,5,127,10,3,30,10,2", NULL,
-> -			cmux_cb, modem, NULL);
-> +	/*
-> +	 * if the modem is configured with auto-baud-detection, it learns the
-> +	 * baud rate from a few 'AT' commands. Utilize the wakeup feature to
-> +	 * send those 'AT's.
-> +	 * It doesn't hurt if the modem is configured with a fixed baudrate,
-> +	 * as it just detects when the modem is ready instead.
-> +	 */
-> +	g_at_chat_set_wakeup_command(data->uart, "AT\r", 500, 10000);
-
-Yikes.  I'll again warn that set_wakeup_command is only meant to be used =
-
-on the Freerunner.  This looks like a 'creative' use of the feature. =
-
-Can I get a bit more details how exactly it is helping you in this case?
-
-> +	g_at_chat_send(data->uart, "ATE0", none_prefix, ate_cb, modem, NULL);
->   =
-
->   	return -EINPROGRESS;
->   }
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index ec19995d..dcc276e1 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -883,8 +883,16 @@ static gboolean setup_quectel_serial(struct modem_in=
-fo *modem)
->   	const char *value;
->   =
-
->   	info =3D modem->serial;
-> -	value =3D udev_device_get_property_value(info->dev, "OFONO_QUECTEL_RTSC=
-TS");
->   =
-
-> +	value =3D udev_device_get_property_value(info->dev, "OFONO_QUECTEL_GPIO=
-_CHIP");
-> +	if (value)
-> +		ofono_modem_set_string(modem->modem, "GpioChip", value);
-> +
-> +	value =3D udev_device_get_property_value(info->dev, "OFONO_QUECTEL_GPIO=
-_OFFSET");
-> +	if (value)
-> +		ofono_modem_set_string(modem->modem, "GpioOffset", value);
-> +
-> +	value =3D udev_device_get_property_value(info->dev, "OFONO_QUECTEL_RTSC=
-TS");
->   	ofono_modem_set_string(modem->modem, "RtsCts", value ? value : "off");
->   	ofono_modem_set_string(modem->modem, "Device", info->devnode);
->   =
-
-> =
-
-
-Regards,
--Denis
-
---===============8348717161249231930==--
+--===============7415659287408116408==--
 
