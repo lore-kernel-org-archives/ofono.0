@@ -1,155 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============7850398510595365894=="
+Content-Type: multipart/mixed; boundary="===============3156590002345853179=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCHv3 9/9] quectel: initialize call, phonebook and sms when ready
-Date: Wed, 10 Jul 2019 23:51:48 +0200
-Message-ID: <20190710215148.78083-10-martin@geanix.com>
+Subject: Re: [PATCHv3 0/9] Quectel M95 support
+Date: Thu, 11 Jul 2019 00:21:44 +0200
+Message-ID: <26e9846b-7fea-4ab3-f687-aec9e32f5691@geanix.com>
 In-Reply-To: <20190710215148.78083-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7850398510595365894==
+--===============3156590002345853179==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The Quectel M95 modem issues a "Call ready" notification when call and
-phonebook are ready, so set up a listener for that.
+Hi,
 
-The only way to know when sms is ready is to issue QINITSTAT queries.
-Since sms is always ready after call and phonebook, the queries are
-initiated after creating call/phonebook.
----
- plugins/quectel.c | 75 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 75 insertions(+)
+The modem supports an unsolicited notification for voltage level =
 
-diff --git a/plugins/quectel.c b/plugins/quectel.c
-index 8bf9a963..e96a66d7 100644
---- a/plugins/quectel.c
-+++ b/plugins/quectel.c
-@@ -42,6 +42,9 @@
- #include <ofono/devinfo.h>
- #include <ofono/netreg.h>
- #include <ofono/sim.h>
-+#include <ofono/sms.h>
-+#include <ofono/phonebook.h>
-+#include <ofono/voicecall.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
- #include <ofono/log.h>
-@@ -51,6 +54,7 @@
- =
+warnings and errors. I.e it can send
 
- static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
- static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-+static const char *qinistat_prefix[] =3D { "+QINISTAT:", NULL };
- static const char *cgmm_prefix[] =3D { "UC15", "Quectel_M95", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
+   UNDER_VOLTAGE POWER DOWN
+   UNDER_VOLTAGE WARNING
+   OVER_VOLTAGE WARNING
+   OVER_VOLTAGE POWER DOWN
 
-@@ -69,8 +73,10 @@ struct quectel_data {
- 	GAtChat *modem;
- 	GAtChat *aux;
- 	guint cpin_ready;
-+	guint call_ready;
- 	bool have_sim;
- 	enum ofono_vendor vendor;
-+	struct l_timeout *sms_ready_timer;
- =
+The power down messages should probably just close the serial ports and =
 
- 	/* used by quectel uart driver */
- 	GAtChat *uart;
-@@ -338,6 +344,67 @@ static void cgmm_cb(int ok, GAtResult *result, void *u=
-ser_data)
- 			NULL);
- }
- =
+call ofono_modem_set_powered(modem, false), but what about the warnings?
 
-+static void qinistat_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct quectel_data *data =3D ofono_modem_get_data(modem);
-+	GAtResultIter iter;
-+	int status;
-+
-+	DBG("%p", modem);
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+QINISTAT:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &status))
-+		return;
-+
-+	DBG("qinistat: %d", status);
-+
-+	if (status !=3D 3) {
-+		l_timeout_modify_ms(data->sms_ready_timer, 500);
-+		return;
-+	}
-+
-+	ofono_sms_create(modem, data->vendor, "atmodem", data->aux);
-+	l_timeout_remove(data->sms_ready_timer);
-+	data->sms_ready_timer =3D NULL;
-+}
-+
-+static void sms_ready_cb(struct l_timeout *timeout, void *user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct quectel_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	g_at_chat_send(data->aux, "AT+QINISTAT", qinistat_prefix, qinistat_cb,
-+			modem, NULL);
-+}
-+
-+static void call_ready_notify(GAtResult *result, void *user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct quectel_data *data =3D ofono_modem_get_data(modem);
-+	const char *sim_inserted;
-+	GAtResultIter iter;
-+
-+	DBG("%p", modem);
-+
-+	g_at_chat_unregister(data->aux, data->call_ready);
-+	data->sms_ready_timer =3D l_timeout_create_ms(500, sms_ready_cb, modem,
-+							NULL);
-+	if (!data->sms_ready_timer) {
-+		close_serial(modem);
-+		return;
-+	}
-+
-+	ofono_phonebook_create(modem, 0, "atmodem", data->aux);
-+	ofono_voicecall_create(modem, 0, "atmodem", data->aux);
-+}
-+
- static int open_ttys(struct ofono_modem *modem)
- {
- 	struct quectel_data *data =3D ofono_modem_get_data(modem);
-@@ -357,6 +424,14 @@ static int open_ttys(struct ofono_modem *modem)
- 		return -EIO;
- 	}
- =
+Should I just add a hardware monitor dbus interface like the =
 
-+	data->call_ready =3D g_at_chat_register(data->aux, "Call Ready",
-+						call_ready_notify, false,
-+						modem, NULL);
-+	if (!data->call_ready) {
-+		close_serial(modem);
-+		return -ENOTTY;
-+	}
-+
- 	g_at_chat_set_slave(data->modem, data->aux);
- =
+gemalto/cinterion drivers do, with a signal for the warnings?
 
- 	g_at_chat_send(data->modem, "ATE0; &C0; +CMEE=3D1", none_prefix, NULL,
--- =
+Thanks,
+Martin
 
-2.22.0
+On 10/07/2019 23.51, Martin Hundeb=C3=B8ll wrote:
+> Changes since v1/v2:
+>   * remove c types patch
+>   * add patch with m95 sms quirks
+>   * add patch to query device model
+>   * add patch to create voicecall, phonebook, and sms functionality
+>   * add patch to enable flow control on modem if configured
+> =
 
+> Martin Hundeb=C3=B8ll (9):
+>    atmodem: sms: add quectel m95 quirks
+>    quectel: always print modem pointer in debug messages
+>    quectel: unwrap call to at_util_open_device()
+>    quectel: replace glib uses with ell
+>    quectel: add basic support for serial connected modems
+>    quectel: support gpio to power on/off the modem
+>    quectel: configure flow control when enabled
+>    quectel: query device model to enable vendor quirks
+>    quectel: initialize call, phonebook and sms when ready
+> =
 
---===============7850398510595365894==--
+>   drivers/atmodem/sms.c |  24 ++-
+>   plugins/quectel.c     | 491 ++++++++++++++++++++++++++++++++++++++----
+>   plugins/udevng.c      |  32 ++-
+>   3 files changed, 494 insertions(+), 53 deletions(-)
+>=20
+
+--===============3156590002345853179==--
 
