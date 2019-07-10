@@ -1,73 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4234688429135189305=="
+Content-Type: multipart/mixed; boundary="===============7767806676776686839=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 09/10] quectel: add basic support for serial connected
- modems
-Date: Tue, 09 Jul 2019 10:25:38 -0500
-Message-ID: <567371b6-c940-9928-d955-93b94fad7d39@gmail.com>
-In-Reply-To: <1eb425dc-cdda-a723-176f-cef89370ab67@geanix.com>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: [PATCHv3 0/9] Quectel M95 support
+Date: Wed, 10 Jul 2019 23:51:39 +0200
+Message-ID: <20190710215148.78083-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4234688429135189305==
+--===============7767806676776686839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Changes since v1/v2:
+ * remove c types patch
+ * add patch with m95 sms quirks
+ * add patch to query device model
+ * add patch to create voicecall, phonebook, and sms functionality
+ * add patch to enable flow control on modem if configured
 
-On 07/09/2019 01:50 AM, Martin Hundeb=C3=B8ll wrote:
-> Hi Denis,
-> =
+Martin Hundeb=C3=B8ll (9):
+  atmodem: sms: add quectel m95 quirks
+  quectel: always print modem pointer in debug messages
+  quectel: unwrap call to at_util_open_device()
+  quectel: replace glib uses with ell
+  quectel: add basic support for serial connected modems
+  quectel: support gpio to power on/off the modem
+  quectel: configure flow control when enabled
+  quectel: query device model to enable vendor quirks
+  quectel: initialize call, phonebook and sms when ready
 
-> On 08/07/2019 18.12, Denis Kenzior wrote:
->> However, there is still the fundamental issue of not being able to =
+ drivers/atmodem/sms.c |  24 ++-
+ plugins/quectel.c     | 491 ++++++++++++++++++++++++++++++++++++++----
+ plugins/udevng.c      |  32 ++-
+ 3 files changed, 494 insertions(+), 53 deletions(-)
 
->> correlate the created ttys to the original one...=C2=A0 If we can fix th=
-at =
+-- =
 
->> in the kernel, then a strong argument can be made to drop GAtMux =
+2.22.0
 
->> entirely. Which is actually what I would prefer as it would make =
 
->> conversion to ell much easier.
-> =
-
-> Let's see how it goes:
-> https://lore.kernel.org/patchwork/patch/1098922/
-
-That looks quite reasonable, so hopefully it gets picked up soon.
-
-> =
-
-> It won't make it in until v5.4, so either we support both n_gsm and =
-
-> gatmux, or we fall back to /dev/gsmtty1 as base if GSMIOC_GETBASE isn't =
-
-> defined.
-
-Nah, I don't think there is a need to support both if everyone is happy =
-
-to use the kernel multiplexer.  Can we come up with some common place =
-
-where to put the kernel multiplexer setup?  This is something that will =
-
-be relevant to more than quectel driver...
-
-Something like atutil? .. Or maybe even ell?  E.g. we need an equivalent =
-
-of g_at_mux_setup_gsm0710() and perhaps something that would open all =
-
-the DLCs requested?
-
-E.g. something like:
-
-mux_setup(GAtChat *master, n_dlcs, callback, userdata, destroy);
-
-callback(size_t n_dlcs, GAtChat *dlcs, userdata)
-
-Regards,
--Denis
-
---===============4234688429135189305==--
+--===============7767806676776686839==--
 
