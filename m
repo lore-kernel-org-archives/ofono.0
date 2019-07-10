@@ -1,110 +1,155 @@
-Content-Type: multipart/mixed; boundary="===============3234351899193650461=="
+Content-Type: multipart/mixed; boundary="===============7850398510595365894=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCHv3 8/9] quectel: query device model to enable vendor quirks
-Date: Wed, 10 Jul 2019 23:51:47 +0200
-Message-ID: <20190710215148.78083-9-martin@geanix.com>
+Subject: [PATCHv3 9/9] quectel: initialize call, phonebook and sms when ready
+Date: Wed, 10 Jul 2019 23:51:48 +0200
+Message-ID: <20190710215148.78083-10-martin@geanix.com>
 In-Reply-To: <20190710215148.78083-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3234351899193650461==
+--===============7850398510595365894==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The Quectel M95 modem issues a "Call ready" notification when call and
+phonebook are ready, so set up a listener for that.
+
+The only way to know when sms is ready is to issue QINITSTAT queries.
+Since sms is always ready after call and phonebook, the queries are
+initiated after creating call/phonebook.
 ---
- plugins/quectel.c | 37 ++++++++++++++++++++++++++++++++++---
- 1 file changed, 34 insertions(+), 3 deletions(-)
+ plugins/quectel.c | 75 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 75 insertions(+)
 
 diff --git a/plugins/quectel.c b/plugins/quectel.c
-index bfae31c0..8bf9a963 100644
+index 8bf9a963..e96a66d7 100644
 --- a/plugins/quectel.c
 +++ b/plugins/quectel.c
-@@ -51,6 +51,7 @@
+@@ -42,6 +42,9 @@
+ #include <ofono/devinfo.h>
+ #include <ofono/netreg.h>
+ #include <ofono/sim.h>
++#include <ofono/sms.h>
++#include <ofono/phonebook.h>
++#include <ofono/voicecall.h>
+ #include <ofono/gprs.h>
+ #include <ofono/gprs-context.h>
+ #include <ofono/log.h>
+@@ -51,6 +54,7 @@
  =
 
  static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
  static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-+static const char *cgmm_prefix[] =3D { "UC15", "Quectel_M95", NULL };
++static const char *qinistat_prefix[] =3D { "+QINISTAT:", NULL };
+ static const char *cgmm_prefix[] =3D { "UC15", "Quectel_M95", NULL };
  static const char *none_prefix[] =3D { NULL };
  =
 
- static const uint8_t gsm0710_terminate[] =3D {
-@@ -69,6 +70,7 @@ struct quectel_data {
+@@ -69,8 +73,10 @@ struct quectel_data {
+ 	GAtChat *modem;
  	GAtChat *aux;
  	guint cpin_ready;
++	guint call_ready;
  	bool have_sim;
-+	enum ofono_vendor vendor;
+ 	enum ofono_vendor vendor;
++	struct l_timeout *sms_ready_timer;
  =
 
  	/* used by quectel uart driver */
  	GAtChat *uart;
-@@ -306,6 +308,36 @@ static void cfun_query(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 		cfun_enable(TRUE, NULL, modem);
+@@ -338,6 +344,67 @@ static void cgmm_cb(int ok, GAtResult *result, void *u=
+ser_data)
+ 			NULL);
  }
  =
 
-+static void cgmm_cb(int ok, GAtResult *result, void *user_data)
++static void qinistat_cb(gboolean ok, GAtResult *result, gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
 +	struct quectel_data *data =3D ofono_modem_get_data(modem);
 +	GAtResultIter iter;
-+	const char *model;
++	int status;
 +
-+	DBG("%p ok %d", modem, ok);
++	DBG("%p", modem);
 +
-+	if (!at_util_parse_attr(result, "", &model)) {
-+		ofono_error("Failed to query modem model");
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+QINISTAT:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &status))
++		return;
++
++	DBG("qinistat: %d", status);
++
++	if (status !=3D 3) {
++		l_timeout_modify_ms(data->sms_ready_timer, 500);
++		return;
++	}
++
++	ofono_sms_create(modem, data->vendor, "atmodem", data->aux);
++	l_timeout_remove(data->sms_ready_timer);
++	data->sms_ready_timer =3D NULL;
++}
++
++static void sms_ready_cb(struct l_timeout *timeout, void *user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct quectel_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_send(data->aux, "AT+QINISTAT", qinistat_prefix, qinistat_cb,
++			modem, NULL);
++}
++
++static void call_ready_notify(GAtResult *result, void *user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct quectel_data *data =3D ofono_modem_get_data(modem);
++	const char *sim_inserted;
++	GAtResultIter iter;
++
++	DBG("%p", modem);
++
++	g_at_chat_unregister(data->aux, data->call_ready);
++	data->sms_ready_timer =3D l_timeout_create_ms(500, sms_ready_cb, modem,
++							NULL);
++	if (!data->sms_ready_timer) {
 +		close_serial(modem);
 +		return;
 +	}
 +
-+	if (strcmp(model, "UC15") =3D=3D 0) {
-+		DBG("%p model UC15", modem);
-+		data->vendor =3D OFONO_VENDOR_QUECTEL;
-+	} else if (strcmp(model, "Quectel_M95") =3D=3D 0) {
-+		DBG("%p model M95", modem);
-+		data->vendor =3D OFONO_VENDOR_QUECTEL_M95;
-+	} else {
-+		ofono_warn("%p unknown model: '%s'", modem, model);
-+		data->vendor =3D OFONO_VENDOR_QUECTEL;
-+	}
-+
-+	g_at_chat_send(data->aux, "AT+CFUN?", cfun_prefix, cfun_query, modem,
-+			NULL);
++	ofono_phonebook_create(modem, 0, "atmodem", data->aux);
++	ofono_voicecall_create(modem, 0, "atmodem", data->aux);
 +}
 +
  static int open_ttys(struct ofono_modem *modem)
  {
  	struct quectel_data *data =3D ofono_modem_get_data(modem);
-@@ -331,7 +363,7 @@ static int open_ttys(struct ofono_modem *modem)
- 			NULL, NULL);
- 	g_at_chat_send(data->aux, "ATE0; &C0; +CMEE=3D1", none_prefix, NULL, NULL,
- 			NULL);
--	g_at_chat_send(data->aux, "AT+CFUN?", cfun_prefix, cfun_query, modem,
-+	g_at_chat_send(data->aux, "AT+CGMM", cgmm_prefix, cgmm_cb, modem,
- 			NULL);
+@@ -357,6 +424,14 @@ static int open_ttys(struct ofono_modem *modem)
+ 		return -EIO;
+ 	}
  =
 
- 	return -EINPROGRESS;
-@@ -582,8 +614,7 @@ static void quectel_pre_sim(struct ofono_modem *modem)
- 	DBG("%p", modem);
++	data->call_ready =3D g_at_chat_register(data->aux, "Call Ready",
++						call_ready_notify, false,
++						modem, NULL);
++	if (!data->call_ready) {
++		close_serial(modem);
++		return -ENOTTY;
++	}
++
+ 	g_at_chat_set_slave(data->modem, data->aux);
  =
 
- 	ofono_devinfo_create(modem, 0, "atmodem", data->aux);
--	sim =3D ofono_sim_create(modem, OFONO_VENDOR_QUECTEL, "atmodem",
--				data->aux);
-+	sim =3D ofono_sim_create(modem, data->vendor, "atmodem", data->aux);
- =
-
- 	if (sim && data->have_sim =3D=3D true)
- 		ofono_sim_inserted_notify(sim, TRUE);
+ 	g_at_chat_send(data->modem, "ATE0; &C0; +CMEE=3D1", none_prefix, NULL,
 -- =
 
 2.22.0
 
 
---===============3234351899193650461==--
+--===============7850398510595365894==--
 
