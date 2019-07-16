@@ -1,171 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============6323810654449407179=="
+Content-Type: multipart/mixed; boundary="===============2064314022643149679=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3 9/9] quectel: initialize call,
- phonebook and sms when ready
-Date: Fri, 12 Jul 2019 11:00:59 -0500
-Message-ID: <51dac60b-f035-324c-3feb-999356cca3a7@gmail.com>
-In-Reply-To: <20190710215148.78083-10-martin@geanix.com>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: [PATCH 1/7] gatresult: strip trailing spaces from unquoted strings
+Date: Tue, 16 Jul 2019 21:10:47 +0200
+Message-ID: <20190716191053.71990-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6323810654449407179==
+--===============2064314022643149679==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Some vendors might print trailing spaces after unsolicited result codes.
+Avoid duplicating and stripping the string after calling
+g_at_result_iter_next_unquoted_string() by stripping the spaces in
+gatresult instead.
+---
+ gatchat/gatresult.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-On 7/10/19 4:51 PM, Martin Hundeb=C3=B8ll wrote:
-> The Quectel M95 modem issues a "Call ready" notification when call and
-> phonebook are ready, so set up a listener for that.
-> =
+diff --git a/gatchat/gatresult.c b/gatchat/gatresult.c
+index 2659db28..883b4105 100644
+--- a/gatchat/gatresult.c
++++ b/gatchat/gatresult.c
+@@ -111,6 +111,7 @@ gboolean g_at_result_iter_next_unquoted_string(GAtResul=
+tIter *iter,
+ 	unsigned int pos;
+ 	unsigned int end;
+ 	unsigned int len;
++	unsigned int stripped;
+ 	char *line;
+ =
 
-> The only way to know when sms is ready is to issue QINITSTAT queries.
-> Since sms is always ready after call and phonebook, the queries are
-> initiated after creating call/phonebook.
-> ---
->   plugins/quectel.c | 75 +++++++++++++++++++++++++++++++++++++++++++++++
->   1 file changed, 75 insertions(+)
-> =
+ 	if (iter =3D=3D NULL)
+@@ -139,7 +140,12 @@ gboolean g_at_result_iter_next_unquoted_string(GAtResu=
+ltIter *iter,
+ 	while (end < len && line[end] !=3D ',' && line[end] !=3D ')')
+ 		end +=3D 1;
+ =
 
-> diff --git a/plugins/quectel.c b/plugins/quectel.c
-> index 8bf9a963..e96a66d7 100644
-> --- a/plugins/quectel.c
-> +++ b/plugins/quectel.c
-> @@ -42,6 +42,9 @@
->   #include <ofono/devinfo.h>
->   #include <ofono/netreg.h>
->   #include <ofono/sim.h>
-> +#include <ofono/sms.h>
-> +#include <ofono/phonebook.h>
-> +#include <ofono/voicecall.h>
->   #include <ofono/gprs.h>
->   #include <ofono/gprs-context.h>
->   #include <ofono/log.h>
-> @@ -51,6 +54,7 @@
->   =
+-	iter->buf[end] =3D '\0';
++	stripped =3D end;
++
++	while (line[stripped - 1] =3D=3D ' ')
++		stripped -=3D 1;
++
++	iter->buf[stripped] =3D '\0';
+ =
 
->   static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
->   static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-> +static const char *qinistat_prefix[] =3D { "+QINISTAT:", NULL };
->   static const char *cgmm_prefix[] =3D { "UC15", "Quectel_M95", NULL };
->   static const char *none_prefix[] =3D { NULL };
->   =
+ out:
+ 	iter->line_pos =3D skip_to_next_field(line, end, len);
+-- =
 
-> @@ -69,8 +73,10 @@ struct quectel_data {
->   	GAtChat *modem;
->   	GAtChat *aux;
->   	guint cpin_ready;
-> +	guint call_ready;
->   	bool have_sim;
->   	enum ofono_vendor vendor;
-> +	struct l_timeout *sms_ready_timer;
->   =
-
->   	/* used by quectel uart driver */
->   	GAtChat *uart;
-> @@ -338,6 +344,67 @@ static void cgmm_cb(int ok, GAtResult *result, void =
-*user_data)
->   			NULL);
->   }
->   =
-
-> +static void qinistat_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct quectel_data *data =3D ofono_modem_get_data(modem);
-> +	GAtResultIter iter;
-> +	int status;
-> +
-> +	DBG("%p", modem);
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "+QINISTAT:"))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, &status))
-> +		return;
-> +
-> +	DBG("qinistat: %d", status);
-> +
-> +	if (status !=3D 3) {
-> +		l_timeout_modify_ms(data->sms_ready_timer, 500);
-> +		return;
-> +	}
-> +
-> +	ofono_sms_create(modem, data->vendor, "atmodem", data->aux);
-> +	l_timeout_remove(data->sms_ready_timer);
-> +	data->sms_ready_timer =3D NULL;
-> +}
-> +
-> +static void sms_ready_cb(struct l_timeout *timeout, void *user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct quectel_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	DBG("%p", modem);
-> +
-> +	g_at_chat_send(data->aux, "AT+QINISTAT", qinistat_prefix, qinistat_cb,
-> +			modem, NULL);
-> +}
-> +
-> +static void call_ready_notify(GAtResult *result, void *user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct quectel_data *data =3D ofono_modem_get_data(modem);
-> +	const char *sim_inserted;
-> +	GAtResultIter iter;
-
-Squashed these two unused variables
-
-> +
-> +	DBG("%p", modem);
-> +
-> +	g_at_chat_unregister(data->aux, data->call_ready);
-
-Being paranoid, I added data->call_ready =3D 0 here.
-
-> +	data->sms_ready_timer =3D l_timeout_create_ms(500, sms_ready_cb, modem,
-> +							NULL);
-> +	if (!data->sms_ready_timer) {
-> +		close_serial(modem);
-> +		return;
-> +	}
-> +
-> +	ofono_phonebook_create(modem, 0, "atmodem", data->aux);
-> +	ofono_voicecall_create(modem, 0, "atmodem", data->aux);
-> +}
-> +
->   static int open_ttys(struct ofono_modem *modem)
->   {
->   	struct quectel_data *data =3D ofono_modem_get_data(modem);
-> @@ -357,6 +424,14 @@ static int open_ttys(struct ofono_modem *modem)
->   		return -EIO;
->   	}
->   =
-
-> +	data->call_ready =3D g_at_chat_register(data->aux, "Call Ready",
-> +						call_ready_notify, false,
-> +						modem, NULL);
-> +	if (!data->call_ready) {
-> +		close_serial(modem);
-> +		return -ENOTTY;
-> +	}
-> +
->   	g_at_chat_set_slave(data->modem, data->aux);
->   =
-
->   	g_at_chat_send(data->modem, "ATE0; &C0; +CMEE=3D1", none_prefix, NULL,
-> =
+2.22.0
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
---===============6323810654449407179==--
+--===============2064314022643149679==--
 
