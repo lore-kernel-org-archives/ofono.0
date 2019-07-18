@@ -1,39 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2174992594075051783=="
+Content-Type: multipart/mixed; boundary="===============1476445188373059328=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: [PATCH 04/10] Makefile
-Date: Thu, 18 Jul 2019 12:23:08 +0200
-Message-ID: <20190718102314.28094-4-jonas@norrbonn.se>
+Subject: [PATCH 05/10] ublox: use custom netreg atom
+Date: Thu, 18 Jul 2019 12:23:09 +0200
+Message-ID: <20190718102314.28094-5-jonas@norrbonn.se>
 In-Reply-To: <20190718102314.28094-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2174992594075051783==
+--===============1476445188373059328==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am | 1 +
- 1 file changed, 1 insertion(+)
+ plugins/ublox.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 39777abc..7fb45d35 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -471,6 +471,7 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/ubloxmodem/ubloxmodem.h \
- 			drivers/ubloxmodem/ubloxmodem.c \
- 			drivers/ubloxmodem/gprs-context.c \
-+			drivers/ubloxmodem/network-registration.c \
- 			drivers/ubloxmodem/netmon.c \
- 			drivers/ubloxmodem/lte.c
+diff --git a/plugins/ublox.c b/plugins/ublox.c
+index ff08a6a1..918bd3ec 100644
+--- a/plugins/ublox.c
++++ b/plugins/ublox.c
+@@ -399,7 +399,8 @@ static void ublox_post_online(struct ofono_modem *modem)
+ {
+ 	struct ublox_data *data =3D ofono_modem_get_data(modem);
  =
 
+-	ofono_netreg_create(modem, data->vendor_family, "atmodem", data->aux);
++	ofono_netreg_create(modem,
++		ublox_model_to_id(data->model), "ubloxmodem", data->aux);
+ =
+
+ 	ofono_netmon_create(modem, data->vendor_family, "ubloxmodem", data->aux);
+ }
 -- =
 
 2.20.1
 
 
---===============2174992594075051783==--
+--===============1476445188373059328==--
 
