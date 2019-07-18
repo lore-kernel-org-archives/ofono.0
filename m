@@ -1,32 +1,156 @@
-Content-Type: multipart/mixed; boundary="===============5015421442296327983=="
+Content-Type: multipart/mixed; boundary="===============5320627344666894802=="
 MIME-Version: 1.0
-From: Matt Ranostay <matt.ranostay@konsulko.com>
-Subject: Detecting if a modem has dialing support
-Date: Thu, 18 Jul 2019 15:53:22 +0900
-Message-ID: <CAJCx=g==5oo49BDc8DMr4-BE_Bifjsp-NX5T=X1A-SdXPkRdSA@mail.gmail.com>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: [PATCH 01/10] atmodem: export generic netreg funcs
+Date: Thu, 18 Jul 2019 12:23:05 +0200
+Message-ID: <20190718102314.28094-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5015421442296327983==
+--===============5320627344666894802==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello et al,
+An upcoming netreg driver for uBlox modems will need to override the
+probe method in order to set itself up, but for further functionality
+the "generic" AT implementations are sufficient.  The easiest way to do
+this is to just set up a vtable with a custom probe implementation and
+defer all other methods to the common/generic methods.
 
-So there are a few modems that org.ofono.VoiceCallManager interfaces
-but don't have Dial support, and there is no programmatic way to check
-without dialing attempting to dial a valid phone number.
+The problem is that the AT methods are not actually exported.  This
+generic AT functionality was not intended to be hooked directly into
+other drivers.
 
-Can't pass an empty string to test since it would fail the
-Error.InvalidFormat test before Error.NotImplemented.  The usecase for
-this is we are using several modems per device (including HandsFree)
-and want to know in the userspace application which can dial a
-respective phone number.
+This patch exports all the methods of the atmodem network-registration
+driver implementation so that they can be used as generic/common
+implementations for other drivers.
+---
+ drivers/atmodem/network-registration.c | 16 +++++++++-------
+ drivers/atmodem/network-registration.h | 17 +++++++++++++++++
+ 2 files changed, 26 insertions(+), 7 deletions(-)
+ create mode 100644 drivers/atmodem/network-registration.h
 
-Thanks,
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index 67380b73..0f83977b 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -41,6 +41,8 @@
+ #include "atmodem.h"
+ #include "vendor.h"
+ =
 
-Matt
++#include "network-registration.h"
++
+ static const char *none_prefix[] =3D { NULL };
+ static const char *creg_prefix[] =3D { "+CREG:", NULL };
+ static const char *cops_prefix[] =3D { "+COPS:", NULL };
+@@ -270,7 +272,7 @@ static void option_tech_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 		nd->tech =3D -1;
+ }
+ =
 
---===============5015421442296327983==--
+-static void at_registration_status(struct ofono_netreg *netreg,
++void at_registration_status(struct ofono_netreg *netreg,
+ 					ofono_netreg_status_cb_t cb,
+ 					void *data)
+ {
+@@ -450,7 +452,7 @@ error:
+ 	g_free(cbd);
+ }
+ =
+
+-static void at_current_operator(struct ofono_netreg *netreg,
++void at_current_operator(struct ofono_netreg *netreg,
+ 				ofono_netreg_operator_cb_t cb, void *data)
+ {
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+@@ -589,7 +591,7 @@ static void cops_list_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	g_free(list);
+ }
+ =
+
+-static void at_list_operators(struct ofono_netreg *netreg,
++void at_list_operators(struct ofono_netreg *netreg,
+ 				ofono_netreg_operator_list_cb_t cb, void *data)
+ {
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+@@ -615,7 +617,7 @@ static void register_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	cb(&error, cbd->data);
+ }
+ =
+
+-static void at_register_auto(struct ofono_netreg *netreg,
++void at_register_auto(struct ofono_netreg *netreg,
+ 				ofono_netreg_register_cb_t cb, void *data)
+ {
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+@@ -630,7 +632,7 @@ static void at_register_auto(struct ofono_netreg *netre=
+g,
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
+ =
+
+-static void at_register_manual(struct ofono_netreg *netreg,
++void at_register_manual(struct ofono_netreg *netreg,
+ 				const char *mcc, const char *mnc,
+ 				ofono_netreg_register_cb_t cb, void *data)
+ {
+@@ -1228,7 +1230,7 @@ static void csq_cb(gboolean ok, GAtResult *result, gp=
+ointer user_data)
+ 	cb(&error, strength, cbd->data);
+ }
+ =
+
+-static void at_signal_strength(struct ofono_netreg *netreg,
++void at_signal_strength(struct ofono_netreg *netreg,
+ 				ofono_netreg_strength_cb_t cb, void *data)
+ {
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+@@ -2144,7 +2146,7 @@ static int at_netreg_probe(struct ofono_netreg *netre=
+g, unsigned int vendor,
+ 	return 0;
+ }
+ =
+
+-static void at_netreg_remove(struct ofono_netreg *netreg)
++void at_netreg_remove(struct ofono_netreg *netreg)
+ {
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+ =
+
+diff --git a/drivers/atmodem/network-registration.h b/drivers/atmodem/netwo=
+rk-registration.h
+new file mode 100644
+index 00000000..0f622411
+--- /dev/null
++++ b/drivers/atmodem/network-registration.h
+@@ -0,0 +1,17 @@
++#pragma once
++
++void at_registration_status(struct ofono_netreg *netreg,
++					ofono_netreg_status_cb_t cb,
++					void *data);
++void at_current_operator(struct ofono_netreg *netreg,
++				ofono_netreg_operator_cb_t cb, void *data);
++void at_list_operators(struct ofono_netreg *netreg,
++				ofono_netreg_operator_list_cb_t cb, void *data);
++void at_register_auto(struct ofono_netreg *netreg,
++				ofono_netreg_register_cb_t cb, void *data);
++void at_register_manual(struct ofono_netreg *netreg,
++				const char *mcc, const char *mnc,
++				ofono_netreg_register_cb_t cb, void *data);
++void at_signal_strength(struct ofono_netreg *netreg,
++				ofono_netreg_strength_cb_t cb, void *data);
++void at_netreg_remove(struct ofono_netreg *netreg);
+-- =
+
+2.20.1
+
+
+--===============5320627344666894802==--
 
