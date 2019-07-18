@@ -1,124 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============2917504011880131041=="
+Content-Type: multipart/mixed; boundary="===============1353824046792681543=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH 4/4] test: process-context-settings: add argument for default
- connection
-Date: Thu, 18 Jul 2019 13:49:37 +0200
-Message-ID: <20190718114937.60921-4-martin@geanix.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 1/4] test: process-context-settings: use ip instead of
+ ifconfig/route
+Date: Thu, 18 Jul 2019 18:38:21 +0200
+Message-ID: <20190718163820.GB21502@amd>
 In-Reply-To: <20190718114937.60921-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2917504011880131041==
+--===============1353824046792681543==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add an optional argument to specify an interface to as default
-connection for the system. This changes the printet commands so that the
-gateway is configured as default route, and nameservers are written to
-resolv.conf.
+On Thu 2019-07-18 13:49:34, Martin Hundeb=C3=B8ll wrote:
+> ---
+>  test/process-context-settings | 6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
+> =
 
-Output without a default interface:
+> diff --git a/test/process-context-settings b/test/process-context-settings
+> index 1d30b30d..a536a771 100755
+> --- a/test/process-context-settings
+> +++ b/test/process-context-settings
+> @@ -41,14 +41,14 @@ for path, properties in modems:
+>  			print("    IP address is %s" % (address))
+>  			print("    Gateway is %s" % (gateway))
+>  =
 
-  root(a)iwg26:/usr/lib/ofono/test# ./process-context-settings
-  Configuring /quectel_0/context1
-      Interface is ppp0
-      IP address is 100.64.0.151
-      Gateway is 0.0.0.0
-      Nameserver is 8.8.8.8
-      Nameserver is 8.8.4.4
+> -			cmd =3D "ifconfig " + interface + " " + address
+> -			cmd +=3D " netmask 255.255.255.255"
+> +			cmd =3D "ip address add dev " + interface + " " + address
+> +			cmd +=3D "/32"
+>  			os.system(cmd);
+>  =
 
-  ip address add dev ppp0 100.64.0.151/32
-  ip route add  8.8.8.8 dev ppp0
-  ip route add  8.8.4.4 dev ppp0
+>  			for i in settings["DomainNameServers"]:
+>  				print("    Nameserver is %s" % (i))
+>  =
 
-Output with ppp0 as default interface:
+> -				cmd =3D "route add -host " + i
+> +				cmd =3D "ip route add  " + i
+>  				cmd +=3D" dev " + interface
+>  				os.system(cmd);
 
-  root(a)iwg26:/usr/lib/ofono/test# ./process-context-settings ppp0
-  Using ppp0 as default link
-  Configuring /quectel_0/context1
-      Interface is ppp0
-      IP address is 100.64.0.151
-      Gateway is 0.0.0.0
-      Nameserver is 8.8.8.8
-      Nameserver is 8.8.4.4
+So.. you move from one tool to another one, fixing it on some systems
+and braking on some.
 
-  ip address add dev ppp0 100.64.0.151/32
-  ip route add default via 0.0.0.0 dev ppp0
-  echo nameserver 8.8.8.8 >  /etc/resolv.conf
-  echo nameserver 8.8.4.4 >>  /etc/resolv.conf
+But I guess better solution would be to use python module, not execing
+external programs.
 
-Example of evaluating the commands:
+...which certainly should not be executed using os.system(). Network
+interface called `> /etc/passwd` would be a lot of phun, right? :-).
 
-  root(a)iwg26:/usr/lib/ofono/test# eval "$(./process-context-settings ppp0=
-)"
-  Using ppp0 as default link
-  Configuring /quectel_0/context1
-      Interface is ppp0
-      IP address is 100.64.0.151
-      Gateway is 0.0.0.0
-      Nameserver is 8.8.8.8
-      Nameserver is 8.8.4.4
----
- test/process-context-settings | 23 +++++++++++++++++++----
- 1 file changed, 19 insertions(+), 4 deletions(-)
-
-diff --git a/test/process-context-settings b/test/process-context-settings
-index ee3f17d3..15e23618 100755
---- a/test/process-context-settings
-+++ b/test/process-context-settings
-@@ -10,6 +10,11 @@ manager =3D dbus.Interface(bus.get_object('org.ofono', '=
-/'),
- =
-
- modems =3D manager.GetModems()
- =
-
-+default =3D None
-+if len(sys.argv) > 1:
-+	default =3D sys.argv[1]
-+	print("Using %s as default link" % (default), file=3Dsys.stderr)
-+
- commands =3D []
- =
-
- for path, properties in modems:
-@@ -51,12 +56,22 @@ for path, properties in modems:
- 			cmd +=3D "/32"
- 			commands.append(cmd)
- =
-
--			for i in settings["DomainNameServers"]:
--				print("    Nameserver is %s" % (i),
-+			if interface =3D=3D default:
-+				cmd =3D "ip route add default via " + gateway
-+				cmd +=3D " dev " + interface
-+				commands.append(cmd)
-+
-+			for i,dns in enumerate(settings["DomainNameServers"]):
-+				print("    Nameserver is %s" % (dns),
- 					file=3Dsys.stderr)
- =
-
--				cmd =3D "ip route add  " + i
--				cmd +=3D" dev " + interface
-+				if interface =3D=3D default:
-+					redirect =3D " > " if i =3D=3D 0 else " >> "
-+					cmd =3D "echo nameserver " + dns + redirect
-+					cmd +=3D " /etc/resolv.conf"
-+				else:
-+					cmd =3D "ip route add  " + dns
-+					cmd +=3D" dev " + interface
- =
-
- 				commands.append(cmd)
- =
-
+									Pavel
 -- =
 
-2.22.0
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============1353824046792681543==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============2917504011880131041==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsMHdvSHdBQ2drUU1PZndhcFhiK3ZKS1RnQ2RHR0NPTVlTZjZmd1V1eTBJc1lUb2NhMlYK
+YllJQW9MeDc3QlJGc0lJbWNiWG1vdyswZ1NGaTBieGUKPXIzbEEKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============1353824046792681543==--
 
