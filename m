@@ -1,92 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============7266495786968881224=="
+Content-Type: multipart/mixed; boundary="===============3933152336025097159=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/4] test: process-context-settings: print commands
- instead of running them
-Date: Fri, 19 Jul 2019 01:28:31 -0500
-Message-ID: <f48efdaf-7b03-3635-6e08-7c371d467dce@gmail.com>
-In-Reply-To: <20190718114937.60921-3-martin@geanix.com>
+Subject: Re: [PATCH 03/10] ublox: network-registration atom
+Date: Fri, 19 Jul 2019 01:40:08 -0500
+Message-ID: <8d0dc895-9b6b-87fd-777f-aa378fec54c3@gmail.com>
+In-Reply-To: <20190718102314.28094-3-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7266495786968881224==
+--===============3933152336025097159==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
-
-On 7/18/19 6:49 AM, Martin Hundeb=C3=B8ll wrote:
-> Collect the setup commands and print them to stdout at the end of the
-> script. This allows users to evaluate the standard output to apply
-> settings.
+On 7/18/19 5:23 AM, Jonas Bonn wrote:
+> For uBlox modems, a bit of custom setup is required, but after that the
+> generic "atmodem" (27.007-compatible) method implementations are
+> sufficient.  This driver, therefore, just puts the custom probe method
+> into place and defers remaining functionality to the recently exported
+> atmodem implementations.
 > ---
->   test/process-context-settings | 12 +++++++++---
->   1 file changed, 9 insertions(+), 3 deletions(-)
-> =
-
-> diff --git a/test/process-context-settings b/test/process-context-settings
-> index 7ffb12b3..ee3f17d3 100755
-> --- a/test/process-context-settings
-> +++ b/test/process-context-settings
-> @@ -1,6 +1,5 @@
->   #!/usr/bin/python3
->   =
-
-> -import os
->   import sys
->   import dbus
->   =
-
-> @@ -11,6 +10,8 @@ manager =3D dbus.Interface(bus.get_object('org.ofono', =
-'/'),
->   =
-
->   modems =3D manager.GetModems()
->   =
-
-> +commands =3D []
-> +
->   for path, properties in modems:
->   	if "org.ofono.ConnectionManager" not in properties["Interfaces"]:
->   		continue
-> @@ -48,7 +49,7 @@ for path, properties in modems:
->   =
-
->   			cmd =3D "ip address add dev " + interface + " " + address
->   			cmd +=3D "/32"
-> -			os.system(cmd);
-> +			commands.append(cmd)
->   =
-
->   			for i in settings["DomainNameServers"]:
->   				print("    Nameserver is %s" % (i),
-> @@ -56,5 +57,10 @@ for path, properties in modems:
->   =
-
->   				cmd =3D "ip route add  " + i
->   				cmd +=3D" dev " + interface
-> -				os.system(cmd);
-> +
-> +				commands.append(cmd)
-> +
->   		print('', file=3Dsys.stderr)
-> +
-> +
-> +print("\n".join(commands))
+>   drivers/ubloxmodem/network-registration.c | 425 ++++++++++++++++++++++
+>   drivers/ubloxmodem/ubloxmodem.c           |   2 +
+>   drivers/ubloxmodem/ubloxmodem.h           |   3 +
+>   3 files changed, 430 insertions(+)
+>   create mode 100644 drivers/ubloxmodem/network-registration.c
 > =
 
 
-Can we actually keep the current behavior of executing all the generated =
+Also, please squash patch 4 into this one.
 
-commands?  process-context-settings is used in testing and it is a pain =
+> diff --git a/drivers/ubloxmodem/network-registration.c b/drivers/ubloxmod=
+em/network-registration.c
+> new file mode 100644
+> index 00000000..cfd194a9
+> --- /dev/null
+> +++ b/drivers/ubloxmodem/network-registration.c
+> @@ -0,0 +1,425 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *  Copyright (C) 2010  ST-Ericsson AB.
 
-to unlearn the old way.  Perhaps you can add a command line option to =
+Do you want to maybe update the copyrights for this new file?
 
-only print the commands.  E.g. --dry-run or --print-only or something.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
 
 Regards,
 -Denis
 
---===============7266495786968881224==--
+--===============3933152336025097159==--
 
