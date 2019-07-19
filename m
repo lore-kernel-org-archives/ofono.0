@@ -1,69 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============2583762575820379196=="
+Content-Type: multipart/mixed; boundary="===============8922826041617595525=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: Re: [PATCH 1/4] test: process-context-settings: use ip instead of
- ifconfig/route
-Date: Thu, 18 Jul 2019 21:08:33 +0200
-Message-ID: <c79f17be-63f4-9e1b-2cb6-d867f74aed47@geanix.com>
-In-Reply-To: <20190718163820.GB21502@amd>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Detecting if a modem has dialing support
+Date: Thu, 18 Jul 2019 23:43:23 -0500
+Message-ID: <7e3ce17e-adbd-f326-43f2-59b19417da87@gmail.com>
+In-Reply-To: <CAJCx=g==5oo49BDc8DMr4-BE_Bifjsp-NX5T=X1A-SdXPkRdSA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2583762575820379196==
+--===============8922826041617595525==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 18/07/2019 18.38, Pavel Machek wrote:
-> On Thu 2019-07-18 13:49:34, Martin Hundeb=C3=B8ll wrote:
->> ---
->>   test/process-context-settings | 6 +++---
->>   1 file changed, 3 insertions(+), 3 deletions(-)
->>
->> diff --git a/test/process-context-settings b/test/process-context-settin=
-gs
->> index 1d30b30d..a536a771 100755
->> --- a/test/process-context-settings
->> +++ b/test/process-context-settings
->> @@ -41,14 +41,14 @@ for path, properties in modems:
->>   			print("    IP address is %s" % (address))
->>   			print("    Gateway is %s" % (gateway))
->>   =
+Hi Matt,
 
->> -			cmd =3D "ifconfig " + interface + " " + address
->> -			cmd +=3D " netmask 255.255.255.255"
->> +			cmd =3D "ip address add dev " + interface + " " + address
->> +			cmd +=3D "/32"
->>   			os.system(cmd);
->>   =
-
->>   			for i in settings["DomainNameServers"]:
->>   				print("    Nameserver is %s" % (i))
->>   =
-
->> -				cmd =3D "route add -host " + i
->> +				cmd =3D "ip route add  " + i
->>   				cmd +=3D" dev " + interface
->>   				os.system(cmd);
+On 7/18/19 1:53 AM, Matt Ranostay wrote:
+> Hello et al,
 > =
 
-> So.. you move from one tool to another one, fixing it on some systems
-> and braking on some.
-
-`ifconfig` and friends have been obsolete for quite some time now. Even =
-
-busybox has been shipping `ip` since 2002...
-
-> But I guess better solution would be to use python module, not execing
-> external programs.
+> So there are a few modems that org.ofono.VoiceCallManager interfaces
+> but don't have Dial support, and there is no programmatic way to check
+> without dialing attempting to dial a valid phone number.
 > =
 
-> ...which certainly should not be executed using os.system(). Network
-> interface called `> /etc/passwd` would be a lot of phun, right? :-).
 
-I'll leave it up to ofono to choose sane names for interfaces :)
+If a modem driver creates a voicecall atom (thus exposing =
 
-// Martin
+VoiceCallManager) without actually checking that voice dialing is =
 
---===============2583762575820379196==--
+supported, then that is a bug in the individual modem driver.  That =
+
+should really be fixed first..
+
+> Can't pass an empty string to test since it would fail the
+> Error.InvalidFormat test before Error.NotImplemented.  The usecase for
+> this is we are using several modems per device (including HandsFree)
+> and want to know in the userspace application which can dial a
+> respective phone number.
+
+I think this is a lost cause as the error returned will vary by modem =
+
+firmware.
+
+Regards,
+-Denis
+
+--===============8922826041617595525==--
 
