@@ -1,48 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============8472806887148667808=="
+Content-Type: multipart/mixed; boundary="===============8074060968282273898=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH 2/2] quectel: pass vendor id to gprs and gprs-context
-Date: Fri, 19 Jul 2019 12:27:46 +0200
-Message-ID: <20190719102746.122911-2-martin@geanix.com>
-In-Reply-To: <20190719102746.122911-1-martin@geanix.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCHv2 4/4] doc: document power-event signals for quectel
+ Hardware API
+Date: Fri, 19 Jul 2019 13:04:16 +0200
+Message-ID: <20190719110416.GA11224@amd>
+In-Reply-To: <20190719101914.122689-4-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8472806887148667808==
+--===============8074060968282273898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The gprs-context does special casing on the quectel serial modem when
-probing the supported layer 2 protocols, so pass the vendor id when
-setting up the atoms.
----
- plugins/quectel.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+On Fri 2019-07-19 12:19:14, Martin Hundeb=C3=B8ll wrote:
+> ---
+> =
 
-diff --git a/plugins/quectel.c b/plugins/quectel.c
-index 9cac92fa..667a7c7c 100644
---- a/plugins/quectel.c
-+++ b/plugins/quectel.c
-@@ -717,8 +717,9 @@ static void quectel_post_sim(struct ofono_modem *modem)
- =
+> Changes since v1:
+>  * new patch split out from PATCHv1 7/7
+> =
 
- 	DBG("%p", modem);
- =
+>  doc/quectel-hardware-api.txt | 19 +++++++++++++++++++
+>  1 file changed, 19 insertions(+)
+> =
 
--	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->aux);
--	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
-+	gprs =3D ofono_gprs_create(modem, data->vendor, "atmodem", data->aux);
-+	gc =3D ofono_gprs_context_create(modem, data->vendor, "atmodem",
-+					data->modem);
- =
+> diff --git a/doc/quectel-hardware-api.txt b/doc/quectel-hardware-api.txt
+> index 6aafbfd8..411afcd1 100644
+> --- a/doc/quectel-hardware-api.txt
+> +++ b/doc/quectel-hardware-api.txt
+> @@ -10,6 +10,25 @@ Methods		array{string,variant} GetProperties
+>  			Returns hardware properties for the modem object. See
+>  			the properties section for available properties.
+>  =
 
- 	if (gprs && gc)
- 		ofono_gprs_add_context(gprs, gc);
+> +Signals		PowerDown(string reason)
+> +
+> +			This signal is emitted on gracefull shutdowns initiated
+> +			by the modem.
+> +
+> +			Possible reasons:
+> +				"LowPower"	The supply voltage is too low
+> +				"Normal"	The PWRKEY pin was asserted
+> +				"HighPower"	The supply voltage is too high
+> +
+> +		PowerWarning(string reason)
+> +
+> +			This signal is emitted when the modem detects its supply
+> +			voltage is close to its supported limits.
+> +
+> +			Possible reasons:
+> +				"LowPower"	The supply voltage is low
+> +				"HighPower"	The supply voltage is high
+> +
+
+It is "high voltage" not "high power", so maybe it should be
+"HighVoltage" (etc?).
+
+("Low power" sounds like device entered powersaving mode).
+								Pavel
+
 -- =
 
-2.22.0
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============8074060968282273898==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============8472806887148667808==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsMHhvNjhBQ2drUU1PZndhcFhiK3ZMNm1RQ2dxdENVWVRXeWpqTTBoVVN2dEsvWlhhaDQK
+TGtvQW5SUFdYQUdRcWZvRmVYVzc5ell5YzNsaTNHS1MKPXpzR3kKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============8074060968282273898==--
 
