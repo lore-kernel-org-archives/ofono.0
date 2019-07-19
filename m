@@ -1,48 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============7409916118457271224=="
+Content-Type: multipart/mixed; boundary="===============5323593566795961834=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Detecting if a modem has dialing support
-Date: Fri, 19 Jul 2019 10:32:47 -0500
-Message-ID: <72c6ecec-5814-c862-4322-cd3760d47a52@gmail.com>
-In-Reply-To: <CAJCx=gmZ8Fg07HAbfFxE+SgO52-pyTLZvG=_ZznSM6sTRDSu6w@mail.gmail.com>
+Subject: Re: [PATCH 1/2] atmodem: gprs-context: parse list-less CGDATA response
+Date: Fri, 19 Jul 2019 10:35:03 -0500
+Message-ID: <1ed3584f-8bcb-d75b-fc47-2e737924f33e@gmail.com>
+In-Reply-To: <20190719102746.122911-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7409916118457271224==
+--===============5323593566795961834==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Matt,
+Hi Martin,
 
-> It is in the qmimodem driver, and not sure if any modem using that
-> driver is implementing
-> dialing support.
+On 7/19/19 5:27 AM, Martin Hundeb=C3=B8ll wrote:
+> The Quectel M95 and MC60 modems respond to AT+CGDATA=3D? with a single
+> +CGDATA=3D"PPP", but the callback in gprs-context expects a list of
+> protocols.
+> =
+
+> Avoid falling back to the old-style ATD*99 by not expecting a list of
+> protocols for serial quectel modems.
+> ---
+>   drivers/atmodem/gprs-context.c | 8 +++++---
+>   1 file changed, 5 insertions(+), 3 deletions(-)
 > =
 
 
-I believe there are some people using a QMI modems for voicecall =
-
-testing.  Don't recall offhand if they're using a hacked firmware or =
-
-just specific devices.  So there are devices that support this, but =
-
-likely in very custom setups.
-
-I guess the detection logic in the qmimodem voicecall driver is not =
-
-sufficient for knowing whether voicecall support is real or not.  I'm =
-
-not a qmi expert, so not sure what else could be done here.
-
-Worst case, I suppose we can turn off voicecall for QMI by default, and =
-
-those who need it can add a udev setting / config option / environment =
-
-variable for controlling this when required.
+Both applied, thanks.
 
 Regards,
 -Denis
 
---===============7409916118457271224==--
+
+--===============5323593566795961834==--
 
