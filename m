@@ -1,66 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============8880007001534507933=="
+Content-Type: multipart/mixed; boundary="===============7409916118457271224=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCHv3 4/4] doc: document power-event signals for quectel Hardware
- API
-Date: Fri, 19 Jul 2019 14:39:57 +0200
-Message-ID: <20190719123957.6911-4-martin@geanix.com>
-In-Reply-To: <20190719123957.6911-1-martin@geanix.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Detecting if a modem has dialing support
+Date: Fri, 19 Jul 2019 10:32:47 -0500
+Message-ID: <72c6ecec-5814-c862-4322-cd3760d47a52@gmail.com>
+In-Reply-To: <CAJCx=gmZ8Fg07HAbfFxE+SgO52-pyTLZvG=_ZznSM6sTRDSu6w@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8880007001534507933==
+--===============7409916118457271224==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
+Hi Matt,
 
-Changes since v2:
- * Use Voltage{High,Low} instead of {High,Low}Power
-
-Changes since v1:
- * new patch split out from PATCHv1 7/7
-
- doc/quectel-hardware-api.txt | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
-
-diff --git a/doc/quectel-hardware-api.txt b/doc/quectel-hardware-api.txt
-index 6aafbfd8..8795ef40 100644
---- a/doc/quectel-hardware-api.txt
-+++ b/doc/quectel-hardware-api.txt
-@@ -10,6 +10,25 @@ Methods		array{string,variant} GetProperties
- 			Returns hardware properties for the modem object. See
- 			the properties section for available properties.
- =
-
-+Signals		PowerDown(string reason)
-+
-+			This signal is emitted on gracefull shutdowns initiated
-+			by the modem.
-+
-+			Possible reasons:
-+				"VoltageLow"	The supply voltage is too low
-+				"Normal"	The PWRKEY pin was asserted
-+				"VoltageHigh"	The supply voltage is too high
-+
-+		PowerWarning(string reason)
-+
-+			This signal is emitted when the modem detects its supply
-+			voltage is close to its supported limits.
-+
-+			Possible reasons:
-+				"VoltageLow"	The supply voltage is low
-+				"VoltageHigh"	The supply voltage is high
-+
- Properties	int32 Voltage [readonly]
- =
-
- 			Integer with the modem supply voltage in mV.
--- =
-
-2.22.0
+> It is in the qmimodem driver, and not sure if any modem using that
+> driver is implementing
+> dialing support.
+> =
 
 
---===============8880007001534507933==--
+I believe there are some people using a QMI modems for voicecall =
+
+testing.  Don't recall offhand if they're using a hacked firmware or =
+
+just specific devices.  So there are devices that support this, but =
+
+likely in very custom setups.
+
+I guess the detection logic in the qmimodem voicecall driver is not =
+
+sufficient for knowing whether voicecall support is real or not.  I'm =
+
+not a qmi expert, so not sure what else could be done here.
+
+Worst case, I suppose we can turn off voicecall for QMI by default, and =
+
+those who need it can add a udev setting / config option / environment =
+
+variable for controlling this when required.
+
+Regards,
+-Denis
+
+--===============7409916118457271224==--
 
