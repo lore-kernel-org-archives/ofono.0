@@ -1,53 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============6912122101880792726=="
+Content-Type: multipart/mixed; boundary="===============8472806887148667808=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH 1/2] atmodem: gprs-context: parse list-less CGDATA response
-Date: Fri, 19 Jul 2019 12:27:45 +0200
-Message-ID: <20190719102746.122911-1-martin@geanix.com>
+Subject: [PATCH 2/2] quectel: pass vendor id to gprs and gprs-context
+Date: Fri, 19 Jul 2019 12:27:46 +0200
+Message-ID: <20190719102746.122911-2-martin@geanix.com>
+In-Reply-To: <20190719102746.122911-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6912122101880792726==
+--===============8472806887148667808==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The Quectel M95 and MC60 modems respond to AT+CGDATA=3D? with a single
-+CGDATA=3D"PPP", but the callback in gprs-context expects a list of
-protocols.
-
-Avoid falling back to the old-style ATD*99 by not expecting a list of
-protocols for serial quectel modems.
+The gprs-context does special casing on the quectel serial modem when
+probing the supported layer 2 protocols, so pass the vendor id when
+setting up the atoms.
 ---
- drivers/atmodem/gprs-context.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ plugins/quectel.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 4e623a63..f9f3c0ab 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -409,9 +409,11 @@ static void at_cgdata_test_cb(gboolean ok, GAtResult *=
-result,
- 		goto error;
- 	}
+diff --git a/plugins/quectel.c b/plugins/quectel.c
+index 9cac92fa..667a7c7c 100644
+--- a/plugins/quectel.c
++++ b/plugins/quectel.c
+@@ -717,8 +717,9 @@ static void quectel_post_sim(struct ofono_modem *modem)
  =
 
--	if (!g_at_result_iter_open_list(&iter)) {
--		DBG("no list found");
--		goto error;
-+	if (gcd->vendor !=3D OFONO_VENDOR_QUECTEL_SERIAL) {
-+		if (!g_at_result_iter_open_list(&iter)) {
-+			DBG("no list found");
-+			goto error;
-+		}
- 	}
+ 	DBG("%p", modem);
  =
 
- 	while (!found && g_at_result_iter_next_string(&iter, &data_type)) {
+-	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->aux);
+-	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
++	gprs =3D ofono_gprs_create(modem, data->vendor, "atmodem", data->aux);
++	gc =3D ofono_gprs_context_create(modem, data->vendor, "atmodem",
++					data->modem);
+ =
+
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
 -- =
 
 2.22.0
 
 
---===============6912122101880792726==--
+--===============8472806887148667808==--
 
