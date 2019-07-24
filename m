@@ -1,58 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============6055699251693088931=="
+Content-Type: multipart/mixed; boundary="===============8239982942488095335=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: Telit ME910C1-WW not detected
-Date: Tue, 23 Jul 2019 15:11:16 +0200
-Message-ID: <CAKSBH7FXFetDHJZoA_xwVP6H3DmGFo7x_b9WtRX5w2dGoRnH+g@mail.gmail.com>
-In-Reply-To: <599D0C5744F85B4480C6B0762332A90524D0FE4F@dmdgate08-vm02.DMD06.local>
+From: Tarmo Kuuse <tarmo.kuuse@gmail.com>
+Subject: Setting "RoamingAllowed" on by default; or storing persistently
+Date: Wed, 24 Jul 2019 17:15:20 +0300
+Message-ID: <65e65c13-ee97-03ed-45e6-4a24779440b1@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6055699251693088931==
+--===============8239982942488095335==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Gabriele,
+Hi!
 
-On Tue, Jul 23, 2019 at 2:50 PM Dresdo Gabriele <Gdresdo@dmd.it> wrote:
->
-> Hello,
->
-> I'm new to oFono, I'm trying to setup a Telit ME910C1 with oFono 1.18 in =
-our embedded system (ARMHF) with Debian stretch kernel 4.9.11 but list-mode=
-ms returns no results.
->
-> I installed ofono packet using apt-get
+I'd like for my device to automatically connect to 3G data in roaming =
 
-try install it from the official repository with git clone. You will
-also need the ell library. These are the two official repositories:
-   https://git.kernel.org/pub/scm/network/ofono/ofono.git
-   https://git.kernel.org/pub/scm/libs/ell/ell.git/
+wherever the GSM network permits it. I'd very much like to set this up =
 
-The version 1.18 is a bit old.
+as default during manufacturing regardless of the SIM inserted. ofono =
 
->
-> I can send and receive AT commands to the modem using a terminal connecte=
-d to /dev/ttyUSB1
->
-> I paste Log from ofonod -dn.
->
-> Any suggestion will be useful
->
-> Thanks
->
-> Gabriele
->
+version 1.21 (debian buster).
 
-If this doesn't work, it means that your modem is not supported.
-In this case, please sent the result of:
-   lsusb
-   lsusb -t
-(the part relevant for your modem)
+I can tell ofono to enable roaming manually - either via the config file =
 
-Regards,
-Giacinto
+(e.g. /var/lib/ofono/248030010014875/gprs) or dbus interface (e.g. =
 
---===============6055699251693088931==--
+dbus-send --system --print-reply --dest=3Dorg.ofono /quectel_0 =
+
+org.ofono.ConnectionManager.SetProperty string:"RoamingAllowed" =
+
+variant:boolean:true), but it does not seem to be stored persistently. =
+
+After a reboot ofono has disabled roaming again and the config file =
+
+holds "RoamingAllowed=3D0".
+
+So my questions are:
+1. can I set up ofono to always permit data connections in roaming?
+2. if not, can I at least store RoamingAllowed persistently per SIM card?
+
+As context: working on a 3G-equipped gateway device, factory-installed =
+
+with a roaming-enabled SIM card and typically shipped to a foreign =
+
+country (mostly within EU where data roaming incurs no penalty). It's =
+
+rather desirable that 3G comes online without requiring any setup =
+
+whatsoever once the gateway is powered on in destination country.
+
+-- =
+
+Kind regards
+Tarmo Kuuse
+
+--===============8239982942488095335==--
 
