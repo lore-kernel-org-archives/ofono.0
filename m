@@ -1,90 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============2609757500233798777=="
+Content-Type: multipart/mixed; boundary="===============8397376290551520391=="
 MIME-Version: 1.0
-From: Tarmo Kuuse <tarmo.kuuse@gmail.com>
-Subject: Re: Setting "RoamingAllowed" on by default; or storing persistently
-Date: Wed, 24 Jul 2019 17:55:31 +0300
-Message-ID: <197f7ebf-af59-4256-6543-3e1793623bc7@gmail.com>
-In-Reply-To: <2a79b31f-6004-6b7f-d0cf-39432d463216@gmail.com>
+From: richard.rojfors@gmail.com
+Subject: [PATCH] gprs: Postpone attach decisions until netreg is finished
+Date: Wed, 24 Jul 2019 19:02:55 +0200
+Message-ID: <20190724170255.8670-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2609757500233798777==
+--===============8397376290551520391==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-On 24.07.19 02:23, Denis Kenzior wrote:
->> I'd like for my device to automatically connect to 3G data in roaming =
+In case the gprs_netreg_update is called from somewhere else
+than the actual netreg update before any netreg updates have
+happened. It can not make proper decisions. For instance
+we might run on EUTRAN but it does not know yet. So check
+if the technology is known to netreg, if not just return
+since netreg will kick us when its finished initialising,
+which will be very soon.
+---
+ src/gprs.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
 
->> wherever the GSM network permits it. I'd very much like to set this up =
+diff --git a/src/gprs.c b/src/gprs.c
+index bdb8c8a2..4e79c528 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1660,6 +1660,16 @@ static void gprs_netreg_removed(struct ofono_gprs *g=
+prs)
+ static void gprs_netreg_update(struct ofono_gprs *gprs)
+ {
+ 	ofono_bool_t attach;
++	int technology;
++
++	technology =3D ofono_netreg_get_technology(gprs->netreg);
++
++	/* If we are called before netreg has updated us, just return
++	 * we will get called again when the technology is available
++	 * and we can make better decisions
++	 */
++	if (technology =3D=3D -1)
++		return;
+ =
 
->> as default during manufacturing regardless of the SIM inserted. ofono =
+ 	attach =3D gprs->netreg_status =3D=3D NETWORK_REGISTRATION_STATUS_REGISTE=
+RED;
+ =
 
->> version 1.21 (debian buster).
-> =
+@@ -1670,8 +1680,7 @@ static void gprs_netreg_update(struct ofono_gprs *gpr=
+s)
+ =
 
-> Isn't this quite old?=C2=A0 I think we're up to 1.29 and we don't do rele=
-ases =
+ 	DBG("attach: %u, driver_attached: %u", attach, gprs->driver_attached);
+ =
 
-> that often these days...
-
-Yes, the package maintainer seems to be erring on the side of caution.
-
->> I can tell ofono to enable roaming manually - either via the config =
-
->> file (e.g. /var/lib/ofono/248030010014875/gprs) or dbus interface =
-
->> (e.g. dbus-send --system --print-reply --dest=3Dorg.ofono /quectel_0 =
-
->> org.ofono.ConnectionManager.SetProperty string:"RoamingAllowed" =
-
->> variant:boolean:true), but it does not seem to be stored persistently. =
-
->> After a reboot ofono has disabled roaming again and the config file =
-
->> holds "RoamingAllowed=3D0".
-> =
-
-> If the method call is successful, then RoamingAllowed should be updated =
-
-> on disk.=C2=A0 E.g. see src/gprs.c, we invoke storage_sync() right after =
-
-> updating it.
-> =
-
-> Perhaps try running strace on ofonod and see why this fails?
-
-Sounds logical to me, thank you for confirming.
-
->> So my questions are:
->> 1. can I set up ofono to always permit data connections in roaming?
-> =
-
-> Not at the moment.=C2=A0 oFono never had a concept of a main configuratio=
-n =
-
-> file.=C2=A0 But perhaps something like that could be introduced specifica=
-lly =
-
-> for this use case...
-
-I heartily agree.
-
->> 2. if not, can I at least store RoamingAllowed persistently per SIM card?
-> =
-
-> This should already work...
-
-Thank you for the quick reply. I'll begin by upgrading ofono to see if =
-
-the persistence starts to work for me.
-
+-	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
+-			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
++	if (technology =3D=3D ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs=
+))
+ 		/*
+ 		 * For LTE we set attached status only on successful
+ 		 * context activation.
 -- =
 
-Kind regards
-Tarmo Kuuse
+2.20.1
 
---===============2609757500233798777==--
+
+--===============8397376290551520391==--
 
