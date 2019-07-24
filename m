@@ -1,73 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============8397376290551520391=="
+Content-Type: multipart/mixed; boundary="===============8096657038101186817=="
 MIME-Version: 1.0
 From: richard.rojfors@gmail.com
-Subject: [PATCH] gprs: Postpone attach decisions until netreg is finished
-Date: Wed, 24 Jul 2019 19:02:55 +0200
-Message-ID: <20190724170255.8670-1-richard.rojfors@gmail.com>
+Subject: [PATCH] atmodem: Check for auto activated contexts during init
+Date: Wed, 24 Jul 2019 19:24:19 +0200
+Message-ID: <20190724172419.29405-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8397376290551520391==
+--===============8096657038101186817==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-In case the gprs_netreg_update is called from somewhere else
-than the actual netreg update before any netreg updates have
-happened. It can not make proper decisions. For instance
-we might run on EUTRAN but it does not know yet. So check
-if the technology is known to netreg, if not just return
-since netreg will kick us when its finished initialising,
-which will be very soon.
+To detect if a context gets activated before we register
+for unsolicited events we need to check if any is
+already activated, and flag it auto activated.
 ---
- src/gprs.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
+ drivers/atmodem/gprs.c | 47 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index bdb8c8a2..4e79c528 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1660,6 +1660,16 @@ static void gprs_netreg_removed(struct ofono_gprs *g=
-prs)
- static void gprs_netreg_update(struct ofono_gprs *gprs)
- {
- 	ofono_bool_t attach;
-+	int technology;
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index fbee5c94..10108281 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -43,6 +43,7 @@
+ =
+
+ static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
+ static const char *cgdcont_prefix[] =3D { "+CGDCONT:", NULL };
++static const char *cgact_prefix[] =3D { "+CGACT:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
+
+ struct gprs_data {
+@@ -192,6 +193,48 @@ static void at_cgdcont_read_cb(gboolean ok, GAtResult =
+*result,
+ 				activated_cid);
+ }
+ =
+
++static void at_cgact_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_gprs *gprs =3D user_data;
++	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
++	GAtResultIter iter;
 +
-+	technology =3D ofono_netreg_get_technology(gprs->netreg);
++	DBG("ok %d", ok);
 +
-+	/* If we are called before netreg has updated us, just return
-+	 * we will get called again when the technology is available
-+	 * and we can make better decisions
-+	 */
-+	if (technology =3D=3D -1)
++	if (!ok) {
++		ofono_warn("Can't read CGACT contexts.");
 +		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, "+CGACT:")) {
++		int read_cid =3D -1;
++		int read_status =3D -1;
++
++		if (!g_at_result_iter_next_number(&iter, &read_cid))
++			break;
++
++		if (!g_at_result_iter_next_number(&iter, &read_status))
++			break;
++
++		if (read_status !=3D 1)
++			continue;
++
++		/* Flag this as auto context as it was obviously active */
++		if (gd->last_auto_context_id =3D=3D 0)
++			gd->last_auto_context_id =3D read_cid;
++
++		if (read_cid !=3D gd->last_auto_context_id)
++			continue;
++
++		g_at_chat_send(gd->chat, "AT+CGDCONT?", cgdcont_prefix,
++				at_cgdcont_read_cb, gprs, NULL);
++
++		break;
++	}
++}
++
+ static void cgreg_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_gprs *gprs =3D user_data;
+@@ -495,6 +538,10 @@ static void gprs_initialized(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 		break;
+ 	}
  =
 
- 	attach =3D gprs->netreg_status =3D=3D NETWORK_REGISTRATION_STATUS_REGISTE=
-RED;
++	/* Check if there is any already activated contexts at init */
++	g_at_chat_send(gd->chat, "AT+CGACT?", cgact_prefix,
++			at_cgact_cb, gprs, NULL);
++
+ 	ofono_gprs_register(gprs);
+ }
  =
 
-@@ -1670,8 +1680,7 @@ static void gprs_netreg_update(struct ofono_gprs *gpr=
-s)
- =
-
- 	DBG("attach: %u, driver_attached: %u", attach, gprs->driver_attached);
- =
-
--	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
--			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
-+	if (technology =3D=3D ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs=
-))
- 		/*
- 		 * For LTE we set attached status only on successful
- 		 * context activation.
 -- =
 
 2.20.1
 
 
---===============8397376290551520391==--
+--===============8096657038101186817==--
 
