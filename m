@@ -1,91 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============0552816024331084446=="
+Content-Type: multipart/mixed; boundary="===============2609757500233798777=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Tarmo Kuuse <tarmo.kuuse@gmail.com>
 Subject: Re: Setting "RoamingAllowed" on by default; or storing persistently
-Date: Tue, 23 Jul 2019 18:23:27 -0500
-Message-ID: <2a79b31f-6004-6b7f-d0cf-39432d463216@gmail.com>
-In-Reply-To: <65e65c13-ee97-03ed-45e6-4a24779440b1@gmail.com>
+Date: Wed, 24 Jul 2019 17:55:31 +0300
+Message-ID: <197f7ebf-af59-4256-6543-3e1793623bc7@gmail.com>
+In-Reply-To: <2a79b31f-6004-6b7f-d0cf-39432d463216@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0552816024331084446==
+--===============2609757500233798777==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tarmo,
+Hi Denis,
 
-On 7/24/19 9:15 AM, Tarmo Kuuse wrote:
-> Hi!
+On 24.07.19 02:23, Denis Kenzior wrote:
+>> I'd like for my device to automatically connect to 3G data in roaming =
+
+>> wherever the GSM network permits it. I'd very much like to set this up =
+
+>> as default during manufacturing regardless of the SIM inserted. ofono =
+
+>> version 1.21 (debian buster).
 > =
 
-> I'd like for my device to automatically connect to 3G data in roaming =
+> Isn't this quite old?=C2=A0 I think we're up to 1.29 and we don't do rele=
+ases =
 
-> wherever the GSM network permits it. I'd very much like to set this up =
+> that often these days...
 
-> as default during manufacturing regardless of the SIM inserted. ofono =
+Yes, the package maintainer seems to be erring on the side of caution.
 
-> version 1.21 (debian buster).
+>> I can tell ofono to enable roaming manually - either via the config =
 
-Isn't this quite old?  I think we're up to 1.29 and we don't do releases =
+>> file (e.g. /var/lib/ofono/248030010014875/gprs) or dbus interface =
 
-that often these days...
+>> (e.g. dbus-send --system --print-reply --dest=3Dorg.ofono /quectel_0 =
 
+>> org.ofono.ConnectionManager.SetProperty string:"RoamingAllowed" =
+
+>> variant:boolean:true), but it does not seem to be stored persistently. =
+
+>> After a reboot ofono has disabled roaming again and the config file =
+
+>> holds "RoamingAllowed=3D0".
 > =
 
-> I can tell ofono to enable roaming manually - either via the config file =
+> If the method call is successful, then RoamingAllowed should be updated =
 
-> (e.g. /var/lib/ofono/248030010014875/gprs) or dbus interface (e.g. =
+> on disk.=C2=A0 E.g. see src/gprs.c, we invoke storage_sync() right after =
 
-> dbus-send --system --print-reply --dest=3Dorg.ofono /quectel_0 =
-
-> org.ofono.ConnectionManager.SetProperty string:"RoamingAllowed" =
-
-> variant:boolean:true), but it does not seem to be stored persistently. =
-
-> After a reboot ofono has disabled roaming again and the config file =
-
-> holds "RoamingAllowed=3D0".
-
-If the method call is successful, then RoamingAllowed should be updated =
-
-on disk.  E.g. see src/gprs.c, we invoke storage_sync() right after =
-
-updating it.
-
-Perhaps try running strace on ofonod and see why this fails?
-
+> updating it.
 > =
 
-> So my questions are:
-> 1. can I set up ofono to always permit data connections in roaming?
+> Perhaps try running strace on ofonod and see why this fails?
 
-Not at the moment.  oFono never had a concept of a main configuration =
+Sounds logical to me, thank you for confirming.
 
-file.  But perhaps something like that could be introduced specifically =
-
-for this use case...
-
-> 2. if not, can I at least store RoamingAllowed persistently per SIM card?
+>> So my questions are:
+>> 1. can I set up ofono to always permit data connections in roaming?
 > =
 
+> Not at the moment.=C2=A0 oFono never had a concept of a main configuratio=
+n =
 
-This should already work...
+> file.=C2=A0 But perhaps something like that could be introduced specifica=
+lly =
 
-> As context: working on a 3G-equipped gateway device, factory-installed =
+> for this use case...
 
-> with a roaming-enabled SIM card and typically shipped to a foreign =
+I heartily agree.
 
-> country (mostly within EU where data roaming incurs no penalty). It's =
-
-> rather desirable that 3G comes online without requiring any setup =
-
-> whatsoever once the gateway is powered on in destination country.
+>> 2. if not, can I at least store RoamingAllowed persistently per SIM card?
 > =
 
+> This should already work...
 
-Regards,
--Denis
+Thank you for the quick reply. I'll begin by upgrading ofono to see if =
 
---===============0552816024331084446==--
+the persistence starts to work for me.
+
+-- =
+
+Kind regards
+Tarmo Kuuse
+
+--===============2609757500233798777==--
 
