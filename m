@@ -1,41 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8278093835619026012=="
+Content-Type: multipart/mixed; boundary="===============1779008229804605028=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Setting "RoamingAllowed" on by default; or storing persistently
-Date: Tue, 23 Jul 2019 23:45:24 -0500
-Message-ID: <906a7cf0-9ab5-7388-1e63-a20f31ac6ace@gmail.com>
-In-Reply-To: <197f7ebf-af59-4256-6543-3e1793623bc7@gmail.com>
+Subject: Re: [PATCH] atmodem: Check for auto activated contexts during init
+Date: Wed, 24 Jul 2019 02:12:28 -0500
+Message-ID: <4215da9b-bfdb-eb7e-edfe-99703c3a8214@gmail.com>
+In-Reply-To: <20190724172419.29405-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8278093835619026012==
+--===============1779008229804605028==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tarmo,
+Hi Richard,
 
->>> 2. if not, can I at least store RoamingAllowed persistently per SIM =
-
->>> card?
->>
->> This should already work...
+On 7/24/19 12:24 PM, richard.rojfors(a)gmail.com wrote:
+> From: Richard R=C3=B6jfors <richard@puffinpack.se>
 > =
 
-> Thank you for the quick reply. I'll begin by upgrading ofono to see if =
-
-> the persistence starts to work for me.
+> To detect if a context gets activated before we register
+> for unsolicited events we need to check if any is
+> already activated, and flag it auto activated.
+> ---
+>   drivers/atmodem/gprs.c | 47 ++++++++++++++++++++++++++++++++++++++++++
+>   1 file changed, 47 insertions(+)
 > =
 
 
-I would doubt it.  The code in question has been in there way before =
-
-version 1.1.  Either your system is somehow strange (e.g. perhaps the fs =
-
-is not writable) or we have a bug somewhere...
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============8278093835619026012==--
+
+--===============1779008229804605028==--
 
