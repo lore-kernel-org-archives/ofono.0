@@ -1,78 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============5099866966366745099=="
+Content-Type: multipart/mixed; boundary="===============1261419866745447642=="
 MIME-Version: 1.0
-From: Richard =?unknown-8bit?q?R=C3=B6jfors?= <richard.rojfors@gmail.com>
-Subject: Re: [PATCH] gprs: Postpone attach decisions until netreg is finished
-Date: Thu, 01 Aug 2019 11:31:51 +0000
-Message-ID: <CAHB-PjkM=eRwTu8WGGRuK6eEmxagXJBMwYod+fuyT_Qwp+sO-A@mail.gmail.com>
-In-Reply-To: <5082a823-9f02-f117-cc16-aadc1cbf7cf1@gmail.com>
+From: richard.rojfors@gmail.com
+Subject: [PATCH] netreg, gprs: Use -1 as netreg status during init.
+Date: Thu, 01 Aug 2019 11:48:55 +0000
+Message-ID: <20190801114855.11639-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5099866966366745099==
+--===============1261419866745447642==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-Den tors 25 juli 2019 kl 06:58 skrev Denis Kenzior <denkenz@gmail.com>:
+Previously the valid "unknown" registration status was set
+during startup, but its a bit problematic for gprs.
+There might be cases where a LTE context is activated
+before netreg is finished updating its status.
+And then gprs could make faulty actions.
+Instead we set the status to -1 when the drivers supports
+fetching the status manually, which is done during startup.
+During the time the status is -1, gprs postpones actions until
+the status is valid (>=3D 0).
+---
+ src/gprs.c    | 12 ++++++++++--
+ src/network.c |  5 ++++-
+ 2 files changed, 14 insertions(+), 3 deletions(-)
 
-> > +     technology =3D ofono_netreg_get_technology(gprs->netreg);
-> > +
-> > +     /* If we are called before netreg has updated us, just return
-> > +      * we will get called again when the technology is available
-> > +      * and we can make better decisions
-> > +      */
-> > +     if (technology =3D=3D -1)
-> > +             return;
->
-> You have to be careful here, some modem drivers do not report technology
-> at all, and it is an optional property in the API.  So you are probably
-> breaking such drivers with this change...
->
->
-Unfortunately you are completely correct ;-)
-I send another spin. Where i instead set the netreg status to -1 in case
-the driver can fetch
-the status during startup. This will work with both sms and gprs which
-seems to be the users of netreg.
-The D-Bus interface will also return "unknown" during this time.
-..And the users such as gprs can know if the status is valid or not.
+diff --git a/src/gprs.c b/src/gprs.c
+index bdb8c8a2..07802c36 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1661,6 +1661,14 @@ static void gprs_netreg_update(struct ofono_gprs *gp=
+rs)
+ {
+ 	ofono_bool_t attach;
+ =
 
---Richard
++	/* This function can get called by other reasons than netreg
++	 * updating its status. So check if we have a valid netreg status yet.
++	 * The only reason for not having a valid status is basically during
++	 * startup while the netreg atom is fetching the status.
++	 */
++	if (gprs->netreg_status < 0)
++		return;
++
+ 	attach =3D gprs->netreg_status =3D=3D NETWORK_REGISTRATION_STATUS_REGISTE=
+RED;
+ =
 
---===============5099866966366745099==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+ 	attach =3D attach || (gprs->roaming_allowed &&
+@@ -3083,8 +3091,8 @@ struct ofono_gprs *ofono_gprs_create(struct ofono_mod=
+em *modem,
+ 		break;
+ 	}
+ =
 
-PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+SGkgRGVuaXMsPC9kaXY+PGJyPjxkaXYgY2xh
-c3M9ImdtYWlsX3F1b3RlIj48ZGl2IGRpcj0ibHRyIiBjbGFzcz0iZ21haWxfYXR0ciI+RGVuIHRv
-cnMgMjUganVsaSAyMDE5IGtsIDA2OjU4IHNrcmV2IERlbmlzIEtlbnppb3IgJmx0OzxhIGhyZWY9
-Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSI+ZGVua2VuekBnbWFpbC5jb208L2E+Jmd0Ozo8YnI+
-PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAw
-cHggMHB4IDAuOGV4O2JvcmRlci1sZWZ0OjFweCBzb2xpZCByZ2IoMjA0LDIwNCwyMDQpO3BhZGRp
-bmctbGVmdDoxZXgiPiZndDsgK8KgIMKgIMKgdGVjaG5vbG9neSA9IG9mb25vX25ldHJlZ19nZXRf
-dGVjaG5vbG9neShncHJzLSZndDtuZXRyZWcpOzxicj4KJmd0OyArPGJyPgomZ3Q7ICvCoCDCoCDC
-oC8qIElmIHdlIGFyZSBjYWxsZWQgYmVmb3JlIG5ldHJlZyBoYXMgdXBkYXRlZCB1cywganVzdCBy
-ZXR1cm48YnI+CiZndDsgK8KgIMKgIMKgICogd2Ugd2lsbCBnZXQgY2FsbGVkIGFnYWluIHdoZW4g
-dGhlIHRlY2hub2xvZ3kgaXMgYXZhaWxhYmxlPGJyPgomZ3Q7ICvCoCDCoCDCoCAqIGFuZCB3ZSBj
-YW4gbWFrZSBiZXR0ZXIgZGVjaXNpb25zPGJyPgomZ3Q7ICvCoCDCoCDCoCAqLzxicj4KJmd0OyAr
-wqAgwqAgwqBpZiAodGVjaG5vbG9neSA9PSAtMSk8YnI+CiZndDsgK8KgIMKgIMKgIMKgIMKgIMKg
-IMKgcmV0dXJuOzxicj4KPGJyPgpZb3UgaGF2ZSB0byBiZSBjYXJlZnVsIGhlcmUsIHNvbWUgbW9k
-ZW0gZHJpdmVycyBkbyBub3QgcmVwb3J0IHRlY2hub2xvZ3kgPGJyPgphdCBhbGwsIGFuZCBpdCBp
-cyBhbiBvcHRpb25hbCBwcm9wZXJ0eSBpbiB0aGUgQVBJLsKgIFNvIHlvdSBhcmUgcHJvYmFibHkg
-PGJyPgpicmVha2luZyBzdWNoIGRyaXZlcnMgd2l0aCB0aGlzIGNoYW5nZS4uLjxicj4KPGJyPjwv
-YmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PlVuZm9ydHVuYXRlbHkgeW91IGFyZSBjb21w
-bGV0ZWx5IGNvcnJlY3QgOy0pPC9kaXY+PGRpdj5JIHNlbmQgYW5vdGhlciBzcGluLiBXaGVyZSBp
-IGluc3RlYWQgc2V0IHRoZSBuZXRyZWcgc3RhdHVzIHRvIC0xIGluIGNhc2UgdGhlIGRyaXZlciBj
-YW4gZmV0Y2g8L2Rpdj48ZGl2PnRoZSBzdGF0dXMgZHVyaW5nIHN0YXJ0dXAuIFRoaXMgd2lsbCB3
-b3JrIHdpdGggYm90aCBzbXMgYW5kIGdwcnMgd2hpY2ggc2VlbXMgdG8gYmUgdGhlIHVzZXJzIG9m
-IG5ldHJlZy48L2Rpdj48ZGl2PlRoZSBELUJ1cyBpbnRlcmZhY2Ugd2lsbCBhbHNvIHJldHVybiAm
-cXVvdDt1bmtub3duJnF1b3Q7IGR1cmluZyB0aGlzIHRpbWUuPC9kaXY+PGRpdj4uLkFuZCB0aGUg
-dXNlcnMgc3VjaCBhcyBncHJzIGNhbiBrbm93IGlmIHRoZSBzdGF0dXMgaXMgdmFsaWQgb3Igbm90
-LjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+LS1SaWNoYXJkwqA8L2Rpdj48L2Rpdj48L2Rpdj4K
+-	gprs->status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
+-	gprs->netreg_status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
++	gprs->status =3D -1;
++	gprs->netreg_status =3D -1;
+ 	gprs->used_pids =3D l_uintset_new(MAX_CONTEXTS);
+ =
 
---===============5099866966366745099==--
+ 	return gprs;
+diff --git a/src/network.c b/src/network.c
+index 2824eae6..1db01bcf 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -1874,7 +1874,7 @@ struct ofono_netreg *ofono_netreg_create(struct ofono=
+_modem *modem,
+ 	if (netreg =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	netreg->status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
++	netreg->status =3D -1;
+ 	netreg->location =3D -1;
+ 	netreg->cellid =3D -1;
+ 	netreg->technology =3D -1;
+@@ -1893,6 +1893,9 @@ struct ofono_netreg *ofono_netreg_create(struct ofono=
+_modem *modem,
+ 			continue;
+ =
+
+ 		netreg->driver =3D drv;
++		/* Check if we can init the status properly using the driver */
++		if (netreg->driver->registration_status =3D=3D NULL)
++			netreg->status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
+ 		break;
+ 	}
+ =
+
+-- =
+
+2.20.1
+
+
+--===============1261419866745447642==--
 
