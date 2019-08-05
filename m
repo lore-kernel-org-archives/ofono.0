@@ -1,65 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============8137936509583266652=="
+Content-Type: multipart/mixed; boundary="===============2450737365632729076=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: Unsalble cellular connection
-Date: Fri, 02 Aug 2019 19:43:08 +0200
-Message-ID: <CAKSBH7Fnrhdq8HAkD8TtEmfnauj9Je9A++wQzhksss=F3xDWXg@mail.gmail.com>
-In-Reply-To: <CAA=hcWRsgAiz6YUVRkiFh8d6Aa_q6qdcw-5NtOerum-8vqaCbQ@mail.gmail.com>
+From: richard.rojfors@gmail.com
+Subject: [PATCH] gprs: Use -1 as netreg status during init.
+Date: Mon, 05 Aug 2019 22:40:09 +0000
+Message-ID: <20190805224009.9942-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8137936509583266652==
+--===============2450737365632729076==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi jupiter,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-On Fri, Aug 2, 2019 at 12:46 PM JH <jupiter.hce@gmail.com> wrote:
->
-> Hi Giacinto, thanks for your response.
->
-> On 8/2/19, Giacinto Cifelli <gciofono@gmail.com> wrote:
-> > Hi jupiter,
-> > most likely the network dropped the context without signaling.
-> > What kind of modem is it? And would you know also the chipset?
->
-> It is uBlox SARA-R4 chipset,
-not sur whether uBlox did this chipset.
+Previously the valid "unknown" netreg status was set
+during startup, but its a bit problematic for gprs.
+There might be cases where a LTE context is activated
+before netreg is finished updating its status.
+Resulting in gprs taking faulty actions.
+Instead we set the status to -1 until we are updated
+with a known value.
+During the time the status is -1, gprs postpones actions until
+the status is valid (>=3D 0).
+---
+ src/gprs.c | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
 
-> did you mean it could be caused by weak
-> LTE signalling level? It is a prototype device, the hardware was
-> designed by an contractor. Any simple way to show LTE signalling level
-> in connman or ofono log files?
-This signal level is output periodically by ofono in a signal.
-You can try to catch all ofono signals (these are dbus events, not to
-be confused with signal level and network signaling) with
-dbus-monitor.
-But I think the signal is ok.
-Only the network disables the PDP context. maybe without informing the mode=
-m.
-This is done by several networks.
+diff --git a/src/gprs.c b/src/gprs.c
+index bdb8c8a2..fd28c585 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1661,6 +1661,15 @@ static void gprs_netreg_update(struct ofono_gprs *gp=
+rs)
+ {
+ 	ofono_bool_t attach;
+ =
 
-> The trouble is it connected well at
-> startup, then dropped it, it is hard to convince the hardware
-> contractor it is hardware problem unless I have strong evidence that
-> is not the software problem.
++	/*
++	 * This function can get called by other reasons than netreg
++	 * updating its status. So check if we have a valid netreg status yet.
++	 * The only reason for not having a valid status is basically during
++	 * startup while the netreg atom is fetching the status.
++	 */
++	if (gprs->netreg_status < 0)
++		return;
++
+ 	attach =3D gprs->netreg_status =3D=3D NETWORK_REGISTRATION_STATUS_REGISTE=
+RED;
+ =
 
-Ask uBlox how to capture a protocol stack trace, and if it is feasible
-for your application, do it and have it analyzed by uBlox.
+ 	attach =3D attach || (gprs->roaming_allowed &&
+@@ -3084,7 +3093,7 @@ struct ofono_gprs *ofono_gprs_create(struct ofono_mod=
+em *modem,
+ 	}
+ =
 
-Are you on GSM, on LTE catM or on LTE NB-IOT when this happens? On
-which network operator and country?
+ 	gprs->status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
+-	gprs->netreg_status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
++	gprs->netreg_status =3D -1;
+ 	gprs->used_pids =3D l_uintset_new(MAX_CONTEXTS);
+ =
 
->
-> Thank you very much.
->
-> Kind regards,
->
-> - jupiter
+ 	return gprs;
+@@ -3095,6 +3104,7 @@ static void netreg_watch(struct ofono_atom *atom,
+ 				void *data)
+ {
+ 	struct ofono_gprs *gprs =3D data;
++	int status;
+ =
 
-BR,
-Giacinto
+ 	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
+ 		gprs_netreg_removed(gprs);
+@@ -3102,7 +3112,16 @@ static void netreg_watch(struct ofono_atom *atom,
+ 	}
+ =
 
---===============8137936509583266652==--
+ 	gprs->netreg =3D __ofono_atom_get_data(atom);
+-	gprs->netreg_status =3D ofono_netreg_get_status(gprs->netreg);
++	status =3D ofono_netreg_get_status(gprs->netreg);
++
++	/*
++	 * If the status is known, assign it, otherwise keep the init value
++	 * to indicate that the netreg atom is not initialised with a known
++	 * value
++	 */
++	if (status !=3D NETWORK_REGISTRATION_STATUS_UNKNOWN)
++		gprs->netreg_status =3D ofono_netreg_get_status(status);
++
+ 	gprs->status_watch =3D __ofono_netreg_add_status_watch(gprs->netreg,
+ 					netreg_status_changed, gprs, NULL);
+ =
+
+-- =
+
+2.20.1
+
+
+--===============2450737365632729076==--
 
