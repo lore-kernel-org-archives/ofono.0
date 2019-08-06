@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2450737365632729076=="
+Content-Type: multipart/mixed; boundary="===============3133810867629567598=="
 MIME-Version: 1.0
 From: richard.rojfors@gmail.com
-Subject: [PATCH] gprs: Use -1 as netreg status during init.
-Date: Mon, 05 Aug 2019 22:40:09 +0000
-Message-ID: <20190805224009.9942-1-richard.rojfors@gmail.com>
+Subject: [PATCH v2] gprs: Use -1 as netreg status during init.
+Date: Tue, 06 Aug 2019 08:33:56 +0000
+Message-ID: <20190806083356.21197-1-richard.rojfors@gmail.com>
+In-Reply-To: <20190805224009.9942-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2450737365632729076==
+--===============3133810867629567598==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -28,7 +29,7 @@ the status is valid (>=3D 0).
  1 file changed, 21 insertions(+), 2 deletions(-)
 
 diff --git a/src/gprs.c b/src/gprs.c
-index bdb8c8a2..fd28c585 100644
+index bdb8c8a2..d554dab1 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
 @@ -1661,6 +1661,15 @@ static void gprs_netreg_update(struct ofono_gprs *gp=
@@ -86,7 +87,7 @@ em *modem,
 +	 * value
 +	 */
 +	if (status !=3D NETWORK_REGISTRATION_STATUS_UNKNOWN)
-+		gprs->netreg_status =3D ofono_netreg_get_status(status);
++		gprs->netreg_status =3D status;
 +
  	gprs->status_watch =3D __ofono_netreg_add_status_watch(gprs->netreg,
  					netreg_status_changed, gprs, NULL);
@@ -97,5 +98,5 @@ em *modem,
 2.20.1
 
 
---===============2450737365632729076==--
+--===============3133810867629567598==--
 
