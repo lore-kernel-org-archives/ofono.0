@@ -1,64 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============4344720737335828079=="
+Content-Type: multipart/mixed; boundary="===============5837155676581633954=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Duplicated contexts...
-Date: Thu, 08 Aug 2019 14:10:21 -0500
-Message-ID: <5ce7b703-3abf-49e3-efa7-3a89259c5d4d@gmail.com>
-In-Reply-To: <CAHB-PjnzsOxc-ZbH95LQ94R05wCUz4UCdhgphNiseubEfCwZsQ@mail.gmail.com>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: Re: Unsalble cellular connection
+Date: Fri, 09 Aug 2019 05:59:32 +0200
+Message-ID: <CAKSBH7Fy-sPKYLMxXw0bK9He7E2u1tu=b9y8cbOrRVyokFEYjA@mail.gmail.com>
+In-Reply-To: <CAA=hcWQ9=UkLmxT-3oRQah8ArUBExz=khvGGt8sMSOD4gv-ogA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4344720737335828079==
+--===============5837155676581633954==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Richard,
+Hi,
 
-> 21:01:52 daemon.info <http://daemon.info> ofonod[547]: Aux: < \r\n+CIEV: =
+On Wed, Aug 7, 2019 at 12:27 PM JH <jupiter.hce@gmail.com> wrote:
+>
+> Hi Giacinto,
+>
+> Just got response from the hardware contractor.
+>
+> On 8/3/19, Giacinto Cifelli <gciofono@gmail.com> wrote:
+> > Hi jupiter,
+>
+> > This signal level is output periodically by ofono in a signal.
+> > You can try to catch all ofono signals (these are dbus events, not to
+> > be confused with signal level and network signaling) with
+> > dbus-monitor.
+> > But I think the signal is ok.
+> > Only the network disables the PDP context. maybe without informing the
+> > modem.
+> > This is done by several networks.
+> >
+> >> The trouble is it connected well at
+> >> startup, then dropped it, it is hard to convince the hardware
+> >> contractor it is hardware problem unless I have strong evidence that
+> >> is not the software problem.
+> >
+> > Ask uBlox how to capture a protocol stack trace, and if it is feasible
+> > for your application, do it and have it analyzed by uBlox.
+> >
+> > Are you on GSM, on LTE catM or on LTE NB-IOT when this happens? On
+> > which network operator and country?
+>
+> It is LTE Cat-M1, the operator is Telstra in Australia. I will be very
+> interested in finding out what is going on.
 
-> 2,2\r\n
-> 21:01:52 daemon.info <http://daemon.info> ofonod[547]: Aux: < \r\n+CGEV: =
+you need stack traces.
+Most likely the chipset you are using is the MDM9205, so the trace will be =
+QXDM.
 
-> ME PDN ACT 4\r\n
-> 21:01:52 daemon.info <http://daemon.info> ofonod[547]: Aux: < \r\n+CGEV: =
+>
+> Thank you.
+>
+> Kind regards,
+>
+> - jupiter
 
-> NW CLASS "B"\r\n
-> 21:01:52 daemon.info <http://daemon.info> ofonod[547]: Aux: < \r\n+CREG: =
+BR,
+Giacinto
 
-> 5,"0080","00000006",7\r\n
-> So I think the interesting part is the ME PDN ACT here. and you see =
-
-> before the cops=3D0 sim is still reading stuff...
-
-As I said earlier, your modem is getting set Online way before the SIM =
-
-has been initialized.  The only reason for setting Online that early is =
-
-if you have a locked SIM and you need to make an emergency call or you =
-
-have no SIM at all and need to do the same.
-
-For normal cases going Online before the SubscriberIdentity has been =
-
-probed was never a good idea.  I'm all for making that work, but you =
-
-will likely find that doing this will uncover other issues.
-
-> =
-
-> Good point. I vote for option 2, I think its less intrusive. agree its =
-
-> an OK way forward?
-> =
-
-
-I think either option is about the same amount of work, Option 1 being =
-
-more elegant but a bit more invasive, yes.
-
-Regards,
--Denis
-
---===============4344720737335828079==--
+--===============5837155676581633954==--
 
