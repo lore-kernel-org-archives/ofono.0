@@ -1,60 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2333724907086751857=="
+Content-Type: multipart/mixed; boundary="===============8215535297170476789=="
 MIME-Version: 1.0
-From: JH <jupiter.hce@gmail.com>
-Subject: Re: Unsalble cellular connection
-Date: Fri, 09 Aug 2019 22:56:45 +1000
-Message-ID: <CAA=hcWRNYQMPm2FJFmGNEvzFeUV2SC+rLvp+miB78qTY6LXwcQ@mail.gmail.com>
-In-Reply-To: <CAKSBH7Fy-sPKYLMxXw0bK9He7E2u1tu=b9y8cbOrRVyokFEYjA@mail.gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Motorola Droid 4 SMS sending
+Date: Sun, 11 Aug 2019 01:14:04 +0200
+Message-ID: <20190810231404.GA26417@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2333724907086751857==
+--===============8215535297170476789==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Giacinto,
+Hi!
 
-I tried to run openwrt on my embedded system, it got netifd daemon to
-manage the LTE modem, and started udhcpc -p /var/run/udhcpc-wwan0.pid
--s /lib/netifd, that problem has gone away.
+Motorola Droid 4 runs packet protocol over serial... and its kernel
+driver requires explicit "write()" boundaries at places where packet
+boundaries should be.
 
-Now I am really worried, if the problem of lost LTE network IP address
-only happened in connman not in openwrt, it will unlikely be the carry
-network and modem issues, could it be because that openwrt used udhcpc
-to refresh the IP address? How does the connman manage the dhcp for
-LTE IP address?
+So I can send SMS using low level g_at... functions (that are not
+normally accessible), but not using g_at_chat_send().
 
-Thank you.
+If anyone has good idea for clean (or clean enough) solution, let me
+know.
 
-Kind regards,
+Best regards,
+									Pavel
 
-- jh
+   snprintf(buf, sizeof(buf), "AT+GCMGS=3D\r");
+   encode_hex_own_buf(pdu, pdu_len, 0, buf_pdu);
 
-On 8/9/19, Giacinto Cifelli <gciofono@gmail.com> wrote:
->> > Ask uBlox how to capture a protocol stack trace, and if it is feasible
->> > for your application, do it and have it analyzed by uBlox.
->> >
->> > Are you on GSM, on LTE catM or on LTE NB-IOT when this happens? On
->> > which network operator and country?
->>
->> It is LTE Cat-M1, the operator is Telstra in Australia. I will be very
->> interested in finding out what is going on.
->
-> you need stack traces.
-> Most likely the chipset you are using is the MDM9205, so the trace will be
-> QXDM.
->
->>
->> Thank you.
->>
->> Kind regards,
->>
->> - jupiter
->
-> BR,
-> Giacinto
->
+#if WANT_IT_BROKEN
+        strcat(buf, buf_pdu+2);
+        g_at_chat_send(data->send_chat, buf, none_prefix, NULL, data, NULL);
+#else
+        g_at_io_write(data->send_chat->parent->io, buf, strlen(buf));
+ 	g_at_io_write(data->send_chat->parent->io, buf_pdu, strlen(buf_pdu));
+	g_io_channel_flush(data->send_chat->parent->io->channel, NULL);
+#endif
+			=
 
---===============2333724907086751857==--
+-- =
+
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--===============8215535297170476789==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
+
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsMVBUN3dBQ2drUU1PZndhcFhiK3ZMSEtRQ2JCMUZYdTE1SDc4ejdIMVgrTmFHMVkvcEoK
+VWZzQW4xRkovUWx6Mkdzc3NNUHhUYkdKQk5nd0hjWloKPVlIeDQKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============8215535297170476789==--
 
