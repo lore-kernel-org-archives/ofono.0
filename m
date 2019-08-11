@@ -1,40 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============1480906659270634172=="
+Content-Type: multipart/mixed; boundary="===============0432728717090954174=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: Unsalble cellular connection
-Date: Sun, 11 Aug 2019 15:37:47 +0200
-Message-ID: <CAKSBH7FrgbdEf_b4RTcR1Y6PrzQX=LzXc8NrhrZLN6RChfjcRg@mail.gmail.com>
-In-Reply-To: <CAA=hcWSK7P6DP=pjCg7pdUDC=Cz9=PNWJ7_u02ZJrw8u8UG3Nw@mail.gmail.com>
+From: richard.rojfors@gmail.com
+Subject: [PATCH] gprs: Do not detach when running LTE and GPRS is unavailable.
+Date: Sun, 11 Aug 2019 16:58:10 +0200
+Message-ID: <20190811145810.31475-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1480906659270634172==
+--===============0432728717090954174==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-hi,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-On Sun, Aug 11, 2019 at 1:57 PM JH <jupiter.hce@gmail.com> wrote:
->
-> More observation about the network connection, the device has two
-> network interfaces, WiFi mlan0 and LTE wwan0, I think that problem is
-> likely in connman, not in ofono as in some stage, the wifi IP address
-> lost as well, but it came back.
->
-> Why connmand contently calling to add and to del both mlan0 and wwan0
-> in route table? How does the connman manage the route, dhcp to refresh
-> interface IP address?
+There are cases where the gprs status might updated to for instance
+"unknown" while LTE is the bearer.
+In that case we should not set the attach state to FALSE,
+since then running LTE the conext activation reflects the attached
+state.
+---
+ src/gprs.c | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
 
-can you check with the ofono script test/list-contexts if the method
-is static or dhcp?
-I believe this can be the problem: if ofono managed to get an IP
-address, likely with at+cgpaddr and/or at+cgcontrdp,
-then it passes it to connman, and then it is set on the interface...
-static, with no lease expiration.
+diff --git a/src/gprs.c b/src/gprs.c
+index 9cb69d14..1a9b234d 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1660,6 +1660,15 @@ static void gprs_netreg_removed(struct ofono_gprs *g=
+prs)
+ 	gprs_attached_update(gprs);
+ }
+ =
 
-best regards,
-Giacinto
++static gboolean expect_lte_context_auto_activation(struct ofono_gprs *gprs)
++{
++	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
++			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
++		return TRUE;
++
++	return FALSE;
++}
++
+ static void gprs_netreg_update(struct ofono_gprs *gprs)
+ {
+ 	ofono_bool_t attach;
+@@ -1682,8 +1691,7 @@ static void gprs_netreg_update(struct ofono_gprs *gpr=
+s)
+ =
 
---===============1480906659270634172==--
+ 	DBG("attach: %u, driver_attached: %u", attach, gprs->driver_attached);
+ =
+
+-	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
+-			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
++	if (expect_lte_context_auto_activation(gprs))
+ 		/*
+ 		 * For LTE we set attached status only on successful
+ 		 * context activation.
+@@ -2560,7 +2568,12 @@ void ofono_gprs_status_notify(struct ofono_gprs *gpr=
+s, int status)
+ =
+
+ 	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
+ 			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING) {
+-		gprs_attached_update(gprs);
++		/*
++		 * For LTE we attached status reflects successful context
++		 * activation.
++		 */
++		if (!expect_lte_context_auto_activation(gprs))
++			gprs_attached_update(gprs);
+ 		return;
+ 	}
+ =
+
+-- =
+
+2.20.1
+
+
+--===============0432728717090954174==--
 
