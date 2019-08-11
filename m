@@ -1,84 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============0432728717090954174=="
+Content-Type: multipart/mixed; boundary="===============0739147823462097214=="
 MIME-Version: 1.0
 From: richard.rojfors@gmail.com
-Subject: [PATCH] gprs: Do not detach when running LTE and GPRS is unavailable.
-Date: Sun, 11 Aug 2019 16:58:10 +0200
-Message-ID: <20190811145810.31475-1-richard.rojfors@gmail.com>
+Subject: [PATCH 1/2] gprs: Ignore activated contexts during init,
+ list them later
+Date: Sun, 11 Aug 2019 18:46:30 +0200
+Message-ID: <20190811164631.16804-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0432728717090954174==
+--===============0739147823462097214==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-There are cases where the gprs status might updated to for instance
-"unknown" while LTE is the bearer.
-In that case we should not set the attach state to FALSE,
-since then running LTE the conext activation reflects the attached
-state.
+There is an issue if an context gets auto activated early,
+then provisioning might not have run yet for instance,
+so a "new" context is created, which might be duplicated
+by a provisioning context later.
+So ignore the activated contexts until gprs is ready,
+then it calls the driver to list active contexts.
 ---
- src/gprs.c | 19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
+ include/gprs.h |  7 +++++++
+ src/gprs.c     | 24 ++++++++++++++++++++++++
+ 2 files changed, 31 insertions(+)
 
+diff --git a/include/gprs.h b/include/gprs.h
+index 988d6102..38e3c508 100644
+--- a/include/gprs.h
++++ b/include/gprs.h
+@@ -36,6 +36,10 @@ typedef void (*ofono_gprs_status_cb_t)(const struct ofon=
+o_error *error,
+ =
+
+ typedef void (*ofono_gprs_cb_t)(const struct ofono_error *error, void *dat=
+a);
+ =
+
++typedef void (*ofono_gprs_active_context_cb_t)(const struct ofono_error *e=
+rror,
++						int cid, const char *apn,
++						void *data);
++
+ struct ofono_gprs_driver {
+ 	const char *name;
+ 	int (*probe)(struct ofono_gprs *gprs, unsigned int vendor,
+@@ -45,6 +49,9 @@ struct ofono_gprs_driver {
+ 				ofono_gprs_cb_t cb, void *data);
+ 	void (*attached_status)(struct ofono_gprs *gprs,
+ 					ofono_gprs_status_cb_t cb, void *data);
++	void (*get_active_auto_context)(struct ofono_gprs *gprs,
++					ofono_gprs_active_context_cb_t cb,
++					void *data);
+ };
+ =
+
+ enum gprs_suspend_cause {
 diff --git a/src/gprs.c b/src/gprs.c
-index 9cb69d14..1a9b234d 100644
+index 9cb69d14..05b413c5 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
-@@ -1660,6 +1660,15 @@ static void gprs_netreg_removed(struct ofono_gprs *g=
-prs)
- 	gprs_attached_update(gprs);
+@@ -1959,6 +1959,11 @@ void ofono_gprs_cid_activated(struct ofono_gprs  *gp=
+rs, unsigned int cid,
+ =
+
+ 	DBG("");
+ =
+
++	if (!__ofono_atom_get_registered(gprs->atom)) {
++		DBG("cid %u activated before atom registered", cid);
++		return;
++	}
++
+ 	if (l_uintset_contains(gprs->used_cids, cid)) {
+ 		DBG("cid %u already activated", cid);
+ 		return;
+@@ -3338,11 +3343,24 @@ remove:
+ 		storage_sync(imsi, SETTINGS_STORE, gprs->settings);
  }
  =
 
-+static gboolean expect_lte_context_auto_activation(struct ofono_gprs *gprs)
++static void gprs_get_active_context_callback(const struct ofono_error *err=
+or,
++						int cid, const char *apn,
++						void *data)
 +{
-+	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
-+			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
-+		return TRUE;
++	struct ofono_gprs *gprs =3D data;
 +
-+	return FALSE;
++	DBG("error =3D %d", error->type);
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR && apn !=3D NULL && cid =
+> 0)
++		ofono_gprs_cid_activated(gprs, cid, apn);
 +}
 +
- static void gprs_netreg_update(struct ofono_gprs *gprs)
+ static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
  {
- 	ofono_bool_t attach;
-@@ -1682,8 +1691,7 @@ static void gprs_netreg_update(struct ofono_gprs *gpr=
-s)
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
+ 	const char *path =3D __ofono_atom_get_path(gprs->atom);
++	const struct ofono_gprs_driver *drv =3D gprs->driver;
  =
 
- 	DBG("attach: %u, driver_attached: %u", attach, gprs->driver_attached);
+ 	if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
+ 		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
+@@ -3366,6 +3384,12 @@ static void ofono_gprs_finish_register(struct ofono_=
+gprs *gprs)
+ 					netreg_watch, gprs, NULL);
  =
 
--	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
--			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
-+	if (expect_lte_context_auto_activation(gprs))
- 		/*
- 		 * For LTE we set attached status only on successful
- 		 * context activation.
-@@ -2560,7 +2568,12 @@ void ofono_gprs_status_notify(struct ofono_gprs *gpr=
-s, int status)
+ 	__ofono_atom_register(gprs->atom, gprs_unregister);
++
++	/* Find any context activated during init */
++	if (drv->get_active_auto_context)
++		drv->get_active_auto_context(gprs,
++					      gprs_get_active_context_callback,
++					      gprs);
+ }
  =
 
- 	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
- 			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING) {
--		gprs_attached_update(gprs);
-+		/*
-+		 * For LTE we attached status reflects successful context
-+		 * activation.
-+		 */
-+		if (!expect_lte_context_auto_activation(gprs))
-+			gprs_attached_update(gprs);
- 		return;
- 	}
- =
-
+ static void spn_read_cb(const char *spn, const char *dc, void *data)
 -- =
 
 2.20.1
 
 
---===============0432728717090954174==--
+--===============0739147823462097214==--
 
