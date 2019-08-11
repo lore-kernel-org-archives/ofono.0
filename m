@@ -1,64 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7050823104402115009=="
+Content-Type: multipart/mixed; boundary="===============2145125910628185119=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Motorola Droid 4 SMS sending
-Date: Sun, 11 Aug 2019 09:25:40 -0500
-Message-ID: <9c4395ca-dd5c-ae90-f074-003541fc0ab2@gmail.com>
-In-Reply-To: <20190810231404.GA26417@amd>
+Subject: Re: [rfc] Motorola Droid 4 voice: integrate into atmodem or
+ completely separate?
+Date: Sun, 11 Aug 2019 09:31:19 -0500
+Message-ID: <174aba4c-e8a4-c059-ffcb-64770aae7401@gmail.com>
+In-Reply-To: <20190812082251.GA6161@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7050823104402115009==
+--===============2145125910628185119==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pavel,
 
-On 8/10/19 6:14 PM, Pavel Machek wrote:
+On 8/12/19 3:22 AM, Pavel Machek wrote:
 > Hi!
 > =
 
-> Motorola Droid 4 runs packet protocol over serial... and its kernel
-> driver requires explicit "write()" boundaries at places where packet
-> boundaries should be.
-> =
+> Droid 4 has ... something similar to AT commands, but not quite. For
+> voice calls, I modified atmodem... but I guess there are so many
+> changes that creating separate motorolamodem/voicecall.c might be
+> an option? (send_clcc() changes make sense as a cleanup, and were sent
+> in separate mail.)
 
-> So I can send SMS using low level g_at... functions (that are not
-> normally accessible), but not using g_at_chat_send().
-> =
+Since it looks like the Modem does actually provide some rudimentary =
 
-> If anyone has good idea for clean (or clean enough) solution, let me
-> know.
-> =
+unsolicited call state notifications via CIEV, you're better off just =
 
-> Best regards,
-> 									Pavel
-> =
+writing a custom driver.  CLCC polling logic is actually quite complex =
 
->     snprintf(buf, sizeof(buf), "AT+GCMGS=3D\r");
->     encode_hex_own_buf(pdu, pdu_len, 0, buf_pdu);
-> =
+as it is, so adding vendor branching to it just makes things worse. =
 
+Also the driver is likely to be much simpler if you can rely on =
 
-So speaking from memory, but 27.005 expects CMGS to be a two part =
+unsolicited call state reporting events.
 
-command.  First you send AT+CMGS=3D<whatever> and the modem then prompts =
-
-for the PDU using '>'.  Then we provide the PDU followed by Ctrl-Z.  If =
-
-the Motorola modem doesn't do this, then you're stuck providing a full =
-
-Motorola-Hacked-AT-Commands implementation of your own.
-
-You can try hacking GAtChat to add a bunch of behavior-modifications =
-
-like this, but I imagine that this protocol is different enough where =
-
-such changes become a nightmare to keep track of.
+The send_clcc change does sort of make sense separately.
 
 Regards,
 -Denis
 
---===============7050823104402115009==--
+--===============2145125910628185119==--
 
