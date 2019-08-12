@@ -1,90 +1,111 @@
-Content-Type: multipart/mixed; boundary="===============8654223026094300505=="
+Content-Type: multipart/mixed; boundary="===============5746103757819175237=="
 MIME-Version: 1.0
-From: richard.rojfors@gmail.com
-Subject: [PATCH v2] gprs: Do not detach when running LTE and GPRS is
- unavailable.
-Date: Mon, 12 Aug 2019 22:37:56 +0200
-Message-ID: <20190812203756.32082-1-richard.rojfors@gmail.com>
-In-Reply-To: <20190811145810.31475-1-richard.rojfors@gmail.com>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: [PATCH 1/2] gatchat: add g_at_chat_retry()
+Date: Mon, 12 Aug 2019 22:38:31 +0200
+Message-ID: <20190812203832.19096-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8654223026094300505==
+--===============5746103757819175237==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Richard R=C3=B6jfors <richard@puffinpack.se>
+The current API doesn't support canceling an in-progress command;
+instead g_at_chat_cancel() simply removes the callback.
 
-There are cases where the gprs status might updated to for instance
-"unknown" while LTE is the bearer.
-In that case we should not set the attach state to FALSE,
-since then running LTE the conext activation reflects the attached
-state.
+In cases where the modem doesn't respond at all to a command, a chat is
+simply stalled without any way to write new commands to the modem.
+
+Support that case by adding a g_at_chat_retry() function to the API. The
+function does nothing if the command is not yet in-progress, or if the
+command is finished. Otherwise, it resets the bytes-written counter to
+re-write the command string.
 ---
- src/gprs.c | 23 ++++++++++++++++++++---
- 1 file changed, 20 insertions(+), 3 deletions(-)
+ gatchat/gatchat.c | 31 +++++++++++++++++++++++++++++++
+ gatchat/gatchat.h |  7 +++++++
+ 2 files changed, 38 insertions(+)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 9cb69d14..f7a2b739 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1660,6 +1660,15 @@ static void gprs_netreg_removed(struct ofono_gprs *g=
-prs)
- 	gprs_attached_update(gprs);
+diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+index 3f290ac2..71dc94f5 100644
+--- a/gatchat/gatchat.c
++++ b/gatchat/gatchat.c
+@@ -1047,6 +1047,29 @@ static guint at_chat_send_common(struct at_chat *cha=
+t, guint gid,
+ 	return c->id;
  }
  =
 
-+static gboolean on_lte(struct ofono_gprs *gprs)
++static gboolean at_chat_retry(struct at_chat *chat, guint gid)
 +{
-+	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
-+			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
-+		return TRUE;
++	struct at_command *cmd =3D g_queue_peek_head(chat->command_queue);
 +
-+	return FALSE;
++	if (!cmd)
++		return FALSE;
++
++	/* do nothing if command is not yet started, or already finished */
++	if (cmd->id !=3D gid)
++		return FALSE;
++
++	/* do nothing if command is not fully written */
++	if (chat->cmd_bytes_written !=3D strlen(cmd->cmd))
++		return FALSE;
++
++	/* reset number of written bytes to re-write command */
++	chat->cmd_bytes_written =3D 0;
++
++	chat_wakeup_writer(chat);
++
++	return TRUE;
 +}
 +
- static void gprs_netreg_update(struct ofono_gprs *gprs)
+ static struct at_notify *at_notify_create(struct at_chat *chat,
+ 						const char *prefix,
+ 						gboolean pdu)
+@@ -1543,6 +1566,14 @@ guint g_at_chat_send_and_expect_short_prompt(GAtChat=
+ *chat, const char *cmd,
+ 					NULL, func, user_data, notify);
+ }
+ =
+
++gboolean g_at_chat_retry(GAtChat *chat, guint id)
++{
++	if (chat =3D=3D NULL || id =3D=3D 0)
++		return FALSE;
++
++	return at_chat_retry(chat->parent, id);
++}
++
+ gboolean g_at_chat_cancel(GAtChat *chat, guint id)
  {
- 	ofono_bool_t attach;
-@@ -1682,8 +1691,7 @@ static void gprs_netreg_update(struct ofono_gprs *gpr=
-s)
+ 	/* We use id 0 for wakeup commands */
+diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
+index 7290b34f..32870318 100644
+--- a/gatchat/gatchat.h
++++ b/gatchat/gatchat.h
+@@ -147,6 +147,13 @@ guint g_at_chat_send_and_expect_short_prompt(GAtChat *=
+chat, const char *cmd,
+ 				const char **valid_resp, GAtResultFunc func,
+ 				gpointer user_data, GDestroyNotify notify);
  =
 
- 	DBG("attach: %u, driver_attached: %u", attach, gprs->driver_attached);
- =
-
--	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
--			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
-+	if (on_lte(gprs))
- 		/*
- 		 * For LTE we set attached status only on successful
- 		 * context activation.
-@@ -2560,7 +2568,16 @@ void ofono_gprs_status_notify(struct ofono_gprs *gpr=
-s, int status)
- =
-
- 	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
- 			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING) {
--		gprs_attached_update(gprs);
-+		/*
-+		 * For LTE we attached status reflects successful context
-+		 * activation.
-+		 * Since we in gprs_netreg_update not even try to attach
-+		 * to GPRS if we are running on LTE, we can on some modems
-+		 * expect the gprs status to be unknown. That must not
-+		 * result in detaching...
-+		 */
-+		if (!on_lte(gprs))
-+			gprs_attached_update(gprs);
- 		return;
- 	}
++/*!
++ * Retry an already created command. This does nothing if the command is
++ * still waiting in the queue. If the command has been written to the chan=
+nel,
++ * but no response is received yet, the retry writes the command again.
++ */
++gboolean g_at_chat_retry(GAtChat *chat, guint id);
++
+ gboolean g_at_chat_cancel(GAtChat *chat, guint id);
+ gboolean g_at_chat_cancel_all(GAtChat *chat);
  =
 
 -- =
 
-2.20.1
+2.22.0
 
 
---===============8654223026094300505==--
+--===============5746103757819175237==--
 
