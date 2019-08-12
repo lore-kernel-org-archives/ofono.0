@@ -1,33 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2237833731576096904=="
+Content-Type: multipart/mixed; boundary="===============7760336675625252936=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gprs: Do not detach when running LTE and GPRS is
- unavailable.
-Date: Mon, 12 Aug 2019 15:13:48 -0500
-Message-ID: <8f7d07f4-eff5-372e-fdfc-66e42e9dc8ef@gmail.com>
-In-Reply-To: <CAHB-Pj=tyW3kaNo_-R=s+avRL7p5LTdhwCZ56NqqxtEA0KrB+Q@mail.gmail.com>
+From: richard.rojfors@gmail.com
+Subject: [PATCH 1/3] gprs: Add list_active_contexts
+Date: Mon, 12 Aug 2019 22:18:24 +0200
+Message-ID: <20190812201826.28535-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2237833731576096904==
+--===============7760336675625252936==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Richard,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-> =
+This is useful for instance during startup where early
+activated contexts can be listed at a suitable point in time.
+---
+ include/gprs.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-> I have more in the pipeline regarding this, I'm kind of working step by s=
-tep
-> to get LTE to work properly and with hand over to come.
-> =
+diff --git a/include/gprs.h b/include/gprs.h
+index 988d6102..c276517f 100644
+--- a/include/gprs.h
++++ b/include/gprs.h
+@@ -45,6 +45,8 @@ struct ofono_gprs_driver {
+ 				ofono_gprs_cb_t cb, void *data);
+ 	void (*attached_status)(struct ofono_gprs *gprs,
+ 					ofono_gprs_status_cb_t cb, void *data);
++	void (*list_active_contexts)(struct ofono_gprs *gprs,
++					ofono_gprs_status_cb_t cb, void *data);
+ };
+ =
+
+ enum gprs_suspend_cause {
+-- =
+
+2.20.1
 
 
-Nice! About time someone looked into this :)
-
-Regards,
--Denis
-
---===============2237833731576096904==--
+--===============7760336675625252936==--
 
