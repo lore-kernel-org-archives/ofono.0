@@ -1,32 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============1903195326980193145=="
+Content-Type: multipart/mixed; boundary="===============1519055239061765967=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] doc: convert quectel power event reasons to lower case
-Date: Tue, 13 Aug 2019 05:49:11 -0500
-Message-ID: <8f79dd84-86ab-4484-3f3c-b476307d50b3@gmail.com>
-In-Reply-To: <20190813180853.2049-1-martin@geanix.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [rfc] Motorola Droid 4 voice: integrate into atmodem or
+ completely separate?
+Date: Tue, 13 Aug 2019 22:59:22 +0200
+Message-ID: <20190813205922.GA14446@amd>
+In-Reply-To: <174aba4c-e8a4-c059-ffcb-64770aae7401@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1903195326980193145==
+--===============1519055239061765967==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi!
 
-On 8/13/19 1:08 PM, Martin Hundeb=C3=B8ll wrote:
-> ---
->   doc/quectel-hardware-api.txt | 10 +++++-----
->   1 file changed, 5 insertions(+), 5 deletions(-)
+> >Droid 4 has ... something similar to AT commands, but not quite. For
+> >voice calls, I modified atmodem... but I guess there are so many
+> >changes that creating separate motorolamodem/voicecall.c might be
+> >an option? (send_clcc() changes make sense as a cleanup, and were sent
+> >in separate mail.)
 > =
 
+> Since it looks like the Modem does actually provide some rudimentary
+> unsolicited call state notifications via CIEV, you're better off just
+> writing a custom driver.  CLCC polling logic is actually quite complex as=
+ it
+> is, so adding vendor branching to it just makes things worse. Also the
+> driver is likely to be much simpler if you can rely on unsolicited call
+> state reporting events.
 
-Both applied, thanks.
+Thanks for feedback. Done, but there are more cleanups possible.
 
-Regards,
--Denis
+> The send_clcc change does sort of make sense separately.
 
+Yes, you should have it separate in your inbox ;-). If not, let me
+know and I'll resend.
 
---===============1903195326980193145==--
+Best regards,
+									Pavel
+-- =
+
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--===============1519055239061765967==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
+
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsMVRKS29BQ2drUU1PZndhcFhiK3ZJeTRnQ2dzV2t6L04vZmhZWnZOaDlzUDJVREV3cmQK
+b0ZBQW9KNWZqYUJ4WEdKYVZGSXFKSjRvT0R5R2prL0EKPU1ZMUsKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============1519055239061765967==--
 
