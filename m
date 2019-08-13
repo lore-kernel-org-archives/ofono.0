@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============5432654928902956074=="
+Content-Type: multipart/mixed; boundary="===============7402238486545657632=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/3] gprs: Add list_active_contexts
-Date: Tue, 13 Aug 2019 01:42:04 -0500
-Message-ID: <4c8d5caf-d133-85f9-97b6-ab2fd0700697@gmail.com>
-In-Reply-To: <20190812213130.23420-1-richard.rojfors@gmail.com>
+Subject: Re: [PATCH v2 2/3] gprs: Ignore activated contexts during init,
+ list them later
+Date: Tue, 13 Aug 2019 01:43:00 -0500
+Message-ID: <bd770ca8-9df2-693d-6418-72e01450114f@gmail.com>
+In-Reply-To: <20190812213130.23420-2-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5432654928902956074==
+--===============7402238486545657632==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,19 +20,39 @@ On 8/12/19 4:31 PM, richard.rojfors(a)gmail.com wrote:
 > From: Richard R=C3=B6jfors <richard@puffinpack.se>
 > =
 
-> This is useful for instance during startup where early
-> activated contexts can be listed at a suitable point in time.
+> There is an issue if an context gets auto activated early,
+> then provisioning might not have run yet for instance,
+> so a "new" context is created, which might be duplicated
+> by a provisioning context later.
+> So ignore the activated contexts until gprs is ready,
+> then it calls the driver to list active contexts.
 > ---
->   include/gprs.h | 2 ++
->   1 file changed, 2 insertions(+)
+>   src/gprs.c | 22 +++++++++++++++++++++-
+>   1 file changed, 21 insertions(+), 1 deletion(-)
 > =
 
 
-Applied, thanks.
+<snip>
+
+>   =
+
+> +static void gprs_list_active_contexts_callback(const struct ofono_error =
+*error,
+> +						void *data)
+> +{
+> +	(void)data;
+> +
+
+Squashed this pointless line and...
+
+> +	DBG("error =3D %d", error->type);
+> +}
+> +
+
+applied, thanks.
 
 Regards,
 -Denis
 
-
---===============5432654928902956074==--
+--===============7402238486545657632==--
 
