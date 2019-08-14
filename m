@@ -1,61 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============1519055239061765967=="
+Content-Type: multipart/mixed; boundary="===============5046982326293499181=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [rfc] Motorola Droid 4 voice: integrate into atmodem or
- completely separate?
-Date: Tue, 13 Aug 2019 22:59:22 +0200
-Message-ID: <20190813205922.GA14446@amd>
-In-Reply-To: <174aba4c-e8a4-c059-ffcb-64770aae7401@gmail.com>
+From: JH <jupiter.hce@gmail.com>
+Subject: Re: Unsalble cellular connection
+Date: Wed, 14 Aug 2019 21:11:59 +1000
+Message-ID: <CAA=hcWTH2Ayb=OtWim7h_AX+0haoq_GZ5ZYGHbOLkCMq+zr6=A@mail.gmail.com>
+In-Reply-To: <e698981e-c1c9-d782-7af1-ea1af4d89dfc@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1519055239061765967==
+--===============5046982326293499181==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Jonas,
 
-> >Droid 4 has ... something similar to AT commands, but not quite. For
-> >voice calls, I modified atmodem... but I guess there are so many
-> >changes that creating separate motorolamodem/voicecall.c might be
-> >an option? (send_clcc() changes make sense as a cleanup, and were sent
-> >in separate mail.)
-> =
+On 8/14/19, Jonas Bonn <jonas@norrbonn.se> wrote:
+> So you have no traffic over the LTE link?  How do you know that it goes
+> down after 1-2 hours... maybe it went down after 5 minutes?
 
-> Since it looks like the Modem does actually provide some rudimentary
-> unsolicited call state notifications via CIEV, you're better off just
-> writing a custom driver.  CLCC polling logic is actually quite complex as=
- it
-> is, so adding vendor branching to it just makes things worse. Also the
-> driver is likely to be much simpler if you can rely on unsolicited call
-> state reporting events.
+I logged link status every 10 minutes.
 
-Thanks for feedback. Done, but there are more cleanups possible.
+> Cloud messages are as good as a ping... a packet's a packet.
+> The link is configured by connman, not ofono.  ofono just publishes the
+> address details so that connman can set it up.
 
-> The send_clcc change does sort of make sense separately.
+So, it is back to connman?
 
-Yes, you should have it separate in your inbox ;-). If not, let me
-know and I'll resend.
+>>> No Address?  No Interface?  Running ofono with debug output will
+>>> probably shed some light on what's going on here.
+>>
+>> I think that could be because I only ran it once, if I ran
+>> list-contexts 4 times consecutively, every time it displayed different
+>> results included address and interface, is it the normal behaviour of
+>> list-contexts?
+>
+> Sounds broken...???
 
-Best regards,
-									Pavel
--- =
+Which one is broken, ofono or connman or something else? There is not
+much configurations for both ofono and connman,
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+Can the defect hardware particularly the system power supply caused
+the link down? I have only one test device, I cannot prove it. The
+SATA chip has a pin for power up, During the boot, a command to set
+the power up before ofono is running. When the link is down, either I
+restart the ofonod or I called the command to turn the power up again,
+both can bring the link back. I cannot image the chip could lose
+power, but if the system power supply is not stable in some stage too
+low to support the SARA chip, will it trig the power down? I talked to
+the hardware engineer who rejected that it did not make sense because
+WiFi was running fine, he is pointing the figure to the modem manager
+and connection manager.
 
---===============1519055239061765967==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
+Thank you.
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFsMVRKS29BQ2drUU1PZndhcFhiK3ZJeTRnQ2dzV2t6L04vZmhZWnZOaDlzUDJVREV3cmQK
-b0ZBQW9KNWZqYUJ4WEdKYVZGSXFKSjRvT0R5R2prL0EKPU1ZMUsKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
+Kind regards,
 
---===============1519055239061765967==--
+- jh
+
+--===============5046982326293499181==--
 
