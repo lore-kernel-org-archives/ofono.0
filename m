@@ -1,58 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6631338651296111405=="
+Content-Type: multipart/mixed; boundary="===============7932952870823948248=="
 MIME-Version: 1.0
 From: richard.rojfors@gmail.com
-Subject: [PATCH 2/4] gprs: Always call gprs_attached_update on context
- deactivation.
-Date: Wed, 14 Aug 2019 20:24:42 +0200
-Message-ID: <20190814182444.13508-2-richard.rojfors@gmail.com>
+Subject: [PATCH 3/4] Revert "gprs: set driver_attached when activating
+ automatic contexts"
+Date: Wed, 14 Aug 2019 20:24:43 +0200
+Message-ID: <20190814182444.13508-3-richard.rojfors@gmail.com>
 In-Reply-To: <20190814182444.13508-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6631338651296111405==
+--===============7932952870823948248==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-Since its registered context is a condition for being attached
-when running LTE, we might need to update the attached state
-when a context is deactivated. Otherwise we might remain
-attached, and connection managers (at least connman) start
-to hammer us to connect a context, eventhough it happens
-automatically in LTE.
+This reverts commit 0167c3339ca8f17a653592af995f439d24405de8.
+
+Since gprs_attached_update now takes LTE in account this
+should be reverted. This was actually a bad solution since
+in case LTE was lost, and we should fall back on GPRS we
+have flagged the driver to already being attached, which is not...
 ---
- src/gprs.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ src/gprs.c | 1 -
+ 1 file changed, 1 deletion(-)
 
 diff --git a/src/gprs.c b/src/gprs.c
-index 94d13f82..cb31e2d2 100644
+index cb31e2d2..eb6cd30b 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
-@@ -2738,11 +2738,12 @@ void ofono_gprs_context_deactivated(struct ofono_gp=
-rs_context *gc,
- 	 * If "Attached" property was about to be signalled as TRUE but there
- 	 * were still active contexts, try again to signal "Attached" property
- 	 * to registered applications after active contexts have been released.
-+	 *
-+	 * ... or in the case of LTE where the attached state were a registered
-+	 * context is a condition for being attached
- 	 */
--	if (gc->gprs->flags & GPRS_FLAG_ATTACHED_UPDATE) {
--		gc->gprs->flags &=3D ~GPRS_FLAG_ATTACHED_UPDATE;
--		gprs_attached_update(gc->gprs);
--	}
-+	gc->gprs->flags &=3D ~GPRS_FLAG_ATTACHED_UPDATE;
-+	gprs_attached_update(gc->gprs);
- }
+@@ -940,7 +940,6 @@ static void pri_read_settings_callback(const struct ofo=
+no_error *error,
  =
 
- int ofono_gprs_context_driver_register(
+ 	gprs->flags &=3D ~GPRS_FLAG_ATTACHING;
+ =
+
+-	gprs->driver_attached =3D TRUE;
+ 	gprs_set_attached_property(gprs, TRUE);
+ =
+
+ 	ofono_dbus_signal_property_changed(conn, pri_ctx->path,
 -- =
 
 2.20.1
 
 
---===============6631338651296111405==--
+--===============7932952870823948248==--
 
