@@ -1,92 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============0490945673313438647=="
+Content-Type: multipart/mixed; boundary="===============4377353860468012975=="
 MIME-Version: 1.0
-From: richard.rojfors@gmail.com
-Subject: [PATCH 4/4] Revert "gprs: _cid_activated is an 'attaching' state"
-Date: Wed, 14 Aug 2019 20:24:44 +0200
-Message-ID: <20190814182444.13508-4-richard.rojfors@gmail.com>
-In-Reply-To: <20190814182444.13508-1-richard.rojfors@gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: Unsalble cellular connection
+Date: Thu, 15 Aug 2019 13:33:56 +0200
+Message-ID: <06302577-e253-2279-3fcd-2f3871c5e4a7@monom.org>
+In-Reply-To: <315c5382-35c5-2407-d7c6-9fb198ae4f8b@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0490945673313438647==
+--===============4377353860468012975==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Richard R=C3=B6jfors <richard@puffinpack.se>
+Hi,
 
-This reverts commit 1fd419e5b4b3a87673f8e0219edb0f3ed9fca774.
+On 8/14/19 3:00 PM, Jonas Bonn wrote:
+> Well, the log _seemed_ to indicate that connman does an NTP request to a =
 
-Since gprs_attached_update now guarantees that we
-will not get attached without having a context activated
-in LTE, this is not needed anymore. It also potentially
-interferes in case the driver was actually attaching.
----
- src/gprs.c | 18 +-----------------
- 1 file changed, 1 insertion(+), 17 deletions(-)
-
-diff --git a/src/gprs.c b/src/gprs.c
-index eb6cd30b..6bdc125d 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -913,7 +913,6 @@ static void pri_read_settings_callback(const struct ofo=
-no_error *error,
- {
- 	struct pri_context *pri_ctx =3D data;
- 	struct ofono_gprs_context *gc =3D pri_ctx->context_driver;
--	struct ofono_gprs *gprs =3D pri_ctx->gprs;
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	dbus_bool_t value;
- =
-
-@@ -938,18 +937,11 @@ static void pri_read_settings_callback(const struct o=
-fono_error *error,
- =
-
- 	value =3D pri_ctx->active;
- =
-
--	gprs->flags &=3D ~GPRS_FLAG_ATTACHING;
--
--	gprs_set_attached_property(gprs, TRUE);
-+	gprs_set_attached_property(pri_ctx->gprs, TRUE);
- =
-
- 	ofono_dbus_signal_property_changed(conn, pri_ctx->path,
- 					OFONO_CONNECTION_CONTEXT_INTERFACE,
- 					"Active", DBUS_TYPE_BOOLEAN, &value);
--
--	if (gprs->flags & GPRS_FLAG_RECHECK) {
--		gprs->flags &=3D ~GPRS_FLAG_RECHECK;
--		gprs_netreg_update(gprs);
--	}
- }
- =
-
- static DBusMessage *pri_set_apn(struct pri_context *ctx, DBusConnection *c=
-onn,
-@@ -2039,14 +2031,6 @@ void ofono_gprs_cid_activated(struct ofono_gprs  *gp=
-rs, unsigned int cid,
- 					DBUS_TYPE_STRING, &apn);
- 	}
- =
-
--	/* Prevent ofono_gprs_status_notify from changing the 'attached'
--	 * state until after the context has been set to 'active' in
--	 * the pri_read_settings_callback; this prevents a race where
--	 * the connection manager sees the modem as attached before there
--	 * is an active context.
--	 */
--	gprs->flags |=3D GPRS_FLAG_ATTACHING;
--
- 	gc->driver->read_settings(gc, cid, pri_read_settings_callback, pri_ctx);
- }
- =
-
--- =
-
-2.20.1
+> server that isn't available and thereby decides to take the link down... =
 
 
---===============0490945673313438647==--
+NTP lookup failures won't trigger a disconnect. As long oFono or the =
+
+kernel via RNTL changes the state ConnMan doesn't change the routing.
+
+> off the top of my head I can't say whether that's something connman =
+
+> actually does so hopefully somebody else will jump in here.=C2=A0 Did ofo=
+no =
+
+> indicate the context as still established after that?
+
+Mabye checking what monitor-ofono shows.
+
+> Seeing the issue with complete logs would be useful.=C2=A0 I thought your =
+
+> previous logs indicated connman trying to deactivate the context when it =
+
+> took the link down, but the ofono logs didn't show any of that... what's =
+
+> going on there?
+
+Yes, that is a good question. If oFono doesn't tell ConnMan anything, =
+
+then ConnMan reacts to a state change of the device.
+
+Thanks,
+Daniel
+
+--===============4377353860468012975==--
 
