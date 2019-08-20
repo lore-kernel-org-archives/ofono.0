@@ -1,78 +1,133 @@
-Content-Type: multipart/mixed; boundary="===============0020416505959169971=="
+Content-Type: multipart/mixed; boundary="===============6178510457460230756=="
 MIME-Version: 1.0
-From: Richard =?unknown-8bit?q?R=C3=B6jfors?= <richard.rojfors@gmail.com>
-Subject: Re: [PATCH 1/4] gprs: Check for LTE in gprs_attached_update
-Date: Tue, 20 Aug 2019 02:58:21 +0200
-Message-ID: <CAHB-Pj=MGqvog=2ox_RvfGhsOx4EceRykeBa_cX-vEihc0zLVg@mail.gmail.com>
-In-Reply-To: <73112d6e-fe83-aa60-b8d3-7c1a13b7e3df@gmail.com>
+From: richard.rojfors@gmail.com
+Subject: [PATCH v2 1/3] gprs: Check for LTE in gprs_attached_update
+Date: Tue, 20 Aug 2019 17:56:50 +0200
+Message-ID: <20190820155652.8598-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0020416505959169971==
+--===============6178510457460230756==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-Den m=C3=A5n 19 aug. 2019 kl 21:48 skrev Denis Kenzior <denkenz@gmail.com=
->:
+Since we have a different condition for the attach state
+when running on LTE, we should consider it in gprs_attached_update.
+Previously it's done in some instances. But for instance if
+the driver got detached from GPRS but now running on LTE with a
+context up, we would be deattached.
+---
+ src/gprs.c | 51 ++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 28 insertions(+), 23 deletions(-)
 
-> Hi Richard,
->
-> > As I said, I'm afraid I have no logs for this. I tried to visualize how
-> > it could happen.
->
-> Sorry for the repeat.  Just take it as a strong hint for the "next time" =
-:)
->
+diff --git a/src/gprs.c b/src/gprs.c
+index bba482cb..5829a577 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1571,13 +1571,34 @@ static void release_active_contexts(struct ofono_gp=
+rs *gprs)
+ 	}
+ }
+ =
 
-I got the hint ;-)
++static gboolean on_lte(struct ofono_gprs *gprs)
++{
++	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
++			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
++		return TRUE;
++
++	return FALSE;
++}
++
+ static void gprs_attached_update(struct ofono_gprs *gprs)
+ {
+ 	ofono_bool_t attached;
++	int status =3D gprs->status;
+ =
+
+-	attached =3D gprs->driver_attached &&
+-		(gprs->status =3D=3D NETWORK_REGISTRATION_STATUS_REGISTERED ||
+-			gprs->status =3D=3D NETWORK_REGISTRATION_STATUS_ROAMING);
++	if (on_lte(gprs))
++		/*
++		 * For LTE we attached status reflects successful context
++		 * activation.
++		 * Since we in gprs_netreg_update not even try to attach
++		 * to GPRS if we are running on LTE, we can on some modems
++		 * expect the gprs status to be unknown. That must not
++		 * result in detaching...
++		 */
++		attached =3D have_active_contexts(gprs);
++	else
++		attached =3D gprs->driver_attached &&
++			(status =3D=3D NETWORK_REGISTRATION_STATUS_REGISTERED ||
++				status =3D=3D NETWORK_REGISTRATION_STATUS_ROAMING);
+ =
+
+ 	if (attached =3D=3D gprs->attached)
+ 		return;
+@@ -1591,11 +1612,13 @@ static void gprs_attached_update(struct ofono_gprs =
+*gprs)
+ 	if (attached =3D=3D FALSE) {
+ 		release_active_contexts(gprs);
+ 		gprs->bearer =3D -1;
+-	} else if (have_active_contexts(gprs) =3D=3D TRUE) {
++	} else if (have_active_contexts(gprs) =3D=3D TRUE && !on_lte(gprs)) {
+ 		/*
+ 		 * Some times the context activates after a detach event and
+ 		 * right before an attach. We close it to avoid unexpected open
+ 		 * contexts.
++		 * Skip that for LTE since the condition to be attached on LTE
++		 * is that a context gets activated
+ 		 */
+ 		release_active_contexts(gprs);
+ 		gprs->flags |=3D GPRS_FLAG_ATTACHED_UPDATE;
+@@ -1660,15 +1683,6 @@ static void gprs_netreg_removed(struct ofono_gprs *g=
+prs)
+ 	gprs_attached_update(gprs);
+ }
+ =
+
+-static gboolean on_lte(struct ofono_gprs *gprs)
+-{
+-	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
+-			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
+-		return TRUE;
+-
+-	return FALSE;
+-}
+-
+ static void gprs_netreg_update(struct ofono_gprs *gprs)
+ {
+ 	ofono_bool_t attach;
+@@ -2573,16 +2587,7 @@ void ofono_gprs_status_notify(struct ofono_gprs *gpr=
+s, int status)
+ =
+
+ 	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
+ 			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING) {
+-		/*
+-		 * For LTE we attached status reflects successful context
+-		 * activation.
+-		 * Since we in gprs_netreg_update not even try to attach
+-		 * to GPRS if we are running on LTE, we can on some modems
+-		 * expect the gprs status to be unknown. That must not
+-		 * result in detaching...
+-		 */
+-		if (!on_lte(gprs))
+-			gprs_attached_update(gprs);
++		gprs_attached_update(gprs);
+ 		return;
+ 	}
+ =
+
+-- =
+
+2.20.1
 
 
->
-> >
-> > But anyway I think it makes more sense to "calculate" the attached state
-> > in one place,
-> > (gprs_attached_update) and one of the places this gets called from is
-> > when GPRS detaches.
->
-> Care to resend a cleaned up patch? I'm fine taking at least 1/4.
->
-> Will do. I think we can skip 2/4. But I think 3 and 4/4 should be applied
-too. But we can start with the first.
-
---Richard
-
---===============0020416505959169971==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdj5IaSBEZW5pcyw8L2Rpdj48YnI+PGRpdiBjbGFzcz0iZ21haWxf
-cXVvdGUiPjxkaXYgZGlyPSJsdHIiIGNsYXNzPSJnbWFpbF9hdHRyIj5EZW4gbcOlbiAxOSBhdWcu
-IDIwMTkga2wgMjE6NDggc2tyZXYgRGVuaXMgS2VuemlvciAmbHQ7PGEgaHJlZj0ibWFpbHRvOmRl
-bmtlbnpAZ21haWwuY29tIj5kZW5rZW56QGdtYWlsLmNvbTwvYT4mZ3Q7Ojxicj48L2Rpdj48Ymxv
-Y2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44
-ZXg7Ym9yZGVyLWxlZnQ6MXB4IHNvbGlkIHJnYigyMDQsMjA0LDIwNCk7cGFkZGluZy1sZWZ0OjFl
-eCI+SGkgUmljaGFyZCw8YnI+Cjxicj4KJmd0OyBBcyBJIHNhaWQsIEkmIzM5O20gYWZyYWlkIEkg
-aGF2ZSBubyBsb2dzIGZvciB0aGlzLiBJIHRyaWVkIHRvIHZpc3VhbGl6ZSBob3cgPGJyPgomZ3Q7
-IGl0IGNvdWxkIGhhcHBlbi48YnI+Cjxicj4KU29ycnkgZm9yIHRoZSByZXBlYXQuwqAgSnVzdCB0
-YWtlIGl0IGFzIGEgc3Ryb25nIGhpbnQgZm9yIHRoZSAmcXVvdDtuZXh0IHRpbWUmcXVvdDsgOik8
-YnI+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2PjxkaXY+SSBnb3QgdGhlIGhpbnQgOy0pPC9k
-aXY+PGRpdj7CoDwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1h
-cmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdiKDIwNCwyMDQs
-MjA0KTtwYWRkaW5nLWxlZnQ6MWV4Ij4KPGJyPgomZ3Q7IDxicj4KJmd0OyBCdXQgYW55d2F5IEkg
-dGhpbmsgaXQgbWFrZXMgbW9yZSBzZW5zZSB0byAmcXVvdDtjYWxjdWxhdGUmcXVvdDsgdGhlIGF0
-dGFjaGVkIHN0YXRlIDxicj4KJmd0OyBpbiBvbmUgcGxhY2UsPGJyPgomZ3Q7IChncHJzX2F0dGFj
-aGVkX3VwZGF0ZSkgYW5kIG9uZSBvZiB0aGUgcGxhY2VzIHRoaXMgZ2V0cyBjYWxsZWQgZnJvbSBp
-cyA8YnI+CiZndDsgd2hlbiBHUFJTIGRldGFjaGVzLjxicj4KPGJyPgpDYXJlIHRvIHJlc2VuZCBh
-IGNsZWFuZWQgdXAgcGF0Y2g/IEkmIzM5O20gZmluZSB0YWtpbmcgYXQgbGVhc3QgMS80Ljxicj48
-YnI+PC9ibG9ja3F1b3RlPjxkaXY+V2lsbCBkby4gSSB0aGluayB3ZSBjYW4gc2tpcCAyLzQuIEJ1
-dCBJIHRoaW5rIDMgYW5kIDQvNCBzaG91bGQgYmUgYXBwbGllZCB0b28uIEJ1dCB3ZSBjYW4gc3Rh
-cnQgd2l0aCB0aGUgZmlyc3QuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj4tLVJpY2hhcmTCoDwv
-ZGl2PjwvZGl2PjwvZGl2Pgo=
-
---===============0020416505959169971==--
+--===============6178510457460230756==--
 
