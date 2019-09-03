@@ -1,510 +1,538 @@
-Content-Type: multipart/mixed; boundary="===============2041432482474554235=="
+Content-Type: multipart/mixed; boundary="===============7953385066795987721=="
 MIME-Version: 1.0
-From: Richard =?unknown-8bit?q?R=C3=B6jfors?= <richard.rojfors@gmail.com>
+From: Jonas Bonn <jonas@norrbonn.se>
 Subject: Re: [PATCH] ublox: gprs: React on context deactivation
-Date: Tue, 03 Sep 2019 16:10:49 +0200
-Message-ID: <CAHB-Pjnvdu+90EHZ3rEotangEsAATeACUFWUenWgywOm6aB6Hw@mail.gmail.com>
-In-Reply-To: <20190903140611.1264-1-richard.rojfors@gmail.com>
+Date: Tue, 03 Sep 2019 21:49:27 +0200
+Message-ID: <CAALamod_189UAzzrasmZfOvrShOkC5-ug2y39xE7sKErZqG=-w@mail.gmail.com>
+In-Reply-To: <CAHB-Pjnvdu+90EHZ3rEotangEsAATeACUFWUenWgywOm6aB6Hw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2041432482474554235==
+--===============7953385066795987721==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Tue, Sep 3, 2019, 16:11 Richard R=C3=B6jfors <richard.rojfors@gmail.co=
+m>
+wrote:
 
-An example log when this happened. In this case ofono thought context 4 was
-still activated
-even though it was deactivated
+> Hi,
+>
+> An example log when this happened. In this case ofono thought context 4
+> was still activated
+> even though it was deactivated
+>
 
-12:47:52 info: Aux: < \r\n+CIEV: 9,2\r\n
-12:50:37 info: Aux: < \r\n+CIEV: 2,2\r\n
-12:50:42 info: Aux: < \r\n+CIEV: 2,1\r\n
-12:51:06 info: Aux: < \r\n+CIEV: 2,0\r\n
-12:51:08 info: Aux: < \r\n+CGREG: 5,"004B","0000E404",6,"01"\r\n
-12:51:08 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
-status roaming (5)
-12:51:08 info: Aux: < \r\n+UREG: 6\r\n
-12:51:08 info: Aux: < \r\n+CIEV: 9,2\r\n
-12:51:08 info: Aux: < \r\n+CIEV: 9,1\r\n
-12:51:09 info: Aux: < \r\n+CGEV: NW MODIFY 4,0,0\r\n
-12:51:16 info: Aux: < \r\n+CREG: 0\r\n
-12:51:16 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
-status 0 tech -1 lac -1 ci -1
-12:51:16 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
-0x6f2fe8
-12:51:16 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
-12:51:16 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
-driver_attached: 1
-12:51:16 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
-12:51:16 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
-driver_attached: 0
-12:51:16 info: Aux: > AT\r
-12:51:16 info: Aux: < \r\n+CIEV: 7,0\r\n
-12:51:16 info: Aux: < \r\nOK\r\n
-12:51:16 info: Aux: Finally woke up the modem
-12:51:16 info: Aux: > AT+CGATT=3D0\r
-12:51:16 info: Aux: < \r\n+CGREG: 4\r\n
-12:51:16 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
-status unknown (4)
-12:51:16 info: Aux: < \r\n+UREG: 0\r\n
-12:51:16 info: Aux: < \r\n+CIEV: 9,1\r\n
-12:51:16 info: Aux: < \r\nOK\r\n
-12:51:16 debug: ../git/src/gprs.c:gprs_attach_callback() /ublox_0 error =3D=
- 0
-12:51:16 info: Aux: > AT+CGREG?\r
-12:51:16 info: Aux: < \r\n+CGREG: 2,4\r\n
-12:51:16 info: Aux: < \r\nOK\r\n
-12:51:16 debug: ../git/src/gprs.c:registration_status_cb() /ublox_0 error 0
-status 4
-12:51:16 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
-status unknown (4)
-12:51:27 info: Aux: < \r\n+CREG: 0\r\n
-12:51:27 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
-status 0 tech -1 lac -1 ci -1
-12:51:27 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
-(nil)
-12:51:27 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
-12:51:27 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
-driver_attached: 0
-12:51:27 info: Aux: < \r\n+CIEV: 2,2\r\n
-12:51:30 info: Aux: < \r\n+CTZE: +08,1,"19/09/03,14:51:29"\r\n
-12:51:30 debug:
-../git/drivers/ubloxmodem/network-registration.c:ctze_notify() tz +08 dst 1
-time 19/09/03,14:51:29
-12:51:30 debug: ../git/src/network.c:ofono_netreg_time_notify() net time
-2019-09-03 14:51:29 utcoff 7200 dst 1
-12:51:30 info: Aux: < \r\n+CREG: 5,"0080","00000006",2\r\n
-12:51:30 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
-status 5 tech 2 lac 128 ci 6
-12:51:30 debug: ../git/src/gprs.c:netreg_status_changed() 5 (roaming)
-12:51:30 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 1,
-driver_attached: 0
-12:51:30 info: Aux: > AT\r
-12:51:30 info: Aux: < \r\n+CIEV: 7,1\r\n
-12:51:30 info: Aux: < \r\nOK\r\n
-12:51:30 info: Aux: Finally woke up the modem
-12:51:30 info: Aux: > AT+COPS=3D3,2\r
-12:51:30 info: Aux: < \r\nOK\r\n
-12:51:30 info: Aux: > AT+COPS?\r
-12:51:30 info: Aux: < \r\n+COPS: 0,2,"24002",2\r\n
-12:51:30 info: Aux: < \r\nOK\r\n
-12:51:30 debug:
-../git/drivers/atmodem/network-registration.c:cops_numeric_cb() Cops
-numeric got mcc: 240, mnc: 02
-12:51:30 info: Aux: > AT+CSQ\r
-12:51:30 info: Aux: < \r\n+CSQ: 11,1\r\n
-12:51:30 info: Aux: < \r\nOK\r\n
-12:51:30 debug: ../git/drivers/atmodem/network-registration.c:csq_cb()
-csq_cb: 11
-12:51:30 debug: ../git/src/network.c:ofono_netreg_strength_notify()
-strength 35
-12:51:30 info: Aux: > AT+CGATT=3D1\r
-12:51:37 info: Aux: < \r\n+CME ERROR: 148\r\n
-12:51:37 debug: ../git/src/gprs.c:gprs_attach_callback() /ublox_0 error =3D=
+Yes, I've seen this, too, and have a similar patch that I never got around
+to sending. Please apply.
+
+/Jonas
+
+
+> 12:47:52 info: Aux: < \r\n+CIEV: 9,2\r\n
+> 12:50:37 info: Aux: < \r\n+CIEV: 2,2\r\n
+> 12:50:42 info: Aux: < \r\n+CIEV: 2,1\r\n
+> 12:51:06 info: Aux: < \r\n+CIEV: 2,0\r\n
+> 12:51:08 info: Aux: < \r\n+CGREG: 5,"004B","0000E404",6,"01"\r\n
+> 12:51:08 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
+> status roaming (5)
+> 12:51:08 info: Aux: < \r\n+UREG: 6\r\n
+> 12:51:08 info: Aux: < \r\n+CIEV: 9,2\r\n
+> 12:51:08 info: Aux: < \r\n+CIEV: 9,1\r\n
+> 12:51:09 info: Aux: < \r\n+CGEV: NW MODIFY 4,0,0\r\n
+> 12:51:16 info: Aux: < \r\n+CREG: 0\r\n
+> 12:51:16 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
+> status 0 tech -1 lac -1 ci -1
+> 12:51:16 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
+> 0x6f2fe8
+> 12:51:16 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
+> 12:51:16 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
+> driver_attached: 1
+> 12:51:16 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
+> 12:51:16 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
+> driver_attached: 0
+> 12:51:16 info: Aux: > AT\r
+> 12:51:16 info: Aux: < \r\n+CIEV: 7,0\r\n
+> 12:51:16 info: Aux: < \r\nOK\r\n
+> 12:51:16 info: Aux: Finally woke up the modem
+> 12:51:16 info: Aux: > AT+CGATT=3D0\r
+> 12:51:16 info: Aux: < \r\n+CGREG: 4\r\n
+> 12:51:16 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
+> status unknown (4)
+> 12:51:16 info: Aux: < \r\n+UREG: 0\r\n
+> 12:51:16 info: Aux: < \r\n+CIEV: 9,1\r\n
+> 12:51:16 info: Aux: < \r\nOK\r\n
+> 12:51:16 debug: ../git/src/gprs.c:gprs_attach_callback() /ublox_0 error =
+=3D 0
+> 12:51:16 info: Aux: > AT+CGREG?\r
+> 12:51:16 info: Aux: < \r\n+CGREG: 2,4\r\n
+> 12:51:16 info: Aux: < \r\nOK\r\n
+> 12:51:16 debug: ../git/src/gprs.c:registration_status_cb() /ublox_0 error
+> 0 status 4
+> 12:51:16 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
+> status unknown (4)
+> 12:51:27 info: Aux: < \r\n+CREG: 0\r\n
+> 12:51:27 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
+> status 0 tech -1 lac -1 ci -1
+> 12:51:27 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
+> (nil)
+> 12:51:27 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
+> 12:51:27 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
+> driver_attached: 0
+> 12:51:27 info: Aux: < \r\n+CIEV: 2,2\r\n
+> 12:51:30 info: Aux: < \r\n+CTZE: +08,1,"19/09/03,14:51:29"\r\n
+> 12:51:30 debug:
+> ../git/drivers/ubloxmodem/network-registration.c:ctze_notify() tz +08 dst=
  1
-12:51:37 info: Aux: > AT+COPS=3D3,0\r
-12:51:37 info: Aux: < \r\n+CIEV: 2,3\r\n
-12:51:37 info: Aux: < \r\n+CREG: 0\r\n
-12:51:37 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
-status 0 tech -1 lac -1 ci -1
-12:51:37 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
-(nil)
-12:51:37 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
-12:51:37 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
-driver_attached: 0
-12:51:37 info: Aux: < \r\n+CIEV: 7,0\r\n\r\n+CREG: 3\r\n
-12:51:37 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
-status 3 tech -1 lac -1 ci -1
-12:51:37 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
-(nil)
-12:51:37 debug: ../git/src/gprs.c:netreg_status_changed() 3 (denied)
-12:51:37 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
-driver_attached: 0
-12:51:37 info: Aux: < \r\nOK\r\n
-12:51:37 info: Aux: > AT+COPS?\r
-12:51:37 info: Aux: < \r\n+COPS: 0\r\n
-12:51:37 info: Aux: < \r\nOK\r\n
-12:51:37 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
-(nil)
-12:51:37 info: Aux: > AT+CGREG?\r
-12:51:37 info: Aux: < \r\n+CGREG: 2,3\r\n
-12:51:37 info: Aux: < \r\nOK\r\n
-12:51:37 debug: ../git/src/gprs.c:registration_status_cb() /ublox_0 error 0
-status 3
-12:51:37 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
-status denied (3)
-12:51:47 info: Aux: < \r\n+CIEV: 2,1\r\n
-12:51:48 info: Aux: < \r\n+CIEV: 2,2\r\n
-12:51:49 info: Aux: < \r\n+CIEV: 2,1\r\n
-12:51:50 info: Aux: < \r\n+CREG: 0\r\n
-12:51:50 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
-status 0 tech -1 lac -1 ci -1
-12:51:50 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
-(nil)
-12:51:50 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
-12:51:50 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
-driver_attached: 0
-12:51:50 info: Aux: < \r\n+CGREG: 5,"4E85","000003EA",2,"01"\r\n
-12:51:50 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
-status roaming (5)
-12:51:50 info: Aux: < \r\n+UREG: 3\r\n
-12:51:50 info: Aux: < \r\n+CIEV: 9,2\r\n
-12:51:50 info: Aux: < \r\n+CTZE: +08,1,"19/09/03,14:51:50"\r\n
-12:51:50 debug:
-../git/drivers/ubloxmodem/network-registration.c:ctze_notify() tz +08 dst 1
-time 19/09/03,14:51:50
-12:51:50 debug: ../git/src/network.c:ofono_netreg_time_notify() net time
-2019-09-03 14:51:50 utcoff 7200 dst 1
-12:51:50 info: Aux: < \r\n+CREG: 5,"0E63","8CD17D00",2\r\n
-12:51:50 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
-status 5 tech 2 lac 3683 ci 2147483647
-12:51:50 debug: ../git/src/gprs.c:netreg_status_changed() 5 (roaming)
-12:51:50 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 1,
-driver_attached: 1
-12:51:50 info: Aux: > AT\r
-12:51:50 info: Aux: < \r\n+CIEV: 7,1\r\n
-12:51:50 info: Aux: < \r\nOK\r\n
-12:51:50 info: Aux: Finally woke up the modem
-12:51:50 info: Aux: > AT+COPS=3D3,2\r
-12:51:50 info: Aux: < \r\nOK\r\n
-12:51:50 info: Aux: > AT+COPS?\r
-12:51:50 info: Aux: < \r\n+COPS: 0,2,"24002",2\r\n
-12:51:50 info: Aux: < \r\nOK\r\n
-12:51:50 debug:
-../git/drivers/atmodem/network-registration.c:cops_numeric_cb() Cops
-numeric got mcc: 240, mnc: 02
-12:51:50 info: Aux: > AT+CSQ\r
-12:51:50 info: Aux: < \r\n+CSQ: 8,1\r\n
-12:51:50 info: Aux: < \r\nOK\r\n
-12:51:50 debug: ../git/drivers/atmodem/network-registration.c:csq_cb()
-csq_cb: 8
-12:51:50 debug: ../git/src/network.c:ofono_netreg_strength_notify()
-strength 25
-12:51:50 info: Aux: > AT+COPS=3D3,0\r
-12:51:50 info: Aux: < \r\nOK\r\n
-12:51:50 info: Aux: > AT+COPS?\r
-12:51:50 info: Aux: < \r\n+COPS: 0,0,"3 SE",2\r\n
-12:51:50 info: Aux: < \r\nOK\r\n
-12:51:50 debug: ../git/drivers/atmodem/network-registration.c:cops_cb()
-cops_cb: 3 SE, 240 02 2
-12:51:50 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
-(nil)
-12:51:50 debug: ../git/src/gprs.c:netreg_status_changed() 5 (roaming)
-12:51:50 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 1,
-driver_attached: 1
-12:51:52 info: Aux: < \r\n+CGEV: ME PDN DEACT 4\r\n
-12:51:53 info: Aux: < \r\n+CIEV: 2,2\r\n
-12:52:03 info: Aux: < \r\n+CIEV: 2,1\r\n
-12:52:08 info: Aux: < \r\n+CIEV: 2,2\r\n
-12:52:14 info: Aux: < \r\n+CIEV: 2,1\r\n
+> time 19/09/03,14:51:29
+> 12:51:30 debug: ../git/src/network.c:ofono_netreg_time_notify() net time
+> 2019-09-03 14:51:29 utcoff 7200 dst 1
+> 12:51:30 info: Aux: < \r\n+CREG: 5,"0080","00000006",2\r\n
+> 12:51:30 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
+> status 5 tech 2 lac 128 ci 6
+> 12:51:30 debug: ../git/src/gprs.c:netreg_status_changed() 5 (roaming)
+> 12:51:30 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 1,
+> driver_attached: 0
+> 12:51:30 info: Aux: > AT\r
+> 12:51:30 info: Aux: < \r\n+CIEV: 7,1\r\n
+> 12:51:30 info: Aux: < \r\nOK\r\n
+> 12:51:30 info: Aux: Finally woke up the modem
+> 12:51:30 info: Aux: > AT+COPS=3D3,2\r
+> 12:51:30 info: Aux: < \r\nOK\r\n
+> 12:51:30 info: Aux: > AT+COPS?\r
+> 12:51:30 info: Aux: < \r\n+COPS: 0,2,"24002",2\r\n
+> 12:51:30 info: Aux: < \r\nOK\r\n
+> 12:51:30 debug:
+> ../git/drivers/atmodem/network-registration.c:cops_numeric_cb() Cops
+> numeric got mcc: 240, mnc: 02
+> 12:51:30 info: Aux: > AT+CSQ\r
+> 12:51:30 info: Aux: < \r\n+CSQ: 11,1\r\n
+> 12:51:30 info: Aux: < \r\nOK\r\n
+> 12:51:30 debug: ../git/drivers/atmodem/network-registration.c:csq_cb()
+> csq_cb: 11
+> 12:51:30 debug: ../git/src/network.c:ofono_netreg_strength_notify()
+> strength 35
+> 12:51:30 info: Aux: > AT+CGATT=3D1\r
+> 12:51:37 info: Aux: < \r\n+CME ERROR: 148\r\n
+> 12:51:37 debug: ../git/src/gprs.c:gprs_attach_callback() /ublox_0 error =
+=3D 1
+> 12:51:37 info: Aux: > AT+COPS=3D3,0\r
+> 12:51:37 info: Aux: < \r\n+CIEV: 2,3\r\n
+> 12:51:37 info: Aux: < \r\n+CREG: 0\r\n
+> 12:51:37 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
+> status 0 tech -1 lac -1 ci -1
+> 12:51:37 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
+> (nil)
+> 12:51:37 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
+> 12:51:37 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
+> driver_attached: 0
+> 12:51:37 info: Aux: < \r\n+CIEV: 7,0\r\n\r\n+CREG: 3\r\n
+> 12:51:37 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
+> status 3 tech -1 lac -1 ci -1
+> 12:51:37 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
+> (nil)
+> 12:51:37 debug: ../git/src/gprs.c:netreg_status_changed() 3 (denied)
+> 12:51:37 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
+> driver_attached: 0
+> 12:51:37 info: Aux: < \r\nOK\r\n
+> 12:51:37 info: Aux: > AT+COPS?\r
+> 12:51:37 info: Aux: < \r\n+COPS: 0\r\n
+> 12:51:37 info: Aux: < \r\nOK\r\n
+> 12:51:37 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
+> (nil)
+> 12:51:37 info: Aux: > AT+CGREG?\r
+> 12:51:37 info: Aux: < \r\n+CGREG: 2,3\r\n
+> 12:51:37 info: Aux: < \r\nOK\r\n
+> 12:51:37 debug: ../git/src/gprs.c:registration_status_cb() /ublox_0 error
+> 0 status 3
+> 12:51:37 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
+> status denied (3)
+> 12:51:47 info: Aux: < \r\n+CIEV: 2,1\r\n
+> 12:51:48 info: Aux: < \r\n+CIEV: 2,2\r\n
+> 12:51:49 info: Aux: < \r\n+CIEV: 2,1\r\n
+> 12:51:50 info: Aux: < \r\n+CREG: 0\r\n
+> 12:51:50 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
+> status 0 tech -1 lac -1 ci -1
+> 12:51:50 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
+> (nil)
+> 12:51:50 debug: ../git/src/gprs.c:netreg_status_changed() 0 (unregistered)
+> 12:51:50 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 0,
+> driver_attached: 0
+> 12:51:50 info: Aux: < \r\n+CGREG: 5,"4E85","000003EA",2,"01"\r\n
+> 12:51:50 debug: ../git/src/gprs.c:ofono_gprs_status_notify() /ublox_0
+> status roaming (5)
+> 12:51:50 info: Aux: < \r\n+UREG: 3\r\n
+> 12:51:50 info: Aux: < \r\n+CIEV: 9,2\r\n
+> 12:51:50 info: Aux: < \r\n+CTZE: +08,1,"19/09/03,14:51:50"\r\n
+> 12:51:50 debug:
+> ../git/drivers/ubloxmodem/network-registration.c:ctze_notify() tz +08 dst=
+ 1
+> time 19/09/03,14:51:50
+> 12:51:50 debug: ../git/src/network.c:ofono_netreg_time_notify() net time
+> 2019-09-03 14:51:50 utcoff 7200 dst 1
+> 12:51:50 info: Aux: < \r\n+CREG: 5,"0E63","8CD17D00",2\r\n
+> 12:51:50 debug: ../git/src/network.c:ofono_netreg_status_notify() /ublox_0
+> status 5 tech 2 lac 3683 ci 2147483647
+> 12:51:50 debug: ../git/src/gprs.c:netreg_status_changed() 5 (roaming)
+> 12:51:50 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 1,
+> driver_attached: 1
+> 12:51:50 info: Aux: > AT\r
+> 12:51:50 info: Aux: < \r\n+CIEV: 7,1\r\n
+> 12:51:50 info: Aux: < \r\nOK\r\n
+> 12:51:50 info: Aux: Finally woke up the modem
+> 12:51:50 info: Aux: > AT+COPS=3D3,2\r
+> 12:51:50 info: Aux: < \r\nOK\r\n
+> 12:51:50 info: Aux: > AT+COPS?\r
+> 12:51:50 info: Aux: < \r\n+COPS: 0,2,"24002",2\r\n
+> 12:51:50 info: Aux: < \r\nOK\r\n
+> 12:51:50 debug:
+> ../git/drivers/atmodem/network-registration.c:cops_numeric_cb() Cops
+> numeric got mcc: 240, mnc: 02
+> 12:51:50 info: Aux: > AT+CSQ\r
+> 12:51:50 info: Aux: < \r\n+CSQ: 8,1\r\n
+> 12:51:50 info: Aux: < \r\nOK\r\n
+> 12:51:50 debug: ../git/drivers/atmodem/network-registration.c:csq_cb()
+> csq_cb: 8
+> 12:51:50 debug: ../git/src/network.c:ofono_netreg_strength_notify()
+> strength 25
+> 12:51:50 info: Aux: > AT+COPS=3D3,0\r
+> 12:51:50 info: Aux: < \r\nOK\r\n
+> 12:51:50 info: Aux: > AT+COPS?\r
+> 12:51:50 info: Aux: < \r\n+COPS: 0,0,"3 SE",2\r\n
+> 12:51:50 info: Aux: < \r\nOK\r\n
+> 12:51:50 debug: ../git/drivers/atmodem/network-registration.c:cops_cb()
+> cops_cb: 3 SE, 240 02 2
+> 12:51:50 debug: ../git/src/network.c:current_operator_callback() 0x6f2440,
+> (nil)
+> 12:51:50 debug: ../git/src/gprs.c:netreg_status_changed() 5 (roaming)
+> 12:51:50 debug: ../git/src/gprs.c:gprs_netreg_update() attach: 1,
+> driver_attached: 1
+> 12:51:52 info: Aux: < \r\n+CGEV: ME PDN DEACT 4\r\n
+> 12:51:53 info: Aux: < \r\n+CIEV: 2,2\r\n
+> 12:52:03 info: Aux: < \r\n+CIEV: 2,1\r\n
+> 12:52:08 info: Aux: < \r\n+CIEV: 2,2\r\n
+> 12:52:14 info: Aux: < \r\n+CIEV: 2,1\r\n
+>
+> Den tis 3 sep. 2019 kl 16:06 skrev <richard.rojfors@gmail.com>:
+>
+>> From: Richard R=C3=B6jfors <richard@puffinpack.se>
+>>
+>> In case a context get deactivated when a AT+CGACT=3D0 is
+>> not issued, indicate that to gprs core.
+>> This can happen if the device has an auto activated
+>> LTE context and modem switches over to for instance UTRAN.
+>> ---
+>>  drivers/ubloxmodem/gprs-context.c | 15 ++++++++++++++-
+>>  1 file changed, 14 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/drivers/ubloxmodem/gprs-context.c
+>> b/drivers/ubloxmodem/gprs-context.c
+>> index ff78a42a..188c2c62 100644
+>> --- a/drivers/ubloxmodem/gprs-context.c
+>> +++ b/drivers/ubloxmodem/gprs-context.c
+>> @@ -40,6 +40,8 @@
+>>
+>>  #include "ubloxmodem.h"
+>>
+>> +#define UBLOX_FLAG_DEACTIVATING 0x01
+>> +
+>>  static const char *none_prefix[] =3D { NULL };
+>>  static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
+>>  static const char *uipaddr_prefix[] =3D { "+UIPADDR:", NULL };
+>> @@ -57,6 +59,7 @@ struct gprs_context_data {
+>>         ofono_gprs_context_cb_t cb;
+>>         void *cb_data;
+>>         enum netmode networking_mode;
+>> +       int flags;
+>>  };
+>>
+>>  static void uipaddr_cb(gboolean ok, GAtResult *result, gpointer
+>> user_data)
+>> @@ -426,6 +429,8 @@ static void cgact_disable_cb(gboolean ok, GAtResult
+>> *result, gpointer user_data)
+>>
+>>         DBG("ok %d", ok);
+>>
+>> +       gcd->flags &=3D ~UBLOX_FLAG_DEACTIVATING;
+>> +
+>>         if (!ok) {
+>>                 CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
+>>                 return;
+>> @@ -448,6 +453,8 @@ static void ublox_gprs_deactivate_primary(struct
+>> ofono_gprs_context *gc,
+>>         gcd->cb =3D cb;
+>>         gcd->cb_data =3D data;
+>>
+>> +       gcd->flags |=3D UBLOX_FLAG_DEACTIVATING;
+>> +
+>>         snprintf(buf, sizeof(buf), "AT+CGACT=3D0,%u", gcd->active_contex=
+t);
+>>         g_at_chat_send(gcd->chat, buf, none_prefix,
+>>                         cgact_disable_cb, gc, NULL);
+>> @@ -473,10 +480,16 @@ static void cgev_notify(GAtResult *result, gpointer
+>> user_data)
+>>                 sscanf(event, "%*s %*s %*s %u", &cid);
+>>         else if (g_str_has_prefix(event, "NW DEACT"))
+>>                 sscanf(event, "%*s %*s %u", &cid);
+>> +       else if (!(gcd->flags & UBLOX_FLAG_DEACTIVATING) &&
+>> +                g_str_has_prefix(event, "ME PDN DEACT"))
+>> +               /* The modem might consider the ME deactivating without
+>> +                * an explicit CGACT=3D0 beeing sent
+>> +                */
+>> +               sscanf(event, "%*s %*s %*s %u", &cid);
+>>         else
+>>                 return;
+>>
+>> -       DBG("cid %d", cid);
+>> +       DBG("cid %d, active cid: %d", cid, gcd->active_context);
+>>
+>>         if ((unsigned int) cid !=3D gcd->active_context)
+>>                 return;
+>> --
+>> 2.20.1
+>>
+>>
 
-Den tis 3 sep. 2019 kl 16:06 skrev <richard.rojfors@gmail.com>:
-
-> From: Richard R=C3=B6jfors <richard@puffinpack.se>
->
-> In case a context get deactivated when a AT+CGACT=3D0 is
-> not issued, indicate that to gprs core.
-> This can happen if the device has an auto activated
-> LTE context and modem switches over to for instance UTRAN.
-> ---
->  drivers/ubloxmodem/gprs-context.c | 15 ++++++++++++++-
->  1 file changed, 14 insertions(+), 1 deletion(-)
->
-> diff --git a/drivers/ubloxmodem/gprs-context.c
-> b/drivers/ubloxmodem/gprs-context.c
-> index ff78a42a..188c2c62 100644
-> --- a/drivers/ubloxmodem/gprs-context.c
-> +++ b/drivers/ubloxmodem/gprs-context.c
-> @@ -40,6 +40,8 @@
->
->  #include "ubloxmodem.h"
->
-> +#define UBLOX_FLAG_DEACTIVATING 0x01
-> +
->  static const char *none_prefix[] =3D { NULL };
->  static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
->  static const char *uipaddr_prefix[] =3D { "+UIPADDR:", NULL };
-> @@ -57,6 +59,7 @@ struct gprs_context_data {
->         ofono_gprs_context_cb_t cb;
->         void *cb_data;
->         enum netmode networking_mode;
-> +       int flags;
->  };
->
->  static void uipaddr_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-> @@ -426,6 +429,8 @@ static void cgact_disable_cb(gboolean ok, GAtResult
-> *result, gpointer user_data)
->
->         DBG("ok %d", ok);
->
-> +       gcd->flags &=3D ~UBLOX_FLAG_DEACTIVATING;
-> +
->         if (!ok) {
->                 CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
->                 return;
-> @@ -448,6 +453,8 @@ static void ublox_gprs_deactivate_primary(struct
-> ofono_gprs_context *gc,
->         gcd->cb =3D cb;
->         gcd->cb_data =3D data;
->
-> +       gcd->flags |=3D UBLOX_FLAG_DEACTIVATING;
-> +
->         snprintf(buf, sizeof(buf), "AT+CGACT=3D0,%u", gcd->active_context=
-);
->         g_at_chat_send(gcd->chat, buf, none_prefix,
->                         cgact_disable_cb, gc, NULL);
-> @@ -473,10 +480,16 @@ static void cgev_notify(GAtResult *result, gpointer
-> user_data)
->                 sscanf(event, "%*s %*s %*s %u", &cid);
->         else if (g_str_has_prefix(event, "NW DEACT"))
->                 sscanf(event, "%*s %*s %u", &cid);
-> +       else if (!(gcd->flags & UBLOX_FLAG_DEACTIVATING) &&
-> +                g_str_has_prefix(event, "ME PDN DEACT"))
-> +               /* The modem might consider the ME deactivating without
-> +                * an explicit CGACT=3D0 beeing sent
-> +                */
-> +               sscanf(event, "%*s %*s %*s %u", &cid);
->         else
->                 return;
->
-> -       DBG("cid %d", cid);
-> +       DBG("cid %d, active cid: %d", cid, gcd->active_context);
->
->         if ((unsigned int) cid !=3D gcd->active_context)
->                 return;
-> --
-> 2.20.1
->
->
-
---===============2041432482474554235==
+--===============7953385066795987721==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+SGksPGRpdj48YnI+PC9kaXY+PGRpdj5BbiBleGFtcGxlIGxvZyB3aGVu
-IHRoaXMgaGFwcGVuZWQuIEluIHRoaXMgY2FzZSBvZm9ubyB0aG91Z2h0IGNvbnRleHQgNCB3YXMg
-c3RpbGwgYWN0aXZhdGVkPC9kaXY+PGRpdj5ldmVuIHRob3VnaCBpdCB3YXMgZGVhY3RpdmF0ZWQ8
-YnI+PGJyPjEyOjQ3OjUyIGluZm86IEF1eDogJmx0OyBcclxuK0NJRVY6IDksMlxyXG48YnI+MTI6
-NTA6MzcgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogMiwyXHJcbjxicj4xMjo1MDo0MiBpbmZv
-OiBBdXg6ICZsdDsgXHJcbitDSUVWOiAyLDFcclxuPGJyPjEyOjUxOjA2IGluZm86IEF1eDogJmx0
-OyBcclxuK0NJRVY6IDIsMFxyXG48YnI+MTI6NTE6MDggaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0dS
-RUc6IDUsJnF1b3Q7MDA0QiZxdW90OywmcXVvdDswMDAwRTQwNCZxdW90Oyw2LCZxdW90OzAxJnF1
-b3Q7XHJcbjxicj4xMjo1MTowOCBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6b2Zvbm9fZ3Byc19z
-dGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIHJvYW1pbmcgKDUpPGJyPjEyOjUxOjA4IGlu
-Zm86IEF1eDogJmx0OyBcclxuK1VSRUc6IDZcclxuPGJyPjEyOjUxOjA4IGluZm86IEF1eDogJmx0
-OyBcclxuK0NJRVY6IDksMlxyXG48YnI+MTI6NTE6MDggaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lF
-VjogOSwxXHJcbjxicj4xMjo1MTowOSBpbmZvOiBBdXg6ICZsdDsgXHJcbitDR0VWOiBOVyBNT0RJ
-RlkgNCwwLDBcclxuPGJyPjEyOjUxOjE2IGluZm86IEF1eDogJmx0OyBcclxuK0NSRUc6IDBcclxu
-PGJyPjEyOjUxOjE2IGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpvZm9ub19uZXRyZWdfc3Rh
-dHVzX25vdGlmeSgpIC91YmxveF8wIHN0YXR1cyAwIHRlY2ggLTEgbGFjIC0xIGNpIC0xPGJyPjEy
-OjUxOjE2IGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpjdXJyZW50X29wZXJhdG9yX2NhbGxi
-YWNrKCkgMHg2ZjI0NDAsIDB4NmYyZmU4PGJyPjEyOjUxOjE2IGRlYnVnOiAuLi9naXQvc3JjL2dw
-cnMuYzpuZXRyZWdfc3RhdHVzX2NoYW5nZWQoKSAwICh1bnJlZ2lzdGVyZWQpPGJyPjEyOjUxOjE2
-IGRlYnVnOiAuLi9naXQvc3JjL2dwcnMuYzpncHJzX25ldHJlZ191cGRhdGUoKSBhdHRhY2g6IDAs
-IGRyaXZlcl9hdHRhY2hlZDogMTxicj4xMjo1MToxNiBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6
-bmV0cmVnX3N0YXR1c19jaGFuZ2VkKCkgMCAodW5yZWdpc3RlcmVkKTxicj4xMjo1MToxNiBkZWJ1
-ZzogLi4vZ2l0L3NyYy9ncHJzLmM6Z3Byc19uZXRyZWdfdXBkYXRlKCkgYXR0YWNoOiAwLCBkcml2
-ZXJfYXR0YWNoZWQ6IDA8YnI+MTI6NTE6MTYgaW5mbzogQXV4OiAmZ3Q7IEFUXHI8YnI+MTI6NTE6
-MTYgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogNywwXHJcbjxicj4xMjo1MToxNiBpbmZvOiBB
-dXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MToxNiBpbmZvOiBBdXg6IEZpbmFsbHkgd29rZSB1
-cCB0aGUgbW9kZW08YnI+MTI6NTE6MTYgaW5mbzogQXV4OiAmZ3Q7IEFUK0NHQVRUPTBccjxicj4x
-Mjo1MToxNiBpbmZvOiBBdXg6ICZsdDsgXHJcbitDR1JFRzogNFxyXG48YnI+MTI6NTE6MTYgZGVi
-dWc6IC4uL2dpdC9zcmMvZ3Bycy5jOm9mb25vX2dwcnNfc3RhdHVzX25vdGlmeSgpIC91YmxveF8w
-IHN0YXR1cyB1bmtub3duICg0KTxicj4xMjo1MToxNiBpbmZvOiBBdXg6ICZsdDsgXHJcbitVUkVH
-OiAwXHJcbjxicj4xMjo1MToxNiBpbmZvOiBBdXg6ICZsdDsgXHJcbitDSUVWOiA5LDFcclxuPGJy
-PjEyOjUxOjE2IGluZm86IEF1eDogJmx0OyBcclxuT0tcclxuPGJyPjEyOjUxOjE2IGRlYnVnOiAu
-Li9naXQvc3JjL2dwcnMuYzpncHJzX2F0dGFjaF9jYWxsYmFjaygpIC91YmxveF8wIGVycm9yID0g
-MDxicj4xMjo1MToxNiBpbmZvOiBBdXg6ICZndDsgQVQrQ0dSRUc/XHI8YnI+MTI6NTE6MTYgaW5m
-bzogQXV4OiAmbHQ7IFxyXG4rQ0dSRUc6IDIsNFxyXG48YnI+MTI6NTE6MTYgaW5mbzogQXV4OiAm
-bHQ7IFxyXG5PS1xyXG48YnI+MTI6NTE6MTYgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOnJlZ2lz
-dHJhdGlvbl9zdGF0dXNfY2IoKSAvdWJsb3hfMCBlcnJvciAwIHN0YXR1cyA0PGJyPjEyOjUxOjE2
-IGRlYnVnOiAuLi9naXQvc3JjL2dwcnMuYzpvZm9ub19ncHJzX3N0YXR1c19ub3RpZnkoKSAvdWJs
-b3hfMCBzdGF0dXMgdW5rbm93biAoNCk8YnI+MTI6NTE6MjcgaW5mbzogQXV4OiAmbHQ7IFxyXG4r
-Q1JFRzogMFxyXG48YnI+MTI6NTE6MjcgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5jOm9mb25v
-X25ldHJlZ19zdGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIDAgdGVjaCAtMSBsYWMgLTEg
-Y2kgLTE8YnI+MTI6NTE6MjcgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5jOmN1cnJlbnRfb3Bl
-cmF0b3JfY2FsbGJhY2soKSAweDZmMjQ0MCwgKG5pbCk8YnI+MTI6NTE6MjcgZGVidWc6IC4uL2dp
-dC9zcmMvZ3Bycy5jOm5ldHJlZ19zdGF0dXNfY2hhbmdlZCgpIDAgKHVucmVnaXN0ZXJlZCk8YnI+
-MTI6NTE6MjcgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOmdwcnNfbmV0cmVnX3VwZGF0ZSgpIGF0
-dGFjaDogMCwgZHJpdmVyX2F0dGFjaGVkOiAwPGJyPjEyOjUxOjI3IGluZm86IEF1eDogJmx0OyBc
-clxuK0NJRVY6IDIsMlxyXG48YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ1RaRTog
-KzA4LDEsJnF1b3Q7MTkvMDkvMDMsMTQ6NTE6MjkmcXVvdDtcclxuPGJyPjEyOjUxOjMwIGRlYnVn
-OiAuLi9naXQvZHJpdmVycy91YmxveG1vZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmM6Y3R6ZV9u
-b3RpZnkoKSB0eiArMDggZHN0IDEgdGltZSAxOS8wOS8wMywxNDo1MToyOTxicj4xMjo1MTozMCBk
-ZWJ1ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX3RpbWVfbm90aWZ5KCkgbmV0
-IHRpbWUgMjAxOS0wOS0wMyAxNDo1MToyOSB1dGNvZmYgNzIwMCBkc3QgMTxicj4xMjo1MTozMCBp
-bmZvOiBBdXg6ICZsdDsgXHJcbitDUkVHOiA1LCZxdW90OzAwODAmcXVvdDssJnF1b3Q7MDAwMDAw
-MDYmcXVvdDssMlxyXG48YnI+MTI6NTE6MzAgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5jOm9m
-b25vX25ldHJlZ19zdGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIDUgdGVjaCAyIGxhYyAx
-MjggY2kgNjxicj4xMjo1MTozMCBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6bmV0cmVnX3N0YXR1
-c19jaGFuZ2VkKCkgNSAocm9hbWluZyk8YnI+MTI6NTE6MzAgZGVidWc6IC4uL2dpdC9zcmMvZ3By
-cy5jOmdwcnNfbmV0cmVnX3VwZGF0ZSgpIGF0dGFjaDogMSwgZHJpdmVyX2F0dGFjaGVkOiAwPGJy
-PjEyOjUxOjMwIGluZm86IEF1eDogJmd0OyBBVFxyPGJyPjEyOjUxOjMwIGluZm86IEF1eDogJmx0
-OyBcclxuK0NJRVY6IDcsMVxyXG48YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmbHQ7IFxyXG5PS1xy
-XG48YnI+MTI6NTE6MzAgaW5mbzogQXV4OiBGaW5hbGx5IHdva2UgdXAgdGhlIG1vZGVtPGJyPjEy
-OjUxOjMwIGluZm86IEF1eDogJmd0OyBBVCtDT1BTPTMsMlxyPGJyPjEyOjUxOjMwIGluZm86IEF1
-eDogJmx0OyBcclxuT0tcclxuPGJyPjEyOjUxOjMwIGluZm86IEF1eDogJmd0OyBBVCtDT1BTP1xy
-PGJyPjEyOjUxOjMwIGluZm86IEF1eDogJmx0OyBcclxuK0NPUFM6IDAsMiwmcXVvdDsyNDAwMiZx
-dW90OywyXHJcbjxicj4xMjo1MTozMCBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1
-MTozMCBkZWJ1ZzogLi4vZ2l0L2RyaXZlcnMvYXRtb2RlbS9uZXR3b3JrLXJlZ2lzdHJhdGlvbi5j
-OmNvcHNfbnVtZXJpY19jYigpIENvcHMgbnVtZXJpYyBnb3QgbWNjOiAyNDAsIG1uYzogMDI8YnI+
-MTI6NTE6MzAgaW5mbzogQXV4OiAmZ3Q7IEFUK0NTUVxyPGJyPjEyOjUxOjMwIGluZm86IEF1eDog
-Jmx0OyBcclxuK0NTUTogMTEsMVxyXG48YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmbHQ7IFxyXG5P
-S1xyXG48YnI+MTI6NTE6MzAgZGVidWc6IC4uL2dpdC9kcml2ZXJzL2F0bW9kZW0vbmV0d29yay1y
-ZWdpc3RyYXRpb24uYzpjc3FfY2IoKSBjc3FfY2I6IDExPGJyPjEyOjUxOjMwIGRlYnVnOiAuLi9n
-aXQvc3JjL25ldHdvcmsuYzpvZm9ub19uZXRyZWdfc3RyZW5ndGhfbm90aWZ5KCkgc3RyZW5ndGgg
-MzU8YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmZ3Q7IEFUK0NHQVRUPTFccjxicj4xMjo1MTozNyBp
-bmZvOiBBdXg6ICZsdDsgXHJcbitDTUUgRVJST1I6IDE0OFxyXG48YnI+MTI6NTE6MzcgZGVidWc6
-IC4uL2dpdC9zcmMvZ3Bycy5jOmdwcnNfYXR0YWNoX2NhbGxiYWNrKCkgL3VibG94XzAgZXJyb3Ig
-PSAxPGJyPjEyOjUxOjM3IGluZm86IEF1eDogJmd0OyBBVCtDT1BTPTMsMFxyPGJyPjEyOjUxOjM3
-IGluZm86IEF1eDogJmx0OyBcclxuK0NJRVY6IDIsM1xyXG48YnI+MTI6NTE6MzcgaW5mbzogQXV4
-OiAmbHQ7IFxyXG4rQ1JFRzogMFxyXG48YnI+MTI6NTE6MzcgZGVidWc6IC4uL2dpdC9zcmMvbmV0
-d29yay5jOm9mb25vX25ldHJlZ19zdGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIDAgdGVj
-aCAtMSBsYWMgLTEgY2kgLTE8YnI+MTI6NTE6MzcgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5j
-OmN1cnJlbnRfb3BlcmF0b3JfY2FsbGJhY2soKSAweDZmMjQ0MCwgKG5pbCk8YnI+MTI6NTE6Mzcg
-ZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOm5ldHJlZ19zdGF0dXNfY2hhbmdlZCgpIDAgKHVucmVn
-aXN0ZXJlZCk8YnI+MTI6NTE6MzcgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOmdwcnNfbmV0cmVn
-X3VwZGF0ZSgpIGF0dGFjaDogMCwgZHJpdmVyX2F0dGFjaGVkOiAwPGJyPjEyOjUxOjM3IGluZm86
-IEF1eDogJmx0OyBcclxuK0NJRVY6IDcsMFxyXG5cclxuK0NSRUc6IDNcclxuPGJyPjEyOjUxOjM3
-IGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpvZm9ub19uZXRyZWdfc3RhdHVzX25vdGlmeSgp
-IC91YmxveF8wIHN0YXR1cyAzIHRlY2ggLTEgbGFjIC0xIGNpIC0xPGJyPjEyOjUxOjM3IGRlYnVn
-OiAuLi9naXQvc3JjL25ldHdvcmsuYzpjdXJyZW50X29wZXJhdG9yX2NhbGxiYWNrKCkgMHg2ZjI0
-NDAsIChuaWwpPGJyPjEyOjUxOjM3IGRlYnVnOiAuLi9naXQvc3JjL2dwcnMuYzpuZXRyZWdfc3Rh
-dHVzX2NoYW5nZWQoKSAzIChkZW5pZWQpPGJyPjEyOjUxOjM3IGRlYnVnOiAuLi9naXQvc3JjL2dw
-cnMuYzpncHJzX25ldHJlZ191cGRhdGUoKSBhdHRhY2g6IDAsIGRyaXZlcl9hdHRhY2hlZDogMDxi
-cj4xMjo1MTozNyBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MTozNyBpbmZvOiBB
-dXg6ICZndDsgQVQrQ09QUz9ccjxicj4xMjo1MTozNyBpbmZvOiBBdXg6ICZsdDsgXHJcbitDT1BT
-OiAwXHJcbjxicj4xMjo1MTozNyBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MToz
-NyBkZWJ1ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6Y3VycmVudF9vcGVyYXRvcl9jYWxsYmFjaygp
-IDB4NmYyNDQwLCAobmlsKTxicj4xMjo1MTozNyBpbmZvOiBBdXg6ICZndDsgQVQrQ0dSRUc/XHI8
-YnI+MTI6NTE6MzcgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0dSRUc6IDIsM1xyXG48YnI+MTI6NTE6
-MzcgaW5mbzogQXV4OiAmbHQ7IFxyXG5PS1xyXG48YnI+MTI6NTE6MzcgZGVidWc6IC4uL2dpdC9z
-cmMvZ3Bycy5jOnJlZ2lzdHJhdGlvbl9zdGF0dXNfY2IoKSAvdWJsb3hfMCBlcnJvciAwIHN0YXR1
-cyAzPGJyPjEyOjUxOjM3IGRlYnVnOiAuLi9naXQvc3JjL2dwcnMuYzpvZm9ub19ncHJzX3N0YXR1
-c19ub3RpZnkoKSAvdWJsb3hfMCBzdGF0dXMgZGVuaWVkICgzKTxicj4xMjo1MTo0NyBpbmZvOiBB
-dXg6ICZsdDsgXHJcbitDSUVWOiAyLDFcclxuPGJyPjEyOjUxOjQ4IGluZm86IEF1eDogJmx0OyBc
-clxuK0NJRVY6IDIsMlxyXG48YnI+MTI6NTE6NDkgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjog
-MiwxXHJcbjxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZsdDsgXHJcbitDUkVHOiAwXHJcbjxicj4x
-Mjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX3N0YXR1c19u
-b3RpZnkoKSAvdWJsb3hfMCBzdGF0dXMgMCB0ZWNoIC0xIGxhYyAtMSBjaSAtMTxicj4xMjo1MTo1
-MCBkZWJ1ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6Y3VycmVudF9vcGVyYXRvcl9jYWxsYmFjaygp
-IDB4NmYyNDQwLCAobmlsKTxicj4xMjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6bmV0
-cmVnX3N0YXR1c19jaGFuZ2VkKCkgMCAodW5yZWdpc3RlcmVkKTxicj4xMjo1MTo1MCBkZWJ1Zzog
-Li4vZ2l0L3NyYy9ncHJzLmM6Z3Byc19uZXRyZWdfdXBkYXRlKCkgYXR0YWNoOiAwLCBkcml2ZXJf
-YXR0YWNoZWQ6IDA8YnI+MTI6NTE6NTAgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0dSRUc6IDUsJnF1
-b3Q7NEU4NSZxdW90OywmcXVvdDswMDAwMDNFQSZxdW90OywyLCZxdW90OzAxJnF1b3Q7XHJcbjxi
-cj4xMjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6b2Zvbm9fZ3Byc19zdGF0dXNfbm90
-aWZ5KCkgL3VibG94XzAgc3RhdHVzIHJvYW1pbmcgKDUpPGJyPjEyOjUxOjUwIGluZm86IEF1eDog
-Jmx0OyBcclxuK1VSRUc6IDNcclxuPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0OyBcclxuK0NJ
-RVY6IDksMlxyXG48YnI+MTI6NTE6NTAgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ1RaRTogKzA4LDEs
-JnF1b3Q7MTkvMDkvMDMsMTQ6NTE6NTAmcXVvdDtcclxuPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9n
-aXQvZHJpdmVycy91YmxveG1vZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmM6Y3R6ZV9ub3RpZnko
-KSB0eiArMDggZHN0IDEgdGltZSAxOS8wOS8wMywxNDo1MTo1MDxicj4xMjo1MTo1MCBkZWJ1Zzog
-Li4vZ2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX3RpbWVfbm90aWZ5KCkgbmV0IHRpbWUg
-MjAxOS0wOS0wMyAxNDo1MTo1MCB1dGNvZmYgNzIwMCBkc3QgMTxicj4xMjo1MTo1MCBpbmZvOiBB
-dXg6ICZsdDsgXHJcbitDUkVHOiA1LCZxdW90OzBFNjMmcXVvdDssJnF1b3Q7OENEMTdEMDAmcXVv
-dDssMlxyXG48YnI+MTI6NTE6NTAgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5jOm9mb25vX25l
-dHJlZ19zdGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIDUgdGVjaCAyIGxhYyAzNjgzIGNp
-IDIxNDc0ODM2NDc8YnI+MTI6NTE6NTAgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOm5ldHJlZ19z
-dGF0dXNfY2hhbmdlZCgpIDUgKHJvYW1pbmcpPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvc3Jj
-L2dwcnMuYzpncHJzX25ldHJlZ191cGRhdGUoKSBhdHRhY2g6IDEsIGRyaXZlcl9hdHRhY2hlZDog
-MTxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZndDsgQVRccjxicj4xMjo1MTo1MCBpbmZvOiBBdXg6
-ICZsdDsgXHJcbitDSUVWOiA3LDFcclxuPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0OyBcclxu
-T0tcclxuPGJyPjEyOjUxOjUwIGluZm86IEF1eDogRmluYWxseSB3b2tlIHVwIHRoZSBtb2RlbTxi
-cj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZndDsgQVQrQ09QUz0zLDJccjxicj4xMjo1MTo1MCBpbmZv
-OiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZndDsgQVQrQ09Q
-Uz9ccjxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZsdDsgXHJcbitDT1BTOiAwLDIsJnF1b3Q7MjQw
-MDImcXVvdDssMlxyXG48YnI+MTI6NTE6NTAgaW5mbzogQXV4OiAmbHQ7IFxyXG5PS1xyXG48YnI+
-MTI6NTE6NTAgZGVidWc6IC4uL2dpdC9kcml2ZXJzL2F0bW9kZW0vbmV0d29yay1yZWdpc3RyYXRp
-b24uYzpjb3BzX251bWVyaWNfY2IoKSBDb3BzIG51bWVyaWMgZ290IG1jYzogMjQwLCBtbmM6IDAy
-PGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmd0OyBBVCtDU1Fccjxicj4xMjo1MTo1MCBpbmZvOiBB
-dXg6ICZsdDsgXHJcbitDU1E6IDgsMVxyXG48YnI+MTI6NTE6NTAgaW5mbzogQXV4OiAmbHQ7IFxy
-XG5PS1xyXG48YnI+MTI6NTE6NTAgZGVidWc6IC4uL2dpdC9kcml2ZXJzL2F0bW9kZW0vbmV0d29y
-ay1yZWdpc3RyYXRpb24uYzpjc3FfY2IoKSBjc3FfY2I6IDg8YnI+MTI6NTE6NTAgZGVidWc6IC4u
-L2dpdC9zcmMvbmV0d29yay5jOm9mb25vX25ldHJlZ19zdHJlbmd0aF9ub3RpZnkoKSBzdHJlbmd0
-aCAyNTxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZndDsgQVQrQ09QUz0zLDBccjxicj4xMjo1MTo1
-MCBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZndDsg
-QVQrQ09QUz9ccjxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZsdDsgXHJcbitDT1BTOiAwLDAsJnF1
-b3Q7MyBTRSZxdW90OywyXHJcbjxicj4xMjo1MTo1MCBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJc
-bjxicj4xMjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L2RyaXZlcnMvYXRtb2RlbS9uZXR3b3JrLXJlZ2lz
-dHJhdGlvbi5jOmNvcHNfY2IoKSBjb3BzX2NiOiAzIFNFLCAyNDAgMDIgMjxicj4xMjo1MTo1MCBk
+PGRpdiBkaXI9ImF1dG8iPjxkaXY+PGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGRp
+diBkaXI9Imx0ciIgY2xhc3M9ImdtYWlsX2F0dHIiPk9uIFR1ZSwgU2VwIDMsIDIwMTksIDE2OjEx
+IFJpY2hhcmQgUsO2amZvcnMgJmx0OzxhIGhyZWY9Im1haWx0bzpyaWNoYXJkLnJvamZvcnNAZ21h
+aWwuY29tIj5yaWNoYXJkLnJvamZvcnNAZ21haWwuY29tPC9hPiZndDsgd3JvdGU6PGJyPjwvZGl2
+PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4
+O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjxkaXYgZGlyPSJs
+dHIiPkhpLDxkaXY+PGJyPjwvZGl2PjxkaXY+QW4gZXhhbXBsZSBsb2cgd2hlbiB0aGlzIGhhcHBl
+bmVkLiBJbiB0aGlzIGNhc2Ugb2Zvbm8gdGhvdWdodCBjb250ZXh0IDQgd2FzIHN0aWxsIGFjdGl2
+YXRlZDwvZGl2PjxkaXY+ZXZlbiB0aG91Z2ggaXQgd2FzIGRlYWN0aXZhdGVkPGJyPjwvZGl2Pjwv
+ZGl2PjwvYmxvY2txdW90ZT48L2Rpdj48L2Rpdj48ZGl2IGRpcj0iYXV0byI+PGJyPjwvZGl2Pjxk
+aXYgZGlyPSJhdXRvIj5ZZXMsIEkmIzM5O3ZlIHNlZW4gdGhpcywgdG9vLCBhbmQgaGF2ZSBhIHNp
+bWlsYXIgcGF0Y2ggdGhhdCBJIG5ldmVyIGdvdCBhcm91bmQgdG8gc2VuZGluZy4gUGxlYXNlIGFw
+cGx5LsKgPC9kaXY+PGRpdiBkaXI9ImF1dG8iPjxicj48L2Rpdj48ZGl2IGRpcj0iYXV0byI+L0pv
+bmFzwqA8L2Rpdj48ZGl2IGRpcj0iYXV0byI+PGJyPjwvZGl2PjxkaXYgZGlyPSJhdXRvIj48ZGl2
+IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHls
+ZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1s
+ZWZ0OjFleCI+PGRpdiBkaXI9Imx0ciI+PGRpdj48YnI+MTI6NDc6NTIgaW5mbzogQXV4OiAmbHQ7
+IFxyXG4rQ0lFVjogOSwyXHJcbjxicj4xMjo1MDozNyBpbmZvOiBBdXg6ICZsdDsgXHJcbitDSUVW
+OiAyLDJcclxuPGJyPjEyOjUwOjQyIGluZm86IEF1eDogJmx0OyBcclxuK0NJRVY6IDIsMVxyXG48
+YnI+MTI6NTE6MDYgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogMiwwXHJcbjxicj4xMjo1MTow
+OCBpbmZvOiBBdXg6ICZsdDsgXHJcbitDR1JFRzogNSwmcXVvdDswMDRCJnF1b3Q7LCZxdW90OzAw
+MDBFNDA0JnF1b3Q7LDYsJnF1b3Q7MDEmcXVvdDtcclxuPGJyPjEyOjUxOjA4IGRlYnVnOiAuLi9n
+aXQvc3JjL2dwcnMuYzpvZm9ub19ncHJzX3N0YXR1c19ub3RpZnkoKSAvdWJsb3hfMCBzdGF0dXMg
+cm9hbWluZyAoNSk8YnI+MTI6NTE6MDggaW5mbzogQXV4OiAmbHQ7IFxyXG4rVVJFRzogNlxyXG48
+YnI+MTI6NTE6MDggaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogOSwyXHJcbjxicj4xMjo1MTow
+OCBpbmZvOiBBdXg6ICZsdDsgXHJcbitDSUVWOiA5LDFcclxuPGJyPjEyOjUxOjA5IGluZm86IEF1
+eDogJmx0OyBcclxuK0NHRVY6IE5XIE1PRElGWSA0LDAsMFxyXG48YnI+MTI6NTE6MTYgaW5mbzog
+QXV4OiAmbHQ7IFxyXG4rQ1JFRzogMFxyXG48YnI+MTI6NTE6MTYgZGVidWc6IC4uL2dpdC9zcmMv
+bmV0d29yay5jOm9mb25vX25ldHJlZ19zdGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIDAg
+dGVjaCAtMSBsYWMgLTEgY2kgLTE8YnI+MTI6NTE6MTYgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29y
+ay5jOmN1cnJlbnRfb3BlcmF0b3JfY2FsbGJhY2soKSAweDZmMjQ0MCwgMHg2ZjJmZTg8YnI+MTI6
+NTE6MTYgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOm5ldHJlZ19zdGF0dXNfY2hhbmdlZCgpIDAg
+KHVucmVnaXN0ZXJlZCk8YnI+MTI6NTE6MTYgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOmdwcnNf
+bmV0cmVnX3VwZGF0ZSgpIGF0dGFjaDogMCwgZHJpdmVyX2F0dGFjaGVkOiAxPGJyPjEyOjUxOjE2
+IGRlYnVnOiAuLi9naXQvc3JjL2dwcnMuYzpuZXRyZWdfc3RhdHVzX2NoYW5nZWQoKSAwICh1bnJl
+Z2lzdGVyZWQpPGJyPjEyOjUxOjE2IGRlYnVnOiAuLi9naXQvc3JjL2dwcnMuYzpncHJzX25ldHJl
+Z191cGRhdGUoKSBhdHRhY2g6IDAsIGRyaXZlcl9hdHRhY2hlZDogMDxicj4xMjo1MToxNiBpbmZv
+OiBBdXg6ICZndDsgQVRccjxicj4xMjo1MToxNiBpbmZvOiBBdXg6ICZsdDsgXHJcbitDSUVWOiA3
+LDBcclxuPGJyPjEyOjUxOjE2IGluZm86IEF1eDogJmx0OyBcclxuT0tcclxuPGJyPjEyOjUxOjE2
+IGluZm86IEF1eDogRmluYWxseSB3b2tlIHVwIHRoZSBtb2RlbTxicj4xMjo1MToxNiBpbmZvOiBB
+dXg6ICZndDsgQVQrQ0dBVFQ9MFxyPGJyPjEyOjUxOjE2IGluZm86IEF1eDogJmx0OyBcclxuK0NH
+UkVHOiA0XHJcbjxicj4xMjo1MToxNiBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6b2Zvbm9fZ3By
+c19zdGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIHVua25vd24gKDQpPGJyPjEyOjUxOjE2
+IGluZm86IEF1eDogJmx0OyBcclxuK1VSRUc6IDBcclxuPGJyPjEyOjUxOjE2IGluZm86IEF1eDog
+Jmx0OyBcclxuK0NJRVY6IDksMVxyXG48YnI+MTI6NTE6MTYgaW5mbzogQXV4OiAmbHQ7IFxyXG5P
+S1xyXG48YnI+MTI6NTE6MTYgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOmdwcnNfYXR0YWNoX2Nh
+bGxiYWNrKCkgL3VibG94XzAgZXJyb3IgPSAwPGJyPjEyOjUxOjE2IGluZm86IEF1eDogJmd0OyBB
+VCtDR1JFRz9ccjxicj4xMjo1MToxNiBpbmZvOiBBdXg6ICZsdDsgXHJcbitDR1JFRzogMiw0XHJc
+bjxicj4xMjo1MToxNiBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MToxNiBkZWJ1
+ZzogLi4vZ2l0L3NyYy9ncHJzLmM6cmVnaXN0cmF0aW9uX3N0YXR1c19jYigpIC91YmxveF8wIGVy
+cm9yIDAgc3RhdHVzIDQ8YnI+MTI6NTE6MTYgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOm9mb25v
+X2dwcnNfc3RhdHVzX25vdGlmeSgpIC91YmxveF8wIHN0YXR1cyB1bmtub3duICg0KTxicj4xMjo1
+MToyNyBpbmZvOiBBdXg6ICZsdDsgXHJcbitDUkVHOiAwXHJcbjxicj4xMjo1MToyNyBkZWJ1Zzog
+Li4vZ2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX3N0YXR1c19ub3RpZnkoKSAvdWJsb3hf
+MCBzdGF0dXMgMCB0ZWNoIC0xIGxhYyAtMSBjaSAtMTxicj4xMjo1MToyNyBkZWJ1ZzogLi4vZ2l0
+L3NyYy9uZXR3b3JrLmM6Y3VycmVudF9vcGVyYXRvcl9jYWxsYmFjaygpIDB4NmYyNDQwLCAobmls
+KTxicj4xMjo1MToyNyBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6bmV0cmVnX3N0YXR1c19jaGFu
+Z2VkKCkgMCAodW5yZWdpc3RlcmVkKTxicj4xMjo1MToyNyBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJz
+LmM6Z3Byc19uZXRyZWdfdXBkYXRlKCkgYXR0YWNoOiAwLCBkcml2ZXJfYXR0YWNoZWQ6IDA8YnI+
+MTI6NTE6MjcgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogMiwyXHJcbjxicj4xMjo1MTozMCBp
+bmZvOiBBdXg6ICZsdDsgXHJcbitDVFpFOiArMDgsMSwmcXVvdDsxOS8wOS8wMywxNDo1MToyOSZx
+dW90O1xyXG48YnI+MTI6NTE6MzAgZGVidWc6IC4uL2dpdC9kcml2ZXJzL3VibG94bW9kZW0vbmV0
+d29yay1yZWdpc3RyYXRpb24uYzpjdHplX25vdGlmeSgpIHR6ICswOCBkc3QgMSB0aW1lIDE5LzA5
+LzAzLDE0OjUxOjI5PGJyPjEyOjUxOjMwIGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpvZm9u
+b19uZXRyZWdfdGltZV9ub3RpZnkoKSBuZXQgdGltZSAyMDE5LTA5LTAzIDE0OjUxOjI5IHV0Y29m
+ZiA3MjAwIGRzdCAxPGJyPjEyOjUxOjMwIGluZm86IEF1eDogJmx0OyBcclxuK0NSRUc6IDUsJnF1
+b3Q7MDA4MCZxdW90OywmcXVvdDswMDAwMDAwNiZxdW90OywyXHJcbjxicj4xMjo1MTozMCBkZWJ1
+ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX3N0YXR1c19ub3RpZnkoKSAvdWJs
+b3hfMCBzdGF0dXMgNSB0ZWNoIDIgbGFjIDEyOCBjaSA2PGJyPjEyOjUxOjMwIGRlYnVnOiAuLi9n
+aXQvc3JjL2dwcnMuYzpuZXRyZWdfc3RhdHVzX2NoYW5nZWQoKSA1IChyb2FtaW5nKTxicj4xMjo1
+MTozMCBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6Z3Byc19uZXRyZWdfdXBkYXRlKCkgYXR0YWNo
+OiAxLCBkcml2ZXJfYXR0YWNoZWQ6IDA8YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmZ3Q7IEFUXHI8
+YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogNywxXHJcbjxicj4xMjo1MToz
+MCBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MTozMCBpbmZvOiBBdXg6IEZpbmFs
+bHkgd29rZSB1cCB0aGUgbW9kZW08YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmZ3Q7IEFUK0NPUFM9
+MywyXHI8YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmbHQ7IFxyXG5PS1xyXG48YnI+MTI6NTE6MzAg
+aW5mbzogQXV4OiAmZ3Q7IEFUK0NPUFM/XHI8YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmbHQ7IFxy
+XG4rQ09QUzogMCwyLCZxdW90OzI0MDAyJnF1b3Q7LDJcclxuPGJyPjEyOjUxOjMwIGluZm86IEF1
+eDogJmx0OyBcclxuT0tcclxuPGJyPjEyOjUxOjMwIGRlYnVnOiAuLi9naXQvZHJpdmVycy9hdG1v
+ZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmM6Y29wc19udW1lcmljX2NiKCkgQ29wcyBudW1lcmlj
+IGdvdCBtY2M6IDI0MCwgbW5jOiAwMjxicj4xMjo1MTozMCBpbmZvOiBBdXg6ICZndDsgQVQrQ1NR
+XHI8YnI+MTI6NTE6MzAgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ1NROiAxMSwxXHJcbjxicj4xMjo1
+MTozMCBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MTozMCBkZWJ1ZzogLi4vZ2l0
+L2RyaXZlcnMvYXRtb2RlbS9uZXR3b3JrLXJlZ2lzdHJhdGlvbi5jOmNzcV9jYigpIGNzcV9jYjog
+MTE8YnI+MTI6NTE6MzAgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5jOm9mb25vX25ldHJlZ19z
+dHJlbmd0aF9ub3RpZnkoKSBzdHJlbmd0aCAzNTxicj4xMjo1MTozMCBpbmZvOiBBdXg6ICZndDsg
+QVQrQ0dBVFQ9MVxyPGJyPjEyOjUxOjM3IGluZm86IEF1eDogJmx0OyBcclxuK0NNRSBFUlJPUjog
+MTQ4XHJcbjxicj4xMjo1MTozNyBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6Z3Byc19hdHRhY2hf
+Y2FsbGJhY2soKSAvdWJsb3hfMCBlcnJvciA9IDE8YnI+MTI6NTE6MzcgaW5mbzogQXV4OiAmZ3Q7
+IEFUK0NPUFM9MywwXHI8YnI+MTI6NTE6MzcgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogMiwz
+XHJcbjxicj4xMjo1MTozNyBpbmZvOiBBdXg6ICZsdDsgXHJcbitDUkVHOiAwXHJcbjxicj4xMjo1
+MTozNyBkZWJ1ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX3N0YXR1c19ub3Rp
+ZnkoKSAvdWJsb3hfMCBzdGF0dXMgMCB0ZWNoIC0xIGxhYyAtMSBjaSAtMTxicj4xMjo1MTozNyBk
 ZWJ1ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6Y3VycmVudF9vcGVyYXRvcl9jYWxsYmFjaygpIDB4
-NmYyNDQwLCAobmlsKTxicj4xMjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6bmV0cmVn
-X3N0YXR1c19jaGFuZ2VkKCkgNSAocm9hbWluZyk8YnI+MTI6NTE6NTAgZGVidWc6IC4uL2dpdC9z
-cmMvZ3Bycy5jOmdwcnNfbmV0cmVnX3VwZGF0ZSgpIGF0dGFjaDogMSwgZHJpdmVyX2F0dGFjaGVk
-OiAxPGJyPjEyOjUxOjUyIGluZm86IEF1eDogJmx0OyBcclxuK0NHRVY6IE1FIFBETiBERUFDVCA0
-XHJcbjxicj4xMjo1MTo1MyBpbmZvOiBBdXg6ICZsdDsgXHJcbitDSUVWOiAyLDJcclxuPGJyPjEy
-OjUyOjAzIGluZm86IEF1eDogJmx0OyBcclxuK0NJRVY6IDIsMVxyXG48YnI+MTI6NTI6MDggaW5m
-bzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogMiwyXHJcbjxicj4xMjo1MjoxNCBpbmZvOiBBdXg6ICZs
-dDsgXHJcbitDSUVWOiAyLDFcclxuPGJyPjwvZGl2PjwvZGl2Pjxicj48ZGl2IGNsYXNzPSJnbWFp
-bF9xdW90ZSI+PGRpdiBkaXI9Imx0ciIgY2xhc3M9ImdtYWlsX2F0dHIiPkRlbiB0aXMgMyBzZXAu
-IDIwMTkga2wgMTY6MDYgc2tyZXYgJmx0OzxhIGhyZWY9Im1haWx0bzpyaWNoYXJkLnJvamZvcnNA
-Z21haWwuY29tIj5yaWNoYXJkLnJvamZvcnNAZ21haWwuY29tPC9hPiZndDs6PGJyPjwvZGl2Pjxi
-bG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAw
-LjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdiKDIwNCwyMDQsMjA0KTtwYWRkaW5nLWxlZnQ6
-MWV4Ij5Gcm9tOiBSaWNoYXJkIFLDtmpmb3JzICZsdDs8YSBocmVmPSJtYWlsdG86cmljaGFyZEBw
-dWZmaW5wYWNrLnNlIiB0YXJnZXQ9Il9ibGFuayI+cmljaGFyZEBwdWZmaW5wYWNrLnNlPC9hPiZn
-dDs8YnI+Cjxicj4KSW4gY2FzZSBhIGNvbnRleHQgZ2V0IGRlYWN0aXZhdGVkIHdoZW4gYSBBVCtD
-R0FDVD0wIGlzPGJyPgpub3QgaXNzdWVkLCBpbmRpY2F0ZSB0aGF0IHRvIGdwcnMgY29yZS48YnI+
-ClRoaXMgY2FuIGhhcHBlbiBpZiB0aGUgZGV2aWNlIGhhcyBhbiBhdXRvIGFjdGl2YXRlZDxicj4K
-TFRFIGNvbnRleHQgYW5kIG1vZGVtIHN3aXRjaGVzIG92ZXIgdG8gZm9yIGluc3RhbmNlIFVUUkFO
-Ljxicj4KLS0tPGJyPgrCoGRyaXZlcnMvdWJsb3htb2RlbS9ncHJzLWNvbnRleHQuYyB8IDE1ICsr
-KysrKysrKysrKysrLTxicj4KwqAxIGZpbGUgY2hhbmdlZCwgMTQgaW5zZXJ0aW9ucygrKSwgMSBk
-ZWxldGlvbigtKTxicj4KPGJyPgpkaWZmIC0tZ2l0IGEvZHJpdmVycy91YmxveG1vZGVtL2dwcnMt
-Y29udGV4dC5jIGIvZHJpdmVycy91YmxveG1vZGVtL2dwcnMtY29udGV4dC5jPGJyPgppbmRleCBm
-Zjc4YTQyYS4uMTg4YzJjNjIgMTAwNjQ0PGJyPgotLS0gYS9kcml2ZXJzL3VibG94bW9kZW0vZ3By
-cy1jb250ZXh0LmM8YnI+CisrKyBiL2RyaXZlcnMvdWJsb3htb2RlbS9ncHJzLWNvbnRleHQuYzxi
-cj4KQEAgLTQwLDYgKzQwLDggQEA8YnI+Cjxicj4KwqAjaW5jbHVkZSAmcXVvdDt1YmxveG1vZGVt
-LmgmcXVvdDs8YnI+Cjxicj4KKyNkZWZpbmUgVUJMT1hfRkxBR19ERUFDVElWQVRJTkcgMHgwMTxi
-cj4KKzxicj4KwqBzdGF0aWMgY29uc3QgY2hhciAqbm9uZV9wcmVmaXhbXSA9IHsgTlVMTCB9Ozxi
-cj4KwqBzdGF0aWMgY29uc3QgY2hhciAqY2djb250cmRwX3ByZWZpeFtdID0geyAmcXVvdDsrQ0dD
-T05UUkRQOiZxdW90OywgTlVMTCB9Ozxicj4KwqBzdGF0aWMgY29uc3QgY2hhciAqdWlwYWRkcl9w
-cmVmaXhbXSA9IHsgJnF1b3Q7K1VJUEFERFI6JnF1b3Q7LCBOVUxMIH07PGJyPgpAQCAtNTcsNiAr
-NTksNyBAQCBzdHJ1Y3QgZ3Byc19jb250ZXh0X2RhdGEgezxicj4KwqAgwqAgwqAgwqAgb2Zvbm9f
-Z3Byc19jb250ZXh0X2NiX3QgY2I7PGJyPgrCoCDCoCDCoCDCoCB2b2lkICpjYl9kYXRhOzxicj4K
-wqAgwqAgwqAgwqAgZW51bSBuZXRtb2RlIG5ldHdvcmtpbmdfbW9kZTs8YnI+CivCoCDCoCDCoCDC
-oGludCBmbGFnczs8YnI+CsKgfTs8YnI+Cjxicj4KwqBzdGF0aWMgdm9pZCB1aXBhZGRyX2NiKGdi
-b29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKTxicj4KQEAg
-LTQyNiw2ICs0MjksOCBAQCBzdGF0aWMgdm9pZCBjZ2FjdF9kaXNhYmxlX2NiKGdib29sZWFuIG9r
-LCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKTxicj4KPGJyPgrCoCDCoCDC
-oCDCoCBEQkcoJnF1b3Q7b2sgJWQmcXVvdDssIG9rKTs8YnI+Cjxicj4KK8KgIMKgIMKgIMKgZ2Nk
-LSZndDtmbGFncyAmYW1wOz0gflVCTE9YX0ZMQUdfREVBQ1RJVkFUSU5HOzxicj4KKzxicj4KwqAg
-wqAgwqAgwqAgaWYgKCFvaykgezxicj4KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgQ0FMTEJBQ0tf
-V0lUSF9GQUlMVVJFKGdjZC0mZ3Q7Y2IsIGdjZC0mZ3Q7Y2JfZGF0YSk7PGJyPgrCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCByZXR1cm47PGJyPgpAQCAtNDQ4LDYgKzQ1Myw4IEBAIHN0YXRpYyB2b2lk
-IHVibG94X2dwcnNfZGVhY3RpdmF0ZV9wcmltYXJ5KHN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQg
-KmdjLDxicj4KwqAgwqAgwqAgwqAgZ2NkLSZndDtjYiA9IGNiOzxicj4KwqAgwqAgwqAgwqAgZ2Nk
-LSZndDtjYl9kYXRhID0gZGF0YTs8YnI+Cjxicj4KK8KgIMKgIMKgIMKgZ2NkLSZndDtmbGFncyB8
-PSBVQkxPWF9GTEFHX0RFQUNUSVZBVElORzs8YnI+Cis8YnI+CsKgIMKgIMKgIMKgIHNucHJpbnRm
-KGJ1Ziwgc2l6ZW9mKGJ1ZiksICZxdW90O0FUK0NHQUNUPTAsJXUmcXVvdDssIGdjZC0mZ3Q7YWN0
-aXZlX2NvbnRleHQpOzxicj4KwqAgwqAgwqAgwqAgZ19hdF9jaGF0X3NlbmQoZ2NkLSZndDtjaGF0
-LCBidWYsIG5vbmVfcHJlZml4LDxicj4KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgY2dhY3RfZGlzYWJsZV9jYiwgZ2MsIE5VTEwpOzxicj4KQEAgLTQ3MywxMCArNDgwLDE2IEBA
-IHN0YXRpYyB2b2lkIGNnZXZfbm90aWZ5KEdBdFJlc3VsdCAqcmVzdWx0LCBncG9pbnRlciB1c2Vy
-X2RhdGEpPGJyPgrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBzc2NhbmYoZXZlbnQsICZxdW90OyUq
-cyAlKnMgJSpzICV1JnF1b3Q7LCAmYW1wO2NpZCk7PGJyPgrCoCDCoCDCoCDCoCBlbHNlIGlmIChn
-X3N0cl9oYXNfcHJlZml4KGV2ZW50LCAmcXVvdDtOVyBERUFDVCZxdW90OykpPGJyPgrCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCBzc2NhbmYoZXZlbnQsICZxdW90OyUqcyAlKnMgJXUmcXVvdDssICZh
-bXA7Y2lkKTs8YnI+CivCoCDCoCDCoCDCoGVsc2UgaWYgKCEoZ2NkLSZndDtmbGFncyAmYW1wOyBV
-QkxPWF9GTEFHX0RFQUNUSVZBVElORykgJmFtcDsmYW1wOzxicj4KK8KgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIGdfc3RyX2hhc19wcmVmaXgoZXZlbnQsICZxdW90O01FIFBETiBERUFDVCZxdW90Oykp
-PGJyPgorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAvKiBUaGUgbW9kZW0gbWlnaHQgY29uc2lkZXIg
-dGhlIE1FIGRlYWN0aXZhdGluZyB3aXRob3V0PGJyPgorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-KiBhbiBleHBsaWNpdCBDR0FDVD0wIGJlZWluZyBzZW50PGJyPgorwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgKi88YnI+CivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoHNzY2FuZihldmVudCwgJnF1b3Q7
-JSpzICUqcyAlKnMgJXUmcXVvdDssICZhbXA7Y2lkKTs8YnI+CsKgIMKgIMKgIMKgIGVsc2U8YnI+
-CsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVybjs8YnI+Cjxicj4KLcKgIMKgIMKgIMKgREJH
-KCZxdW90O2NpZCAlZCZxdW90OywgY2lkKTs8YnI+CivCoCDCoCDCoCDCoERCRygmcXVvdDtjaWQg
-JWQsIGFjdGl2ZSBjaWQ6ICVkJnF1b3Q7LCBjaWQsIGdjZC0mZ3Q7YWN0aXZlX2NvbnRleHQpOzxi
-cj4KPGJyPgrCoCDCoCDCoCDCoCBpZiAoKHVuc2lnbmVkIGludCkgY2lkICE9IGdjZC0mZ3Q7YWN0
-aXZlX2NvbnRleHQpPGJyPgrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm47PGJyPgotLSA8
-YnI+CjIuMjAuMTxicj4KPGJyPgo8L2Jsb2NrcXVvdGU+PC9kaXY+Cg==
+NmYyNDQwLCAobmlsKTxicj4xMjo1MTozNyBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6bmV0cmVn
+X3N0YXR1c19jaGFuZ2VkKCkgMCAodW5yZWdpc3RlcmVkKTxicj4xMjo1MTozNyBkZWJ1ZzogLi4v
+Z2l0L3NyYy9ncHJzLmM6Z3Byc19uZXRyZWdfdXBkYXRlKCkgYXR0YWNoOiAwLCBkcml2ZXJfYXR0
+YWNoZWQ6IDA8YnI+MTI6NTE6MzcgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogNywwXHJcblxy
+XG4rQ1JFRzogM1xyXG48YnI+MTI6NTE6MzcgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5jOm9m
+b25vX25ldHJlZ19zdGF0dXNfbm90aWZ5KCkgL3VibG94XzAgc3RhdHVzIDMgdGVjaCAtMSBsYWMg
+LTEgY2kgLTE8YnI+MTI6NTE6MzcgZGVidWc6IC4uL2dpdC9zcmMvbmV0d29yay5jOmN1cnJlbnRf
+b3BlcmF0b3JfY2FsbGJhY2soKSAweDZmMjQ0MCwgKG5pbCk8YnI+MTI6NTE6MzcgZGVidWc6IC4u
+L2dpdC9zcmMvZ3Bycy5jOm5ldHJlZ19zdGF0dXNfY2hhbmdlZCgpIDMgKGRlbmllZCk8YnI+MTI6
+NTE6MzcgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOmdwcnNfbmV0cmVnX3VwZGF0ZSgpIGF0dGFj
+aDogMCwgZHJpdmVyX2F0dGFjaGVkOiAwPGJyPjEyOjUxOjM3IGluZm86IEF1eDogJmx0OyBcclxu
+T0tcclxuPGJyPjEyOjUxOjM3IGluZm86IEF1eDogJmd0OyBBVCtDT1BTP1xyPGJyPjEyOjUxOjM3
+IGluZm86IEF1eDogJmx0OyBcclxuK0NPUFM6IDBcclxuPGJyPjEyOjUxOjM3IGluZm86IEF1eDog
+Jmx0OyBcclxuT0tcclxuPGJyPjEyOjUxOjM3IGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpj
+dXJyZW50X29wZXJhdG9yX2NhbGxiYWNrKCkgMHg2ZjI0NDAsIChuaWwpPGJyPjEyOjUxOjM3IGlu
+Zm86IEF1eDogJmd0OyBBVCtDR1JFRz9ccjxicj4xMjo1MTozNyBpbmZvOiBBdXg6ICZsdDsgXHJc
+bitDR1JFRzogMiwzXHJcbjxicj4xMjo1MTozNyBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxi
+cj4xMjo1MTozNyBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6cmVnaXN0cmF0aW9uX3N0YXR1c19j
+YigpIC91YmxveF8wIGVycm9yIDAgc3RhdHVzIDM8YnI+MTI6NTE6MzcgZGVidWc6IC4uL2dpdC9z
+cmMvZ3Bycy5jOm9mb25vX2dwcnNfc3RhdHVzX25vdGlmeSgpIC91YmxveF8wIHN0YXR1cyBkZW5p
+ZWQgKDMpPGJyPjEyOjUxOjQ3IGluZm86IEF1eDogJmx0OyBcclxuK0NJRVY6IDIsMVxyXG48YnI+
+MTI6NTE6NDggaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogMiwyXHJcbjxicj4xMjo1MTo0OSBp
+bmZvOiBBdXg6ICZsdDsgXHJcbitDSUVWOiAyLDFcclxuPGJyPjEyOjUxOjUwIGluZm86IEF1eDog
+Jmx0OyBcclxuK0NSRUc6IDBcclxuPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvc3JjL25ldHdv
+cmsuYzpvZm9ub19uZXRyZWdfc3RhdHVzX25vdGlmeSgpIC91YmxveF8wIHN0YXR1cyAwIHRlY2gg
+LTEgbGFjIC0xIGNpIC0xPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpj
+dXJyZW50X29wZXJhdG9yX2NhbGxiYWNrKCkgMHg2ZjI0NDAsIChuaWwpPGJyPjEyOjUxOjUwIGRl
+YnVnOiAuLi9naXQvc3JjL2dwcnMuYzpuZXRyZWdfc3RhdHVzX2NoYW5nZWQoKSAwICh1bnJlZ2lz
+dGVyZWQpPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvc3JjL2dwcnMuYzpncHJzX25ldHJlZ191
+cGRhdGUoKSBhdHRhY2g6IDAsIGRyaXZlcl9hdHRhY2hlZDogMDxicj4xMjo1MTo1MCBpbmZvOiBB
+dXg6ICZsdDsgXHJcbitDR1JFRzogNSwmcXVvdDs0RTg1JnF1b3Q7LCZxdW90OzAwMDAwM0VBJnF1
+b3Q7LDIsJnF1b3Q7MDEmcXVvdDtcclxuPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvc3JjL2dw
+cnMuYzpvZm9ub19ncHJzX3N0YXR1c19ub3RpZnkoKSAvdWJsb3hfMCBzdGF0dXMgcm9hbWluZyAo
+NSk8YnI+MTI6NTE6NTAgaW5mbzogQXV4OiAmbHQ7IFxyXG4rVVJFRzogM1xyXG48YnI+MTI6NTE6
+NTAgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lFVjogOSwyXHJcbjxicj4xMjo1MTo1MCBpbmZvOiBB
+dXg6ICZsdDsgXHJcbitDVFpFOiArMDgsMSwmcXVvdDsxOS8wOS8wMywxNDo1MTo1MCZxdW90O1xy
+XG48YnI+MTI6NTE6NTAgZGVidWc6IC4uL2dpdC9kcml2ZXJzL3VibG94bW9kZW0vbmV0d29yay1y
+ZWdpc3RyYXRpb24uYzpjdHplX25vdGlmeSgpIHR6ICswOCBkc3QgMSB0aW1lIDE5LzA5LzAzLDE0
+OjUxOjUwPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpvZm9ub19uZXRy
+ZWdfdGltZV9ub3RpZnkoKSBuZXQgdGltZSAyMDE5LTA5LTAzIDE0OjUxOjUwIHV0Y29mZiA3MjAw
+IGRzdCAxPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0OyBcclxuK0NSRUc6IDUsJnF1b3Q7MEU2
+MyZxdW90OywmcXVvdDs4Q0QxN0QwMCZxdW90OywyXHJcbjxicj4xMjo1MTo1MCBkZWJ1ZzogLi4v
+Z2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX3N0YXR1c19ub3RpZnkoKSAvdWJsb3hfMCBz
+dGF0dXMgNSB0ZWNoIDIgbGFjIDM2ODMgY2kgMjE0NzQ4MzY0Nzxicj4xMjo1MTo1MCBkZWJ1Zzog
+Li4vZ2l0L3NyYy9ncHJzLmM6bmV0cmVnX3N0YXR1c19jaGFuZ2VkKCkgNSAocm9hbWluZyk8YnI+
+MTI6NTE6NTAgZGVidWc6IC4uL2dpdC9zcmMvZ3Bycy5jOmdwcnNfbmV0cmVnX3VwZGF0ZSgpIGF0
+dGFjaDogMSwgZHJpdmVyX2F0dGFjaGVkOiAxPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmd0OyBB
+VFxyPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0OyBcclxuK0NJRVY6IDcsMVxyXG48YnI+MTI6
+NTE6NTAgaW5mbzogQXV4OiAmbHQ7IFxyXG5PS1xyXG48YnI+MTI6NTE6NTAgaW5mbzogQXV4OiBG
+aW5hbGx5IHdva2UgdXAgdGhlIG1vZGVtPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmd0OyBBVCtD
+T1BTPTMsMlxyPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0OyBcclxuT0tcclxuPGJyPjEyOjUx
+OjUwIGluZm86IEF1eDogJmd0OyBBVCtDT1BTP1xyPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0
+OyBcclxuK0NPUFM6IDAsMiwmcXVvdDsyNDAwMiZxdW90OywyXHJcbjxicj4xMjo1MTo1MCBpbmZv
+OiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L2RyaXZlcnMv
+YXRtb2RlbS9uZXR3b3JrLXJlZ2lzdHJhdGlvbi5jOmNvcHNfbnVtZXJpY19jYigpIENvcHMgbnVt
+ZXJpYyBnb3QgbWNjOiAyNDAsIG1uYzogMDI8YnI+MTI6NTE6NTAgaW5mbzogQXV4OiAmZ3Q7IEFU
+K0NTUVxyPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0OyBcclxuK0NTUTogOCwxXHJcbjxicj4x
+Mjo1MTo1MCBpbmZvOiBBdXg6ICZsdDsgXHJcbk9LXHJcbjxicj4xMjo1MTo1MCBkZWJ1ZzogLi4v
+Z2l0L2RyaXZlcnMvYXRtb2RlbS9uZXR3b3JrLXJlZ2lzdHJhdGlvbi5jOmNzcV9jYigpIGNzcV9j
+YjogODxicj4xMjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L3NyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVn
+X3N0cmVuZ3RoX25vdGlmeSgpIHN0cmVuZ3RoIDI1PGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmd0
+OyBBVCtDT1BTPTMsMFxyPGJyPjEyOjUxOjUwIGluZm86IEF1eDogJmx0OyBcclxuT0tcclxuPGJy
+PjEyOjUxOjUwIGluZm86IEF1eDogJmd0OyBBVCtDT1BTP1xyPGJyPjEyOjUxOjUwIGluZm86IEF1
+eDogJmx0OyBcclxuK0NPUFM6IDAsMCwmcXVvdDszIFNFJnF1b3Q7LDJcclxuPGJyPjEyOjUxOjUw
+IGluZm86IEF1eDogJmx0OyBcclxuT0tcclxuPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvZHJp
+dmVycy9hdG1vZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmM6Y29wc19jYigpIGNvcHNfY2I6IDMg
+U0UsIDI0MCAwMiAyPGJyPjEyOjUxOjUwIGRlYnVnOiAuLi9naXQvc3JjL25ldHdvcmsuYzpjdXJy
+ZW50X29wZXJhdG9yX2NhbGxiYWNrKCkgMHg2ZjI0NDAsIChuaWwpPGJyPjEyOjUxOjUwIGRlYnVn
+OiAuLi9naXQvc3JjL2dwcnMuYzpuZXRyZWdfc3RhdHVzX2NoYW5nZWQoKSA1IChyb2FtaW5nKTxi
+cj4xMjo1MTo1MCBkZWJ1ZzogLi4vZ2l0L3NyYy9ncHJzLmM6Z3Byc19uZXRyZWdfdXBkYXRlKCkg
+YXR0YWNoOiAxLCBkcml2ZXJfYXR0YWNoZWQ6IDE8YnI+MTI6NTE6NTIgaW5mbzogQXV4OiAmbHQ7
+IFxyXG4rQ0dFVjogTUUgUEROIERFQUNUIDRcclxuPGJyPjEyOjUxOjUzIGluZm86IEF1eDogJmx0
+OyBcclxuK0NJRVY6IDIsMlxyXG48YnI+MTI6NTI6MDMgaW5mbzogQXV4OiAmbHQ7IFxyXG4rQ0lF
+VjogMiwxXHJcbjxicj4xMjo1MjowOCBpbmZvOiBBdXg6ICZsdDsgXHJcbitDSUVWOiAyLDJcclxu
+PGJyPjEyOjUyOjE0IGluZm86IEF1eDogJmx0OyBcclxuK0NJRVY6IDIsMVxyXG48YnI+PC9kaXY+
+PC9kaXY+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj48ZGl2IGRpcj0ibHRyIiBjbGFzcz0i
+Z21haWxfYXR0ciI+RGVuIHRpcyAzIHNlcC4gMjAxOSBrbCAxNjowNiBza3JldiAmbHQ7PGEgaHJl
+Zj0ibWFpbHRvOnJpY2hhcmQucm9qZm9yc0BnbWFpbC5jb20iIHRhcmdldD0iX2JsYW5rIiByZWw9
+Im5vcmVmZXJyZXIiPnJpY2hhcmQucm9qZm9yc0BnbWFpbC5jb208L2E+Jmd0Ozo8YnI+PC9kaXY+
+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4
+IDAuOGV4O2JvcmRlci1sZWZ0OjFweCBzb2xpZCByZ2IoMjA0LDIwNCwyMDQpO3BhZGRpbmctbGVm
+dDoxZXgiPkZyb206IFJpY2hhcmQgUsO2amZvcnMgJmx0OzxhIGhyZWY9Im1haWx0bzpyaWNoYXJk
+QHB1ZmZpbnBhY2suc2UiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPnJpY2hhcmRA
+cHVmZmlucGFjay5zZTwvYT4mZ3Q7PGJyPgo8YnI+CkluIGNhc2UgYSBjb250ZXh0IGdldCBkZWFj
+dGl2YXRlZCB3aGVuIGEgQVQrQ0dBQ1Q9MCBpczxicj4Kbm90IGlzc3VlZCwgaW5kaWNhdGUgdGhh
+dCB0byBncHJzIGNvcmUuPGJyPgpUaGlzIGNhbiBoYXBwZW4gaWYgdGhlIGRldmljZSBoYXMgYW4g
+YXV0byBhY3RpdmF0ZWQ8YnI+CkxURSBjb250ZXh0IGFuZCBtb2RlbSBzd2l0Y2hlcyBvdmVyIHRv
+IGZvciBpbnN0YW5jZSBVVFJBTi48YnI+Ci0tLTxicj4KwqBkcml2ZXJzL3VibG94bW9kZW0vZ3By
+cy1jb250ZXh0LmMgfCAxNSArKysrKysrKysrKysrKy08YnI+CsKgMSBmaWxlIGNoYW5nZWQsIDE0
+IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24oLSk8YnI+Cjxicj4KZGlmZiAtLWdpdCBhL2RyaXZl
+cnMvdWJsb3htb2RlbS9ncHJzLWNvbnRleHQuYyBiL2RyaXZlcnMvdWJsb3htb2RlbS9ncHJzLWNv
+bnRleHQuYzxicj4KaW5kZXggZmY3OGE0MmEuLjE4OGMyYzYyIDEwMDY0NDxicj4KLS0tIGEvZHJp
+dmVycy91YmxveG1vZGVtL2dwcnMtY29udGV4dC5jPGJyPgorKysgYi9kcml2ZXJzL3VibG94bW9k
+ZW0vZ3Bycy1jb250ZXh0LmM8YnI+CkBAIC00MCw2ICs0MCw4IEBAPGJyPgo8YnI+CsKgI2luY2x1
+ZGUgJnF1b3Q7dWJsb3htb2RlbS5oJnF1b3Q7PGJyPgo8YnI+CisjZGVmaW5lIFVCTE9YX0ZMQUdf
+REVBQ1RJVkFUSU5HIDB4MDE8YnI+Cis8YnI+CsKgc3RhdGljIGNvbnN0IGNoYXIgKm5vbmVfcHJl
+Zml4W10gPSB7IE5VTEwgfTs8YnI+CsKgc3RhdGljIGNvbnN0IGNoYXIgKmNnY29udHJkcF9wcmVm
+aXhbXSA9IHsgJnF1b3Q7K0NHQ09OVFJEUDomcXVvdDssIE5VTEwgfTs8YnI+CsKgc3RhdGljIGNv
+bnN0IGNoYXIgKnVpcGFkZHJfcHJlZml4W10gPSB7ICZxdW90OytVSVBBRERSOiZxdW90OywgTlVM
+TCB9Ozxicj4KQEAgLTU3LDYgKzU5LDcgQEAgc3RydWN0IGdwcnNfY29udGV4dF9kYXRhIHs8YnI+
+CsKgIMKgIMKgIMKgIG9mb25vX2dwcnNfY29udGV4dF9jYl90IGNiOzxicj4KwqAgwqAgwqAgwqAg
+dm9pZCAqY2JfZGF0YTs8YnI+CsKgIMKgIMKgIMKgIGVudW0gbmV0bW9kZSBuZXR3b3JraW5nX21v
+ZGU7PGJyPgorwqAgwqAgwqAgwqBpbnQgZmxhZ3M7PGJyPgrCoH07PGJyPgo8YnI+CsKgc3RhdGlj
+IHZvaWQgdWlwYWRkcl9jYihnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVy
+IHVzZXJfZGF0YSk8YnI+CkBAIC00MjYsNiArNDI5LDggQEAgc3RhdGljIHZvaWQgY2dhY3RfZGlz
+YWJsZV9jYihnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0
+YSk8YnI+Cjxicj4KwqAgwqAgwqAgwqAgREJHKCZxdW90O29rICVkJnF1b3Q7LCBvayk7PGJyPgo8
+YnI+CivCoCDCoCDCoCDCoGdjZC0mZ3Q7ZmxhZ3MgJmFtcDs9IH5VQkxPWF9GTEFHX0RFQUNUSVZB
+VElORzs8YnI+Cis8YnI+CsKgIMKgIMKgIMKgIGlmICghb2spIHs8YnI+CsKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIENBTExCQUNLX1dJVEhfRkFJTFVSRShnY2QtJmd0O2NiLCBnY2QtJmd0O2NiX2Rh
+dGEpOzxicj4KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgcmV0dXJuOzxicj4KQEAgLTQ0OCw2ICs0
+NTMsOCBAQCBzdGF0aWMgdm9pZCB1YmxveF9ncHJzX2RlYWN0aXZhdGVfcHJpbWFyeShzdHJ1Y3Qg
+b2Zvbm9fZ3Byc19jb250ZXh0ICpnYyw8YnI+CsKgIMKgIMKgIMKgIGdjZC0mZ3Q7Y2IgPSBjYjs8
+YnI+CsKgIMKgIMKgIMKgIGdjZC0mZ3Q7Y2JfZGF0YSA9IGRhdGE7PGJyPgo8YnI+CivCoCDCoCDC
+oCDCoGdjZC0mZ3Q7ZmxhZ3MgfD0gVUJMT1hfRkxBR19ERUFDVElWQVRJTkc7PGJyPgorPGJyPgrC
+oCDCoCDCoCDCoCBzbnByaW50ZihidWYsIHNpemVvZihidWYpLCAmcXVvdDtBVCtDR0FDVD0wLCV1
+JnF1b3Q7LCBnY2QtJmd0O2FjdGl2ZV9jb250ZXh0KTs8YnI+CsKgIMKgIMKgIMKgIGdfYXRfY2hh
+dF9zZW5kKGdjZC0mZ3Q7Y2hhdCwgYnVmLCBub25lX3ByZWZpeCw8YnI+CsKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNnYWN0X2Rpc2FibGVfY2IsIGdjLCBOVUxMKTs8YnI+CkBA
+IC00NzMsMTAgKzQ4MCwxNiBAQCBzdGF0aWMgdm9pZCBjZ2V2X25vdGlmeShHQXRSZXN1bHQgKnJl
+c3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKTxicj4KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgc3Nj
+YW5mKGV2ZW50LCAmcXVvdDslKnMgJSpzICUqcyAldSZxdW90OywgJmFtcDtjaWQpOzxicj4KwqAg
+wqAgwqAgwqAgZWxzZSBpZiAoZ19zdHJfaGFzX3ByZWZpeChldmVudCwgJnF1b3Q7TlcgREVBQ1Qm
+cXVvdDspKTxicj4KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgc3NjYW5mKGV2ZW50LCAmcXVvdDsl
+KnMgJSpzICV1JnF1b3Q7LCAmYW1wO2NpZCk7PGJyPgorwqAgwqAgwqAgwqBlbHNlIGlmICghKGdj
+ZC0mZ3Q7ZmxhZ3MgJmFtcDsgVUJMT1hfRkxBR19ERUFDVElWQVRJTkcpICZhbXA7JmFtcDs8YnI+
+CivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBnX3N0cl9oYXNfcHJlZml4KGV2ZW50LCAmcXVvdDtN
+RSBQRE4gREVBQ1QmcXVvdDspKTxicj4KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLyogVGhlIG1v
+ZGVtIG1pZ2h0IGNvbnNpZGVyIHRoZSBNRSBkZWFjdGl2YXRpbmcgd2l0aG91dDxicj4KK8KgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgICogYW4gZXhwbGljaXQgQ0dBQ1Q9MCBiZWVpbmcgc2VudDxicj4K
+K8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgICovPGJyPgorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBz
+c2NhbmYoZXZlbnQsICZxdW90OyUqcyAlKnMgJSpzICV1JnF1b3Q7LCAmYW1wO2NpZCk7PGJyPgrC
+oCDCoCDCoCDCoCBlbHNlPGJyPgrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm47PGJyPgo8
+YnI+Ci3CoCDCoCDCoCDCoERCRygmcXVvdDtjaWQgJWQmcXVvdDssIGNpZCk7PGJyPgorwqAgwqAg
+wqAgwqBEQkcoJnF1b3Q7Y2lkICVkLCBhY3RpdmUgY2lkOiAlZCZxdW90OywgY2lkLCBnY2QtJmd0
+O2FjdGl2ZV9jb250ZXh0KTs8YnI+Cjxicj4KwqAgwqAgwqAgwqAgaWYgKCh1bnNpZ25lZCBpbnQp
+IGNpZCAhPSBnY2QtJmd0O2FjdGl2ZV9jb250ZXh0KTxicj4KwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgcmV0dXJuOzxicj4KLS0gPGJyPgoyLjIwLjE8YnI+Cjxicj4KPC9ibG9ja3F1b3RlPjwvZGl2
+Pgo8L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
 
---===============2041432482474554235==--
+--===============7953385066795987721==--
 
