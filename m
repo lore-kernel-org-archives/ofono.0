@@ -1,207 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============1078192348563828344=="
+Content-Type: multipart/mixed; boundary="===============1521301409211194360=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCHv2] gatchat: implement timeout setting for commands
-Date: Thu, 05 Sep 2019 13:07:30 +0200
-Message-ID: <20190905110730.117268-1-martin@geanix.com>
-In-Reply-To: <20190902211011.61386-1-martin@geanix.com>
+Subject: Re: [RFC] gatchat: implement timeout setting for commands
+Date: Thu, 05 Sep 2019 13:41:11 +0200
+Message-ID: <2f677fc5-4d56-77e2-5722-4d2751867d04@geanix.com>
+In-Reply-To: <0035204a-e272-92cd-d59a-e252299dffef@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1078192348563828344==
+--===============1521301409211194360==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The adds a function to the set a chat-wide timeout for at commands. It
-allows plugins to handle cases where the modem fails to respond with
-either an OK or an error.
+Hi Denis,
 
-Without these timeouts, the plugin is never notified about a hanging
-command, and it has no way to detect it; effectively leaving the device
-in a broken state, where only a full restart of the ofono service
-unbreaks it.
+On 02/09/2019 23.25, Denis Kenzior wrote:
+> Hi Martin,
+> =
 
-If a timeout occurs, the passed callback so the plugin can reset the
-modem to a known state.
----
- gatchat/gatchat.c | 66 +++++++++++++++++++++++++++++++++++++++++++++++
- gatchat/gatchat.h | 10 +++++++
- 2 files changed, 76 insertions(+)
+> On 9/2/19 4:10 PM, Martin Hundeb=C3=B8ll wrote:
+>> The adds a function to the set a chat-wide timeout for at commands. It
+>> allows plugins to handle cases where the modem fails to respond with
+>> either an OK or an error.
+> =
 
-diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
-index 9e777107..8e36ca1a 100644
---- a/gatchat/gatchat.c
-+++ b/gatchat/gatchat.c
-@@ -97,6 +97,10 @@ struct at_chat {
- 	gdouble inactivity_time;		/* Period of inactivity */
- 	guint wakeup_timeout;			/* How long to wait for resp */
- 	GTimer *wakeup_timer;			/* Keep track of elapsed time */
-+	guint cmd_timeout_ms;			/* How long to wait for command resp */
-+	gint cmd_timeout_source;		/* Handle commands with no response */
-+	GAtTimeoutFunc cmd_timeout_func;	/* Function to call in case of timeout */
-+	gpointer cmd_timeout_data;		/* Data to pass to cmd_timeout_func */
- 	GAtSyntax *syntax;
- 	gboolean destroyed;			/* Re-entrancy guard */
- 	gboolean in_read_handler;		/* Re-entrancy guard */
-@@ -353,6 +357,11 @@ static void chat_cleanup(struct at_chat *chat)
- 		chat->timeout_source =3D 0;
- 	}
- =
+> Okay, this is sort of a known problem without a really good solution...
+> =
 
-+	if (chat->cmd_timeout_source) {
-+		g_source_remove(chat->cmd_timeout_source);
-+		chat->cmd_timeout_source =3D 0;
-+	}
-+
- 	g_at_syntax_unref(chat->syntax);
- 	chat->syntax =3D NULL;
- =
+>>
+>> Without these timeouts, the plugin is never notified about a hanging
+>> command, and it has no way to detect it; effectively leaving the device
+>> in a broken state, where only a full restart of the ofono service
+>> unbreaks it.
+> =
 
-@@ -436,6 +445,11 @@ static void at_chat_finish_command(struct at_chat *p, =
-gboolean ok, char *final)
- 	struct at_command *cmd =3D g_queue_pop_head(p->command_queue);
- 	GSList *response_lines;
- =
+> The trouble is, what if this happens on a command handled by a generic =
 
-+	if (p->cmd_timeout_source) {
-+		g_source_remove(p->cmd_timeout_source);
-+		p->cmd_timeout_source =3D 0;
-+	}
-+
- 	/* Cannot happen, but lets be paranoid */
- 	if (cmd =3D=3D NULL)
- 		return;
-@@ -823,6 +837,19 @@ static gboolean wakeup_no_response(gpointer user_data)
- 	return TRUE;
- }
- =
+> atmodem driver atom?=C2=A0 Are you going in and adding timeout handling t=
+o =
 
-+static gboolean command_no_response(gpointer user_data)
-+{
-+	struct at_chat *chat =3D user_data;
-+
-+	if (chat->debugf)
-+		chat->debugf("command got no response\n", chat->debug_data);
-+
-+	if (chat->cmd_timeout_func)
-+		chat->cmd_timeout_func(chat->cmd_timeout_data);
-+
-+	return TRUE;
-+}
-+
- static gboolean can_write_data(gpointer data)
+> all command callbacks?
+
+My initial thought was that calling the command callback with ok=3Dfalse =
+
+would be handled already. But that might be too optimistic?
+
+> If this timeout only happens in special cases, then those can be taken =
+
+> care of by setting up your own timeout...
+
+Our problem is that this was seen during SIM initialization when doing =
+
+so too early on the quectel modem (worked around in my latest quectel =
+
+sim patches.) So it needs to be chat-wide.
+
+>>
+>> If a timeout occurs, the passed callback is invoked with 'ok' set to
+>> false, and no final response in the result. This allows callbacks to
+>> identify the timeout with this snippet:
+>>
+>> =C2=A0=C2=A0 if (!ok) {
+>> =C2=A0=C2=A0=C2=A0=C2=A0 decode_at_error(&error, g_at_result_final_respo=
+nse(result));
+>> =C2=A0=C2=A0=C2=A0=C2=A0 if (error.type =3D=3D OFONO_ERROR_TYPE_FAILURE)=
  {
- 	struct at_chat *chat =3D data;
-@@ -923,6 +950,12 @@ static gboolean can_write_data(gpointer data)
- 	if (chat->wakeup_timer)
- 		g_timer_start(chat->wakeup_timer);
- =
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* handle timeout */
+>> =C2=A0=C2=A0=C2=A0=C2=A0 }
+>> =C2=A0=C2=A0 }
+> =
 
-+	/* Handle no response */
-+	if (chat->cmd_timeout_ms)
-+		chat->cmd_timeout_source =3D g_timeout_add(chat->cmd_timeout_ms,
-+							command_no_response,
-+							chat);
-+
- 	return FALSE;
- }
- =
+> About the only thing I can suggest is to create a separate timeout =
 
-@@ -1065,11 +1098,34 @@ static gboolean at_chat_retry(struct at_chat *chat,=
- guint id)
- 	/* reset number of written bytes to re-write command */
- 	chat->cmd_bytes_written =3D 0;
- =
+> callback for the GAtChat object that the modem driver can set.=C2=A0 That=
+ way =
 
-+	/* cancel potential timeout */
-+	if (chat->cmd_timeout_source) {
-+		g_source_remove(chat->cmd_timeout_source);
-+		chat->cmd_timeout_source =3D 0;
-+	}
-+
- 	chat_wakeup_writer(chat);
- =
+> if the timeout happens, the modem driver can just reset the entire =
 
- 	return TRUE;
- }
- =
+> setup.=C2=A0 E.g. maybe via ofono_modem_reset.
 
-+static gboolean at_chat_set_command_timeout(struct at_chat *chat,
-+						size_t seconds,
-+						GAtTimeoutFunc func,
-+						gpointer user_data)
-+{
-+	if (chat->cmd_timeout_source) {
-+		g_source_remove(chat->cmd_timeout_source);
-+		chat->cmd_timeout_source =3D 0;
-+	}
-+
-+	chat->cmd_timeout_ms =3D seconds * 1000;
-+	chat->cmd_timeout_func =3D func;
-+	chat->cmd_timeout_data =3D user_data;
-+
-+	return TRUE;
-+}
-+
- static struct at_notify *at_notify_create(struct at_chat *chat,
- 						const char *prefix,
- 						gboolean pdu)
-@@ -1574,6 +1630,16 @@ gboolean g_at_chat_retry(GAtChat *chat, guint id)
- 	return at_chat_retry(chat->parent, id);
- }
- =
+That could work too.
 
-+gboolean g_at_chat_set_command_timeout(GAtChat *chat, size_t seconds,
-+					GAtTimeoutFunc func, gpointer user_data)
-+{
-+	if (chat =3D=3D NULL)
-+		return FALSE;
-+
-+	return at_chat_set_command_timeout(chat->parent, seconds, func,
-+						user_data);
-+}
-+
- gboolean g_at_chat_cancel(GAtChat *chat, guint id)
- {
- 	/* We use id 0 for wakeup commands */
-diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
-index 32870318..eb42aac5 100644
---- a/gatchat/gatchat.h
-+++ b/gatchat/gatchat.h
-@@ -38,6 +38,7 @@ typedef struct _GAtChat GAtChat;
- typedef void (*GAtResultFunc)(gboolean success, GAtResult *result,
- 				gpointer user_data);
- typedef void (*GAtNotifyFunc)(GAtResult *result, gpointer user_data);
-+typedef void (*GAtTimeoutFunc)(gpointer user_data);
- =
+I have one concern with my current patches though:
+The timeout needs to accommodate long-lasting commands like AT+COPS, =
 
- enum _GAtChatTerminator {
- 	G_AT_CHAT_TERMINATOR_OK,
-@@ -154,6 +155,15 @@ guint g_at_chat_send_and_expect_short_prompt(GAtChat *=
-chat, const char *cmd,
-  */
- gboolean g_at_chat_retry(GAtChat *chat, guint id);
- =
+which is can take up to 80 seconds or so. But that is much longer than =
 
-+/*!
-+ * Set the timeout for commands. If the timeout is configured and no respo=
-nse
-+ * is received from a written command within the timeout, the callback is
-+ * called to the plugin handle it.
-+ */
-+gboolean g_at_chat_set_command_timeout(GAtChat *chat, size_t seconds,
-+					GAtTimeoutFunc func,
-+					gpointer user_data);
-+
- gboolean g_at_chat_cancel(GAtChat *chat, guint id);
- gboolean g_at_chat_cancel_all(GAtChat *chat);
- =
+the timeout for powering up the modem.
 
--- =
+So if:
+   1: user enables modem
+   2: gatchat gets stuck with no command
+   3: set_powered_timeout() triggers
+   4: gatchat timeout fires
 
-2.23.0
+What happens is the user tries to enable the modem again after step 3? =
 
+Should the plugin enable function clean up after potential timeouts to =
 
---===============1078192348563828344==--
+avoid step 4?
+
+// Martin
+
+--===============1521301409211194360==--
 
