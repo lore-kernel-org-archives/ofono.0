@@ -1,199 +1,509 @@
-Content-Type: multipart/mixed; boundary="===============5708040901967257867=="
+Content-Type: multipart/mixed; boundary="===============7827645954374533189=="
 MIME-Version: 1.0
-From: Christo Labuschagne <cl@Nanoteq.com>
-Subject: Infinitely calling at_gprs_activate_primary after suspend and resume 
-Date: Thu, 05 Sep 2019 10:35:12 +0000
-Message-ID: <AFA70583AB912E4AA797D4F844234B3201F211@NTQ-EXC.nanoteq.co.za>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: [PATCHv3] quectel: handle sim states
+Date: Thu, 05 Sep 2019 12:33:20 +0200
+Message-ID: <20190905103320.114207-1-martin@geanix.com>
+In-Reply-To: <20190902211610.61809-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5708040901967257867==
+--===============7827645954374533189==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Good day all
+The quectel M95 and MC60 modems are picky about when the sim is properly
+initialized, so the logic to detect this needs to be in the quectel
+plugin.
 
-We are running ofono 1.29 with a Telit HE910 modem connected via HSIC (USB)=
-.  When I suspend the kernel and wake again the following events happen:
-gatio.c - read_watcher_destroy_notify
-gatchat.c - io_disconnect
-                   - chat_cleanup
-                   - in chat_cleanup chat->command_queue is freed and set t=
-o NULL
-Then (I haven't traced the root of this one)
-drivers/atmodem/gprs-context.c - at_gprs_activate_primary()
-gatchat.c - g_at_chat_send()
-                In here it fails because command_queue is null
+After doing basic initialization, a CPIN query is issued to detect sim
+state.
 
-It then continues forever to try and call at_gprs_activate_primary().
+If the sim is unlocked and ready, a timer is created to wait for the
+modem state (AT+QINISTAT) to complete. At this point ofono is notified
+about the initialized sim.
 
-I did not trace everything into glib, but I'm assuming that when going to s=
-leep and then waking removes and then re-adds the ttyACM's for the modem, w=
-hich causes the destroy notify.
+If the sim is locked, a listener for "+CPIN: READY" is set up to
+know when a pin is entered. Once the indication is received, the timer
+is set up as if the sim was unlocked from the beginning.
 
-There are two possible ways to fix the problem.  Fix it in ofono to recreat=
-e the command_queue before actually calling at_gprs_activate_primary (which=
- in the long term should probably be the best fix) or try and prevent - on =
-a driver level - to not remove the ttyACM's between sleep and resume.  The =
-latter would then not kick of the destroy notify.
+If the sim is busy/resetting, the CPIN query is issued again.
+---
+ plugins/quectel.c | 336 ++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 237 insertions(+), 99 deletions(-)
 
-Our product would be receiving data calls, so I would like to wake from sle=
-ep and then read the packets on the connection and answer the call.  What i=
-s the best solution in the group's opinion?
+diff --git a/plugins/quectel.c b/plugins/quectel.c
+index dea23bdd..d4947489 100644
+--- a/plugins/quectel.c
++++ b/plugins/quectel.c
+@@ -84,15 +84,22 @@ enum quectel_model {
+ 	QUECTEL_MC60,
+ };
+ =
 
-Kind regards
-Christo
++enum quectel_state {
++	QUECTEL_STATE_INITIALIZING =3D 0,
++	QUECTEL_STATE_POST_SIM,
++	QUECTEL_STATE_READY,
++	QUECTEL_STATE_INITIALIZED,
++};
++
+ struct quectel_data {
+ 	GAtChat *modem;
+ 	GAtChat *aux;
+-	guint cpin_ready;
+-	guint call_ready;
+-	bool have_sim;
+ 	enum ofono_vendor vendor;
+ 	enum quectel_model model;
+-	struct l_timeout *sms_ready_timer;
++	enum quectel_state state;
++	struct ofono_sim *sim;
++	enum ofono_sim_state sim_state;
++	unsigned int sim_watch;
+ =
+
+ 	/* used by quectel uart driver */
+ 	GAtChat *uart;
+@@ -185,9 +192,6 @@ static void quectel_remove(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (data->cpin_ready !=3D 0)
+-		g_at_chat_unregister(data->aux, data->cpin_ready);
+-
+ 	ofono_modem_set_data(modem, NULL);
+ 	l_timeout_remove(data->init_timeout);
+ 	l_gpio_writer_free(data->gpio);
+@@ -527,42 +531,211 @@ static void dbus_hw_enable(struct ofono_modem *modem)
+ 	ofono_modem_add_interface(modem, dbus_hw_interface);
+ }
+ =
+
+-static void cpin_notify(GAtResult *result, gpointer user_data)
++static void qinistat_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct quectel_data *data =3D ofono_modem_get_data(modem);
+-	const char *sim_inserted;
+ 	GAtResultIter iter;
++	int ready =3D 0;
++	int status;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+ 	g_at_result_iter_init(&iter, result);
+ =
+
+-	if (!g_at_result_iter_next(&iter, "+CPIN:"))
++	if (!g_at_result_iter_next(&iter, "+QINISTAT:"))
+ 		return;
+ =
+
+-	g_at_result_iter_next_unquoted_string(&iter, &sim_inserted);
++	if (!g_at_result_iter_next_number(&iter, &status))
++		return;
+ =
+
+-	if (g_strcmp0(sim_inserted, "NOT INSERTED") !=3D 0)
+-		data->have_sim =3D true;
++	DBG("qinistat: %d", status);
+ =
+
+-	ofono_modem_set_powered(modem, TRUE);
++	switch (data->model) {
++	case QUECTEL_UC15:
++		/* UC15 uses a bitmap of 1 + 2 + 4 =3D 7 */
++		ready =3D 7;
++		break;
++	case QUECTEL_M95:
++	case QUECTEL_MC60:
++		/* M95 and MC60 uses a counter to 3 */
++		ready =3D 3;
++		break;
++	case QUECTEL_UNKNOWN:
++		ready =3D 0;
++		break;
++	}
+ =
+
+-	/* Turn off the radio. */
+-	g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix, NULL, NULL, NULL);
++	if (status !=3D ready) {
++		l_timeout_modify_ms(data->init_timeout, 500);
++		return;
++	}
+ =
+
+-	g_at_chat_unregister(data->aux, data->cpin_ready);
+-	data->cpin_ready =3D 0;
++	l_timeout_remove(data->init_timeout);
++	data->init_timeout =3D NULL;
+ =
+
+-	dbus_hw_enable(modem);
++	if (data->sim_state =3D=3D OFONO_SIM_STATE_READY) {
++		/*
++		 * when initializing with a non-locked sim card, the sim atom
++		 * isn't created until now to avoid accessing it before the
++		 * modem is ready.
++		 *
++		 * call ofono_modem_set_powered() to make ofono call
++		 * quectel_pre_sim() where the sim atom is created.
++		 */
++		ofono_modem_set_powered(modem, true);
++	} else {
++		/*
++		 * When initialized with a locked sim card, the modem is already
++		 * powered up, and the inserted signal has been sent to allow
++		 * the pin to be entered. So simply update the state, and notify
++		 * about the finished initialization below.
++		 */
++		data->sim_state =3D OFONO_SIM_STATE_READY;
++	}
++
++	ofono_sim_initialized_notify(data->sim);
++
++	/*
++	 * If quectel_post_sim() has not yet been called, then postpone atom
++	 * creation until it is called. Otherwise create the atoms now.
++	 */
++	if (data->state !=3D QUECTEL_STATE_POST_SIM) {
++		data->state =3D QUECTEL_STATE_READY;
++		return;
++	}
++
++	ofono_sms_create(modem, data->vendor, "atmodem", data->aux);
++	ofono_phonebook_create(modem, data->vendor, "atmodem", data->aux);
++	ofono_voicecall_create(modem, data->vendor, "atmodem", data->aux);
++	ofono_call_volume_create(modem, data->vendor, "atmodem", data->aux);
++	data->state =3D QUECTEL_STATE_INITIALIZED;
++}
++
++static void init_timer_cb(struct l_timeout *timeout, void *user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct quectel_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_send(data->aux, "AT+QINISTAT", qinistat_prefix, qinistat_cb,
++			modem, NULL);
++}
++
++static void sim_watch_cb(GAtResult *result, void *user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct quectel_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_unregister(data->aux, data->sim_watch);
++	data->sim_watch =3D 0;
++
++	data->init_timeout =3D l_timeout_create_ms(500, init_timer_cb, modem, NUL=
+L);
++	if (!data->init_timeout) {
++		close_serial(modem);
++		return;
++	}
++}
++
++static enum ofono_sim_state cme_parse(GAtResult *result)
++{
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (error.type !=3D OFONO_ERROR_TYPE_CME)
++		return OFONO_SIM_STATE_RESETTING;
++
++	switch (error.error) {
++	case 5:
++	case 6:
++	case 7:
++	case 11:
++	case 12:
++	case 17:
++	case 18:
++		return OFONO_SIM_STATE_LOCKED_OUT;
++	case 10:
++		return OFONO_SIM_STATE_NOT_PRESENT;
++	case 13:
++	case 14:
++	case 15:
++		return OFONO_SIM_STATE_RESETTING;
++	default:
++		ofono_error("unknown cpin error: %i", error.error);
++		return OFONO_SIM_STATE_RESETTING;
++	}
++}
++
++static enum ofono_sim_state cpin_parse(GAtResult *result)
++{
++	GAtResultIter iter;
++	const char *cpin;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CPIN:"))
++		return OFONO_SIM_STATE_RESETTING;
++
++	g_at_result_iter_next_unquoted_string(&iter, &cpin);
++
++	if (g_strcmp0(cpin, "NOT INSERTED") =3D=3D 0)
++		return OFONO_SIM_STATE_NOT_PRESENT;
++
++	if (g_strcmp0(cpin, "READY") =3D=3D 0)
++		return OFONO_SIM_STATE_READY;
++
++	return OFONO_SIM_STATE_LOCKED_OUT;
+ }
+ =
+
+ static void cpin_query(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+-	DBG("%p ok %d", user_data, ok);
++	struct ofono_modem *modem =3D user_data;
++	struct quectel_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p ok %i", modem, ok);
+ =
+
+ 	if (ok)
+-		cpin_notify(result, user_data);
++		data->sim_state =3D cpin_parse(result);
++	else
++		data->sim_state =3D cme_parse(result);
++
++	/* Turn off the radio. */
++	g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix, NULL, NULL, NULL);
++
++	switch (data->sim_state) {
++	case OFONO_SIM_STATE_LOCKED_OUT:
++		ofono_modem_set_powered(modem, true);
++		data->sim_watch =3D g_at_chat_register(data->aux, "+CPIN: READY",
++							sim_watch_cb, FALSE,
++							modem, NULL);
++		if (!data->sim_watch) {
++			ofono_error("failed to create sim watch");
++			close_serial(modem);
++			return;
++		}
++		break;
++	case OFONO_SIM_STATE_READY:
++		data->init_timeout =3D l_timeout_create_ms(500, init_timer_cb,
++							modem, NULL);
++		if (!data->init_timeout) {
++			ofono_error("failed to create qinitstat timer");
++			close_serial(modem);
++			return;
++		}
++		break;
++	case OFONO_SIM_STATE_RESETTING:
++	case OFONO_SIM_STATE_INSERTED:
++		g_at_chat_send(data->aux, "AT+CPIN?", cpin_prefix, cpin_query,
++				modem, NULL);
++		break;
++	case OFONO_SIM_STATE_NOT_PRESENT:
++		ofono_warn("%s: sim not present", ofono_modem_get_path(modem));
++		ofono_modem_set_powered(modem, true);
++	}
+ }
+ =
+
+ static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -577,8 +750,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 		return;
+ 	}
+ =
+
+-	data->cpin_ready =3D g_at_chat_register(data->aux, "+CPIN", cpin_notify,
+-						FALSE, modem, NULL);
++	dbus_hw_enable(modem);
++
+ 	g_at_chat_send(data->aux, "AT+CPIN?", cpin_prefix, cpin_query, modem,
+ 			NULL);
+ }
+@@ -659,67 +832,6 @@ static void cgmm_cb(int ok, GAtResult *result, void *u=
+ser_data)
+ 			NULL);
+ }
+ =
+
+-static void qinistat_cb(gboolean ok, GAtResult *result, gpointer user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct quectel_data *data =3D ofono_modem_get_data(modem);
+-	GAtResultIter iter;
+-	int status;
+-
+-	DBG("%p", modem);
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "+QINISTAT:"))
+-		return;
+-
+-	if (!g_at_result_iter_next_number(&iter, &status))
+-		return;
+-
+-	DBG("qinistat: %d", status);
+-
+-	if (status !=3D 3) {
+-		l_timeout_modify_ms(data->sms_ready_timer, 500);
+-		return;
+-	}
+-
+-	ofono_sms_create(modem, data->vendor, "atmodem", data->aux);
+-	l_timeout_remove(data->sms_ready_timer);
+-	data->sms_ready_timer =3D NULL;
+-}
+-
+-static void sms_ready_cb(struct l_timeout *timeout, void *user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct quectel_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	g_at_chat_send(data->aux, "AT+QINISTAT", qinistat_prefix, qinistat_cb,
+-			modem, NULL);
+-}
+-
+-static void call_ready_notify(GAtResult *result, void *user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct quectel_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	g_at_chat_unregister(data->aux, data->call_ready);
+-	data->call_ready =3D 0;
+-	data->sms_ready_timer =3D l_timeout_create_ms(500, sms_ready_cb, modem,
+-							NULL);
+-	if (!data->sms_ready_timer) {
+-		close_serial(modem);
+-		return;
+-	}
+-
+-	ofono_phonebook_create(modem, 0, "atmodem", data->aux);
+-	ofono_voicecall_create(modem, 0, "atmodem", data->aux);
+-	ofono_call_volume_create(modem, 0, "atmodem", data->aux);
+-}
+-
+ static int open_ttys(struct ofono_modem *modem)
+ {
+ 	struct quectel_data *data =3D ofono_modem_get_data(modem);
+@@ -739,20 +851,10 @@ static int open_ttys(struct ofono_modem *modem)
+ 		return -EIO;
+ 	}
+ =
+
+-	data->call_ready =3D g_at_chat_register(data->aux, "Call Ready",
+-						call_ready_notify, false,
+-						modem, NULL);
+-	if (!data->call_ready) {
+-		close_serial(modem);
+-		return -ENOTTY;
+-	}
+-
+ 	g_at_chat_set_slave(data->modem, data->aux);
+ =
+
+-	g_at_chat_send(data->modem, "ATE0; &C0; +CMEE=3D1", none_prefix, NULL,
+-			NULL, NULL);
+-	g_at_chat_send(data->aux, "ATE0; &C0; +CMEE=3D1", none_prefix, NULL, NULL,
+-			NULL);
++	g_at_chat_send(data->aux, "ATE0; &C0; +CMEE=3D1; +QIURC=3D0", none_prefix,
++			NULL, NULL, NULL);
+ 	g_at_chat_send(data->aux, "AT+CGMM", cgmm_prefix, cgmm_cb, modem,
+ 			NULL);
+ =
+
+@@ -1007,6 +1109,8 @@ static int quectel_disable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->aux, "AT+CFUN=3D0", cfun_prefix, cfun_disable, modem,
+ 			NULL);
+ =
+
++	data->state =3D QUECTEL_STATE_INITIALIZING;
++
+ 	return -EINPROGRESS;
+ }
+ =
+
+@@ -1048,10 +1152,18 @@ static void quectel_pre_sim(struct ofono_modem *mod=
+em)
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->aux);
+-	sim =3D ofono_sim_create(modem, data->vendor, "atmodem", data->aux);
++	data->sim =3D ofono_sim_create(modem, data->vendor, "atmodem", data->aux);
++	if (!data->sim)
++		return;
+ =
+
+-	if (sim && data->have_sim =3D=3D true)
+-		ofono_sim_inserted_notify(sim, TRUE);
++	switch (data->sim_state) {
++	case OFONO_SIM_STATE_LOCKED_OUT:
++	case OFONO_SIM_STATE_READY:
++		ofono_sim_inserted_notify(data->sim, true);
++		break;
++	default:
++		break;
++	}
+ }
+ =
+
+ static void quectel_post_sim(struct ofono_modem *modem)
+@@ -1068,6 +1180,32 @@ static void quectel_post_sim(struct ofono_modem *mod=
+em)
+ =
+
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
++
++	/*
++	 * the sim related atoms must not be created until the modem is really
++	 * ready, so check the state here
++	 */
++	switch (data->state) {
++	case QUECTEL_STATE_INITIALIZING:
++		/*
++		 * the modem is still initializing, so postpone the atom
++		 * creation until qinistat_cb() determines the modem is
++		 * ready
++		 */
++		data->state =3D QUECTEL_STATE_POST_SIM;
++		return;
++	case QUECTEL_STATE_READY:
++		/* the modem is ready, so create atoms below */
++		break;
++	default:
++		return;
++	}
++
++	ofono_sms_create(modem, data->vendor, "atmodem", data->aux);
++	ofono_phonebook_create(modem, data->vendor, "atmodem", data->aux);
++	ofono_voicecall_create(modem, data->vendor, "atmodem", data->aux);
++	ofono_call_volume_create(modem, data->vendor, "atmodem", data->aux);
++	data->state =3D QUECTEL_STATE_INITIALIZED;
+ }
+ =
+
+ static void quectel_post_online(struct ofono_modem *modem)
+-- =
+
+2.23.0
 
 
-Important Notice:
-
-This e-mail and its contents are subject to the Nanoteq (Pty) Ltd e-mail le=
-gal notice available at:
-http://www.nanoteq.com/AboutUs/EmailDisclaimer.aspx
-
---===============5708040901967257867==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
-bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
-ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
-PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpXaW5n
-ZGluZ3M7CglwYW5vc2UtMTo1IDAgMCAwIDAgMCAwIDAgMCAwO30KQGZvbnQtZmFjZQoJe2ZvbnQt
-ZmFtaWx5OldpbmdkaW5nczsKCXBhbm9zZS0xOjUgMCAwIDAgMCAwIDAgMCAwIDA7fQpAZm9udC1m
-YWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0
-O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlRhaG9tYTsKCXBhbm9zZS0xOjIgMTEgNiA0IDMg
-NSA0IDQgMiA0O30KLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KcC5Nc29Ob3JtYWwsIGxpLk1zb05v
-cm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowaW47CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7
-Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9
-CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xv
-cjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29I
-eXBlcmxpbmtGb2xsb3dlZAoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsK
-CXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLk1zb0FjZXRhdGUsIGxpLk1zb0FjZXRhdGUs
-IGRpdi5Nc29BY2V0YXRlCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJbXNvLXN0eWxlLWxpbms6
-IkJhbGxvb24gVGV4dCBDaGFyIjsKCW1hcmdpbjowaW47CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7
-Cglmb250LXNpemU6OC4wcHQ7Cglmb250LWZhbWlseToiVGFob21hIiwic2Fucy1zZXJpZiI7fQpw
-Lk1zb0xpc3RQYXJhZ3JhcGgsIGxpLk1zb0xpc3RQYXJhZ3JhcGgsIGRpdi5Nc29MaXN0UGFyYWdy
-YXBoCgl7bXNvLXN0eWxlLXByaW9yaXR5OjM0OwoJbWFyZ2luLXRvcDowaW47CgltYXJnaW4tcmln
-aHQ6MGluOwoJbWFyZ2luLWJvdHRvbTowaW47CgltYXJnaW4tbGVmdDouNWluOwoJbWFyZ2luLWJv
-dHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwi
-c2Fucy1zZXJpZiI7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFs
-LWNvbXBvc2U7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2lu
-ZG93dGV4dDt9CnNwYW4uQmFsbG9vblRleHRDaGFyCgl7bXNvLXN0eWxlLW5hbWU6IkJhbGxvb24g
-VGV4dCBDaGFyIjsKCW1zby1zdHlsZS1wcmlvcml0eTo5OTsKCW1zby1zdHlsZS1saW5rOiJCYWxs
-b29uIFRleHQiOwoJZm9udC1mYW1pbHk6IlRhaG9tYSIsInNhbnMtc2VyaWYiO30KLk1zb0NocERl
-ZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJp
-Iiwic2Fucy1zZXJpZiI7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjguNWluIDExLjBpbjsK
-CW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdl
-OldvcmRTZWN0aW9uMTt9Ci8qIExpc3QgRGVmaW5pdGlvbnMgKi8KQGxpc3QgbDAKCXttc28tbGlz
-dC1pZDoxMTcwMDE5NzQxOwoJbXNvLWxpc3QtdHlwZTpoeWJyaWQ7Cgltc28tbGlzdC10ZW1wbGF0
-ZS1pZHM6NDM1NTY4MjEwIDE4MzcwMzYxNzYgNjc2OTg2OTEgNjc2OTg2OTMgNjc2OTg2ODkgNjc2
-OTg2OTEgNjc2OTg2OTMgNjc2OTg2ODkgNjc2OTg2OTEgNjc2OTg2OTM7fQpAbGlzdCBsMDpsZXZl
-bDEKCXttc28tbGV2ZWwtc3RhcnQtYXQ6MDsKCW1zby1sZXZlbC1udW1iZXItZm9ybWF0OmJ1bGxl
-dDsKCW1zby1sZXZlbC10ZXh0Oi07Cgltc28tbGV2ZWwtdGFiLXN0b3A6bm9uZTsKCW1zby1sZXZl
-bC1udW1iZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0OjYwLjc1cHQ7Cgl0ZXh0LWluZGVu
-dDotLjI1aW47Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJbXNvLWZhcmVh
-c3QtZm9udC1mYW1pbHk6Q2FsaWJyaTt9CkBsaXN0IGwwOmxldmVsMgoJe21zby1sZXZlbC1udW1i
-ZXItZm9ybWF0OmJ1bGxldDsKCW1zby1sZXZlbC10ZXh0Om87Cgltc28tbGV2ZWwtdGFiLXN0b3A6
-bm9uZTsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0Ojk2Ljc1
-cHQ7Cgl0ZXh0LWluZGVudDotLjI1aW47Cglmb250LWZhbWlseToiQ291cmllciBOZXciO30KQGxp
-c3QgbDA6bGV2ZWwzCgl7bXNvLWxldmVsLW51bWJlci1mb3JtYXQ6YnVsbGV0OwoJbXNvLWxldmVs
-LXRleHQ6XEYwQTc7Cgltc28tbGV2ZWwtdGFiLXN0b3A6bm9uZTsKCW1zby1sZXZlbC1udW1iZXIt
-cG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0OjEzMi43NXB0OwoJdGV4dC1pbmRlbnQ6LS4yNWlu
-OwoJZm9udC1mYW1pbHk6V2luZ2RpbmdzO30KQGxpc3QgbDA6bGV2ZWw0Cgl7bXNvLWxldmVsLW51
-bWJlci1mb3JtYXQ6YnVsbGV0OwoJbXNvLWxldmVsLXRleHQ6XEYwQjc7Cgltc28tbGV2ZWwtdGFi
-LXN0b3A6bm9uZTsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0
-OjE2OC43NXB0OwoJdGV4dC1pbmRlbnQ6LS4yNWluOwoJZm9udC1mYW1pbHk6U3ltYm9sO30KQGxp
-c3QgbDA6bGV2ZWw1Cgl7bXNvLWxldmVsLW51bWJlci1mb3JtYXQ6YnVsbGV0OwoJbXNvLWxldmVs
-LXRleHQ6bzsKCW1zby1sZXZlbC10YWItc3RvcDpub25lOwoJbXNvLWxldmVsLW51bWJlci1wb3Np
-dGlvbjpsZWZ0OwoJbWFyZ2luLWxlZnQ6MjA0Ljc1cHQ7Cgl0ZXh0LWluZGVudDotLjI1aW47Cglm
-b250LWZhbWlseToiQ291cmllciBOZXciO30KQGxpc3QgbDA6bGV2ZWw2Cgl7bXNvLWxldmVsLW51
-bWJlci1mb3JtYXQ6YnVsbGV0OwoJbXNvLWxldmVsLXRleHQ6XEYwQTc7Cgltc28tbGV2ZWwtdGFi
-LXN0b3A6bm9uZTsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0
-OjI0MC43NXB0OwoJdGV4dC1pbmRlbnQ6LS4yNWluOwoJZm9udC1mYW1pbHk6V2luZ2RpbmdzO30K
-QGxpc3QgbDA6bGV2ZWw3Cgl7bXNvLWxldmVsLW51bWJlci1mb3JtYXQ6YnVsbGV0OwoJbXNvLWxl
-dmVsLXRleHQ6XEYwQjc7Cgltc28tbGV2ZWwtdGFiLXN0b3A6bm9uZTsKCW1zby1sZXZlbC1udW1i
-ZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0OjI3Ni43NXB0OwoJdGV4dC1pbmRlbnQ6LS4y
-NWluOwoJZm9udC1mYW1pbHk6U3ltYm9sO30KQGxpc3QgbDA6bGV2ZWw4Cgl7bXNvLWxldmVsLW51
-bWJlci1mb3JtYXQ6YnVsbGV0OwoJbXNvLWxldmVsLXRleHQ6bzsKCW1zby1sZXZlbC10YWItc3Rv
-cDpub25lOwoJbXNvLWxldmVsLW51bWJlci1wb3NpdGlvbjpsZWZ0OwoJbWFyZ2luLWxlZnQ6MzEy
-Ljc1cHQ7Cgl0ZXh0LWluZGVudDotLjI1aW47Cglmb250LWZhbWlseToiQ291cmllciBOZXciO30K
-QGxpc3QgbDA6bGV2ZWw5Cgl7bXNvLWxldmVsLW51bWJlci1mb3JtYXQ6YnVsbGV0OwoJbXNvLWxl
-dmVsLXRleHQ6XEYwQTc7Cgltc28tbGV2ZWwtdGFiLXN0b3A6bm9uZTsKCW1zby1sZXZlbC1udW1i
-ZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0OjM0OC43NXB0OwoJdGV4dC1pbmRlbnQ6LS4y
-NWluOwoJZm9udC1mYW1pbHk6V2luZ2RpbmdzO30Kb2wKCXttYXJnaW4tYm90dG9tOjBpbjt9CnVs
-Cgl7bWFyZ2luLWJvdHRvbTowaW47fQotLT48L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1s
-Pgo8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3htbD48
-IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVsYXlvdXQgdjpleHQ9
-ImVkaXQiPgo8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBlbGF5b3V0
-PjwveG1sPjwhW2VuZGlmXS0tPgo8L2hlYWQ+Cjxib2R5IGxhbmc9IkVOLVVTIiBsaW5rPSJibHVl
-IiB2bGluaz0icHVycGxlIj4KPGRpdiBjbGFzcz0iV29yZFNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tWkEiPkdvb2QgZGF5IGFsbDxvOnA+PC9vOnA+PC9zcGFu
-PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tWkEiPjxvOnA+Jm5ic3A7
-PC9vOnA+PC9zcGFuPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tWkEi
-PldlIGFyZSBydW5uaW5nIG9mb25vIDEuMjkgd2l0aCBhIFRlbGl0IEhFOTEwIG1vZGVtIGNvbm5l
-Y3RlZCB2aWEgSFNJQyAoVVNCKS4mbmJzcDsgV2hlbiBJIHN1c3BlbmQgdGhlIGtlcm5lbCBhbmQg
-d2FrZSBhZ2FpbiB0aGUgZm9sbG93aW5nIGV2ZW50cyBoYXBwZW46PG86cD48L286cD48L3NwYW4+
-PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1aQSI+Z2F0aW8uYyAmIzgy
-MTE7IHJlYWRfd2F0Y2hlcl9kZXN0cm95X25vdGlmeTxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tWkEiPmdhdGNoYXQuYyAmIzgyMTE7IGlv
-X2Rpc2Nvbm5lY3Q8bzpwPjwvbzpwPjwvc3Bhbj48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
-cGFuIGxhbmc9IkVOLVpBIj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgJm5ic3A7
-Jm5ic3A7IC0gY2hhdF9jbGVhbnVwPG86cD48L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNv
-Tm9ybWFsIj48c3BhbiBsYW5nPSJFTi1aQSI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7ICZuYnNwOyAmbmJzcDstIGluIGNoYXRfY2xlYW51cCBjaGF0LSZndDtjb21tYW5kX3F1ZXVl
-IGlzIGZyZWVkIGFuZCBzZXQgdG8gTlVMTDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KPHAgY2xhc3M9
-Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tWkEiPlRoZW4gKEkgaGF2ZW4mIzgyMTc7dCB0cmFj
-ZWQgdGhlIHJvb3Qgb2YgdGhpcyBvbmUpPG86cD48L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0i
-TXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1aQSI+ZHJpdmVycy9hdG1vZGVtL2dwcnMtY29udGV4
-dC5jICYjODIxMTsgYXRfZ3Byc19hY3RpdmF0ZV9wcmltYXJ5KCk8bzpwPjwvbzpwPjwvc3Bhbj48
-L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVpBIj5nYXRjaGF0LmMgJiM4
-MjExOyBnX2F0X2NoYXRfc2VuZCgpPG86cD48L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNv
-Tm9ybWFsIj48c3BhbiBsYW5nPSJFTi1aQSI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7IEluIGhlcmUgaXQgZmFpbHMgYmVjYXVzZSBjb21tYW5kX3F1ZXVlIGlzIG51bGw8bzpwPjwv
-bzpwPjwvc3Bhbj48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVpBIj48
-bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxh
-bmc9IkVOLVpBIj5JdCB0aGVuIGNvbnRpbnVlcyBmb3JldmVyIHRvIHRyeSBhbmQgY2FsbCBhdF9n
-cHJzX2FjdGl2YXRlX3ByaW1hcnkoKS48bzpwPjwvbzpwPjwvc3Bhbj48L3A+CjxwIGNsYXNzPSJN
-c29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVpBIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+
-CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVpBIj5JIGRpZCBub3QgdHJhY2Ug
-ZXZlcnl0aGluZyBpbnRvIGdsaWIsIGJ1dCBJJiM4MjE3O20gYXNzdW1pbmcgdGhhdCB3aGVuIGdv
-aW5nIHRvIHNsZWVwIGFuZCB0aGVuIHdha2luZyByZW1vdmVzIGFuZCB0aGVuIHJlLWFkZHMgdGhl
-IHR0eUFDTSYjODIxNztzIGZvciB0aGUgbW9kZW0sIHdoaWNoIGNhdXNlcyB0aGUgZGVzdHJveSBu
-b3RpZnkuPG86cD48L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBs
-YW5nPSJFTi1aQSI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9y
-bWFsIj48c3BhbiBsYW5nPSJFTi1aQSI+VGhlcmUgYXJlIHR3byBwb3NzaWJsZSB3YXlzIHRvIGZp
-eCB0aGUgcHJvYmxlbS4mbmJzcDsgRml4IGl0IGluIG9mb25vIHRvIHJlY3JlYXRlIHRoZSBjb21t
-YW5kX3F1ZXVlIGJlZm9yZSBhY3R1YWxseSBjYWxsaW5nIGF0X2dwcnNfYWN0aXZhdGVfcHJpbWFy
-eSAod2hpY2ggaW4gdGhlIGxvbmcgdGVybSBzaG91bGQgcHJvYmFibHkgYmUgdGhlIGJlc3QgZml4
-KSBvciB0cnkgYW5kIHByZXZlbnQKIC0gb24gYSBkcml2ZXIgbGV2ZWwgLSB0byBub3QgcmVtb3Zl
-IHRoZSB0dHlBQ00mIzgyMTc7cyBiZXR3ZWVuIHNsZWVwIGFuZCByZXN1bWUuJm5ic3A7IFRoZSBs
-YXR0ZXIgd291bGQgdGhlbiBub3Qga2ljayBvZiB0aGUgZGVzdHJveSBub3RpZnkuPG86cD48L286
-cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1aQSI+PG86
-cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5n
-PSJFTi1aQSI+T3VyIHByb2R1Y3Qgd291bGQgYmUgcmVjZWl2aW5nIGRhdGEgY2FsbHMsIHNvIEkg
-d291bGQgbGlrZSB0byB3YWtlIGZyb20gc2xlZXAgYW5kIHRoZW4gcmVhZCB0aGUgcGFja2V0cyBv
-biB0aGUgY29ubmVjdGlvbiBhbmQgYW5zd2VyIHRoZSBjYWxsLiZuYnNwOyBXaGF0IGlzIHRoZSBi
-ZXN0IHNvbHV0aW9uIGluIHRoZSBncm91cCYjODIxNztzIG9waW5pb24/PG86cD48L286cD48L3Nw
-YW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1aQSI+PG86cD4mbmJz
-cDs8L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1a
-QSI+S2luZCByZWdhcmRzPG86cD48L286cD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
-Ij48c3BhbiBsYW5nPSJFTi1aQSI+Q2hyaXN0bzxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KPC9kaXY+
-Cjxicj4KPGZvbnQgZmFjZT0iQXJpYWwiIGNvbG9yPSJHcmF5IiBzaXplPSIyIj48YnI+CkltcG9y
-dGFudCBOb3RpY2U6PGJyPgo8YnI+ClRoaXMgZS1tYWlsIGFuZCBpdHMgY29udGVudHMgYXJlIHN1
-YmplY3QgdG8gdGhlIE5hbm90ZXEgKFB0eSkgTHRkIGUtbWFpbCBsZWdhbCBub3RpY2UgYXZhaWxh
-YmxlIGF0Ojxicj4KaHR0cDovL3d3dy5uYW5vdGVxLmNvbS9BYm91dFVzL0VtYWlsRGlzY2xhaW1l
-ci5hc3B4PGJyPgo8L2ZvbnQ+CjwvYm9keT4KPC9odG1sPgo=
-
---===============5708040901967257867==--
+--===============7827645954374533189==--
 
