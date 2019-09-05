@@ -1,39 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5559676184890131682=="
+Content-Type: multipart/mixed; boundary="===============4058730580294279374=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ublox: gprs: React on context deactivation
-Date: Mon, 02 Sep 2019 16:39:48 -0500
-Message-ID: <11c76bb9-0446-cd32-3961-8534a9ea5dee@gmail.com>
-In-Reply-To: <20190903140611.1264-1-richard.rojfors@gmail.com>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: [PATCH] atmodem: sms: don't request URC buffering for Quectel UC15
+ modems
+Date: Thu, 05 Sep 2019 11:16:55 +0200
+Message-ID: <20190905091655.109912-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5559676184890131682==
+--===============4058730580294279374==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Richard,
+Add a vendor quirk to avoid an error being returned when setting up sms
+notification for Quectel UC15 modems.
+---
+ drivers/atmodem/sms.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-On 9/3/19 9:06 AM, richard.rojfors(a)gmail.com wrote:
-> From: Richard R=C3=B6jfors <richard@puffinpack.se>
-> =
+diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+index 442cfc58..d502da72 100644
+--- a/drivers/atmodem/sms.c
++++ b/drivers/atmodem/sms.c
+@@ -844,6 +844,7 @@ static gboolean build_cnmi_string(char *buf, int *cnmi_=
+opts,
+ 	case OFONO_VENDOR_HUAWEI:
+ 	case OFONO_VENDOR_ZTE:
+ 	case OFONO_VENDOR_SIMCOM:
++	case OFONO_VENDOR_QUECTEL:
+ 		/* MSM devices advertise support for mode 2, but return an
+ 		 * error if we attempt to actually use it. */
+ 		mode =3D "1";
+-- =
 
-> In case a context get deactivated when a AT+CGACT=3D0 is
-> not issued, indicate that to gprs core.
-> This can happen if the device has an auto activated
-> LTE context and modem switches over to for instance UTRAN.
-> ---
->   drivers/ubloxmodem/gprs-context.c | 15 ++++++++++++++-
->   1 file changed, 14 insertions(+), 1 deletion(-)
-> =
-
-
-Applied, thanks.
-
-Regards,
--Denis
+2.23.0
 
 
---===============5559676184890131682==--
+--===============4058730580294279374==--
 
