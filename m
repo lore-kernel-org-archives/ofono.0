@@ -1,156 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============0573991631339364501=="
+Content-Type: multipart/mixed; boundary="===============8958909805512592581=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC] gatchat: implement timeout setting for commands
-Date: Wed, 04 Sep 2019 08:15:38 -0500
-Message-ID: <da2f3f27-9cce-6509-a6a5-601e7116e720@gmail.com>
-In-Reply-To: <2f677fc5-4d56-77e2-5722-4d2751867d04@geanix.com>
+Subject: Re: [PATCHv3] quectel: handle sim states
+Date: Tue, 10 Sep 2019 09:10:46 -0500
+Message-ID: <c7dc3c8a-9d22-3415-fb0c-0cb181102f5d@gmail.com>
+In-Reply-To: <20190905103320.114207-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0573991631339364501==
+--===============8958909805512592581==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Martin,
 
-On 9/5/19 6:41 AM, Martin Hundeb=C3=B8ll wrote:
-> Hi Denis,
+On 9/5/19 5:33 AM, Martin Hundeb=C3=B8ll wrote:
+> The quectel M95 and MC60 modems are picky about when the sim is properly
+> initialized, so the logic to detect this needs to be in the quectel
+> plugin.
 > =
 
-> On 02/09/2019 23.25, Denis Kenzior wrote:
->> Hi Martin,
->>
->> On 9/2/19 4:10 PM, Martin Hundeb=C3=B8ll wrote:
->>> The adds a function to the set a chat-wide timeout for at commands. It
->>> allows plugins to handle cases where the modem fails to respond with
->>> either an OK or an error.
->>
->> Okay, this is sort of a known problem without a really good solution...
->>
->>>
->>> Without these timeouts, the plugin is never notified about a hanging
->>> command, and it has no way to detect it; effectively leaving the device
->>> in a broken state, where only a full restart of the ofono service
->>> unbreaks it.
->>
->> The trouble is, what if this happens on a command handled by a generic =
-
->> atmodem driver atom?=C2=A0 Are you going in and adding timeout handling =
-to =
-
->> all command callbacks?
+> After doing basic initialization, a CPIN query is issued to detect sim
+> state.
 > =
 
-> My initial thought was that calling the command callback with ok=3Dfalse =
+> If the sim is unlocked and ready, a timer is created to wait for the
+> modem state (AT+QINISTAT) to complete. At this point ofono is notified
+> about the initialized sim.
+> =
 
-> would be handled already. But that might be too optimistic?
+> If the sim is locked, a listener for "+CPIN: READY" is set up to
+> know when a pin is entered. Once the indication is received, the timer
+> is set up as if the sim was unlocked from the beginning.
+> =
+
+> If the sim is busy/resetting, the CPIN query is issued again.
+> ---
+>   plugins/quectel.c | 336 ++++++++++++++++++++++++++++++++--------------
+>   1 file changed, 237 insertions(+), 99 deletions(-)
 > =
 
 
-Sort of.  The problem is that there's no concept of a timeout at the =
+So what changed in this version?
 
-protocol level.  And we don't have any idea whether the timeout really =
+<snip>
 
-happened, or things are just taking a while.  Nor do we know if it is a =
+> +	if (data->sim_state =3D=3D OFONO_SIM_STATE_READY) {
+> +		/*
+> +		 * when initializing with a non-locked sim card, the sim atom
+> +		 * isn't created until now to avoid accessing it before the
+> +		 * modem is ready.
+> +		 *
+> +		 * call ofono_modem_set_powered() to make ofono call
+> +		 * quectel_pre_sim() where the sim atom is created.
+> +		 */
+> +		ofono_modem_set_powered(modem, true);
+> +	} else {
+> +		/*
+> +		 * When initialized with a locked sim card, the modem is already
+> +		 * powered up, and the inserted signal has been sent to allow
+> +		 * the pin to be entered. So simply update the state, and notify
+> +		 * about the finished initialization below.
+> +		 */
+> +		data->sim_state =3D OFONO_SIM_STATE_READY;
+> +	}
+> +
+> +	ofono_sim_initialized_notify(data->sim);
 
-bug, e.g. in GAtSyntax or just the modem not adhering to the spec.
+I don't know what you're doing here?  So sim_initialized_notify is meant =
 
-Another issue is that even if a timeout happens, we have no idea whether =
+to be called after PIN entry by the user, e.g. via +CPIN.  Many modems =
 
-it is safe to send any subsequent commands.  Command cancelation is a =
+need some time to actually read the SIM file system and perform other =
 
-gray area, with some manufacturers supporting it partially and some not =
+initializations prior to functioning properly.  So oFono lets the driver =
 
-at all.  Even just blindly sending on the next command would not =
+tell us when this is complete.  Calling this when the PIN is locked =
 
-necessarily work.
+seems wrong?
 
-Hence my point that special (and probably vendor specific) handling of =
+Also, it isn't clear whether data->sim is valid here at this point in =
 
-timeouts would need to be added _everywhere_ in the generic callbacks. =
+all cases?
 
-So basically exposing this is generally a bad idea.
+> +
+> +	/*
+> +	 * If quectel_post_sim() has not yet been called, then postpone atom
+> +	 * creation until it is called. Otherwise create the atoms now.
+> +	 */
+> +	if (data->state !=3D QUECTEL_STATE_POST_SIM) {
+> +		data->state =3D QUECTEL_STATE_READY;
+> +		return;
+> +	}
+> +
+> +	ofono_sms_create(modem, data->vendor, "atmodem", data->aux);
+> +	ofono_phonebook_create(modem, data->vendor, "atmodem", data->aux);
+> +	ofono_voicecall_create(modem, data->vendor, "atmodem", data->aux);
+> +	ofono_call_volume_create(modem, data->vendor, "atmodem", data->aux);
+> +	data->state =3D QUECTEL_STATE_INITIALIZED;
 
->> If this timeout only happens in special cases, then those can be taken =
+I'm lost here as well?  How do you even get into this path if we're in =
 
->> care of by setting up your own timeout...
-> =
+post_sim?  Is it because you called sim_initialized when you shouldn't =
 
-> Our problem is that this was seen during SIM initialization when doing =
+have and trying to take care of the weirdness?
 
-> so too early on the quectel modem (worked around in my latest quectel =
+For a locked SIM you should be doing something like:
 
-> sim patches.) So it needs to be chat-wide.
-> =
+ofono_set_powered(modem, TRUE);
+ofono_sim_inserted(sim, TRUE);
 
+g_at_chat_register("CPIN: Ready", sim_ready_cb);
+sim_ready_cb: poll QINISTAT.  If ready, call ofono_sim_initialized
 
-SIM initialization or modem initialization?  Maybe you want to take care =
+This last part may or may not need to be synced up with the sim atom driver.
 
-of this prior to setting up the MUX?
+Many modems actually provide a proper unsolicited notification that =
 
->>>
->>> If a timeout occurs, the passed callback is invoked with 'ok' set to
->>> false, and no final response in the result. This allows callbacks to
->>> identify the timeout with this snippet:
->>>
->>> =C2=A0=C2=A0 if (!ok) {
->>> =C2=A0=C2=A0=C2=A0=C2=A0 decode_at_error(&error, g_at_result_final_resp=
-onse(result));
->>> =C2=A0=C2=A0=C2=A0=C2=A0 if (error.type =3D=3D OFONO_ERROR_TYPE_FAILURE=
-) {
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* handle timeout */
->>> =C2=A0=C2=A0=C2=A0=C2=A0 }
->>> =C2=A0=C2=A0 }
->>
->> About the only thing I can suggest is to create a separate timeout =
+makes logic like this much simpler and can be handled inside the modem =
 
->> callback for the GAtChat object that the modem driver can set.=C2=A0 Tha=
-t =
+driver.
 
->> way if the timeout happens, the modem driver can just reset the entire =
+Move all the atom creation into post_sim.  Voicecalls probably belong in =
 
->> setup.=C2=A0 E.g. maybe via ofono_modem_reset.
-> =
+pre_sim.
 
-> That could work too.
-> =
-
-> I have one concern with my current patches though:
-> The timeout needs to accommodate long-lasting commands like AT+COPS, =
-
-> which is can take up to 80 seconds or so. But that is much longer than =
-
-> the timeout for powering up the modem.
-
-That's the other problem.  The timeout should be variable and per =
-
-command.  Which means g_at_chat_send should be modified with a timeout =
-
-value and that change would be quite invasive.  Given that timeouts =
-
-shouldn't even happen, it just makes the whole thing a huge mess.
-
-> =
-
-> So if:
->  =C2=A0 1: user enables modem
->  =C2=A0 2: gatchat gets stuck with no command
->  =C2=A0 3: set_powered_timeout() triggers
->  =C2=A0 4: gatchat timeout fires
-> =
-
-> What happens is the user tries to enable the modem again after step 3? =
-
-> Should the plugin enable function clean up after potential timeouts to =
-
-> avoid step 4?
-
-No clue.  That is completely manufacturer dependent.
+> +}
+> +
 
 Regards,
 -Denis
 
---===============0573991631339364501==--
+--===============8958909805512592581==--
 
