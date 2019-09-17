@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0295258196235280862=="
+Content-Type: multipart/mixed; boundary="===============4780167878044775422=="
 MIME-Version: 1.0
 From: richard.rojfors@gmail.com
-Subject: [PATCH] gprs: Only release detachable context on de-attach
-Date: Tue, 17 Sep 2019 13:14:17 +0200
-Message-ID: <20190917111417.27567-1-richard.rojfors@gmail.com>
+Subject: [PATCH v2] gprs: Only release detachable context on de-attach
+Date: Tue, 17 Sep 2019 18:25:48 +0200
+Message-ID: <20190917162548.14266-1-richard.rojfors@gmail.com>
+In-Reply-To: <20190917111417.27567-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0295258196235280862==
+--===============4780167878044775422==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -30,7 +31,7 @@ be notified.
  1 file changed, 40 insertions(+), 15 deletions(-)
 
 diff --git a/src/gprs.c b/src/gprs.c
-index de172979..6a9209c2 100644
+index de172979..85a6b29e 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
 @@ -1521,6 +1521,27 @@ static gboolean have_active_contexts(struct ofono_gp=
@@ -50,7 +51,7 @@ rs *gprs)
 +		ctx =3D l->data;
 +		gc =3D ctx->context_driver;
 +
-+		if (!gc->driver->detach_shutdown)
++		if (!gc || !gc->driver->detach_shutdown)
 +			continue;
 +
 +		if (ctx->active =3D=3D TRUE)
@@ -124,5 +125,5 @@ s)
 2.20.1
 
 
---===============0295258196235280862==--
+--===============4780167878044775422==--
 
