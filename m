@@ -1,26 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1987606128145474404=="
+Content-Type: multipart/mixed; boundary="===============4925014786177169299=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] xmm7modem: Fix to set gateway in pdp context
-Date: Fri, 20 Sep 2019 09:55:34 -0500
-Message-ID: <9bf1b9fd-352f-10e7-731f-d4bc3476be64@gmail.com>
-In-Reply-To: <1568811207-10491-1-git-send-email-antara.borwankar@intel.com>
+Subject: Re: [PATCH] gprs: deattach driver when gprs status indicates
+ unregistered
+Date: Fri, 20 Sep 2019 09:58:51 -0500
+Message-ID: <be8a9d4e-a0dd-22fe-5630-e43453ebf0bc@gmail.com>
+In-Reply-To: <20190917214807.19663-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1987606128145474404==
+--===============4925014786177169299==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+Hi Richard,
 
-On 9/18/19 7:53 AM, Antara Borwankar wrote:
-> gateway was not being listed in context settings. Fixed teh bug
-> to show correct gateway address.
+On 9/17/19 4:48 PM, richard.rojfors(a)gmail.com wrote:
+> From: Richard R=C3=B6jfors <richard@puffinpack.se>
+> =
+
+> In the same way as we consider the driver attached when the
+> gprs status indicates we are registered, we should consider
+> it deattached when the status indicates unregistration.
+> =
+
+> If we don't, then we would not always recover from the case
+> when deattaching the driver fails. We would just revert back
+> the driver attached status to true, and "ignore" if the status
+> indicates the opposite when we check the registration status
+> afterwards.
 > ---
->   drivers/ifxmodem/gprs-context.c | 6 +++---
->   1 file changed, 3 insertions(+), 3 deletions(-)
+>   src/gprs.c | 12 ++++++------
+>   1 file changed, 6 insertions(+), 6 deletions(-)
 > =
 
 
@@ -30,5 +42,5 @@ Regards,
 -Denis
 
 
---===============1987606128145474404==--
+--===============4925014786177169299==--
 
