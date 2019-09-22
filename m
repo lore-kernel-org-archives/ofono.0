@@ -1,40 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============1071275264158805801=="
+Content-Type: multipart/mixed; boundary="===============0308656935015496041=="
 MIME-Version: 1.0
 From: richard.rojfors@gmail.com
-Subject: [PATCH] plugins: quectel: Fix compiler warning
-Date: Sun, 22 Sep 2019 22:53:21 +0200
-Message-ID: <20190922205321.3438-1-richard.rojfors@gmail.com>
+Subject: [PATCH] gprs: Do nothing on detached when attaching.
+Date: Sun, 22 Sep 2019 23:04:23 +0200
+Message-ID: <20190922210423.4553-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1071275264158805801==
+--===============0308656935015496041==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-plugins/quectel.c: In function =E2=80=98quectel_pre_sim=E2=80=99:
-plugins/quectel.c:1150:20: error: unused variable =E2=80=98sim=E2=80=99 [-W=
-error=3Dunused-variable]
-  struct ofono_sim *sim;
+Its incorrect to fiddle with the driver attach state when
+attaching. When attaching the state is transitioning,
+and the correct state will not always be assigned in
+the end of the attach process, regardless of result.
 ---
- plugins/quectel.c | 1 -
- 1 file changed, 1 deletion(-)
+ src/gprs.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/plugins/quectel.c b/plugins/quectel.c
-index d4947489..1d21d6dd 100644
---- a/plugins/quectel.c
-+++ b/plugins/quectel.c
-@@ -1147,7 +1147,6 @@ static void quectel_set_online(struct ofono_modem *mo=
-dem, ofono_bool_t online,
- static void quectel_pre_sim(struct ofono_modem *modem)
+diff --git a/src/gprs.c b/src/gprs.c
+index c7b181f5..7d854fcf 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2551,6 +2551,15 @@ void ofono_gprs_detached_notify(struct ofono_gprs *g=
+prs)
  {
- 	struct quectel_data *data =3D ofono_modem_get_data(modem);
--	struct ofono_sim *sim;
+ 	DBG("%s", __ofono_atom_get_path(gprs->atom));
  =
 
- 	DBG("%p", modem);
++	/*
++	 * In case we are attaching let that finish, it will update to the
++	 * correct status. If we fiddle with driver_attach and the
++	 * attach fails, the code will invert back the state to attached,
++	 * which would leave us in an incorrect state.
++	 */
++	if (gprs->flags & GPRS_FLAG_ATTACHING)
++		return;
++
+ 	gprs->driver_attached =3D FALSE;
+ 	gprs_attached_update(gprs);
  =
 
 -- =
@@ -42,5 +50,5 @@ dem, ofono_bool_t online,
 2.20.1
 
 
---===============1071275264158805801==--
+--===============0308656935015496041==--
 
