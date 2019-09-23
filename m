@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0308656935015496041=="
+Content-Type: multipart/mixed; boundary="===============5100552743215327145=="
 MIME-Version: 1.0
 From: richard.rojfors@gmail.com
-Subject: [PATCH] gprs: Do nothing on detached when attaching.
-Date: Sun, 22 Sep 2019 23:04:23 +0200
-Message-ID: <20190922210423.4553-1-richard.rojfors@gmail.com>
+Subject: [PATCH v2] gprs: Do nothing on detached when attaching.
+Date: Mon, 23 Sep 2019 09:15:46 +0200
+Message-ID: <20190923071546.32592-1-richard.rojfors@gmail.com>
+In-Reply-To: <20190922210423.4553-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0308656935015496041==
+--===============5100552743215327145==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,7 +17,7 @@ From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
 Its incorrect to fiddle with the driver attach state when
 attaching. When attaching the state is transitioning,
-and the correct state will not always be assigned in
+and the correct state will now always be assigned in
 the end of the attach process, regardless of result.
 ---
  src/gprs.c | 9 +++++++++
@@ -50,5 +51,5 @@ prs)
 2.20.1
 
 
---===============0308656935015496041==--
+--===============5100552743215327145==--
 
