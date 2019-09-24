@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============1262763629405214048=="
+Content-Type: multipart/mixed; boundary="===============2904693164232265931=="
 MIME-Version: 1.0
 From: Nicola Lunghi <nick83ola@gmail.com>
 Subject: [PATCH] quectel: remove unused variable in quectel_pre_sim
-Date: Tue, 24 Sep 2019 08:31:52 +0100
-Message-ID: <20190924073152.7239-1-nicola.lunghi@jci.com>
+Date: Tue, 24 Sep 2019 08:32:42 +0100
+Message-ID: <20190924073242.7337-1-nicola.lunghi@jci.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1262763629405214048==
+--===============2904693164232265931==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -40,5 +40,5 @@ dem, ofono_bool_t online,
 2.20.1
 
 
---===============1262763629405214048==--
+--===============2904693164232265931==--
 
