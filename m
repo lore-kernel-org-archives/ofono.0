@@ -1,39 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4262580592820064795=="
+Content-Type: multipart/mixed; boundary="===============3298167016933130767=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] gprs: Do nothing on detached when attaching.
-Date: Tue, 24 Sep 2019 09:55:58 -0500
-Message-ID: <b1934c85-3dcc-bcc6-57c8-fb1a67bb3edb@gmail.com>
-In-Reply-To: <20190923071546.32592-1-richard.rojfors@gmail.com>
+Subject: Re: [PATCH] quectel: remove unused variable in quectel_pre_sim
+Date: Tue, 24 Sep 2019 09:56:59 -0500
+Message-ID: <78d3a1ca-2bb9-88b2-8ab8-95796920a451@gmail.com>
+In-Reply-To: <20190924071514.6072-1-nicola.lunghi@jci.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4262580592820064795==
+--===============3298167016933130767==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Richard,
+Hi Nicola,
 
-On 9/23/19 2:15 AM, richard.rojfors(a)gmail.com wrote:
-> From: Richard R=C3=B6jfors <richard@puffinpack.se>
+On 9/24/19 2:15 AM, Nicola Lunghi wrote:
+> From: Nicola Lunghi <nick83ola@gmail.com>
 > =
 
-> Its incorrect to fiddle with the driver attach state when
-> attaching. When attaching the state is transitioning,
-> and the correct state will now always be assigned in
-> the end of the attach process, regardless of result.
+> This variable was left over by a previous commit and in gcc 9.1
+> was throwing an error an error (unused variable)
 > ---
->   src/gprs.c | 9 +++++++++
->   1 file changed, 9 insertions(+)
+>   plugins/quectel.c | 1 -
+>   1 file changed, 1 deletion(-)
 > =
 
 
-Applied, thanks.
+Thanks for the patch.  I pushed the one from Richard since it was in my =
+
+mailbox a bit earlier.
 
 Regards,
 -Denis
 
-
---===============4262580592820064795==--
+--===============3298167016933130767==--
 
