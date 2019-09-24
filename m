@@ -1,31 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============6393290251517272328=="
+Content-Type: multipart/mixed; boundary="===============4262580592820064795=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] plugins: quectel: Fix compiler warning
-Date: Tue, 24 Sep 2019 09:55:09 -0500
-Message-ID: <9f5674c3-38a0-d8ef-9ebd-55f3bb9a8aad@gmail.com>
-In-Reply-To: <20190922205321.3438-1-richard.rojfors@gmail.com>
+Subject: Re: [PATCH v2] gprs: Do nothing on detached when attaching.
+Date: Tue, 24 Sep 2019 09:55:58 -0500
+Message-ID: <b1934c85-3dcc-bcc6-57c8-fb1a67bb3edb@gmail.com>
+In-Reply-To: <20190923071546.32592-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6393290251517272328==
+--===============4262580592820064795==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Richard,
 
-On 9/22/19 3:53 PM, richard.rojfors(a)gmail.com wrote:
+On 9/23/19 2:15 AM, richard.rojfors(a)gmail.com wrote:
 > From: Richard R=C3=B6jfors <richard@puffinpack.se>
 > =
 
-> plugins/quectel.c: In function =E2=80=98quectel_pre_sim=E2=80=99:
-> plugins/quectel.c:1150:20: error: unused variable =E2=80=98sim=E2=80=99 [=
--Werror=3Dunused-variable]
->    struct ofono_sim *sim;
+> Its incorrect to fiddle with the driver attach state when
+> attaching. When attaching the state is transitioning,
+> and the correct state will now always be assigned in
+> the end of the attach process, regardless of result.
 > ---
->   plugins/quectel.c | 1 -
->   1 file changed, 1 deletion(-)
+>   src/gprs.c | 9 +++++++++
+>   1 file changed, 9 insertions(+)
 > =
 
 
@@ -35,5 +35,5 @@ Regards,
 -Denis
 
 
---===============6393290251517272328==--
+--===============4262580592820064795==--
 
