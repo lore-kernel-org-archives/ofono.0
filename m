@@ -1,54 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6366879763154929717=="
+Content-Type: multipart/mixed; boundary="===============0471904669264314306=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+From: Pavel Machek <pavel@ucw.cz>
 Subject: Re: [PATCH v2 1/1] ublox: rework device initialization sequence
-Date: Tue, 24 Sep 2019 21:20:15 +0200
-Message-ID: <80d85787-2bf2-afb9-aefa-1cf68b0fafd4@geanix.com>
-In-Reply-To: <547d8842-d534-0406-448c-d490d9d17f11@geanix.com>
+Date: Tue, 24 Sep 2019 21:55:33 +0200
+Message-ID: <20190924195533.GA10695@amd>
+In-Reply-To: <20190924160126.26221-1-jonas@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6366879763154929717==
+--===============0471904669264314306==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Tue 2019-09-24 18:01:26, Jonas Bonn wrote:
+> uBlox devices present their USB interfaces well before those interfaces
+> are ready to respond to any commands.  The documentation says to monitor
+> the 'greeting text' to detect readiness, but this 'greeting text' is not
+> actually specified for any device other than the TOBY L4.
 
-On 24/09/2019 20.09, Martin Hundeb=C3=B8ll wrote:
-> On 24/09/2019 19.23, Denis Kenzior wrote:
->>> Furthermore, there's not an AT command sent every 500 ms.=C2=A0 The =
+Collecting "greeting texts" from all the modems we want to support
+should not be hard, right?
 
->>> command gets requeued after 500ms, but it doesn't actually go out =
+Best regards,
+									Pavel
+-- =
 
->>> until the modem responds to the first one... not quite sure why this =
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
->>> works, to be honest.
->>>
->>
->> Funny.=C2=A0 But not real confidence inspiring :)
->>
->> Martin, any ideas what could be going wrong here?
-> =
+--===============0471904669264314306==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
-> The code looks quite familiar :)
-> =
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsMktkTFVBQ2drUU1PZndhcFhiK3ZKMm53Q2d0NDFvV2ZidjNNckorV0RGekdQeVdCVVkK
+QTMwQW5qMnE5d3BuMi84akUrRUUxUzFDVDNIUG5lb3IKPTc1dEMKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
 
-> Jonas, do you have a log with OFONO_AT_DEBUG=3D1 set?
-
-For the record, here one from my setup:
-
-UART: > AT\r
-UART: < \371\013s\001\222\371
-../git/plugins/quectel.c:init_timeout_cb() 0x610000000d40
-UART: > AT\r
-UART: < \r\nOK\r\n
-../git/plugins/quectel.c:init_cmd_cb() 0x610000000d40
-../git/src/modem.c:get_modem_property() modem 0x610000000d40 property RtsCts
-UART: > ATE0\r
-UART: < \r\nOK\r\n
-
-// Martin
-
---===============6366879763154929717==--
+--===============0471904669264314306==--
 
