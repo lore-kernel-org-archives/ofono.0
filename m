@@ -1,30 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5836870189318711404=="
+Content-Type: multipart/mixed; boundary="===============8756523685893349692=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3] quectel: handle sim states
-Date: Mon, 23 Sep 2019 21:51:55 -0500
-Message-ID: <a00ac8d0-6564-2a31-2ef5-c41d9c481272@gmail.com>
-In-Reply-To: <46ffe50f-2af2-bab8-8508-2253c1afd68d@gmail.com>
+From: Nicola Lunghi <nick83ola@gmail.com>
+Subject: [PATCH] quectel: remove unused variable in quectel_pre_sim
+Date: Tue, 24 Sep 2019 08:15:15 +0100
+Message-ID: <20190924071514.6072-1-nicola.lunghi@jci.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5836870189318711404==
+--===============8756523685893349692==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> Yes I'm with you.=C2=A0 I thought it weird to send CPIN: READY uninitiali=
-zed. =
+From: Nicola Lunghi <nick83ola@gmail.com>
 
->  =C2=A0But okay, I got this part.
-> =
+This variable was left over by a previous commit and in gcc 9.1
+was throwing an error an error (unused variable)
+---
+ plugins/quectel.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/plugins/quectel.c b/plugins/quectel.c
+index d4947489..1d21d6dd 100644
+--- a/plugins/quectel.c
++++ b/plugins/quectel.c
+@@ -1147,7 +1147,6 @@ static void quectel_set_online(struct ofono_modem *mo=
+dem, ofono_bool_t online,
+ static void quectel_pre_sim(struct ofono_modem *modem)
+ {
+ 	struct quectel_data *data =3D ofono_modem_get_data(modem);
+-	struct ofono_sim *sim;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-- =
+
+2.20.1
 
 
-And of course I meant 'uninitialized' to be 'unsolicited' :)
-
-Regards,
--Denis
-
-
---===============5836870189318711404==--
+--===============8756523685893349692==--
 
