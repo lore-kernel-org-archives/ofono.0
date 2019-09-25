@@ -1,75 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============6640080451938667384=="
+Content-Type: multipart/mixed; boundary="===============8424543149694337453=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3] quectel: handle sim states
-Date: Tue, 24 Sep 2019 15:40:25 -0500
-Message-ID: <7f027d2d-f323-61e7-eedc-6b7a56c6eb83@gmail.com>
-In-Reply-To: <41f7e5a9-2fe7-8ce3-c02e-280090fa946f@geanix.com>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: Re: [PATCH v2 1/1] ublox: rework device initialization sequence
+Date: Wed, 25 Sep 2019 05:44:06 +0200
+Message-ID: <d48fc281-bf0c-5870-9043-042493c2254e@norrbonn.se>
+In-Reply-To: <80d85787-2bf2-afb9-aefa-1cf68b0fafd4@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6640080451938667384==
+--===============8424543149694337453==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Martin,
 
->> I tried implementing what you suggest - see the attached patch. But I =
-
->> still get "SMS not supported by this modem.".
->>
->> The attached log shows quectel_post_sim() being called (line 584) way =
-
->> before QINISTAT returns 3 (line 686).
->>
->> Is this because my SIM isn't locked, and so the =
-
->> ofono_sim_inserted_notify() call makes it go all the way?
->>
->> I can work around it by calling ofono_sim_inserted_notify() either if =
-
->> the SIM is locked, or/and when qinistat returns 3.
+On 24/09/2019 21:20, Martin Hundeb=C3=B8ll wrote:
+> Hi,
 > =
 
-> It also happens on a locked SIM - log attached.
+> On 24/09/2019 20.09, Martin Hundeb=C3=B8ll wrote:
+>> On 24/09/2019 19.23, Denis Kenzior wrote:
+>>>> Furthermore, there's not an AT command sent every 500 ms.=C2=A0 The =
+
+>>>> command gets requeued after 500ms, but it doesn't actually go out =
+
+>>>> until the modem responds to the first one... not quite sure why this =
+
+>>>> works, to be honest.
+>>>>
+>>>
+>>> Funny.=C2=A0 But not real confidence inspiring :)
+>>>
+>>> Martin, any ideas what could be going wrong here?
+>>
+>> The code looks quite familiar :)
+
+For good reason! :)
+
+>>
+>> Jonas, do you have a log with OFONO_AT_DEBUG=3D1 set?
 > =
 
 
-So in your log:
+ofonod[31545]: Aux: > AT\r
+ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+ofonod[31545]: Aux: > AT\r
+ofonod[31545]: Aux: < AT\r
+ofonod[31545]: Aux: < AT\r
+ofonod[31545]: Aux: < \r\nOK\r\n
+ofonod[31545]: plugins/ublox.c:init_cmd_cb() 0x563f7c2cebc0
+ofonod[31545]: Aux: < \r\nOK\r\n
+ofonod[31545]: Aux: < \r\n+AT: READY\r\n
+ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+ofonod[31545]: Aux: > ATE0\r
+ofonod[31545]: Aux: < ATE0
+ofonod[31545]: Aux: < \r\r\nOK\r\n
 
-ofonod[3982107]: ../git/plugins/quectel.c:sim_watch_cb() 0x610000000d40
-ofonod[3982107]: ../git/src/sim.c:sim_enter_pin_cb() Waiting for =
 
-ofono_sim_initialized_notify
+> For the record, here one from my setup:
+> =
 
-So we're supposed to be waiting here for a bit.  Somehow we're not or =
+> UART: > AT\r
+> UART: < \371\013s\001\222\371
+> ../git/plugins/quectel.c:init_timeout_cb() 0x610000000d40
+> UART: > AT\r
+> UART: < \r\nOK\r\n
+> ../git/plugins/quectel.c:init_cmd_cb() 0x610000000d40
+> ../git/src/modem.c:get_modem_property() modem 0x610000000d40 property =
 
-you're calling ofono_sim_initialized early.  Perhaps the default sim =
+> RtsCts
+> UART: > ATE0\r
+> UART: < \r\nOK\r\n
+> =
 
-driver is doing this?  Check this first.
 
-ofonod[3982107]: Aux: > AT+CPIN?\r
-ofonod[3982107]: Aux: < \r\n+CPIN: READY\r\n\r\nOK\r\n
-ofonod[3982107]: Aux: > AT+CPIN?\r
-ofonod[3982107]: Aux: < \r\n+CPIN: READY\r\n\r\nOK\r\n
+So yours looks a bit different... you really do lose the first AT =
 
-It looks like we get into recheck_pin here somehow...
+command into a black hole.  The uBlox modem seems to not lose anything =
 
-ofonod[3982107]: ../git/drivers/atmodem/sim.c:at_cpin_cb() crsm_pin_cb: =
+sent over the USB bus but rather buffers it up and responds later.  That =
 
-READY
-ofonod[3982107]: ../git/src/sim.c:sim_pin_query_cb() sim->pin_type: 1, =
+said, according to the documentation it _could_ lose the AT command so =
 
-pin_type: 0
-ofonod[3982107]: ../git/drivers/atmodem/sim.c:at_pin_retries_query()
-ofonod[3982107]: Aux: > AT+QTRPIN\r
-ofonod[3982107]: Aux: < \r\n+QTRPIN: 3,3,10,10\r\n\r\nOK\r\n
-ofonod[3982107]: Aux: > AT+CUAD\r
-ofonod[3982107]: Aux: < \r\n+CME ERROR: 100\r\n
+one cannot rely on the response just turning up eventually.
 
-Regards,
--Denis
+The thing that wasn't clear to me, though, was why every invocation of =
 
---===============6640080451938667384==--
+init_timeout_cb doesn't result in a new AT command being sent?  It's =
+
+like the command is set to be retried in the first invocation, but it =
+
+never gets sent so the subsequent retries amount to no-ops.  This =
+
+behaviour is agreeable in this case, but I don't quite understand why it =
+
+works this way...
+
+/Jonas
+
+
+
+
+--===============8424543149694337453==--
 
