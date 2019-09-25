@@ -1,165 +1,331 @@
-Content-Type: multipart/mixed; boundary="===============5728340369671919419=="
+Content-Type: multipart/mixed; boundary="===============4536911573613442575=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: [PATCH v2 1/1] ublox: rework device initialization sequence
-Date: Wed, 25 Sep 2019 09:41:43 +0200
-Message-ID: <390a5f2a-f1da-8373-3bbf-7e020441ab03@norrbonn.se>
-In-Reply-To: <9a124ace-7284-be81-1d5e-f5c73110d492@geanix.com>
+From: Antara Borwankar <antara.borwankar@intel.com>
+Subject: [PATCH] udev: Adding PCIe as a subsystem in udev
+Date: Wed, 25 Sep 2019 15:25:07 +0530
+Message-ID: <1569405307-14848-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5728340369671919419==
+--===============4536911573613442575==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Adding support for enumerating PCIe types of modems in ofono
+---
+ plugins/udevng.c | 195 +++++++++++++++++++++++++++++++++++++++++++++++++--=
+----
+ 1 file changed, 174 insertions(+), 21 deletions(-)
 
-On 25/09/2019 09:27, Martin Hundeb=C3=B8ll wrote:
-> Hi Jonas,
-> =
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 1b54b4a..bebbc2d 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -41,6 +41,7 @@
+ enum modem_type {
+ 	MODEM_TYPE_USB,
+ 	MODEM_TYPE_SERIAL,
++	MODEM_TYPE_PCIE,
+ };
+ =
 
-> On 9/25/19 5:44 AM, Jonas Bonn wrote:
->> On 24/09/2019 21:20, Martin Hundeb=C3=B8ll wrote:
->>> On 24/09/2019 20.09, Martin Hundeb=C3=B8ll wrote:
->>>> On 24/09/2019 19.23, Denis Kenzior wrote:
->>>>>> Furthermore, there's not an AT command sent every 500 ms.=C2=A0 The =
+ struct modem_info {
+@@ -1229,26 +1230,43 @@ static gboolean setup_xmm7xxx(struct modem_info *mo=
+dem)
+ 				info->interface, info->number, info->label,
+ 				info->sysattr, info->subsystem);
+ =
 
->>>>>> command gets requeued after 500ms, but it doesn't actually go out =
+-		if (g_strcmp0(modem->model,"095a") =3D=3D 0) {
+-			if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
+-				if (g_strcmp0(info->number, "00") =3D=3D 0)
+-					mdm =3D info->devnode;
+-			} else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
+-				if (g_strcmp0(info->number, "06") =3D=3D 0)
+-					net =3D info->devnode;
+-				if (g_strcmp0(info->number, "08") =3D=3D 0)
+-					net2 =3D info->devnode;
+-				if (g_strcmp0(info->number, "0a") =3D=3D 0)
+-					net3 =3D info->devnode;
++		if (g_strcmp0(info->subsystem, "pci") =3D=3D 0) {
++			if ((g_strcmp0(modem->vendor,"0x8086") =3D=3D 0) &&
++					(g_strcmp0(modem->model,"0x7560") =3D=3D 0)) {
++				mdm =3D "/dev/iat";
++				net =3D "inm0";
++				net2 =3D "inm1";
++				net3 =3D "inm2";
++				ofono_modem_set_string(modem->modem,
++						"CtrlPath", "/PCIE/IOSM/CTRL/1");
++				ofono_modem_set_string(modem->modem, "DataPath",
++						"/PCIE/IOSM/IPS/");
+ 			}
+-		} else {
+-			if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
+-				if (g_strcmp0(info->number, "02") =3D=3D 0)
+-					mdm =3D info->devnode;
+-			} else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
+-				if (g_strcmp0(info->number, "00") =3D=3D 0)
+-					net =3D info->devnode;
++		} else { /* For USB */
++			if (g_strcmp0(modem->model,"095a") =3D=3D 0) {
++				if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
++					if (g_strcmp0(info->number, "00") =3D=3D 0)
++						mdm =3D info->devnode;
++				} else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
++					if (g_strcmp0(info->number, "06") =3D=3D 0)
++						net =3D info->devnode;
++					if (g_strcmp0(info->number, "08") =3D=3D 0)
++						net2 =3D info->devnode;
++					if (g_strcmp0(info->number, "0a") =3D=3D 0)
++						net3 =3D info->devnode;
++				}
++			} else {
++				if (g_strcmp0(info->subsystem, "tty") =3D=3D 0) {
++					if (g_strcmp0(info->number, "02") =3D=3D 0)
++						mdm =3D info->devnode;
++				} else if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
++					if (g_strcmp0(info->number, "00") =3D=3D 0)
++						net =3D info->devnode;
++				}
+ 			}
++
++			ofono_modem_set_string(modem->modem, "CtrlPath", "/USBCDC/0");
++			ofono_modem_set_string(modem->modem, "DataPath", "/USBHS/NCM/");
+ 		}
+ 	}
+ =
 
->>>>>> until the modem responds to the first one... not quite sure why =
+@@ -1266,9 +1284,6 @@ static gboolean setup_xmm7xxx(struct modem_info *mode=
+m)
+ 	if (net3)
+ 		ofono_modem_set_string(modem->modem, "NetworkInterface3", net3);
+ =
 
->>>>>> this works, to be honest.
->>>>>>
->>>>>
->>>>> Funny.=C2=A0 But not real confidence inspiring :)
->>>>>
->>>>> Martin, any ideas what could be going wrong here?
->>>>
->>>> The code looks quite familiar :)
->>
->> For good reason! :)
->>
->>>>
->>>> Jonas, do you have a log with OFONO_AT_DEBUG=3D1 set?
->>>
->>
->> ofonod[31545]: Aux: > AT\r
->> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
->> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
->> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
->> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
->> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
->> ofonod[31545]: Aux: > AT\r
->> ofonod[31545]: Aux: < AT\r
->> ofonod[31545]: Aux: < AT\r
->> ofonod[31545]: Aux: < \r\nOK\r\n
->> ofonod[31545]: plugins/ublox.c:init_cmd_cb() 0x563f7c2cebc0
->> ofonod[31545]: Aux: < \r\nOK\r\n
->> ofonod[31545]: Aux: < \r\n+AT: READY\r\n
->> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
->> ofonod[31545]: Aux: > ATE0\r
->> ofonod[31545]: Aux: < ATE0
->> ofonod[31545]: Aux: < \r\r\nOK\r\n
->>
->>
->>> For the record, here one from my setup:
->>>
->>> UART: > AT\r
->>> UART: < \371\013s\001\222\371
->>> ../git/plugins/quectel.c:init_timeout_cb() 0x610000000d40
->>> UART: > AT\r
->>> UART: < \r\nOK\r\n
->>> ../git/plugins/quectel.c:init_cmd_cb() 0x610000000d40
->>> ../git/src/modem.c:get_modem_property() modem 0x610000000d40 property =
+-	ofono_modem_set_string(modem->modem, "CtrlPath", "/USBCDC/0");
+-	ofono_modem_set_string(modem->modem, "DataPath", "/USBHS/NCM/");
+-
+ 	return TRUE;
+ }
+ =
 
->>> RtsCts
->>> UART: > ATE0\r
->>> UART: < \r\nOK\r\n
->>>
->>
->> So yours looks a bit different... you really do lose the first AT =
+@@ -1437,6 +1452,7 @@ static void destroy_modem(gpointer data)
+ =
 
->> command into a black hole.=C2=A0 The uBlox modem seems to not lose anyth=
-ing =
+ 	switch (modem->type) {
+ 	case MODEM_TYPE_USB:
++	case MODEM_TYPE_PCIE:
+ 		for (list =3D modem->devices; list; list =3D list->next) {
+ 			struct device_info *info =3D list->data;
+ =
 
->> sent over the USB bus but rather buffers it up and responds later.  =
+@@ -1467,6 +1483,7 @@ static gboolean check_remove(gpointer key, gpointer v=
+alue, gpointer user_data)
+ =
 
->> That said, according to the documentation it _could_ lose the AT =
+ 	switch (modem->type) {
+ 	case MODEM_TYPE_USB:
++	case MODEM_TYPE_PCIE:
+ 		for (list =3D modem->devices; list; list =3D list->next) {
+ 			struct device_info *info =3D list->data;
+ =
 
->> command so one cannot rely on the response just turning up eventually.
-> =
+@@ -1597,6 +1614,91 @@ static void add_serial_device(struct udev_device *de=
+v)
+ 	modem->serial =3D info;
+ }
+ =
 
-> Could it be safe to assume that it will lose only a single AT command? =
++static void add_pci_device(const char *syspath, const char *devname,
++			const char *driver, const char *vendor,
++			const char *model, struct udev_device *device)
++{
++	const char *devpath, *devnode, *interface, *number;
++	const char *label, *sysattr, *subsystem;
++	struct modem_info *modem;
++	struct device_info *info;
++	struct udev_device *parent;
++
++	devpath =3D udev_device_get_syspath(device);
++
++	if (devpath =3D=3D NULL)
++		return;
++
++	devnode =3D udev_device_get_devnode(device);
++
++	if (devnode =3D=3D NULL) {
++		devnode =3D udev_device_get_property_value(device, "INTERFACE");
++		DBG("devnode =3D %s", devnode);
++	}
++
++	modem =3D g_hash_table_lookup(modem_list, syspath);
++
++	if (modem =3D=3D NULL) {
++		modem =3D g_try_new0(struct modem_info, 1);
++
++		if (modem =3D=3D NULL)
++			return;
++
++		modem->type =3D MODEM_TYPE_PCIE;
++		modem->syspath =3D g_strdup(syspath);
++		modem->devname =3D g_strdup(devname);
++		modem->driver =3D g_strdup(driver);
++		modem->vendor =3D g_strdup(vendor);
++		modem->model =3D g_strdup(model);
++		modem->sysattr =3D get_sysattr(driver);
++
++		g_hash_table_replace(modem_list, modem->syspath, modem);
++	}
++
++	interface =3D udev_device_get_property_value(device, "INTERFACE");
++
++	/*
++	 * If environment variable is not set, get value from attributes
++	 *  (or parent's ones)
++	 */
++	number =3D udev_device_get_sysattr_value(device, "bInterfaceNumber");
++
++	if (number =3D=3D NULL) {
++		parent =3D udev_device_get_parent(device);
++		number =3D udev_device_get_sysattr_value(parent, "bInterfaceNumber");
++	}
++
++	label =3D udev_device_get_property_value(device, "OFONO_LABEL");
++
++	if (!label)
++		label =3D udev_device_get_property_value(device, "OFONO_LABEL");
++
++	subsystem =3D udev_device_get_subsystem(device);
++
++	if (modem->sysattr !=3D NULL)
++		sysattr =3D udev_device_get_sysattr_value(device, modem->sysattr);
++	else
++		sysattr =3D NULL;
++
++	DBG("%s (%s) %s [%s] =3D=3D> %s %s", devnode, driver,
++					interface, number, label, sysattr);
++	info =3D g_try_new0(struct device_info, 1);
++
++	if (info =3D=3D NULL)
++		return;
++
++	info->devpath =3D g_strdup(devpath);
++	info->devnode =3D g_strdup(devnode);
++	info->interface =3D g_strdup(interface);
++	info->number =3D g_strdup(number);
++	info->label =3D g_strdup(label);
++	info->sysattr =3D g_strdup(sysattr);
++	info->subsystem =3D g_strdup(subsystem);
++
++	modem->devices =3D g_slist_insert_sorted(modem->devices, info,
++							compare_device);
++}
++
+ static void add_device(const char *syspath, const char *devname,
+ 			const char *driver, const char *vendor,
+ 			const char *model, struct udev_device *device)
+@@ -1625,8 +1727,10 @@ static void add_device(const char *syspath, const ch=
+ar *devname,
+ 		return;
+ =
 
-> In that case, it should be enough to send just two AT's. Once the first =
+ 	modem =3D g_hash_table_lookup(modem_list, syspath);
++
+ 	if (modem =3D=3D NULL) {
+ 		modem =3D g_try_new0(struct modem_info, 1);
++
+ 		if (modem =3D=3D NULL)
+ 			return;
+ =
 
-> OK is received, you could wait 500 ms for the second OK, or retry the =
+@@ -1772,6 +1876,7 @@ static struct {
+ 	{ "telit",	"cdc_acm",	"1bc7", "0036"	},
+ 	{ "xmm7xxx",	"cdc_acm",	"8087"		},
+ 	{ "xmm7xxx",	"cdc_ncm",	"8087"		},
++	{ "xmm7xxx",	"imc_ipc",	"0x8086", "0x7560"},
+ 	{ }
+ };
+ =
 
-> second AT in case of a timeout?
-> =
+@@ -1858,6 +1963,51 @@ static void check_usb_device(struct udev_device *dev=
+ice)
+ 	add_device(syspath, devname, driver, vendor, model, device);
+ }
+ =
 
-> No lost AT:
->  =C2=A0> AT=C2=A0=C2=A0 // Send first
->  =C2=A0> AT=C2=A0=C2=A0 // Send second and wait
->  =C2=A0< OK=C2=A0=C2=A0 // Wait 500 ms
->  =C2=A0< OK=C2=A0=C2=A0 // Start initialization
-> =
++static void check_pci_device(struct udev_device *device)
++{
++	const char *syspath, *devname, *driver;
++	const char *vendor =3D NULL, *model =3D NULL, *drv =3D NULL;
++	unsigned int i;
++
++	syspath =3D udev_device_get_syspath(device);
++
++	if (syspath =3D=3D NULL)
++		return;
++
++	devname =3D udev_device_get_devnode(device);
++	vendor =3D udev_device_get_sysattr_value(device, "vendor");
++	model =3D udev_device_get_sysattr_value(device, "device");
++	driver =3D udev_device_get_property_value(device, "OFONO_DRIVER");
++	drv =3D udev_device_get_property_value(device, "DRIVER");
++	DBG("%s [%s:%s]", drv, vendor, model);
++
++	if (vendor =3D=3D NULL || model =3D=3D NULL)
++		return;
++
++	for (i =3D 0; vendor_list[i].driver; i++) {
++		if ((drv !=3D NULL) && (g_str_equal(vendor_list[i].drv, drv) =3D=3D TRUE=
+))
++			DBG("vendor_list[%d].drv =3D %s", i, vendor_list[i].drv);
++		else
++			continue;
++
++		if (vendor_list[i].vid) {
++			if (!g_str_equal(vendor_list[i].vid, vendor))
++				continue;
++		}
++
++		if (vendor_list[i].pid) {
++			if (!g_str_equal(vendor_list[i].pid, model))
++				continue;
++		}
++
++		driver =3D vendor_list[i].driver;
++	}
++
++	if (driver =3D=3D NULL)
++		return;
++
++	add_pci_device(syspath, devname, driver, vendor, model, device);
++}
+ static void check_device(struct udev_device *device)
+ {
+ 	const char *bus;
+@@ -1872,6 +2022,8 @@ static void check_device(struct udev_device *device)
+ 	if ((g_str_equal(bus, "usb") =3D=3D TRUE) ||
+ 			(g_str_equal(bus, "usbmisc") =3D=3D TRUE))
+ 		check_usb_device(device);
++	else if (g_str_equal(bus, "pci") =3D=3D TRUE)
++		check_pci_device(device);
+ 	else
+ 		add_serial_device(device);
+ =
 
-> One lost AT
->  =C2=A0> AT=C2=A0=C2=A0 // Send first
->  =C2=A0> AT=C2=A0=C2=A0 // Send second and wait
->  =C2=A0< OK=C2=A0=C2=A0 // Wait 500 ms
->  =C2=A0> AT=C2=A0=C2=A0 // Retry second
->  =C2=A0< OK=C2=A0=C2=A0 // Start initialization
+@@ -1932,6 +2084,7 @@ static void enumerate_devices(struct udev *context)
+ 	udev_enumerate_add_match_subsystem(enumerate, "usbmisc");
+ 	udev_enumerate_add_match_subsystem(enumerate, "net");
+ 	udev_enumerate_add_match_subsystem(enumerate, "hsi");
++	udev_enumerate_add_match_subsystem(enumerate, "pci");
+ =
 
-That's pretty much what we've got, isn't it?
+ 	udev_enumerate_scan_devices(enumerate);
+ =
+
+-- =
+
+1.9.1
 
 
-> =
-
->> The thing that wasn't clear to me, though, was why every invocation of =
-
->> init_timeout_cb doesn't result in a new AT command being sent?=C2=A0 It'=
-s =
-
->> like the command is set to be retried in the first invocation, but it =
-
->> never gets sent so the subsequent retries amount to no-ops.=C2=A0 This =
-
->> behaviour is agreeable in this case, but I don't quite understand why =
-
->> it works this way...
-> =
-
-> Can the usb-to-serial driver block further writes until the modem is read=
-y?
-
-Not the driver but the modem.  If the USB bulk endpoint on the modem =
-
-side decides it is busy (for example, because it's buffers are full), it =
-
-can NAK subsequent packets until it's ready to receive again.  It's not =
-
-out of the question that Linux is smart enough to return EAGAIN for a =
-
-write in that case... but I would suspect that the OS would normally =
-
-buffer the write() for more than one AT command before this happened. =
-
-For that reason, I can't see why ofono would be able to detect this... =
-
-from ofono's point of view it should just look like there's a series of =
-
-AT commands going out and no responses coming back.  There must be some =
-
-magic in g_io_...???
-
-/Jonas
-
-> =
-
-> // Martin
-
---===============5728340369671919419==--
+--===============4536911573613442575==--
 
