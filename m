@@ -1,64 +1,133 @@
-Content-Type: multipart/mixed; boundary="===============1367384004680432456=="
+Content-Type: multipart/mixed; boundary="===============8389337688085249762=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
 Subject: Re: [PATCH v2 1/1] ublox: rework device initialization sequence
-Date: Wed, 25 Sep 2019 08:47:09 +0200
-Message-ID: <880633c3-1a55-ba5f-80e2-59a1858401ad@norrbonn.se>
-In-Reply-To: <CAHB-PjnNh4x8EwyWX0MKNvUnRZLWta0BRjpVBRZaNkARRPzcBA@mail.gmail.com>
+Date: Wed, 25 Sep 2019 09:27:00 +0200
+Message-ID: <9a124ace-7284-be81-1d5e-f5c73110d492@geanix.com>
+In-Reply-To: <d48fc281-bf0c-5870-9043-042493c2254e@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1367384004680432456==
+--===============8389337688085249762==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Jonas,
 
+On 9/25/19 5:44 AM, Jonas Bonn wrote:
+> On 24/09/2019 21:20, Martin Hundeb=C3=B8ll wrote:
+>> On 24/09/2019 20.09, Martin Hundeb=C3=B8ll wrote:
+>>> On 24/09/2019 19.23, Denis Kenzior wrote:
+>>>>> Furthermore, there's not an AT command sent every 500 ms.=C2=A0 The =
 
-On 25/09/2019 08:40, Richard R=C3=B6jfors wrote:
-> Den tis 24 sep. 2019 kl 21:55 skrev Pavel Machek <pavel@ucw.cz =
+>>>>> command gets requeued after 500ms, but it doesn't actually go out =
 
-> <mailto:pavel@ucw.cz>>:
+>>>>> until the modem responds to the first one... not quite sure why =
+
+>>>>> this works, to be honest.
+>>>>>
+>>>>
+>>>> Funny.=C2=A0 But not real confidence inspiring :)
+>>>>
+>>>> Martin, any ideas what could be going wrong here?
+>>>
+>>> The code looks quite familiar :)
 > =
 
->     On Tue 2019-09-24 18:01:26, Jonas Bonn wrote:
->      > uBlox devices present their USB interfaces well before those
->     interfaces
->      > are ready to respond to any commands.=C2=A0 The documentation says=
- to
->     monitor
->      > the 'greeting text' to detect readiness, but this 'greeting text'
->     is not
->      > actually specified for any device other than the TOBY L4.
+> For good reason! :)
 > =
 
->     Collecting "greeting texts" from all the modems we want to support
->     should not be hard, right?
-
-...given that one has access to all the devices!
-
-Honestly, I suspect the documentation is garbage.  There are no greeting =
-
-texts for devices other than the L4; probing is just a matter of waiting =
-
-for AT to respond to with OK.
-
+>>>
+>>> Jonas, do you have a log with OFONO_AT_DEBUG=3D1 set?
+>>
 > =
 
+> ofonod[31545]: Aux: > AT\r
+> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+> ofonod[31545]: Aux: > AT\r
+> ofonod[31545]: Aux: < AT\r
+> ofonod[31545]: Aux: < AT\r
+> ofonod[31545]: Aux: < \r\nOK\r\n
+> ofonod[31545]: plugins/ublox.c:init_cmd_cb() 0x563f7c2cebc0
+> ofonod[31545]: Aux: < \r\nOK\r\n
+> ofonod[31545]: Aux: < \r\n+AT: READY\r\n
+> ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
+> ofonod[31545]: Aux: > ATE0\r
+> ofonod[31545]: Aux: < ATE0
+> ofonod[31545]: Aux: < \r\r\nOK\r\n
 > =
-
-> I don't think that's a good idea. What if ofono is restated and the =
-
-> modem is still running?
-
-In this case, the TOBY-L4 does not provide a greeting text.
-
-/Jonas
-
 
 > =
 
-> --Richard
+>> For the record, here one from my setup:
+>>
+>> UART: > AT\r
+>> UART: < \371\013s\001\222\371
+>> ../git/plugins/quectel.c:init_timeout_cb() 0x610000000d40
+>> UART: > AT\r
+>> UART: < \r\nOK\r\n
+>> ../git/plugins/quectel.c:init_cmd_cb() 0x610000000d40
+>> ../git/src/modem.c:get_modem_property() modem 0x610000000d40 property =
 
---===============1367384004680432456==--
+>> RtsCts
+>> UART: > ATE0\r
+>> UART: < \r\nOK\r\n
+>>
+> =
+
+> So yours looks a bit different... you really do lose the first AT =
+
+> command into a black hole.=C2=A0 The uBlox modem seems to not lose anythi=
+ng =
+
+> sent over the USB bus but rather buffers it up and responds later.=C2=A0 =
+That =
+
+> said, according to the documentation it _could_ lose the AT command so =
+
+> one cannot rely on the response just turning up eventually.
+
+Could it be safe to assume that it will lose only a single AT command? =
+
+In that case, it should be enough to send just two AT's. Once the first =
+
+OK is received, you could wait 500 ms for the second OK, or retry the =
+
+second AT in case of a timeout?
+
+No lost AT:
+  > AT   // Send first
+  > AT   // Send second and wait
+  < OK   // Wait 500 ms
+  < OK   // Start initialization
+
+One lost AT
+  > AT   // Send first
+  > AT   // Send second and wait
+  < OK   // Wait 500 ms
+  > AT   // Retry second
+  < OK   // Start initialization
+
+> The thing that wasn't clear to me, though, was why every invocation of =
+
+> init_timeout_cb doesn't result in a new AT command being sent?=C2=A0 It's =
+
+> like the command is set to be retried in the first invocation, but it =
+
+> never gets sent so the subsequent retries amount to no-ops.=C2=A0 This =
+
+> behaviour is agreeable in this case, but I don't quite understand why it =
+
+> works this way...
+
+Can the usb-to-serial driver block further writes until the modem is ready?
+
+// Martin
+
+--===============8389337688085249762==--
 
