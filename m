@@ -1,110 +1,207 @@
-Content-Type: multipart/mixed; boundary="===============8424543149694337453=="
+Content-Type: multipart/mixed; boundary="===============4260887734826578741=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: [PATCH v2 1/1] ublox: rework device initialization sequence
-Date: Wed, 25 Sep 2019 05:44:06 +0200
-Message-ID: <d48fc281-bf0c-5870-9043-042493c2254e@norrbonn.se>
-In-Reply-To: <80d85787-2bf2-afb9-aefa-1cf68b0fafd4@geanix.com>
+Subject: Re: [PATCH] ublox: network-registration: Check ureg for tech also for
+ L2 modems
+Date: Wed, 25 Sep 2019 06:05:10 +0200
+Message-ID: <b3aa0488-0ec9-54a8-ebc6-671969b810cb@norrbonn.se>
+In-Reply-To: <20190924161112.32561-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8424543149694337453==
+--===============4260887734826578741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Richard,
 
-On 24/09/2019 21:20, Martin Hundeb=C3=B8ll wrote:
-> Hi,
+On 24/09/2019 18:11, richard.rojfors(a)gmail.com wrote:
+> From: Richard R=C3=B6jfors <richard@puffinpack.se>
 > =
 
-> On 24/09/2019 20.09, Martin Hundeb=C3=B8ll wrote:
->> On 24/09/2019 19.23, Denis Kenzior wrote:
->>>> Furthermore, there's not an AT command sent every 500 ms.=C2=A0 The =
+> It seems like the CREG reporting from the L2 modems are quite
+> buggy. An example for a L210 where CREG reports UTRAN while
+> COPS and UREG reports LTE. A manual poll also indicates LTE.
+> =
 
->>>> command gets requeued after 500ms, but it doesn't actually go out =
+> I also found that the technology mapping was incorrect,
+> probably confused with enum packet_bearer.
+> =
 
->>>> until the modem responds to the first one... not quite sure why this =
+> A commented log showing where CREG is not trustable:
+> =
 
->>>> works, to be honest.
->>>>
->>>
->>> Funny.=C2=A0 But not real confidence inspiring :)
->>>
->>> Martin, any ideas what could be going wrong here?
->>
->> The code looks quite familiar :)
+> UREG indicates LTE
+> 21:59:29 : < \r\n+UREG: 7\r\n
+> 21:59:29 : < \r\n+CIEV: 9,2\r\n
+> 21:59:29 : < \r\n+CGEV: NW MODIFY 1,0,0\r\n
+> 21:59:31 : < \r\n+CIEV: 2,2\r\n
+> 21:59:39 : < \r\n+CIEV: 2,3\r\n
+> 21:59:44 : < \r\n+CIEV: 2,2\r\n
+> 22:01:38 : < \r\n+CIEV: 2,3\r\n
+> 22:01:43 : < \r\n+CIEV: 2,2\r\n
+> =
 
-For good reason! :)
+> A CREG indicating UTRAN with HSDPA and HSUPA
+> 22:29:39 : < \r\n+CREG: 5,"0000","00000000",6\r\n
+> 22:29:39 : > AT\r
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:39 : > AT+COPS=3D3,2\r
+> 22:29:39 : < \r\n+CIEV: 9,2\r\n
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:39 : > AT+COPS?\r
+> =
 
->>
->> Jonas, do you have a log with OFONO_AT_DEBUG=3D1 set?
+> An immediate cops indicating LTE
+> 22:29:39 : < \r\n+COPS: 0,2,"24007",7\r\n
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:39 : > AT+CSQ\r
+> 22:29:39 : < \r\n+CIEV: 2,4\r\n
+> 22:29:39 : < \r\n+CSQ: 26,4\r\n
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:39 : > AT+CGATT=3D1\r
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:39 : > AT+COPS=3D3,0\r
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:39 : > AT+COPS?\r
+> =
+
+> Another cops also indicates LTE
+> 22:29:39 : < \r\n+COPS: 0,0,"Tele2",7\r\n <- 7: LTE
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:39 : > AT+CGREG?\r
+> =
+
+> CGREG indicates unknown -> normal on LTE
+> 22:29:39 : < \r\n+CGREG: 2,4\r\n
+> 22:29:39 : < \r\nOK\r\n
+> 22:29:44 : < \r\n+CIEV: 9,2\r\n
+> 22:29:46 : < \r\n+CIEV: 2,2\r\n
+> 22:56:23 : < \r\n+CIEV: 2,3\r\n
+> 22:56:28 : < \r\n+CIEV: 2,2\r\n
+> 22:59:40 : < \r\n+CIEV: 2,4\r\n
+> =
+
+> Manual poll shows we are running LTE
+> at+creg?
+> +CREG: 2,5,"2AFC","01DB0206",7
+> =
+
+> OK
+
+For the TOBY-L4, RAT changes won't trigger a CREG URC... for whatever =
+
+reason, this command is so brittle that they needed to bypass it with a =
+
+UREG command.  For the L2, they don't bother to document this, but it =
+
+appears to suffer from the same deficiencies as the L4.  CGREG and =
+
+friends appear to suffer from the same ailment... they don't have a firm =
+
+grasp of the overall state so they return "unknown" as a fallback.
+
+
+> ---
+>   drivers/ubloxmodem/network-registration.c | 34 +++++++++++++++++++----
+>   1 file changed, 28 insertions(+), 6 deletions(-)
+> =
+
+> diff --git a/drivers/ubloxmodem/network-registration.c b/drivers/ubloxmod=
+em/network-registration.c
+> index 64ef8076..69af4644 100644
+> --- a/drivers/ubloxmodem/network-registration.c
+> +++ b/drivers/ubloxmodem/network-registration.c
+> @@ -58,6 +58,7 @@ struct tech_query {
+>   	int status;
+>   	int lac;
+>   	int ci;
+> +	int tech;
+>   	struct ofono_netreg *netreg;
+>   };
+>   =
+
+> @@ -235,20 +236,40 @@ static void ublox_query_tech_cb(gboolean ok, GAtRes=
+ult *result,
+>   		return;
+>   =
+
+>   	switch (state) {
+> +	case 0:
+> +		/* Not registered for PS, then we have to trust CREG... */
+> +		tech =3D tq->tech;
+> +		break;
+> +	case 1:
+> +		tech =3D ACCESS_TECHNOLOGY_GSM;
+> +		break;
+> +	case 2:
+> +		tech =3D ACCESS_TECHNOLOGY_GSM_EGPRS;
+> +		break;
+> +	case 3:
+> +		tech =3D ACCESS_TECHNOLOGY_UTRAN;
+> +		break;
+>   	case 4:
+> -		tech =3D 5;
+> +		tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA;
+>   		break;
+>   	case 5:
+> -		tech =3D 4;
+> +		tech =3D ACCESS_TECHNOLOGY_UTRAN_HSUPA;
+> +		break;
+> +	case 6:
+> +		tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA;
+> +		break;
+> +	case 7:
+> +		tech =3D ACCESS_TECHNOLOGY_EUTRAN;
+>   		break;
+>   	case 8:
+> -		tech =3D 1;
+> +		tech =3D ACCESS_TECHNOLOGY_GSM;
+>   		break;
+>   	case 9:
+> -		tech =3D 2;
+> +		tech =3D ACCESS_TECHNOLOGY_GSM_EGPRS;
+>   		break;
+>   	default:
+> -		tech =3D state;
+> +		/* Not registered for PS or something unknown, trust CREG... */
+> +		tech =3D tq->tech;
+>   	}
+>   =
+
+>   error:
+> @@ -270,12 +291,13 @@ static void creg_notify(GAtResult *result, gpointer=
+ user_data)
+>   	if (status !=3D 1 && status !=3D 5)
+>   		goto notify;
+>   =
+
+> -	if (ublox_is_toby_l4(nd->model)) {
+> +	if (ublox_is_toby_l4(nd->model) || ublox_is_toby_l2(nd->model)) {
+>   		tq =3D g_new0(struct tech_query, 1);
+>   =
+
+>   		tq->status =3D status;
+>   		tq->lac =3D lac;
+>   		tq->ci =3D ci;
+> +		tq->tech =3D tech;
+>   		tq->netreg =3D netreg;
+>   =
+
+>   		if (g_at_chat_send(nd->at_data.chat, "AT+UREG?", ureg_prefix,
 > =
 
 
-ofonod[31545]: Aux: > AT\r
-ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
-ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
-ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
-ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
-ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
-ofonod[31545]: Aux: > AT\r
-ofonod[31545]: Aux: < AT\r
-ofonod[31545]: Aux: < AT\r
-ofonod[31545]: Aux: < \r\nOK\r\n
-ofonod[31545]: plugins/ublox.c:init_cmd_cb() 0x563f7c2cebc0
-ofonod[31545]: Aux: < \r\nOK\r\n
-ofonod[31545]: Aux: < \r\n+AT: READY\r\n
-ofonod[31545]: plugins/ublox.c:init_timeout_cb() 0x563f7c2cebc0
-ofonod[31545]: Aux: > ATE0\r
-ofonod[31545]: Aux: < ATE0
-ofonod[31545]: Aux: < \r\r\nOK\r\n
++1, looks good.  I'm even inclined to say we should do this for all =
 
+u-Blox modems, but since I don't have access to any other models it's =
 
-> For the record, here one from my setup:
-> =
+probably best to just add them to this list one by one as they become =
 
-> UART: > AT\r
-> UART: < \371\013s\001\222\371
-> ../git/plugins/quectel.c:init_timeout_cb() 0x610000000d40
-> UART: > AT\r
-> UART: < \r\nOK\r\n
-> ../git/plugins/quectel.c:init_cmd_cb() 0x610000000d40
-> ../git/src/modem.c:get_modem_property() modem 0x610000000d40 property =
-
-> RtsCts
-> UART: > ATE0\r
-> UART: < \r\nOK\r\n
-> =
-
-
-So yours looks a bit different... you really do lose the first AT =
-
-command into a black hole.  The uBlox modem seems to not lose anything =
-
-sent over the USB bus but rather buffers it up and responds later.  That =
-
-said, according to the documentation it _could_ lose the AT command so =
-
-one cannot rely on the response just turning up eventually.
-
-The thing that wasn't clear to me, though, was why every invocation of =
-
-init_timeout_cb doesn't result in a new AT command being sent?  It's =
-
-like the command is set to be retried in the first invocation, but it =
-
-never gets sent so the subsequent retries amount to no-ops.  This =
-
-behaviour is agreeable in this case, but I don't quite understand why it =
-
-works this way...
+available for test.
 
 /Jonas
 
-
-
-
---===============8424543149694337453==--
+--===============4260887734826578741==--
 
