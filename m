@@ -1,40 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============7090819020810441266=="
+Content-Type: multipart/mixed; boundary="===============0839904177823902562=="
 MIME-Version: 1.0
-From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCH] gprs: free interface name in gprs_context_remove()
-Date: Thu, 26 Sep 2019 21:45:00 +0200
-Message-ID: <20190926194500.228892-1-martin@geanix.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] gprs: free interface name in gprs_context_remove()
+Date: Thu, 26 Sep 2019 14:50:54 -0500
+Message-ID: <43f52f6a-6596-52aa-9ede-53f860334d23@gmail.com>
+In-Reply-To: <20190926194500.228892-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7090819020810441266==
+--===============0839904177823902562==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/gprs.c | 1 +
- 1 file changed, 1 insertion(+)
+Hi Martin,
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 8df983a9..a8702958 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -2794,6 +2794,7 @@ static void gprs_context_remove(struct ofono_atom *at=
-om)
- 	if (gc->driver && gc->driver->remove)
- 		gc->driver->remove(gc);
- =
+On 9/26/19 2:45 PM, Martin Hundeb=C3=B8ll wrote:
+> ---
+>   src/gprs.c | 1 +
+>   1 file changed, 1 insertion(+)
 
-+	g_free(gc->interface);
- 	g_free(gc);
- }
- =
+Applied, thanks.
 
--- =
-
-2.23.0
+Regards,
+-Denis
 
 
---===============7090819020810441266==--
+--===============0839904177823902562==--
 
