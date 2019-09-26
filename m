@@ -1,81 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============5714916877069667704=="
+Content-Type: multipart/mixed; boundary="===============4100994327756393852=="
 MIME-Version: 1.0
-From: Borwankar, Antara <antara.borwankar@intel.com>
-Subject: RE: [PATCH] atmodem: fix to populate activated gprs context ip
- settings
-Date: Thu, 26 Sep 2019 11:50:51 +0000
-Message-ID: <9BCC1739A7EADA4790E1FFF4123FB3268BB655BE@BGSMSX101.gar.corp.intel.com>
-In-Reply-To: <1569497007-11249-1-git-send-email-antara.borwankar@intel.com>
+From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: Re: [PATCHv3] quectel: handle sim states
+Date: Thu, 26 Sep 2019 21:26:16 +0200
+Message-ID: <87fdc777-3440-5e07-e2e6-da298d78ed03@geanix.com>
+In-Reply-To: <7f027d2d-f323-61e7-eedc-6b7a56c6eb83@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5714916877069667704==
+--===============4100994327756393852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dennis,
+Hi Denis,
 
-I am facing this issue because for xmm7mode we get default cid as 0. =
+On 24/09/2019 22.40, Denis Kenzior wrote:
+>>> I tried implementing what you suggest - see the attached patch. But I =
 
-In at_cgdcont_read_cb when cids =3D l_uintset_new(activated_cid); is called
-It will create  a set with size zero hence the check in at_cgdcont_parse is=
- failing.
+>>> still get "SMS not supported by this modem.".
+>>>
+>>> The attached log shows quectel_post_sim() being called (line 584) way =
 
-Do you think this fix is fine? =
+>>> before QINISTAT returns 3 (line 686).
+>>>
+>>> Is this because my SIM isn't locked, and so the =
 
-Should I put handling for cid 0 under vendor flag check.
+>>> ofono_sim_inserted_notify() call makes it go all the way?
+>>>
+>>> I can work around it by calling ofono_sim_inserted_notify() either if =
 
-Regards
-Antara =
+>>> the SIM is locked, or/and when qinistat returns 3.
+>>
+>> It also happens on a locked SIM - log attached.
+>>
+> =
 
+> So in your log:
+> =
 
------Original Message-----
-From: Borwankar, Antara =
+> ofonod[3982107]: ../git/plugins/quectel.c:sim_watch_cb() 0x610000000d40
+> ofonod[3982107]: ../git/src/sim.c:sim_enter_pin_cb() Waiting for =
 
-Sent: Thursday, September 26, 2019 4:53 PM
-To: ofono(a)ofono.org
-Cc: Borwankar, Antara <antara.borwankar@intel.com>; denkenz(a)gmail.com
-Subject: [PATCH] atmodem: fix to populate activated gprs context ip settings
+> ofono_sim_initialized_notify
+> =
 
-Function to get ipv4 and ipv6 settings for first default activated context =
-in LTE was not getting called after pdp activation.
-Calling ofono_gprs_cid_activated function for last_auto_context_id.
----
- drivers/atmodem/gprs.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+> So we're supposed to be waiting here for a bit.=C2=A0 Somehow we're not o=
+r =
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c index 16f4927.=
-.71a8631 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -194,6 +194,7 @@ static void at_cgdcont_parse(struct ofono_gprs *gprs, G=
-AtResult *result,
- 				struct l_uintset *cids)
- {
- 	GAtResultIter iter;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
- =
+> you're calling ofono_sim_initialized early.=C2=A0 Perhaps the default sim =
 
- 	g_at_result_iter_init(&iter, result);
- =
+> driver is doing this?=C2=A0 Check this first.
 
-@@ -204,7 +205,8 @@ static void at_cgdcont_parse(struct ofono_gprs *gprs, G=
-AtResult *result,
- 		if (!g_at_result_iter_next_number(&iter, &read_cid))
- 			break;
- =
+Spot on:
+https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/drivers/atmodem=
+/sim.c?id=3D93f03865f731fb4b9d368b8e99bd458aa0efca53#n1357
 
--		if (!l_uintset_contains(cids, read_cid))
-+		if (!l_uintset_contains(cids, read_cid) &&
-+			read_cid !=3D gd->last_auto_context_id)
- 			continue;
- =
+Patches coming up.
 
- 		/* ignore protocol */
---
-1.9.1
+// Martin
 
-
---===============5714916877069667704==--
+--===============4100994327756393852==--
 
