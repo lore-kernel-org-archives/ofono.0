@@ -1,56 +1,165 @@
-Content-Type: multipart/mixed; boundary="===============3278623134940252736=="
+Content-Type: multipart/mixed; boundary="===============3306770235095182444=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] udev: Adding PCIe as a subsystem in udev
-Date: Thu, 26 Sep 2019 20:09:57 -0500
-Message-ID: <b03847fa-9f4c-7e7b-422e-7086fe2aace1@gmail.com>
-In-Reply-To: <9BCC1739A7EADA4790E1FFF4123FB3268BB6557C@BGSMSX101.gar.corp.intel.com>
+Date: Thu, 26 Sep 2019 20:20:02 -0500
+Message-ID: <3373e7a4-c1a6-cddf-f186-a960cd33d065@gmail.com>
+In-Reply-To: <1569489577-5992-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3278623134940252736==
+--===============3306770235095182444==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Antara,
 
-On 9/26/19 4:46 AM, Borwankar, Antara wrote:
-> Hi Denis,
-> =
+<snip>
 
-> Regarding your below query
-> =
+> @@ -1612,16 +1631,8 @@ static void add_device(const char *syspath, const =
+char *devname,
+>   	if (devpath =3D=3D NULL)
+>   		return;
+>   =
 
-> - Can you tell me why this new addition uses vid/pid with a 0x prefix whi=
-le the rest of the table does not?  It seems weird & inconsistent.
-> Actually in case of pci device vendor and device id read using libudev AP=
-I is returning as "0x8086" and "0x7560" strings respectively. So I have add=
-ed the same values in vendor_list table.
+> -	devnode =3D udev_device_get_devnode(device);
+> -	if (devnode =3D=3D NULL) {
+> -		devnode =3D udev_device_get_property_value(device, "INTERFACE");
+> -		if (devnode =3D=3D NULL)
+> -			return;
+> -	}
+> -
+> -	usb_interface =3D udev_device_get_parent_with_subsystem_devtype(device,
+> -						"usb", "usb_interface");
+> -	if (usb_interface =3D=3D NULL)
+> +	subsystem =3D udev_device_get_subsystem(device);
+> +	if (subsystem =3D=3D NULL)
+>   		return;
 
-That is strange.  Okay, so maybe we should just add a different look-up =
+Lets just make the modem type into an argument to this function, since =
 
-table to handle this.  Perhaps pci_driver_list[] and use vids/pids with =
+check_pci_device and check_usb_device already know this.
 
-0x prefixes there.
+>   =
 
-> In case of usb device the vendor and device strings returned by same libu=
-dev API does not have "0x" prefix. I don=E2=80=99t have any idea why it is =
-so.
-> =
+>   	modem =3D g_hash_table_lookup(modem_list, syspath);
+> @@ -1630,7 +1641,12 @@ static void add_device(const char *syspath, const =
+char *devname,
+>   		if (modem =3D=3D NULL)
+>   			return;
+>   =
 
-> If you insist I can remove this prefix 0x from vendor_list table and chan=
-ge the implementation of check_pci_device() function to handle comparison o=
-f vendor and model strings with vid, pid form vendor_list.
+> -		modem->type =3D MODEM_TYPE_USB;
+> +		if ((g_str_equal(subsystem, "usb") =3D=3D TRUE) ||
+> +				(g_str_equal(subsystem, "usbmisc") =3D=3D TRUE))
+> +			modem->type =3D MODEM_TYPE_USB;
+> +		else if (g_str_equal(subsystem, "pci") =3D=3D TRUE)
+> +			modem->type =3D MODEM_TYPE_PCIE;
+> +
+>   		modem->syspath =3D g_strdup(syspath);
+>   		modem->devname =3D g_strdup(devname);
+>   		modem->driver =3D g_strdup(driver);
+> @@ -1642,30 +1658,60 @@ static void add_device(const char *syspath, const=
+ char *devname,
+>   		g_hash_table_replace(modem_list, modem->syspath, modem);
+>   	}
+>   =
 
-Yep, that might be another alternative.  I'd be fine with either. =
+> -	interface =3D udev_device_get_property_value(usb_interface, "INTERFACE"=
+);
+> -	number =3D udev_device_get_property_value(device, "ID_USB_INTERFACE_NUM=
+");
+> +	label =3D udev_device_get_property_value(device, "OFONO_LABEL");
+>   =
 
-Having some entries with 0x and some without will confuse people and =
+> -	/* If environment variable is not set, get value from attributes (or pa=
+rent's ones) */
+> -	if (number =3D=3D NULL) {
+> -		number =3D udev_device_get_sysattr_value(device,
+> +	if (modem->type =3D=3D MODEM_TYPE_USB) {
+> +		devnode =3D udev_device_get_devnode(device);
+> +		if (devnode =3D=3D NULL) {
+> +			devnode =3D udev_device_get_property_value(device,
+> +							"INTERFACE");
+> +			if (devnode =3D=3D NULL)
+> +				return;
+> +		}
+> +
+> +		usb_interface =3D udev_device_get_parent_with_subsystem_devtype(
+> +							device, "usb",
+> +							"usb_interface");
+> +		if (usb_interface =3D=3D NULL)
+> +			return;
+> +
+> +		interface =3D udev_device_get_property_value(usb_interface,
+> +							"INTERFACE");
+> +		number =3D udev_device_get_property_value(device,
+> +						"ID_USB_INTERFACE_NUM");
+> +
+> +		if (number =3D=3D NULL)
+> +			number =3D udev_device_get_sysattr_value(device,
+>   							"bInterfaceNumber");
+>   =
 
-lead to bugs.
+> -		if (number =3D=3D NULL) {
+> -			parent =3D udev_device_get_parent(device);
+> -			number =3D udev_device_get_sysattr_value(parent,
+> +		if (!label)
+> +			label =3D udev_device_get_property_value(usb_interface,
+> +							"OFONO_LABEL");
+> +	} else {
+> +		devnode =3D NULL;
+> +		interface =3D udev_device_get_property_value(device,
+> +							"INTERFACE");
+> +		number =3D udev_device_get_sysattr_value(device,
+>   							"bInterfaceNumber");
+> -		}
+> -	}
+>   =
+
+> -	label =3D udev_device_get_property_value(device, "OFONO_LABEL");
+> -	if (!label)
+> -		label =3D udev_device_get_property_value(usb_interface,
+> +		if (!label)
+> +			label =3D udev_device_get_property_value(device,
+>   							"OFONO_LABEL");
+> +	}
+
+You can drop OFONO_LABEL handling for pci devices completely.  I don't =
+
+even remember why that was used but it definitely should not be needed =
+
+unless you're trying to be backward compatible with some legacy things, =
+
+which you're not.
+
+>   =
+
+> -	subsystem =3D udev_device_get_subsystem(device);
+> +	/*
+> +	 *If environment variable is not set, get value from attributes
+> +	 *(or parent's ones)
+> +	 */
+> +	if (number =3D=3D NULL) {
+> +		parent =3D udev_device_get_parent(device);
+> +		number =3D udev_device_get_sysattr_value(parent,
+> +							"bInterfaceNumber");
+> +	}
+>   =
+
+>   	if (modem->sysattr !=3D NULL)
+> -		sysattr =3D udev_device_get_sysattr_value(device, modem->sysattr);
+> +		sysattr =3D udev_device_get_sysattr_value(device,
+> +							modem->sysattr);
+>   	else
+>   		sysattr =3D NULL;
+>   =
+
+<snip>
 
 Regards,
 -Denis
 
---===============3278623134940252736==--
+--===============3306770235095182444==--
 
