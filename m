@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============8872242773188601120=="
+Content-Type: multipart/mixed; boundary="===============8458800139173843882=="
 MIME-Version: 1.0
 From: Tom Nguyen <tomirq@earthlink.net>
-Subject: [PATCH v2] qmimodem: support wake on SMS receive
+Subject: [PATCH v3] qmimodem: support wake on SMS receive
 Date: Sat, 28 Sep 2019 01:48:39 +0000
-Message-ID: <33895343.1315.1558616914012@wamui-dingo.atl.sa.earthlink.net>
+Message-ID: <276382527.7616.1558635312492@wamui-eagle.atl.sa.earthlink.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8872242773188601120==
+--===============8458800139173843882==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -28,13 +28,13 @@ Changes to support suspend/resume with wake on SMS:
   1. Process message upon event indication and delete.
   2. Then check for possibly more messages to process.
 ---
- drivers/qmimodem/sms.c | 344 +++++++++++++++++++++++++++++++++++++++++----=
+ drivers/qmimodem/sms.c | 327 ++++++++++++++++++++++++++++++++++++++++-----=
 ----
- drivers/qmimodem/wms.h |  77 ++++++++---
- 2 files changed, 348 insertions(+), 73 deletions(-)
+ drivers/qmimodem/wms.h |  77 +++++++++---
+ 2 files changed, 332 insertions(+), 72 deletions(-)
 
 diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c index 1e93039.=
-.73af9fe 100644
+.081492b 100644
 --- a/drivers/qmimodem/sms.c
 +++ b/drivers/qmimodem/sms.c
 @@ -39,8 +39,15 @@ struct sms_data {
@@ -53,24 +53,15 @@ diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c index 1e93039.=
 +
  static void get_smsc_addr_cb(struct qmi_result *result, void *user_data)  {
  	struct cb_data *cbd =3D user_data;
-@@ -334,21 +341,81 @@ error:
+@@ -334,21 +341,78 @@ error:
  	g_free(cbd);
  }
  =
 
--static void raw_read_cb(struct qmi_result *result, void *user_data)
-+static void delete_msg_cb(struct qmi_result *result, void *user_data)
- {
- 	struct ofono_sms *sms =3D user_data;
--	const struct qmi_wms_raw_message* msg;
--	uint16_t len;
--	uint16_t error;
++static void delete_msg_cb(struct qmi_result *result, void *user_data) {
++	struct ofono_sms *sms =3D user_data;
 +	uint16_t err;
- =
-
--	if (qmi_result_set_error(result, &error)) {
--		DBG("Raw read error: %d (%s)", error,
--			qmi_result_get_error(result));
++
 +	DBG("");
 +
 +	if (qmi_result_set_error(result, &err))
@@ -92,7 +83,7 @@ diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c index 1e93039.=
 +
 +	param =3D qmi_param_new();
 +	if (param =3D=3D NULL)
-+		goto done;
++		return;
 +
 +	qmi_param_append_uint8(param, QMI_WMS_PARAM_DEL_STORE,
 +				QMI_WMS_STORAGE_TYPE_NV);
@@ -116,25 +107,29 @@ diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c index 1e93039.=
 +
 +	if (qmi_service_send(data->wms, QMI_WMS_DELETE, param,
 +			func, sms, NULL) > 0)
- 		return;
++		return;
 +
 +	qmi_param_free(param);
-+
-+done:
-+	return;
 +}
 +
-+static void raw_read_cb(struct qmi_result *result, void *user_data) {
-+	struct ofono_sms *sms =3D user_data;
+ static void raw_read_cb(struct qmi_result *result, void *user_data)  {
+ 	struct ofono_sms *sms =3D user_data;
+-	const struct qmi_wms_raw_message* msg;
+-	uint16_t len;
+-	uint16_t error;
 +	struct sms_data *data =3D ofono_sms_get_data(sms);
 +	const struct qmi_wms_raw_message *msg;
 +	uint16_t err;
-+
+ =
+
+-	if (qmi_result_set_error(result, &error)) {
+-		DBG("Raw read error: %d (%s)", error,
+-			qmi_result_get_error(result));
 +	DBG("");
 +
 +	if (qmi_result_set_error(result, &err)) {
 +		DBG("Err: read %d - %s", err, qmi_result_get_error(result));
-+		goto done;
+ 		return;
  	}
  =
 
@@ -144,7 +139,7 @@ diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c index 1e93039.=
  	if (msg) {
  		uint16_t plen;
  		uint16_t tpdu_len;
-@@ -357,9 +424,165 @@ static void raw_read_cb(struct qmi_result *result, vo=
+@@ -357,9 +421,153 @@ static void raw_read_cb(struct qmi_result *result, vo=
 id *user_data)
  		tpdu_len =3D plen - msg->msg_data[0] - 1;
  =
@@ -156,9 +151,6 @@ id *user_data)
 +
 +	/* delete read msg */
 +	delete_msg(sms, QMI_WMS_MT_UNDEFINE);
-+
-+done:
-+	return;
 +}
 +
 +static void raw_read(struct ofono_sms *sms, uint8_t type, uint32_t ndx) =
@@ -171,7 +163,7 @@ id *user_data)
 +
 +	param =3D qmi_param_new();
 +	if (param =3D=3D NULL)
-+		goto done;
++		return;
 +
 +	data->rd_msg_id.type =3D type;
 +	data->rd_msg_id.ndx =3D ndx;
@@ -189,9 +181,6 @@ id *user_data)
 +		return;
 +
 +	qmi_param_free(param);
-+
-+done:
-+	return;
 +}
 +
 +static void get_msg_list_cb(struct qmi_result *result, void *user_data) =
@@ -250,7 +239,7 @@ id *user_data)
 +
 +	param =3D qmi_param_new();
 +	if (param =3D=3D NULL)
-+		goto done;
++		return;
 +
 +	data->msg_list_chk =3D true;
 +
@@ -267,9 +256,6 @@ id *user_data)
 +		return;
 +
 +	qmi_param_free(param);
-+
-+done:
-+	return;
 +}
 +
 +static void get_msg_protocol_cb(struct qmi_result *result, void =
@@ -284,7 +270,7 @@ id *user_data)
 +	if (qmi_result_set_error(result, &err) &&
 +			(err !=3D QMI_ERR_OP_DEVICE_UNSUPPORTED)) {
 +		DBG("Err: protocol %d - %s", err, qmi_result_get_error(result));
-+		goto done;
++		return;
 +	}
 +
 +	if (err !=3D QMI_ERR_OP_DEVICE_UNSUPPORTED) {
@@ -301,9 +287,6 @@ id *user_data)
 +
 +	/* check for messages */
 +	get_msg_list(sms);
-+
-+done:
-+	return;
 +}
 +
 +static void get_msg_protocol(struct ofono_sms *sms) {
@@ -317,7 +300,7 @@ id *user_data)
  =
 
  static void event_notify(struct qmi_result *result, void *user_data) @@ -3=
-67,66 +590,72 @@ static void event_notify(struct qmi_result *result, void *=
+67,66 +575,72 @@ static void event_notify(struct qmi_result *result, void *=
 user_data)
  	struct ofono_sms *sms =3D user_data;
  	struct sms_data *data =3D ofono_sms_get_data(sms);
@@ -441,7 +424,7 @@ user_data)
  =
 
  static void get_routes_cb(struct qmi_result *result, void *user_data) @@ -=
-445,7 +674,7 @@ static void get_routes_cb(struct qmi_result *result, void *=
+445,7 +659,7 @@ static void get_routes_cb(struct qmi_result *result, void *=
 user_data)
  		goto done;
  =
@@ -453,7 +436,7 @@ user_data)
  =
 
  	num =3D GUINT16_FROM_LE(list->count);
-@@ -468,8 +697,8 @@ static void get_routes_cb(struct qmi_result *result, vo=
+@@ -468,8 +682,8 @@ static void get_routes_cb(struct qmi_result *result, vo=
 id *user_data)
  	new_list->count =3D GUINT16_TO_LE(1);
  	new_list->route[0].msg_type =3D QMI_WMS_MSG_TYPE_P2P;
@@ -466,7 +449,7 @@ id *user_data)
 
  	param =3D qmi_param_new();
  	if (!param)
-@@ -478,9 +707,9 @@ static void get_routes_cb(struct qmi_result *result, vo=
+@@ -478,9 +692,9 @@ static void get_routes_cb(struct qmi_result *result, vo=
 id *user_data)
  	qmi_param_append(param, QMI_WMS_PARAM_ROUTE_LIST, len, new_list);
  	qmi_param_append_uint8(param, QMI_WMS_PARAM_STATUS_REPORT, 0x01);
@@ -483,7 +466,7 @@ id *user_data)
  	qmi_param_free(param);
  =
 
-@@ -524,6 +753,9 @@ static void create_wms_cb(struct qmi_service *service, =
+@@ -524,6 +738,9 @@ static void create_wms_cb(struct qmi_service *service, =
 void *user_data)
  =
 
@@ -633,5 +616,6 @@ _));
 --
 1.9.1
 
---===============8872242773188601120==--
+
+--===============8458800139173843882==--
 
