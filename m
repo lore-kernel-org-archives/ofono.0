@@ -1,51 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7884786329530547012=="
+Content-Type: multipart/mixed; boundary="===============6397330294499118749=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: CGDCONT handling for cid 0
-Date: Mon, 30 Sep 2019 11:15:36 -0500
-Message-ID: <5e3296f9-e8c1-617d-23f2-b7b5573e229b@gmail.com>
-In-Reply-To: <1569566792-2914-1-git-send-email-antara.borwankar@intel.com>
+Subject: Re: [PATCH] udev: Adding PCIe as a subsystem in udev
+Date: Mon, 30 Sep 2019 11:29:29 -0500
+Message-ID: <621b5480-fb84-1b3c-a560-691c3da1b46e@gmail.com>
+In-Reply-To: <1569563480-16711-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7884786329530547012==
+--===============6397330294499118749==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Antara,
 
-On 9/27/19 1:46 AM, Antara Borwankar wrote:
-> Added handling for cid 0 in +CGDCONT callback.
+On 9/27/19 12:51 AM, Antara Borwankar wrote:
+> Adding support for enumerating PCIe types of modems in ofono
 > ---
->   drivers/atmodem/gprs.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>   plugins/udevng.c | 178 +++++++++++++++++++++++++++++++++++++++++-------=
+-------
+>   1 file changed, 135 insertions(+), 43 deletions(-)
 > =
 
-> diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-> index 16f4927..defbba0 100644
-> --- a/drivers/atmodem/gprs.c
-> +++ b/drivers/atmodem/gprs.c
-> @@ -240,7 +240,7 @@ static void at_cgdcont_read_cb(gboolean ok, GAtResult=
- *result,
->   		return;
->   	}
->   =
 
-> -	cids =3D l_uintset_new(activated_cid);
-> +	cids =3D l_uintset_new_from_range(0,activated_cid);
-
-Applied with a silent amend to put a space between ',' and 2nd argument.
+<snip>
 
 >   =
 
->   	l_uintset_put(cids, activated_cid);
->   =
+> +static struct {
 
-> =
+I made this static const struct {
 
+> +	const char *driver;
+> +	const char *drv;
+> +	const char *vid;
+> +	const char *pid;
+> +} pci_driver_list[] =3D {
+> +	{ "xmm7xxx",	"imc_ipc",	"0x8086",	"0x7560"},
+> +	{ }
+> +};
+> +
+
+applied, thanks.
 
 Regards,
 -Denis
---===============7884786329530547012==--
+
+--===============6397330294499118749==--
 
