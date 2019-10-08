@@ -1,114 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============8752353383353295743=="
+Content-Type: multipart/mixed; boundary="===============0724680286093518118=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: [PATCHv3 1/2] gatmux: take reference to mux object while processing
- incoming data
-Date: Tue, 08 Oct 2019 20:44:40 +0200
-Message-ID: <20191008184441.7410-1-martin@geanix.com>
+Subject: [PATCHv3 2/2] gatmux: disable destroy notification on read watcher
+Date: Tue, 08 Oct 2019 20:44:41 +0200
+Message-ID: <20191008184441.7410-2-martin@geanix.com>
+In-Reply-To: <20191008184441.7410-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8752353383353295743==
+--===============0724680286093518118==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When closing down a cmux object, the address sanitizer detects a
-use-after-free in gatmux.c (see below).
+With the reference in place in received_data(), the address sanitizer
+now encounters a use-after-free when the destroy notification is
+dispatched for the read watcher (see below).
 
-Avoid this by taking a reference to the mux object during the processing
-in received_data().
+Fix this by remove the destroy notification callback, as it isn't really
+used except in the shutdown function.
 
-ofonod[3640549]: ../git/plugins/quectel.c:cfun_disable() 0x610000000b40
-ofonod[3640549]: ../git/plugins/quectel.c:close_serial() 0x610000000b40
-ofonod[3640549]: ../git/plugins/quectel.c:close_mux() 0x610000000b40
-ofonod[3640549]: ../git/examples/emulator.c:powered_watch() Removing modem =
-0x610000000b40 from the list
-ofonod[3640549]: ../git/examples/emulator.c:powered_watch() Removing server=
- watch: 106
-ofonod[3640549]: ../git/src/modem.c:modem_change_state() old state: 0, new =
-state: 0
+=3D=3D5797=3D=3DERROR: AddressSanitizer: heap-use-after-free on address 0x6=
+21000ac5904 at pc 0x55c1243b1f14 bp 0x7ffdef001340 sp 0x7ffdef001330
+WRITE of size 4 at 0x621000ac5904 thread T0
+    #0 0x55c1243b1f13 in read_watcher_destroy_notify ../git/gatchat/gatmux.=
+c:660
+    #1 0x7f08a8676742  (/usr/lib/libglib-2.0.so.0+0x62742)
+    #2 0x7f08a867e2e4 in g_main_context_dispatch (/usr/lib/libglib-2.0.so.0=
++0x6a2e4)
+    #3 0x7f08a8680210  (/usr/lib/libglib-2.0.so.0+0x6c210)
+    #4 0x7f08a8681122 in g_main_loop_run (/usr/lib/libglib-2.0.so.0+0x6d122)
+    #5 0x55c1243d6703 in main ../git/src/main.c:286
+    #6 0x7f08a8423152 in __libc_start_main (/usr/lib/libc.so.6+0x27152)
+    #7 0x55c1241fe1ad in _start (/home/martin/projects/ofono/x86/src/ofonod=
++0xfd1ad)
 
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-=3D=3D3640549=3D=3DERROR: AddressSanitizer: heap-use-after-free on address =
-0x62100073dd28 at pc 0x5566b6402a21 bp 0x7ffe7a2db0e0 sp 0x7ffe7a2db0d0
-READ of size 8 at 0x62100073dd28 thread T0
-    #0 0x5566b6402a20 in debug ../git/gatchat/gatmux.c:109
-    #1 0x5566b6404bd7 in channel_close ../git/gatchat/gatmux.c:525
-    #2 0x7fa0516e44a6 in g_io_channel_shutdown (/usr/lib/libglib-2.0.so.0+0=
-x774a6)
-    #3 0x7fa0516e4644 in g_io_channel_unref (/usr/lib/libglib-2.0.so.0+0x77=
-644)
-    #4 0x5566b64048a4 in watch_finalize ../git/gatchat/gatmux.c:474
-    #5 0x7fa0516d6f6f  (/usr/lib/libglib-2.0.so.0+0x69f6f)
-    #6 0x7fa0516ac6a7 in g_slist_foreach (/usr/lib/libglib-2.0.so.0+0x3f6a7)
-    #7 0x7fa0516b277b in g_slist_free_full (/usr/lib/libglib-2.0.so.0+0x457=
-7b)
-    #8 0x5566b6403413 in dispatch_sources ../git/gatchat/gatmux.c:224
-    #9 0x5566b64039ea in received_data ../git/gatchat/gatmux.c:268
-    #10 0x7fa0516d727e in g_main_context_dispatch (/usr/lib/libglib-2.0.so.=
-0+0x6a27e)
-    #11 0x7fa0516d91c0  (/usr/lib/libglib-2.0.so.0+0x6c1c0)
-    #12 0x7fa0516da0d2 in g_main_loop_run (/usr/lib/libglib-2.0.so.0+0x6d0d=
-2)
-    #13 0x5566b6429b1b in main ../git/src/main.c:286
-    #14 0x7fa05147fee2 in __libc_start_main (/usr/lib/libc.so.6+0x26ee2)
-    #15 0x5566b62531ad in _start (/home/martin/projects/ofono/x86/src/ofono=
-d+0xfc1ad)
-
-0x62100073dd28 is located 40 bytes inside of 4672-byte region [0x62100073dd=
-00,0x62100073ef40)
+0x621000ac5904 is located 4 bytes inside of 4672-byte region [0x621000ac590=
+0,0x621000ac6b40)
 freed by thread T0 here:
-    #0 0x7fa0519256c0 in __interceptor_free /build/gcc/src/gcc/libsanitizer=
+    #0 0x7f08a88cc6b0 in __interceptor_free /build/gcc/src/gcc/libsanitizer=
 /asan/asan_malloc_linux.cc:122
-    #1 0x5566b64052d7 in g_at_mux_unref ../git/gatchat/gatmux.c:645
-    #2 0x5566b63d6d19 in close_mux ../git/plugins/quectel.c:199
-    #3 0x5566b63d7047 in close_serial ../git/plugins/quectel.c:223
-    #4 0x5566b63db62a in cfun_disable ../git/plugins/quectel.c:1056
-    #5 0x5566b63f6ae1 in at_chat_finish_command ../git/gatchat/gatchat.c:459
-    #6 0x5566b63f701b in at_chat_handle_command_response ../git/gatchat/gat=
-chat.c:521
-    #7 0x5566b63f785b in have_line ../git/gatchat/gatchat.c:600
-    #8 0x5566b63f87f1 in new_bytes ../git/gatchat/gatchat.c:759
-    #9 0x5566b640174c in received_data ../git/gatchat/gatio.c:122
-    #10 0x5566b64047b4 in watch_dispatch ../git/gatchat/gatmux.c:464
-    #11 0x5566b640313b in dispatch_sources ../git/gatchat/gatmux.c:183
-    #12 0x5566b64039ea in received_data ../git/gatchat/gatmux.c:268
-    #13 0x7fa0516d727e in g_main_context_dispatch (/usr/lib/libglib-2.0.so.=
-0+0x6a27e)
+    #1 0x55c1243b1ebf in g_at_mux_unref ../git/gatchat/gatmux.c:652
+    #2 0x55c1243b062c in received_data ../git/gatchat/gatmux.c:276
+    #3 0x7f08a867e2ce in g_main_context_dispatch (/usr/lib/libglib-2.0.so.0=
++0x6a2ce)
 
 previously allocated by thread T0 here:
-    #0 0x7fa051925ce8 in __interceptor_calloc /build/gcc/src/gcc/libsanitiz=
+    #0 0x7f08a88cccd8 in __interceptor_calloc /build/gcc/src/gcc/libsanitiz=
 er/asan/asan_malloc_linux.cc:153
-    #1 0x5566b6405009 in g_at_mux_new ../git/gatchat/gatmux.c:606
-    #2 0x5566b6407f6b in g_at_mux_new_gsm0710_basic ../git/gatchat/gatmux.c=
-:1165
-    #3 0x5566b63da9ba in cmux_cb ../git/plugins/quectel.c:882
-    #4 0x5566b63f6ae1 in at_chat_finish_command ../git/gatchat/gatchat.c:459
-    #5 0x5566b63f701b in at_chat_handle_command_response ../git/gatchat/gat=
+    #1 0x55c1243b1bf1 in g_at_mux_new ../git/gatchat/gatmux.c:613
+    #2 0x55c1243b4b53 in g_at_mux_new_gsm0710_basic ../git/gatchat/gatmux.c=
+:1172
+    #3 0x55c124386abd in cmux_gatmux ../git/plugins/quectel.c:871
+    #4 0x55c12438779f in cmux_cb ../git/plugins/quectel.c:1023
+    #5 0x55c1243a368e in at_chat_finish_command ../git/gatchat/gatchat.c:459
+    #6 0x55c1243a3bc8 in at_chat_handle_command_response ../git/gatchat/gat=
 chat.c:521
-    #6 0x5566b63f785b in have_line ../git/gatchat/gatchat.c:600
-    #7 0x5566b63f87f1 in new_bytes ../git/gatchat/gatchat.c:759
-    #8 0x5566b640174c in received_data ../git/gatchat/gatio.c:122
-    #9 0x7fa0516d727e in g_main_context_dispatch (/usr/lib/libglib-2.0.so.0=
-+0x6a27e)
+    #7 0x55c1243a4408 in have_line ../git/gatchat/gatchat.c:600
+    #8 0x55c1243a539e in new_bytes ../git/gatchat/gatchat.c:759
+    #9 0x55c1243ae2f9 in received_data ../git/gatchat/gatio.c:122
+    #10 0x7f08a867e2ce in g_main_context_dispatch (/usr/lib/libglib-2.0.so.=
+0+0x6a2ce)
 
-SUMMARY: AddressSanitizer: heap-use-after-free ../git/gatchat/gatmux.c:109 =
-in debug
+SUMMARY: AddressSanitizer: heap-use-after-free ../git/gatchat/gatmux.c:660 =
+in read_watcher_destroy_notify
 Shadow bytes around the buggy address:
-  0x0c42800dfb50: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x0c42800dfb60: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x0c42800dfb70: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x0c42800dfb80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x0c42800dfb90: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-=3D>0x0c42800dfba0: fd fd fd fd fd[fd]fd fd fd fd fd fd fd fd fd fd
-  0x0c42800dfbb0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
-  0x0c42800dfbc0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
-  0x0c42800dfbd0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
-  0x0c42800dfbe0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
-  0x0c42800dfbf0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c4280150ad0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4280150ae0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4280150af0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4280150b00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4280150b10: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=3D>0x0c4280150b20:[fd]fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c4280150b30: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c4280150b40: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c4280150b50: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c4280150b60: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c4280150b70: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
 Shadow byte legend (one shadow byte represents 8 application bytes):
   Addressable:           00
   Partially addressable: 01 02 03 04 05 06 07
@@ -129,70 +96,64 @@ Shadow byte legend (one shadow byte represents 8 application bytes):
   Left alloca redzone:     ca
   Right alloca redzone:    cb
   Shadow gap:              cc
-=3D=3D3640549=3D=3DABORTING
+=3D=3D5797=3D=3DABORTING
 ---
 
 Changes since v2:
- * narrow the scope of the taken reference to the for loop
- * defer removal of destroy notification callback to separate patch
+ * new patch to add more details
 
- gatchat/gatmux.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ gatchat/gatmux.c | 14 ++++----------
+ 1 file changed, 4 insertions(+), 10 deletions(-)
 
 diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
-index 757a5123..d50e5361 100644
+index d50e5361..4d89f039 100644
 --- a/gatchat/gatmux.c
 +++ b/gatchat/gatmux.c
-@@ -231,6 +231,7 @@ static gboolean received_data(GIOChannel *channel, GIOC=
-ondition cond,
- 	int i;
- 	GIOStatus status;
- 	gsize bytes_read;
-+	gboolean buffer_full =3D FALSE;
- =
-
- 	if (cond & G_IO_NVAL)
- 		return FALSE;
-@@ -255,6 +256,8 @@ static gboolean received_data(GIOChannel *channel, GIOC=
-ondition cond,
- 		if (mux->buf_used > 0)
- 			memmove(mux->buf, mux->buf + nread, mux->buf_used);
- =
-
-+		g_at_mux_ref(mux);
-+
- 		for (i =3D 1; i <=3D MAX_CHANNELS; i++) {
- 			int offset =3D i / 8;
- 			int bit =3D i % 8;
-@@ -267,6 +270,10 @@ static gboolean received_data(GIOChannel *channel, GIO=
-Condition cond,
- =
-
- 			dispatch_sources(mux->dlcs[i-1], G_IO_IN);
- 		}
-+
-+		buffer_full =3D mux->buf_used =3D=3D sizeof(mux->buf);
-+
-+		g_at_mux_unref(mux);
+@@ -653,13 +653,6 @@ void g_at_mux_unref(GAtMux *mux)
  	}
+ }
  =
 
- 	if (cond & (G_IO_HUP | G_IO_ERR))
-@@ -275,7 +282,7 @@ static gboolean received_data(GIOChannel *channel, GIOC=
-ondition cond,
- 	if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGAIN)
+-static void read_watcher_destroy_notify(gpointer user_data)
+-{
+-	GAtMux *mux =3D user_data;
+-
+-	mux->read_watch =3D 0;
+-}
+-
+ gboolean g_at_mux_start(GAtMux *mux)
+ {
+ 	if (mux->channel =3D=3D NULL)
+@@ -673,8 +666,7 @@ gboolean g_at_mux_start(GAtMux *mux)
+ =
+
+ 	mux->read_watch =3D g_io_add_watch_full(mux->channel, G_PRIORITY_DEFAULT,
+ 				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
+-						received_data, mux,
+-						read_watcher_destroy_notify);
++						received_data, mux, NULL);
+ =
+
+ 	mux->shutdown =3D FALSE;
+ =
+
+@@ -691,8 +683,10 @@ gboolean g_at_mux_shutdown(GAtMux *mux)
+ 	if (mux->channel =3D=3D NULL)
  		return FALSE;
  =
 
--	if (mux->buf_used =3D=3D sizeof(mux->buf))
-+	if (buffer_full)
- 		return FALSE;
+-	if (mux->read_watch > 0)
++	if (mux->read_watch > 0) {
+ 		g_source_remove(mux->read_watch);
++		mux->read_watch =3D 0;
++	}
  =
 
- 	return TRUE;
+ 	if (mux->write_watch > 0)
+ 		g_source_remove(mux->write_watch);
 -- =
 
 2.23.0
 
---===============8752353383353295743==--
+--===============0724680286093518118==--
 
