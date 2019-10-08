@@ -1,61 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============4305952058124424888=="
+Content-Type: multipart/mixed; boundary="===============7399241665081173757=="
 MIME-Version: 1.0
 From: Martin =?unknown-8bit?q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: Re: [PATCHv2] gatmux: take reference to mux object while processing
- incoming data
-Date: Tue, 08 Oct 2019 20:46:13 +0200
-Message-ID: <61193cf8-6f81-b3f4-f289-18523278b170@geanix.com>
-In-Reply-To: <22c80e86-4a7f-05da-0ca6-051284681de5@gmail.com>
+Subject: Re: [PATCH] gatmux: don't free cmux data until watchers are destroyed
+Date: Tue, 08 Oct 2019 20:47:38 +0200
+Message-ID: <6e5d0f61-6854-8f4d-ebc2-eac5a1548505@geanix.com>
+In-Reply-To: <ed1f5907-1c13-89de-f87f-3a86ebbc38f4@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4305952058124424888==
+--===============7399241665081173757==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
 
-On 08/10/2019 06.08, Denis Kenzior wrote:
->> @@ -646,13 +653,6 @@ void g_at_mux_unref(GAtMux *mux)
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
->> =C2=A0 }
->> -static void read_watcher_destroy_notify(gpointer user_data)
->> -{
->> -=C2=A0=C2=A0=C2=A0 GAtMux *mux =3D user_data;
->> -
->> -=C2=A0=C2=A0=C2=A0 mux->read_watch =3D 0;
->> -}
->> -
->> =C2=A0 gboolean g_at_mux_start(GAtMux *mux)
->> =C2=A0 {
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (mux->channel =3D=3D NULL)
->> @@ -666,8 +666,7 @@ gboolean g_at_mux_start(GAtMux *mux)
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 mux->read_watch =3D g_io_add_watch_full(m=
-ux->channel, =
 
->> G_PRIORITY_DEFAULT,
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
->> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 recei=
-ved_data, mux,
->> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 read_=
-watcher_destroy_notify);
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 recei=
-ved_data, mux, NULL);
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 mux->shutdown =3D FALSE;
->>
+On 08/10/2019 06.06, Denis Kenzior wrote:
 > =
 
-> Can you tell me why this part is needed?=C2=A0 Does glib not call =
+> On 10/7/19 1:37 PM, Martin Hundeb=C3=B8ll wrote:
+>>> Why not do something like:
+>>>
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 g_at_mux_ref(mux);
+>>>
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 for (i =3D 1; i <=3D MAX_CHANNELS && !mux->shut=
+down; i++) {
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ int offset =3D i / 8;
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ int bit =3D i % 8;
+>>>
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ if (!(mux->newdata[offset] & (1 << bit)))
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 continue;
+>>>
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ dispatch_sources(mux->dlcs[i-1], G_IO_IN);
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
+>>>
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 g_at_mux_unref(mux);
+>>>
+>>
+>> I'm afraid this isn't enough, as I still get use-after-free when using =
 
-> read_watcher_destroy_notify right away when the source is removed?
+>> gatmux in the quectel plugin (see attached log).
+> =
 
-I sent is as a separate patch to show the details.
+> That buffer size check is a bit dubious and should never happen in =
+
+> practice, it is also something that one cannot recover from if the =
+
+> condition does get hit.=C2=A0 I actually would just take it out, but you =
+can =
+
+> also just check the condition right before the mux_unref and scribble it =
+
+> to a temporary.=C2=A0 i.e.
+> =
+
+> bool buffer_full =3D false;
+> =
+
+> g_at_mux_ref();
+> =
+
+> for (...) {
+>  =C2=A0=C2=A0=C2=A0=C2=A0...
+>  =C2=A0=C2=A0=C2=A0=C2=A0dispatch_sources(...);
+> }
+> =
+
+> buffer_full =3D !mux->shutdown && mux->buf_used =3D=3D sizeof(mux->buf);
+
+Why the "!mux->shutdown" here? I would expect that to be checked before =
+
+processing the data...
 
 // Martin
---===============4305952058124424888==--
+--===============7399241665081173757==--
 
