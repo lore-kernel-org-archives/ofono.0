@@ -1,42 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============2709851445149636723=="
+Content-Type: multipart/mixed; boundary="===============7772414638669781632=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3 2/2] gatmux: disable destroy notification on read watcher
-Date: Tue, 08 Oct 2019 14:49:29 -0500
-Message-ID: <10c3c710-9e03-bb5b-2717-124121738b3e@gmail.com>
-In-Reply-To: <20191008184441.7410-2-martin@geanix.com>
+Subject: Re: [PATCHv3 1/2] quectel: rework sim detection
+Date: Fri, 11 Oct 2019 12:12:25 -0500
+Message-ID: <001e13a9-76f2-5e03-3bd4-906857d55de6@gmail.com>
+In-Reply-To: <20191007213959.20110-1-martin@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2709851445149636723==
+--===============7772414638669781632==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Martin,
 
-On 10/8/19 1:44 PM, Martin Hundeb=C3=B8ll wrote:
-> With the reference in place in received_data(), the address sanitizer
-> now encounters a use-after-free when the destroy notification is
-> dispatched for the read watcher (see below).
+On 10/7/19 4:39 PM, Martin Hundeb=C3=B8ll wrote:
+> Use at_util_sim_state_query_new() to query the sim inserted state. Once
+> that returns, the locked state is queried by issuing a AT+CPIN? command.
 > =
 
-> Fix this by remove the destroy notification callback, as it isn't really
-> used except in the shutdown function.
+> If not locked, a timer is started to query the quectel init status of
+> the sim. Once the init status is ready, the sim atom is created, and the
+> modem is set to powered, and the sim is signaled both inserted, and
+> initialized.
 > =
 
+> If locked, the modem is set to powered, and the sim atom is created.
+> This allows users to enter the pin to unlock the sim. Once the sim is
+> unlocked, a +CPIN: READY indication is caught to query the quectel
+> init status. Once the init status is ready, the sim is signaled
+> initialized.
+> =
 
-Okay, this is finally coming back to me.  So glib does indeed wait until =
+> All the above is needed, because the modem indicated +CPIN: READY before
+> the sim is really ready. The only way to be certain, is to wait for the
+> quectel init status to be ready. Even signaling the sim inserted
+> prematurely can cause to modem to hang during the initial AT+CRSM
+> commands.
+> ---
+> =
 
-after the source callback has completed to call the destroy function. =
+> Changes since v2:
+>   * None
+> =
 
-We have dealt with this in a slightly different way, see GAtIO for =
-
-details.  But I'm fine with this approach as well.
 
 Applied, thanks.
 
 Regards,
 -Denis
---===============2709851445149636723==--
+
+--===============7772414638669781632==--
 
