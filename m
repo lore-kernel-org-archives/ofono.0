@@ -1,57 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============1090381120288486968=="
+Content-Type: multipart/mixed; boundary="===============3247030634739344922=="
 MIME-Version: 1.0
-From: Antara Borwankar <antara.borwankar@intel.com>
-Subject: [PATCH] xmm7modem: fix for crash after receiving MT SMS after SIM swap
-Date: Tue, 15 Oct 2019 10:20:55 +0530
-Message-ID: <1571115055-13615-1-git-send-email-antara.borwankar@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] xmm7modem: fix for crash after receiving MT SMS after SIM
+ swap
+Date: Tue, 15 Oct 2019 10:45:05 -0500
+Message-ID: <78b510a5-8f83-9b1e-be7b-f8ccfaeccf3e@gmail.com>
+In-Reply-To: <1571115055-13615-1-git-send-email-antara.borwankar@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1090381120288486968==
+--===============3247030634739344922==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Earlier SMS atom was being created based on +XSIMSTATE command,
-which is a proprietary command for intel modems.
-But this logic fails in case of SIM hot swap when +XSIMSTATE
-value received is not handled in notify function.
-There can be other such scenarios as well. Therefore SMS atom
-will now be created in post_online function which anyways gets
-called after +XSIMSTATE SMS READY and PB READY is received.
----
- plugins/xmm7xxx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Antara,
 
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index a544798..876f614 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -1003,7 +1003,6 @@ static void switch_sim_state_status(struct ofono_mode=
-m *modem, int status)
- =
+On 10/14/19 11:50 PM, Antara Borwankar wrote:
+> Earlier SMS atom was being created based on +XSIMSTATE command,
+> which is a proprietary command for intel modems.
+> But this logic fails in case of SIM hot swap when +XSIMSTATE
+> value received is not handled in notify function.
 
- 		if (data->sms_phonebook_added =3D=3D FALSE) {
- 			ofono_phonebook_create(modem, 0, "atmodem", data->chat);
--			ofono_sms_create(modem, 0, "atmodem", data->chat);
- 			data->sms_phonebook_added =3D TRUE;
- 		}
- =
+Which value isn't handled?  Should the plugin be handling it instead?
 
-@@ -1281,6 +1280,7 @@ static void xmm7xxx_post_online(struct ofono_modem *m=
-odem)
- =
+> There can be other such scenarios as well. Therefore SMS atom
+> will now be created in post_online function which anyways gets
+> called after +XSIMSTATE SMS READY and PB READY is received.
 
- 	ofono_ims_create(modem, "xmm7modem", data->chat);
- 	ofono_netmon_create(modem, 0, "xmm7modem", data->chat);
-+	ofono_sms_create(modem, 0, "atmodem", data->chat);
- }
- =
+Are you sure? Looking at the code it invokes ofono_sim_initialized even =
 
- static int xmm7xxx_probe(struct ofono_modem *modem)
--- =
+after just SIM inserted / PIN not needed.  And it is entirely possible =
 
-1.9.1
+for the modem to be Online for emergency calls, in which case SIM =
 
---===============1090381120288486968==--
+insertion or PIN entry will get one to post_online potentially skipping =
+
+any SMS/phonebook ready notifications.
+
+> ---
+>   plugins/xmm7xxx.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> =
+
+
+Regards,
+-Denis
+--===============3247030634739344922==--
 
