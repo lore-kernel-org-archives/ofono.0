@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============5231768281711533924=="
+Content-Type: multipart/mixed; boundary="===============6833396378964759903=="
 MIME-Version: 1.0
 From: contact@dsiekmeier.de
 Subject: Connection lost on Embedded Linux system
-Date: Mon, 21 Oct 2019 08:31:40 +0000
-Message-ID: <20191021083140.2603.65659@new-ml01.vlan13.01.org>
+Date: Mon, 21 Oct 2019 08:34:09 +0000
+Message-ID: <20191021083409.2603.34788@new-ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5231768281711533924==
+--===============6833396378964759903==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -36,5 +36,5 @@ wn
 limitations using connman and oFono together?
 
 Kind Regards
---===============5231768281711533924==--
+--===============6833396378964759903==--
 
