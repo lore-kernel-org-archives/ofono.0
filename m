@@ -1,164 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============2925541314481691623=="
+Content-Type: multipart/mixed; boundary="===============1281385397937245433=="
 MIME-Version: 1.0
-From: nick83ola <nick83ola@gmail.com>
-Subject: Re: Telit ME910C1-WW not detected
-Date: Mon, 21 Oct 2019 13:45:03 +0100
-Message-ID: <CABPh3UOuR8+47G4v1f910A_FCZ2qYk3By5O1nygbrQq1gxE7-g@mail.gmail.com>
-In-Reply-To: <CAPS-YPCc_b5DV8_+uuY9U3GFLiZexiH9vyJpNzJQ64HosN8ACQ@mail.gmail.com>
+From: Richard =?unknown-8bit?q?R=C3=B6jfors?= <richard.rojfors@gmail.com>
+Subject: Re: Connection lost on Embedded Linux system
+Date: Wed, 23 Oct 2019 11:06:10 +0200
+Message-ID: <CAHB-Pj=8Q_1m9SkVcmH+VJfAQYc9eBvGS-7=mQ39xYhsLyYgEg@mail.gmail.com>
+In-Reply-To: <20191021083140.2603.65659@new-ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2925541314481691623==
+--===============1281385397937245433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Anibal,
+Den m=C3=A5n 21 okt. 2019 kl 21:02 skrev <contact@dsiekmeier.de>:
 
-Sorry but i was dragged along with other tasks and didn't test this througl=
-y.
-Next week I will be in the US (I am based in Ireland) to do some
-testing on the reliability of ME910
-and I will be able to thoroughly test this.
-For now (from remote) it seems to be working fine but next week I will
-have more information on this
+> Hello,
+>
+> If I restart oFono manually, everything is working fine again. Is there
+> any known bug
+> regarding some blocking state changes or something like this?
+>
 
-Thanks for your patience
-Nicola Lunghi
+Which modem are you using?
 
-On Thu, 3 Oct 2019 at 23:09, Anibal Lim=C3=B3n <limon.anibal@gmail.com> w=
-rote:
->
-> Hi,
->
-> I fix a bug in the code due to auto-attach, see [1] and the specific chan=
-ge [2].
-> Please test and let me know before send the patch.
->
-> Cheers.
-> Anibal
->
-> [1] https://github.com/alimon/ofono/tree/me910_fix_v2
-> [2] https://github.com/alimon/ofono/commit/682fd656afaf637b915d5d6b78a421=
-1dd6e0884d
->
-> On Wed, Oct 2, 2019 at 9:39 AM Anibal Lim=C3=B3n <limon.anibal@gmail.co=
-m> wrote:
->>
->>
->>
->> On Wed, Oct 2, 2019 at 9:32 AM nick83ola <nick83ola@gmail.com> wrote:
->>>
->>> Thanks
->>>
->>> do you think that you can submit it to ofono mailing list?
->>>
->>> in particular I don;t know if
->>>
->>> if (data->model =3D=3D ME910C1)
->>> ofono_netreg_create(modem, OFONO_VENDOR_TELIT_ME910C1, "atmodem", data-=
->chat);
->>> else
->>> ofono_netreg_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->chat);
->>
->>
->> That's because this specific model dosen't support  signal strength repo=
-rting via CIND.
->>
->> https://github.com/alimon/ofono/commit/920712e184ffaf1143e9ce13c3bec8ac1=
-deeda5c#diff-2bbda16023120e26f58cfa7335520fb4
->>
->> Anibal
->>
->>>
->>>
->>> is acceptable
->>>
->>> Cheers
->>> Nicola Lunghi
->>>
->>>
->>> On Wed, 2 Oct 2019 at 15:29, Anibal Lim=C3=B3n <limon.anibal@gmail.co=
-m> wrote:
->>>>
->>>>
->>>>
->>>> On Wed, Oct 2, 2019 at 9:00 AM nick83ola <nick83ola@gmail.com> wrote:
->>>>>
->>>>> Hi Anibal,
->>>>> I'm interested as well in the patch
->>>>>
->>>>> I saw that there you have two branches (me910 and v1.30+me910) can yo=
-u tell me what branch have you tested?
->>>>> the diff is this
->>>>
->>>>
->>>> Yeah the latest one is me910, I was making a mistake to enable GPRS in=
-stead of disable it, that's the change.
->>>>
->>>> Anibal
->>>>
->>>>>
->>>>>
->>>>> git diff me910
->>>>> diff --git a/plugins/telit.c b/plugins/telit.c
->>>>> index f36995dc..50344281 100644
->>>>> --- a/plugins/telit.c
->>>>> +++ b/plugins/telit.c
->>>>> @@ -239,16 +239,19 @@ static void cfun_enable_cb(gboolean ok, GAtResu=
-lt *result, gpointer user_data)
->>>>>
->>>>>         ofono_modem_set_powered(modem, TRUE);
->>>>>
->>>>> -       /*
->>>>> -        * Tell the modem not to automatically initiate auto-attach
->>>>> -        * proceedures on its own.
->>>>> -        */
->>>>> -       if (data->model =3D=3D ME910C1)
->>>>> -               g_at_chat_send(data->chat, "AT+CGATT=3D0", NULL, NULL=
-, NULL, NULL);
->>>>> -       else
->>>>> -
->>>>> +       if (data->model =3D=3D ME910C1) {
->>>>> +               /*
->>>>> +                * Telit ME910C1 needs to activate the GPRS to auto-a=
-ttach the network.
->>>>> +                */
->>>>> +               g_at_chat_send(data->chat, "AT+CGATT=3D1", NULL, NULL=
-, NULL, NULL);
->>>>> +       } else {
->>>>> +               /*
->>>>> +                * Tell the modem not to automatically initiate auto-=
-attach
->>>>> +                * proceedures on its own.
->>>>> +                */
->>>>>                 g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_pre=
-fix,
->>>>>                                         NULL, NULL, NULL);
->>>>> +       }
->>>>>
->>>>>         /* Follow sim state */
->>>>>         g_at_chat_register(data->chat, "#QSS:", telit_qss_notify,
->>>>>
->>>>>
->>>>> Thanks
->>>>> Nicola Lunghi
->>>>>
->>>>>
->>>>> On Tue, 1 Oct 2019 at 22:54, <limon.anibal@gmail.com> wrote:
->>>>>>
->>>>>> Hi Dresdo,
->>>>>>
->>>>>> I have a patch that adds support for Telit ME910 but it is upon Ofon=
-o 1.30, i plan to send for review.
->>>>>>
->>>>>> https://github.com/alimon/ofono/commit/920712e184ffaf1143e9ce13c3bec=
-8ac1deeda5c
->>>>>>
->>>>>> Regards!,
->>>>>> Anibal
->>>>>> _______________________________________________
->>>>>> ofono mailing list -- ofono(a)ofono.org
->>>>>> To unsubscribe send an email to ofono-leave(a)ofono.org
---===============2925541314481691623==--
+--Richard
+
+--===============1281385397937245433==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+RGVuIG3DpW4gMjEgb2t0LiAyMDE5IGtsIDIx
+OjAyIHNrcmV2ICZsdDs8YSBocmVmPSJtYWlsdG86Y29udGFjdEBkc2lla21laWVyLmRlIj5jb250
+YWN0QGRzaWVrbWVpZXIuZGU8L2E+Jmd0Ozo8YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfcXVv
+dGUiPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4
+IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdiKDIwNCwyMDQsMjA0KTtwYWRkaW5n
+LWxlZnQ6MWV4Ij5IZWxsbyw8YnI+PGJyPgpJZiBJIHJlc3RhcnQgb0Zvbm8gbWFudWFsbHksIGV2
+ZXJ5dGhpbmcgaXMgd29ya2luZyBmaW5lIGFnYWluLiBJcyB0aGVyZSBhbnkga25vd24gYnVnPGJy
+PgpyZWdhcmRpbmcgc29tZSBibG9ja2luZyBzdGF0ZSBjaGFuZ2VzIG9yIHNvbWV0aGluZyBsaWtl
+IHRoaXM/PGJyPjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PldoaWNoIG1vZGVtIGFy
+ZSB5b3UgdXNpbmc/PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj4tLVJpY2hhcmTCoDwvZGl2Pjwv
+ZGl2PjwvZGl2Pgo=
+
+--===============1281385397937245433==--
 
