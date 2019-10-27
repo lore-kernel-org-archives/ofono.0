@@ -1,45 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============9072254165361498487=="
+Content-Type: multipart/mixed; boundary="===============0054835465393854283=="
 MIME-Version: 1.0
 From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
-Subject: [PATCH phonesim 3/7] configure.ac: use gnu++11 to fix build with Qt
- 5.7
-Date: Sun, 27 Oct 2019 02:04:21 +0200
-Message-ID: <20191027000425.14022-4-jbb.prv@gmx.de>
+Subject: [PATCH phonesim 6/7] Make Qt detect fPIC flag correctly
+Date: Sun, 27 Oct 2019 02:04:24 +0200
+Message-ID: <20191027000425.14022-7-jbb.prv@gmx.de>
 In-Reply-To: <20191027000425.14022-1-jbb.prv@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9072254165361498487==
+--===============0054835465393854283==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Martin Jansa <Martin.Jansa@gmail.com>
-
-Signed-off-by: Martin Jansa <Martin.Jansa@gmail.com>
 ---
- configure.ac | 4 ++++
- 1 file changed, 4 insertions(+)
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/configure.ac b/configure.ac
-index 253aa27..4eb969a 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -24,6 +24,10 @@ AC_ARG_ENABLE(optimization, AC_HELP_STRING([--disable-op=
-timization],
+diff --git a/Makefile.am b/Makefile.am
+index 59fb421..74cf657 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -46,7 +46,7 @@ nodist_src_phonesim_SOURCES =3D src/ui_controlbase.h \
 
- PKG_CHECK_MODULES(QT, Qt5Core Qt5Gui Qt5Xml Qt5Network Qt5Script Qt5DBus Q=
-t5Widgets, dummy=3Dyes,
- 						AC_MSG_ERROR(Qt is required))
-+
-+# Needed for Qt 5.7
-+CXXFLAGS=3D"$CXXFLAGS --std=3Dgnu++11"
-+
- AC_SUBST(QT_CFLAGS)
- AC_SUBST(QT_LIBS)
+ src_phonesim_LDADD =3D $(QT_LIBS)
+
+-AM_CXXFLAGS =3D -Wall $(QT_CFLAGS) -fPIC -fPIE
++AM_CXXFLAGS =3D -Wall $(QT_CFLAGS) -fPIC
+
+ AM_CPPFLAGS =3D -I$(top_srcdir)/src -I$(top_builddir)/src
 
 --
 2.23.0
 
---===============9072254165361498487==--
+--===============0054835465393854283==--
 
