@@ -1,36 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============1616438603650434322=="
+Content-Type: multipart/mixed; boundary="===============7679610007413019325=="
 MIME-Version: 1.0
 From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
-Subject: Port ofono-phonesim to Qt5
-Date: Sun, 27 Oct 2019 02:04:18 +0200
-Message-ID: <20191027000425.14022-1-jbb.prv@gmx.de>
+Subject: [PATCH phonesim 2/7] Fix random build failure
+Date: Sun, 27 Oct 2019 02:04:20 +0200
+Message-ID: <20191027000425.14022-3-jbb.prv@gmx.de>
+In-Reply-To: <20191027000425.14022-1-jbb.prv@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1616438603650434322==
+--===============7679610007413019325==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear ofono maintainers,
+From: Martin Jansa <Martin.Jansa@gmail.com>
 
-This is the minimal set of patches required to port ofono phonesim to Qt5,
-based on previous work from openembedded (https://layers.openembedded.org/l=
-ayerindex/recipe
+uic and moc doesn't create output directory automatically and it could
+be missing when uic is executed before gcc creates any object files as
+src/*.o
 
-The original patches from openembedded have been preserved in order to keep
-authorship information.
+OE @ ~/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-=
+r0/build $ rm -rf src/
 
-In order to ease porting to the upcoming Qt6, I have prepared additional
-refactoring patches, which port away from deprecated APIs and make use
-of c++11 features like override to make finding porting issues less difficu=
-lt.
-I'll send those in a seperate email if there is interest.
+OE @ ~/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-=
+r0/build $ /OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bi=
+n/qt5/uic ../phonesim-1.20/src/controlbase.ui -o src/ui_controlbase.h
+Could not create output file
 
-Kind regards,
-Jonah
+Fixes phonesim randomly failing with:
+OE @ ~/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-=
+r0/build $ cat ../temp/log.do_compile
+DEBUG: SITE files ['endian-little', 'bit-32', 'ix86-common', 'common-linux'=
+, 'common-glibc', 'i586-linux', 'common']
+DEBUG: Executing shell function do_compile
+NOTE: make -j 9
+/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/uic .=
+./phonesim-1.20/src/controlbase.ui -o src/ui_controlbase.h
+/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
+./phonesim-1.20/src/control.h -o src/moc_control.cpp
+/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
+./phonesim-1.20/src/phonesim.h -o src/moc_phonesim.cpp
+/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
+./phonesim-1.20/src/hardwaremanipulator.h -o src/moc_hardwaremanipulator.cpp
+/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
+./phonesim-1.20/src/callmanager.h -o src/moc_callmanager.cpp
+/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
+./phonesim-1.20/src/simfilesystem.h -o src/moc_simfilesystem.cpp
+/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
+./phonesim-1.20/src/simapplication.h -o src/moc_simapplication.cpp
+Could not create output file
+Makefile:977: recipe for target 'src/ui_controlbase.h' failed
+make: *** [src/ui_controlbase.h] Error 1
+make: *** Waiting for unfinished jobs....
+WARNING: /OE/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim=
+/1.20-r0/temp/run.do_compile.3359:1 exit 1 from 'exit 1'
+ERROR: oe_runmake failed
+ERROR: Function failed: do_compile (log file is located at /OE/build/wpb/we=
+bos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-r0/temp/log.do_comp=
+ile.3359)
 
+Signed-off-by: Martin Jansa <Martin.Jansa@gmail.com>
+---
+ Makefile.am | 2 ++
+ 1 file changed, 2 insertions(+)
 
+diff --git a/Makefile.am b/Makefile.am
+index 8c99b04..59fb421 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -67,6 +67,7 @@ QT_V_MOC_  =3D $(QT_V_MOC_$(AM_DEFAULT_VERBOSITY))
+ QT_V_MOC_0 =3D @echo "  MOC     " $@;
 
---===============1616438603650434322==--
+ src/moc_%.cpp: src/%.h
++	$(MKDIR_P) src
+ 	$(QT_V_MOC)$(MOC) $< -o $@
+
+ QT_V_UIC   =3D $(QT_V_UIC_$(V))
+@@ -74,4 +75,5 @@ QT_V_UIC_  =3D $(QT_V_UIC_$(AM_DEFAULT_VERBOSITY))
+ QT_V_UIC_0 =3D @echo "  UIC     " $@;
+
+ src/ui_%.h: src/%.ui
++	$(MKDIR_P) src
+ 	$(QT_V_UIC)$(UIC) $< -o $@
+--
+2.23.0
+
+--===============7679610007413019325==--
 
