@@ -1,89 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============4851900316774085353=="
+Content-Type: multipart/mixed; boundary="===============2970473378324859952=="
 MIME-Version: 1.0
 From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
-Subject: [PATCH phonesim v2 2/8] Fix random build failure
-Date: Sun, 27 Oct 2019 17:30:03 +0100
-Message-ID: <20191027163009.13406-3-jbb.prv@gmx.de>
+Subject: [PATCH phonesim v2 4/8] Fix build with Qt 5.8
+Date: Sun, 27 Oct 2019 17:30:05 +0100
+Message-ID: <20191027163009.13406-5-jbb.prv@gmx.de>
 In-Reply-To: <20191027163009.13406-1-jbb.prv@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4851900316774085353==
+--===============2970473378324859952==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Martin Jansa <Martin.Jansa@gmail.com>
 
-uic and moc doesn't create output directory automatically and it could
-be missing when uic is executed before gcc creates any object files as
-src/*.o
-
-OE @ ~/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-=
-r0/build $ rm -rf src/
-
-OE @ ~/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-=
-r0/build $ /OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bi=
-n/qt5/uic ../phonesim-1.20/src/controlbase.ui -o src/ui_controlbase.h
-Could not create output file
-
-Fixes phonesim randomly failing with:
-OE @ ~/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-=
-r0/build $ cat ../temp/log.do_compile
-DEBUG: SITE files ['endian-little', 'bit-32', 'ix86-common', 'common-linux'=
-, 'common-glibc', 'i586-linux', 'common']
-DEBUG: Executing shell function do_compile
-NOTE: make -j 9
-/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/uic .=
-./phonesim-1.20/src/controlbase.ui -o src/ui_controlbase.h
-/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
-./phonesim-1.20/src/control.h -o src/moc_control.cpp
-/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
-./phonesim-1.20/src/phonesim.h -o src/moc_phonesim.cpp
-/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
-./phonesim-1.20/src/hardwaremanipulator.h -o src/moc_hardwaremanipulator.cpp
-/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
-./phonesim-1.20/src/callmanager.h -o src/moc_callmanager.cpp
-/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
-./phonesim-1.20/src/simfilesystem.h -o src/moc_simfilesystem.cpp
-/OE/build/wpb/webos-ports/tmp-glibc/sysroots/x86_64-linux/usr/bin/qt5/moc .=
-./phonesim-1.20/src/simapplication.h -o src/moc_simapplication.cpp
-Could not create output file
-Makefile:977: recipe for target 'src/ui_controlbase.h' failed
-make: *** [src/ui_controlbase.h] Error 1
-make: *** Waiting for unfinished jobs....
-WARNING: /OE/build/wpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim=
-/1.20-r0/temp/run.do_compile.3359:1 exit 1 from 'exit 1'
-ERROR: oe_runmake failed
-ERROR: Function failed: do_compile (log file is located at /OE/build/wpb/we=
-bos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-r0/temp/log.do_comp=
-ile.3359)
+../phonesim-1.20/src/qsmsmessage.cpp: In member function 'QCBSMessage QCBSD=
+eliverMessage::unpack(QTextCodec*)':
+../phonesim-1.20/src/qsmsmessage.cpp:2598:40: error: ambiguous overload for=
+ 'operator=3D=3D' (operand types are 'QCharRef' and 'char')
+                          text[len - 1] =3D=3D '\0' ) ) {
+                          ~~~~~~~~~~~~~~^~~~~~~
+In file included from ../phonesim-1.20/src/qsmsmessage.h:23:0,
+                 from ../phonesim-1.20/src/qsmsmessage.cpp:22:
+/OE/build/owpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-r0=
+/recipe-sysroot/usr/include/qt5/QtCore/qstring.h:1632:13: note: candidate: =
+bool operator=3D=3D(QChar, const QStringRef&)
+ inline bool operator=3D=3D(QChar lhs, const QStringRef &rhs) Q_DECL_NOTHROW
+             ^~~~~~~~
+/OE/build/owpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-r0=
+/recipe-sysroot/usr/include/qt5/QtCore/qstring.h:1613:13: note: candidate: =
+bool operator=3D=3D(QChar, const QString&)
+ inline bool operator=3D=3D(QChar lhs, const QString &rhs) Q_DECL_NOTHROW
+             ^~~~~~~~
+In file included from /OE/build/owpb/webos-ports/tmp-glibc/work/i586-webos-=
+linux/phonesim/1.20-r0/recipe-sysroot/usr/include/qt5/QtCore/qstring.h:48:0,
+                 from ../phonesim-1.20/src/qsmsmessage.h:23,
+                 from ../phonesim-1.20/src/qsmsmessage.cpp:22:
+/OE/build/owpb/webos-ports/tmp-glibc/work/i586-webos-linux/phonesim/1.20-r0=
+/recipe-sysroot/usr/include/qt5/QtCore/qchar.h:573:30: note: candidate: con=
+stexpr bool operator=3D=3D(QChar, QChar)
+ Q_DECL_CONSTEXPR inline bool operator=3D=3D(QChar c1, QChar c2) Q_DECL_NOT=
+HROW { return c1.ucs =3D=3D c2.ucs; }
+                              ^~~~~~~~
+make: *** [Makefile:583: src/qsmsmessage.o] Error 1
 
 Signed-off-by: Martin Jansa <Martin.Jansa@gmail.com>
 ---
- Makefile.am | 2 ++
- 1 file changed, 2 insertions(+)
+ src/qsmsmessage.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 8c99b04..59fb421 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -67,6 +67,7 @@ QT_V_MOC_  =3D $(QT_V_MOC_$(AM_DEFAULT_VERBOSITY))
- QT_V_MOC_0 =3D @echo "  MOC     " $@;
-
- src/moc_%.cpp: src/%.h
-+	$(MKDIR_P) src
- 	$(QT_V_MOC)$(MOC) $< -o $@
-
- QT_V_UIC   =3D $(QT_V_UIC_$(V))
-@@ -74,4 +75,5 @@ QT_V_UIC_  =3D $(QT_V_UIC_$(AM_DEFAULT_VERBOSITY))
- QT_V_UIC_0 =3D @echo "  UIC     " $@;
-
- src/ui_%.h: src/%.ui
-+	$(MKDIR_P) src
- 	$(QT_V_UIC)$(UIC) $< -o $@
+diff --git a/src/qsmsmessage.cpp b/src/qsmsmessage.cpp
+index 54885bd..63d6952 100644
+--- a/src/qsmsmessage.cpp
++++ b/src/qsmsmessage.cpp
+@@ -2594,8 +2594,8 @@ QCBSMessage QCBSDeliverMessage::unpack(QTextCodec *co=
+dec)
+     QString text =3D userData
+         ( (QSMSDataCodingScheme)scheme, codec, headers, false, true );
+     len =3D text.length();
+-    while ( len > 0 && ( text[len - 1] =3D=3D '\r' || text[len - 1] =3D=3D=
+ '\n' ||
+-                         text[len - 1] =3D=3D '\0' ) ) {
++    while ( len > 0 && ( text.at(len - 1) =3D=3D QChar ('\r') || text.at(l=
+en - 1) =3D=3D QChar ('\n') ||
++                         text.at(len - 1) =3D=3D QChar ('\0') ) ) {
+         --len;
+     }
+     m.setText( text.left( len ) );
 --
 2.23.0
 
---===============4851900316774085353==--
+--===============2970473378324859952==--
 
