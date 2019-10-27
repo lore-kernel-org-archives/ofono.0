@@ -1,38 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============7730849239035582516=="
+Content-Type: multipart/mixed; boundary="===============6532548890810706984=="
 MIME-Version: 1.0
-From: Alexander Akulich <akulichalexander@gmail.com>
+From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
 Subject: Re: Port ofono-phonesim to Qt5
-Date: Sun, 27 Oct 2019 14:42:14 +0300
-Message-ID: <CAA1VrPoV-fa1tWRtKy7Z=8snhqs53guS7pG38_RtMrVo3T6c_Q@mail.gmail.com>
-In-Reply-To: <9ac19806-579c-c976-7568-0427393ecda3@gmx.de>
+Date: Sun, 27 Oct 2019 17:05:20 +0100
+Message-ID: <28919974-655f-f8a0-b4ba-d9b481618d97@gmx.de>
+In-Reply-To: <CAA1VrPoV-fa1tWRtKy7Z=8snhqs53guS7pG38_RtMrVo3T6c_Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7730849239035582516==
+--===============6532548890810706984==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello devs, Hi Jonah!
+Hi Alexander,
 
-I'm also interested in upstreaming Qt5 support, but I'm still not
-managed to setup `git send-email`.
-I pushed my Qt5 fixes to a branch on github [1] and there is one
-'must-have' patch: [2].
-Without that patch, phonesim doesn't work on 64-bit platforms.
+It's also the first time I use git send-email, but I'd include your
+patch in the next revision of this patchset if you want.
 
-[1] https://github.com/Kaffeine/phonesim/commits/upstreaming
-[2] https://github.com/Kaffeine/phonesim/commit/33ce5700c6352db731ec6859fdd=
-1fdefc6671e16
+I spent quite some time looking for existing Qt5 work on phonesim, but
+seemingly failed to find your repository. Hopefully we'll be able to
+avoid the duplication if this patch is accepted.
 
-On Sun, Oct 27, 2019 at 3:11 AM Jonah Br=C3=BCchert <jbb.prv@gmx.de> wrot=
-e:
+
+> Hello devs, Hi Jonah!
 >
-> The proper url is of course
-> https://layers.openembedded.org/layerindex/recipe/32381/. Sorry for the
-> truncated one in the first mail.
+> I'm also interested in upstreaming Qt5 support, but I'm still not
+> managed to setup `git send-email`.
+> I pushed my Qt5 fixes to a branch on github [1] and there is one
+> 'must-have' patch: [2].
+> Without that patch, phonesim doesn't work on 64-bit platforms.
+>
+> [1] https://github.com/Kaffeine/phonesim/commits/upstreaming
+> [2] https://github.com/Kaffeine/phonesim/commit/33ce5700c6352db731ec6859f=
+dd1fdefc6671e16
+>
+> On Sun, Oct 27, 2019 at 3:11 AM Jonah Br=C3=BCchert <jbb.prv@gmx.de> wr=
+ote:
+>> The proper url is of course
+>> https://layers.openembedded.org/layerindex/recipe/32381/. Sorry for the
+>> truncated one in the first mail.
+>> _______________________________________________
+>> ofono mailing list -- ofono(a)ofono.org
+>> To unsubscribe send an email to ofono-leave(a)ofono.org
 > _______________________________________________
 > ofono mailing list -- ofono(a)ofono.org
 > To unsubscribe send an email to ofono-leave(a)ofono.org
---===============7730849239035582516==--
+--===============6532548890810706984==--
 
