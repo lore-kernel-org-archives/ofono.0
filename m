@@ -1,32 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============5756848874284629856=="
+Content-Type: multipart/mixed; boundary="===============1616438603650434322=="
 MIME-Version: 1.0
-From: contact@dsiekmeier.de
-Subject: Re: Connection lost on Embedded Linux system
-Date: Thu, 24 Oct 2019 12:53:34 +0000
-Message-ID: <20191024125334.2734.14466@new-ml01.vlan13.01.org>
-In-Reply-To: <20191021083140.2603.65659@new-ml01.vlan13.01.org>
+From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
+Subject: Port ofono-phonesim to Qt5
+Date: Sun, 27 Oct 2019 02:04:18 +0200
+Message-ID: <20191027000425.14022-1-jbb.prv@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5756848874284629856==
+--===============1616438603650434322==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Okay... bit by bit I find out more information.
+Dear ofono maintainers,
 
-I removed the antenna a couple of times (~30) to force the modem to lost th=
-e connection.
-Mounting the antenna again I retrieve a new IP address from the cellphone c=
-ompany.
-oFono is showing the information in the log and the settings of the network=
- interface is
-updated (checked with "ip addr").
+This is the minimal set of patches required to port ofono phonesim to Qt5,
+based on previous work from openembedded (https://layers.openembedded.org/l=
+ayerindex/recipe
 
-But occasionally (in case of failing ping), the address is shown but not ap=
-plied to the
-interface. Therefore I wonder if it is really a oFono problem...
+The original patches from openembedded have been preserved in order to keep
+authorship information.
 
-Kind Regards.
---===============5756848874284629856==--
+In order to ease porting to the upcoming Qt6, I have prepared additional
+refactoring patches, which port away from deprecated APIs and make use
+of c++11 features like override to make finding porting issues less difficu=
+lt.
+I'll send those in a seperate email if there is interest.
+
+Kind regards,
+Jonah
+
+
+
+--===============1616438603650434322==--
 
