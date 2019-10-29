@@ -1,50 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============3934102659017524582=="
+Content-Type: multipart/mixed; boundary="===============2883179664727696301=="
 MIME-Version: 1.0
-From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
-Subject: [PATCH phonesim v2 8/8] Use override at least in server header
-Date: Sun, 27 Oct 2019 17:30:09 +0100
-Message-ID: <20191027163009.13406-9-jbb.prv@gmx.de>
-In-Reply-To: <20191027163009.13406-1-jbb.prv@gmx.de>
+From: khlee9228@naver.com
+Subject: ofono.service is not working
+Date: Tue, 29 Oct 2019 04:07:41 +0000
+Message-ID: <20191029040741.2734.53532@new-ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3934102659017524582==
+--===============2883179664727696301==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Alexander Akulich <akulichalexander@gmail.com>
+Hello.
 
----
- src/server.h | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+After I download and compile and then sudo make install and everything is w=
+orking.
 
-diff --git a/src/server.h b/src/server.h
-index 3342a90..9175359 100644
---- a/src/server.h
-+++ b/src/server.h
-@@ -32,15 +32,15 @@ class HardwareManipulatorFactory;
- class PhoneSimServer : public QTcpServer
- {
- public:
--    PhoneSimServer(const QString &, quint16 port, QObject *parent =3D 0);
--    ~PhoneSimServer();
-+    PhoneSimServer(const QString &, quint16 port, QObject *parent =3D null=
-ptr);
-+    ~PhoneSimServer() override;
+But ofono.service is not automatically running.  =
 
-     void setHardwareManipulator(HardwareManipulatorFactory *f);
 
-     SimRules *rules() const { return currentRules; }
-
- protected:
--    void incomingConnection(qintptr s);
-+    void incomingConnection(qintptr s) override;
-
- private:
-     QString filename;
---
-2.23.0
-
---===============3934102659017524582==--
+How do I start ofono.service?
+--===============2883179664727696301==--
 
