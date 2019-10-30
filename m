@@ -1,48 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5369631316438547097=="
+Content-Type: multipart/mixed; boundary="===============2114281184326007791=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH phonesim v2 1/8] Port to qt5
-Date: Wed, 30 Oct 2019 10:44:08 -0500
-Message-ID: <e57bde4b-b8ef-8beb-78b3-a8f702271153@gmail.com>
-In-Reply-To: <573bce36-4371-fdfc-b934-09df46c9e4a6@gmx.de>
+From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
+Subject: [PATCH phonesim v3 2/2] Use override at least in server header
+Date: Wed, 30 Oct 2019 21:37:20 +0100
+Message-ID: <20191030203720.10302-2-jbb.prv@gmx.de>
+In-Reply-To: <20191030203720.10302-1-jbb.prv@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5369631316438547097==
+--===============2114281184326007791==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonah,
+From: Alexander Akulich <akulichalexander@gmail.com>
 
-On 10/29/19 11:58 AM, Jonah Br=C3=BCchert wrote:
-> Hi,
-> =
+---
+ src/server.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-> first of all, thanks for the review!
-> =
+diff --git a/src/server.h b/src/server.h
+index 3342a90..9175359 100644
+--- a/src/server.h
++++ b/src/server.h
+@@ -32,15 +32,15 @@ class HardwareManipulatorFactory;
+ class PhoneSimServer : public QTcpServer
+ {
+ public:
+-    PhoneSimServer(const QString &, quint16 port, QObject *parent =3D 0);
+-    ~PhoneSimServer();
++    PhoneSimServer(const QString &, quint16 port, QObject *parent =3D null=
+ptr);
++    ~PhoneSimServer() override;
 
-> The current structure of the commits is purely for historical reasons,
-> since this is a collection of patches by different people that are all
-> required for the Qt5 port. The Signed-off-by exist for the same reason,
-> because the people who originally did the affected patches used them.
+     void setHardwareManipulator(HardwareManipulatorFactory *f);
 
-Right, but this is sort of irrelevant for phonesim repo itself.  I'm =
+     SimRules *rules() const { return currentRules; }
 
-fine upgrading to Qt5, but lets structure the commits properly in a =
+ protected:
+-    void incomingConnection(qintptr s);
++    void incomingConnection(qintptr s) override;
 
-logical manner.
+ private:
+     QString filename;
+--
+2.23.0
 
-> =
-
-> If you want I can squash them together and group the changes into a
-> commit by content, not by author.
-
-That would be preferred.  And if you feel obliged to, feel free to make =
-
-use of Co-Authored-By tags.  I'm fine accepting those.
-
-Regards,
--Denis
---===============5369631316438547097==--
+--===============2114281184326007791==--
 
