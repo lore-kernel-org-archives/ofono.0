@@ -1,31 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============5336756996565316755=="
+Content-Type: multipart/mixed; boundary="===============8304648549879283088=="
 MIME-Version: 1.0
-From: khlee9228@naver.com
-Subject: Please help me ofono friend why failed to start ofono.servce:unit
- ofono.service not found
-Date: Sat, 02 Nov 2019 07:13:19 +0000
-Message-ID: <20191102071319.2734.65102@new-ml01.vlan13.01.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH phonesim v3 1/2] Port to qt5
+Date: Wed, 06 Nov 2019 18:10:50 -0600
+Message-ID: <2f8a4999-021a-1f80-0023-0994f24ff73e@gmail.com>
+In-Reply-To: <20191030203720.10302-1-jbb.prv@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5336756996565316755==
+--===============8304648549879283088==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi ofono friends
-I am currently using Raseberry pi 3 B and compiled source code from the ofo=
-no git
-My current version is 1.30 and looks everything is working =
+Hi Jonah,
+
+On 10/30/19 3:37 PM, Jonah Br=C3=BCchert wrote:
+> From: Simon Busch <morphis@gravedo.de>
+> =
+
+> Co-authored-by: Martin Jansa <Martin.Jansa@gmail.com>
+> Co-authored-by: Jonah Br=C3=BCchert <jbb.prv@gmx.de>
+> Co-authored-by: Alexander Akulich <akulichalexander@gmail.com>
+> ---
+>   Makefile.am         |  4 +++-
+>   configure.ac        | 15 ++++++++++++---
+>   src/control.cpp     |  4 ++--
+>   src/phonesim.cpp    |  2 +-
+>   src/phonesim.h      |  2 +-
+>   src/qsimcommand.cpp |  2 +-
+>   src/qsmsmessage.cpp |  6 +++---
+>   src/server.cpp      |  2 +-
+>   src/server.h        |  2 +-
+>   9 files changed, 25 insertions(+), 14 deletions(-)
+> =
 
 
-But if I execute systemctl start ofono
-failed to start ofono.service:unit ofono service not found happened. Is thi=
-s something messed? =
+Sorry for the delay.  Took me a bit to sort out Qt5 on my VM.  Anyway, =
 
+the changes look fine to me and things still appear to work.  So I went =
 
-Please help me what is missing
+ahead and pushed both of these patches out.
 
-Paul
---===============5336756996565316755==--
+Regards,
+-Denis
+--===============8304648549879283088==--
 
