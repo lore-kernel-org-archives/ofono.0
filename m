@@ -1,78 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============4134141744375820286=="
+Content-Type: multipart/mixed; boundary="===============8322432617333038146=="
 MIME-Version: 1.0
-From: Jonah =?unknown-8bit?q?Br=C3=BCchert?= <jbb.prv@gmx.de>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH phonesim v3 1/2] Port to qt5
-Date: Thu, 07 Nov 2019 11:26:30 +0100
-Message-ID: <471e6980-7528-f449-69a8-d280d73017d3@gmx.de>
-In-Reply-To: <2f8a4999-021a-1f80-0023-0994f24ff73e@gmail.com>
+Date: Mon, 11 Nov 2019 20:28:45 -0600
+Message-ID: <7e5b56ce-fb09-c6a5-fc57-99982feb06a3@gmail.com>
+In-Reply-To: <471e6980-7528-f449-69a8-d280d73017d3@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4134141744375820286==
+--===============8322432617333038146==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jonah,
 
-Thank you very much for applying the patches!
+No top posting please :)
 
-As mentioned earlier I have worked on a few additional commits to
-completely replace all deprecated Qt APIs.
+On 11/7/19 4:26 AM, Jonah Br=C3=BCchert wrote:
+> Hi Denis,
+> =
 
-This is not strictly required until Qt6 is released, but will basically
-allow to run on Qt6 right when it's released with just a few build
-system changes.
+> Thank you very much for applying the patches!
+> =
 
-If you are interested, just let me know when you have time to review
-those as adding those patches is obviously not urgent.
+> As mentioned earlier I have worked on a few additional commits to
+> completely replace all deprecated Qt APIs.
+> =
 
-In addition I added a cmake build system which allowed me to work with
-Qt's QtCreator IDE, but I can very well understand if you don't want to
-switch the build system and would leave that patch out.
+> This is not strictly required until Qt6 is released, but will basically
+> allow to run on Qt6 right when it's released with just a few build
+> system changes.
+> =
 
-I pushed the patches to KDE's GitLab instance
-https://invent.kde.org/jbbgameich/ofono-phonesim/commits/master for now,
-but would of course send them to the mailing list for review later.
+> If you are interested, just let me know when you have time to review
+> those as adding those patches is obviously not urgent.
+
+Go ahead and send these in.
+
+> =
+
+> In addition I added a cmake build system which allowed me to work with
+> Qt's QtCreator IDE, but I can very well understand if you don't want to
+> switch the build system and would leave that patch out.
+
+I'm not really in charge of the build system.  That is Marcel you'd need =
+
+to convince.  He doesn't much like cmake though.
+
+> =
+
+> I pushed the patches to KDE's GitLab instance
+> https://invent.kde.org/jbbgameich/ofono-phonesim/commits/master for now,
+> but would of course send them to the mailing list for review later.
+> =
 
 
-Kind regards,
+Having them on the list would be good.
 
-Jonah
-
-
-> Hi Jonah,
->
-> On 10/30/19 3:37 PM, Jonah Br=C3=BCchert wrote:
->> From: Simon Busch <morphis@gravedo.de>
->>
->> Co-authored-by: Martin Jansa <Martin.Jansa@gmail.com>
->> Co-authored-by: Jonah Br=C3=BCchert <jbb.prv@gmx.de>
->> Co-authored-by: Alexander Akulich <akulichalexander@gmail.com>
->> ---
->> =C2=A0 Makefile.am=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=
-=A0 4 +++-
->> =C2=A0 configure.ac=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 15 +++++=
-+++++++---
->> =C2=A0 src/control.cpp=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 4 ++--
->> =C2=A0 src/phonesim.cpp=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +-
->> =C2=A0 src/phonesim.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +-
->> =C2=A0 src/qsimcommand.cpp |=C2=A0 2 +-
->> =C2=A0 src/qsmsmessage.cpp |=C2=A0 6 +++---
->> =C2=A0 src/server.cpp=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +-
->> =C2=A0 src/server.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 =
-+-
->> =C2=A0 9 files changed, 25 insertions(+), 14 deletions(-)
->>
->
-> Sorry for the delay.=C2=A0 Took me a bit to sort out Qt5 on my VM. Anyway,
-> the changes look fine to me and things still appear to work.=C2=A0 So I
-> went ahead and pushed both of these patches out.
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list -- ofono(a)ofono.org
-> To unsubscribe send an email to ofono-leave(a)ofono.org
---===============4134141744375820286==--
+Regards,
+-Denis
+--===============8322432617333038146==--
 
