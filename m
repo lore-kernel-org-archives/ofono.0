@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4425571166224013269=="
+Content-Type: multipart/mixed; boundary="===============6260554338438143084=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH phonesim 01/13] Use nullptrs
-Date: Mon, 18 Nov 2019 14:05:29 -0600
-Message-ID: <0ae304e4-11bd-6131-d1b7-dda664df2e3d@gmail.com>
-In-Reply-To: <20191112213719.9309-2-jbb.prv@gmx.de>
+Subject: Re: [PATCH phonesim 03/13] Port old-style connects
+Date: Mon, 18 Nov 2019 14:06:48 -0600
+Message-ID: <8f6d7bd9-5e62-8ac5-4e7e-ee2aee228cdc@gmail.com>
+In-Reply-To: <20191112213719.9309-4-jbb.prv@gmx.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4425571166224013269==
+--===============6260554338438143084==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,36 +16,103 @@ Content-Transfer-Encoding: quoted-printable
 Hi Jonah,
 
 On 11/12/19 3:37 PM, Jonah Br=C3=BCchert wrote:
-> Done using the modernize-use-nullptr check of clang-tidy
+> * Update CXX Standard to 14 to be able to use qOverload()
 > ---
->   src/aidapplication.h              |  2 +-
->   src/callmanager.h                 |  2 +-
->   src/conformancesimapplication.cpp |  2 +-
->   src/control.cpp                   |  2 +-
->   src/control.h                     |  2 +-
->   src/gsmspec.cpp                   | 20 ++++++------
->   src/hardwaremanipulator.h         |  2 +-
->   src/main.cpp                      |  6 ++--
->   src/phonesim.cpp                  | 54 +++++++++++++++----------------
->   src/phonesim.h                    |  2 +-
->   src/qatresult.cpp                 |  2 +-
->   src/qatresultparser.cpp           |  8 ++---
->   src/qatutils.cpp                  | 12 +++----
->   src/qcbsmessage.cpp               |  2 +-
->   src/qsmsmessage.cpp               |  8 ++---
->   src/qsmsmessage_p.h               |  4 +--
->   src/qwsppdu.cpp                   |  4 +--
->   src/server.cpp                    |  4 +--
->   src/simapplication.cpp            | 22 ++++++-------
->   src/simapplication.h              |  6 ++--
->   20 files changed, 83 insertions(+), 83 deletions(-)
+>   configure.ac        |  4 +--
+>   src/callmanager.cpp | 22 ++++++-------
+>   src/control.cpp     | 77 +++++++++++++++++++++------------------------
+>   src/phonesim.cpp    | 56 +++++++++++++++++----------------
+>   src/phonesim.h      |  3 +-
+>   5 files changed, 80 insertions(+), 82 deletions(-)
 > =
 
 
-Patches 1 & 2 applied, thanks.
+<snip>
+
+> @@ -527,35 +528,36 @@ SimRules::SimRules(qintptr fd, QObject *p,  const Q=
+String& filename, HardwareMan
+>           machine =3D hmf->create(this, nullptr);
+> =
+
+>       if (machine) {
+> -        connect(machine, SIGNAL(unsolicitedCommand(QString)),
+> -                this, SLOT(unsolicited(QString)));
+> -        connect(machine, SIGNAL(command(QString)),
+> -                this, SLOT(command(QString)));
+> -        connect(machine, SIGNAL(variableChanged(QString,QString)),
+> -                this, SLOT(setVariable(QString,QString)));
+> -        connect(machine, SIGNAL(switchTo(QString)),
+> -                this, SLOT(switchTo(QString)));
+> +        connect(machine, &HardwareManipulator::unsolicitedCommand,
+> +                this, &SimRules::unsolicited);
+> +        connect(machine, &HardwareManipulator::command,
+> +                this, &SimRules::command);
+> +        connect(machine, &HardwareManipulator::variableChanged,
+> +                this, &SimRules::setVariable);
+> +        connect(machine, &HardwareManipulator::switchTo,
+> +                this, &SimRules::switchTo);
+>       }
+> =
+
+> +
+
+I squashed this stray whitespace...
+
+>       _callManager =3D new CallManager(this);
+> -    connect( _callManager, SIGNAL(send(QString)),
+> -             this, SLOT(respond(QString)) );
+> -    connect( _callManager, SIGNAL(unsolicited(QString)),
+> -             this, SLOT(unsolicited(QString)) );
+> -    connect( _callManager, SIGNAL(dialCheck(QString,bool&)),
+> -             this, SLOT(dialCheck(QString,bool&)) );
+> +    connect( _callManager, &CallManager::send,
+> +             this, qOverload<const QString &>( &SimRules::respond ) );
+> +    connect( _callManager, &CallManager::unsolicited,
+> +             this, &SimRules::unsolicited );
+> +    connect( _callManager, &CallManager::dialCheck,
+> +             this, &SimRules::dialCheck );
+> =
+
+>       if ( machine ) {
+> -        connect( machine, SIGNAL(startIncomingCall(QString,QString,QStri=
+ng)),
+> -                 _callManager, SLOT(startIncomingCall(QString,QString,QS=
+tring)) );
+> -        connect ( _callManager, SIGNAL( callStatesChanged( QList<CallInf=
+o> * ) ),
+> -                  machine, SLOT( callManagement( QList<CallInfo> * ) ) );
+> -        connect ( machine, SIGNAL( stateChangedToAlerting() ), _callMana=
+ger,
+> -                SLOT( dialingToAlerting() ) );
+> -        connect ( machine, SIGNAL( stateChangedToConnected() ), _callMan=
+ager,
+> -                SLOT( dialingToConnected() ) );
+> -        connect ( machine, SIGNAL( stateChangedToHangup( int ) ), _callM=
+anager,
+> -                SLOT( hangupRemote( int ) ) );
+> +        connect( machine, &HardwareManipulator::startIncomingCall, _call=
+Manager,
+> +                 qOverload<const QString &, const QString &, const QStri=
+ng &>( &CallManager::startIncomingCall ) );
+> +        connect ( _callManager, &CallManager::callStatesChanged,
+> +                  machine, &HardwareManipulator::callManagement);
+> +        connect ( machine, &HardwareManipulator::stateChangedToAlerting,=
+ _callManager,
+> +                &CallManager::dialingToAlerting );
+> +        connect ( machine, &HardwareManipulator::stateChangedToConnected=
+, _callManager,
+> +                &CallManager::dialingToConnected );
+> +        connect ( machine, &HardwareManipulator::stateChangedToHangup, _=
+callManager,
+> +                &CallManager::hangupRemote );
+>       }
+> =
+
+>       connect(this,SIGNAL(readyRead()),
+
+... and applied this patch.
 
 Regards,
 -Denis
-
---===============4425571166224013269==--
+--===============6260554338438143084==--
 
