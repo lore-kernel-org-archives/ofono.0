@@ -1,32 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============8043701064611950342=="
+Content-Type: multipart/mixed; boundary="===============5980513504072479463=="
 MIME-Version: 1.0
-From: JH <jupiter.hce@gmail.com>
-Date: Wed, 20 Nov 2019 06:00:37 +0000
-Message-ID: <CAA=hcWRoYC+f0ec3Q1v40=2kar5bbb+81094KKVk9Hp6crcipA@mail.gmail.com>
+From: santaroga76@googlemail.com
+Subject: Help/Info needed how to run Ofono with Quectel EC25 (Qualcomm MSM
+ 9x70)
+Date: Wed, 04 Dec 2019 11:14:06 +0000
+Message-ID: <20191204111406.2883.76116@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8043701064611950342==
+--===============5980513504072479463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+I want to use the EC25 with oFono (tested using ofono 1.21 and 1.30). After=
+ enabling the modem, unlocking the SIM and putting the modem online it is p=
+ossible to send SMS and many other things are working too. The DBus interfa=
+ces/objects are available, but there are some few problems I am facing and =
+need any help/advice:
 
-I have two 4G LTE devices, one can connect to 4G network, one could
-not and has following error from connman log file:
+1. It is not possible to dial voice call (org.ofono.VoiceCallManager.Dial("=
+SOME_NUMBER", "default")) ends up always with "Error.NotImplemented"
 
-Failed to change property: /ubloxqmi_0/context1
-org.ofono.ConnectionContext.Active: org.ofono.Error.AttachInProgress
-GPRS Attach is in progress
+2. The "org.ofono.LocationReporting" does not appear at all
 
-Does the error indicate the SIM is not activated? Or what could be the prob=
-lem?
+These two problems are currently the most serious for our application, plea=
+se help (if any).
 
-Thank you.
-
-Kind regards,
-
-- jh
---===============8043701064611950342==--
+Thanks a LOT!
+--===============5980513504072479463==--
 
