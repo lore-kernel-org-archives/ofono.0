@@ -1,71 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============0977656424677424438=="
+Content-Type: multipart/mixed; boundary="===============0233425424938815066=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: 4G LTE GPRS Attach error?
-Date: Mon, 09 Dec 2019 16:21:37 +0100
-Message-ID: <e7304a36-adeb-1c24-63f7-5be46c34d854@norrbonn.se>
-In-Reply-To: <CAA=hcWRhEX9iBDqq_2aaHF6dtFdXZZd1kfYY=ARnTpESzBV4Eg@mail.gmail.com>
+From: JH <jupiter.hce@gmail.com>
+Subject: Re: How accuracy to get 4G LTE RSSI via connman dbus query?
+Date: Tue, 10 Dec 2019 09:14:39 +1100
+Message-ID: <CAA=hcWToewOAr6GoU4Egim8xq4mRg7MqFDr2xcqTREigbc9QdQ@mail.gmail.com>
+In-Reply-To: <21c06978-3efe-6cb6-9d4a-94cc2354ba18@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0977656424677424438==
+--===============0233425424938815066==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Jonas,
 
-
-On 20/11/2019 10:39, JH wrote:
-> Sorry missing the subject, I further checked, it is not SIM issue,
-> then I am confused, does the 4G LTE is really using the old 2G GRPS?
-> =
-
-> Appreciate comments what is that error really means?
-> =
-
-> Thank you.
-> =
-
-> - jh
-> =
-
-> On 11/20/19, JH <jupiter.hce@gmail.com> wrote:
+On 12/10/19, Jonas Bonn <jonas@norrbonn.se> wrote:
+> Hi,
+>
+> On 09/12/2019 07:50, JH wrote:
 >> Hi,
 >>
->> I have two 4G LTE devices, one can connect to 4G network, one could
->> not and has following error from connman log file:
+>> I get 4G LTE RSSI from dbus connman service, I usually got about -61 I
+>> thought it was accurate. But today, we are doing a test to check 4G LTE
+>> RSSI based on different antennas, when connected to a antenna, the RSSI
+>> is about -61, when I did not connect to an antenna, the RSSI =3D -40 but
+>> the 4G LTE connection lost:
 >>
->> Failed to change property: /ubloxqmi_0/context1
->> org.ofono.ConnectionContext.Active: org.ofono.Error.AttachInProgress
->> GPRS Attach is in progress
->>
->> Does the error indicate the SIM is not activated? Or what could be the
->> problem?
+>> kernel: qmi_wwan 1-1:1.3: nonzero urb status received: -71.
+>
+> Here your modem has probably crashed, right?
 
-No, quite the opposite.  It pretty much indicates that the SIM is =
-
-activated and it is in the process of connecting to the network.
-
-Don't be confused by the GPRS terminology, there.  I think even for LTE =
-
-you'll get this message while attaching to the default bearer.
-
-Is that the last message in the log?  If yes, I would run with debug =
-
-output and check what's going on in more detail.
-
-/Jonas
+Right, I lost LTE connection at that time.
 
 >>
->> Thank you.
+>> Apparently that RSSI =3D -40 was wrong in the situation of without anten=
+na
+>> connection. I tried to build qmicli, but I could not get it running.
+>> googling Internet, people pointed out, it could not be run if the qmi is
+>> running by other services (ofono is running qmi on /dev/cdc-wdm0).
 >>
->> Kind regards,
->>
->> - jh
->>
-> _______________________________________________
-> ofono mailing list -- ofono(a)ofono.org
-> To unsubscribe send an email to ofono-leave(a)ofono.org
->=20
---===============0977656424677424438==--
+>> # qmicli --nas-get-signal-strength --device=3D/dev/cdc-wdm0
+>> error: couldn't create client for the 'nas' service: CID allocation
+>> failed in the CTL client: Transaction timed out
+>
+> Just make sure ofono is stopped before running ofono.
+>
+> # systemctl stop ofono
+
+Hmm, that is too difficult to use qmicli, it is not practical to stop
+ofono every time. Are there any workarounds without stopping ofono?
+
+Googling internet, followed suggestion to use qmi-proxy, but I still
+could not get that work either:
+
+# qmicli -p --nas-get-signal-strength --device=3D/dev/cdc-wdm0
+error: couldn't open the QmiDevice: Couldn't spawn the qmi-proxy
+
+The qmicli seems showing complete different values, but  it did make
+sense than the values from connman dbus query:
+
+[/dev/cdc-wdm0] Successfully got signal strength
+Current:
+        Network 'none': '-128 dBm'
+RSSI:
+        Network 'none': '-128 dBm'
+ECIO:
+        Network 'none': '-2.5 dBm'
+IO: '-106 dBm'
+SINR (8): '9.0 dB'
+
+So RSSI from comman dbus query was false, right?
+
+What is the normal methods you guys to measure the 4G LTE signaling strengt=
+h?
+
+Thank you very much Jonas,
+
+Kind regards,
+
+- jh
+--===============0233425424938815066==--
 
