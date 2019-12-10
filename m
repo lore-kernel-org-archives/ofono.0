@@ -1,208 +1,154 @@
-Content-Type: multipart/mixed; boundary="===============5541182852089521740=="
+Content-Type: multipart/mixed; boundary="===============5436200251657563891=="
 MIME-Version: 1.0
-From: richard.rojfors@gmail.com
-Subject: [PATCH] gprs: Don't modify the context if assign fails
-Date: Tue, 10 Dec 2019 13:58:16 +0100
-Message-ID: <20191210125816.24254-1-richard.rojfors@gmail.com>
+From: nick83ola <nick83ola@gmail.com>
+Subject: automatically retrieve the apn for a network
+Date: Tue, 10 Dec 2019 13:33:04 +0000
+Message-ID: <CABPh3UOpewhbDuU3W6FoKiETJ7HJ24e_=mi9an-cTNCYShPSMw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5541182852089521740==
+--===============5436200251657563891==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Richard R=C3=B6jfors <richard@puffinpack.se>
+Hi,
+I'm a newbie of ofono and I'm having some issue connecting with
+connman/ofono.
 
-There was an issue while running LTE and the connection
-manager tried to activate the context with CID 1 while
-it got automatically activated at the same time with
-CID 4.
+There's a way to retrieve the apn for a specific network and automatically
+create a context?
+I tried to use the mbpi plugins but a lot of network have duplicates in the
+apn list.
 
-When the automatic activation happened ofono_gprs_cid_activated
-got called which tried to assign the context, but that failed
-since the driver context was considered in use
-(by the activation call).
-Eventhough it failed, the context was modified,
-cid was set to 0 (making cid 1 leak).
-Then release_context got called which clear pointers
-assigned to the context.
+There's also a property in modem properties
+  [ org.ofono.AllowedAccessPoints ]
 
-A bit later the activation callback got called, in my case
-activation failed. Due to the failure it tries to clean up
-by calling context_settings_free, but unfortunately the pointers
-where reset above causing ofono to segfault du to null pointer
-derefs.
+but is empty
 
-Instead we make sure assign_context does not touch the context
-unless it succeeds. Then there is no need to call release_context
-if assign fails.
-That ensures the context being intact when the activation callback
-gets called.
+what's the smart way to retrieve the APN for a given network programmaticly?
 
-03:23:21 ofonod[545]: Aux: < \r\n+CGEV: ME PDN ACT 4\r\n\r\n+CTZE: +04,0,"1=
-9/12/10,04:25:03"\r\n
-03:23:21 ofonod[545]: drivers/ubloxmodem/network-registration.c:ctze_notify=
-() tz +04 dst 0 time 19/12/10,04:25:03
-03:23:21 ofonod[545]: src/network.c:ofono_netreg_time_notify() net time 201=
-9-12-10 04:25:03 utcoff 3600 dst 0
-03:23:22 ofonod[545]: Aux: > AT+CGDCONT?\r
-03:23:22 ofonod[545]: drivers/ubloxmodem/gprs-context.c:ublox_gprs_activate=
-_primary() cid 1
+Thanks
+Nicola Lunghi
 
-Connection manager requests activation, will mark the context in use and as=
-sign
-it cid 1.
 
-03:23:22 ofonod[545]: Aux: < \r\n+CGDCONT: 1,"IP","m2m.tele2.com","",0,0,0,=
-0,0,0\r\n
-03:23:22 ofonod[545]: Aux: < +CGDCONT: 4,"IP","m2m.tele2.com.mnc003.mcc248.=
-gprs","100.69.174.133",0,0,0,0,0,0\r\n
-03:23:22 ofonod[545]: Aux: < \r\nOK\r\n
-03:23:22 ofonod[545]: drivers/atmodem/gprs.c:at_cgdcont_read_cb() ok 1
-03:23:22 ofonod[545]: src/gprs.c:ofono_gprs_cid_activated() cid 4
-03:23:22 ofonod[545]: Can't assign context to driver for APN.
+/list-modems
+[ /telit_0 ]
+    Online =3D 1
+    Powered =3D 1
+    Lockdown =3D 0
+    Emergency =3D 0
+    Manufacturer =3D Telit
+    Model =3D HE910-D
+    Revision =3D 12.00.024
+    Serial =3D 351579054636509
+    SystemPath =3D /sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2.1/1-2.=
+1.3
+    Interfaces =3D org.ofono.SmartMessaging org.ofono.PushNotification
+org.ofono.MessageManager org.ofono.Phonebook org.ofono.NetworkRegistration
+org.ofono.ConnectionManager org.ofono.AllowedAccessPoints
+org.ofono.SimManager
+    Features =3D sms net gprs sim
+    Type =3D hardware
+    [ org.ofono.SmartMessaging ]
+    [ org.ofono.PushNotification ]
+    [ org.ofono.MessageManager ]
+        ServiceCenterAddress =3D +353857000000
+        UseDeliveryReports =3D 0
+        Bearer =3D cs-preferred
+        Alphabet =3D default
+    [ org.ofono.Phonebook ]
+    [ org.ofono.NetworkRegistration ]
+        Status =3D denied
+        Mode =3D auto
+        Name =3D
+    [ org.ofono.ConnectionManager ]
+        Attached =3D 0
+        Bearer =3D hsdpa
+        RoamingAllowed =3D 0
+        Powered =3D 1
+    [ org.ofono.AllowedAccessPoints ]
+    [ org.ofono.SimManager ]
+        Present =3D 1
+        CardIdentifier =3D 8935303052299844310
+        SubscriberIdentity =3D 272032040423839
+        ServiceProviderName =3D eir
+        FixedDialing =3D 0
+        BarredDialing =3D 0
+        MobileCountryCode =3D 272
+        MobileNetworkCode =3D 03
+        SubscriberNumbers =3D +353858016215
+        LockedPins =3D
+        ServiceNumbers =3D [Call Wait Off] =3D '#43#' [Call Wait On] =3D '*=
+43#'
+[Voice Mail 171] =3D '171' [Last Call Info] =3D '*#101#' [Nat Direct Enq] =
+=3D
+'11811' [Int Direct Enq] =3D '11818' [Customer Care] =3D '1921' [Int Cust C=
+are]
+=3D '+35317011450' [Int Voice Mail] =3D '+353855'
+        PinRequired =3D none
+        Retries =3D [pin =3D 3] [pin2 =3D 3] [puk =3D 10] [puk2 =3D 10]
+        CardSlotCount =3D 1
+        ActiveCardSlot =3D 1
 
-Since its marked in use above, we fail to assign it cid 4. When that fails
-the cid is cleared an all context pointers are set to NULL.
+--===============5436200251657563891==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-03:23:22 ofonod[545]: Aux: > AT+CGDCONT=3D1,"IP","m2m.tele2.com"\r
-03:23:22 ofonod[545]: Aux: < \r\nOK\r\n
-03:23:22 ofonod[545]: drivers/ubloxmodem/gprs-context.c:cgdcont_cb() ok 1
-03:23:22 ofonod[545]: Aux: > AT+CGACT=3D1,1\r
-03:23:22 ofonod[545]: Aux: < \r\n+CME ERROR: 100\r\n
-03:23:22 ofonod[545]: drivers/ubloxmodem/gprs-context.c:cgact_enable_cb() o=
-k 0
-03:23:22 ofonod[545]: src/gprs.c:pri_activate_callback() 0x853480
-03:23:22 ofonod[545]: src/gprs.c:pri_activate_callback() Activating context=
- failed with error: Unknown error
+PGRpdiBkaXI9Imx0ciI+PGRpdj5IaSw8L2Rpdj48ZGl2PkkmIzM5O20gYSBuZXdiaWUgb2Ygb2Zv
+bm8gYW5kIEkmIzM5O20gaGF2aW5nIHNvbWUgaXNzdWUgY29ubmVjdGluZyB3aXRoIGNvbm5tYW4v
+b2Zvbm8uPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5UaGVyZSYjMzk7cyBhIHdheSB0byByZXRy
+aWV2ZSB0aGUgYXBuIGZvciBhIHNwZWNpZmljIG5ldHdvcmsgYW5kIGF1dG9tYXRpY2FsbHkgY3Jl
+YXRlIGEgY29udGV4dD88YnI+PC9kaXY+PGRpdj48L2Rpdj48ZGl2PkkgdHJpZWQgdG8gdXNlIHRo
+ZSBtYnBpIHBsdWdpbnMgYnV0IGEgbG90IG9mIG5ldHdvcmsgaGF2ZSBkdXBsaWNhdGVzIGluIHRo
+ZSBhcG4gbGlzdC48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PlRoZXJlJiMzOTtzIGFsc28gYSBw
+cm9wZXJ0eSBpbiBtb2RlbSBwcm9wZXJ0aWVzPGJyPjwvZGl2PjxkaXY+IMKgIFsgb3JnLm9mb25v
+LkFsbG93ZWRBY2Nlc3NQb2ludHMgXTxicj7CoDwvZGl2PjxkaXY+YnV0IGlzIGVtcHR5PGJyPjwv
+ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+d2hhdCYjMzk7cyB0aGUgc21hcnQgd2F5IHRvIHJldHJp
+ZXZlIHRoZSBBUE4gZm9yIGEgZ2l2ZW4gbmV0d29yayBwcm9ncmFtbWF0aWNseT88L2Rpdj48ZGl2
+Pjxicj48L2Rpdj48ZGl2PlRoYW5rczwvZGl2PjxkaXY+Tmljb2xhIEx1bmdoaTwvZGl2PjxkaXY+
+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+L2xpc3QtbW9kZW1zIDxicj5bIC90ZWxpdF8w
+IF08YnI+wqAgwqAgT25saW5lID0gMTxicj7CoCDCoCBQb3dlcmVkID0gMTxicj7CoCDCoCBMb2Nr
+ZG93biA9IDA8YnI+wqAgwqAgRW1lcmdlbmN5ID0gMDxicj7CoCDCoCBNYW51ZmFjdHVyZXIgPSBU
+ZWxpdDxicj7CoCDCoCBNb2RlbCA9IEhFOTEwLUQ8YnI+wqAgwqAgUmV2aXNpb24gPSAxMi4wMC4w
+MjQ8YnI+wqAgwqAgU2VyaWFsID0gMzUxNTc5MDU0NjM2NTA5PGJyPsKgIMKgIFN5c3RlbVBhdGgg
+PSAvc3lzL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjE0LjAvdXNiMS8xLTIvMS0yLjEvMS0y
+LjEuMzxicj7CoCDCoCBJbnRlcmZhY2VzID0gb3JnLm9mb25vLlNtYXJ0TWVzc2FnaW5nIG9yZy5v
+Zm9uby5QdXNoTm90aWZpY2F0aW9uIG9yZy5vZm9uby5NZXNzYWdlTWFuYWdlciBvcmcub2Zvbm8u
+UGhvbmVib29rIG9yZy5vZm9uby5OZXR3b3JrUmVnaXN0cmF0aW9uIG9yZy5vZm9uby5Db25uZWN0
+aW9uTWFuYWdlciBvcmcub2Zvbm8uQWxsb3dlZEFjY2Vzc1BvaW50cyBvcmcub2Zvbm8uU2ltTWFu
+YWdlciA8YnI+wqAgwqAgRmVhdHVyZXMgPSBzbXMgbmV0IGdwcnMgc2ltIDxicj7CoCDCoCBUeXBl
+ID0gaGFyZHdhcmU8YnI+wqAgwqAgWyBvcmcub2Zvbm8uU21hcnRNZXNzYWdpbmcgXTxicj7CoCDC
+oCBbIG9yZy5vZm9uby5QdXNoTm90aWZpY2F0aW9uIF08YnI+wqAgwqAgWyBvcmcub2Zvbm8uTWVz
+c2FnZU1hbmFnZXIgXTxicj7CoCDCoCDCoCDCoCBTZXJ2aWNlQ2VudGVyQWRkcmVzcyA9ICszNTM4
+NTcwMDAwMDA8YnI+wqAgwqAgwqAgwqAgVXNlRGVsaXZlcnlSZXBvcnRzID0gMDxicj7CoCDCoCDC
+oCDCoCBCZWFyZXIgPSBjcy1wcmVmZXJyZWQ8YnI+wqAgwqAgwqAgwqAgQWxwaGFiZXQgPSBkZWZh
+dWx0PGJyPsKgIMKgIFsgb3JnLm9mb25vLlBob25lYm9vayBdPGJyPsKgIMKgIFsgb3JnLm9mb25v
+Lk5ldHdvcmtSZWdpc3RyYXRpb24gXTxicj7CoCDCoCDCoCDCoCBTdGF0dXMgPSBkZW5pZWQ8YnI+
+wqAgwqAgwqAgwqAgTW9kZSA9IGF1dG88YnI+wqAgwqAgwqAgwqAgTmFtZSA9IDxicj7CoCDCoCBb
+IG9yZy5vZm9uby5Db25uZWN0aW9uTWFuYWdlciBdPGJyPsKgIMKgIMKgIMKgIEF0dGFjaGVkID0g
+MDxicj7CoCDCoCDCoCDCoCBCZWFyZXIgPSBoc2RwYTxicj7CoCDCoCDCoCDCoCBSb2FtaW5nQWxs
+b3dlZCA9IDA8YnI+wqAgwqAgwqAgwqAgUG93ZXJlZCA9IDE8YnI+wqAgwqAgWyBvcmcub2Zvbm8u
+QWxsb3dlZEFjY2Vzc1BvaW50cyBdPGJyPsKgIMKgIFsgb3JnLm9mb25vLlNpbU1hbmFnZXIgXTxi
+cj7CoCDCoCDCoCDCoCBQcmVzZW50ID0gMTxicj7CoCDCoCDCoCDCoCBDYXJkSWRlbnRpZmllciA9
+IDg5MzUzMDMwNTIyOTk4NDQzMTA8YnI+wqAgwqAgwqAgwqAgU3Vic2NyaWJlcklkZW50aXR5ID0g
+MjcyMDMyMDQwNDIzODM5PGJyPsKgIMKgIMKgIMKgIFNlcnZpY2VQcm92aWRlck5hbWUgPSBlaXI8
+YnI+wqAgwqAgwqAgwqAgRml4ZWREaWFsaW5nID0gMDxicj7CoCDCoCDCoCDCoCBCYXJyZWREaWFs
+aW5nID0gMDxicj7CoCDCoCDCoCDCoCBNb2JpbGVDb3VudHJ5Q29kZSA9IDI3Mjxicj7CoCDCoCDC
+oCDCoCBNb2JpbGVOZXR3b3JrQ29kZSA9IDAzPGJyPsKgIMKgIMKgIMKgIFN1YnNjcmliZXJOdW1i
+ZXJzID0gKzM1Mzg1ODAxNjIxNSA8YnI+wqAgwqAgwqAgwqAgTG9ja2VkUGlucyA9IDxicj7CoCDC
+oCDCoCDCoCBTZXJ2aWNlTnVtYmVycyA9IFtDYWxsIFdhaXQgT2ZmXSA9ICYjMzk7IzQzIyYjMzk7
+IFtDYWxsIFdhaXQgT25dID0gJiMzOTsqNDMjJiMzOTsgW1ZvaWNlIE1haWwgMTcxXSA9ICYjMzk7
+MTcxJiMzOTsgW0xhc3QgQ2FsbCBJbmZvXSA9ICYjMzk7KiMxMDEjJiMzOTsgW05hdCBEaXJlY3Qg
+RW5xXSA9ICYjMzk7MTE4MTEmIzM5OyBbSW50IERpcmVjdCBFbnFdID0gJiMzOTsxMTgxOCYjMzk7
+IFtDdXN0b21lciBDYXJlXSA9ICYjMzk7MTkyMSYjMzk7IFtJbnQgQ3VzdCBDYXJlXSA9ICYjMzk7
+KzM1MzE3MDExNDUwJiMzOTsgW0ludCBWb2ljZSBNYWlsXSA9ICYjMzk7KzM1Mzg1NSYjMzk7IDxi
+cj7CoCDCoCDCoCDCoCBQaW5SZXF1aXJlZCA9IG5vbmU8YnI+wqAgwqAgwqAgwqAgUmV0cmllcyA9
+IFtwaW4gPSAzXSBbcGluMiA9IDNdIFtwdWsgPSAxMF0gW3B1azIgPSAxMF0gPGJyPsKgIMKgIMKg
+IMKgIENhcmRTbG90Q291bnQgPSAxPGJyPsKgIMKgIMKgIMKgIEFjdGl2ZUNhcmRTbG90ID0gMTxi
+cj48L2Rpdj48L2Rpdj4K
 
-Activation callback, and it failed. Will try to clean up, but the pointers =
-are
-NULL'ed...
-
-Dec 10 03:23:22 ofonod[545]: Aborting (signal 11) [/usr/sbin/ofonod]
----
- src/gprs.c | 64 ++++++++++++++++++++++++++++++------------------------
- 1 file changed, 36 insertions(+), 28 deletions(-)
-
-diff --git a/src/gprs.c b/src/gprs.c
-index 2d3a99e6..223c777f 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -223,23 +223,11 @@ static gboolean gprs_context_string_to_type(const cha=
-r *str,
- 	return FALSE;
- }
- =
-
--static gboolean assign_context(struct pri_context *ctx, unsigned int use_c=
-id)
-+static struct ofono_gprs_context *
-+find_avail_gprs_context(struct pri_context *ctx)
- {
--	struct l_uintset *used_cids =3D ctx->gprs->used_cids;
- 	GSList *l;
- =
-
--	if (used_cids =3D=3D NULL)
--		return FALSE;
--
--	if (!use_cid)
--		use_cid =3D l_uintset_find_unused_min(used_cids);
--
--	if (use_cid > l_uintset_get_max(used_cids))
--		return FALSE;
--
--	l_uintset_put(used_cids, use_cid);
--	ctx->context.cid =3D use_cid;
--
- 	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
- 		struct ofono_gprs_context *gc =3D l->data;
- =
-
-@@ -257,24 +245,45 @@ static gboolean assign_context(struct pri_context *ct=
-x, unsigned int use_cid)
- 				gc->type !=3D ctx->type)
- 			continue;
- =
-
--		ctx->context_driver =3D gc;
--		ctx->context_driver->inuse =3D TRUE;
-+		return gc;
-+	}
- =
-
--		if (ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IPV4V6 ||
--				ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IP)
--			gc->settings->ipv4 =3D g_new0(struct ipv4_settings, 1);
-+	return NULL;
-+}
- =
-
--		if (ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IPV4V6 ||
--				ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IPV6)
--			gc->settings->ipv6 =3D g_new0(struct ipv6_settings, 1);
-+static gboolean assign_context(struct pri_context *ctx, unsigned int use_c=
-id)
-+{
-+	struct l_uintset *used_cids =3D ctx->gprs->used_cids;
-+	struct ofono_gprs_context *gc;
- =
-
--		return TRUE;
--	}
-+	if (used_cids =3D=3D NULL)
-+		return FALSE;
- =
-
--	l_uintset_take(used_cids, ctx->context.cid);
--	ctx->context.cid =3D 0;
-+	if (!use_cid)
-+		use_cid =3D l_uintset_find_unused_min(used_cids);
- =
-
--	return FALSE;
-+	if (use_cid > l_uintset_get_max(used_cids))
-+		return FALSE;
-+
-+	gc =3D find_avail_gprs_context(ctx);
-+	if (gc =3D=3D NULL)
-+		return FALSE;
-+
-+	l_uintset_put(used_cids, use_cid);
-+	ctx->context.cid =3D use_cid;
-+
-+	ctx->context_driver =3D gc;
-+	ctx->context_driver->inuse =3D TRUE;
-+
-+	if (ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IPV4V6 ||
-+			ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IP)
-+		gc->settings->ipv4 =3D g_new0(struct ipv4_settings, 1);
-+
-+	if (ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IPV4V6 ||
-+			ctx->context.proto =3D=3D OFONO_GPRS_PROTO_IPV6)
-+		gc->settings->ipv6 =3D g_new0(struct ipv6_settings, 1);
-+
-+	return TRUE;
- }
- =
-
- static void release_context(struct pri_context *ctx)
-@@ -2032,7 +2041,6 @@ void ofono_gprs_cid_activated(struct ofono_gprs  *gpr=
-s, unsigned int cid,
- =
-
- 	if (assign_context(pri_ctx, cid) =3D=3D FALSE) {
- 		ofono_warn("Can't assign context to driver for APN.");
--		release_context(pri_ctx);
- 		return;
- 	}
- =
-
--- =
-
-2.20.1
-
---===============5541182852089521740==--
+--===============5436200251657563891==--
 
