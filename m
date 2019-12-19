@@ -1,122 +1,147 @@
-Content-Type: multipart/mixed; boundary="===============5238981528557911197=="
+Content-Type: multipart/mixed; boundary="===============1015044546919744063=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [pulseaudio-discuss] Proposal for a new API and usage of
  Bluetooth HSP and HFP profiles on Linux
-Date: Wed, 18 Dec 2019 21:01:19 +0000
-Message-ID: <06eb7e98-1357-afd1-40a5-2ccb139d8dec@gmail.com>
-In-Reply-To: <20191218173632.aqdmdhutu3ruezck@pali>
+Date: Thu, 19 Dec 2019 01:11:10 +0000
+Message-ID: <0cfbe253-417c-e7c0-553a-abf360a80c9f@gmail.com>
+In-Reply-To: <20191218213349.2ksew2wnhgu3peub@pali>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5238981528557911197==
+--===============1015044546919744063==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pali,
 
->>> I'm not sure what logic around HSP you really care about.  It is just a
->>> single button press in the end.
->>
->> CSR features (battery status level, ...) and CSR codec selection (e.g.
->> AuriStream). Also some apple extensions are used in HSP profile.
-
-Since HFP can do everything that HSP can and more, I view HSP as =
-
-deprecated and not to be used.  If these are also available in HFP, then =
-
-I'd just use HFP instead.  But HSP was never my focus, so if you feel =
-
-there's a need for better HSP support, then fair enough.
-
->>
->>> For HFP, oFono can already support all sorts of extensions.  See for ex=
-ample
->>> how we handled Siri for HFP support in oFono here:
->>> https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/doc/siri-ap=
-i.txt.
+> Yes, I see. Also there are devices without HFP support, only with HSP.
+> pulseaudio support also these devices and pulseaudio is not going to
+> drop support for them. Last time when I looked at ofono, it has no HSP
+> support. Is ofono going to add support for HSP?
 > =
 
-> About Siri: In hsphfpd API it is delegated to Telephony Agent. So
-> hsphfpd is not going to (re)implement it.
-> =
 
->> I saw. But it does not support usage of vendor codecs, like CSR
->> AuriStream and it does not support CSR extensions, like displaying text
->> on embedded display.
+No.
 
-But that's my point, you can easily accomplish this by creating another =
-
-oFono API / atom for HFP CSR extensions and expose this information / =
-
-functionality.  Similar to how Siri was done.  I see no need for a =
-
-completely new external daemon.
-
->>
->>> Many of the extensions you talked about are also relevant for real mode=
-ms as
->>> well (like battery reporting, call volume, etc).  Some of these APIs are
->>> already defined in fact.
->>>
->>> Given the above, oFono upstream has no interest in adding or maintaining
->>> support this new framework.
-> =
-
-> Maybe better question: Do you mean that you do not want to maintain
-> hsphfpd, or that you completely do not want to see that ofono would be
-> "Telepony Agent" for hsphfpd?
-
-The latter.
+<snip>
 
 > =
 
->> Denis, if you are not interested in my proposed hsphfpd daemon, how you
->> want to solve problem with other extensions and other vendor codecs?
+> But would you accept patches which exports DBus API e.g. for displaying t=
+ext
+> on HFP headset with embedded display? Or patches which implements 3
+> different way for reporting battery level status of HFP headset? And API
+> for sending "computer battery level" to HFP headset? Or implementing
+> setup of SCO sockets (via RFCOMM layer) for custom codecs? Or exporting
+> uinput linux device for button press events? Because all these
+
+So which roles are we talking about here?  Your Design document shows =
+
+hsphfpd registering for both HFP AG and HFP HF roles, but maybe this was =
+
+not the intent?
+
+If you're talking about extending oFono APIs when it is acting as the HF =
+
+connecting to the AG, then codec setup APIs, etc are definitely =
+
+something that would be welcome.
+
+If you're talking about AG role, then that is different... In general, =
+
+if the oFono is in an AG role, then there should be nothing to configure =
+
+and there are no APIs for this role.  Things like reporting AG battery =
+
+level to HFP headset are done directly using plugins.  See =
+
+ofono_emulator_set_indicator and how this is done by upower.c for =
+
+example.  I happily take patches for any additional features (codecs, =
+
+etc) you want to support here.
+
+But... oFono upstream has no interest in accepting forwarded AT commands =
+
+from some external daemon if we're in AG role.  We rejected such a =
+
+design years ago and nothing has changed.
+
+AG role is already quite tricky to implement without additional =
+
+complexity introduced by having multiple applications and IPC.  "Its =
+
+your funeral" as the saying goes if you want to go that route.
+
+<snip>
+
+> I disagree here. Primary purpose of HFP for desktop users is ability to
+> use bluetooth's microphone. And not telephony stack and its complicated
+> features like call hold and others, which are in HFP used and
+> implemented probably only in car kits.
+
+So your primary goal here is to have the desktop play the role of the =
+
+AG, purely so you can forward the audio from a headset out to whatever =
+
+it is that you want.  And you want oFono (or some other daemon) to =
+
+(optionally) handle the call related AT commands in the HFP AG role.
+
+Such a design will get a NAK from me on the oFono side.  But don't let =
+
+that stop you.  You can simply invoke oFono APIs directly from your =
+
+daemon.  No need for any changes in oFono itself.  As mentioned above, I =
+
+wouldn't recommend it, but... :)
+
+> =
+
+>>>> Also for using ofono with HFP profile is not possible on desktop
+>>>> computer which do not have any modem as it is hooked to some active
+>>>> modem.
 >>
+>> This statement is not true at all.  You can use oFono without any 'real'
+>> modems attached.  It can happily manage only HFP devices (or modems as we
+>> call them.)
+> =
 
-See above..
+> Ok, can you please provide exact steps how to do it, including
+> activating of bidirectional audio stream?
 
->> Also in my proposed solution it is possible to use HFP profile without
->> Telephony Agent (ofono). Do you think it is really a good idea to have
->> strong dependency on ofono just for bluetooth HFP headset?
->>
+So again, which role?  If we're the HF connecting to the AG, then things =
 
-Why not?  The main purpose of HFP is telephony; whether it is classic =
+just work without a modem.  If we're the AG, then yes you need a modem =
 
-phone calls or skype/facetime.  oFono seems a natural fit.
-
->> Also for using ofono with HFP profile is not possible on desktop
->> computer which do not have any modem as it is hooked to some active
->> modem.
-
-This statement is not true at all.  You can use oFono without any 'real' =
-
-modems attached.  It can happily manage only HFP devices (or modems as =
-
-we call them.)
+to be driven by the AG connection.
 
 >>
->> There is a way to use ofono sim simulator which provide fake modem, but
->> its setup is hard on desktop and it not automated.
->>
+>> You must be thinking of the oFono HFP AG implementation...
+> =
 
-You must be thinking of the oFono HFP AG implementation...
+> Yes! For connecting bluetooth headset you need HFP AG implementation.
+> =
 
->> So connecting bluetooth headset in HFP profile with ofono is something
->> not so easy and not an obvious way.
->>
+> And I guess this is the reason why simulator is needed. HFP headset acts
+> as a "client" for modem. Therefore on desktop / laptop you need to
+> implement "modem server" which will be used by HFP headset "client".
+> =
 
-Again, not true.  As I said above, you can use oFono for this use case =
+> And phone simulator is doing exactly this "modem server", it is
+> simulator of modem.
+> =
 
-just fine.  Certainly the main driver for the development of oFono was =
 
-to drive real modem hardware, but it isn't limited to that.  So if you =
+Okay, I see now.  Yes, the above is correct.  My comments about not =
 
-want to use it only for HFP, you can.
+needing a modem device hold true only if oFono is in HFP HF role =
+
+connecting to an AG.
 
 Regards,
 -Denis
---===============5238981528557911197==--
+--===============1015044546919744063==--
 
