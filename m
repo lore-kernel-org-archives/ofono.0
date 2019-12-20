@@ -1,152 +1,210 @@
-Content-Type: multipart/mixed; boundary="===============2545857764583791606=="
+Content-Type: multipart/mixed; boundary="===============3673279230220904890=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [pulseaudio-discuss] Proposal for a new API and usage of
  Bluetooth HSP and HFP profiles on Linux
-Date: Thu, 19 Dec 2019 15:01:50 +0000
-Message-ID: <90261b42-1048-370f-7680-acd9f7e754ed@gmail.com>
-In-Reply-To: <20191219095132.blj3oyyrlfowv5ik@pali>
+Date: Fri, 20 Dec 2019 21:22:25 +0000
+Message-ID: <76f1cb25-b608-e4e9-6fd9-8da932c56a15@gmail.com>
+In-Reply-To: <20191219153344.hxnoa3idqvgdwrp2@pali>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2545857764583791606==
+--===============3673279230220904890==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pali,
 
->>> But would you accept patches which exports DBus API e.g. for displaying=
- text
->>> on HFP headset with embedded display? Or patches which implements 3
->>> different way for reporting battery level status of HFP headset? And API
->>> for sending "computer battery level" to HFP headset? Or implementing
->>> setup of SCO sockets (via RFCOMM layer) for custom codecs? Or exporting
->>> uinput linux device for button press events? Because all these
->>
->> So which roles are we talking about here?  Your Design document shows
->> hsphfpd registering for both HFP AG and HFP HF roles, but maybe this was=
- not
->> the intent?
+>> There have been one or two implementations of AG role fully external to
+>> oFono.  These implementations simply used the existing oFono APIs to dri=
+ve
+>> the modem.
 > =
 
-> My proposed hsphfpd is going to support both roles. Which means to
-> implement whole HFP profile. So for connecting bluetooth headsets (when
-> AG role is needed on desktop) and also for connecting mobile phones
-> (when HF role is needed on desktop).
+> bluez & pulseaudio developers told me that it would be a good idea to
+> avoid implementing a new AT parser for telephony stack. And rather use
+> ofono implementation for telephony part...
+
+In my opinion there's nothing scary about AT parsing.  In fact that is =
+
+the easiest part of this whole venture.  If you don't want to roll your =
+
+own parser, you can borrow one from the oFono project.  We already =
+
+solved this nicely in the form of the gatchat library.  You could =
+
+incorporate this into your project (if it is GPL compatible).  Or you =
+
+could wait until we port gatchat to ell which will be under LGPL license.
+
 > =
 
-> And my primary motivation is for bluetooth headsets as this is what are
-> asking desktop and laptop users again and again that is missing on Linux
-> systems.
+> But if I should use existing DBus API provided by ofono, it means that I
+> need to do parsing of all AT commands (including telephony) and
+> translate them to ofono DBus API.
+
+I think you will need to do this regardless.  Otherwise I fail to see =
+
+how you prevent one 'agent' from consuming AT commands it shouldn't be. =
+
+This is a possibility you need to consider, whether it happens by =
+
+accident or maliciously.
+
 > =
 
-> So higher priority has AG role and slightly lower priority has HF role.
+> I agree, this should work and there is not need to modify ofono. But it
+> means that in hsphfpd daemon I need to have full AT parser for all
+> telephony commands and it was something which bluez / pa developers
+> thought that should be avoided. Therefore I come up with idea that
+> telephony commands would be handled by external Telephony Agent, which
+> can be ofono.
+
+Understood.  But I think the metric function was selected =
+
+inappropriately in this case.  My opinion is that you should have =
+
+started with what the overall architecture should look like; you should =
+
+not have based design decisions on which parts might be a little hard to =
+
+implement.
+
+> =
+
+>> You could do that.  But as I said, we rejected such a design a
+>> long time ago due to complexity and other issues.
+> =
+
+> Anyway, what is the problem with accepting modem socket in ofono via
+> DBus and starts talking with it like with any other modem which ofono
+> supports? Currently ofono already takes modem socket from bluez via DBus
+> API, so in same way hsphfpd can pass modem socket to ofono. Basically
+> ofono then can reuse same code which already uses for sockets from
+> bluez, just it do not have to parse and interpret audio related AT
+> commands (as these are handled by hsphpfd itself).
+> =
+
+> What are exact issues? I do not see complexity at ofono part (as has
+> already everything implemented) and currently I do not see those "other"
+> issues.
+
+The issues are many.  And really the question is not whether it 'could =
+
+be' done, but whether it 'should be' done.  Let me describe a couple =
+
+examples:
+
+- In the case of HF role (1), oFono already provides all the necessary =
+
+APIs.  So put yourself in oFono's maintainer shoes.  What would we gain =
+
+by supporting almost the same but different mechanism?  We would have to =
+
+introduce a new hfp_hf plugin, one that is almost identical, but =
+
+different to hfp_hf_bluez5 plugin.  These two plugins would have =
+
+coexistence issues, which would add more complexity.  Then there's the =
+
+impact on PulseAudio and other users.  How do they know when to use the =
+
+HandsfreeAudio API vs some external API?  Supporting this new way buys =
+
+us a lot of extra code / complexity with no value added.
+
+- The other example is more practical. HFP Service Level Connection =
+
+(SLC) establishment is actually quite tricky.  There are certain =
+
+limitations on what can and cannot be done prior to SLC establishment, =
+
+including how audio handling is done.  Unfortunately, codec negotiation, =
+
+indicator negotiation, and feature negotiation are part of the SLC. =
+
+oFono already solves all of this and handles all of it nicely.  We have =
+
+passed all relevant certification testing.  It is very unclear how you =
+
+plan to handle this (or whether you realistically even can) in your =
+
+architecture when the responsibilities are split between the various =
+
+daemons.  So again, oFono has nothing to gain here...
+
+> =
+
+> You suggested to use phone simulator together with ofono and then
+> starts extending / patching phone simulator to supports all needed parts
+> which are in my hsphfpd design (battery status, button press, codec
+> selection)?
 > =
 
 
-So to summarize.  You have broadly 3 main use cases for HFP:
+Not quite.  I suggested you expand oFono's emulator implementation (for =
 
-1. HF connecting to AG role.  Essentially a carkit role.  oFono does =
+AG role) and its DBus APIs (for HF role) to support the new vendor =
 
-this pretty well already and has the APIs defined that cover up to HFP =
+specific features that you want.
 
-1.7.  Any vendor extensions can be easily added.  And some carkit =
+Forget about the phone simulator, it is really irrelevant for what =
 
-manufacturers already use it.
+you're trying to accomplish.
 
-2. AG role when you have a 'real modem' behind it.  oFono already =
-
-provides everything needed for this scenario.
-
-3. AG role when you don't have a real modem or you have some sort of =
-
-VoIP use case.  oFono doesn't cover this case as you stated.
-
-So I can see value in something that implements case #3.  But having =
-
-said that, oFono will not be receiving AT commands from external daemons:
-	- For case 1, it'd just be a rehash of what oFono does well already.  I =
-
-reinvented a few wheels in my time, but doesn't mean I think this one =
-
-should be.
-	- The reasoning for case 2/3 I already covered upthread.
-
->> If you're talking about extending oFono APIs when it is acting as the HF
->> connecting to the AG, then codec setup APIs, etc are definitely something
->> that would be welcome.
->>
->> If you're talking about AG role, then that is different... In general, if
->> the oFono is in an AG role, then there should be nothing to configure and
->> there are no APIs for this role.
+> Also how to handle the main problem of phone simulator that it is too
+> much complicated to setup it on desktop? Looking at the steps...
 > =
 
-> Codecs needs to be configured also in AG role. Before accepting SCO
-> connection you need to configure SCO socket for correct codec. Also for
-> vendor codecs it needs to be properly negotiated via AT commands.
->
-
-Sure, but that doesn't mean they need an actual D-Bus API to be =
-
-configured with.  You can simply extend oFono emulator to support =
-
-whatever codecs you want and whatever custom AT command handling that =
-
-you need.  If the HF requests the codec, then you use it.  There's no =
-
-D-Bus API required here.  Again, take a look at how this is done in =
-
-oFono today.
-
->> Such a design will get a NAK from me on the oFono side.  But don't let t=
-hat
->> stop you.  You can simply invoke oFono APIs directly from your daemon.  =
-No
->> need for any changes in oFono itself.  As mentioned above, I wouldn't
->> recommend it, but... :)
+> https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/B=
+luetooth/#index5h2
 > =
 
-> So if you are disagreeing with this design, can you propose alternative?
-> Which would support needs for desktop users? Support for HSP profile (in
-> AG role), support for HFP profile (in AG role), ability to parse and
-> interpret needed AT commands. And later also HS and HF role of these
-> profiles.
+> ... that desktop user needs to run nontrivial commands in command like,
+> plus creating configuration file only just to connect bluetooth headset
+> is ridiculous and non-acceptable for desktop application.
 > =
 
+> If this problem is not fixed, ofono and phone simulator are not usable
+> as "main" software implementation of HFP profile for usage of bluetooth
+> headsets on Linux.
 
-There have been one or two implementations of AG role fully external to =
+oFono was never advertised as solving the 'HFP AG without a modem' use =
 
-oFono.  These implementations simply used the existing oFono APIs to =
+case.  This is something we never had as a requirement / objective. =
 
-drive the modem.  You could do that.  But as I said, we rejected such a =
+Phonesim is a development tool.  So of course it isn't trivial to setup, =
 
-design a long time ago due to complexity and other issues.
+it isn't meant to be used in production in the first place.  The use of =
 
-Or you can ignore the call control aspects entirely...
+phonesim described in the PA wiki, while creative, is a giant hack ;)
 
-But in the end, it is your architecture.  All I can do is point out =
+Basically it all boils down to the fact that nobody has stepped up all =
 
-(early in the process) what is and what is not acceptable to oFono upstream.
+this time to solve a particular use case you care about.  But blaming =
 
->>
->> Okay, I see now.  Yes, the above is correct.  My comments about not need=
-ing
->> a modem device hold true only if oFono is in HFP HF role connecting to an
->> AG.
-> =
+oFono for this is misguided.
 
-> Ok. So I guess now you understood main problem. I thought it was
-> obvious, but seems that bluetooth HFP is too complicated, so talking
-> about it always needs more detailed explanation. Sorry for that if it
-> was not clear from my side since beginning what are requirements for my
-> setup.
+So, if you want to solve the HFP AG without a modem case I fully support =
 
-Well it was a bit of reading comprehension fail on my part as well.  The =
+your efforts.
 
-two roles are really quite different, so precise language helps.
+Perhaps this can even be solved in oFono itself (since it already does =
+
+90% of what you want) by making the modem requirement optional.  What we =
+
+could do for example is to create a dummy modem if an AG connection is =
+
+requested and no other suitable modems are detected in the system.  The =
+
+resultant AG wouldn't have any call control capability, it could still =
+
+be used for transferring audio data, battery, etc.  If you want to =
+
+pursue this, we can brainstorm further.
 
 Regards,
 -Denis
---===============2545857764583791606==--
+--===============3673279230220904890==--
 
