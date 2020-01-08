@@ -1,77 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============6128471722535603076=="
+Content-Type: multipart/mixed; boundary="===============0670139041046772270=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: connman settings for modem APN
-Date: Tue, 07 Jan 2020 18:05:26 +0100
-Message-ID: <3268003d-87c8-77f5-75e6-99f82bbb7c78@monom.org>
-In-Reply-To: <CABPh3UMvrJHZoGSNTvvWCNCOHH4jKZ44XcF+3EeD8zxL+CaikQ@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: HSP/HFP ofono bluetooth support for Linux desktop
+Date: Wed, 08 Jan 2020 14:34:32 -0600
+Message-ID: <721332d3-336a-b9d2-f8cd-72da785fb9dc@gmail.com>
+In-Reply-To: <20200107192311.efit6zftt27encdc@pali>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6128471722535603076==
+--===============0670139041046772270==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Pali,
 
-On 07.01.20 17:38, nick83ola wrote:
-> I have to manage a modem with connman through dbus and I'm willing to
-> work on the ofono plugin to add the APN handling but I'm not familiar
-> with connman code.
+> Do you have a reasonable solution also for second issue?
 > =
 
-> Connman is already creating a ofono internet context by default for
-> the modem but it doesn't offer the possibility to configure the APN
-> (and user/password) for the connection.
 
-Correct.
+HSP profile has always been a problem child.  It isn't really all that =
 
-> Where you would put the dbus method to set the APN for a particular
-> connection? =
+useful as a profile, and given how minimal it is, the right place for it =
 
+always seemed to be inside Pulse Audio itself.  This is what Marcel & I =
 
-See oFono documentation on Connection Context.
+agreed upon back about 8-9 years ago anyway.
 
-> I would prefer if possible only to connect to connman not
-> connman/ofono.
+You are advocating that HSP is still useful, particularly with vendor =
 
-/*
-  * The way this plugin works is following:
-  *
-  *   powered -> SubscriberIdentity or Online =3D True -> gprs, context ->
-  *     attached -> netreg -> ready
-  *
-  * Depending on the modem type, this plugin will behave differently.
-  *
-  * GSM working flow:
-  *
-  * When a new modem appears, the plugin always powers it up. This
-  * allows the plugin to create a connman_device. The core will call
-  * modem_enable() if the technology is enabled. modem_enable() will
-  * then set the modem online. If the technology is disabled then
-  * modem_disable() will just set the modem offline. The modem is
-  * always kept powered all the time.
-  *
-  * After setting the modem online the plugin waits for the
-  * ConnectionManager and ConnectionContext to appear. When the context
-  * signals that it is attached and the NetworkRegistration interface
-  * appears, a new Service will be created and registered at the core.
-  *
-  * When asked to connect to the network (network_connect()) the plugin
-  * will set the Active property on the context. If this operation is
-  * successful the modem is connected to the network. oFono will inform
-  * the plugin about IP configuration through the updating the context's
-  * properties.
-[...]
+extensions.  Which is fair enough, but now you have to figure out how =
 
-I have only a vague memory on this topic, but I think to remember that =
+and where to put this support.
 
-oFono will only show the CM if the APN was provisioned in oFono. Maybe I =
+As mentioned earlier, one idea you can explore is to create a small =
 
-have false memory on it.
+daemon (or maybe it can even be part of ofonod itself) that will handle =
 
-Thanks,
-Daniel
---===============6128471722535603076==--
+HSP client/server roles.  See for example the dundee daemon that is part =
+
+of ofono.git.  dundee handles Bluetooth DUN profile and might be a good =
+
+model / starting point for what you're trying to accomplish.
+
+You can then implement the same API interfaces for setting up the HSP =
+
+audio stream as oFono does today (i.e. =
+
+https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/doc/handsfree-a=
+udio-api.txt), =
+
+which would make PulseAudio's job much easier, since the audio stream =
+
+aspects would be essentially identical to HFP.  If you're part of =
+
+oFono's tree, then in theory many implementation aspects could be reused.
+
+If you want to provide some higher-level APIs for external applications, =
+
+then HSP specific interfaces (APIs) can be added as needed.
+
+If you decide this is something you want to pursue, then I'm happy to =
+
+host this in the oFono tree.
+
+Regards,
+-Denis
+--===============0670139041046772270==--
 
