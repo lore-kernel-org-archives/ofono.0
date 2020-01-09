@@ -1,70 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============0670139041046772270=="
+Content-Type: multipart/mixed; boundary="===============0202840438996950551=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Tanu Kaskinen <tanuk@iki.fi>
 Subject: Re: HSP/HFP ofono bluetooth support for Linux desktop
-Date: Wed, 08 Jan 2020 14:34:32 -0600
-Message-ID: <721332d3-336a-b9d2-f8cd-72da785fb9dc@gmail.com>
-In-Reply-To: <20200107192311.efit6zftt27encdc@pali>
+Date: Thu, 09 Jan 2020 07:42:56 +0200
+Message-ID: <3d61da57f8fd37a3ac6d5991326497c2f9896d23.camel@iki.fi>
+In-Reply-To: <721332d3-336a-b9d2-f8cd-72da785fb9dc@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0670139041046772270==
+--===============0202840438996950551==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pali,
+Hi, I'd like to point out that Pali's messages aren't getting through
+to the ofono mailing list. Is he not subscribed?
 
-> Do you have a reasonable solution also for second issue?
+-- Tanu
+
+
+On Wed, 2020-01-08 at 14:34 -0600, Denis Kenzior wrote:
+> Hi Pali,
 > =
 
+> > Do you have a reasonable solution also for second issue?
+> > =
 
-HSP profile has always been a problem child.  It isn't really all that =
+> =
 
-useful as a profile, and given how minimal it is, the right place for it =
+> HSP profile has always been a problem child.  It isn't really all that =
 
-always seemed to be inside Pulse Audio itself.  This is what Marcel & I =
+> useful as a profile, and given how minimal it is, the right place for it =
 
-agreed upon back about 8-9 years ago anyway.
+> always seemed to be inside Pulse Audio itself.  This is what Marcel & I =
 
-You are advocating that HSP is still useful, particularly with vendor =
+> agreed upon back about 8-9 years ago anyway.
+> =
 
-extensions.  Which is fair enough, but now you have to figure out how =
+> You are advocating that HSP is still useful, particularly with vendor =
 
-and where to put this support.
+> extensions.  Which is fair enough, but now you have to figure out how =
 
-As mentioned earlier, one idea you can explore is to create a small =
+> and where to put this support.
+> =
 
-daemon (or maybe it can even be part of ofonod itself) that will handle =
+> As mentioned earlier, one idea you can explore is to create a small =
 
-HSP client/server roles.  See for example the dundee daemon that is part =
+> daemon (or maybe it can even be part of ofonod itself) that will handle =
 
-of ofono.git.  dundee handles Bluetooth DUN profile and might be a good =
+> HSP client/server roles.  See for example the dundee daemon that is part =
 
-model / starting point for what you're trying to accomplish.
+> of ofono.git.  dundee handles Bluetooth DUN profile and might be a good =
 
-You can then implement the same API interfaces for setting up the HSP =
+> model / starting point for what you're trying to accomplish.
+> =
 
-audio stream as oFono does today (i.e. =
+> You can then implement the same API interfaces for setting up the HSP =
 
-https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/doc/handsfree-a=
-udio-api.txt), =
+> audio stream as oFono does today (i.e. =
 
-which would make PulseAudio's job much easier, since the audio stream =
+> https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/doc/handsfree=
+-audio-api.txt), =
 
-aspects would be essentially identical to HFP.  If you're part of =
+> which would make PulseAudio's job much easier, since the audio stream =
 
-oFono's tree, then in theory many implementation aspects could be reused.
+> aspects would be essentially identical to HFP.  If you're part of =
 
-If you want to provide some higher-level APIs for external applications, =
+> oFono's tree, then in theory many implementation aspects could be reused.
+> =
 
-then HSP specific interfaces (APIs) can be added as needed.
+> If you want to provide some higher-level APIs for external applications, =
 
-If you decide this is something you want to pursue, then I'm happy to =
+> then HSP specific interfaces (APIs) can be added as needed.
+> =
 
-host this in the oFono tree.
+> If you decide this is something you want to pursue, then I'm happy to =
 
-Regards,
--Denis
---===============0670139041046772270==--
+> host this in the oFono tree.
+> =
+
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list -- ofono(a)ofono.org
+> To unsubscribe send an email to ofono-leave(a)ofono.org
+
+--===============0202840438996950551==--
 
