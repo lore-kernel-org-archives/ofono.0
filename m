@@ -1,79 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4807612106585309472=="
+Content-Type: multipart/mixed; boundary="===============2376231622253778295=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: JH <jupiter.hce@gmail.com>
 Subject: Re: Where are ofono dbus paths for RSRQ and RSRP?
-Date: Wed, 22 Jan 2020 15:44:09 -0600
-Message-ID: <965e959a-38bf-0451-fb33-869f29ad6108@gmail.com>
-In-Reply-To: <CAA=hcWSeZ6dDoz=DTs_e3RM=VkGgReRtD+A_mjGGcxqinjmSuA@mail.gmail.com>
+Date: Thu, 23 Jan 2020 21:39:05 +1100
+Message-ID: <CAA=hcWS6cXJO6V1NZQBwtXqvt_soQFDv9Q3ogLauPFBbKmgnjg@mail.gmail.com>
+In-Reply-To: <965e959a-38bf-0451-fb33-869f29ad6108@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4807612106585309472==
+--===============2376231622253778295==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
-> Sorry, I am still learning dbus command and syntax, can the
-> NetworkMonitor interface be run via
-> dbus-send?
+On 1/23/20, Denis Kenzior <denkenz@gmail.com> wrote:
+> You can invoke the org.ofono.NetworkMonitor.GetServingCellInformation or
+> GetNeighbouringCellsInformation methods and see if this particular value
+> would be reported.
 
-It can...  Using dbus-send is not too user-friendly though.  I'd suggest =
+That indeed works well.
 
-a UI based tool.  Something like d-feet, or qdbusviewer.
+> If you're on uBlox hardware, then i think it only reports the Serving
+> Cell info, not neighbor cells.
 
-<snip>
+You are right, uBlox hardware only works for Serving Cell info, not
+neighbor cells. Since the device is in stationary, all we need is the
+Serving Cell info, not neighbor cells.
 
->              dict entry(
->                 string "Interfaces"
->                 variant                   array [
->                       string "org.ofono.SmartMessaging"
->                       string "org.ofono.PushNotification"
->                       string "org.ofono.MessageManager"
->                       string "org.ofono.LongTermEvolution"
->                       string "org.ofono.NetworkRegistration"
->                       string "org.ofono.RadioSettings"
->                       string "org.ofono.ConnectionManager"
->                       string "org.ofono.NetworkMonitor"
+Thank you very much Denis, greatly appreciate it.
 
-So the modem repots NetworkMonitor support...
+Kind regards,
 
->                       string "org.ofono.MessageWaiting"
->                       string "org.ofono.AllowedAccessPoints"
->                       string "org.ofono.SimManager"
->                    ]
->              )
-
-<snip>
-
-> =
-
-> But I got following command syntax error, what is the correct syntax
-> to run NetworkMonitor?
-> =
-
-> # dbus-send --print-reply --system --dest=3Dorg.ofono /ubloxqmi_0
-> org.ofono.NetworkMonitor.GetProperties
-
-This won't work because NetworkMonitor interface does not have =
-
-Properties.  Refer to the networkmonitor-api.txt documentation: =
-
-https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/doc/networkmoni=
-tor-api.txt
-
-You can invoke the org.ofono.NetworkMonitor.GetServingCellInformation or =
-
-GetNeighbouringCellsInformation methods and see if this particular value =
-
-would be reported.
-
-If you're on uBlox hardware, then i think it only reports the Serving =
-
-Cell info, not neighbor cells.
-
-Regards,
--Denis
---===============4807612106585309472==--
+- jh
+--===============2376231622253778295==--
 
