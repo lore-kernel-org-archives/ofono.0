@@ -1,38 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2376231622253778295=="
+Content-Type: multipart/mixed; boundary="===============0701893535945929419=="
 MIME-Version: 1.0
 From: JH <jupiter.hce@gmail.com>
-Subject: Re: Where are ofono dbus paths for RSRQ and RSRP?
-Date: Thu, 23 Jan 2020 21:39:05 +1100
-Message-ID: <CAA=hcWS6cXJO6V1NZQBwtXqvt_soQFDv9Q3ogLauPFBbKmgnjg@mail.gmail.com>
-In-Reply-To: <965e959a-38bf-0451-fb33-869f29ad6108@gmail.com>
+Subject: org.ofono.AllowedAccessPoints not found on the interface_list
+Date: Sat, 25 Jan 2020 11:49:13 +1100
+Message-ID: <CAA=hcWRwwH6FTgDsuP3a1gLpfHuYgrmyAMJmAoHfih9VLLJKuA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2376231622253778295==
+--===============0701893535945929419==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-On 1/23/20, Denis Kenzior <denkenz@gmail.com> wrote:
-> You can invoke the org.ofono.NetworkMonitor.GetServingCellInformation or
-> GetNeighbouringCellsInformation methods and see if this particular value
-> would be reported.
+I am running ofono for SARA-R4 Modem, systemd show many following
+messages, does it need be concerned?
 
-That indeed works well.
+Interface org.ofono.AllowedAccessPoints not found on the interface_list
 
-> If you're on uBlox hardware, then i think it only reports the Serving
-> Cell info, not neighbor cells.
+Sometimes the LTE was connected but sometime the LTE was not
+connected, I try to figure out if there is any issues in ofono or not.
 
-You are right, uBlox hardware only works for Serving Cell info, not
-neighbor cells. Since the device is in stationary, all we need is the
-Serving Cell info, not neighbor cells.
+Appreciate your comments.
 
-Thank you very much Denis, greatly appreciate it.
+Thank you.
 
 Kind regards,
 
-- jh
---===============2376231622253778295==--
+ - jh
+--===============0701893535945929419==--
 
