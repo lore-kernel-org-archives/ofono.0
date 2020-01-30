@@ -1,60 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============3976104992292954745=="
+Content-Type: multipart/mixed; boundary="===============0320216023886112997=="
 MIME-Version: 1.0
-From: JH <jupiter.hce@gmail.com>
-Subject: Re: 4G LTE connection stability with USB voltage requirement
-Date: Tue, 28 Jan 2020 06:08:18 +1100
-Message-ID: <CAA=hcWTzEPeyH1bzyC1jGZVoiE2hho8fW6E6NTnAviXmw27k=w@mail.gmail.com>
-In-Reply-To: <20200127173034.hw6il2cnpvgl64py@beryllium.lan>
+From: jagernicolas@legtux.org
+Subject: AuthenticationMethod can't be set to none
+Date: Thu, 30 Jan 2020 13:02:41 +0000
+Message-ID: <20200130130241.3099.82762@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3976104992292954745==
+--===============0320216023886112997==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+Hi,
+I have a device with a Quectel EC21 module. I have to make `ofono` working =
+to connect internet using the lte. In the past, another company use `pppd` =
+to connect internet. Using their scripts, I can connect internet when the m=
+odule is set to avoid authentication (`noauth`). Now I try to do the same w=
+ith `ofono` (I have no prior knowledge of ofono/connman and even the use of=
+ cell module).
+ =
 
-Thanks for your response.
+According to `connman-api.txt`,
+```
+string AuthenticationMethod [readwrite]
+	Holds the PPP authentication method to use.  Valid values are "pap", "chap=
+" and "none".
+	Defaults to "chap".
+```
 
-On 1/28/20, Daniel Wagner <wagi@monom.org> wrote:
-> Hi JH,
->
-> On Mon, Jan 27, 2020 at 01:26:41PM +1100, JH wrote:
->> It seems to me there are subtle differences between connman / ofono
->> and OpenWrt netifd, could the connman / ofono require more rigid
->> stable USB voltage than OpenWrt netifd? Or could the OpenWrt netifd be
->> more superior than connman / ofono in terms of 4G LTE connections?
->>
->> Appreciate your insight comments and advice.
->
-> What about measuring the power drawn by the device? And while at it
-> also careful check the datasheets of the components if the tolerances
-> of the hardware components are meet.
+I could set the value of AuthenticationMethod  to "pap, "chap" and "none". =
+For example,
+```
+	context.SetProperty("AuthenticationMethod", dbus.String("pap"), timeout =
+=3D 100)
+```
+will set the value. but,
+```
+	context.SetProperty("AuthenticationMethod", dbus.String("none"), timeout =
+=3D 100)
+```
+I got the following error,
+```
+	org.ofono.Error.InvalidFormat: Argument format is not recognized
+```
 
-I did current measuring, running ConnMan and oFono, the power
-consumption was about 150mA - 260mA, running OpenWrt netifd, the power
-consumption was about 150mA - 200mA. I have to say, the result might
-not be accurate (1) if I change the voltage slightly, the power
-consumption would be different; (2) The maximum current consumption
-changes from time to time; (3) The DC power has only one output and
-one current meter, I cannot connect both devices running in parallel.
-I'll find a DC power supply with two power output and 2 current /
-voltage meters, and to buy another debug cable to connect both devices
-in parallel.
+According to `lte-api.txt`,
+```
+string AuthenticationMethod [readwrite, experimental]
 
-> I cannot comment on netifd since I don't know anything about it. But
-> it could be that ConnMan and oFono together do more CPU work hence the
-> device drains more power. I can tell you from experience if the CPU
-> doesn't get enough power you see really random crashes and weird
-> behaviors. Check the reports on Raspberry Pi and power supplies.
+			Sets the Method used for the authentication
+			for the default APN.
 
-Good to know that experience, it does help a lot.
+			Available values are "none", "pap" and "chap".
+			Default is "none".
 
-Thank you Daniel,
+			If the AuthenticationMethod is set to 'none',
+			no authentication is performed for the default attach
+			APN.  Username and Password properties are ignored,
+			even if containing a valid value.  If Username or
+			Password are empty, AuthenticationMethod is implicitly
+			assumed to be set to 'none'.
+```
+we can read that `If Username or Password are empty, AuthenticationMethod i=
+s implicitly assumed to be set to 'none'.`. I try that using the `connman-a=
+pi`, but yet no internet.
+Using the `lte-api` don't work much, It seems the field `AuthenticationMeth=
+od` is not present. When I print what come from `lte.GetProperties()` I got=
+ only the field `DefaultAccessPointName`,
+```
+DefaultAccessPointName
+dbus.Dictionary({dbus.String('DefaultAccessPointName'): dbus.String('', var=
+iant_level=3D1)}, signature=3Ddbus.Signature('sv'))
+```
+I don't see how I could solve this. Help would be appreciated.
 
-Kind regards,
 
-- jh
---===============3976104992292954745==--
+Additionnal informations:
+versions:
+```
+# ofonod -v
+1.24
+# connmand -v
+1.35
+```
+
+
+regards,
+--===============0320216023886112997==--
 
