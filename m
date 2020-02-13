@@ -1,137 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============3289925501145675013=="
+Content-Type: multipart/mixed; boundary="===============6231640124290712238=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: HSP/HFP ofono bluetooth support for Linux desktop
-Date: Wed, 12 Feb 2020 15:29:04 -0600
-Message-ID: <57639029-7588-956b-8e3c-a2a6ed11b758@gmail.com>
-In-Reply-To: <20200108212537.zs6pesil2vjguvu6@pali>
+Subject: Re: [PATCH] ublox: network-registration: Handle UREG unsolicited
+ during poll
+Date: Thu, 13 Feb 2020 10:44:49 -0600
+Message-ID: <340f70ab-cd3e-242c-ed1c-d09f32b41dc0@gmail.com>
+In-Reply-To: <20200209215928.25656-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3289925501145675013==
+--===============6231640124290712238==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pali,
+Hi Richard,
 
-On 1/8/20 3:25 PM, Pali Roh=C3=A1r wrote:
-> Hello!
+On 2/9/20 3:59 PM, richard.rojfors(a)gmail.com wrote:
+> From: Richard R=C3=B6jfors <richard@puffinpack.se>
 > =
 
-
-Somehow this went straight to my Junk folder, so I didn't see this =
-
-message at all until now.
-
+> In the case a unsolicited indication for UREG was received
+> while the status was polled. The poll response failed to parse.
+> This since the unsolicited indication only carries one
+> parameter, while the poll response is expected to carry two.
 > =
 
-> Audio application (e.g. pulseaudio) really do not want to handle two
-> separate services to monitor and process HSP/HFP devices. >
-> For audio application are HSP and HFP devices equivalent, they provide
-> same features: SCO socket, API for controlling microphone and speaker
-> gain; plus optionally specify used codec.
+> Update the code to loop until the response is found.
 > =
 
-> So having two separate services which fully divided for audio
-> application purpose does not make sense.
+> The log below shows a case where this happened.
 > =
 
-> So it is possible that both HSP and HFP audio cards would be available
-> via one audio API? Because I do not see how it could be done via design
-> like dundee.
+> 10:07:55 ofonod[520]: Aux: > AT+UREG?\r
+> 10:07:55 ofonod[520]: Aux: < \r\n+CGREG: 4\r\n\r\n+UREG: 0\r\n\r\n+CIEV: =
+9,1\r\n
+> 10:07:55 ofonod[520]: src/gprs.c:ofono_gprs_status_notify() /ublox_0 stat=
+us unknown (4)
+> 10:07:55 ofonod[520]: src/gprs.c:ofono_gprs_detached_notify() /ublox_0
+> 10:07:55 ofonod[520]: Aux: < \r\n+UREG: 1,0\r\n
+> 10:07:55 ofonod[520]: Aux: < \r\nOK\r\n
+> ---
+>   drivers/ubloxmodem/network-registration.c | 18 ++++++++++++------
+>   1 file changed, 12 insertions(+), 6 deletions(-)
 > =
 
+> diff --git a/drivers/ubloxmodem/network-registration.c b/drivers/ubloxmod=
+em/network-registration.c
+> index 6a524f47..2c6358e3 100644
+> --- a/drivers/ubloxmodem/network-registration.c
+> +++ b/drivers/ubloxmodem/network-registration.c
+> @@ -288,15 +288,21 @@ static void ublox_ureg_cb(gboolean ok, GAtResult *r=
+esult,
+>   =
 
-One API sure.  Maybe on multiple services.  Honestly, I don't see why =
+>   	g_at_result_iter_init(&iter, result);
+>   =
 
-this would be such a burden for PA to watch 2 dbus services instead of =
+> -	if (!g_at_result_iter_next(&iter, "+UREG:"))
+> -		return;
+> +	while (g_at_result_iter_next(&iter, "+UREG:")) {
+> +		if (!g_at_result_iter_next_number(&iter, &enabled))
+> +			return;
+>   =
 
-1.  From oFono perspective it would make more sense to keep the HSP part =
+> -	if (!g_at_result_iter_next_number(&iter, &enabled))
+> -		return;
+> +		/* Sometimes we get an unsolicited UREG here, skip it */
+> +		if (!g_at_result_iter_next_number(&iter, &state))
+> +			continue;
+>   =
 
-a separate daemon.  I could be convinced otherwise if it is indeed a big =
+> -	if (!g_at_result_iter_next_number(&iter, &state))
+> -		return;
+> +		goto parsed_state;
 
-burden for PA...
+Wouldn't it look nicer to just perform the ublox_ureg_state_to_tech =
 
->> You can then implement the same API interfaces for setting up the HSP au=
-dio
->> stream as oFono does today (i.e. https://git.kernel.org/pub/scm/network/=
-ofono/ofono.git/tree/doc/handsfree-audio-api.txt),
+steps here (i.e within the loop) without the goto?
+
+> +	}
+> +
+> +	/* In case we get here, the response was not parsed */
+> +	goto error;
+
+Then this also becomes unnecessary.
+
+>   =
+
+> +parsed_state:
+>   	tech =3D ublox_ureg_state_to_tech(state);
+>   	if (tech < 0)
+>   		/* No valid UREG status, we have to trust CREG... */
 > =
 
-> This API is unusable for both HSP and HFP audio streams. In pulseaudio
-> it is somehow used, but it is not suitable.
-> =
-
-
-Funny.  "It is used but not suitable"?
-
-> Main objection for handsfree-audio-api.txt is that it does not provide
-> information about locally used codec and somehow mixes air codec and
-> local codec. In my hsphfpd.txt I used term "AgentCodec" for bluetooth
-> local codec and term "AirCodec" for bluetooth air codec format.
-
-Okay.  But, just FYI, at the time there was no hw that could do such =
-
-on-the-fly conversions, so this use case wasn't considered/implemented. =
-
-There's really no reason why we couldn't extend our APIs to handle this.
-
-> =
-
-> Another objection against handsfree-audio-api.txt API is that it is
-> bound to HF codecs (via number) and does not support for pass e.g. CSR
-> codecs.
-
-True.  In retrospect we probably should have used strings.  But it was =
-
-assumed that vendor extensions would go via the Bluetooth SIG Assigned =
-
-Numbers facility.  Anyhow, we can always add a 'Register2' method that =
-
-could take codecs as a string array or a combination of strings & ints. =
-
-And if Register2 was used, then use 'NewConnection2' with a signature =
-
-that supports passing in vendor codecs and whatever else that might be =
-
-needed.
-
-> =
-
-> What is completely missing in that API is controlling volume level.
->
-
-It is there on the CallVolume interface
-
-> And also API does not provide socket MTU information or ability to
-> change/specify which codec would be used.
-
-There was no need, we automatically defaulted to using Wide band if =
-
-available.  Third party codecs are a new use case (for oFono HFP), so =
-
-would require an API extension.
-
-> =
-
-> Non-audio APIs which are needed to export (for both HSP and HFP profiles):
-> =
-
-> * battery level (0% - 100%)
-> * power source (external, battery, unknown)
-> * ability to send "our laptop" battery level and power source to remote d=
-evice
-> * send text message to embedded display
-> * process button press event (exported via linux kernel uinput)
-> =
-
-
-I think all of these are feasible to support under the current oFono =
-
-structure, either via plugins or API extensions.
 
 Regards,
 -Denis
---===============3289925501145675013==--
+--===============6231640124290712238==--
 
