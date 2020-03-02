@@ -1,31 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============2862956094381502600=="
+Content-Type: multipart/mixed; boundary="===============7033683524617769444=="
 MIME-Version: 1.0
-From: khlee9228@naver.com
-Subject: LTE Registration req not tried
-Date: Sun, 01 Mar 2020 03:09:25 +0000
-Message-ID: <20200301030925.2640.84502@ml01.vlan13.01.org>
+From: nick83ola <nick83ola@gmail.com>
+Subject: Expose MBPI api over d-bus
+Date: Mon, 02 Mar 2020 10:52:44 +0000
+Message-ID: <CABPh3UNsBS8YnW5kWhMHaGkjPN8WFHB7gkXvFtDW9kyMn_FgQQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2862956094381502600==
+--===============7033683524617769444==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello.
+Dear Ofono developers,
 
-We are currently using samsung modem and RIL connection.
+I need to expose the mbpi information over d-bus and possibly
+automatically create profiles based on the information provided in the
+mobile provider information database.
 
-After power up, =
+Do you think the right way could be:
+- add a d-bus interface to the mbpi.c plugin
+- or extend the allowed apn plugin to query the mobile provider database?
+- or something else?
 
-
-In 3G case,   attach  request is happenend automatically =
-
-in 4G case,   attach request is not happened automatically
-
-Do you know why LTE resitration request is not happend automatically after =
-power up?
-AT+CGATT=3D1 is ok to make LTE registration but I have no idea why LTE regi=
-stration is not happend?
---===============2862956094381502600==--
+Thanks
+Nicola Lunghi
+--===============7033683524617769444==--
 
