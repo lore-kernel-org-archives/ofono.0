@@ -1,74 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============7476736109480725740=="
+Content-Type: multipart/mixed; boundary="===============8467533145789508878=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: How to handle modems with additional wwan connect stage?
-Date: Wed, 11 Mar 2020 10:44:21 -0500
-Message-ID: <c8f07c2e-c997-c795-9579-b67da89a6355@gmail.com>
-In-Reply-To: <20200311124609.2753.5269@ml01.vlan13.01.org>
+From: Tarmo Kuuse <tarmo.kuuse@gmail.com>
+Subject: Re: [PATCH] plugin: provision: create multiple contexts for multiple
+ entries in mbpi
+Date: Thu, 12 Mar 2020 15:22:00 +0200
+Message-ID: <b66d4aa0-04ba-8828-8325-d07ffe6955b4@gmail.com>
+In-Reply-To: <a39210bd-2edb-21dc-7f21-b81a60649745@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7476736109480725740==
+--===============8467533145789508878==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mattias,
+Hi Denis,
 
-On 3/11/20 7:46 AM, mattias.mansson(a)verisure.com wrote:
-> We are writing a ofono driver/plugin for a new Quectel modem based on a q=
-ualcomm chipset. This modem has a wwan interface that needs to be "connecte=
-d" after the context is activated, partially to allow the host to run dhcp.=
- It can be done either using QMI or with a special qualcomm command AT$QCRM=
-CALL. We want to control it using AT, as we have found several issues with =
-QMI. But we are having some trouble figuring out where this command should =
-be called in the ofono state machine, at least in the LTE case where the co=
-ntext is automatically activated. If we activate the context manually, we c=
-ould just add that call in the end of the context activation. But if we for=
- the automatic case add this command when we receive PDN ACT 1 and the AT c=
-ommand fails (which right now happens sometimes), we end up in a state wher=
-e we can't try again, because the context is already activated. So we can't=
- really find the best way to do this...
-
-I guess you would have to build in logic to retry the command as part of =
-
-the .read_settings operation. In other words, try to retry your AT$MAGIC =
-
-command several times prior to giving up.  Or contact your modem vendor =
-
-to fix their firmware :)
-
+On 04.03.20 20:49, Denis Kenzior wrote:
+>> In my case automatic provisioning always fails:
+>> - the database has multiple entries for basically every operator/country
 > =
 
-> Another issue I wanted to ask is that when we get an automatic context ac=
-tivation on 4G, we don't get the APN set from the network in the AT+CGDCONT=
-? response. According to Quectel, this is just how their modem work. It wil=
-l only show manually set APN from that response. Is this normal for any oth=
-er modules? And how to solve the problem that ofono wants the APN when call=
-ing ofono_gprs_cid_activated when we get the CGEV saying the PDN is active?
+> mbpi is just not a very good database.=C2=A0 It provides lots of duplicat=
+es =
 
-By 4G you mean UMTS/UTRAN, not LTE/EUTRAN, right?  Not sure anyone =
+> and doesn't distinguish by spn last I checked.=C2=A0 Ubuntu Touch folks u=
+sed =
 
-really tested UMTS network-activated contexts, all testing was focused =
+> the android apndb and others used custom ones.=C2=A0 As far as I'm aware, =
 
-on LTE, but in theory they should work just the same.  The key =
+> ofono + mbpi was never used in production.=C2=A0 If I'm wrong, I'd love t=
+o =
 
-difference might be that the default bearer for LTE is usually still =
+> hear about it.
+> =
 
-defined on the ME, so +CGDCONT would work for those contexts and not for =
+> I have discouraged the use of mbpi for these reasons.=C2=A0 Not stopping =
+you =
 
-truly dynamic network activated ones.
+> from using it, just pointing out what has been done historically.
 
-According to 27.007, +CGDCONT is only used to define parameters.  For =
+As I understand it, ofono is designed to automatically pick the correct =
 
-obtaining 'dynamic' parameters, CGCONTRDP should be used instead. =
+service provider parameters (primarily APN) for the installed SIM - =
 
-Perhaps the AT modem driver should be using CGCONTRDP instead of =
+unlike a simple solution like pppd. When arriving to the connman/ofono =
 
-+CGDCONT when issuing ofono_gprs_cid_activated.
+community I found it very difficult getting my widget online when ofono =
 
-Regards,
--Denis
+refuses to use the ready-to-use mbpi database and authoritative response =
 
---===============7476736109480725740==--
+is "mbpi is bad, don't used it".
+
+I don't see how am I going to solve this. The end user cannot configure =
+
+the device (there's no user interaction whatsoever). I could not find =
+
+the mythical Android database at the time (I do now - it's at =
+
+https://android.googlesource.com/device/sample/+/master/etc/apns-full-conf.=
+xml). =
+
+It contains many duplicates, because the virtual MNO-s share MCC and =
+
+MNC-s with the physical ones. That's how the mobile networks are built =
+
+in the real world. So I was very confused about how to proceed.
+
+Sure, after much, much frustration I arrived to the workaround of =
+
+manually provisioning APNs (which I stole from mbpi!) for each factory =
+
+installed SIM through Christophe Ronco's file-provision plugin. This =
+
+plugin is a life-saver, but it certainly falls short of automatic =
+
+provisioning. That's the same level of sophistication as pppd. And as =
+
+extra punishment I have to write a network supervisor which orders =
+
+connman to actually use the service of a new SIM whenever it is replaced =
+
+- even if it's from the same MNO. But that's a different rant altogether.
+
+So, for perspective - saying "mbpi is just not a very good database" =
+
+helps me none at all when I need to get my widget to go online :) Please =
+
+handle the duplication, as this is how the mobile networks are built.
+
+-- =
+
+Kind regards,
+Tarmo
+--===============8467533145789508878==--
 
