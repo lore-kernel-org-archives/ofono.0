@@ -1,126 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============5819791029082309188=="
+Content-Type: multipart/mixed; boundary="===============3649039509802836656=="
 MIME-Version: 1.0
-From: Tarmo Kuuse <tarmo.kuuse@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] plugin: provision: create multiple contexts for multiple
  entries in mbpi
-Date: Thu, 12 Mar 2020 21:36:26 +0200
-Message-ID: <50960623-ace4-5fac-c30c-7c004b12eb8f@gmail.com>
-In-Reply-To: <59c61ecf-9d98-90f2-a2f3-0ec8c09f6843@gmail.com>
+Date: Thu, 12 Mar 2020 15:06:24 -0500
+Message-ID: <16075134-e441-32ca-8beb-d825028925ee@gmail.com>
+In-Reply-To: <50960623-ace4-5fac-c30c-7c004b12eb8f@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5819791029082309188==
+--===============3649039509802836656==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Tarmo,
 
-On 12.03.20 16:49, Denis Kenzior wrote:
-> Hi Tarmo,
+>> Once a proper database is used, this mostly goes away as an issue.=C2=A0=
+ We =
+
+>> did add the SPN field to MBPI schema in the olden days.=C2=A0 The proble=
+m =
+
+>> is that nobody actually updated the MBPI database to take advantage of =
+
+>> this.
+
+Hmm, maybe my memory is faulty (it has been ~9 years now), but I do not =
+
+see anything in the mbpi DTD file for the SPN.  The oFono change was =
+
+done in 2011 in ef37b3fe4244d823a5dde1a311c0d466ad2e7172.  And we did =
+
+have someone working on extending mbpi, but it seems SPN changes never =
+
+made it.  I no longer recall what happened, exactly.
+
 > =
 
->> I don't see how am I going to solve this. The end user cannot =
+> So if the SPN for every duplicate in mbpi was populated, ofono would =
 
->> configure the device (there's no user interaction whatsoever). I could =
+> start provisioning them? That's useful information. Where could one find =
 
->> not find the mythical Android database at the time (I do now - it's at =
+> the details of this schema documented?
 
->> https://android.googlesource.com/device/sample/+/master/etc/apns-full-co=
-nf.xml). =
+It is much more likely to, yes.  The number of duplicates goes down =
 
->> It contains many duplicates, because the virtual MNO-s share MCC and =
+tremendously, particularly if the db is reasonably up to date.  There =
 
->> MNC-s with the physical ones. That's how the mobile networks are built =
+may be a few extra bits we can also differentiate on as well, and extend =
 
->> in the real world. So I was very confused about how to proceed.
+the provisioning API for these.
+
+See above about the schema.  Maybe someone wants to pick up this work =
+
+again...
+
 > =
 
-> MVNOs are handled by utilizing the EFspn file as a differentiator.=C2=A0 =
-So =
+>>> Sure, after much, much frustration I arrived to the workaround of =
 
-> even if MNC/MCC is the same, once you include the SPN, the number of =
+>>> manually provisioning APNs (which I stole from mbpi!) for each =
 
-> duplicates goes down drastically.=C2=A0 This is why oFono uses the follow=
-ing =
+>>> factory installed SIM through Christophe Ronco's file-provision =
 
-> signature for get_settings:
-> =
+>>> plugin. This plugin is a life-saver, but it certainly falls short of =
 
->  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int (*get_settings)(const cha=
-r *mcc, const char *mnc, const =
+>>> automatic provisioning. That's the same level of sophistication as =
 
-> char *spn,
-> =
+>>> pppd. And as extra punishment I have to write a network supervisor =
 
-> Once a proper database is used, this mostly goes away as an issue.=C2=A0 =
-We =
+>>> which orders connman to actually use the service of a new SIM =
 
-> did add the SPN field to MBPI schema in the olden days.=C2=A0 The problem=
- is =
+>>> whenever it is replaced - even if it's from the same MNO. But that's =
 
-> that nobody actually updated the MBPI database to take advantage of this.
+>>> a different rant altogether.
+>>>
+>>> So, for perspective - saying "mbpi is just not a very good database" =
 
-So if the SPN for every duplicate in mbpi was populated, ofono would =
+>>> helps me none at all when I need to get my widget to go online :) =
 
-start provisioning them? That's useful information. Where could one find =
+>>> Please handle the duplication, as this is how the mobile networks are =
 
-the details of this schema documented?
-
->> Sure, after much, much frustration I arrived to the workaround of =
-
->> manually provisioning APNs (which I stole from mbpi!) for each factory =
-
->> installed SIM through Christophe Ronco's file-provision plugin. This =
-
->> plugin is a life-saver, but it certainly falls short of automatic =
-
->> provisioning. That's the same level of sophistication as pppd. And as =
-
->> extra punishment I have to write a network supervisor which orders =
-
->> connman to actually use the service of a new SIM whenever it is =
-
->> replaced - even if it's from the same MNO. But that's a different rant =
-
->> altogether.
+>>> built.
+>>>
 >>
->> So, for perspective - saying "mbpi is just not a very good database" =
+>> I can take a patch that enables duplicates as a config / environmental =
 
->> helps me none at all when I need to get my widget to go online :) =
+>> setting.=C2=A0 As long as the default is the old behavior.=C2=A0 But as =
+I =
 
->> Please handle the duplication, as this is how the mobile networks are =
+>> mentioned previously, ConnMan / oFono were not designed to work this =
 
->> built.
->>
+>> way, and so far nobody has been willing to do the work in both =
+
+>> projects to change that.
 > =
 
-> I can take a patch that enables duplicates as a config / environmental =
+> I emphasize.
+> =
 
-> setting.=C2=A0 As long as the default is the old behavior.=C2=A0 But as I =
+> Stepping back, I suspect the task of maintaining a clean, accurate =
 
-> mentioned previously, ConnMan / oFono were not designed to work this =
+> provisioning database of every SIM in the world is rather challenging. =
 
-> way, and so far nobody has been willing to do the work in both projects =
+> Perhaps more challenging, than re-designing ofono :)
 
-> to change that.
+Quite possible.  But I would still question whether trying APNs at =
 
-I emphasize.
+semi-random is a good strategy.
 
-Stepping back, I suspect the task of maintaining a clean, accurate =
+> =
 
-provisioning database of every SIM in the world is rather challenging. =
+> I could pick up a few commodity SIMs from my country, determine the SPN =
 
-Perhaps more challenging, than re-designing ofono :)
+> and contribute updates somewhere. Heh, I don't even know which MVNOs =
 
-I could pick up a few commodity SIMs from my country, determine the SPN =
+> here are dead and which are operational.
 
-and contribute updates somewhere. Heh, I don't even know which MVNOs =
+Exactly.  In the Meego days Nokia had their own APN database.  And it =
 
-here are dead and which are operational.
+was considered crown jewels / company secret ;)  Understandable, =
 
---
-Kind regards,
-Tarmo
---===============5819791029082309188==--
+considering how much work probably went into keeping it up to date.
+
+Regards,
+-Denis
+--===============3649039509802836656==--
 
