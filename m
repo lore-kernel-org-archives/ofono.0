@@ -1,136 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============8564203876475593314=="
+Content-Type: multipart/mixed; boundary="===============5819791029082309188=="
 MIME-Version: 1.0
 From: Tarmo Kuuse <tarmo.kuuse@gmail.com>
 Subject: Re: [PATCH] plugin: provision: create multiple contexts for multiple
  entries in mbpi
-Date: Thu, 12 Mar 2020 21:17:52 +0200
-Message-ID: <4ae9db94-dd37-b629-c474-2a67b72d4277@gmail.com>
-In-Reply-To: <4f4cb0f7-03e9-47c5-3663-6a984909aac6@kerlink.fr>
+Date: Thu, 12 Mar 2020 21:36:26 +0200
+Message-ID: <50960623-ace4-5fac-c30c-7c004b12eb8f@gmail.com>
+In-Reply-To: <59c61ecf-9d98-90f2-a2f3-0ec8c09f6843@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8564203876475593314==
+--===============5819791029082309188==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Cristophe,
+Hi Denis,
 
-On 12.03.20 17:51, Christophe Ronco wrote:
->>>> In my case automatic provisioning always fails:
->>>> - the database has multiple entries for basically every
->>>> operator/country
->>>
->>> mbpi is just not a very good database.=C2=A0 It provides lots of
->>> duplicates and doesn't distinguish by spn last I checked.=C2=A0 Ubuntu
->>> Touch folks used the android apndb and others used custom ones.=C2=A0 As
->>> far as I'm aware, ofono + mbpi was never used in production.=C2=A0 If I=
-'m
->>> wrong, I'd love to hear about it.
->>>
->>> I have discouraged the use of mbpi for these reasons.=C2=A0 Not stopping
->>> you from using it, just pointing out what has been done historically.
->>
->> As I understand it, ofono is designed to automatically pick the
->> correct service provider parameters (primarily APN) for the installed
->> SIM - unlike a simple solution like pppd. When arriving to the
->> connman/ofono community I found it very difficult getting my widget
->> online when ofono refuses to use the ready-to-use mbpi database and
->> authoritative response is "mbpi is bad, don't used it".
->>
->> I don't see how am I going to solve this. The end user cannot
->> configure the device (there's no user interaction whatsoever). I could
->> not find the mythical Android database at the time (I do now - it's at
+On 12.03.20 16:49, Denis Kenzior wrote:
+> Hi Tarmo,
+> =
+
+>> I don't see how am I going to solve this. The end user cannot =
+
+>> configure the device (there's no user interaction whatsoever). I could =
+
+>> not find the mythical Android database at the time (I do now - it's at =
+
 >> https://android.googlesource.com/device/sample/+/master/etc/apns-full-co=
-nf.xml).
->> It contains many duplicates, because the virtual MNO-s share MCC and
->> MNC-s with the physical ones. That's how the mobile networks are built
+nf.xml). =
+
+>> It contains many duplicates, because the virtual MNO-s share MCC and =
+
+>> MNC-s with the physical ones. That's how the mobile networks are built =
+
 >> in the real world. So I was very confused about how to proceed.
->>
->> Sure, after much, much frustration I arrived to the workaround of
->> manually provisioning APNs (which I stole from mbpi!) for each factory
->> installed SIM through Christophe Ronco's file-provision plugin. This
->> plugin is a life-saver, but it certainly falls short of automatic
->> provisioning. That's the same level of sophistication as pppd. And as
->> extra punishment I have to write a network supervisor which orders
->> connman to actually use the service of a new SIM whenever it is
->> replaced - even if it's from the same MNO. But that's a different rant
+> =
+
+> MVNOs are handled by utilizing the EFspn file as a differentiator.=C2=A0 =
+So =
+
+> even if MNC/MCC is the same, once you include the SPN, the number of =
+
+> duplicates goes down drastically.=C2=A0 This is why oFono uses the follow=
+ing =
+
+> signature for get_settings:
+> =
+
+>  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int (*get_settings)(const cha=
+r *mcc, const char *mnc, const =
+
+> char *spn,
+> =
+
+> Once a proper database is used, this mostly goes away as an issue.=C2=A0 =
+We =
+
+> did add the SPN field to MBPI schema in the olden days.=C2=A0 The problem=
+ is =
+
+> that nobody actually updated the MBPI database to take advantage of this.
+
+So if the SPN for every duplicate in mbpi was populated, ofono would =
+
+start provisioning them? That's useful information. Where could one find =
+
+the details of this schema documented?
+
+>> Sure, after much, much frustration I arrived to the workaround of =
+
+>> manually provisioning APNs (which I stole from mbpi!) for each factory =
+
+>> installed SIM through Christophe Ronco's file-provision plugin. This =
+
+>> plugin is a life-saver, but it certainly falls short of automatic =
+
+>> provisioning. That's the same level of sophistication as pppd. And as =
+
+>> extra punishment I have to write a network supervisor which orders =
+
+>> connman to actually use the service of a new SIM whenever it is =
+
+>> replaced - even if it's from the same MNO. But that's a different rant =
+
 >> altogether.
+>>
+>> So, for perspective - saying "mbpi is just not a very good database" =
+
+>> helps me none at all when I need to get my widget to go online :) =
+
+>> Please handle the duplication, as this is how the mobile networks are =
+
+>> built.
+>>
 > =
 
-> Thanks! Happy to see this is used outside my company.
+> I can take a patch that enables duplicates as a config / environmental =
 
-It's very useful. Either I've misunderstood something, or it's the only =
+> setting.=C2=A0 As long as the default is the old behavior.=C2=A0 But as I =
 
-usable method for manually provisioning SIMs in ofono.
+> mentioned previously, ConnMan / oFono were not designed to work this =
 
-> I assume we are in the same case, once our device is on field, there is
-> no end user to configure anything. So we need automatic choices or in
-> factory provisioning.
-> =
+> way, and so far nobody has been willing to do the work in both projects =
 
-> In my case, I wouldn't want multiple contexts to be created from mbpi
-> database. If I could choose today, I would totally remove mbpi database
-> from our product. Some of our clients have a private APN and I am always
-> afraid that they can connect with a public APN instead of using the
-> specific, secure, with QoS network they have negotiated with their
-> network operator.
-> =
+> to change that.
 
-> I know it's a pain to configure APN (and it's a lot worth for support
-> team than for me) but saying "we will magically select an APN, don't
-> bother with that" seems dangerous to me.
+I emphasize.
 
-I agree, it's dangerous to automatically provision stuff in GSM networks.
+Stepping back, I suspect the task of maintaining a clean, accurate =
 
-However, if my options include:
+provisioning database of every SIM in the world is rather challenging. =
 
-a) support case for almost every customer in another country who needs =
+Perhaps more challenging, than re-designing ofono :)
 
-to insert any unseen-by-me, commodity SIM (so I could ask them which SIM =
+I could pick up a few commodity SIMs from my country, determine the SPN =
 
-they inserted, determine the APN, update provisioning file; very =
+and contribute updates somewhere. Heh, I don't even know which MVNOs =
 
-politely ask customer to take the gadget to office, open waterproof =
-
-enclosure, connect Ethernet; push the updated provisioning file, verify =
-
-dialup; finally ask customer to close enclosure and take it to site).
-
-b) support case only for customers with SIMs that require non-standard =
-
-provisioning, private APNs and other corner cases.
-
-... option b) would win. I _was_ the support team, among other things. =
-
-Option a) was the only option for a few years because I used pppd for =
-
-dialup. I had hoped to fix it with ofono and mbpi.
-
-There are partial workarounds. Unrestricted roaming in EU means we could =
-
-ship gadgets with our own SIMs instead of badgering customers. Apart =
-
-from that it was often a struggle and a waste of time getting commodity =
-
-SIMs in other countries to connect.
-
-I guess the user should eventually be able to set the APN on their own, =
-
-e.g. via Bluetooth. This takes non-trivial effort, though.
-
-> About your problem with ConnMan and first connection with a new SIM, I
-> have a patch in ConnMan to handle that (and roaming SIM cards also if I
-> remember well). We can discuss that outside the list if it can help.
-
-Thank you for the kind offer. I would otherwise accept it, but I've left =
-
-the job. As a stopgap measure I had a script which poked ConnMan and =
-
-ofono via dbus until they accepted a new SIM and connected.
+here are dead and which are operational.
 
 --
 Kind regards,
 Tarmo
---===============8564203876475593314==--
+--===============5819791029082309188==--
 
