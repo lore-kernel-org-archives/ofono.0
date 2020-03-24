@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============2574219075717574766=="
+Content-Type: multipart/mixed; boundary="===============7051343811347867418=="
 MIME-Version: 1.0
 From: Marek Szuba <scriptkiddie@wp.pl>
 Subject: APN for a newly added service provider
-Date: Tue, 24 Mar 2020 15:06:36 +0100
-Message-ID: <4ad493e2-76ae-9311-335a-7cbdd39da1ef@wp.pl>
+Date: Tue, 24 Mar 2020 15:06:42 +0100
+Message-ID: <cc4d13b7-9ab5-e5b2-1d57-2380e141c83d@wp.pl>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2574219075717574766==
+--===============7051343811347867418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -49,9 +49,5 @@ comments!
 -- =
 
 MS
-
--- =
-
-MS
---===============2574219075717574766==--
+--===============7051343811347867418==--
 
