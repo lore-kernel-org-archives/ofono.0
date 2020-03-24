@@ -1,41 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6811391747790756945=="
+Content-Type: multipart/mixed; boundary="===============2574219075717574766=="
 MIME-Version: 1.0
 From: Marek Szuba <scriptkiddie@wp.pl>
-Subject: Using a Huawei modem in NCM mode
-Date: Tue, 24 Mar 2020 15:05:58 +0100
-Message-ID: <6c5da4e0-a4df-6d3a-8890-c9673f50d019@wp.pl>
+Subject: APN for a newly added service provider
+Date: Tue, 24 Mar 2020 15:06:36 +0100
+Message-ID: <4ad493e2-76ae-9311-335a-7cbdd39da1ef@wp.pl>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6811391747790756945==
+--===============2574219075717574766==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hello,
 
-A possibly stupid question: is there any way of having my broadband
-modem, a Huawei E3372 (12d1:155e), connect in NCM mode rather than
-PPP-via-Modem mode? At first I thought this mode was not supported for
-Huawei in spite of it exposing a CDC_NCM interface to the system which
-the kernel has used to create a WWAN network interface. Then however I
-noticed ofonod logs report the modem as capable of both Modem and NDIS
-modes, and posts and patches I have found on OpenWRT mailing lists
-(comments elsewhere invariably said one had to flash stick-mode firmware
-to make it work, which however I am confident is not needed in my case
-because I can get the stick out if Hilink and into Modem/NDIS mode
-simply by setting the right option in usb_modeswitch configuration)
-suggest switching to NDIS mode might be a simple matter of sending an
-appropriate AT^NDISDUP command. Unfortunately, I haven't found anything
-on how to achieve this in oFono.
+I have noticed something interesting lately in how oFono (or to be
+precise oFono+Connman, as that is what I have on my system) has handled
+a newly added service provider and I wonder if this is intentional or I
+have done something wrong.
 
-Just to make it clear, the ttyUSB0+ppp mode of this modem works
-perfectly with oFono.
+Context: I have attempted to connect to the Internet using a broadband
+modem using a SIM card from a provider not listed in my
+serviceproviders.xml file. The provider in question is an MVNO on the
+German T-Mobile network, with all the settings (other than the SPN, of
+course) identical to those of another pre-paid MVNO that already has an
+entry in the aforementioned file (Congstar), which has only got a single
+APN defined.
 
-Again, thank you in advance for your answers.
+My steps: I have cloned the Congstar <provider> section in
+serviceproviders.xml with an appropriate SPN, then disconnected the
+modem and restarted ofonod just in case.
+
+Expected: Connman establishes a cellular connection right away
+
+Actually happened: although ofonod debug messages showed that it had
+correctly read the new SPN entry and set up an Internet context, said
+context did not have an APN set and connman failed to use it to
+establish a connection - until I used the "create-internet-context" test
+script to set the APN. Now regardless of how often I disconnect the
+modem, restart ofonod and so on, the context's APN does get set
+automatically and the mobile-broadband connection works fine.
+
+I am curious regarding what might have happened here so that I
+understand why it has happened and possibly prevent from having to mess
+around with test scripts in the future. Thank you in advance for your
+comments!
 
 -- =
 
 MS
---===============6811391747790756945==--
+
+-- =
+
+MS
+--===============2574219075717574766==--
 
