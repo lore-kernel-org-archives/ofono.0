@@ -1,25 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6237147271888560533=="
+Content-Type: multipart/mixed; boundary="===============4022497547810335288=="
 MIME-Version: 1.0
-From: bruno.souben@alstomgroup.com
-Subject: LTE set private APN
-Date: Fri, 03 Apr 2020 14:20:59 +0000
-Message-ID: <20200403142059.2692.60467@ml01.vlan13.01.org>
+From: JongSeok Won <wjs890204@gmail.com>
+Subject: [PATCH] rilmodem: update call direction from the isMT value
+Date: Sun, 05 Apr 2020 20:26:13 +0900
+Message-ID: <20200405112613.40239-1-wjs890204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6237147271888560533==
+--===============4022497547810335288==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-During start-up, a default Ofono context is set as soon as LTE is attached =
-: defaut public APN is then recorded.
-How then context must be handle to change it with another private APN authe=
-nticated with user, password ?
-I tried to change it dynamically with dbus (AccessPointName, Username, Pass=
-word) but error message "The resource is currently in use" is returned
+oFono cannot determines the call of direction when the voicecall
+is triggered in rilmodem
+---
+ drivers/rilmodem/voicecall.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Ofono 1.24
-Modem Quectel EC25
---===============6237147271888560533==--
+diff --git a/drivers/rilmodem/voicecall.c b/drivers/rilmodem/voicecall.c
+index 13dc5071..6c169166 100644
+--- a/drivers/rilmodem/voicecall.c
++++ b/drivers/rilmodem/voicecall.c
+@@ -177,7 +177,7 @@ static void clcc_poll_cb(struct ril_msg *message, gpoin=
+ter user_data)
+ 		call->id =3D parcel_r_int32(&rilp);
+ 		call->phone_number.type =3D parcel_r_int32(&rilp);
+ 		parcel_r_int32(&rilp); /* isMpty */
+-		parcel_r_int32(&rilp); /* isMT */
++		call->direction =3D parcel_r_int32(&rilp); /* isMT */
+ 		parcel_r_int32(&rilp); /* als */
+ 		call->type =3D parcel_r_int32(&rilp); /* isVoice */
+ 		parcel_r_int32(&rilp); /* isVoicePrivacy */
+-- =
+
+2.17.1
+
+--===============4022497547810335288==--
 
