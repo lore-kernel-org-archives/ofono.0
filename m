@@ -1,66 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3405900945784351894=="
+Content-Type: multipart/mixed; boundary="===============0992380992483836847=="
 MIME-Version: 1.0
-From: Pau Espin Pedrol <pespin@sysmocom.de>
-Subject: crash in drivers/qmimodem/gprs.c:extract_ss_info()
-Date: Tue, 12 May 2020 11:32:24 +0200
-Message-ID: <c5efe8ea-99a6-1e94-c31a-21a1de7b5832@sysmocom.de>
+From: arash.javanmard@inro-et.de
+Subject: Quectel BG95 Support
+Date: Thu, 14 May 2020 14:27:22 +0000
+Message-ID: <20200514142722.2843.94186@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3405900945784351894==
+--===============0992380992483836847==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Hello,
+unfortunately there is no support for Quectel BG95 in ofono.  But neverthel=
+ess i tried to adapt the existing Quectel implementation for BG95.
+So i added:
 
-I reported an ofono recurring crash together with the corresponding
-investigation & logs yesterday on #ofono IRC channel. The crash appears
-on our osmo-gsm-tester setup several times per day.
+udevng.c
+------- 8< -------------
+	{ "quectelqmi",	"qmi_wwan",	"2c7c", "0700"	},
+	{ "quectelqmi",	"qcserial",	"2c7c", "0700"	},
+	{ "quectel",	"option",	"2c7c", "0700"	},
+------- >8 -------------
 
-In my opinion, the summary for the crash is following race condition:
-1- We submit QMI request using qmi_attached_status() and expect callback
-to be received at some point
-2- While waiting for the response, modem announces becoming offline
-(modem_change_state() MODEM_STATE_ONLINE -> MODEM_STATE_OFFLINE). Here
-gprs_remove() is called which frees all related structures
-3- We receive the QMI response of qmi_attached_status() and
-get_ss_info_cb() is called, which eventually crashes because the "gprs =3D
-cbd->user" is already gone, so use after free occurs and process
-receives SIGSEGV.
+It helps to recognize the modem, but it seems to be BUG in "setup_quectel" =
+fucntion in "udevng.c" file.
+Since checking for "modem->serial" in the function produces a segfault. so =
+i just commented it out.
+But after that the next problems popped up in "quectel.c"-Modul.
 
-The details of the issue can be found here:
-https://osmocom.org/issues/4542
+------- 8< ----------------------------------------
+ofonod[273]: Aux: > AT+CGMM\r
+ofonod[273]: Aux: < \r\nBG95-M3\r\n\r\nOK\r\n
+ofonod[273]: plugins/quectel.c:cgmm_cb() 0x165dd0 ok 1
+ofonod[273]: Failed to query modem model
+------- >8 -----------------------------------------
 
-so far Denis proposed something like this on IRC:
-* Tracking outstanding requests and cancel them. For instance GAtChat
-(via g_at_chat_clone) creates a facade object instead, and assigns a
-=E2=80=98group id=E2=80=99 to it.  So destroying the facade object also can=
-cels any
-outstanding requests associated with it. QMI should ideally do something
-similar.
-* An easy fix would be to store the request id for whatever NAS
-request you=E2=80=99re doing in gprs.c and cancel it in gprs_remove. But you
-might run into this in other places in drivers/qmimodem/gprs.c
+As you can see it failed to query the model modem, even though the modem is=
+ answering correct. =
 
+so i digged deeper and found out, that only the number of lines save in res=
+ult-argument which is a "GATResult" =
 
-I would welcome if someone with more knowledge of ofono code base than I
-could have a look at this and provide some fix, or at least some
-detailed pointers at the work required. I am happy to collaborate and
-test the patches as needed.
+is actually zero! That means somewho the answer of the modem is not parsed =
+right!
 
-Best Regards,
-Pau
--- =
+Any help is welcome!
 
-- Pau Espin Pedrol <pespin@sysmocom.de>         http://www.sysmocom.de/
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-* sysmocom - systems for mobile communications GmbH
-* Alt-Moabit 93
-* 10559 Berlin, Germany
-* Sitz / Registered office: Berlin, HRB 134158 B
-* Geschaeftsfuehrer / Managing Director: Harald Welte
---===============3405900945784351894==--
+Best Regards
+Arash
+--===============0992380992483836847==--
 
