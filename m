@@ -1,54 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0992380992483836847=="
+Content-Type: multipart/mixed; boundary="===============0321367748851795444=="
 MIME-Version: 1.0
-From: arash.javanmard@inro-et.de
-Subject: Quectel BG95 Support
-Date: Thu, 14 May 2020 14:27:22 +0000
-Message-ID: <20200514142722.2843.94186@ml01.vlan13.01.org>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Missing documentation for SimManager property writing?
+Date: Tue, 19 May 2020 10:50:11 +0200
+Message-ID: <20200519085011.GA8008@duo.ucw.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0992380992483836847==
+--===============0321367748851795444==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
-unfortunately there is no support for Quectel BG95 in ofono.  But neverthel=
-ess i tried to adapt the existing Quectel implementation for BG95.
-So i added:
+Hi!
 
-udevng.c
-------- 8< -------------
-	{ "quectelqmi",	"qmi_wwan",	"2c7c", "0700"	},
-	{ "quectelqmi",	"qcserial",	"2c7c", "0700"	},
-	{ "quectel",	"option",	"2c7c", "0700"	},
-------- >8 -------------
+In doc/sim-api.txt, there are some properties marked read/write, but I
+don't see documented way to change those properties. Someone may want
+to fix that up.
 
-It helps to recognize the modem, but it seems to be BUG in "setup_quectel" =
-fucntion in "udevng.c" file.
-Since checking for "modem->serial" in the function produces a segfault. so =
-i just commented it out.
-But after that the next problems popped up in "quectel.c"-Modul.
+Best regards,
+									Pavel
+-- =
 
-------- 8< ----------------------------------------
-ofonod[273]: Aux: > AT+CGMM\r
-ofonod[273]: Aux: < \r\nBG95-M3\r\n\r\nOK\r\n
-ofonod[273]: plugins/quectel.c:cgmm_cb() 0x165dd0 ok 1
-ofonod[273]: Failed to query modem model
-------- >8 -----------------------------------------
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
-As you can see it failed to query the model modem, even though the modem is=
- answering correct. =
+--===============0321367748851795444==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
-so i digged deeper and found out, that only the number of lines save in res=
-ult-argument which is a "GATResult" =
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlGMEVBQkVDQUIwV0lRUlBmUE83cjBlQWhr
+MDEwdjB3NS9CcWxkdjY4Z1VDWHNPZHd3QUtDUkF3NS9CcWxkdjYKOG1pUkFLQzh1OTJvcWZVakFS
+Vjg0T05MK09PVGdBczFsQUNlTVRGdFRIMmVTZ3dlRUZxQXFOK0d0bVlzeitFPQo9dkpSbwotLS0t
+LUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
 
-is actually zero! That means somewho the answer of the modem is not parsed =
-right!
-
-Any help is welcome!
-
-Best Regards
-Arash
---===============0992380992483836847==--
+--===============0321367748851795444==--
 
