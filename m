@@ -1,51 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1053021195837202397=="
+Content-Type: multipart/mixed; boundary="===============1052015154056997020=="
 MIME-Version: 1.0
 From: poeschel@lemonage.de
-Subject: [PATCH 5/7] quectel: EC21 does not understand AT+QIURC
-Date: Tue, 26 May 2020 12:16:23 +0200
-Message-ID: <20200526101625.31871-6-poeschel@lemonage.de>
+Subject: [PATCH 6/7] voicecall: Quectel modem do not understand AT+CNAP
+Date: Tue, 26 May 2020 12:16:24 +0200
+Message-ID: <20200526101625.31871-7-poeschel@lemonage.de>
 In-Reply-To: <20200526101625.31871-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1053021195837202397==
+--===============1052015154056997020==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lars Poeschel <poeschel@lemonage.de>
 
-Because the Quectel EC21 does not understand the AT+QIURC command, we
-leave that out during initialisation.
 ---
- plugins/quectel.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
+ drivers/atmodem/voicecall.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/quectel.c b/plugins/quectel.c
-index 9ff75516..574de44e 100644
---- a/plugins/quectel.c
-+++ b/plugins/quectel.c
-@@ -772,8 +772,14 @@ static void setup_aux(struct ofono_modem *modem)
- 	DBG("%p", modem);
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index 7ab6567f..e7f24b60 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -1113,7 +1113,9 @@ static int at_voicecall_probe(struct ofono_voicecall =
+*vc, unsigned int vendor,
+ 	g_at_chat_send(vd->chat, "AT+CRC=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(vd->chat, "AT+CLIP=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(vd->chat, "AT+CDIP=3D1", NULL, NULL, NULL, NULL);
+-	g_at_chat_send(vd->chat, "AT+CNAP=3D1", NULL, NULL, NULL, NULL);
++
++	if (vd->vendor !=3D OFONO_VENDOR_QUECTEL)
++		g_at_chat_send(vd->chat, "AT+CNAP=3D1", NULL, NULL, NULL, NULL);
  =
 
- 	g_at_chat_set_slave(data->modem, data->aux);
--	g_at_chat_send(data->aux, "ATE0; &C0; +CMEE=3D1; +QIURC=3D0", none_prefix,
--			NULL, NULL, NULL);
-+
-+	if (data->model =3D=3D QUECTEL_EC21)
-+		g_at_chat_send(data->aux, "ATE0; &C0; +CMEE=3D1", none_prefix,
-+				NULL, NULL, NULL);
-+	else
-+		g_at_chat_send(data->aux, "ATE0; &C0; +CMEE=3D1; +QIURC=3D0",
-+				none_prefix, NULL, NULL, NULL);
-+
- 	g_at_chat_send(data->aux, "AT+CFUN?", cfun_prefix, cfun_query, modem,
- 			NULL);
- }
+ 	switch (vd->vendor) {
+ 	case OFONO_VENDOR_QUALCOMM_MSM:
 -- =
 
 2.26.2
 
---===============1053021195837202397==--
+--===============1052015154056997020==--
 
