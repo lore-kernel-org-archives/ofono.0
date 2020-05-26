@@ -1,41 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============0321367748851795444=="
+Content-Type: multipart/mixed; boundary="===============7086858426458479629=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Missing documentation for SimManager property writing?
-Date: Tue, 19 May 2020 10:50:11 +0200
-Message-ID: <20200519085011.GA8008@duo.ucw.cz>
+From: poeschel@lemonage.de
+Subject: [PATCH 0/7] Add quectel EC21 in serial mode
+Date: Tue, 26 May 2020 12:16:18 +0200
+Message-ID: <20200526101625.31871-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0321367748851795444==
+--===============7086858426458479629==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+From: Lars Poeschel <poeschel@lemonage.de>
 
-In doc/sim-api.txt, there are some properties marked read/write, but I
-don't see documented way to change those properties. Someone may want
-to fix that up.
+This patchset adds support for the quectel EC21 LTE modem connected
+through its serial port.
 
-Best regards,
-									Pavel
+Lars Poeschel (7):
+  quectel: Add Quectel EC21 to known serial modems
+  quectel: use lte atom on EC21
+  quectel: Query the model before setting up the mux
+  quectel: EC21 needs aux channel to be the first mux channel
+  quectel: EC21 does not understand AT+QIURC
+  voicecall: Quectel modem do not understand AT+CNAP
+  quectel: EC21 add ussd with atmodem driver
+
+ drivers/atmodem/voicecall.c |   4 +-
+ plugins/quectel.c           | 153 +++++++++++++++++++++++-------------
+ 2 files changed, 101 insertions(+), 56 deletions(-)
+
 -- =
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+2.26.2
 
---===============0321367748851795444==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlGMEVBQkVDQUIwV0lRUlBmUE83cjBlQWhr
-MDEwdjB3NS9CcWxkdjY4Z1VDWHNPZHd3QUtDUkF3NS9CcWxkdjYKOG1pUkFLQzh1OTJvcWZVakFS
-Vjg0T05MK09PVGdBczFsQUNlTVRGdFRIMmVTZ3dlRUZxQXFOK0d0bVlzeitFPQo9dkpSbwotLS0t
-LUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
-
---===============0321367748851795444==--
+--===============7086858426458479629==--
 
