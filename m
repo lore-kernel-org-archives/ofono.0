@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1052015154056997020=="
+Content-Type: multipart/mixed; boundary="===============4218370458129640243=="
 MIME-Version: 1.0
 From: poeschel@lemonage.de
-Subject: [PATCH 6/7] voicecall: Quectel modem do not understand AT+CNAP
-Date: Tue, 26 May 2020 12:16:24 +0200
-Message-ID: <20200526101625.31871-7-poeschel@lemonage.de>
+Subject: [PATCH 7/7] quectel: EC21 add ussd with atmodem driver
+Date: Tue, 26 May 2020 12:16:25 +0200
+Message-ID: <20200526101625.31871-8-poeschel@lemonage.de>
 In-Reply-To: <20200526101625.31871-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1052015154056997020==
+--===============4218370458129640243==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,29 +16,31 @@ Content-Transfer-Encoding: quoted-printable
 From: Lars Poeschel <poeschel@lemonage.de>
 
 ---
- drivers/atmodem/voicecall.c | 4 +++-
+ plugins/quectel.c | 4 +++-
  1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
-index 7ab6567f..e7f24b60 100644
---- a/drivers/atmodem/voicecall.c
-+++ b/drivers/atmodem/voicecall.c
-@@ -1113,7 +1113,9 @@ static int at_voicecall_probe(struct ofono_voicecall =
-*vc, unsigned int vendor,
- 	g_at_chat_send(vd->chat, "AT+CRC=3D1", NULL, NULL, NULL, NULL);
- 	g_at_chat_send(vd->chat, "AT+CLIP=3D1", NULL, NULL, NULL, NULL);
- 	g_at_chat_send(vd->chat, "AT+CDIP=3D1", NULL, NULL, NULL, NULL);
--	g_at_chat_send(vd->chat, "AT+CNAP=3D1", NULL, NULL, NULL, NULL);
-+
-+	if (vd->vendor !=3D OFONO_VENDOR_QUECTEL)
-+		g_at_chat_send(vd->chat, "AT+CNAP=3D1", NULL, NULL, NULL, NULL);
+diff --git a/plugins/quectel.c b/plugins/quectel.c
+index 574de44e..a8fbc75a 100644
+--- a/plugins/quectel.c
++++ b/plugins/quectel.c
+@@ -1295,8 +1295,10 @@ static void quectel_post_sim(struct ofono_modem *mod=
+em)
+ 	ofono_phonebook_create(modem, data->vendor, "atmodem", data->aux);
+ 	ofono_call_volume_create(modem, data->vendor, "atmodem", data->aux);
  =
 
- 	switch (vd->vendor) {
- 	case OFONO_VENDOR_QUALCOMM_MSM:
+-	if (data->model =3D=3D QUECTEL_EC21)
++	if (data->model =3D=3D QUECTEL_EC21) {
++		ofono_ussd_create(modem, data->vendor, "atmodem", data->aux);
+ 		ofono_lte_create(modem, data->vendor, "atmodem", data->aux);
++	}
+ }
+ =
+
+ static void quectel_post_online(struct ofono_modem *modem)
 -- =
 
 2.26.2
 
---===============1052015154056997020==--
+--===============4218370458129640243==--
 
