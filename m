@@ -1,213 +1,129 @@
-Content-Type: multipart/mixed; boundary="===============5561399929911216112=="
+Content-Type: multipart/mixed; boundary="===============3342084321400649553=="
 MIME-Version: 1.0
-From: Lars Poeschel <poeschel@lemonage.de>
-Subject: Re: [PATCH] Adds optional phone number parameter to ofono-phonesim
-Date: Thu, 28 May 2020 12:17:56 +0200
-Message-ID: <20200528101756.4xr3bstjj4htpiih@lem-wkst-02.lemonage>
-In-Reply-To: <DB7PR10MB2012E817D8D929B468140A88C2B10@DB7PR10MB2012.EURPRD10.PROD.OUTLOOK.COM>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2] quectel: EC21 needs aux channel to be the first mux
+ channel
+Date: Thu, 28 May 2020 16:25:26 +0000
+Message-ID: <998d385e-341d-e8ff-178f-eaa8cea086d0@gmail.com>
+In-Reply-To: <20200528093239.14347-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5561399929911216112==
+--===============3342084321400649553==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bettina-Jennifer,
+Hi Lars,
 
-whatever way you chose to send your patches, this is totally messed up.
-It would be very hard to extract usable information from this email. It
-looks like you wanted to send two patches, but it is just one email.
-Your email does include text and html parts, which is also not good.
-If you want someone to:
-* look at your patches
-* try them out
-* comment on them
-* or even include them in the ofono repository
-you have to follow the steps documented in the HACKING file of ofono.
-Especially the "Submitting patches" section.
-Really please use git send-email to send your patches or at least send
-them in a format that is acceptable by git am.
+On 5/28/20 4:32 AM, poeschel(a)lemonage.de wrote:
+> From: Lars Poeschel <poeschel@lemonage.de>
+> =
+
+> The Quectel EC21 does only work correctly, if the mux channel used for
+> aux is the first mux channel. It does only put it's URC messages in the
+> first mux channel, so this has to be the aux channel in our case.
+> To be flexible on the mux order we introduce an array here, that
+> contains the initialization data in it's needed order and is then simply
+> applied by a for-loop. Initialization of this array is done after we
+> queried the modem model.
+> ---
+>   plugins/quectel.c | 72 ++++++++++++++++++++++++++++++++++++++---------
+>   1 file changed, 58 insertions(+), 14 deletions(-)
+> =
+
+
+So this looks mostly reasonable, but see below:
+
+> diff --git a/plugins/quectel.c b/plugins/quectel.c
+> index 043d39f9..1cad35d6 100644
+> --- a/plugins/quectel.c
+> +++ b/plugins/quectel.c
+> @@ -78,6 +78,21 @@ static const uint8_t gsm0710_terminate[] =3D {
+>   	0xf9, /* close flag */
+>   };
+>   =
+
+> +enum mux_type {
+> +	QUECTEL_MUX_TYPE_AUX =3D 0,
+> +	QUECTEL_MUX_TYPE_MODEM,
+> +	QUECTEL_MUX_TYPE_MAX,
+> +};
+> +
+> +struct mux_initialization_data {
+> +	enum mux_type mux_type;
+> +	char *chat_debug;
+> +	const char *n_gsm_key;
+> +	const char *n_gsm_value;
+> +};
+> +
+> +static struct mux_initialization_data mux_order[QUECTEL_MUX_TYPE_MAX];
+> +
+
+So the issue with this is that this driver now no-longer supports =
+
+multiple modems of the same type active simultaneously (since all =
+
+instances would be trying to write / read from this location).
+
+A better approach would be to use two such variables, i.e. =
+
+mux_order_ec21 and mux_order_default and then either store a pointer to =
+
+the one to use inside quectel_data, or programmatically by looking up =
+
+based on the quectel_data::model.
+
+Alternatively, storing mux_order in quectel_data itself is also an option.
+
+>   enum quectel_model {
+>   	QUECTEL_UNKNOWN,
+>   	QUECTEL_UC15,
+> @@ -1014,6 +1037,17 @@ static void cgmm_cb(int ok, GAtResult *result, voi=
+d *user_data)
+>   		return;
+>   	}
+>   =
+
+> +	mux_order[0] =3D (struct mux_initialization_data)
+> +			{ QUECTEL_MUX_TYPE_MODEM,
+> +			"Modem: ",
+> +			"Modem",
+> +			"/dev/gsmtty1"};
+> +	mux_order[1] =3D (struct mux_initialization_data)
+> +			{ QUECTEL_MUX_TYPE_AUX,
+> +			"Aux: ",
+> +			"Aux",
+> +			"/dev/gsmtty2"};
+> +
+
+This would then move into the static initializer above...
+
+>   	if (strcmp(model, "UC15") =3D=3D 0) {
+>   		DBG("%p model UC15", modem);
+>   		data->vendor =3D OFONO_VENDOR_QUECTEL;
+> @@ -1030,6 +1064,16 @@ static void cgmm_cb(int ok, GAtResult *result, voi=
+d *user_data)
+>   		DBG("%p model EC21", modem);
+>   		data->vendor =3D OFONO_VENDOR_QUECTEL;
+>   		data->model =3D QUECTEL_EC21;
+> +		mux_order[0] =3D (struct mux_initialization_data)
+> +				{ QUECTEL_MUX_TYPE_AUX,
+> +				"Aux: ",
+> +				"Aux",
+> +				"/dev/gsmtty1"};
+> +		mux_order[1] =3D (struct mux_initialization_data)
+> +				{ QUECTEL_MUX_TYPE_MODEM,
+> +				"Modem: ",
+> +				"Modem",
+> +				"/dev/gsmtty2"};
+>   	} else {
+>   		ofono_warn("%p unknown model: '%s'", modem, model);
+>   		data->vendor =3D OFONO_VENDOR_QUECTEL;
+> =
+
 
 Regards,
-Lars
-
-On Wed, May 27, 2020 at 09:51:37AM +0000, Bettina Jennifer Riedl wrote:
-> Hello,
-> =
-
-> this patch adds an optional phone number parameter to ofono-phonesim, ins=
-tead of using the default number.
-> =
-
-> Greetings
-> Bettina
-> =
-
-> Michael Klemm:
-> Added phone number as additional parameter (1/2)
-> AUTHORS: Mention Michael's contributions      (2/2)
-> =
-
-> (1/2)
-> diff --git a/src/main.cpp b/src/main.cpp
-> index 712e767..a20bc1a 100644
-> --- a/src/main.cpp
-> +++ b/src/main.cpp
-> @@ -28,13 +28,14 @@ static void usage()
-> {
->      qWarning() << "Usage:"
->                 << QFileInfo(QCoreApplication::instance()->applicationFil=
-ePath()).fileName().toLocal8Bit().constData()
-> -               << "[-v] [-p port] [-gui] filename";
-> +               << "[-v] [-p port] [-gui] [-n number] filename";
->      exit(-1);
-> }
->  int main(int argc, char **argv)
-> {
->      QString filename =3D nullptr;
-> +    QString number =3D "+491701234567";
->      QCoreApplication *app;
->      int port =3D 12345;
->      int index;
-> @@ -61,6 +62,15 @@ int main(int argc, char **argv)
->          } else if ( strcmp(argv[index],"-h") =3D=3D 0
->                  || strcmp(argv[index],"-help") =3D=3D 0 ) {
->              usage();
-> +        } else if ( strcmp(argv[index],"-n") =3D=3D 0
-> +                || strcmp(argv[index],"-num") =3D=3D 0 ) {
-> +            index++;
-> +            if (index >=3D argc) {
-> +                qWarning() << "ERROR: Got -n but missing phone number";
-> +                usage();
-> +            } else {
-> +                number =3D argv[index];
-> +            }
->          } else {
->              // must be filename.  SHOULD be last argument.
->              if (index !=3D argc-1) {
-> @@ -85,7 +95,7 @@ int main(int argc, char **argv)
->      } else
->          app =3D new QCoreApplication(argc, argv);
-> -    PhoneSimServer *pss =3D new PhoneSimServer(filename, port, nullptr);
-> +    PhoneSimServer *pss =3D new PhoneSimServer(filename, port, number, n=
-ullptr);
-> =
-
-> diff --git a/src/server.cpp b/src/server.cpp
-> index 3ff7def..856a90f 100644
-> --- a/src/server.cpp
-> +++ b/src/server.cpp
-> @@ -22,13 +22,12 @@
-> #include "hardwaremanipulator.h"
-> #include <qdebug.h>
-> -static int phonenumber =3D 555000;
-> -
-> -PhoneSimServer::PhoneSimServer(const QString &f, quint16 port, QObject *=
-parent)
-> +PhoneSimServer::PhoneSimServer(const QString &f, quint16 port, const QSt=
-ring &n, QObject *parent)
->      : QTcpServer(parent), fact(nullptr), currentRules(nullptr)
-> {
->      listen( QHostAddress::Any, port );
->      filename =3D f;
-> +    number =3D n;
-> }
->  PhoneSimServer::~PhoneSimServer()
-> @@ -47,7 +46,6 @@ void PhoneSimServer::setHardwareManipulator(HardwareMan=
-ipulatorFactory *f)
-> void PhoneSimServer::incomingConnection(qintptr s)
-> {
->    SimRules *sr =3D new SimRules(s, this, filename, fact);
-> -    sr->setPhoneNumber(QString::number(phonenumber));
-> -    phonenumber++;
-> +    sr->setPhoneNumber(number);
->      currentRules =3D sr;
-> }
-> =
-
-> diff --git a/src/server.h b/src/server.h
-> index 9175359..6790be4 100644
-> --- a/src/server.h
-> +++ b/src/server.h
-> @@ -32,7 +32,7 @@ class HardwareManipulatorFactory;
-> class PhoneSimServer : public QTcpServer
-> {
-> public:
-> -    PhoneSimServer(const QString &, quint16 port, QObject *parent =3D nu=
-llptr);
-> +    PhoneSimServer(const QString &, quint16 port, const QString &, QObje=
-ct *parent =3D nullptr);
->      ~PhoneSimServer() override;
->      void setHardwareManipulator(HardwareManipulatorFactory *f);
-> @@ -44,6 +44,7 @@ protected:
->  private:
->      QString filename;
-> +    QString number;
-> =
-
-> =
-
-> =
-
-> (2/2)
-> diff --git a/AUTHORS b/AUTHORS
-> index 9b8a840..d8e107f 100644
-> --- a/AUTHORS
-> +++ b/AUTHORS
-> @@ -15,3 +15,4 @@ Jussi Pakkanen <jussi.pakkanen@canonical.com>
-> James Prestwood <james.prestwood@linux.intel.com>
-> Simon Busch <morphis@gravedo.de>
-> Jonah Br=C3=BCchert <jbb.prv@gmx.de>
-> +Michael Klemm <mklemm@assystem.com>
-> _________________________________________________________________________=
-____________
-> =
-
-> Expleo Germany GmbH
-> Sitz der Gesellschaft | Corporate Headquarters: M=C3=BCnchen
-> Handelsregister | Commercial Register: Amtsgericht M=C3=BCnchen HRB 83252
-> Gesch=C3=A4ftsf=C3=BChrung | Management: Ralph Gillessen, Josef Mitterhub=
-er
-> =
-
-> This message contains information that may be privileged or confidential.=
- It is intended only for the person to whom it is addressed.
-> If you are not the intended recipient, you are not authorized to read, pr=
-int, retain, copy, disseminate, distribute, or use this message or any part=
- thereof.
-> If you receive this message in error, please notify the sender immediatel=
-y and delete all copies of this message.
-> _________________________________________________________
-> =
-
-> EMAIL LEGAL MENTION / DISCLAIMER
-> =
-
-> This message contains information that may be privileged or confidential =
-and is the property of the Expleo Services SAS, RCS Versailles 831 178 348,=
- located, 3 avenue des Pr=C3=A9s, 78180 Montigny Le Bretonneux - France. It=
- is intended only for the person to whom it is addressed. If you are not th=
-e intended recipient, you are not authorized to read, print, retain, copy, =
-disseminate, distribute, or use this message or any part thereof. If you re=
-ceive this message in error, please notify the sender immediately and delet=
-e all copies of this message.
-> =
-
-> Ce message contient des informations qui peuvent =C3=AAtre privil=C3=A9gi=
-=C3=A9es ou confidentielles et elles sont de la propri=C3=A9t=C3=A9 d'Exple=
-o Services SAS, RCS Versailles 831 178 348, situ=C3=A9, 3 avenue des Pr=C3=
-=A9s, 78180 Montigny le Bretonneux-France. Il est destin=C3=A9 uniquement =
-=C3=A0 la personne =C3=A0 qui est adress=C3=A9. Si vous n'=C3=AAtes pas le =
-destinataire vis=C3=A9, vous n'=C3=AAtes pas autoris=C3=A9 =C3=A0 lire, imp=
-rimer, conserver, copier, diffuser, distribuer ou utiliser ce message ou to=
-ute partie de celui-ci. Si vous recevez ce message par erreur, veuillez en =
-avertir imm=C3=A9diatement l'exp=C3=A9diteur et supprimer toutes les copies=
- de ce message.
-
-> _______________________________________________
-> ofono mailing list -- ofono(a)ofono.org
-> To unsubscribe send an email to ofono-leave(a)ofono.org
-
---===============5561399929911216112==--
+-Denis
+--===============3342084321400649553==--
 
