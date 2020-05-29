@@ -1,41 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5148301987352409821=="
+Content-Type: multipart/mixed; boundary="===============8411974638138268553=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3] quectel: EC21 needs aux channel to be the first mux
- channel
-Date: Fri, 29 May 2020 14:58:08 +0000
-Message-ID: <094c8640-d1d8-7340-1de1-5b6aad31dff5@gmail.com>
-In-Reply-To: <20200529124347.25767-1-poeschel@lemonage.de>
+Subject: Re: Missing documentation for SimManager property writing?
+Date: Fri, 29 May 2020 15:02:39 +0000
+Message-ID: <50406a9c-857e-4bbd-6fe8-f7dbfff32aaa@gmail.com>
+In-Reply-To: <20200519085011.GA8008@duo.ucw.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5148301987352409821==
+--===============8411974638138268553==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lars,
+Hi Pavel,
 
-On 5/29/20 7:43 AM, poeschel(a)lemonage.de wrote:
-> From: Lars Poeschel <poeschel@lemonage.de>
+On 5/19/20 3:50 AM, Pavel Machek wrote:
+> Hi!
 > =
 
-> The Quectel EC21 does only work correctly, if the mux channel used for
-> aux is the first mux channel. It does only put it's URC messages in the
-> first mux channel, so this has to be the aux channel in our case.
-> To be flexible on the mux order we introduce two arrays here, that then
-> contain the initialization data in their needed order.
-> Initialization data is then applied by for-looping over this array.
-> ---
->   plugins/quectel.c | 61 ++++++++++++++++++++++++++++++++++++-----------
->   1 file changed, 47 insertions(+), 14 deletions(-)
+> In doc/sim-api.txt, there are some properties marked read/write, but I
+> don't see documented way to change those properties. Someone may want
+> to fix that up.
 > =
 
 
-Applied, thanks.
+Ah thanks for pointing this out.  Should now be fixed upstream by commit =
+
+a88d1120a4b0c82c0368a4457179ee8ca64bd884.
 
 Regards,
 -Denis
-
---===============5148301987352409821==--
+--===============8411974638138268553==--
 
