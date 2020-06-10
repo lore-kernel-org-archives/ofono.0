@@ -1,43 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6472312209924450109=="
+Content-Type: multipart/mixed; boundary="===============4591308448095380151=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] [qmimodem] Implement data capability bearer notify
-Date: Wed, 10 Jun 2020 14:24:46 -0500
-Message-ID: <aa33a21f-c6e4-ac58-4092-da94b1ffcd2a@gmail.com>
-In-Reply-To: <20200610134418.745509-1-marius@ubports.com>
+Subject: Re: Weird Droid 4 modem protocol and a way to support it
+Date: Wed, 10 Jun 2020 14:30:55 -0500
+Message-ID: <33a01f94-86e0-3b2f-9d82-b3140dd1261c@gmail.com>
+In-Reply-To: <20200610140042.GW43721@atomide.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6472312209924450109==
+--===============4591308448095380151==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marius,
-
-On 6/10/20 8:44 AM, Marius Gripsgard wrote:
-> This implements data capability bearer notify to qmi modem.
-> Since this is included in the serving system response this
-> just adds a new data extraction for dc.
-> ---
->   drivers/qmimodem/gprs.c | 27 +++++++++++++++++++++++++++
->   drivers/qmimodem/nas.c  | 36 ++++++++++++++++++++++++++++++++++++
->   drivers/qmimodem/nas.h  | 23 +++++++++++++++++++++++
->   3 files changed, 86 insertions(+)
-> =
-
+Hi Tony,
 
 <snip>
 
-> +	// DC is optional so only notify on successful extraction
-> +	if (extract_dc_info(result, &bearer_tech))
-> +		ofono_gprs_bearer_notify(gprs, bearer_tech);
-> +
+> =
 
-I changed the above C++ comment into C style and applied.  Thanks!
+> All we need to do with the TS 27.010 packets is parse the network
+> strength, operate the voice modem, ack SMS notifications, and pass all
+> the other notifications to the qmimodem to deal with over USB.
+> =
 
-Regards
+> To me it seems ideal would be simple read/write type functions in
+> drivers/motorolamodem. Is there some preferred existing exaple for
+> doing something like that?
+
+Not sure I understand.  Example of using ell?  See drivers/mbimmodem/*.
+
+Regards,
 -Denis
 
---===============6472312209924450109==--
+--===============4591308448095380151==--
 
