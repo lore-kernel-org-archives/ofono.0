@@ -1,93 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2497929709868398581=="
+Content-Type: multipart/mixed; boundary="===============6472312209924450109=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: Weird Droid 4 modem protocol and a way to support it
-Date: Wed, 10 Jun 2020 18:24:30 +0200
-Message-ID: <20200610162430.GA4109@amd>
-In-Reply-To: <bf3dfd8a-d192-0c6a-d0ee-6480bea81e13@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2] [qmimodem] Implement data capability bearer notify
+Date: Wed, 10 Jun 2020 14:24:46 -0500
+Message-ID: <aa33a21f-c6e4-ac58-4092-da94b1ffcd2a@gmail.com>
+In-Reply-To: <20200610134418.745509-1-marius@ubports.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2497929709868398581==
+--===============6472312209924450109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Marius,
 
-> >I'd really like to get support for Droid 4 modem... unfortunately it
-> >is quite special. Few words about Droid 4 modem protocol:
-> >
+On 6/10/20 8:44 AM, Marius Gripsgard wrote:
+> This implements data capability bearer notify to qmi modem.
+> Since this is included in the serving system response this
+> just adds a new data extraction for dc.
+> ---
+>   drivers/qmimodem/gprs.c | 27 +++++++++++++++++++++++++++
+>   drivers/qmimodem/nas.c  | 36 ++++++++++++++++++++++++++++++++++++
+>   drivers/qmimodem/nas.h  | 23 +++++++++++++++++++++++
+>   3 files changed, 86 insertions(+)
 > =
 
-> <snip>
-> =
 
-> >
-> >I'm not sure what is the best way to support it. I was not able to get
-> >atchat.c to work with it (and I don't think it is quite suitable), so
-> >I ended up copying it and modifying it for Droid 4 protocol.
-> >
-> >Is that acceptable? Can you see a better way?
-> =
+<snip>
 
-> I don't think there's really another way.  So the approach of duplicating
-> GAtChat and everything inside drivers/atmodem is likely the way to go.
+> +	// DC is optional so only notify on successful extraction
+> +	if (extract_dc_info(result, &bearer_tech))
+> +		ofono_gprs_bearer_notify(gprs, bearer_tech);
+> +
 
-Ok, thanks for confirmation.
+I changed the above C++ comment into C style and applied.  Thanks!
 
-> But if you pursue this, we really should throw out as much of the legacy =
-in
-> gatchat as possible:
-> =
+Regards
+-Denis
 
-> - g_at_chat_suspend / resume is likely not needed (you're probably not
-> running PPP over these, right)?
-> - stuff like g_at_chat_set_wakeup is only relevant for some weird modems =
-and
-> probably isn't relevant here
-> - add_terminator / blacklist_terminator might not be needed
-> - Some other concepts might not be needed, like send_pdu_listing and
-> send_and_expect_short_prompt.  Those are really only for weird SMS comman=
-ds.
-> - It might also be possible to greatly simplify the GAtParser
-> concept.
-
-I believe I don't need GAtParser at all.
-
-> - I'd also just put this all directly into drivers/motmodem/* instead of
-> trying to extend gatchat library itself.
-
-Yes.
-
-> Most importantly though, we should stop using glib.  oFono is (glacially
-> slowly) being ported over to ell.  So I don't really want to accept any n=
-ew
-> glib code.
-
-So... this code started as copy of gatchat, with me removing the
-obviously-unneeded stuff. I guess I can convert motchat easily when
-atchat is converted... but I'm not sure I understand the code well
-enough to do conversion on my own.
-
-Best regards,
-									Pavel
--- =
-
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
-
---===============2497929709868398581==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFVUVBUkVD
-QUFZRkFsN2hDVDRBQ2drUU1PZndhcFhiK3ZLUEhRQ1lxdmszd1puTVYrd1ZlaXhmNkh6b0NUL3YK
-cGdDZ21JWVJ5dmc1T0VEMHpNaWVwWDRWVkQ0bUcvZz0KPUcySk4KLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
-
---===============2497929709868398581==--
+--===============6472312209924450109==--
 
