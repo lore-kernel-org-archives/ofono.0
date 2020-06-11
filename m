@@ -1,37 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============4591308448095380151=="
+Content-Type: multipart/mixed; boundary="===============4747668499858775180=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Weird Droid 4 modem protocol and a way to support it
-Date: Wed, 10 Jun 2020 14:30:55 -0500
-Message-ID: <33a01f94-86e0-3b2f-9d82-b3140dd1261c@gmail.com>
-In-Reply-To: <20200610140042.GW43721@atomide.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH 1/1] huawei: use AT^SYSCFG for radio setting operations on 3G
+ only modems
+Date: Thu, 11 Jun 2020 11:12:26 +0200
+Message-ID: <1591866746-5233-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4591308448095380151==
+--===============4747668499858775180==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tony,
+AT^SYSCFGEX must be used on LTE Huawei modems to enable LTE support.
+But some modems (or firmwares?) do not support this command and AT^SYSCFG
+must be used to get/set radio settings.
+This has been introduced in commit:
+22adf6402c828f8b8cca1b65d8a46ba7792eb787
 
-<snip>
+There is a bug in this commit and AT^SYSCFGEX commands are used even on
+modems not supporting it.
+---
+ drivers/huaweimodem/radio-settings.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-> =
+diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/rad=
+io-settings.c
+index 40431d3..20181d2 100644
+--- a/drivers/huaweimodem/radio-settings.c
++++ b/drivers/huaweimodem/radio-settings.c
+@@ -532,6 +532,7 @@ static void syscfgex_support_cb(gboolean ok, GAtResult =
+*result,
+ 	if (!ok) {
+ 		g_at_chat_send(rsd->chat, "AT^SYSCFG=3D?", syscfg_prefix,
+ 					syscfg_support_cb, rs, NULL);
++		return;
+ 	}
+ =
 
-> All we need to do with the TS 27.010 packets is parse the network
-> strength, operate the voice modem, ack SMS notifications, and pass all
-> the other notifications to the qmimodem to deal with over USB.
-> =
+ 	rsd->syscfgex_cap =3D 1;
+-- =
 
-> To me it seems ideal would be simple read/write type functions in
-> drivers/motorolamodem. Is there some preferred existing exaple for
-> doing something like that?
+2.7.4
 
-Not sure I understand.  Example of using ell?  See drivers/mbimmodem/*.
-
-Regards,
--Denis
-
---===============4591308448095380151==--
+--===============4747668499858775180==--
 
