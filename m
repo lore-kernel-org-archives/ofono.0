@@ -1,31 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============1731850667826583402=="
+Content-Type: multipart/mixed; boundary="===============0385706350381087661=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] cbs: Allow the last CBS fragment to be truncated
-Date: Thu, 18 Jun 2020 15:37:33 -0500
-Message-ID: <6ba787da-bede-d97f-7887-52bbae65d3f5@gmail.com>
-In-Reply-To: <1592346666-27113-1-git-send-email-slava.monich@jolla.com>
+Subject: Re: [PATCH] lte: Use the right D-Bus interface for property change
+ signal
+Date: Thu, 18 Jun 2020 15:38:25 -0500
+Message-ID: <7dfad163-f3bd-16e0-a0f6-84695073bc0c@gmail.com>
+In-Reply-To: <1592347214-28144-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1731850667826583402==
+--===============0385706350381087661==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Slava,
 
-On 6/16/20 5:31 PM, Slava Monich wrote:
-> That does happen in real life.
+On 6/16/20 5:40 PM, Slava Monich wrote:
 > ---
->   src/smsutil.c | 23 +++++++++++++++--------
->   src/smsutil.h |  1 +
->   2 files changed, 16 insertions(+), 8 deletions(-)
+>   src/lte.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> =
+
 
 Applied, thanks.
 
 Regards,
 -Denis
 
---===============1731850667826583402==--
+--===============0385706350381087661==--
 
