@@ -1,93 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============0013428435462579829=="
+Content-Type: multipart/mixed; boundary="===============6355661806816149237=="
 MIME-Version: 1.0
 From: Jimmy Gysens <jimmy.gysens_ext@softathome.com>
-Subject: [PATCH 1/2] modem: add a driver reset function
-Date: Thu, 25 Jun 2020 11:28:50 +0200
-Message-ID: <20200625092851.4548-1-jimmy.gysens_ext@softathome.com>
+Subject: [PATCH 2/2] huawei: reset function
+Date: Thu, 25 Jun 2020 11:28:51 +0200
+Message-ID: <20200625092851.4548-2-jimmy.gysens_ext@softathome.com>
+In-Reply-To: <20200625092851.4548-1-jimmy.gysens_ext@softathome.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0013428435462579829==
+--===============6355661806816149237==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add a reset function to the modem driver. This function can be used to hard
-reset the device. This is an alternative in case the (*enable) and
-(*disable) functions are not supported.
+Implement the modem reset function for Huawei.
 
-A reset will not work when emergency mode is active.
-
-For dbus: dbus-send \
-			--system \
-			--print-reply \
-			--dest=3Dorg.ofono \
-			<modem_path> \
-			org.ofono.Modem.Reset
+Huawei devices can be reset (reboot) by sending the AT^RESET command.
 ---
- include/modem.h |  3 +++
- src/modem.c     | 20 ++++++++++++++++++++
- 2 files changed, 23 insertions(+)
+ plugins/huawei.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
-diff --git a/include/modem.h b/include/modem.h
-index 9b12cfad..519ffe97 100644
---- a/include/modem.h
-+++ b/include/modem.h
-@@ -75,6 +75,9 @@ struct ofono_modem_driver {
- =
-
- 	/* Populate the atoms available online */
- 	void (*post_online)(struct ofono_modem *modem);
-+
-+	/* Reset device */
-+	int (*reset)(struct ofono_modem *modem);
- };
- =
-
- void ofono_modem_add_interface(struct ofono_modem *modem,
-diff --git a/src/modem.c b/src/modem.c
-index 52988cf3..8c633edb 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -1082,6 +1082,24 @@ done:
- 	return NULL;
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index bb876701..35195e2d 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -900,6 +900,30 @@ static void huawei_post_online(struct ofono_modem *mod=
+em)
+ 	}
  }
  =
 
-+static DBusMessage *modem_reset(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
++static void reset_cb(gboolean ok, GAtResult *result,
++						gpointer user_data)
 +{
-+	struct ofono_modem *modem =3D data;
-+	const struct ofono_modem_driver *driver =3D modem->driver;
-+
-+	if (ofono_modem_get_emergency_mode(modem) =3D=3D TRUE)
-+		return __ofono_error_emergency_active(msg);
-+
-+	if (!driver->reset)
-+		return __ofono_error_not_implemented(msg);
-+
-+	if (driver->reset(modem))
-+		return __ofono_error_failed(msg);
-+
-+	return dbus_message_new_method_return(msg);
++	if (!ok)
++		DBG("Failed to reset device");
++	else
++		DBG("Device resets shortly");
 +}
 +
- static DBusMessage *modem_set_property(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -1179,6 +1197,8 @@ static const GDBusMethodTable modem_methods[] =3D {
- 	{ GDBUS_ASYNC_METHOD("SetProperty",
- 			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
- 			NULL, modem_set_property) },
-+	{ GDBUS_METHOD("Reset",
-+			NULL, NULL, modem_reset) },
- 	{ }
++static int huawei_reset(struct ofono_modem *modem)
++{
++	struct huawei_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("Reset device: %p", modem);
++
++	if (g_at_chat_send(data->pcui, "AT^RESET", NULL,
++			reset_cb, NULL, NULL) =3D=3D FALSE) {
++		DBG("Failed to send reset command");
++		return -EIO;
++	}
++
++	return 0;
++}
++
+ static struct ofono_modem_driver huawei_driver =3D {
+ 	.name		=3D "huawei",
+ 	.probe		=3D huawei_probe,
+@@ -910,6 +934,7 @@ static struct ofono_modem_driver huawei_driver =3D {
+ 	.pre_sim	=3D huawei_pre_sim,
+ 	.post_sim	=3D huawei_post_sim,
+ 	.post_online	=3D huawei_post_online,
++	.reset		=3D huawei_reset,
  };
  =
 
+ static int huawei_init(void)
 -- =
 
 2.17.1
 
---===============0013428435462579829==--
+--===============6355661806816149237==--
 
