@@ -1,32 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============0385706350381087661=="
+Content-Type: multipart/mixed; boundary="===============2552069396595672402=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] lte: Use the right D-Bus interface for property change
- signal
-Date: Thu, 18 Jun 2020 15:38:25 -0500
-Message-ID: <7dfad163-f3bd-16e0-a0f6-84695073bc0c@gmail.com>
-In-Reply-To: <1592347214-28144-1-git-send-email-slava.monich@jolla.com>
+From: Jimmy Gysens <jimmy.gysens_ext@softathome.com>
+Subject: [PATCH 2/2] huawei: add ^REJINFO unsolicited listener
+Date: Thu, 25 Jun 2020 11:28:25 +0200
+Message-ID: <20200625092825.4475-2-jimmy.gysens_ext@softathome.com>
+In-Reply-To: <20200625092825.4475-1-jimmy.gysens_ext@softathome.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0385706350381087661==
+--===============2552069396595672402==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Add an event listener for Huawei's ^REJINFO unsolicited event.
+This event provides information regarding the network's attach state.
 
-On 6/16/20 5:40 PM, Slava Monich wrote:
-> ---
->   src/lte.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
-> =
+Format:
 
+^REJINFO:<PLMN ID>,<Service Domain>,<Reject Cause>,<Rat Type>,<Reject Type>
 
-Applied, thanks.
+Note: not all Huawei devices support this.
 
-Regards,
--Denis
+Reference: Huawei ME909s Series LTE Module V100R001 AT command
+specification.
+---
+ drivers/atmodem/gprs.c | 32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
 
---===============0385706350381087661==--
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index b637f733..58d4eed3 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -484,6 +484,36 @@ static void huawei_mode_notify(GAtResult *result, gpoi=
+nter user_data)
+ 	ofono_gprs_bearer_notify(gprs, bearer);
+ }
+ =
+
++static void huawei_rejinfo_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_gprs *gprs =3D user_data;
++	GAtResultIter iter;
++	int plmn, service_domain, reject_cause, rat_type, reject_type;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "^REJINFO:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &plmn))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &service_domain))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &reject_cause))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &rat_type))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &reject_type))
++		return;
++
++	ofono_gprs_rejectinfo_notify(gprs, plmn, service_domain,
++					rat_type, reject_cause, reject_type);
++}
++
+ static void huawei_hcsq_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_gprs *gprs =3D user_data;
+@@ -611,6 +641,8 @@ static void gprs_initialized(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 						FALSE, gprs, NULL);
+ 		g_at_chat_register(gd->chat, "^HCSQ:", huawei_hcsq_notify,
+ 						FALSE, gprs, NULL);
++		g_at_chat_register(gd->chat, "^REJINFO:", huawei_rejinfo_notify,
++						FALSE, gprs, NULL);
+ 		break;
+ 	case OFONO_VENDOR_UBLOX:
+ 		g_at_chat_register(gd->chat, "+UREG:", ublox_ureg_notify,
+-- =
+
+2.17.1
+
+--===============2552069396595672402==--
 
