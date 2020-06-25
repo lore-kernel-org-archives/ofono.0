@@ -1,96 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============7583930219178096842=="
+Content-Type: multipart/mixed; boundary="===============2511943165127886482=="
 MIME-Version: 1.0
-From: Jimmy Gysens <jimmy.gysens_ext@softathome.com>
-Subject: [PATCH] gprs: clean context properly
-Date: Thu, 25 Jun 2020 11:30:08 +0200
-Message-ID: <20200625093008.4840-1-jimmy.gysens_ext@softathome.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] atmodem: set PDP/EPS minimum context ID to 1.
+Date: Thu, 25 Jun 2020 11:33:07 -0500
+Message-ID: <c317de86-72f0-8638-2614-0f032d78f48c@gmail.com>
+In-Reply-To: <20200625092924.4677-1-jimmy.gysens_ext@softathome.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7583930219178096842==
+--===============2511943165127886482==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-After a context is detached, the context is not properly cleared. In
-addition to releasing the context:
+Hi Jimmy,
 
-- Reset the context settings (IP, DNS, interface, ...).
-- Signal the Active flag as false.
----
- src/gprs.c | 24 ++++++++++++++++--------
- 1 file changed, 16 insertions(+), 8 deletions(-)
+On 6/25/20 4:29 AM, Jimmy Gysens wrote:
+> There are manufacturers, like Huawei, returning profile 0 as the minimum
+> PDP/EPS context ID. Profile 0, however, is the default profile used to
+> register to the LTE network. It contains manufacturer specific settings a=
+nd
+> should not be created by +CGDCONT.
+> =
 
-diff --git a/src/gprs.c b/src/gprs.c
-index d9e24840..00cfb905 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1573,6 +1573,19 @@ static bool have_read_settings(struct ofono_gprs *gp=
-rs)
- 	return false;
- }
- =
+> Reference: ETSI TS 127 007: AT command set for User Equipment (UE), secti=
+on
+> 10.1.0.
 
-+static void pri_context_signal_active(struct pri_context *ctx)
-+{
-+	DBusConnection *conn;
-+	dbus_bool_t value;
-+
-+	value =3D ctx->active;
-+	conn =3D ofono_dbus_get_connection();
-+
-+	ofono_dbus_signal_property_changed(conn, ctx->path,
-+					OFONO_CONNECTION_CONTEXT_INTERFACE,
-+					"Active", DBUS_TYPE_BOOLEAN, &value);
-+}
-+
- static void detach_active_contexts(struct ofono_gprs *gprs)
- {
- 	GSList *l;
-@@ -1596,7 +1609,9 @@ static void detach_active_contexts(struct ofono_gprs =
-*gprs)
- 			gc->driver->detach_shutdown(gc, ctx->context.cid);
- =
+Yeah, but which version of it ;)  I think ETSI versions are lagging a bit b=
+ehind =
 
- 		/* Make sure the context is properly cleared */
-+		pri_reset_context_settings(ctx);
- 		release_context(ctx);
-+		pri_context_signal_active(ctx);
- 	}
- }
- =
+3GPP versions and we prefer to use 3GPP 27.007 for historical reasons.
 
-@@ -2251,8 +2266,6 @@ static void gprs_deactivate_for_all(const struct ofon=
-o_error *error,
- {
- 	struct pri_context *ctx =3D data;
- 	struct ofono_gprs *gprs =3D ctx->gprs;
--	DBusConnection *conn;
--	dbus_bool_t value;
- =
+> ---
+>   drivers/atmodem/gprs.c | 7 +++++++
+>   1 file changed, 7 insertions(+)
+> =
 
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
- 		__ofono_dbus_pending_reply(&gprs->pending,
-@@ -2262,12 +2275,7 @@ static void gprs_deactivate_for_all(const struct ofo=
-no_error *error,
- =
+> diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+> index 58d4eed3..bcf1eaaf 100644
+> --- a/drivers/atmodem/gprs.c
+> +++ b/drivers/atmodem/gprs.c
+> @@ -787,6 +787,13 @@ static void at_cgdcont_test_cb(gboolean ok, GAtResul=
+t *result,
+>   	if (found =3D=3D FALSE)
+>   		goto error;
+>   =
 
- 	pri_reset_context_settings(ctx);
- 	release_context(ctx);
--
--	value =3D ctx->active;
--	conn =3D ofono_dbus_get_connection();
--	ofono_dbus_signal_property_changed(conn, ctx->path,
--					OFONO_CONNECTION_CONTEXT_INTERFACE,
--					"Active", DBUS_TYPE_BOOLEAN, &value);
-+	pri_context_signal_active(ctx);
- =
+> +	/*
+> +	 * ETSI TS 127 007: profile 0 is manufacturer specific.
+> +	 * Start from PDP/EPS context ID 1.
+> +	 */
+> +	if (min <=3D 0)
+> +		min =3D 1;
+> +
 
- 	gprs_deactivate_next(gprs);
- }
--- =
+g_at_result_next_range can't really return negative numbers.  Not sure why =
+we =
 
-2.17.1
+have it returning gints.  So I'd prefer to use min =3D=3D 0 here.
 
---===============7583930219178096842==--
+Otherwise, this looks harmless enough, but I wonder if you're breaking some =
+
+drivers doing this since some might report cid=3D0 as the default bearer be=
+ing =
+
+activated by 'ME PDN ACT' unsolicited result code.  Which cid does Huawei r=
+eport =
+
+in this case?
+
+Regards,
+-Denis
+--===============2511943165127886482==--
 
