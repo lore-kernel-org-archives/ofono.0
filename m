@@ -1,37 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4114772918603149355=="
+Content-Type: multipart/mixed; boundary="===============0301556285430524671=="
 MIME-Version: 1.0
 From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: [PATCH 0/2] gemalto: enable ELS81x modem
-Date: Sat, 27 Jun 2020 14:08:36 +0300
-Message-ID: <20200627110838.808865-1-geomatsi@gmail.com>
+Subject: [PATCH 1/2] plugins: udevng: detect Centirion ELS81x modem
+Date: Sat, 27 Jun 2020 14:08:37 +0300
+Message-ID: <20200627110838.808865-2-geomatsi@gmail.com>
+In-Reply-To: <20200627110838.808865-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4114772918603149355==
+--===============0301556285430524671==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Enable detection of Centirion ELS81x modem.
 
-These two simple patches enable oFono support for ELS81x modem using
-cdc_ether/cdc_acm drivers. As far as I know, new firmwares for ELS81x
-enable support for MBIM as well. But I have not yet tried that.
+---
+ plugins/udevng.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Regards,
-Sergey
-
-Sergey Matyukevich (2):
-  plugins: udevng: detect Centirion ELS81x modem
-  plugins: gemalto: enable LTE for ELS81x
-
- plugins/gemalto.c | 5 ++++-
- plugins/udevng.c  | 2 ++
- 2 files changed, 6 insertions(+), 1 deletion(-)
-
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 4a38621b..30597d2c 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1807,6 +1807,8 @@ static struct {
+ 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"cdc_acm",	"1e2d",	"0061"	},
+ 	{ "gemalto",	"cdc_ether",	"1e2d",	"0061"	},
++	{ "gemalto",	"cdc_acm",	"1e2d",	"005b"	},
++	{ "gemalto",	"cdc_ether",	"1e2d",	"005b"	},
+ 	{ "telit",	"cdc_ncm",	"1bc7", "0036"	},
+ 	{ "telit",	"cdc_acm",	"1bc7", "0036"	},
+ 	{ "xmm7xxx",	"cdc_acm",	"8087"		},
 -- =
 
 2.27.0
 
---===============4114772918603149355==--
+--===============0301556285430524671==--
 
