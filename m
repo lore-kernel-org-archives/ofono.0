@@ -1,53 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8795033120979464582=="
+Content-Type: multipart/mixed; boundary="===============8498415613305173361=="
 MIME-Version: 1.0
-From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: [PATCH 2/2] plugins: gemalto: enable LTE for ELS81x
-Date: Sat, 27 Jun 2020 14:08:38 +0300
-Message-ID: <20200627110838.808865-3-geomatsi@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/2] gemalto: enable ELS81x modem
+Date: Mon, 29 Jun 2020 10:21:16 -0500
+Message-ID: <61212ad8-e718-df71-2a82-1ce5104aeac6@gmail.com>
 In-Reply-To: <20200627110838.808865-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8795033120979464582==
+--===============8498415613305173361==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Enable LTE atom for Cinterion ELS81x modems.
+Hi Sergey,
 
----
- plugins/gemalto.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+On 6/27/20 6:08 AM, Sergey Matyukevich wrote:
+> Hi all,
+> =
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 297aaea3..13950742 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -58,6 +58,8 @@
- #define GEMALTO_MODEL_PHS8P	"0053"
- /* ALS3, PLS8-E, and PLS8-X family */
- #define GEMALTO_MODEL_ALS3_PLS8x	"0061"
-+/* ELS81 modem */
-+#define GEMALTO_MODEL_ELS81x   "005b"
- =
+> These two simple patches enable oFono support for ELS81x modem using
+> cdc_ether/cdc_acm drivers. As far as I know, new firmwares for ELS81x
+> enable support for MBIM as well. But I have not yet tried that.
+> =
 
- static const char *none_prefix[] =3D { NULL };
- static const char *sctm_prefix[] =3D { "^SCTM:", NULL };
-@@ -601,7 +603,8 @@ static void gemalto_post_sim(struct ofono_modem *modem)
- =
+> Regards,
+> Sergey
+> =
 
- 	ofono_ussd_create(modem, 0, "atmodem", data->app);
- =
+> Sergey Matyukevich (2):
+>    plugins: udevng: detect Centirion ELS81x modem
+>    plugins: gemalto: enable LTE for ELS81x
+> =
 
--	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x))
-+	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3_PLS8x) ||
-+	    !g_strcmp0(model, GEMALTO_MODEL_ELS81x))
- 		ofono_lte_create(modem, OFONO_VENDOR_GEMALTO,
- 						"atmodem", data->app);
- }
--- =
+>   plugins/gemalto.c | 5 ++++-
+>   plugins/udevng.c  | 2 ++
+>   2 files changed, 6 insertions(+), 1 deletion(-)
+> =
 
-2.27.0
 
---===============8795033120979464582==--
+All applied, thanks.
+
+Regards,
+-Denis
+--===============8498415613305173361==--
 
