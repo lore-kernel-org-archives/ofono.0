@@ -1,85 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5085680902556630334=="
+Content-Type: multipart/mixed; boundary="===============3613229349845409084=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: Weird Droid 4 modem protocol and a way to support it
-Date: Sat, 11 Jul 2020 14:10:47 +0200
-Message-ID: <20200711121047.GA3973@amd>
-In-Reply-To: <bf3dfd8a-d192-0c6a-d0ee-6480bea81e13@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 RESEND] udevng: Add support for Quectel BG96 modem
+Date: Mon, 13 Jul 2020 14:05:29 -0500
+Message-ID: <1425e114-200a-1638-16ca-9fd51c1eb5ee@gmail.com>
+In-Reply-To: <20200711120450.3974-1-sean@geanix.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5085680902556630334==
+--===============3613229349845409084==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Sean,
 
-> >I'd really like to get support for Droid 4 modem... unfortunately it
-> >is quite special. Few words about Droid 4 modem protocol:
+On 7/11/20 7:04 AM, Sean Nyekjaer wrote:
+> ---
+>   plugins/udevng.c | 2 ++
+>   1 file changed, 2 insertions(+)
 > =
 
-> >
-> >I'm not sure what is the best way to support it. I was not able to get
-> >atchat.c to work with it (and I don't think it is quite suitable), so
-> >I ended up copying it and modifying it for Droid 4 protocol.
-> >
-> >Is that acceptable? Can you see a better way?
-> =
 
-> I don't think there's really another way.  So the approach of duplicating
-> GAtChat and everything inside drivers/atmodem is likely the way to go.
-> =
+Applied, thanks.
 
-> But if you pursue this, we really should throw out as much of the legacy =
-in
-> gatchat as possible:
-> =
+Regards,
+-Denis
 
-> - g_at_chat_suspend / resume is likely not needed (you're probably not
-> running PPP over these, right)?
-> - stuff like g_at_chat_set_wakeup is only relevant for some weird modems =
-and
-> probably isn't relevant here
-> - add_terminator / blacklist_terminator might not be needed
-> - Some other concepts might not be needed, like send_pdu_listing and
-> send_and_expect_short_prompt.  Those are really only for weird SMS comman=
-ds.
-> - It might also be possible to greatly simplify the GAtParser
- >concept.
-
-I had it removed from .c files, removed from .h now, too.
-
-> - I'd also just put this all directly into drivers/motmodem/* instead of
-> trying to extend gatchat library itself.
-
-Already done.
-
-> Most importantly though, we should stop using glib.  oFono is (glacially
-> slowly) being ported over to ell.  So I don't really want to accept any n=
-ew
-> glib code.
-
-Heh. I guess I'll wait for atchat to be converted, first...
-
-Best regards,
-								Pavel
--- =
-
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
-
---===============5085680902556630334==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFsOEpyRWNBQ2drUU1PZndhcFhiK3ZKRjZnQ2ZVRlVsbU4zcWdkd1gxejAwNlNyeGFPMkgK
-c0ZJQW9LQWEyOXljWkZCelUxVllKdjhDblliMzY4MDUKPVdSUXIKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
-
---===============5085680902556630334==--
+--===============3613229349845409084==--
 
