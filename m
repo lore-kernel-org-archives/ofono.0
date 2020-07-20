@@ -1,40 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============6163877236975093397=="
+Content-Type: multipart/mixed; boundary="===============4784555622809888285=="
 MIME-Version: 1.0
 From: JongSeok Won <wjs890204@gmail.com>
-Subject: [PATCH] rilmodem: fix typo error in netmon.c
-Date: Mon, 20 Jul 2020 16:34:50 +0900
-Message-ID: <20200720073450.11596-1-wjs890204@gmail.com>
+Subject: [PATCH 1/2] netmon: support cell type LTE
+Date: Mon, 20 Jul 2020 17:40:52 +0900
+Message-ID: <20200720084052.8617-1-wjs890204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6163877236975093397==
+--===============4784555622809888285==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/rilmodem/netmon.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/netmon.h |  3 +++
+ src/netmon.c     | 24 +++++++++++++++++++++++-
+ 2 files changed, 26 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/rilmodem/netmon.c b/drivers/rilmodem/netmon.c
-index 7dd3a562..547ebccc 100644
---- a/drivers/rilmodem/netmon.c
-+++ b/drivers/rilmodem/netmon.c
-@@ -201,7 +201,7 @@ static int process_cellinfo_list(struct ril_msg *messag=
-e,
+diff --git a/include/netmon.h b/include/netmon.h
+index a99d6ca9..53f9d393 100644
+--- a/include/netmon.h
++++ b/include/netmon.h
+@@ -72,6 +72,9 @@ enum ofono_netmon_info {
+ 	OFONO_NETMON_INFO_EARFCN, /* int */
+ 	OFONO_NETMON_INFO_EBAND, /* int */
+ 	OFONO_NETMON_INFO_CQI, /* int */
++	OFONO_NETMON_INFO_PCI, /* int */
++	OFONO_NETMON_INFO_TAC, /* int */
++	OFONO_NETMON_INFO_SNR, /* int */
+ 	OFONO_NETMON_INFO_INVALID,
+ };
  =
 
- 		lac =3D (lac >=3D 0 && lac <=3D 65535) ? lac : -1;
- 		cid =3D (cid >=3D 0 && cid <=3D 268435455) ? cid : -1;
--		psc =3D (psc >=3D 0 && rssi <=3D 511) ? psc : -1;
-+		psc =3D (psc >=3D 0 && psc <=3D 511) ? psc : -1;
- 		rssi =3D (rssi >=3D 0 && rssi <=3D 31) ? rssi : -1;
- 		ber =3D (ber >=3D 0 && ber <=3D 7) ? ber : -1;
+diff --git a/src/netmon.c b/src/netmon.c
+index 9eacb3ca..320c8425 100644
+--- a/src/netmon.c
++++ b/src/netmon.c
+@@ -138,7 +138,7 @@ static void netmon_cell_info_dict_append(DBusMessageIte=
+r *dict,
+ 			intval =3D va_arg(*arglist, int);
  =
 
+ 			CELL_INFO_DICT_APPEND(dict, "TimingAdvance",
+-					intval, uint8_t, DBUS_TYPE_BYTE);
++					intval, uint32_t, DBUS_TYPE_UINT32);
+ 			break;
+ =
+
+ 		case OFONO_NETMON_INFO_PSC:
+@@ -213,6 +213,28 @@ static void netmon_cell_info_dict_append(DBusMessageIt=
+er *dict,
+ 					intval, uint8_t, DBUS_TYPE_BYTE);
+ 			break;
+ =
+
++		case OFONO_NETMON_INFO_PCI:
++			intval =3D va_arg(*arglist, int);
++
++			CELL_INFO_DICT_APPEND(dict, "PhysicalCellId",
++					intval, uint16_t, DBUS_TYPE_UINT16);
++			break;
++
++		case OFONO_NETMON_INFO_TAC:
++			intval =3D va_arg(*arglist, int);
++
++			CELL_INFO_DICT_APPEND(dict, "TrackingAreaCode",
++					intval, uint16_t, DBUS_TYPE_UINT16);
++			break;
++
++		case OFONO_NETMON_INFO_SNR:
++			intval =3D va_arg(*arglist, int);
++
++			ofono_dbus_dict_append(dict, "SingalToNoiseRatio",
++					DBUS_TYPE_INT32, &intval);
++
++			break;
++
+ 		case OFONO_NETMON_INFO_INVALID:
+ 			break;
+ 		}
 -- =
 
 2.17.1
 
---===============6163877236975093397==--
+--===============4784555622809888285==--
 
