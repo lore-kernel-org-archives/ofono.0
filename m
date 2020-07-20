@@ -1,31 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3613229349845409084=="
+Content-Type: multipart/mixed; boundary="===============6163877236975093397=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 RESEND] udevng: Add support for Quectel BG96 modem
-Date: Mon, 13 Jul 2020 14:05:29 -0500
-Message-ID: <1425e114-200a-1638-16ca-9fd51c1eb5ee@gmail.com>
-In-Reply-To: <20200711120450.3974-1-sean@geanix.com>
+From: JongSeok Won <wjs890204@gmail.com>
+Subject: [PATCH] rilmodem: fix typo error in netmon.c
+Date: Mon, 20 Jul 2020 16:34:50 +0900
+Message-ID: <20200720073450.11596-1-wjs890204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3613229349845409084==
+--===============6163877236975093397==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sean,
+---
+ drivers/rilmodem/netmon.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-On 7/11/20 7:04 AM, Sean Nyekjaer wrote:
-> ---
->   plugins/udevng.c | 2 ++
->   1 file changed, 2 insertions(+)
-> =
+diff --git a/drivers/rilmodem/netmon.c b/drivers/rilmodem/netmon.c
+index 7dd3a562..547ebccc 100644
+--- a/drivers/rilmodem/netmon.c
++++ b/drivers/rilmodem/netmon.c
+@@ -201,7 +201,7 @@ static int process_cellinfo_list(struct ril_msg *messag=
+e,
+ =
 
+ 		lac =3D (lac >=3D 0 && lac <=3D 65535) ? lac : -1;
+ 		cid =3D (cid >=3D 0 && cid <=3D 268435455) ? cid : -1;
+-		psc =3D (psc >=3D 0 && rssi <=3D 511) ? psc : -1;
++		psc =3D (psc >=3D 0 && psc <=3D 511) ? psc : -1;
+ 		rssi =3D (rssi >=3D 0 && rssi <=3D 31) ? rssi : -1;
+ 		ber =3D (ber >=3D 0 && ber <=3D 7) ? ber : -1;
+ =
 
-Applied, thanks.
+-- =
 
-Regards,
--Denis
+2.17.1
 
---===============3613229349845409084==--
+--===============6163877236975093397==--
 
