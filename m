@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3514287575128855303=="
+Content-Type: multipart/mixed; boundary="===============3896261107158639835=="
 MIME-Version: 1.0
 From: Pavel Machek <pavel@ucw.cz>
-Subject: [PATCH] Support weird modem in Motorola Droid 4
-Date: Fri, 31 Jul 2020 23:57:30 +0200
-Message-ID: <20200731215730.GA2114@amd>
-In-Reply-To: <20200731100750.GA22791@amd>
+Subject: [PATCH v2] Support weird modem in Motorola Droid 4
+Date: Sat, 01 Aug 2020 00:00:46 +0200
+Message-ID: <20200731220046.GB2114@amd>
+In-Reply-To: <20200731215730.GA2114@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3514287575128855303==
+--===============3896261107158639835==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,6 +16,11 @@ Content-Transfer-Encoding: quoted-printable
 This is basic support for modem in Droid 4, accessed over
 ttyUSB4. That interface is unfortunately quite broken, so we need to
 force very specific SMS mode.
+
+---
+
+Sorry, hit send too soon and sent version with unused variables and
+broken whitespace. This one should be better.
 
 diff --git a/Makefile.am b/Makefile.am
 index fbb0eff4..9b3fbb8d 100644
@@ -46,7 +51,7 @@ index e750a139..f46cd3a2 100644
  		len +=3D sprintf(buf + len, ",0,0,255");
  		break;
 diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-index d502da72..c0f33ebc 100644
+index d502da72..a9306916 100644
 --- a/drivers/atmodem/sms.c
 +++ b/drivers/atmodem/sms.c
 @@ -349,8 +349,15 @@ static inline void at_ack_delivery(struct ofono_sms *s=
@@ -89,8 +94,7 @@ _opts,
 +		mode =3D "1";
 +	if (data->vendor =3D=3D OFONO_VENDOR_DROID)
 +		mode =3D "2";
-+	=
-
++
  	/* Prefer to deliver SMS via +CMT if CNMA is supported */
 -	if (!append_cnmi_element(buf, &len, cnmi_opts[1],
 -					data->cnma_enabled ? "21" : "1", FALSE))
@@ -113,14 +117,13 @@ _opts,
 
  		if (mt =3D=3D 1 && mo =3D=3D 1)
  			supported =3D TRUE;
-@@ -1290,6 +1305,9 @@ static void at_csms_query_cb(gboolean ok, GAtResult *=
+@@ -1290,6 +1305,8 @@ static void at_csms_query_cb(gboolean ok, GAtResult *=
 result,
  		goto out;
  =
 
  	switch (data->vendor) {
 +	case OFONO_VENDOR_DROID:
-+	  	csms =3D 0;
 +		break;
  	case OFONO_VENDOR_QUECTEL_SERIAL:
  		g_at_result_iter_next_number(&iter, &status_min);
@@ -390,10 +393,10 @@ data)
 +OFONO_PLUGIN_DEFINE(droid, "Motorola Droid modem driver", VERSION,
 +			OFONO_PLUGIN_PRIORITY_DEFAULT, droid_init, droid_exit)
 diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 4a38621b..5f8e86e4 100644
+index 4a38621b..14e6e2a7 100644
 --- a/plugins/udevng.c
 +++ b/plugins/udevng.c
-@@ -712,6 +712,36 @@ static gboolean setup_telitqmi(struct modem_info *mode=
+@@ -712,6 +712,34 @@ static gboolean setup_telitqmi(struct modem_info *mode=
 m)
  	return TRUE;
  }
@@ -401,7 +404,7 @@ m)
 
 +static gboolean setup_droid(struct modem_info *modem)
 +{
-+  	const char *qmi =3D NULL, *net =3D NULL, *at =3D NULL;
++	const char *at =3D NULL;
 +	GSList *list;
 +
 +	DBG("%s", modem->syspath);
@@ -421,8 +424,6 @@ m)
 +	if (at =3D=3D NULL)
 +		return FALSE;
 +
-+	DBG("at=3D%s qmi=3D%s net=3D%s", at, qmi, net);
-+
 +	ofono_modem_set_string(modem->modem, "Device", at);
 +	ofono_modem_set_driver(modem->modem, "droid");
 +
@@ -432,7 +433,7 @@ m)
  /* TODO: Not used as we have no simcom driver */
  static gboolean setup_simcom(struct modem_info *modem)
  {
-@@ -1401,6 +1431,7 @@ static struct {
+@@ -1401,6 +1429,7 @@ static struct {
  	{ "gemalto",	setup_gemalto	},
  	{ "xmm7xxx",	setup_xmm7xxx	},
  	{ "mbim",	setup_mbim	},
@@ -440,7 +441,7 @@ m)
  	/* Following are non-USB modems */
  	{ "ifx",	setup_ifx		},
  	{ "u8500",	setup_isi_serial	},
-@@ -1786,6 +1817,8 @@ static struct {
+@@ -1786,6 +1815,8 @@ static struct {
  	{ "telit",	"cdc_acm",	"1bc7", "0021"	},
  	{ "telitqmi",	"qmi_wwan",	"1bc7", "1201"	},
  	{ "telitqmi",	"option",	"1bc7", "1201"	},
@@ -451,23 +452,22 @@ m)
  	{ "samsung",	"option",	"04e8", "6889"	},
 
 
-
 -- =
 
 (english) http://www.livejournal.com/~pavelmachek
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
 g.html
 
---===============3514287575128855303==
+--===============3896261107158639835==
 Content-Type: application/pgp-signature
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="signature.asc"
 
 LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFsOGtrOG9BQ2drUU1PZndhcFhiK3ZJRVpnQ2RHcy9lZjhlVVZ2U254L2tyUTNITTl2R0QK
-V0IwQW9MZ1lmVm5EeTBtOFJoenpLUi85MFBlK0xlU1IKPStPdm8KLS0tLS1FTkQgUEdQIFNJR05B
+QUFZRkFsOGtsSTRBQ2drUU1PZndhcFhiK3ZMNkZ3Q2ZZanUrcUpsTHYwZk53KzVlM3hMS2Y0Y0wK
+R3N3QW4xY2Q3NEM2b2dXbnJUelBjTlRBbk5oc3VUcTAKPU9vQloKLS0tLS1FTkQgUEdQIFNJR05B
 VFVSRS0tLS0tCg==
 
---===============3514287575128855303==--
+--===============3896261107158639835==--
 
