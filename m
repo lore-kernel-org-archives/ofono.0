@@ -1,19 +1,21 @@
-Content-Type: multipart/mixed; boundary="===============8014611165820601746=="
+Content-Type: multipart/mixed; boundary="===============5078474529501186103=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: AT modem on Droid 4: where is my sms?
-Date: Fri, 31 Jul 2020 12:10:15 +0200
-Message-ID: <20200731101015.GA23587@amd>
+Date: Fri, 31 Jul 2020 08:43:38 -0500
+Message-ID: <05afe4c6-a81b-77e5-6e1e-6cb9d0f8f6a6@gmail.com>
 In-Reply-To: <20200731100750.GA22791@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8014611165820601746==
+--===============5078474529501186103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri 2020-07-31 12:07:50, Pavel Machek wrote:
+Hi Pavel,
+
+On 7/31/20 5:07 AM, Pavel Machek wrote:
 > Hi!
 > =
 
@@ -29,6 +31,11 @@ On Fri 2020-07-31 12:07:50, Pavel Machek wrote:
 > indication at ME, index: 2
 > ofonod[5218]: > AT+CMGR=3D2\r
 > ofonod[5218]: < \r\nOK\r\n
+
+That's quite strange, CMGR response should have an intermediate response =
+
+prefixed by +CMGR: prior to the OK.  Your modem is just weird ;)
+
 > ofonod[5218]: > AT+CMGD=3D2\r
 > ofonod[5218]: < \r\nOK\r\n
 > ofonod[5218]: < \r\n+CIEV: 1,3\r\n
@@ -37,32 +44,19 @@ On Fri 2020-07-31 12:07:50, Pavel Machek wrote:
 
 > So.... modem told us we have new message and where it is, but then
 > ofono ... deleted the message without delivering it...?
+>
 
-After a while, this appeared in the log:
+What the stock AT modem driver does is reads the message and deletes it rig=
+ht =
 
-ofonod[5218]: < \r\n+CIEV: 1,4\r\n
-ofonod[5218]: < \r\n+CMTI: "ME",-1\r\n
-ofonod[5218]: Unable to parse CMTI notification
+away.  Somehow your modem says 'sure' to the read request without actually =
 
-Not sure what is going on there.
+reading the message.  Maybe the firmware is just too slow or oFono is too f=
+ast, =
 
-Best regards,								Pavel
--- =
+or maybe this modem needs extra special magic.
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
-
---===============8014611165820601746==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFsOGo3Z2NBQ2drUU1PZndhcFhiK3ZKOWlnQ2ZXREF1bFBWZVJiUGpCcEtFQURML1ZzZ0UK
-NU84QW4wditTcldJa2J6amgyMTRTdjNNWG1xM08rd3IKPThkN3oKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
-
---===============8014611165820601746==--
+Regards,
+-Denis
+--===============5078474529501186103==--
 
