@@ -1,75 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============0657793163549019564=="
+Content-Type: multipart/mixed; boundary="===============7545116427891578819=="
 MIME-Version: 1.0
 From: JongSeok Won <wjs890204@gmail.com>
-Subject: [PATCHv2 1/3] netmon: added PCI, TAC, SNR value
-Date: Fri, 31 Jul 2020 11:20:38 +0900
-Message-ID: <20200731022038.18876-1-wjs890204@gmail.com>
+Subject: [PATCHv2 2/3] rilmodem: support cell type LTE for netmon
+Date: Fri, 31 Jul 2020 11:20:52 +0900
+Message-ID: <20200731022052.18948-1-wjs890204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0657793163549019564==
+--===============7545116427891578819==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-To support cell type LTE, the value of PCI, TAC, SNR is added
 ---
- include/netmon.h |  3 +++
- src/netmon.c     | 21 +++++++++++++++++++++
- 2 files changed, 24 insertions(+)
+ drivers/rilmodem/netmon.c | 51 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 51 insertions(+)
 
-diff --git a/include/netmon.h b/include/netmon.h
-index a99d6ca9..53f9d393 100644
---- a/include/netmon.h
-+++ b/include/netmon.h
-@@ -72,6 +72,9 @@ enum ofono_netmon_info {
- 	OFONO_NETMON_INFO_EARFCN, /* int */
- 	OFONO_NETMON_INFO_EBAND, /* int */
- 	OFONO_NETMON_INFO_CQI, /* int */
-+	OFONO_NETMON_INFO_PCI, /* int */
-+	OFONO_NETMON_INFO_TAC, /* int */
-+	OFONO_NETMON_INFO_SNR, /* int */
- 	OFONO_NETMON_INFO_INVALID,
- };
+diff --git a/drivers/rilmodem/netmon.c b/drivers/rilmodem/netmon.c
+index 547ebccc..9f3a1191 100644
+--- a/drivers/rilmodem/netmon.c
++++ b/drivers/rilmodem/netmon.c
+@@ -109,6 +109,9 @@ static int process_cellinfo_list(struct ril_msg *messag=
+e,
+ 	int mcc, mnc;
+ 	int lac, cid, psc;
+ 	int rssi, ber;
++	int ci, pci, tac;
++	int rsrp, rsrq, rssnr;
++	int cqi, tadv;
+ 	char s_mcc[OFONO_MAX_MCC_LENGTH + 1];
+ 	char s_mnc[OFONO_MAX_MNC_LENGTH + 1];
+ 	int i, j;
+@@ -216,6 +219,54 @@ static int process_cellinfo_list(struct ril_msg *messa=
+ge,
+ 				OFONO_NETMON_INFO_BER, ber,
+ 				OFONO_NETMON_INFO_INVALID);
  =
 
-diff --git a/src/netmon.c b/src/netmon.c
-index 9eacb3ca..10e3ee2b 100644
---- a/src/netmon.c
-+++ b/src/netmon.c
-@@ -213,6 +213,27 @@ static void netmon_cell_info_dict_append(DBusMessageIt=
-er *dict,
- 					intval, uint8_t, DBUS_TYPE_BYTE);
- 			break;
++	} else if (cell_type =3D=3D NETMON_RIL_CELLINFO_TYPE_LTE) {
++		mcc =3D parcel_r_int32(&rilp);
++		mnc =3D parcel_r_int32(&rilp);
++		ci =3D  parcel_r_int32(&rilp);
++		pci =3D parcel_r_int32(&rilp);
++		tac =3D parcel_r_int32(&rilp);
++		rssi =3D parcel_r_int32(&rilp);
++		rsrp =3D parcel_r_int32(&rilp);
++		rsrq =3D parcel_r_int32(&rilp);
++		rssnr =3D parcel_r_int32(&rilp);
++		cqi =3D parcel_r_int32(&rilp);
++		tadv =3D parcel_r_int32(&rilp);
++
++		if (mcc >=3D 0 && mcc <=3D 999)
++		snprintf(s_mcc, sizeof(s_mcc), "%03d", mcc);
++		else
++		strcpy(s_mcc, "");
++
++		if (mnc >=3D 0 && mnc <=3D 999)
++		snprintf(s_mnc, sizeof(s_mnc), "%03d", mnc);
++		else
++		strcpy(s_mnc, "");
++
++		ci =3D (ci >=3D 0 && ci <=3D 268435455) ? ci : -1;
++		pci =3D (pci >=3D 0 && pci <=3D 503) ? pci : -1;
++		tac =3D (tac >=3D 0 && tac <=3D 65535) ? tac : -1;
++		rssi =3D (rssi >=3D 0 && rssi <=3D 31) ? rssi : -1;
++		rsrp =3D (rsrp >=3D 44 && rsrp <=3D 140) ? -rsrp : -1;
++		rsrq =3D (rsrq >=3D 3 && rsrq <=3D 20) ? -rsrq : -1;
++		rssnr =3D (rssnr >=3D -200 && rssnr <=3D 300) ? rssnr : -1;
++		cqi =3D (cqi >=3D 0 && cqi <=3D 15) ? cqi : -1;
++		tadv =3D (tadv >=3D0 && tadv <=3D 63) ? tadv : -1;
++
++		ofono_netmon_serving_cell_notify(netmon,
++				OFONO_NETMON_CELL_TYPE_LTE,
++				OFONO_NETMON_INFO_MCC, s_mcc,
++				OFONO_NETMON_INFO_MNC, s_mnc,
++				OFONO_NETMON_INFO_CI, ci,
++				OFONO_NETMON_INFO_PCI, pci,
++				OFONO_NETMON_INFO_TAC, tac,
++				OFONO_NETMON_INFO_RSSI, rssi,
++				OFONO_NETMON_INFO_RSRP, rsrp,
++				OFONO_NETMON_INFO_RSRQ, rsrq,
++				OFONO_NETMON_INFO_SNR, rssnr,
++				OFONO_NETMON_INFO_CQI, cqi,
++				OFONO_NETMON_INFO_TIMING_ADVANCE, tadv,
++				OFONO_NETMON_INFO_INVALID);
++
+ 	}
  =
 
-+		case OFONO_NETMON_INFO_PCI:
-+			intval =3D va_arg(*arglist, int);
-+
-+			CELL_INFO_DICT_APPEND(dict, "PhysicalCellId",
-+					intval, uint16_t, DBUS_TYPE_UINT16);
-+			break;
-+
-+		case OFONO_NETMON_INFO_TAC:
-+			intval =3D va_arg(*arglist, int);
-+
-+			CELL_INFO_DICT_APPEND(dict, "TrackingAreaCode",
-+					intval, uint16_t, DBUS_TYPE_UINT16);
-+			break;
-+
-+		case OFONO_NETMON_INFO_SNR:
-+			intval =3D va_arg(*arglist, int);
-+
-+			ofono_dbus_dict_append(dict, "SingalToNoiseRatio",
-+					DBUS_TYPE_INT32, &intval);
-+			break;
-+
- 		case OFONO_NETMON_INFO_INVALID:
- 			break;
- 		}
+ 	return OFONO_ERROR_TYPE_NO_ERROR;
 -- =
 
 2.17.1
 
---===============0657793163549019564==--
+--===============7545116427891578819==--
 
