@@ -1,145 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7207139635790568938=="
+Content-Type: multipart/mixed; boundary="===============1902522907701579333=="
 MIME-Version: 1.0
 From: poeschel@lemonage.de
-Subject: [PATCH 3/5] atmodem: Get strength and tech the quectel way on EC21
-Date: Tue, 04 Aug 2020 14:38:47 +0200
-Message-ID: <20200804123849.909105-3-poeschel@lemonage.de>
+Subject: [PATCH 4/5] quectel: Try to update voltage only, when received "vbatt"
+Date: Tue, 04 Aug 2020 14:38:48 +0200
+Message-ID: <20200804123849.909105-4-poeschel@lemonage.de>
 In-Reply-To: <20200804123849.909105-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7207139635790568938==
+--===============1902522907701579333==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lars Poeschel <poeschel@lemonage.de>
 
-I had some trouble getting network strengh and access technology the
-standard way on Quectel EC21. It does work - but only kind of. I did not
-get URCs when I am sure I should. This way through CIEV, CIND and CMER
-is also not documented in Quectel documentation, so I suspect this to be
-unsupported.
-This is now changed to the "quectelish" way of gettings those values and
-this does work more fine-grained and reliable on the Quectel EC21.
+As there are some more sources of +QIND: activated, do now only update
+voltage when we get the
++QIND: "vbatt",-1
+but not on things like
++QIND: "act","LTE"
+or
++QIND: "csq",20,99
 ---
- drivers/atmodem/network-registration.c | 71 ++++++++++++++++++++++++++
- plugins/quectel.c                      |  2 +-
- 2 files changed, 72 insertions(+), 1 deletion(-)
+ plugins/quectel.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index cc702c2c..78b1994c 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -957,6 +957,66 @@ static void tlts_notify(GAtResult *result, gpointer us=
-er_data)
- 	ofono_netreg_time_notify(netreg, &nd->time);
- }
- =
-
-+static void quectel_qind_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct at_netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	int rssi, ber, strength;
-+	const char *str;
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+QIND:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_string(&iter, &str))
-+		return;
-+
-+	if (g_str_equal("csq", str)) {
-+		if (!g_at_result_iter_next_number(&iter, &rssi))
-+			return;
-+
-+		if (!g_at_result_iter_next_number(&iter, &ber))
-+			return;
-+
-+		DBG("rssi %d ber %d", rssi, ber);
-+
-+		if ((rssi =3D=3D 99) || (rssi =3D=3D 199))
-+			strength =3D -1;
-+		else if (rssi > 99) {
-+			rssi -=3D 100;
-+			strength =3D (rssi * 100) / 91;
-+		} else
-+			strength =3D (rssi * 100) / 31;
-+
-+		ofono_netreg_strength_notify(netreg, strength);
-+		return;
-+	}
-+
-+	if (g_str_equal("act", str)) {
-+		nd->tech =3D -1;
-+		if (!g_at_result_iter_next_string(&iter, &str))
-+			return;
-+
-+		DBG("technology %s", str);
-+		if (g_str_equal("GSM", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_GSM;
-+		else if (g_str_equal("EGPRS", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_GSM_EGPRS;
-+		else if (g_str_equal("WCDMA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN;
-+		else if (g_str_equal("HSDPA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA;
-+		else if (g_str_equal("HSUPA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSUPA;
-+		else if (g_str_equal("HSDPA&HSUPA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA;
-+		else if (g_str_equal("LTE", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_EUTRAN;
-+	}
-+}
-+
- static gboolean notify_time(gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -2047,6 +2107,17 @@ static void at_creg_set_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	case OFONO_VENDOR_SAMSUNG:
- 		/* Signal strength reporting via CIND is not supported */
- 		break;
-+	case OFONO_VENDOR_QUECTEL_EC2X:
-+		g_at_chat_register(nd->chat, "+QIND:",
-+				quectel_qind_notify, FALSE, netreg, NULL);
-+		/* Register for specific signal strength reports */
-+		g_at_chat_send(nd->chat, "AT+QINDCFG=3D\"csq\",1", none_prefix,
-+				NULL, NULL, NULL);
-+
-+		/* Register for network technology updates */
-+		g_at_chat_send(nd->chat, "AT+QINDCFG=3D\"act\",1", none_prefix,
-+				NULL, NULL, NULL);
-+		break;
- 	default:
- 		g_at_chat_send(nd->chat, "AT+CIND=3D?", cind_prefix,
- 				cind_support_cb, netreg, NULL);
 diff --git a/plugins/quectel.c b/plugins/quectel.c
-index 50d1b5d3..9aa63c1c 100644
+index 9aa63c1c..d11aba74 100644
 --- a/plugins/quectel.c
 +++ b/plugins/quectel.c
-@@ -1319,7 +1319,7 @@ static void quectel_post_online(struct ofono_modem *m=
-odem)
+@@ -447,10 +447,12 @@ static void qind_notify(GAtResult *result, void *user=
+_data)
+ 	if (!g_at_result_iter_next_string(&iter, &type))
+ 		return;
  =
 
- 	DBG("%p", modem);
+-	if (!g_at_result_iter_next_number(&iter, &event))
+-		return;
++	if (g_strcmp0("vbatt", type)) {
++		if (!g_at_result_iter_next_number(&iter, &event))
++			return;
  =
 
--	ofono_netreg_create(modem, 0, "atmodem", data->aux);
-+	ofono_netreg_create(modem, data->vendor, "atmodem", data->aux);
+-	voltage_handle(hw->modem, event);
++		voltage_handle(hw->modem, event);
++	}
  }
  =
 
- static struct ofono_modem_driver quectel_driver =3D {
+ static void power_notify(GAtResult *result, void *user_data)
 -- =
 
 2.27.0
 
---===============7207139635790568938==--
+--===============1902522907701579333==--
 
