@@ -1,44 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1830660928506168192=="
+Content-Type: multipart/mixed; boundary="===============9006204237257808154=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Revert "quectel: EC21 needs aux channel to be the first
- mux channel"
-Date: Fri, 07 Aug 2020 11:07:34 -0500
-Message-ID: <e991a1fa-c330-774f-6117-54c497864a58@gmail.com>
-In-Reply-To: <20200804115649.907281-1-poeschel@lemonage.de>
+Subject: Re: [PATCH 1/5] Add a vendor OFONO_VENDOR_QUECTEL_EC2X
+Date: Fri, 07 Aug 2020 11:09:19 -0500
+Message-ID: <62d7c37e-8cb9-3929-67aa-bf25de21d663@gmail.com>
+In-Reply-To: <20200804123849.909105-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1830660928506168192==
+--===============9006204237257808154==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Lars,
 
-On 8/4/20 6:56 AM, poeschel(a)lemonage.de wrote:
+On 8/4/20 7:38 AM, poeschel(a)lemonage.de wrote:
 > From: Lars Poeschel <poeschel@lemonage.de>
 > =
 
-> This reverts commit 1868dbf2b3e5929a7081b03a8ff76d214fd38624.
-> Development for this was done on EC21 firmware version
-> EC21EFAR06A01M4G_BETA0318. It now turns out, that actual release
-> firmware versions for this modem again need the original mux order with
-> aux channel as the second mux channel. (We know for sure for firmware
-> version EC21EFAR06A03M4G.)
-> We do not know for sure when and for what firmware versions quectel did
-> the switch back on the mux order, but we suspect that the "BETA"
-> firmware is the only one with the reversed mux order. This "BETA"
-> firmware was only given out for development purposes and will not appear
-> "in the wild", so we revert the patch here and hope for the best.
+> The distinction between OFONO_VENDOR_QUECTEL and
+> OFONO_VENDOR_QUECTEL_SERIAL does not suffice for EC21/EC25 in some
+> places, so introduce and use a new vendor:
+> OFONO_VENDOR_QUECTEL_EC2X
 > ---
->   plugins/quectel.c | 61 +++++++++++------------------------------------
->   1 file changed, 14 insertions(+), 47 deletions(-)
+>   drivers/atmodem/lte.c       | 2 +-
+>   drivers/atmodem/sim.c       | 1 +
+>   drivers/atmodem/sms.c       | 2 ++
+>   drivers/atmodem/vendor.h    | 1 +
+>   drivers/atmodem/voicecall.c | 3 ++-
+>   plugins/quectel.c           | 2 +-
+>   6 files changed, 8 insertions(+), 3 deletions(-)
+> =
 
-Applied, thanks.
+
+This doesn't apply:
+denkenz(a)localhost ~/ofono-master $ git am --3way ~/merge/\[PATCH\ 1_5\]\ =
+Add\ a\ =
+
+vendor\ OFONO_VENDOR_QUECTEL_EC2X.eml
+Applying: Add a vendor OFONO_VENDOR_QUECTEL_EC2X
+error: sha1 information is lacking or useless (drivers/atmodem/lte.c).
+error: could not build fake ancestor
+Patch failed at 0001 Add a vendor OFONO_VENDOR_QUECTEL_EC2X
+
+The chunk in drivers/atmodem/lte.c doesn't look like upstream code at all.
 
 Regards,
 -Denis
-
---===============1830660928506168192==--
+--===============9006204237257808154==--
 
