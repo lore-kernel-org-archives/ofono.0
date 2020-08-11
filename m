@@ -1,42 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============1490198155871618389=="
+Content-Type: multipart/mixed; boundary="===============0168075925208054849=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/5] quectel: Try to update voltage only, when received
- "vbatt"
-Date: Fri, 07 Aug 2020 11:12:03 -0500
-Message-ID: <b56c96ec-47f3-8c83-fc45-37be429f07fe@gmail.com>
-In-Reply-To: <20200804123849.909105-4-poeschel@lemonage.de>
+From: Lars Poeschel <poeschel@lemonage.de>
+Subject: Re: [PATCH 1/5] Add a vendor OFONO_VENDOR_QUECTEL_EC2X
+Date: Tue, 11 Aug 2020 13:38:43 +0200
+Message-ID: <20200811113843.cpc3r5frlhaeialg@lem-wkst-02.lemonage>
+In-Reply-To: <62d7c37e-8cb9-3929-67aa-bf25de21d663@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1490198155871618389==
+--===============0168075925208054849==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lars,
-
-On 8/4/20 7:38 AM, poeschel(a)lemonage.de wrote:
-> From: Lars Poeschel <poeschel@lemonage.de>
+On Fri, Aug 07, 2020 at 11:09:19AM -0500, Denis Kenzior wrote:
+> Hi Lars,
 > =
 
-> As there are some more sources of +QIND: activated, do now only update
-> voltage when we get the
-> +QIND: "vbatt",-1
-> but not on things like
-> +QIND: "act","LTE"
-> or
-> +QIND: "csq",20,99
-> ---
->   plugins/quectel.c | 8 +++++---
->   1 file changed, 5 insertions(+), 3 deletions(-)
+> On 8/4/20 7:38 AM, poeschel(a)lemonage.de wrote:
+> > From: Lars Poeschel <poeschel@lemonage.de>
+> > =
+
+> > The distinction between OFONO_VENDOR_QUECTEL and
+> > OFONO_VENDOR_QUECTEL_SERIAL does not suffice for EC21/EC25 in some
+> > places, so introduce and use a new vendor:
+> > OFONO_VENDOR_QUECTEL_EC2X
+> > ---
+> >   drivers/atmodem/lte.c       | 2 +-
+> >   drivers/atmodem/sim.c       | 1 +
+> >   drivers/atmodem/sms.c       | 2 ++
+> >   drivers/atmodem/vendor.h    | 1 +
+> >   drivers/atmodem/voicecall.c | 3 ++-
+> >   plugins/quectel.c           | 2 +-
+> >   6 files changed, 8 insertions(+), 3 deletions(-)
+> > =
+
 > =
 
+> This doesn't apply:
+> denkenz(a)localhost ~/ofono-master $ git am --3way ~/merge/\[PATCH\ 1_5\]\
+> Add\ a\ vendor\ OFONO_VENDOR_QUECTEL_EC2X.eml
+> Applying: Add a vendor OFONO_VENDOR_QUECTEL_EC2X
+> error: sha1 information is lacking or useless (drivers/atmodem/lte.c).
+> error: could not build fake ancestor
+> Patch failed at 0001 Add a vendor OFONO_VENDOR_QUECTEL_EC2X
+> =
 
-Applied, thanks.
+> The chunk in drivers/atmodem/lte.c doesn't look like upstream code at all.
+
+I am sorry. I started working on a lte context issue with this quectel
+modem, but I am not sure I understood everything right. (This modem does
+not support context ID zero.) So I decided to not submit this. I send
+the remaining three patches as V2 rebased on master shortly.
 
 Regards,
--Denis
-
---===============1490198155871618389==--
+Lars
+--===============0168075925208054849==--
 
