@@ -1,145 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============4351115719339759039=="
+Content-Type: multipart/mixed; boundary="===============4088094072046547634=="
 MIME-Version: 1.0
 From: poeschel@lemonage.de
-Subject: [PATCH v2 2/3] atmodem: Get strength and tech the quectel way on EC21
-Date: Tue, 11 Aug 2020 13:42:16 +0200
-Message-ID: <20200811114217.370049-2-poeschel@lemonage.de>
+Subject: [PATCH v2 3/3] gprs: Quectel EC21 does not understand AT+CPSB
+Date: Tue, 11 Aug 2020 13:42:17 +0200
+Message-ID: <20200811114217.370049-3-poeschel@lemonage.de>
 In-Reply-To: <20200811114217.370049-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4351115719339759039==
+--===============4088094072046547634==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lars Poeschel <poeschel@lemonage.de>
 
-I had some trouble getting network strengh and access technology the
-standard way on Quectel EC21. It does work - but only kind of. I did not
-get URCs when I am sure I should. This way through CIEV, CIND and CMER
-is also not documented in Quectel documentation, so I suspect this to be
-unsupported.
-This is now changed to the "quectelish" way of gettings those values and
-this does work more fine-grained and reliable on the Quectel EC21.
+The Quectel EC21 modem does not understand the AT+CPSB command, so
+aquire the current packet switched bearer from CGREG URC.
 ---
- drivers/atmodem/network-registration.c | 71 ++++++++++++++++++++++++++
- plugins/quectel.c                      |  2 +-
- 2 files changed, 72 insertions(+), 1 deletion(-)
+ drivers/atmodem/gprs.c | 32 ++++++++++++++++++++++++++++++--
+ 1 file changed, 30 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index cc702c2c..78b1994c 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -957,6 +957,66 @@ static void tlts_notify(GAtResult *result, gpointer us=
-er_data)
- 	ofono_netreg_time_notify(netreg, &nd->time);
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index b637f733..5583d6fa 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -40,6 +40,7 @@
+ #include "gatresult.h"
+ =
+
+ #include "atmodem.h"
++#include "common.h"
+ #include "vendor.h"
+ =
+
+ #define MAX_CONTEXTS 255
+@@ -98,6 +99,29 @@ static void list_contexts_data_unref(gpointer user_data)
+ 	g_free(ld);
  }
  =
 
-+static void quectel_qind_notify(GAtResult *result, gpointer user_data)
++static int act_to_bearer(int act)
 +{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct at_netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	int rssi, ber, strength;
-+	const char *str;
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+QIND:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_string(&iter, &str))
-+		return;
-+
-+	if (g_str_equal("csq", str)) {
-+		if (!g_at_result_iter_next_number(&iter, &rssi))
-+			return;
-+
-+		if (!g_at_result_iter_next_number(&iter, &ber))
-+			return;
-+
-+		DBG("rssi %d ber %d", rssi, ber);
-+
-+		if ((rssi =3D=3D 99) || (rssi =3D=3D 199))
-+			strength =3D -1;
-+		else if (rssi > 99) {
-+			rssi -=3D 100;
-+			strength =3D (rssi * 100) / 91;
-+		} else
-+			strength =3D (rssi * 100) / 31;
-+
-+		ofono_netreg_strength_notify(netreg, strength);
-+		return;
++	switch (act) {
++		case 0:
++		case 1:
++			return PACKET_BEARER_GPRS;
++		case 2:
++			return PACKET_BEARER_UMTS;
++		case 3:
++			return PACKET_BEARER_EGPRS;
++		case 4:
++			return PACKET_BEARER_HSDPA;
++		case 5:
++			return PACKET_BEARER_HSUPA;
++		case 6:
++			return PACKET_BEARER_HSUPA_HSDPA;
++		case 7:
++			return PACKET_BEARER_EPS;
++		default:
++			return PACKET_BEARER_NONE;
 +	}
++};
 +
-+	if (g_str_equal("act", str)) {
-+		nd->tech =3D -1;
-+		if (!g_at_result_iter_next_string(&iter, &str))
-+			return;
-+
-+		DBG("technology %s", str);
-+		if (g_str_equal("GSM", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_GSM;
-+		else if (g_str_equal("EGPRS", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_GSM_EGPRS;
-+		else if (g_str_equal("WCDMA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN;
-+		else if (g_str_equal("HSDPA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA;
-+		else if (g_str_equal("HSUPA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSUPA;
-+		else if (g_str_equal("HSDPA&HSUPA", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA;
-+		else if (g_str_equal("LTE", str))
-+			nd->tech =3D ACCESS_TECHNOLOGY_EUTRAN;
-+	}
-+}
-+
- static gboolean notify_time(gpointer user_data)
+ static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
  {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -2047,6 +2107,17 @@ static void at_creg_set_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	case OFONO_VENDOR_SAMSUNG:
- 		/* Signal strength reporting via CIND is not supported */
+ 	struct cb_data *cbd =3D user_data;
+@@ -342,11 +366,11 @@ static void at_gprs_list_active_contexts(struct ofono=
+_gprs *gprs,
+ static void cgreg_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_gprs *gprs =3D user_data;
+-	int status;
++	int status, tech;
+ 	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
+ =
+
+ 	if (at_util_parse_reg_unsolicited(result, "+CGREG:", &status,
+-				NULL, NULL, NULL, gd->vendor) =3D=3D FALSE)
++				NULL, NULL, &tech, gd->vendor) =3D=3D FALSE)
+ 		return;
+ =
+
+ 	/*
+@@ -372,6 +396,8 @@ static void cgreg_notify(GAtResult *result, gpointer us=
+er_data)
+ 	}
+ =
+
+ 	ofono_gprs_status_notify(gprs, status);
++	if (gd->vendor =3D=3D OFONO_VENDOR_QUECTEL_EC2X)
++		ofono_gprs_bearer_notify(gprs, act_to_bearer(tech));
+ }
+ =
+
+ static void cgev_notify(GAtResult *result, gpointer user_data)
+@@ -624,6 +650,8 @@ static void gprs_initialized(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 		g_at_chat_send(gd->chat, "AT#PSNT=3D1", none_prefix,
+ 						NULL, NULL, NULL);
  		break;
 +	case OFONO_VENDOR_QUECTEL_EC2X:
-+		g_at_chat_register(nd->chat, "+QIND:",
-+				quectel_qind_notify, FALSE, netreg, NULL);
-+		/* Register for specific signal strength reports */
-+		g_at_chat_send(nd->chat, "AT+QINDCFG=3D\"csq\",1", none_prefix,
-+				NULL, NULL, NULL);
-+
-+		/* Register for network technology updates */
-+		g_at_chat_send(nd->chat, "AT+QINDCFG=3D\"act\",1", none_prefix,
-+				NULL, NULL, NULL);
 +		break;
  	default:
- 		g_at_chat_send(nd->chat, "AT+CIND=3D?", cind_prefix,
- 				cind_support_cb, netreg, NULL);
-diff --git a/plugins/quectel.c b/plugins/quectel.c
-index 8ca901f2..c3343008 100644
---- a/plugins/quectel.c
-+++ b/plugins/quectel.c
-@@ -1286,7 +1286,7 @@ static void quectel_post_online(struct ofono_modem *m=
-odem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_netreg_create(modem, 0, "atmodem", data->aux);
-+	ofono_netreg_create(modem, data->vendor, "atmodem", data->aux);
- }
- =
-
- static struct ofono_modem_driver quectel_driver =3D {
+ 		g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify,
+ 						FALSE, gprs, NULL);
 -- =
 
 2.27.0
 
---===============4351115719339759039==--
+--===============4088094072046547634==--
 
