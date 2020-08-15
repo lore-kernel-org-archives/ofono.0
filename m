@@ -1,77 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============0645761769863608906=="
+Content-Type: multipart/mixed; boundary="===============8985310128280413377=="
 MIME-Version: 1.0
 From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: [RFC PATCH 2/4] plugins: udevng: detect gemalto network interfaces
-Date: Sun, 16 Aug 2020 00:43:56 +0300
-Message-ID: <20200815214358.69100-3-geomatsi@gmail.com>
+Subject: [RFC PATCH 3/4] plugins: gemalto: add optional gprs-context driver
+Date: Sun, 16 Aug 2020 00:43:57 +0300
+Message-ID: <20200815214358.69100-4-geomatsi@gmail.com>
 In-Reply-To: <20200815214358.69100-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0645761769863608906==
+--===============8985310128280413377==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Some gemalto modems, including ELS81x, may provide more than one
-USB ethernet interface. Detect and save both network interfaces
-rather than the last one.
+Setup custom gprs context driver for modems that provide
+USB ethernet interfaces for data path.
 
 Signed-off-by: Sergey Matyukevich <geomatsi@gmail.com>
 ---
- plugins/udevng.c | 14 +++++++++++---
- 1 file changed, 11 insertions(+), 3 deletions(-)
+ plugins/gemalto.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 7e6a3ab7..839fabdb 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1162,7 +1162,7 @@ static gboolean setup_ublox(struct modem_info *modem)
- static gboolean setup_gemalto(struct modem_info* modem)
- {
- 	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL,
--		*net =3D NULL, *qmi =3D NULL;
-+		*net =3D NULL, *qmi =3D NULL, *net2 =3D NULL;
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index 13950742..238c7cc4 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -588,6 +588,8 @@ static void gemalto_post_sim(struct ofono_modem *modem)
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
+ 	const char *model =3D ofono_modem_get_string(modem, "Model");
++	const char *driver =3D NULL;
++	const char *iface =3D NULL;
  =
 
- 	GSList *list;
+ 	DBG("%p", modem);
  =
 
-@@ -1197,9 +1197,14 @@ static gboolean setup_gemalto(struct modem_info* mod=
-em)
- 			else if (g_strcmp0(info->number, "04") =3D=3D 0)
- 				gps =3D info->devnode;
- 		}
+@@ -596,7 +598,15 @@ static void gemalto_post_sim(struct ofono_modem *modem)
+ 	ofono_sms_create(modem, OFONO_VENDOR_GEMALTO, "atmodem", data->app);
+ =
+
+ 	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->app);
+-	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->mdm);
 +
- 		if (g_strcmp0(info->interface, "2/6/0") =3D=3D 0) {
--			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
--				net =3D info->devnode;
-+			if (g_strcmp0(info->subsystem, "net") =3D=3D 0) {
-+				if (g_strcmp0(info->number, "0a") =3D=3D 0)
-+					net =3D info->devnode;
-+				if (g_strcmp0(info->number, "0c") =3D=3D 0)
-+					net2 =3D info->devnode;
-+			}
- 		}
- 	}
- =
-
-@@ -1216,6 +1221,9 @@ static gboolean setup_gemalto(struct modem_info* mode=
-m)
- 	ofono_modem_set_string(modem->modem, "Model", modem->model);
- 	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
- =
-
-+	if (net2)
-+		ofono_modem_set_string(modem->modem, "NetworkInterface2", net2);
++	iface =3D ofono_modem_get_string(modem, "NetworkInterface");
++	if (iface) {
++		driver =3D "gemaltomodem";
++	} else {
++		driver =3D "atmodem";
++	}
 +
- 	return TRUE;
- }
++	gc =3D ofono_gprs_context_create(modem, 0, driver, data->mdm);
  =
 
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
 -- =
 
 2.28.0
 
---===============0645761769863608906==--
+--===============8985310128280413377==--
 
