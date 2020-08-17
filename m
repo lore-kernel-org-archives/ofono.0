@@ -1,61 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============0574906423759630294=="
+Content-Type: multipart/mixed; boundary="===============8166547738590851463=="
 MIME-Version: 1.0
-From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: Re: [RFC PATCH 4/4] plugins: gemalto: fix incomplete at-chat shutdown
-Date: Mon, 17 Aug 2020 19:56:46 +0300
-Message-ID: <20200817165646.GA4449@curiosity>
-In-Reply-To: <20200815214358.69100-5-geomatsi@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 1/4] drivers: gemalto: add gprs-context driver
+Date: Mon, 17 Aug 2020 14:23:21 -0500
+Message-ID: <74ef862d-9027-45e6-7510-7c2b12959551@gmail.com>
+In-Reply-To: <20200815214358.69100-2-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0574906423759630294==
+--===============8166547738590851463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> Function gemalto_modem_ready attempts to restart AT chat data->app
-> after  incomplete shutdown. As a result, new AT chat does not work
-> as expected loosing AT commands.
+Hi Sergey,
+
+On 8/15/20 4:43 PM, Sergey Matyukevich wrote:
+> Some gemalto modems provide USB ethernet interfaces for data path.
+> Implement gprs-context driver for such modems to send data via
+> USB ethernet rather than fallback to PPP.
 > =
 
 > Signed-off-by: Sergey Matyukevich <geomatsi@gmail.com>
 > ---
->  plugins/gemalto.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
+>   Makefile.am                         |   3 +-
+>   drivers/gemaltomodem/gemaltomodem.c |   4 +-
+>   drivers/gemaltomodem/gemaltomodem.h |   3 +
+>   drivers/gemaltomodem/gprs-context.c | 280 ++++++++++++++++++++++++++++
+>   4 files changed, 288 insertions(+), 2 deletions(-)
+>   create mode 100644 drivers/gemaltomodem/gprs-context.c
 > =
 
-> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-> index 238c7cc4..321c8c1b 100644
-> --- a/plugins/gemalto.c
-> +++ b/plugins/gemalto.c
 
-...
+This looks fine to me.  My only 2 nitpicks are:
 
-> @@ -451,6 +455,8 @@ static void gemalto_modem_ready(GAtResult *result, gp=
-ointer user_data)
->  	data->modem_ready_id =3D 0;
->  	data->trial_cmd_id =3D 0;
->  =
+1. We do not use S-o-B, so feel free to drop those in the future or I will =
+just =
 
-> +	g_at_chat_cancel_all(data->app);
-> +	g_at_chat_unregister_all(data->app);
->  	g_at_chat_unref(data->app);
->  =
+drop them when applying.
 
->  	data->app =3D open_device(app);
+> +
+> +static int gemalto_gprs_context_probe(struct ofono_gprs_context *gc,
+> +					unsigned int vendor, void *data)
+> +{
+> +	GAtChat *chat =3D data;
+> +	struct gprs_context_data *gcd;
+> +
+> +	DBG("");
+> +
+> +	gcd =3D g_try_new0(struct gprs_context_data, 1);
+> +	if (gcd =3D=3D NULL)
+> +		return -ENOMEM;
+> +
 
-Please disregard this patch in the series. This change does not resolve
-the root cause. It looks like when gemalto_modem_ready is called on
-^SYSSTART, occasionally modem is not ready to process AT commands.
-As a result, the upcoming gemalto_initialize function fails due to
-timed out AT commands.
+2. We now prefer to use g_new0 for small structure allocations as these can=
+'t =
 
-It turns out that the approach implemented in ublox plugin (repeated
-probe AT command) provides more reliable results, in particular
-in power-off tests. I will do more testing and update this patch
-in the next revision of the patch set.
+really fail on Linux userspace in practice.  Keeps the code shorter as well.
+
+> +	gcd->chat =3D g_at_chat_clone(chat);
+> +
 
 Regards,
-Sergey
---===============0574906423759630294==--
+-Denis
+--===============8166547738590851463==--
 
