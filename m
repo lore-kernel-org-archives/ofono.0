@@ -1,44 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============3359160277160247976=="
+Content-Type: multipart/mixed; boundary="===============2385869398292235626=="
 MIME-Version: 1.0
-From: Lars Poeschel <poeschel@lemonage.de>
-Subject: Re: [PATCH v3] gprs: Quectel EC21 does not understand AT+CPSB
-Date: Mon, 17 Aug 2020 09:56:33 +0200
-Message-ID: <20200817075633.dfggbu7wvjzuyild@lem-wkst-02.lemonage>
-In-Reply-To: <8c4abe99-6ce3-a526-54a9-64b855f4eab6@gmail.com>
+From: poeschel@lemonage.de
+Subject: [PATCH v4] gprs: Quectel EC21 does not understand AT+CPSB
+Date: Mon, 17 Aug 2020 09:58:07 +0200
+Message-ID: <20200817075807.491927-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3359160277160247976==
+--===============2385869398292235626==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Aug 13, 2020 at 10:03:12AM -0500, Denis Kenzior wrote:
-> > @@ -624,6 +667,12 @@ static void gprs_initialized(gboolean ok, GAtResul=
-t *result, gpointer user_data)
-> >   		g_at_chat_send(gd->chat, "AT#PSNT=3D1", none_prefix,
-> >   						NULL, NULL, NULL);
-> >   		break;
-> > +	case OFONO_VENDOR_QUECTEL_EC2X:
-> > +		g_at_chat_register(gd->chat, "+QIND",
-> > +				quectel_qind_notify, FALSE, gprs, NULL);
-> > +		/* The "QIND: \"act\", ..." URC is activated in
-> > +		 * network-registration.c */
-> =
+From: Lars Poeschel <poeschel@lemonage.de>
 
-> You're using the QIND in network-registration.c to notify CREG technology.
-> And now you're trying to use this here in place of CPSB.  This seems fishy
-> to me. Looking at the Quectel AT commands manual, I'd just guess they do =
-not
-> support this bearer concept at all...
+The Quectel EC21 modem does not understand the AT+CPSB command, and we
+did not find a suitable replacement in the
+Quectel_EC25&EC21_AT_Commands_Manual_V1.3.pdf
+AT+CPSB gives an error on this modem, so we just skip it.
+---
+ drivers/atmodem/gprs.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Until here, you could tell me way more than the official quectel
-support. Thank you for this!
-I will post a new version of the patch that will just skip the AT+CPSB
-command.
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index b637f733..d829e2e6 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -624,6 +624,8 @@ static void gprs_initialized(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 		g_at_chat_send(gd->chat, "AT#PSNT=3D1", none_prefix,
+ 						NULL, NULL, NULL);
+ 		break;
++	case OFONO_VENDOR_QUECTEL_EC2X:
++		break;
+ 	default:
+ 		g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify,
+ 						FALSE, gprs, NULL);
+-- =
 
-Thanks a lot!
+2.27.0
 
-Lars
---===============3359160277160247976==--
+--===============2385869398292235626==--
 
