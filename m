@@ -1,53 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============5861026512886061009=="
+Content-Type: multipart/mixed; boundary="===============6579486618127818543=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 4/4] plugins: gemalto: fix incomplete at-chat shutdown
-Date: Tue, 18 Aug 2020 09:33:14 -0500
-Message-ID: <7f213a9f-4fcd-dca9-c643-dd79c440c435@gmail.com>
-In-Reply-To: <13183792-de6e-c20d-cfbb-e9d86a136153@geanix.com>
+From: Sergey Matyukevich <geomatsi@gmail.com>
+Subject: [PATCH v2 0/3] gemalto: USB ethernet data path for ELS81x
+Date: Tue, 18 Aug 2020 23:43:44 +0300
+Message-ID: <20200818204347.29516-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5861026512886061009==
+--===============6579486618127818543==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Denis and all,
 
->> Instead of this dance of opening / closing the chat in order to force-ca=
-ncel =
-
->> the 'AT' command queued in gemalto_enable(), maybe there should be somet=
-hing =
-
->> in GAtChat itself to handle this case.  =
-
-
-<snip>
-
-> =
-
-> There's also the retry logic used on quectel modems with auto-detection o=
-f baud =
-
-> rates:
-> https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/plugins/quect=
-el.c#n1082
-> =
-
-
-Ah right, I completely forgot about g_at_chat_retry that you added for exac=
-tly =
-
-the use case I outlined above.  Thanks for the reminder.
-
-Maybe we should just add this modem poking logic into =
-
-drivers/atmodem/atutil.[ch] or something if it will be used across multiple=
- drivers.
+This patch series enables USB ethernet data path for gemalto modems
+that support this feature, in particular for ELS81x devices.
 
 Regards,
--Denis
---===============5861026512886061009==--
+Sergey
+
+v1 -> v2
+
+- replace g_try_new0 by use g_new0
+- drop patch with incorrect fix for modem init
+
+
+Sergey Matyukevich (3):
+  drivers: gemalto: add gprs-context driver
+  plugins: udevng: detect gemalto network interfaces
+  plugins: gemalto: alternative gprs-context driver
+
+ Makefile.am                         |   3 +-
+ drivers/gemaltomodem/gemaltomodem.c |   4 +-
+ drivers/gemaltomodem/gemaltomodem.h |   3 +
+ drivers/gemaltomodem/gprs-context.c | 278 ++++++++++++++++++++++++++++
+ plugins/gemalto.c                   |  12 +-
+ plugins/udevng.c                    |  14 +-
+ 6 files changed, 308 insertions(+), 6 deletions(-)
+ create mode 100644 drivers/gemaltomodem/gprs-context.c
+
+-- =
+
+2.28.0
+
+--===============6579486618127818543==--
 
