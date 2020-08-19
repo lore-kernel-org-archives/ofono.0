@@ -1,166 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============8810592939227447697=="
+Content-Type: multipart/mixed; boundary="===============2154396904758277799=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] atmodem: Detect usage of AT+CGEREP
-Date: Wed, 19 Aug 2020 10:07:58 -0500
-Message-ID: <8421397a-129b-0361-38d2-ebaa03e6dc11@gmail.com>
-In-Reply-To: <20200819121339.879624-1-poeschel@lemonage.de>
+Subject: Re: [RFC PATCH] atmodem: Signal quality on quectel serial modems
+Date: Wed, 19 Aug 2020 10:19:13 -0500
+Message-ID: <eb5b1cee-c0a1-e20d-1fb8-5d24311291b8@gmail.com>
+In-Reply-To: <20200819124356.881471-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8810592939227447697==
+--===============2154396904758277799==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Lars,
 
-On 8/19/20 7:13 AM, poeschel(a)lemonage.de wrote:
+On 8/19/20 7:43 AM, poeschel(a)lemonage.de wrote:
 > From: Lars Poeschel <poeschel@lemonage.de>
 > =
 
-> Currently AT+CGEREP=3D2,1 is sent in case we don't know what the modem
-> needs. (default case) Not all modems understand this. So, we first query
-> what the modem supports with AT+CGEREP=3D? and then use this information
-> to be nice to the modem. This way modems, like the Quectel M95 that do
-> only understand AT+CGEREP=3D1 do also work nicely.
-
-I think this is a nice improvement, couple of comments below:
-
-> ---
->   drivers/atmodem/gprs.c | 75 ++++++++++++++++++++++++++++++++++++++++--
->   1 file changed, 73 insertions(+), 2 deletions(-)
+> As the default way of getting the signal quality with +CIND is also
+> unstable on quectel serial modems (the same as on quectel EC21). In fact
+> the signal quality is only updated on cell changes. Those trigger a
+> manual AT+CSQ in ofono and get an update this way, but the URCs do not
+> work.
+> So we implement a quectelish way here as well.
 > =
 
-> diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-> index d829e2e6..3900b95b 100644
-> --- a/drivers/atmodem/gprs.c
-> +++ b/drivers/atmodem/gprs.c
-> @@ -45,6 +45,7 @@
->   #define MAX_CONTEXTS 255
->   =
+> --- >8 ---
+> =
 
->   static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
-> +static const char *cgerep_prefix[] =3D { "+CGEREP:", NULL };
->   static const char *cgdcont_prefix[] =3D { "+CGDCONT:", NULL };
->   static const char *cgact_prefix[] =3D { "+CGACT:", NULL };
->   static const char *none_prefix[] =3D { NULL };
-> @@ -647,6 +648,76 @@ static void gprs_initialized(gboolean ok, GAtResult =
-*result, gpointer user_data)
->   	ofono_gprs_register(gprs);
->   }
->   =
+> I send this patch as a RFC because the quectel_csqn_notify function
+> very much duplicates the ifx_xcsq_notify function despite the "+CSQN"
+> string. I did not see a good way to reuse the already existing
+> function because the callback interface only has one user defined
+> pointer and this is used by the struct ofono_netreg pointer already.
+> Does anyone have a better idea ?
 
-> +static void at_cgerep_test_cb(gboolean ok, GAtResult *result,
-> +				gpointer user_data)
-> +{
-> +	struct ofono_gprs *gprs =3D user_data;
-> +	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-> +	GAtResultIter iter;
-> +	int min1, max1 =3D 1, min2, max2 =3D 1;
-> +	gboolean two_arguments =3D true;
-> +	char buf[20];
-> +
-> +	if (!ok)
-> +		return;
+You could take advantage of the fact that at_netreg_data carries the vendor=
+ id =
 
-Hmm, maybe a good idea here is to print a warning and call ofono_gprs_remov=
-e(). =
+in nd->vendor.  So if you wanted to make ifx_xcsq_notify you could do somet=
+hing =
 
-Otherwise this will just fail silently for someone.
+like:
 
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	g_at_result_iter_next(&iter, "+CGEREP:");
-> +
-> +	if (!g_at_result_iter_open_list(&iter))
-> +		return;
+struct ofono_netreg *netreg =3D user_data;
+struct at_netreg_data *nd =3D
+			ofono_netreg_get_data(netreg);
 
-Ditto here
+switch (nd->vendor) {
+case ...
+	prefix =3D "+XCSQ:";
+	break;
+case ...
+	prefix =3D "+CSQN:";
+	break;
+}
 
-> +
-> +	if (!g_at_result_iter_next_range(&iter, &min1, &max1))
-> +		return;
-> +
+....
 
-So why not just run iter_next_range in a loop?  it actually understands bot=
-h =
+Or just put the meat of ifx_xcsq_notify into a separate function that takes=
+ the =
 
-lists and ranges.  See cind_support_cb() for an example.
+prefix as a parameter...
 
-> +	/* if min1 =3D=3D max1 we had no range but a list and that
-> +	 * means we are interested in the last number of that list*/
-> +	if (min1 =3D=3D max1) {
-> +		while (!g_at_result_iter_close_list(&iter)) {
-> +			if (!g_at_result_iter_next_number(&iter, &max1))
-> +				break;
-> +		}
-> +	}
-> +
-> +	if (!g_at_result_iter_skip_next(&iter)) {
-> +		two_arguments =3D false;
-> +		goto out;
-> +	}
+Then ifx_xcsq_notify might look something like:
 
-Not sure what this is doing?  isn't +CGEREP just two lists ?  According to =
-27.007:
-"+CGEREP:=C2=A0(list of supported <mode>s),(list of supported <bfr>s)"
+netreg_generic_strength_report("+XCSQ:");
 
-> +
-> +	if (!g_at_result_iter_open_list(&iter)) {
-> +		two_arguments =3D false;
-> +		goto out;
-> +	}
-> +
-> +	if (!g_at_result_iter_next_range(&iter, &min2, &max2)) {
-> +		two_arguments =3D false;
-> +		goto out;
-> +	}
-> +
-> +	if (min2 =3D=3D max2) {
-> +		while (!g_at_result_iter_close_list(&iter)) {
-> +			if (!g_at_result_iter_next_number(&iter, &max2)) {
-> +				break;
-> +			}
-> +		}
-> +	}
-> +
-> +out:
-> +	if (max1 > 2)
-> +		max1 =3D 2;
-> +
-> +	if (max2 > 1)
-> +		max2 =3D 1;
-> +
-> +	if (two_arguments)
-> +		sprintf(buf, "AT+CGEREP=3D%u,%u", max1, max2);
-> +	else
-> +		sprintf(buf, "AT+CGEREP=3D%u", max1);
-> +
-> +	g_at_chat_send(gd->chat, buf, none_prefix, gprs_initialized, gprs, NULL=
-);
-> +}
-> +
->   static void at_cgreg_test_cb(gboolean ok, GAtResult *result,
->   				gpointer user_data)
->   {
-> @@ -701,8 +772,8 @@ retry:
->   			gprs_initialized, gprs, NULL);
->   		break;
->   	default:
-> -		g_at_chat_send(gd->chat, "AT+CGEREP=3D2,1", none_prefix,
-> -			gprs_initialized, gprs, NULL);
-> +		g_at_chat_send(gd->chat, "AT+CGEREP=3D?", cgerep_prefix,
-> +			at_cgerep_test_cb, gprs, NULL);
->   		break;
->   	}
->   =
+> =
 
+> Thanks,
+> Lars
+> ---
+>   drivers/atmodem/network-registration.c | 34 ++++++++++++++++++++++++++
+>   1 file changed, 34 insertions(+)
 > =
 
 
 Regards,
 -Denis
---===============8810592939227447697==--
+--===============2154396904758277799==--
 
