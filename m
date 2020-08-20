@@ -1,83 +1,134 @@
-Content-Type: multipart/mixed; boundary="===============2998323748473956242=="
+Content-Type: multipart/mixed; boundary="===============5097821850455710146=="
 MIME-Version: 1.0
-From: Lars Poeschel <poeschel@lemonage.de>
-Subject: Re: [RFC PATCH] atmodem: Signal quality on quectel serial modems
-Date: Thu, 20 Aug 2020 14:01:41 +0200
-Message-ID: <20200820120141.ycd6aendqomaok3e@lem-wkst-02.lemonage>
-In-Reply-To: <eb5b1cee-c0a1-e20d-1fb8-5d24311291b8@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] atmodem: Detect usage of AT+CGEREP
+Date: Thu, 20 Aug 2020 09:41:28 -0500
+Message-ID: <45c4a468-df10-ff48-8ec3-36291c3bd33f@gmail.com>
+In-Reply-To: <20200820120007.v4tjzni73mg5gtba@lem-wkst-02.lemonage>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2998323748473956242==
+--===============5097821850455710146==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Aug 19, 2020 at 10:19:13AM -0500, Denis Kenzior wrote:
-> Hi Lars,
+Hi Lars,
+
+>> So why not just run iter_next_range in a loop?  it actually understands =
+both
+>> lists and ranges.  See cind_support_cb() for an example.
 > =
 
-> On 8/19/20 7:43 AM, poeschel(a)lemonage.de wrote:
-> > From: Lars Poeschel <poeschel@lemonage.de>
-> > =
-
-> > As the default way of getting the signal quality with +CIND is also
-> > unstable on quectel serial modems (the same as on quectel EC21). In fact
-> > the signal quality is only updated on cell changes. Those trigger a
-> > manual AT+CSQ in ofono and get an update this way, but the URCs do not
-> > work.
-> > So we implement a quectelish way here as well.
-> > =
-
-> > --- >8 ---
-> > =
-
-> > I send this patch as a RFC because the quectel_csqn_notify function
-> > very much duplicates the ifx_xcsq_notify function despite the "+CSQN"
-> > string. I did not see a good way to reuse the already existing
-> > function because the callback interface only has one user defined
-> > pointer and this is used by the struct ofono_netreg pointer already.
-> > Does anyone have a better idea ?
+> Ok, I can do this i a loop if you want.
 > =
 
-> You could take advantage of the fact that at_netreg_data carries the vend=
-or
-> id in nd->vendor.  So if you wanted to make ifx_xcsq_notify you could do
-> something like:
+>>> +	/* if min1 =3D=3D max1 we had no range but a list and that
+>>> +	 * means we are interested in the last number of that list*/
+>>> +	if (min1 =3D=3D max1) {
+>>> +		while (!g_at_result_iter_close_list(&iter)) {
+>>> +			if (!g_at_result_iter_next_number(&iter, &max1))
+>>> +				break;
+>>> +		}
+>>> +	}
+>>> +
+>>> +	if (!g_at_result_iter_skip_next(&iter)) {
+>>> +		two_arguments =3D false;
+>>> +		goto out;
+>>> +	}
+>>
+>> Not sure what this is doing?  isn't +CGEREP just two lists ?  According =
+to 27.007:
+>> "+CGEREP:=C2=A0(list of supported <mode>s),(list of supported <bfr>s)"
 > =
 
-> struct ofono_netreg *netreg =3D user_data;
-> struct at_netreg_data *nd =3D
-> 			ofono_netreg_get_data(netreg);
+> Well, we have to deal with very different +CGEREP results. For example
+> on the quectel EC21 I get this:
 > =
 
-> switch (nd->vendor) {
-> case ...
-> 	prefix =3D "+XCSQ:";
-> 	break;
-> case ...
-> 	prefix =3D "+CSQN:";
-> 	break;
-> }
+> "+CGEREP: (0-2),(0,1)"
 > =
 
-
-Denis, thank you for helping out!
-I think I'll go for the vendor switch.
-
-> Or just put the meat of ifx_xcsq_notify into a separate function that tak=
-es
-> the prefix as a parameter...
+> and on the quectel M95 I get this:
 > =
 
-> Then ifx_xcsq_notify might look something like:
+> "+CGEREP: (0,1)"
 > =
 
-> netreg_generic_strength_report("+XCSQ:");
+> So what the code does is this:
+> It tries to parse a range with
 > =
 
+> g_at_result_iter_next_range(&iter, &min1, &max1)
+> =
+
+> Now two things can happen: It either parsed the range "(0-2)" then we
+> have min1 !=3D max1, or it tried to parse a list "(0,1)". This time
+> iter_next_range() breaks on the comma ',' and exits with
+> min1 =3D=3D max1 =3D=3D 0. Then we know, we did not find the maximum valu=
+e yet
+> and we enter the loop:
+> =
+
+> =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7w=
+hile (!g_at_result_iter_close_list(&iter)) {
+> =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=
+=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7if (!g_at_result_iter_ne=
+xt_number(&iter, &max1))
+> =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=
+=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=
+=B7=C2=B7=C2=B7=C2=B7=C2=B7break;
+> =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7}
+> =
+
+> This does then loop to the end of the list until iter_close_list()
+> becomes true, which is at the closing paranthesis ')'. max1 then
+> contains the last item in that list (which we suspect to be the
+> maximum value).
+
+So in theory this could be written like:
+int max =3D -1;
+iter_open_list(&iter);
+
+while (iter_next_range(&iter, &max1, &max2)) {
+	if (max2 > max)
+		max =3D max2;
+}
+
+iter_close_list(&iter);
+
+> =
+
+> Now we have min1 and max1 in both cases(list and range). Now if
+> =
+
+> g_at_result_iter_skip_next()
+> =
+
+> fails, we are at the end of the AT result and we had only one argument
+> to +CGEREP or we start trying to parse the second argument also. (See
+> below.)
+> =
+
+> At the end we construct our AT+CGEREP=3D string depending on if we had
+> two or only one argument.
+
+or you could take the above code I suggested followed by something like:
+
+if (!iter_open_list(&iter)) {
+	twoargs =3D false;
+	goto done;
+}
+
+while (iter_next_range(...)) {
+...
+}
+
+iter_close_list(&iter);
+
+...
 
 Regards,
-Lars
---===============2998323748473956242==--
+-Denis
+--===============5097821850455710146==--
 
