@@ -1,123 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============1831141235921974364=="
+Content-Type: multipart/mixed; boundary="===============8119957235483773268=="
 MIME-Version: 1.0
-From: Lars Poeschel <poeschel@lemonage.de>
-Subject: Re: [PATCH 1/2] atmodem: Detect usage of AT+CGEREP
-Date: Fri, 21 Aug 2020 10:34:44 +0200
-Message-ID: <20200821083444.s43v6wf2tb2s7tlg@lem-wkst-02.lemonage>
-In-Reply-To: <45c4a468-df10-ff48-8ec3-36291c3bd33f@gmail.com>
+From: poeschel@lemonage.de
+Subject: [PATCH v2] atmodem: Signal quality on quectel serial modems
+Date: Fri, 21 Aug 2020 11:24:02 +0200
+Message-ID: <20200821092402.1001245-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1831141235921974364==
+--===============8119957235483773268==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Lars Poeschel <poeschel@lemonage.de>
 
-On Thu, Aug 20, 2020 at 09:41:28AM -0500, Denis Kenzior wrote:
-> > > So why not just run iter_next_range in a loop?  it actually understan=
-ds both
-> > > lists and ranges.  See cind_support_cb() for an example.
-> > =
+As the default way of getting the signal quality with +CIND is also
+unstable on quectel serial modems (the same as on quectel EC21). In fact
+the signal quality is only updated on cell changes. Those trigger a
+manual AT+CSQ in ofono and get an update this way, but the URCs do not
+work.
+So we implement a quectelish way here as well. The quectelish way is
+very similar to the way ifx modems work. We can reuse their csq_notify
+function.
+---
+ drivers/atmodem/network-registration.c | 24 +++++++++++++++++++++---
+ 1 file changed, 21 insertions(+), 3 deletions(-)
 
-> > Ok, I can do this i a loop if you want.
-> > =
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index 78b1994c..c1309f61 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -780,15 +780,26 @@ static void ifx_xciev_notify(GAtResult *result, gpoin=
+ter user_data)
+ 	 */
+ }
+ =
 
-> > > > +	/* if min1 =3D=3D max1 we had no range but a list and that
-> > > > +	 * means we are interested in the last number of that list*/
-> > > > +	if (min1 =3D=3D max1) {
-> > > > +		while (!g_at_result_iter_close_list(&iter)) {
-> > > > +			if (!g_at_result_iter_next_number(&iter, &max1))
-> > > > +				break;
-> > > > +		}
-> > > > +	}
-> > > > +
-> > > > +	if (!g_at_result_iter_skip_next(&iter)) {
-> > > > +		two_arguments =3D false;
-> > > > +		goto out;
-> > > > +	}
-> > > =
+-static void ifx_xcsq_notify(GAtResult *result, gpointer user_data)
++static void ifx_quec_csq_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
++	struct at_netreg_data *nd =3D ofono_netreg_get_data(netreg);
+ 	int rssi, ber, strength;
+ 	GAtResultIter iter;
++	const char *prefix;
+ =
 
-> > > Not sure what this is doing?  isn't +CGEREP just two lists ?  Accordi=
-ng to 27.007:
-> > > "+CGEREP:=C2=A0(list of supported <mode>s),(list of supported <bfr>s)"
-> > =
+ 	g_at_result_iter_init(&iter, result);
+ =
 
-> > Well, we have to deal with very different +CGEREP results. For example
-> > on the quectel EC21 I get this:
-> > =
+-	if (!g_at_result_iter_next(&iter, "+XCSQ:"))
++	switch (nd->vendor) {
++	case  OFONO_VENDOR_QUECTEL_SERIAL:
++		prefix =3D "+CSQN:";
++		break;
++	default:
++		prefix =3D "+XCSQ:";
++		break;
++	}
++
++	if (!g_at_result_iter_next(&iter, prefix))
+ 		return;
+ =
 
-> > "+CGEREP: (0-2),(0,1)"
-> > =
+ 	if (!g_at_result_iter_next_number(&iter, &rssi))
+@@ -2027,7 +2038,7 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 		/* Register for specific signal strength reports */
+ 		g_at_chat_register(nd->chat, "+XCIEV:", ifx_xciev_notify,
+ 						FALSE, netreg, NULL);
+-		g_at_chat_register(nd->chat, "+XCSQ:", ifx_xcsq_notify,
++		g_at_chat_register(nd->chat, "+XCSQ:", ifx_quec_csq_notify,
+ 						FALSE, netreg, NULL);
+ 		g_at_chat_send(nd->chat, "AT+XCSQ=3D1", none_prefix,
+ 						NULL, NULL, NULL);
+@@ -2118,6 +2129,13 @@ static void at_creg_set_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 		g_at_chat_send(nd->chat, "AT+QINDCFG=3D\"act\",1", none_prefix,
+ 				NULL, NULL, NULL);
+ 		break;
++	case OFONO_VENDOR_QUECTEL_SERIAL:
++		g_at_chat_register(nd->chat, "+CSQN:",
++				ifx_quec_csq_notify, FALSE, netreg, NULL);
++		/* Register for specific signal strength reports */
++		g_at_chat_send(nd->chat, "AT+QEXTUNSOL=3D\"SQ\",1", none_prefix,
++				NULL, NULL, NULL);
++		break;
+ 	default:
+ 		g_at_chat_send(nd->chat, "AT+CIND=3D?", cind_prefix,
+ 				cind_support_cb, netreg, NULL);
+-- =
 
-> > and on the quectel M95 I get this:
-> > =
+2.27.0
 
-> > "+CGEREP: (0,1)"
-> > =
-
-> > So what the code does is this:
-> > It tries to parse a range with
-> > =
-
-> > g_at_result_iter_next_range(&iter, &min1, &max1)
-> > =
-
-> > Now two things can happen: It either parsed the range "(0-2)" then we
-> > have min1 !=3D max1, or it tried to parse a list "(0,1)". This time
-> > iter_next_range() breaks on the comma ',' and exits with
-> > min1 =3D=3D max1 =3D=3D 0. Then we know, we did not find the maximum va=
-lue yet
-> > and we enter the loop:
-> > =
-
-> > =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=
-=B7while (!g_at_result_iter_close_list(&iter)) {
-> > =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=
-=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7if (!g_at_result_iter=
-_next_number(&iter, &max1))
-> > =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=
-=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=
-=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7break;
-> > =E2=96=B8=C2=B7=C2=B7=E2=96=B8=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=B7=C2=
-=B7}
-> > =
-
-> > This does then loop to the end of the list until iter_close_list()
-> > becomes true, which is at the closing paranthesis ')'. max1 then
-> > contains the last item in that list (which we suspect to be the
-> > maximum value).
-> =
-
-> So in theory this could be written like:
-> int max =3D -1;
-> iter_open_list(&iter);
-> =
-
-> while (iter_next_range(&iter, &max1, &max2)) {
-> 	if (max2 > max)
-> 		max =3D max2;
-> }
-> =
-
-> iter_close_list(&iter);
-
-I can do this and it does indeed work! :-)
-
-This may be my personal thing, but I find this not very intuitive and
-hard to read.
-
-To make this more intuitive can we:
-* move your proposed while loop to a new function
-* name that function ...iter_next_range_or_list (or something like that)
-* put that function into gatresult.c
-* and in the new at_cgerep_test_cb just use this function ?
-
-I can imagine this new function can be of use at other places as well.
-What do you think ?
-
-Regards,
-Lars
---===============1831141235921974364==--
+--===============8119957235483773268==--
 
