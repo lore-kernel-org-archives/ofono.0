@@ -1,180 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============6380760729983793612=="
+Content-Type: multipart/mixed; boundary="===============8178848974662721205=="
 MIME-Version: 1.0
-From: rakespani@gmail.com
-Subject: Unable to establish ppp connection with Huawei dongle
-Date: Thu, 27 Aug 2020 04:26:40 +0000
-Message-ID: <20200827042640.2753.53584@ml01.vlan13.01.org>
+From: Lars Poeschel <poeschel@lemonage.de>
+Subject: Re: [PATCH 1/2] atmodem: Detect usage of AT+CGEREP
+Date: Mon, 31 Aug 2020 13:09:08 +0200
+Message-ID: <20200831110908.teaqx77c6ghszua2@lem-wkst-02.lemonage>
+In-Reply-To: <e235d27e-8dd2-dc49-6f7c-3da2a8b81615@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6380760729983793612==
+--===============8178848974662721205==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi ,
+On Tue, Aug 25, 2020 at 11:49:02AM -0500, Denis Kenzior wrote:
+> Hi Lars,
+> =
 
-I am trying to enable lte connection with huawei dongle , but I am getting =
-below error log for activat/context. =
+> > > So in theory this could be written like:
+> > > int max =3D -1;
+> > > iter_open_list(&iter);
+> > > =
 
+> > > while (iter_next_range(&iter, &max1, &max2)) {
+> > > 	if (max2 > max)
+> > > 		max =3D max2;
+> > > }
+> > > =
 
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: > AT+CGDCONT=
-=3D1,"IP","airtelgprs.com"\r
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: < \r\nOK\r\n
-Aug 26 11:36:28 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/driver=
-s/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: > AT+CGDATA=3D=
-"PPP",1\r
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: < \r\nCONNECT =
-100000000\r\n
-Aug 26 11:36:28 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/driver=
-s/atmodem/gprs-context.c:at_cgdata_cb() ok 1
-Aug 26 11:36:28 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/driver=
-s/atmodem/gprs-context.c:setup_ppp()
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 0:INITIAL
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: event: 0 (Up), a=
-ction: 2, new_state: 2 (CLOSED)
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 2:CLOSED
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: event: 2 (Open),=
- action: 1026, new_state: 6 (REQSENT)
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_initi=
-alize_restart_count: current state 2:CLOSED
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 2:CLOSED
-Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: ../ofono-1.24/ga=
-tchat/gatppp.c:ppp_enter_phase() 1
-Aug 26 11:36:29 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^BOOT:111=
-3056,0,0,0,99\r\n
-Aug 26 11:36:30 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:30 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-6\r\n
-Aug 26 11:36:31 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:31 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:31 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:31 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:33 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:33 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-6\r\n
-Aug 26 11:36:34 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:34 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:34 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:34 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:36 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:36 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-6\r\n
-Aug 26 11:36:37 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:37 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:37 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:37 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:39 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n\r\n^LTERSRP:-76,-6\r\n
-Aug 26 11:36:40 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:40 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:40 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:40 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:42 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:42 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-6\r\n
-Aug 26 11:36:43 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:43 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:43 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:43 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:45 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:45 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-6\r\n
-Aug 26 11:36:46 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:46 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:46 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:46 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:48 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:48 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-6\r\n
-Aug 26 11:36:49 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:49 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:49 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:49 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:51 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:51 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-6\r\n
-Aug 26 11:36:52 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:52 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:52 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:52 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:54 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:54 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-9\r\n
-Aug 26 11:36:55 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:55 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:55 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+), =
-action: 1006, new_state: 6 (REQSENT)
-Aug 26 11:36:55 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_send_=
-configure_request: current state 6:REQSENT
-Aug 26 11:36:57 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:31\=
-r\n
-Aug 26 11:36:57 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSRP:=
--76,-7\r\n
-Aug 26 11:36:58 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_timeo=
-ut: current state 6:REQSENT
-Aug 26 11:36:58 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gener=
-ate_event: current state 6:REQSENT
-Aug 26 11:36:58 raspberrypi3 daemon.info ofonod[147]: PPP: event: 5 (TO-), =
-action: 803, new_state: 3 (STOPPED)
-Aug 26 11:36:58 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_this_=
-layer_finished: current state 3:STOPPED
-Aug 26 11:36:58 raspberrypi3 daemon.info ofonod[147]: PPP: ../ofono-1.24/ga=
-tchat/gatppp.c:ppp_enter_phase() 0
-Aug 26 11:36:58 raspberrypi3 daemon.info ofonod[147]: PPP: ../ofono-1.24/ga=
-tchat/gatppp.c:ppp_dead()
-Aug 26 11:36:58 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/driver=
-s/atmodem/gprs-context.c:ppp_disconnect() Reason: 0
-Aug 26 11:36:58 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/src/gp=
-rs.c:pri_activate_callback() 0x165b9a8
-Aug 26 11:36:58 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/src/gp=
-rs.c:pri_activate_callback() Activating context failed with error: Unknown =
-error type
---===============6380760729983793612==--
+> > > iter_close_list(&iter);
+> > =
+
+> > I can do this and it does indeed work! :-)
+> > =
+
+> > This may be my personal thing, but I find this not very intuitive and
+> > hard to read.
+> > =
+
+> > To make this more intuitive can we:
+> > * move your proposed while loop to a new function
+> > * name that function ...iter_next_range_or_list (or something like that)
+> > * put that function into gatresult.c
+> =
+
+> I'm confused.  iter_next_range specifically handles ranges as defined by =
+ITU
+> v.250.  See section 5.7.3.1 "Range of Values".
+> =
+
+> Here's a small quote:
+> "If more than one value is supported, then the values may be listed
+> individually, separated by comma characters (IA5 2/12), or, when a
+> continuous range of values is supported, by the first value in the range,
+> followed by a hyphen character (IA5 2/13), followed by the last value in =
+the
+> range. The specification of single values and ranges of values may be
+> intermixed within a single information text. In all cases, the supported
+> values shall be indicated in ascending order."
+> =
+
+> The only thing the user has to do is open up a list, since some modems get
+> this wrong and don't enclose the entire set in '()'
+> =
+
+> > * and in the new at_cgerep_test_cb just use this function ?
+> =
+
+> How would you return the set of supported settings?  I guess you could use
+> something like l_uintset, but even knowing the valid theoretical range is
+> tricky.
+> =
+
+> > =
+
+> > I can imagine this new function can be of use at other places as well.
+> > What do you think ?
+> =
+
+> Given my confusion above, no idea?
+
+Well, given your various hints I think I slowly get how this is supposed
+to work.
+The main misunderstanding I had was about the role of iter_next_range().
+I thought, it should iterate over the whole thing inside the paranthesis
+'()' and give me the min and max of this thing. And it did not make
+sense to me that it does behave differently for (0,1) and (0-1). Why
+should I iterate multiple times inside of the paranthesis with its min -
+max calling interface ?
+This was what I meant with the function iter_next_range_or_list() as I
+called it above that does what I originally expected from the
+iter_next_range().
+
+Ok, I will post a solution with your proposed while-loop.
+
+Many thanks for your hints Denis!
+
+Regards,
+Lars
+
+--===============8178848974662721205==--
 
