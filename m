@@ -1,119 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============5553815561071300295=="
+Content-Type: multipart/mixed; boundary="===============8150426720837492299=="
 MIME-Version: 1.0
-From: poeschel@lemonage.de
-Subject: [PATCH v2] atmodem: Detect usage of AT+CGEREP
-Date: Mon, 31 Aug 2020 15:24:29 +0200
-Message-ID: <20200831132429.1085441-1-poeschel@lemonage.de>
+From: Lars Poeschel <poeschel@lemonage.de>
+Subject: Re: Unable to establish ppp connection with Huawei dongle
+Date: Mon, 31 Aug 2020 16:14:10 +0200
+Message-ID: <20200831141410.pxslwzm5nyiw7yq5@lem-wkst-02.lemonage>
+In-Reply-To: <20200827042640.2753.53584@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5553815561071300295==
+--===============8150426720837492299==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lars Poeschel <poeschel@lemonage.de>
+Hi,
 
-Currently AT+CGEREP=3D2,1 is sent in case we don't know what the modem
-needs. (default case) Not all modems understand this. So, we first query
-what the modem supports with AT+CGEREP=3D? and then use this information
-to be nice to the modem. This way modems, like the Quectel M95 that do
-only understand AT+CGEREP=3D1 do also work nicely.
----
- drivers/atmodem/gprs.c | 59 ++++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 57 insertions(+), 2 deletions(-)
+I do notice two things looking at your logs:
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 68470f11..443bdf77 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -45,6 +45,7 @@
- #define MAX_CONTEXTS 255
- =
+On Thu, Aug 27, 2020 at 04:26:40AM -0000, rakespani(a)gmail.com wrote:
+> Hi ,
+> =
 
- static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
-+static const char *cgerep_prefix[] =3D { "+CGEREP:", NULL };
- static const char *cgdcont_prefix[] =3D { "+CGDCONT:", NULL };
- static const char *cgact_prefix[] =3D { "+CGACT:", NULL };
- static const char *none_prefix[] =3D { NULL };
-@@ -648,6 +649,60 @@ static void gprs_initialized(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	ofono_gprs_register(gprs);
- }
- =
+> I am trying to enable lte connection with huawei dongle , but I am gettin=
+g below error log for activat/context. =
 
-+static void at_cgerep_test_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+	GAtResultIter iter;
-+	int min, max, arg1 =3D 0, arg2 =3D 0;
-+	gboolean two_arguments =3D true;
-+	char buf[20];
-+
-+	if (!ok)
-+		return;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	g_at_result_iter_next(&iter, "+CGEREP:");
-+
-+	if (!g_at_result_iter_open_list(&iter))
-+		return;
-+
-+	while (g_at_result_iter_next_range(&iter, &min, &max)) {
-+		if ((min <=3D 1) && (max >=3D 1))
-+			arg1 =3D 1;
-+
-+		if ((min <=3D 2) && (max >=3D 2))
-+			arg1 =3D 2;
-+	}
-+
-+	if (!g_at_result_iter_close_list(&iter))
-+		return;
-+
-+	if (!g_at_result_iter_open_list(&iter)) {
-+		two_arguments =3D false;
-+		goto out;
-+	}
-+
-+	while (g_at_result_iter_next_range(&iter, &min, &max)) {
-+		if (min <=3D 1 <=3D max)
-+			arg2 =3D 1;
-+	}
-+
-+	if (!g_at_result_iter_close_list(&iter))
-+		return;
-+
-+out:
-+	if (two_arguments)
-+		sprintf(buf, "AT+CGEREP=3D%u,%u", arg1, arg2);
-+	else
-+		sprintf(buf, "AT+CGEREP=3D%u", arg1);
-+
-+	g_at_chat_send(gd->chat, buf, none_prefix, gprs_initialized, gprs,
-+		NULL);
-+}
-+
- static void at_cgreg_test_cb(gboolean ok, GAtResult *result,
- 				gpointer user_data)
- {
-@@ -702,8 +757,8 @@ retry:
- 			gprs_initialized, gprs, NULL);
- 		break;
- 	default:
--		g_at_chat_send(gd->chat, "AT+CGEREP=3D2,1", none_prefix,
--			gprs_initialized, gprs, NULL);
-+		g_at_chat_send(gd->chat, "AT+CGEREP=3D?", cgerep_prefix,
-+			at_cgerep_test_cb, gprs, NULL);
- 		break;
- 	}
- =
+> =
 
--- =
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: > AT+CGDCONT=
+=3D1,"IP","airtelgprs.com"\r
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: < \r\nOK\r\n
+> Aug 26 11:36:28 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/driv=
+ers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
 
-2.28.0
+1. You use ofono-1.24 which is fairly old. Latest release is 1.31 so
+far.
 
---===============5553815561071300295==--
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: > AT+CGDATA=
+=3D"PPP",1\r
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: Modem: < \r\nCONNEC=
+T 100000000\r\n
+> Aug 26 11:36:28 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/driv=
+ers/atmodem/gprs-context.c:at_cgdata_cb() ok 1
+> Aug 26 11:36:28 raspberrypi3 daemon.debug ofonod[147]: ../ofono-1.24/driv=
+ers/atmodem/gprs-context.c:setup_ppp()
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gen=
+erate_event: current state 0:INITIAL
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: event: 0 (Up),=
+ action: 2, new_state: 2 (CLOSED)
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gen=
+erate_event: current state 2:CLOSED
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: event: 2 (Open=
+), action: 1026, new_state: 6 (REQSENT)
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_ini=
+tialize_restart_count: current state 2:CLOSED
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_sen=
+d_configure_request: current state 2:CLOSED
+> Aug 26 11:36:28 raspberrypi3 daemon.info ofonod[147]: PPP: ../ofono-1.24/=
+gatchat/gatppp.c:ppp_enter_phase() 1
+> Aug 26 11:36:29 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^BOOT:1=
+113056,0,0,0,99\r\n
+> Aug 26 11:36:30 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^RSSI:3=
+1\r\n
+> Aug 26 11:36:30 raspberrypi3 daemon.info ofonod[147]: PCUI: < \r\n^LTERSR=
+P:-76,-6\r\n
+> Aug 26 11:36:31 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_tim=
+eout: current state 6:REQSENT
+> Aug 26 11:36:31 raspberrypi3 daemon.info ofonod[147]: PPP: lcp: pppcp_gen=
+erate_event: current state 6:REQSENT
+> Aug 26 11:36:31 raspberrypi3 daemon.info ofonod[147]: PPP: event: 4 (TO+)=
+, action: 1006, new_state: 6 (REQSENT)
+
+2. Ofono is trying to communicate with your provider here and sending
+ppp configuration requests. It does timeout several times. That means
+your mobile provider is not answering this requests.
+At some time you should receive something other than a "(TO+)".
+If I should guess, I would say this is because of wrong apn settings.
+(username/password)
+
+Regards,
+Lars
+--===============8150426720837492299==--
 
