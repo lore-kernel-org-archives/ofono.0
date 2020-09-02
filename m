@@ -1,40 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8965524615458773904=="
+Content-Type: multipart/mixed; boundary="===============0180538771520264914=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3] atmodem: Detect usage of AT+CGEREP
-Date: Tue, 01 Sep 2020 11:10:39 -0500
-Message-ID: <417ceb42-a4ae-813f-f715-2a2f051fc236@gmail.com>
-In-Reply-To: <20200901092111.1205313-1-poeschel@lemonage.de>
+From: rakespani@gmail.com
+Subject: Re: Unable to establish ppp connection with Huawei dongle
+Date: Wed, 02 Sep 2020 10:46:27 +0000
+Message-ID: <20200902104627.2753.10666@ml01.vlan13.01.org>
+In-Reply-To: <20200831141410.pxslwzm5nyiw7yq5@lem-wkst-02.lemonage>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8965524615458773904==
+--===============0180538771520264914==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lars,
+Hi Lars ,
 
-On 9/1/20 4:21 AM, poeschel(a)lemonage.de wrote:
-> From: Lars Poeschel <poeschel@lemonage.de>
-> =
-
-> Currently AT+CGEREP=3D2,1 is sent in case we don't know what the modem
-> needs. (default case) Not all modems understand this. So, we first query
-> what the modem supports with AT+CGEREP=3D? and then use this information
-> to be nice to the modem. This way modems, like the Quectel M95 that do
-> only understand AT+CGEREP=3D1 do also work nicely.
-> ---
-> Changes since v2:
-> - (min <=3D 1 <=3D max)
-> - error handling
-> =
+I have updated ofono to 1.31 =
 
 
-Applied, thanks.
+After that also same error message I am getting . I  captured pppdump for t=
+his . I observe that I am not getting any response from the dongle. =
+
+
+So to verify if AT commands and APN settings are proper or not I followed b=
+elow steps using ofono & pppd .
+
+1. list-modems (ofono-testclient)
+2. enable-modem (ofono-testclient)
+3. create-internet-context airtelgprs.com(ofono-testclient)
+4. online-modem (ofono-testclient)
+5. echo -e -n 'AT+CGDCONT=3D1,"IP","airtelgprs.com"\r'  > /dev/ttyUSB0
+6. echo -e -n 'AT+CGDATA=3D"PPP",1\r'  > /dev/ttyUSB0
+7. /usr/sbin/pppd ttyUSB0 115200 usepeerdns nodetach crtscts noauth passive =
+
+
+With this ppp interface is up . =
+
+
+I am using Huawei E392 Modem.
 
 Regards,
--Denis
-
---===============8965524615458773904==--
+Rakes
+--===============0180538771520264914==--
 
