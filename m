@@ -1,56 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============6896326969872125059=="
+Content-Type: multipart/mixed; boundary="===============2080178398388733435=="
 MIME-Version: 1.0
-From: Lars Poeschel <poeschel@lemonage.de>
+From: Rakes Pani <rakespani@gmail.com>
 Subject: Re: Unable to establish ppp connection with Huawei dongle
-Date: Wed, 02 Sep 2020 13:00:55 +0200
-Message-ID: <20200902110055.6yzsqncyjnxot5bv@lem-wkst-02.lemonage>
-In-Reply-To: <20200902104627.2753.10666@ml01.vlan13.01.org>
+Date: Wed, 02 Sep 2020 11:18:05 +0000
+Message-ID: <20200902111805.2753.79654@ml01.vlan13.01.org>
+In-Reply-To: <20200902110055.6yzsqncyjnxot5bv@lem-wkst-02.lemonage>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6896326969872125059==
+--===============2080178398388733435==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Sep 02, 2020 at 10:46:27AM -0000, rakespani(a)gmail.com wrote:
-> Hi Lars ,
-> =
+Hi Lars,
 
-> I have updated ofono to 1.31 =
+Only difference I see in case of pppd , config request is going with below =
+options.
 
-> =
+Options: (16 bytes), Async Control Character Map(0x00000000), Magic Number,=
+ Protocol Field Compression, Address and Control Field Compression
 
-> After that also same error message I am getting . I  captured pppdump for=
- this . I observe that I am not getting any response from the dongle. =
+In case of ofono , none of the options are sent .
+So I tried hard coding the option's  as ppd , but still no response
 
++++ b/gatchat/ppp_lcp.c
+@@ -119,6 +119,60 @@ static void lcp_generate_config_options(struct lcp_dat=
+a *lcp)
+        lcp->options_len =3D len;
+ }
 
-I think from the log you gave in your last mail that you are not
-awaiting a response from the dongle but instead from your mobile
-provider.
++static void lcp_generate_config_options_modified(struct pppcp_data *pppcp,=
+ struct lcp_data *lcp)
++{
++       guint16 len =3D 0;
++
++       //if (lcp->req_options & REQ_OPTION_ACCM) {
++               guint32 accm;
++               lcp->accm =3D 0U;
++               accm =3D htonl(lcp->accm);
++
++               lcp->options[len] =3D ACCM;
++               lcp->options[len + 1] =3D 6;
++               memcpy(lcp->options + len + 2, &accm, sizeof(accm));
++
++               len +=3D 6;
++       //}
++
++       if (lcp->req_options & REQ_OPTION_MRU) {
++               guint16 mru;
++
++               mru =3D htons(lcp->mru);
++
++               lcp->options[len] =3D MRU;
++               lcp->options[len + 1] =3D 4;
++               memcpy(lcp->options + len + 2, &mru, sizeof(mru));
++
++               len +=3D 4;
++       }
++
++       //if (lcp->req_options & REQ_OPTION_ACFC) {
++               lcp->options[len] =3D ACFC;
++               lcp->options[len + 1] =3D 2;
++
++               len +=3D 2;
++       //}
++
++       //if (lcp->req_options & REQ_OPTION_PFC) {
++               lcp->options[len] =3D PFC;
++               lcp->options[len + 1] =3D 2;
++
++               len +=3D 2;
++       //}
++
++       guint32 magic_number =3D 123456789;
++       guint32 magic_number1 =3D htonl(magic_number);
++
++       lcp->options[len] =3D MAGIC_NUMBER;
++       lcp->options[len + 1] =3D 6;
++       memcpy(lcp->options + len + 2, &magic_number1, sizeof(magic_number1=
+));
++       len +=3D 6;
++
++
++       lcp->options_len =3D len;
++}
++
+ static void lcp_reset_config_options(struct lcp_data *lcp)
+ {
+        /* Using the default ACCM */
+@@ -392,7 +446,8 @@ struct pppcp_data *lcp_new(GAtPPP *ppp, gboolean is_ser=
+ver)
 
-> So to verify if AT commands and APN settings are proper or not I followed=
- below steps using ofono & pppd .
-> =
+        pppcp_set_data(pppcp, lcp);
 
-> 1. list-modems (ofono-testclient)
-> 2. enable-modem (ofono-testclient)
-> 3. create-internet-context airtelgprs.com(ofono-testclient)
-> 4. online-modem (ofono-testclient)
-> 5. echo -e -n 'AT+CGDCONT=3D1,"IP","airtelgprs.com"\r'  > /dev/ttyUSB0
-> 6. echo -e -n 'AT+CGDATA=3D"PPP",1\r'  > /dev/ttyUSB0
-> 7. /usr/sbin/pppd ttyUSB0 115200 usepeerdns nodetach crtscts noauth passi=
-ve =
+-       lcp_reset_config_options(lcp);
++       //lcp_reset_config_options(pppcp,lcp);
++       lcp_generate_config_options_modified(pppcp,lcp);
+        pppcp_set_local_options(pppcp, lcp->options, lcp->options_len);
 
-> =
-
-> With this ppp interface is up . =
-
-
-And now what exactly is the difference between the pppdump you captured
-from ofono and the pppdump captured with pppd ?
+        return pppcp;
 
 Regards,
-Lars
---===============6896326969872125059==--
+Rakes
+--===============2080178398388733435==--
 
