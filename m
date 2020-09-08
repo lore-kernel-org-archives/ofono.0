@@ -1,52 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0268543195578458262=="
+Content-Type: multipart/mixed; boundary="===============5474857243037735623=="
 MIME-Version: 1.0
-From: poeschel@lemonage.de
-Subject: [RFC PATCH] xmm7xxx: Fix non compiling file
-Date: Thu, 03 Sep 2020 11:43:21 +0200
-Message-ID: <20200903094321.3696246-1-poeschel@lemonage.de>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH] xmm7xxx: Fix non compiling file
+Date: Tue, 08 Sep 2020 11:02:54 -0500
+Message-ID: <43c63174-ad9c-345c-4887-45e17c73b353@gmail.com>
+In-Reply-To: <20200903094321.3696246-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0268543195578458262==
+--===============5474857243037735623==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lars Poeschel <poeschel@lemonage.de>
+Hi Lars,
 
-I get a compilation error on plugins/xmm7xx.c:
+On 9/3/20 4:43 AM, poeschel(a)lemonage.de wrote:
+> From: Lars Poeschel <poeschel@lemonage.de>
+> =
 
-  CC       plugins/xmm7xxx.o
-../plugins/xmm7xxx.c:63:10: fatal error: dbus.h: No such file or directory
-   63 | #include "dbus.h"
-      |          ^~~~~~~~
-compilation terminated.
+> I get a compilation error on plugins/xmm7xx.c:
+> =
 
-The commit that introduced this for me is: d2fd1721.
-I do out-of-tree builds.
-The fix is to simply delete the failing include. Since no other file in
-ofono uses such an include i consider this as a mistake.
----
- plugins/xmm7xxx.c | 1 -
- 1 file changed, 1 deletion(-)
+>    CC       plugins/xmm7xxx.o
+> ../plugins/xmm7xxx.c:63:10: fatal error: dbus.h: No such file or directory
+>     63 | #include "dbus.h"
+>        |          ^~~~~~~~
+> compilation terminated.
+> =
 
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index bf90833d..5efdbe26 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -60,7 +60,6 @@
- #include "ofono.h"
- #include "gdbus.h"
- #include "util.h"
--#include "dbus.h"
- =
+> The commit that introduced this for me is: d2fd1721.
+> I do out-of-tree builds.
+> The fix is to simply delete the failing include. Since no other file in
+> ofono uses such an include i consider this as a mistake.
+> ---
+>   plugins/xmm7xxx.c | 1 -
+>   1 file changed, 1 deletion(-)
+> =
 
- #define OFONO_COEX_INTERFACE OFONO_SERVICE ".intel.LteCoexistence"
- #define OFONO_COEX_AGENT_INTERFACE OFONO_SERVICE ".intel.LteCoexistenceAge=
-nt"
--- =
 
-2.28.0
+Applied after tweaking the commit messagee, thanks.
 
---===============0268543195578458262==--
+Regards,
+-Denis
+
+--===============5474857243037735623==--
 
