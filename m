@@ -1,48 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5474857243037735623=="
+Content-Type: multipart/mixed; boundary="===============2142981766172954513=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH] xmm7xxx: Fix non compiling file
-Date: Tue, 08 Sep 2020 11:02:54 -0500
-Message-ID: <43c63174-ad9c-345c-4887-45e17c73b353@gmail.com>
-In-Reply-To: <20200903094321.3696246-1-poeschel@lemonage.de>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Supporting modem in Droid 4
+Date: Wed, 09 Sep 2020 13:35:50 +0200
+Message-ID: <20200909113550.GA7735@duo.ucw.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5474857243037735623==
+--===============2142981766172954513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lars,
+Hi!
 
-On 9/3/20 4:43 AM, poeschel(a)lemonage.de wrote:
-> From: Lars Poeschel <poeschel@lemonage.de>
-> =
+Two months I sent patch for Droid 4 support in ofono:
 
-> I get a compilation error on plugins/xmm7xx.c:
-> =
+https://www.mail-archive.com/ofono(a)ofono.org/msg19590.html
 
->    CC       plugins/xmm7xxx.o
-> ../plugins/xmm7xxx.c:63:10: fatal error: dbus.h: No such file or directory
->     63 | #include "dbus.h"
->        |          ^~~~~~~~
-> compilation terminated.
-> =
+I got no replies. Could I get some comments? Should I try to resend?
 
-> The commit that introduced this for me is: d2fd1721.
-> I do out-of-tree builds.
-> The fix is to simply delete the failing include. Since no other file in
-> ofono uses such an include i consider this as a mistake.
-> ---
->   plugins/xmm7xxx.c | 1 -
->   1 file changed, 1 deletion(-)
-> =
+Best regards,
+									Pavel
 
+-- =
 
-Applied after tweaking the commit messagee, thanks.
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
-Regards,
--Denis
+--===============2142981766172954513==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============5474857243037735623==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlGMEVBQkVDQUIwV0lRUlBmUE83cjBlQWhr
+MDEwdjB3NS9CcWxkdjY4Z1VDWDFpK0ZnQUtDUkF3NS9CcWxkdjYKOHB1bUFKOUlFMmlidXM5UGND
+SUZVc2dVVGgwdzltZDdKQUNhQXRZVnJCR0JVWFhSMFNNWDhnRmtwaDBYeWxZPQo9dHgwNAotLS0t
+LUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
+
+--===============2142981766172954513==--
 
