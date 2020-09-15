@@ -1,71 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============8307453770568834127=="
+Content-Type: multipart/mixed; boundary="===============7201138209625007833=="
 MIME-Version: 1.0
 From: Pavel Machek <pavel@ucw.cz>
-Subject: [PATCH 1/3] droid 4: add special handling required for voice calls
- and SIM
-Date: Tue, 15 Sep 2020 15:23:01 +0200
-Message-ID: <20200915132300.GA13208@duo.ucw.cz>
+Subject: [PATCH 2/3] droid 4: special handling for SMSes
+Date: Tue, 15 Sep 2020 15:23:13 +0200
+Message-ID: <20200915132313.GA13286@duo.ucw.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8307453770568834127==
+--===============7201138209625007833==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Droid 4 modem is "special" (aka broken) so it seems to need a bit of
-error handling.
+Droid 4	 modem is "special" (aka broken) so and getting incoming SMSes
+to work is quite tricky. This should get it right.
 ---
- drivers/atmodem/sim.c       | 1 +
- drivers/atmodem/vendor.h    | 1 +
- drivers/atmodem/voicecall.c | 4 ++++
- 3 files changed, 6 insertions(+)
+ drivers/atmodem/sms.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index e750a139..f46cd3a2 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -199,6 +199,7 @@ static void at_sim_read_info(struct ofono_sim *sim, int=
- fileid,
- 	case OFONO_VENDOR_SPEEDUP:
- 	case OFONO_VENDOR_QUALCOMM_MSM:
- 	case OFONO_VENDOR_SIMCOM:
-+	case OFONO_VENDOR_DROID:
- 		/* Maximum possible length */
- 		len +=3D sprintf(buf + len, ",0,0,255");
- 		break;
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index d839d1e0..2bfd3eb8 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -27,6 +27,7 @@ enum ofono_vendor {
- 	OFONO_VENDOR_MBM,
- 	OFONO_VENDOR_GOBI,
- 	OFONO_VENDOR_QUALCOMM_MSM,
-+	OFONO_VENDOR_DROID,
- 	OFONO_VENDOR_OPTION_HSO,
- 	OFONO_VENDOR_ZTE,
- 	OFONO_VENDOR_HUAWEI,
-diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
-index 7ab6567f..6c80bd4e 100644
---- a/drivers/atmodem/voicecall.c
-+++ b/drivers/atmodem/voicecall.c
-@@ -160,6 +160,10 @@ static void clcc_poll_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- 			poll_again =3D TRUE;
- 			goto poll_again;
- 		}
-+		if (vd->vendor =3D=3D OFONO_VENDOR_DROID) {
-+			poll_again =3D TRUE;
-+			goto poll_again;
-+		}
+diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+index d502da72..f08f2fb1 100644
+--- a/drivers/atmodem/sms.c
++++ b/drivers/atmodem/sms.c
+@@ -463,7 +463,8 @@ static void at_cmt_notify(GAtResult *result, gpointer u=
+ser_data)
+ 	decode_hex_own_buf(hexpdu, -1, &pdu_len, 0, pdu);
+ 	ofono_sms_deliver_notify(sms, pdu, pdu_len, tpdu_len);
  =
 
- 		ofono_error("We are polling CLCC and received an error");
- 		ofono_error("All bets are off for call management");
+-	if (data->vendor !=3D OFONO_VENDOR_SIMCOM)
++	if ((data->vendor !=3D OFONO_VENDOR_SIMCOM) &&
++	    (data->vendor !=3D OFONO_VENDOR_DROID))
+ 		at_ack_delivery(sms);
+ 	return;
+ =
+
+@@ -845,6 +846,7 @@ static gboolean build_cnmi_string(char *buf, int *cnmi_=
+opts,
+ 	case OFONO_VENDOR_ZTE:
+ 	case OFONO_VENDOR_SIMCOM:
+ 	case OFONO_VENDOR_QUECTEL:
++	case OFONO_VENDOR_DROID:
+ 		/* MSM devices advertise support for mode 2, but return an
+ 		 * error if we attempt to actually use it. */
+ 		mode =3D "1";
+@@ -858,9 +860,14 @@ static gboolean build_cnmi_string(char *buf, int *cnmi=
+_opts,
+ 	if (!append_cnmi_element(buf, &len, cnmi_opts[0], mode, FALSE))
+ 		return FALSE;
+ =
+
++	mode =3D "21";
++	if (!data->cnma_enabled)
++		mode =3D "1";
++	if (data->vendor =3D=3D OFONO_VENDOR_DROID)
++		mode =3D "2";
++
+ 	/* Prefer to deliver SMS via +CMT if CNMA is supported */
+-	if (!append_cnmi_element(buf, &len, cnmi_opts[1],
+-					data->cnma_enabled ? "21" : "1", FALSE))
++	if (!append_cnmi_element(buf, &len, cnmi_opts[1], mode, FALSE))
+ 		return FALSE;
+ =
+
+ 	switch (data->vendor) {
+@@ -1290,6 +1297,8 @@ static void at_csms_query_cb(gboolean ok, GAtResult *=
+result,
+ 		goto out;
+ =
+
+ 	switch (data->vendor) {
++	case OFONO_VENDOR_DROID:
++		break;
+ 	case OFONO_VENDOR_QUECTEL_SERIAL:
+ 		g_at_result_iter_next_number(&iter, &status_min);
+ 		g_at_result_iter_next_number(&iter, &status_max);
 -- =
 
 2.11.0
+
 
 -- =
 
@@ -73,16 +86,16 @@ t, gpointer user_data)
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
 g.html
 
---===============8307453770568834127==
+--===============7201138209625007833==
 Content-Type: application/pgp-signature
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="signature.asc"
 
 LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlGMEVBQkVDQUIwV0lRUlBmUE83cjBlQWhr
-MDEwdjB3NS9CcWxkdjY4Z1VDWDJEQU5BQUtDUkF3NS9CcWxkdjYKOG9QWEFLQ3RNWkhMRkpSYW9K
-SCtLKzM3azBCcjQzYm9SUUNncUlua3Z3MExrOXRvQ0VDM0ExNm1NYVlFRndvPQo9T1JFZAotLS0t
+MDEwdjB3NS9CcWxkdjY4Z1VDWDJEQVFRQUtDUkF3NS9CcWxkdjYKOHMrOUFKNDRqSlF1OWxFNjVz
+RFhNcHVIdC9ubjZjcjNTd0Nnd3h5bUxZVTdPeXR0UjNZeEFaZCt5WlB3Z3o4PQo9TW1EMwotLS0t
 LUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
 
---===============8307453770568834127==--
+--===============7201138209625007833==--
 
