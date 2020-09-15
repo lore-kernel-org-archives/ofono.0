@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7778250257654999307=="
+Content-Type: multipart/mixed; boundary="===============7904663017108156666=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] droid 4: add special handling required for voice
- calls and SIM
-Date: Tue, 15 Sep 2020 10:19:26 -0500
-Message-ID: <8f56af43-5b94-427c-6e3f-4a488e4fa26c@gmail.com>
-In-Reply-To: <20200915132300.GA13208@duo.ucw.cz>
+Subject: Re: [PATCH 2/3] droid 4: special handling for SMSes
+Date: Tue, 15 Sep 2020 10:24:26 -0500
+Message-ID: <5f2e0d67-a262-e886-6c8a-8336e68fd29c@gmail.com>
+In-Reply-To: <20200915132313.GA13286@duo.ucw.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7778250257654999307==
+--===============7904663017108156666==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,38 +16,59 @@ Content-Transfer-Encoding: quoted-printable
 Hi Pavel,
 
 On 9/15/20 8:23 AM, Pavel Machek wrote:
-> Droid 4 modem is "special" (aka broken) so it seems to need a bit of
-> error handling.
+> Droid 4	 modem is "special" (aka broken) so and getting incoming SMSes
+> to work is quite tricky. This should get it right.
 > ---
->   drivers/atmodem/sim.c       | 1 +
->   drivers/atmodem/vendor.h    | 1 +
->   drivers/atmodem/voicecall.c | 4 ++++
->   3 files changed, 6 insertions(+)
+>   drivers/atmodem/sms.c | 15 ++++++++++++---
+>   1 file changed, 12 insertions(+), 3 deletions(-)
 > =
+
+> diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+> index d502da72..f08f2fb1 100644
+> --- a/drivers/atmodem/sms.c
+> +++ b/drivers/atmodem/sms.c
+> @@ -463,7 +463,8 @@ static void at_cmt_notify(GAtResult *result, gpointer=
+ user_data)
+>   	decode_hex_own_buf(hexpdu, -1, &pdu_len, 0, pdu);
+>   	ofono_sms_deliver_notify(sms, pdu, pdu_len, tpdu_len);
+>   =
+
+> -	if (data->vendor !=3D OFONO_VENDOR_SIMCOM)
+> +	if ((data->vendor !=3D OFONO_VENDOR_SIMCOM) &&
+> +	    (data->vendor !=3D OFONO_VENDOR_DROID))
+
+Fixed up style here per item M4
+
+>   		at_ack_delivery(sms);
+>   	return;
+>   =
 
 
 <snip>
 
-> @@ -160,6 +160,10 @@ static void clcc_poll_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->   			poll_again =3D TRUE;
->   			goto poll_again;
->   		}
-
-applied with an extra newline here to satisfy doc/coding-style.txt item M1.
-
-> +		if (vd->vendor =3D=3D OFONO_VENDOR_DROID) {
-> +			poll_again =3D TRUE;
-> +			goto poll_again;
-> +		}
+> @@ -858,9 +860,14 @@ static gboolean build_cnmi_string(char *buf, int *cn=
+mi_opts,
+>   	if (!append_cnmi_element(buf, &len, cnmi_opts[0], mode, FALSE))
+>   		return FALSE;
 >   =
 
->   		ofono_error("We are polling CLCC and received an error");
->   		ofono_error("All bets are off for call management");
-> =
+> +	mode =3D "21";
+> +	if (!data->cnma_enabled)
+> +		mode =3D "1";
+> +	if (data->vendor =3D=3D OFONO_VENDOR_DROID)
+> +		mode =3D "2";
+> +
 
+And here per item M1.
+
+Also, I had to resolve a minor conflict manually.  Please rebase against gi=
+t =
+
+HEAD when sending out patches.
+
+Applied, thanks.
 
 Regards,
 -Denis
---===============7778250257654999307==--
+--===============7904663017108156666==--
 
