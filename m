@@ -1,36 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0040049960849841808=="
+Content-Type: multipart/mixed; boundary="===============7001304369582794035=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] droid 4: Add probing.
-Date: Tue, 15 Sep 2020 10:28:01 -0500
-Message-ID: <5660edab-dbea-1604-34d3-a774dbd54b56@gmail.com>
-In-Reply-To: <20200915132325.GA13348@duo.ucw.cz>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 2/3] droid 4: special handling for SMSes
+Date: Fri, 18 Sep 2020 23:46:12 +0200
+Message-ID: <20200918214612.GA7443@duo.ucw.cz>
+In-Reply-To: <5f2e0d67-a262-e886-6c8a-8336e68fd29c@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0040049960849841808==
+--===============7001304369582794035==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pavel,
+Hi!
 
-On 9/15/20 8:23 AM, Pavel Machek wrote:
-> Probe Droid 4 modem. This should result in basic support working.
-> ---
->   Makefile.am      |   3 +
->   plugins/droid.c  | 206 ++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   plugins/udevng.c |  31 +++++++++
->   3 files changed, 240 insertions(+)
->   create mode 100644 plugins/droid.c
+> And here per item M1.
 > =
 
+> Also, I had to resolve a minor conflict manually.  Please rebase against =
+git
+> HEAD when sending out patches.
+> =
 
-Applied, thanks.
+> Applied, thanks.
 
-Regards,
--Denis
+Thank you!
+									Pavel
+-- =
 
---===============0040049960849841808==--
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--===============7001304369582794035==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
+
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlGMEVBQkVDQUIwV0lRUlBmUE83cjBlQWhr
+MDEwdjB3NS9CcWxkdjY4Z1VDWDJVcXBBQUtDUkF3NS9CcWxkdjYKOHBKb0FLQ1ZDbVgxVVlCVGI2
+M3lOSGdYbDUxYXhHZmk1QUNnak1GekJSclJ4ZWlqbXN4ZU1vR0x2UXNYMXNnPQo9eXlOTgotLS0t
+LUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
+
+--===============7001304369582794035==--
 
