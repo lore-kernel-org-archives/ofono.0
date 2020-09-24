@@ -1,48 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============7001304369582794035=="
+Content-Type: multipart/mixed; boundary="===============0228632115206490865=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH 2/3] droid 4: special handling for SMSes
-Date: Fri, 18 Sep 2020 23:46:12 +0200
-Message-ID: <20200918214612.GA7443@duo.ucw.cz>
-In-Reply-To: <5f2e0d67-a262-e886-6c8a-8336e68fd29c@gmail.com>
+From: poeschel@lemonage.de
+Subject: [PATCH 1/2] quectel: Extend power-on timeout
+Date: Thu, 24 Sep 2020 12:38:05 +0200
+Message-ID: <20200924103806.2518502-1-poeschel@lemonage.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7001304369582794035==
+--===============0228632115206490865==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+From: Lars Poeschel <poeschel@lemonage.de>
 
-> And here per item M1.
-> =
+More complicated modems emerge and they need longer start-up times. An
+EC21 takes about 13 seconds to boot up. This is slightly longer than the
+20 * 500 ms we have at the moment. This extends the retries to 30, so we
+have 30 * 500 ms and this does successfully power up an EC21 modem.
+---
+ plugins/quectel.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-> Also, I had to resolve a minor conflict manually.  Please rebase against =
-git
-> HEAD when sending out patches.
-> =
+diff --git a/plugins/quectel.c b/plugins/quectel.c
+index c3343008..6456775d 100644
+--- a/plugins/quectel.c
++++ b/plugins/quectel.c
+@@ -1086,8 +1086,8 @@ static void init_timeout_cb(struct l_timeout *timeout=
+, void *user_data)
+ =
 
-> Applied, thanks.
+ 	DBG("%p", modem);
+ =
 
-Thank you!
-									Pavel
+-	if (data->init_count++ >=3D 20) {
+-		ofono_error("failed to init modem after 20 attempts");
++	if (data->init_count++ >=3D 30) {
++		ofono_error("failed to init modem after 30 attempts");
+ 		close_serial(modem);
+ 		return;
+ 	}
 -- =
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+2.28.0
 
---===============7001304369582794035==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlGMEVBQkVDQUIwV0lRUlBmUE83cjBlQWhr
-MDEwdjB3NS9CcWxkdjY4Z1VDWDJVcXBBQUtDUkF3NS9CcWxkdjYKOHBKb0FLQ1ZDbVgxVVlCVGI2
-M3lOSGdYbDUxYXhHZmk1QUNnak1GekJSclJ4ZWlqbXN4ZU1vR0x2UXNYMXNnPQo9eXlOTgotLS0t
-LUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
-
---===============7001304369582794035==--
+--===============0228632115206490865==--
 
