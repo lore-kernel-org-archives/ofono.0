@@ -1,40 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5833631667530714960=="
+Content-Type: multipart/mixed; boundary="===============6485284924543459439=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH] common: APN with a dot in second position are not invalid
-Date: Mon, 28 Sep 2020 09:38:09 +0200
-Message-ID: <1601278689-6876-1-git-send-email-c.ronco@kerlink.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] common: APN with a dot in second position are not invalid
+Date: Tue, 29 Sep 2020 09:13:54 -0500
+Message-ID: <fa2871d1-6eea-f58e-8668-ea9dd6be3cb4@gmail.com>
+In-Reply-To: <1601278689-6876-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5833631667530714960==
+--===============6485284924543459439==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-APN with a dot in second position (example: "t.est") are wrongly
-considered invalid.
----
- src/common.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Christophe,
 
-diff --git a/src/common.c b/src/common.c
-index 4dcbc83..f955a76 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -709,7 +709,7 @@ const char *registration_tech_to_string(int tech)
- gboolean is_valid_apn(const char *apn)
- {
- 	int i;
--	int last_period =3D 0;
-+	int last_period =3D -1;
- =
+On 9/28/20 2:38 AM, Christophe Ronco wrote:
+> APN with a dot in second position (example: "t.est") are wrongly
+> considered invalid.
+> ---
+>   src/common.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> =
 
- 	if (apn =3D=3D NULL)
- 		return FALSE;
--- =
 
-2.7.4
+Applied, thanks.
 
---===============5833631667530714960==--
+Regards,
+-Denis
+
+--===============6485284924543459439==--
 
