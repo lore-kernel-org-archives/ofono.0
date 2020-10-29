@@ -1,33 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============0625456901878649087=="
+Content-Type: multipart/mixed; boundary="===============0845426809401324558=="
 MIME-Version: 1.0
-From: Louis Rannou <louis@enlaps.fr>
-Subject: Using GPS on sim7600
-Date: Wed, 21 Oct 2020 11:42:47 +0200
-Message-ID: <359756dc-4227-db6c-0655-2474a2661871@enlaps.fr>
+From: Simon Schmeisser <s.schmeisser@gmx.net>
+Subject: New phonesim release including Qt5 support?
+Date: Thu, 29 Oct 2020 17:57:05 +0100
+Message-ID: <f65676dc-4cd4-5408-fded-ba9918701774@gmx.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0625456901878649087==
+--===============0845426809401324558==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi,
 
-I am using a sim7600 with its evaluation kit.
+I'm a member of the Plasma Mobile team and we are currently trying to
+get our messaging and phone stack working. Having a distribution
+packaged version of phonesim available would simplify things a lot for
+us. However distributions are currently dropping Qt4 support and there
+has been no release since Jonah Br=C3=BCchert introduced support for Qt5 la=
+st
+year.
 
-To make the GPS work, I need to send the command AT+CGPS=3D1. What I can =
+So in short, could you please do a new release of phonesim?
 
-do is just open the AT port and send the command. But maybe it should be =
+Thanks and regards
 
-managed by ofono ? In that case, should I make another plugin, or should =
+Simon
 
-it be included in location reporting ?
 
-By the way, I have no org.ofono.LocationReporting in my dbus interface.
-
-Thanks,
-Louis
-
---===============0625456901878649087==--
+--===============0845426809401324558==--
 
