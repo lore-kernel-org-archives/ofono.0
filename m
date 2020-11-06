@@ -1,33 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0845426809401324558=="
+Content-Type: multipart/mixed; boundary="===============6318623765464379409=="
 MIME-Version: 1.0
-From: Simon Schmeisser <s.schmeisser@gmx.net>
-Subject: New phonesim release including Qt5 support?
-Date: Thu, 29 Oct 2020 17:57:05 +0100
-Message-ID: <f65676dc-4cd4-5408-fded-ba9918701774@gmx.net>
+From: Jupiter <jupiter.hce@gmail.com>
+Subject: 4G modem re-register
+Date: Fri, 06 Nov 2020 12:16:09 +1100
+Message-ID: <CAA=hcWQEVe6OSi_A1eFpG7idW1JmtdimCMpRD2KW0+sGPX3V=A@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0845426809401324558==
+--===============6318623765464379409==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-I'm a member of the Plasma Mobile team and we are currently trying to
-get our messaging and phone stack working. Having a distribution
-packaged version of phonesim available would simplify things a lot for
-us. However distributions are currently dropping Qt4 support and there
-has been no release since Jonah Br=C3=BCchert introduced support for Qt5 la=
-st
-year.
+I am running oFono and Connman for uBlox SARA modem in QMI on iMX6,
+when the modem is deregistered due to low signal, it cannot not be
+re-registered automatically.
 
-So in short, could you please do a new release of phonesim?
+The SARA modem is capable of re-register, I can verify that capacity
+in SARA EVK, but why that capacity cannot be performed in an oFono
+device? What could I be missing in oFono configuration?
 
-Thanks and regards
+Thank you.
 
-Simon
+Kind regards,
 
-
---===============0845426809401324558==--
+- jh
+--===============6318623765464379409==--
 
