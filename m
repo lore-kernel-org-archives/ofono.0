@@ -1,53 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============5111490178189002458=="
+Content-Type: multipart/mixed; boundary="===============8312458335248539521=="
 MIME-Version: 1.0
-From: Jupiter <jupiter.hce@gmail.com>
-Subject: Re: Failed to reconnect after 4G LTE signaling strength level is back
-Date: Tue, 01 Dec 2020 20:56:33 +1100
-Message-ID: <CAA=hcWTO8Xfb7RCJKvkcWmhRpENMuN++LZhrNdmS8Ecxkd=meQ@mail.gmail.com>
-In-Reply-To: <22165064-45d2-6542-f014-47b8a33b9c4a@kerlink.fr>
+From: richard.rojfors@gmail.com
+Subject: [PATCH] huawei, util: Fix a couple of implicit enum conversions
+Date: Sun, 20 Dec 2020 11:18:27 +0000
+Message-ID: <20201220111827.2119273-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5111490178189002458==
+--===============8312458335248539521==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+From: Richard R=C3=B6jfors <richard@puffinpack.se>
 
-Thanks for the response.
+GCC 10 warns about a couple of implicit conversions;
 
-> I agree with Jonas to say that all the magic is in ss_info_notify. At lea=
-st that's the case outside LTE, I don't know a lot about LTE specificities.
+huawei: Member from the incorrect enum was returned,
+both had the value 0, so the code would still work.
 
-Any idea how to modify the source to get ss_info_notify running in
-qmimodem The question is how to do it? Adding
-qmi_service_register(data->nas, QMI_NAS_SS_INFO_IND, ss_info_notify,
-netreg, NULL); to ss_info_notify network-registration.c just not
-working.
+drivers/huaweimodem/radio-settings.c: In function =E2=80=98band_gsm_from_hu=
+awei=E2=80=99:
+drivers/huaweimodem/radio-settings.c:107:10: error: implicit conversion fro=
+m =E2=80=98enum ofono_radio_band_umts=E2=80=99 to =E2=80=98enum ofono_radio=
+_band_gsm=E2=80=99 [-Werror=3Denum-conversion]
+  107 |   return OFONO_RADIO_BAND_UMTS_ANY;
 
-> When you restart Ofono, radio stack of the modem will be reset
-> (something like AT+CFUN=3D4, AT+CFUN=3D0 happens), that's why a new data
-> registration process occurs.
+util: smsutil and util has an enum each for representing
+the same thing; The SMS alphabet. They share the same
+values, so an explicit type cast makes GCC happy.
 
-You are right, restarting ofono is to reset modem, I can also run SARA
-modem power reset via GPIO to bring the register back as well.
+src/smsutil.c: In function =E2=80=98sms_text_prepare_with_alphabet=E2=80=99:
+src/smsutil.c:3594:8: error: implicit conversion from =E2=80=98enum sms_alp=
+habet=E2=80=99 to =E2=80=98enum gsm_dialect=E2=80=99 [-Werror=3Denum-conver=
+sion]
+ 3594 |        alphabet, &used_locking,
+---
+ drivers/huaweimodem/radio-settings.c | 2 +-
+ src/smsutil.c                        | 5 ++++-
+ 2 files changed, 5 insertions(+), 2 deletions(-)
 
-> I don't know if you have access to an AT channel or another QMI channel
-> on your modem while Ofono is running. If this is the case, you could ask
-> for registration status while ofono is running using AT commands or
-> using qmicli. Let me know if you can do that and don't know the commands
-> to do it.
+diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/rad=
+io-settings.c
+index c8ebcba0..b3f31e56 100644
+--- a/drivers/huaweimodem/radio-settings.c
++++ b/drivers/huaweimodem/radio-settings.c
+@@ -104,7 +104,7 @@ static enum ofono_radio_band_gsm band_gsm_from_huawei(u=
+nsigned int band)
+ 	size_t i;
+ =
 
-Yes, there are two ports, /dev/ttyUSB0 is for QMI control,
-/dev/ttyUSB1 is for AT, QMI modem does not use it. Yes, I can run AT
-commands manually in the command line to get responses from
-/dev/ttyUSB1.
+ 	if (band =3D=3D HUAWEI_BAND_ANY)
+-		return OFONO_RADIO_BAND_UMTS_ANY;
++		return OFONO_RADIO_BAND_GSM_ANY;
+ =
 
-Thank you.
+ 	for (i =3D ARRAY_SIZE(huawei_band_gsm_table) - 1; i > 0; i--) {
+ 		if (huawei_band_gsm_table[i].band_huawei & band)
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 450a1d38..e6556df6 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -3575,6 +3575,7 @@ GSList *sms_text_prepare_with_alphabet(const char *to=
+, const char *utf8,
+ 	GSList *r =3D NULL;
+ 	enum gsm_dialect used_locking;
+ 	enum gsm_dialect used_single;
++	enum gsm_dialect dialect;
+ =
 
-Kind regards,
+ 	memset(&template, 0, sizeof(struct sms));
+ 	template.type =3D SMS_TYPE_SUBMIT;
+@@ -3586,12 +3587,14 @@ GSList *sms_text_prepare_with_alphabet(const char *=
+to, const char *utf8,
+ 	template.submit.vp.relative =3D 0xA7; /* 24 Hours */
+ 	sms_address_from_string(&template.submit.daddr, to);
+ =
 
-- j
---===============5111490178189002458==--
++	/* There are two enums for the same thing */
++	dialect =3D (enum gsm_dialect)alphabet;
+ 	/*
+ 	 * UDHI, UDL, UD and DCS actually depend on the contents of
+ 	 * the text, and also on the GSM dialect we use to encode it.
+ 	 */
+ 	gsm_encoded =3D convert_utf8_to_gsm_best_lang(utf8, -1, NULL, &written, 0,
+-							alphabet, &used_locking,
++							dialect, &used_locking,
+ 							&used_single);
+ 	if (!gsm_encoded) {
+ 		size_t converted;
+-- =
+
+2.27.0
+
+--===============8312458335248539521==--
 
