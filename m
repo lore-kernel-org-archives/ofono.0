@@ -1,88 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============7091252549466633537=="
+Content-Type: multipart/mixed; boundary="===============0365911678668035737=="
 MIME-Version: 1.0
 From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: [PATCH 4/5] gemalto: gprs: support different gprs protocols
-Date: Mon, 21 Dec 2020 23:01:32 +0300
-Message-ID: <20201221200133.522933-5-geomatsi@gmail.com>
+Subject: [PATCH 5/5] gemalto: gprs: support authentication settings
+Date: Mon, 21 Dec 2020 23:01:33 +0300
+Message-ID: <20201221200133.522933-6-geomatsi@gmail.com>
 In-Reply-To: <20201221200133.522933-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7091252549466633537==
+--===============0365911678668035737==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Sergey Matyukevich <matyukevich@arrival.com>
 
-Add support for IPv6 and dual mode gprs contexts.
+Add support for gprs contexts with username, password, as well as
+specific authentication type.
 ---
- drivers/gemaltomodem/gprs-context.c | 22 ++++++++++++++++------
- 1 file changed, 16 insertions(+), 6 deletions(-)
+ drivers/gemaltomodem/gprs-context.c | 54 ++++++++++++++++++++++++++++-
+ 1 file changed, 53 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gemaltomodem/gprs-context.c b/drivers/gemaltomodem/gpr=
 s-context.c
-index 680f01ab..bb09f0b0 100644
+index bb09f0b0..da68e959 100644
 --- a/drivers/gemaltomodem/gprs-context.c
 +++ b/drivers/gemaltomodem/gprs-context.c
-@@ -46,6 +46,7 @@ static const char *none_prefix[] =3D { NULL };
+@@ -46,6 +46,9 @@ static const char *none_prefix[] =3D { NULL };
  struct gprs_context_data {
  	GAtChat *chat;
  	unsigned int active_context;
-+	enum ofono_gprs_proto proto;
++	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
++	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
++	int auth_type;
+ 	enum ofono_gprs_proto proto;
  	ofono_gprs_context_cb_t cb;
  	void *cb_data;
- };
-@@ -118,15 +119,25 @@ static void gemalto_gprs_activate_primary(struct ofon=
-o_gprs_context *gc,
+@@ -79,7 +82,7 @@ static void swwan_cb(gboolean ok, GAtResult *result, gpoi=
+nter user_data)
+ 	}
+ }
  =
 
- 	DBG("cid %u", ctx->cid);
+-static void cgdcont_enable_cb(gboolean ok, GAtResult *result,
++static void sgauth_enable_cb(gboolean ok, GAtResult *result,
+ 			gpointer user_data)
+ {
+ 	struct ofono_gprs_context *gc =3D user_data;
+@@ -109,6 +112,39 @@ static void cgdcont_enable_cb(gboolean ok, GAtResult *=
+result,
+ 	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
+ }
  =
 
--	/* IPv6 support not implemented */
--	if (ctx->proto !=3D OFONO_GPRS_PROTO_IP)
--		goto error;
--
- 	gcd->active_context =3D ctx->cid;
++static void cgdcont_enable_cb(gboolean ok, GAtResult *result,
++			gpointer user_data)
++{
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ofono_error error;
++	char buf[384];
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		gcd->active_context =3D 0;
++		decode_at_error(&error, g_at_result_final_response(result));
++		gcd->cb(&error, gcd->cb_data);
++		return;
++	}
++
++	if (gcd->username[0] && gcd->password[0])
++		sprintf(buf, "AT^SGAUTH=3D%u,%u,\"%s\",\"%s\"",
++			gcd->active_context, gcd->auth_type,
++			gcd->username, gcd->password);
++	else
++		sprintf(buf, "AT^SGAUTH=3D%u,%u,\"\",\"\"",
++			gcd->active_context, gcd->auth_type);
++
++
++	if (g_at_chat_send(gcd->chat, buf, none_prefix,
++				sgauth_enable_cb, gc, NULL) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
++}
++
+ static void gemalto_gprs_activate_primary(struct ofono_gprs_context *gc,
+ 				const struct ofono_gprs_primary_context *ctx,
+ 				ofono_gprs_context_cb_t cb, void *data)
+@@ -123,6 +159,22 @@ static void gemalto_gprs_activate_primary(struct ofono=
+_gprs_context *gc,
  	gcd->cb_data =3D data;
  	gcd->cb =3D cb;
  =
 
--	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
++	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
++	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
++	gcd->proto =3D ctx->proto;
 +
-+	switch (ctx->proto) {
-+	case OFONO_GPRS_PROTO_IP:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"",
-+				ctx->cid);
++	switch (ctx->auth_method) {
++	case OFONO_GPRS_AUTH_METHOD_PAP:
++		gcd->auth_type =3D 1;
 +		break;
-+	case OFONO_GPRS_PROTO_IPV6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV6\"",
-+				ctx->cid);
++	case OFONO_GPRS_AUTH_METHOD_CHAP:
++		gcd->auth_type =3D 2;
 +		break;
-+	case OFONO_GPRS_PROTO_IPV4V6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV4V6\"",
-+				ctx->cid);
++	case OFONO_GPRS_AUTH_METHOD_NONE:
++	default:
++		gcd->auth_type =3D 0;
 +		break;
 +	}
  =
 
- 	if (ctx->apn)
- 		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"", ctx->apn);
-@@ -135,7 +146,6 @@ static void gemalto_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
- 				cgdcont_enable_cb, gc, NULL))
- 		return;
- =
-
--error:
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
-
+ 	switch (ctx->proto) {
+ 	case OFONO_GPRS_PROTO_IP:
 -- =
 
 2.29.2
 
---===============7091252549466633537==--
+--===============0365911678668035737==--
 
