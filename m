@@ -1,123 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============0365911678668035737=="
+Content-Type: multipart/mixed; boundary="===============2583067675975869577=="
 MIME-Version: 1.0
-From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: [PATCH 5/5] gemalto: gprs: support authentication settings
-Date: Mon, 21 Dec 2020 23:01:33 +0300
-Message-ID: <20201221200133.522933-6-geomatsi@gmail.com>
-In-Reply-To: <20201221200133.522933-1-geomatsi@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] huawei, util: Fix a couple of implicit enum conversions
+Date: Tue, 22 Dec 2020 10:33:24 -0600
+Message-ID: <3d7e6109-11f6-37cc-946f-c26320835c40@gmail.com>
+In-Reply-To: <20201220111827.2119273-1-richard.rojfors@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0365911678668035737==
+--===============2583067675975869577==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sergey Matyukevich <matyukevich@arrival.com>
+Hi Richard,
 
-Add support for gprs contexts with username, password, as well as
-specific authentication type.
----
- drivers/gemaltomodem/gprs-context.c | 54 ++++++++++++++++++++++++++++-
- 1 file changed, 53 insertions(+), 1 deletion(-)
+On 12/20/20 5:18 AM, richard.rojfors(a)gmail.com wrote:
+> From: Richard R=C3=B6jfors <richard@puffinpack.se>
+> =
 
-diff --git a/drivers/gemaltomodem/gprs-context.c b/drivers/gemaltomodem/gpr=
-s-context.c
-index bb09f0b0..da68e959 100644
---- a/drivers/gemaltomodem/gprs-context.c
-+++ b/drivers/gemaltomodem/gprs-context.c
-@@ -46,6 +46,9 @@ static const char *none_prefix[] =3D { NULL };
- struct gprs_context_data {
- 	GAtChat *chat;
- 	unsigned int active_context;
-+	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
-+	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
-+	int auth_type;
- 	enum ofono_gprs_proto proto;
- 	ofono_gprs_context_cb_t cb;
- 	void *cb_data;
-@@ -79,7 +82,7 @@ static void swwan_cb(gboolean ok, GAtResult *result, gpoi=
-nter user_data)
- 	}
- }
- =
+> GCC 10 warns about a couple of implicit conversions;
+> =
 
--static void cgdcont_enable_cb(gboolean ok, GAtResult *result,
-+static void sgauth_enable_cb(gboolean ok, GAtResult *result,
- 			gpointer user_data)
- {
- 	struct ofono_gprs_context *gc =3D user_data;
-@@ -109,6 +112,39 @@ static void cgdcont_enable_cb(gboolean ok, GAtResult *=
-result,
- 	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
- }
- =
+> huawei: Member from the incorrect enum was returned,
+> both had the value 0, so the code would still work.
+> =
 
-+static void cgdcont_enable_cb(gboolean ok, GAtResult *result,
-+			gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ofono_error error;
-+	char buf[384];
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		gcd->active_context =3D 0;
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		gcd->cb(&error, gcd->cb_data);
-+		return;
-+	}
-+
-+	if (gcd->username[0] && gcd->password[0])
-+		sprintf(buf, "AT^SGAUTH=3D%u,%u,\"%s\",\"%s\"",
-+			gcd->active_context, gcd->auth_type,
-+			gcd->username, gcd->password);
-+	else
-+		sprintf(buf, "AT^SGAUTH=3D%u,%u,\"\",\"\"",
-+			gcd->active_context, gcd->auth_type);
-+
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				sgauth_enable_cb, gc, NULL) > 0)
-+		return;
-+
-+	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
-+}
-+
- static void gemalto_gprs_activate_primary(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
- 				ofono_gprs_context_cb_t cb, void *data)
-@@ -123,6 +159,22 @@ static void gemalto_gprs_activate_primary(struct ofono=
-_gprs_context *gc,
- 	gcd->cb_data =3D data;
- 	gcd->cb =3D cb;
- =
+> drivers/huaweimodem/radio-settings.c: In function =E2=80=98band_gsm_from_=
+huawei=E2=80=99:
+> drivers/huaweimodem/radio-settings.c:107:10: error: implicit conversion f=
+rom =E2=80=98enum ofono_radio_band_umts=E2=80=99 to =E2=80=98enum ofono_rad=
+io_band_gsm=E2=80=99 [-Werror=3Denum-conversion]
+>    107 |   return OFONO_RADIO_BAND_UMTS_ANY;
+> =
 
-+	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-+	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-+	gcd->proto =3D ctx->proto;
-+
-+	switch (ctx->auth_method) {
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		gcd->auth_type =3D 1;
-+		break;
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		gcd->auth_type =3D 2;
-+		break;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+	default:
-+		gcd->auth_type =3D 0;
-+		break;
-+	}
- =
+> util: smsutil and util has an enum each for representing
+> the same thing; The SMS alphabet. They share the same
+> values, so an explicit type cast makes GCC happy.
+> =
 
- 	switch (ctx->proto) {
- 	case OFONO_GPRS_PROTO_IP:
--- =
+> src/smsutil.c: In function =E2=80=98sms_text_prepare_with_alphabet=E2=80=
+=99:
+> src/smsutil.c:3594:8: error: implicit conversion from =E2=80=98enum sms_a=
+lphabet=E2=80=99 to =E2=80=98enum gsm_dialect=E2=80=99 [-Werror=3Denum-conv=
+ersion]
+>   3594 |        alphabet, &used_locking,
+> ---
+>   drivers/huaweimodem/radio-settings.c | 2 +-
+>   src/smsutil.c                        | 5 ++++-
+>   2 files changed, 5 insertions(+), 2 deletions(-)
+> =
 
-2.29.2
 
---===============0365911678668035737==--
+I split this into two commits and applied.  Thanks!
+
+Regards,
+-Denis
+
+--===============2583067675975869577==--
 
