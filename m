@@ -1,95 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============2137414635739403532=="
+Content-Type: multipart/mixed; boundary="===============2983044438371554865=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gsmdial: add support for different authentication methods
- selection
-Date: Mon, 04 Jan 2021 11:18:29 -0600
-Message-ID: <806c65c0-7088-47a5-9a16-2e5aeccedc70@gmail.com>
-In-Reply-To: <20210101211215.28129-1-s.e.golubtsov@gmail.com>
+Subject: Re: [PATCH ppp] ppp: Apply configuration options from a DCE request
+ if ACK it
+Date: Mon, 04 Jan 2021 11:20:11 -0600
+Message-ID: <9030bebb-1d58-8e5b-55fc-d357ebd4ebc7@gmail.com>
+In-Reply-To: <20210101210412.23976-1-s.e.golubtsov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2137414635739403532==
+--===============2983044438371554865==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sergei,
 
-On 1/1/21 3:12 PM, s.e.golubtsov(a)gmail.com wrote:
+On 1/1/21 3:04 PM, s.e.golubtsov(a)gmail.com wrote:
 > From: Sergei Golubtsov <s.e.golubtsov@gmail.com>
 > =
 
-> Selection capability for authentication method via a command line
-> argument has been added
+> Apply configuration options if the DCE sends a PPP LCP configure request
+> and the DTE is going to ACK the request. Otherwise some options such as
+> the ACCM may not correspond to the configuration negotiated with the
+> DCE.
 > ---
->   gatchat/gsmdial.c | 13 +++++++++++++
->   1 file changed, 13 insertions(+)
+>   gatchat/ppp_cp.c | 7 +++++--
+>   1 file changed, 5 insertions(+), 2 deletions(-)
 > =
 
-
-denkenz(a)localhost ~/ofono-master $ make
-make --no-print-directory all-am
-   CC       gatchat/gsmdial.o
-gatchat/gsmdial.c: In function =E2=80=98connect_cb=E2=80=99:
-gatchat/gsmdial.c:373:2: error: ISO C90 forbids mixed declarations and code =
-
-[-Werror=3Ddeclaration-after-statement]
-   373 |  GAtPPPAuthMethod auth_method =3D G_AT_PPP_AUTH_METHOD_CHAP;
-       |  ^~~~~~~~~~~~~~~~
-cc1: all warnings being treated as errors
-make[1]: *** [Makefile:4078: gatchat/gsmdial.o] Error 1
-make: *** [Makefile:2376: all] Error 2
-
-
-> diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-> index 60e4f245..0407f97c 100644
-> --- a/gatchat/gsmdial.c
-> +++ b/gatchat/gsmdial.c
-> @@ -53,6 +53,7 @@ static gint option_cid =3D 0;
->   static gchar *option_apn =3D NULL;
->   static gint option_offmode =3D 0;
->   static gboolean option_legacy =3D FALSE;
-> +static gchar *option_auth_method;
->   static gchar *option_username =3D NULL;
->   static gchar *option_password =3D NULL;
->   static gchar *option_pppdump =3D NULL;
-> @@ -369,6 +370,14 @@ static void connect_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
->   	}
->   	g_at_ppp_set_debug(ppp, gsmdial_debug, "PPP");
+> diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+> index f3f2cc4f..371055e4 100644
+> --- a/gatchat/ppp_cp.c
+> +++ b/gatchat/ppp_cp.c
+> @@ -660,9 +660,12 @@ static void pppcp_generate_event(struct pppcp_data *=
+data,
+>   	if (actions & SCR)
+>   		pppcp_send_configure_request(data);
 >   =
 
-> +	GAtPPPAuthMethod auth_method =3D G_AT_PPP_AUTH_METHOD_CHAP;
-> +	if (strcmp(option_auth_method, "PAP") =3D=3D 0) {
-> +		auth_method =3D G_AT_PPP_AUTH_METHOD_PAP;
-> +	} else if (strcmp(option_auth_method, "NONE") =3D=3D 0) {
-> +		auth_method =3D G_AT_PPP_AUTH_METHOD_NONE;
-> +	}
-> +	g_at_ppp_set_auth_method(ppp, auth_method);
-> +
+> -	if (actions & SCA)
+> +	if (actions & SCA) {
+> +		/* Apply local options */
+> +		if (data->driver->rca)
+> +			data->driver->rca(data, packet);
 
-Also please refer to doc/coding-style.txt item M1.
+So this is incorrect.  You're applying options of the wrong 'side'.  See my =
 
->   	g_at_ppp_set_credentials(ppp, option_username, option_password);
+reply in the other thread for  a more detailed explanation.
+
+>   		pppcp_send_configure_ack(data, packet);
+> -	else if (actions & SCN)
+> +	} else if (actions & SCN)
+>   		pppcp_send_configure_nak(data, packet);
 >   =
 
->   	g_at_ppp_set_acfc_enabled(ppp, option_acfc);
-> @@ -677,6 +686,10 @@ static GOptionEntry options[] =3D {
->   				"Use ATD*99***<cid>#" },
->   	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
->   				"Use only ATD*99" },
-> +	{ "auth", 'A', 0, G_OPTION_ARG_STRING, &option_auth_method,
-> +				"Specify the authentication method for the PPP"
-> +				" connection: CHAP, PAP or NONE. CHAP is used"
-> +				" by default." },
->   	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
->   				"Specify PPP username" },
->   	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
+>   	if (actions & STR)
 > =
 
 
 Regards,
 -Denis
---===============2137414635739403532==--
+--===============2983044438371554865==--
 
