@@ -1,155 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============1395563797408361307=="
+Content-Type: multipart/mixed; boundary="===============9180554784997400109=="
 MIME-Version: 1.0
-From: Sergei Golubtsov <s.e.golubtsov@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Quectel EC200T USB: Problems with context activation
-Date: Tue, 05 Jan 2021 22:34:35 +0100
-Message-ID: <CAFiQ677uwX44Hv-Xx9c+dH===O6rqz2k0GzMGRKfujbVp6-zKw@mail.gmail.com>
-In-Reply-To: <735d4c09-ee6f-73e1-237f-5ce57abb8796@gmail.com>
+Date: Wed, 06 Jan 2021 13:52:27 -0600
+Message-ID: <d9ecd585-4913-387c-eee0-92df034c3455@gmail.com>
+In-Reply-To: <CAFiQ677uwX44Hv-Xx9c+dH===O6rqz2k0GzMGRKfujbVp6-zKw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1395563797408361307==
+--===============9180554784997400109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Sergei,
 
-Happy New Year.  Apologies for the late response, I was in holiday mode.
+>     So far, all modems on this planet have honored the default properly...
+> =
+
+> Sorry for my misunderstanding. I should have read the RFC better but this=
+ aspect =
+
+> is defined
+> properly only in the following clause -
+> "TheConfiguration Option is used to inform the peer which control
+> =
+
+> characters MUST remain mapped when the peer sends them."
+> =
+
+> So I have managed to find this after your message. Thank you.
+> =
+
+>     So you have two options for fixing this:
+>      =C2=A0 =C2=A0- Make GAtPPP negotiate a default ACCM in all cases
+> =
+
+>      =C2=A0 =C2=A0- Override the negotiated ACCM (using g_at_hdlc_set_rec=
+v_accm for your
+>     particular modem.
+> =
+
+> I think that this modem is buggy as you have clearly shown. I agree that =
+it is =
+
+> not a good idea to
+> do something which does not follow the RFCs fine. But, I feel that the de=
+fault =
 
 
-Happy New Year too. Thank you for your helpful answer.
+I don't remember why we chose not to negotiate the RX ACCM.  Things may hav=
+e =
 
-So far, all modems on this planet have honored the default properly...
->
+worked wonderfully with the defaults, so maybe we just decided not to touch=
+ it.
 
-Sorry for my misunderstanding. I should have read the RFC better but this
-aspect is defined
-properly only in the following clause -
-"The Configuration Option is used to inform the peer which control
+> value for ACCM
+> is not that one we should use. Excuse me if I am too direct here, I am no=
+t an =
 
-characters MUST remain mapped when the peer sends them."
+> expert in this field
+> but I think it is better for DTE to send a configuration request with ACC=
+M =3D =
 
-So I have managed to find this after your message. Thank you.
+> 0x00000000
+> as pppd does because this allows us to send more information in the same =
+number =
+
+> of bytes.
+> Would you agree? If not I will override the negotiated ACCM, if it is lef=
+t =
 
 
+I think that makes sense.
 
-> So you have two options for fixing this:
->    - Make GAtPPP negotiate a default ACCM in all cases
+> default, for this
+> chinese modem because I do not feel that they could update the firmware t=
+o =
 
-   - Override the negotiated ACCM (using g_at_hdlc_set_recv_accm for your
-> particular modem.
+> fulfill the RFC
+> requirements=C2=A0in a reasonable=C2=A0amount of time if they even would.=
+=C2=A0I do not think =
 
+> that they
+> would even find this necessary if I had told them.
 
-I think that this modem is buggy as you have clearly shown. I agree that it
-is not a good idea to
-do something which does not follow the RFCs fine. But, I feel that the
-default value for ACCM
-is not that one we should use. Excuse me if I am too direct here, I am not
-an expert in this field
-but I think it is better for DTE to send a configuration request with ACCM
-=3D 0x00000000
-as pppd does because this allows us to send more information in the same
-number of bytes.
-Would you agree? If not I will override the negotiated ACCM, if it is left
-default, for this
-chinese modem because I do not feel that they could update the firmware to
-fulfill the RFC
-requirements in a reasonable amount of time if they even would. I do not
-think that they
-would even find this necessary if I had told them.
+Well, it isn't a 'requirement' to use the defaults.  What happened in this =
 
-Thank you very much for your help and sorry for bad patches. I will fix
-them soon.
+particular case is that we didn't explicitly tell the modem side what RX AC=
+CM we =
 
-Have a great day.
+want, and the modem firmware didn't use the defined default values.
+
+I think it should be safe for us to use an ACCM of 0 instead of the RFC def=
+ault. =
+
+  But just in case, we should probably provide a way for the driver to over=
+ride =
+
+it if needed.
+
+So what I would do is:
+
+- Set REQ_OPTION_ACCM in the lcp init somewhere.  Set the initial value to =
+be 0 =
+
+as you suggest.
+- Add g_at_ppp_set_accm() in order to allow drivers to provide a custom ACC=
+M to =
+
+negotiate, if needed.
 
 Regards,
-Sergei.
-
---===============1395563797408361307==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.htm"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjxkaXY+PHNwYW4gY2xhc3M9
-ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNpemU6c21hbGwiPkhpIERlbmlzLDwvc3Bhbj7C
-oDwvZGl2PjxkaXY+PGJyPjwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5
-bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdiKDIw
-NCwyMDQsMjA0KTtwYWRkaW5nLWxlZnQ6MWV4Ij4KSGFwcHkgTmV3IFllYXIuwqAgQXBvbG9naWVz
-IGZvciB0aGUgbGF0ZSByZXNwb25zZSwgSSB3YXMgaW4gaG9saWRheSBtb2RlLjwvYmxvY2txdW90
-ZT48ZGl2PsKgPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtc2l6
-ZTpzbWFsbCI+SGFwcHkgTmV3IFllYXIgdG9vLiBUaGFuayB5b3UgZm9yIHlvdXIgaGVscGZ1bCBh
-bnN3ZXIuPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtc2l6ZTpz
-bWFsbCI+PGJyPjwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1h
-cmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdiKDIwNCwyMDQs
-MjA0KTtwYWRkaW5nLWxlZnQ6MWV4Ij4KU28gZmFyLCBhbGwgbW9kZW1zIG9uIHRoaXMgcGxhbmV0
-IGhhdmUgaG9ub3JlZCB0aGUgZGVmYXVsdCBwcm9wZXJseS4uLjxicj48L2Jsb2NrcXVvdGU+PGRp
-dj7CoDwvZGl2PjxkaXY+PHNwYW4gY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNp
-emU6c21hbGwiPlNvcnJ5IGZvciBteSBtaXN1bmRlcnN0YW5kaW5nLiBJIHNob3VsZCBoYXZlIHJl
-YWQgdGhlIFJGQyBiZXR0ZXIgYnV0IHRoaXMgYXNwZWN0IGlzIGRlZmluZWTCoDwvc3Bhbj48L2Rp
-dj48ZGl2PjxzcGFuIGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1zaXplOnNtYWxs
-Ij5wcm9wZXJseSBvbmx5IGluIHRoZSBmb2xsb3dpbmcgY2xhdXNlIC3CoDwvc3Bhbj48L2Rpdj48
-ZGl2PjxzcGFuIGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1zaXplOnNtYWxsIj4m
-cXVvdDs8L3NwYW4+PHNwYW4gc3R5bGU9ImNvbG9yOnJnYigyMzIsMjMwLDIyNyk7Zm9udC1zaXpl
-OjEzLjMzMzNweCI+VGhlPHNwYW4gY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNp
-emU6c21hbGwiPiA8L3NwYW4+PC9zcGFuPjxzcGFuIHN0eWxlPSJjb2xvcjpyZ2IoMjMyLDIzMCwy
-MjcpO2ZvbnQtc2l6ZToxMy4zMzMzcHgiPkNvbmZpZ3VyYXRpb24gT3B0aW9uIGlzIHVzZWQgdG8g
-aW5mb3JtIHRoZSBwZWVyIHdoaWNoIGNvbnRyb2w8L3NwYW4+PC9kaXY+PHByZSBjbGFzcz0iZ21h
-aWwtbmV3cGFnZSIgc3R5bGU9ImZvbnQtc2l6ZToxMy4zMzMzcHg7bWFyZ2luLXRvcDowcHg7bWFy
-Z2luLWJvdHRvbTowcHg7YnJlYWstYmVmb3JlOnBhZ2U7Y29sb3I6cmdiKDIzMiwyMzAsMjI3KSI+
-Y2hhcmFjdGVycyBNVVNUIHJlbWFpbiBtYXBwZWQgd2hlbiB0aGUgcGVlciBzZW5kcyB0aGVtLjxz
-cGFuIGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1zaXplOnNtYWxsIj4mcXVvdDs8
-L3NwYW4+PC9wcmU+PHByZSBjbGFzcz0iZ21haWwtbmV3cGFnZSIgc3R5bGU9ImZvbnQtc2l6ZTox
-My4zMzMzcHg7bWFyZ2luLXRvcDowcHg7bWFyZ2luLWJvdHRvbTowcHg7YnJlYWstYmVmb3JlOnBh
-Z2U7Y29sb3I6cmdiKDIzMiwyMzAsMjI3KSI+PHNwYW4gY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
-eWxlPSJmb250LXNpemU6c21hbGwiPlNvIEkgaGF2ZSBtYW5hZ2VkIHRvIGZpbmQgdGhpcyBhZnRl
-ciB5b3VyIG1lc3NhZ2UuIFRoYW5rIHlvdS48L3NwYW4+PGJyPjwvcHJlPjxkaXY+wqA8L2Rpdj48
-YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHgg
-MC44ZXg7Ym9yZGVyLWxlZnQ6MXB4IHNvbGlkIHJnYigyMDQsMjA0LDIwNCk7cGFkZGluZy1sZWZ0
-OjFleCI+ClNvIHlvdSBoYXZlIHR3byBvcHRpb25zIGZvciBmaXhpbmcgdGhpczo8YnI+CsKgIMKg
-LSBNYWtlIEdBdFBQUCBuZWdvdGlhdGUgYSBkZWZhdWx0IEFDQ00gaW4gYWxsIGNhc2VzPHNwYW4g
-Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNpemU6c21hbGwiPjwvc3Bhbj48L2Js
-b2NrcXVvdGU+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBw
-eCAwcHggMHB4IDAuOGV4O2JvcmRlci1sZWZ0OjFweCBzb2xpZCByZ2IoMjA0LDIwNCwyMDQpO3Bh
-ZGRpbmctbGVmdDoxZXgiPgrCoCDCoC0gT3ZlcnJpZGUgdGhlIG5lZ290aWF0ZWQgQUNDTSAodXNp
-bmcgZ19hdF9oZGxjX3NldF9yZWN2X2FjY20gZm9yIHlvdXIgPGJyPgpwYXJ0aWN1bGFyIG1vZGVt
-LjwvYmxvY2txdW90ZT48ZGl2PsKgPC9kaXY+PGRpdj48c3BhbiBjbGFzcz0iZ21haWxfZGVmYXVs
-dCI+SSB0aGluayB0aGF0IHRoaXMgbW9kZW0gaXMgYnVnZ3kgYXMgeW91IGhhdmUgY2xlYXJseSBz
-aG93bi4gSSBhZ3JlZSB0aGF0IGl0IGlzIG5vdCBhIGdvb2QgaWRlYSB0bzwvc3Bhbj48L2Rpdj48
-ZGl2PjxzcGFuIGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1zaXplOnNtYWxsIj48
-c3BhbiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+ZG8gc29tZXRoaW5nIHdoaWNoIGRvZXMgbm90IGZv
-bGxvdyB0aGUgUkZDcyBmaW5lLiBCdXQsIEkgZmVlbCB0aGF0IHRoZSBkZWZhdWx0IHZhbHVlIGZv
-ciBBQ0NNPC9zcGFuPjwvc3Bhbj48L2Rpdj48ZGl2PjxzcGFuIGNsYXNzPSJnbWFpbF9kZWZhdWx0
-IiBzdHlsZT0iZm9udC1zaXplOnNtYWxsIj48c3BhbiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+aXMg
-bm90IHRoYXQgb25lIHdlIHNob3VsZCB1c2UuIEV4Y3VzZSBtZSBpZiBJIGFtIHRvbyBkaXJlY3Qg
-aGVyZSwgSSBhbSBub3QgYW4gZXhwZXJ0IGluIHRoaXMgZmllbGQ8L3NwYW4+PC9zcGFuPjwvZGl2
-PjxkaXY+PHNwYW4gY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNpemU6c21hbGwi
-PjxzcGFuIGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij5idXQgSSB0aGluayBpdCBpcyBiZXR0ZXIgZm9y
-IERURSB0byBzZW5kIGEgY29uZmlndXJhdGlvbiByZXF1ZXN0IHdpdGggQUNDTSA9IDB4MDAwMDAw
-MDA8L3NwYW4+PC9zcGFuPjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5
-bGU9ImZvbnQtc2l6ZTpzbWFsbCI+YXMgcHBwZCBkb2VzIGJlY2F1c2UgdGhpcyBhbGxvd3MgdXMg
-dG8gc2VuZCBtb3JlIGluZm9ybWF0aW9uIGluIHRoZSBzYW1lIG51bWJlciBvZiBieXRlcy48L2Rp
-dj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1zaXplOnNtYWxsIj5Xb3Vs
-ZCB5b3UgYWdyZWU/IElmIG5vdCBJIHdpbGwgb3ZlcnJpZGUgdGhlIG5lZ290aWF0ZWQgQUNDTSwg
-aWYgaXQgaXMgbGVmdCBkZWZhdWx0LCBmb3IgdGhpczwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
-ZmF1bHQiIHN0eWxlPSJmb250LXNpemU6c21hbGwiPmNoaW5lc2UgbW9kZW0gYmVjYXVzZSBJIGRv
-IG5vdCBmZWVsIHRoYXQgdGhleSBjb3VsZCB1cGRhdGUgdGhlIGZpcm13YXJlIHRvIGZ1bGZpbGwg
-dGhlIFJGQzwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNpemU6
-c21hbGwiPnJlcXVpcmVtZW50c8KgaW4gYSByZWFzb25hYmxlwqBhbW91bnQgb2YgdGltZSBpZiB0
-aGV5IGV2ZW4gd291bGQuwqBJIGRvIG5vdCB0aGluayB0aGF0IHRoZXnCoDwvZGl2PjxkaXYgY2xh
-c3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNpemU6c21hbGwiPndvdWxkIGV2ZW4gZmlu
-ZCB0aGlzIG5lY2Vzc2FyeSBpZiBJIGhhZCB0b2xkIHRoZW0uPC9kaXY+PC9kaXY+PGRpdj48YnI+
-PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1zaXplOnNt
-YWxsIj5UaGFuayB5b3UgdmVyeSBtdWNoIGZvciB5b3VyIGhlbHAgYW5kIHNvcnJ5IGZvciBiYWQg
-cGF0Y2hlcy4gSSB3aWxsIGZpeCB0aGVtIHNvb24uPC9kaXY+PC9kaXY+PGRpdiBjbGFzcz0iZ21h
-aWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtc2l6ZTpzbWFsbCI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9
-ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LXNpemU6c21hbGwiPkhhdmUgYSBncmVhdCBkYXku
-PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
-ZT0iZm9udC1zaXplOnNtYWxsIj5SZWdhcmRzLDwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1
-bHQiIHN0eWxlPSJmb250LXNpemU6c21hbGwiPlNlcmdlaS48L2Rpdj48YnI+PC9kaXY+PC9kaXY+
-PC9kaXY+Cg==
-
---===============1395563797408361307==--
+-Denis
+--===============9180554784997400109==--
 
