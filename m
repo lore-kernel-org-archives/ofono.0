@@ -1,117 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============9180554784997400109=="
+Content-Type: multipart/mixed; boundary="===============3823864804736927494=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Quectel EC200T USB: Problems with context activation
-Date: Wed, 06 Jan 2021 13:52:27 -0600
-Message-ID: <d9ecd585-4913-387c-eee0-92df034c3455@gmail.com>
-In-Reply-To: <CAFiQ677uwX44Hv-Xx9c+dH===O6rqz2k0GzMGRKfujbVp6-zKw@mail.gmail.com>
+From: s.e.golubtsov@gmail.com
+Subject: [PATCH v2] gsmdial: adding support for selection of authentication
+ method
+Date: Thu, 07 Jan 2021 23:40:15 +0300
+Message-ID: <20210107204017.3382-1-s.e.golubtsov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9180554784997400109==
+--===============3823864804736927494==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sergei,
+From: Sergei Golubtsov <s.e.golubtsov@gmail.com>
 
->     So far, all modems on this planet have honored the default properly...
-> =
+Selection capability for authentication method via a command line
+argument has been added
+---
+ gatchat/gsmdial.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-> Sorry for my misunderstanding. I should have read the RFC better but this=
- aspect =
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index 60e4f245..23f9c2d9 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -53,6 +53,7 @@ static gint option_cid =3D 0;
+ static gchar *option_apn =3D NULL;
+ static gint option_offmode =3D 0;
+ static gboolean option_legacy =3D FALSE;
++static gchar *option_auth_method;
+ static gchar *option_username =3D NULL;
+ static gchar *option_password =3D NULL;
+ static gchar *option_pppdump =3D NULL;
+@@ -369,6 +370,17 @@ static void connect_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	}
+ 	g_at_ppp_set_debug(ppp, gsmdial_debug, "PPP");
+ =
 
-> is defined
-> properly only in the following clause -
-> "TheConfiguration Option is used to inform the peer which control
-> =
++	GAtPPPAuthMethod auth_method;
++
++	if (strcmp(option_auth_method, "PAP") =3D=3D 0)
++		auth_method =3D G_AT_PPP_AUTH_METHOD_PAP;
++	else if (strcmp(option_auth_method, "NONE") =3D=3D 0)
++		auth_method =3D G_AT_PPP_AUTH_METHOD_NONE;
++	else
++		auth_method =3D G_AT_PPP_AUTH_METHOD_CHAP;
++
++	g_at_ppp_set_auth_method(ppp, auth_method);
++
+ 	g_at_ppp_set_credentials(ppp, option_username, option_password);
+ =
 
-> characters MUST remain mapped when the peer sends them."
-> =
+ 	g_at_ppp_set_acfc_enabled(ppp, option_acfc);
+@@ -677,6 +689,10 @@ static GOptionEntry options[] =3D {
+ 				"Use ATD*99***<cid>#" },
+ 	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
+ 				"Use only ATD*99" },
++	{ "auth", 'A', 0, G_OPTION_ARG_STRING, &option_auth_method,
++				"Specify the authentication method for the PPP"
++				" connection: CHAP, PAP or NONE. CHAP is used"
++				" by default." },
+ 	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
+ 				"Specify PPP username" },
+ 	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
+-- =
 
-> So I have managed to find this after your message. Thank you.
-> =
+2.17.1
 
->     So you have two options for fixing this:
->      =C2=A0 =C2=A0- Make GAtPPP negotiate a default ACCM in all cases
-> =
-
->      =C2=A0 =C2=A0- Override the negotiated ACCM (using g_at_hdlc_set_rec=
-v_accm for your
->     particular modem.
-> =
-
-> I think that this modem is buggy as you have clearly shown. I agree that =
-it is =
-
-> not a good idea to
-> do something which does not follow the RFCs fine. But, I feel that the de=
-fault =
-
-
-I don't remember why we chose not to negotiate the RX ACCM.  Things may hav=
-e =
-
-worked wonderfully with the defaults, so maybe we just decided not to touch=
- it.
-
-> value for ACCM
-> is not that one we should use. Excuse me if I am too direct here, I am no=
-t an =
-
-> expert in this field
-> but I think it is better for DTE to send a configuration request with ACC=
-M =3D =
-
-> 0x00000000
-> as pppd does because this allows us to send more information in the same =
-number =
-
-> of bytes.
-> Would you agree? If not I will override the negotiated ACCM, if it is lef=
-t =
-
-
-I think that makes sense.
-
-> default, for this
-> chinese modem because I do not feel that they could update the firmware t=
-o =
-
-> fulfill the RFC
-> requirements=C2=A0in a reasonable=C2=A0amount of time if they even would.=
-=C2=A0I do not think =
-
-> that they
-> would even find this necessary if I had told them.
-
-Well, it isn't a 'requirement' to use the defaults.  What happened in this =
-
-particular case is that we didn't explicitly tell the modem side what RX AC=
-CM we =
-
-want, and the modem firmware didn't use the defined default values.
-
-I think it should be safe for us to use an ACCM of 0 instead of the RFC def=
-ault. =
-
-  But just in case, we should probably provide a way for the driver to over=
-ride =
-
-it if needed.
-
-So what I would do is:
-
-- Set REQ_OPTION_ACCM in the lcp init somewhere.  Set the initial value to =
-be 0 =
-
-as you suggest.
-- Add g_at_ppp_set_accm() in order to allow drivers to provide a custom ACC=
-M to =
-
-negotiate, if needed.
-
-Regards,
--Denis
---===============9180554784997400109==--
+--===============3823864804736927494==--
 
