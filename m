@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7584861919233853324=="
+Content-Type: multipart/mixed; boundary="===============8472841308472214715=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] ppp: using RX ACCM = 0 by default
-Date: Thu, 07 Jan 2021 23:20:25 -0600
-Message-ID: <2fdea865-ff1d-98a8-2a9b-f70bea28d017@gmail.com>
-In-Reply-To: <20210107204017.3382-2-s.e.golubtsov@gmail.com>
+Subject: Re: [PATCH v2] quectel: adding support for the Quectel EC200 USB
+ modem series
+Date: Thu, 07 Jan 2021 23:26:18 -0600
+Message-ID: <a76570b4-c920-572c-6be5-b5f6f7211990@gmail.com>
+In-Reply-To: <20210107204017.3382-3-s.e.golubtsov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7584861919233853324==
+--===============8472841308472214715==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,17 +20,13 @@ On 1/7/21 2:40 PM, s.e.golubtsov(a)gmail.com wrote:
 > From: Sergei Golubtsov <s.e.golubtsov@gmail.com>
 > =
 
-> Some modems such as Quectel EC200T do not honor the default value for
-> the Async-Control-Character-Map (ACCM) configuration option defined in
-> RFC 1548 6.2 as 0xffffffff. This patch suggests to use RX ACCM =3D 0 for
-> Ofono by default as pppd does for instance. This will reduce PPP data
-> overhead as well.
+> Support for the Quectel EC200 USB modem series has been added. The model
+> identification AT command has been added as the first step in the
+> communication with a Quectel USB modem.
 > ---
->   gatchat/gatppp.c  |  5 +++++
->   gatchat/gatppp.h  |  1 +
->   gatchat/ppp.h     |  1 +
->   gatchat/ppp_lcp.c | 15 ++++++++++++++-
->   4 files changed, 21 insertions(+), 1 deletion(-)
+>   plugins/quectel.c | 128 +++++++++++++++++++++++++++++-----------------
+>   plugins/udevng.c  |   6 ++-
+>   2 files changed, 85 insertions(+), 49 deletions(-)
 > =
 
 
@@ -38,5 +35,5 @@ Applied, thanks.
 Regards,
 -Denis
 
---===============7584861919233853324==--
+--===============8472841308472214715==--
 
