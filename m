@@ -1,39 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8472841308472214715=="
+Content-Type: multipart/mixed; boundary="===============5784417363480523386=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] quectel: adding support for the Quectel EC200 USB
- modem series
-Date: Thu, 07 Jan 2021 23:26:18 -0600
-Message-ID: <a76570b4-c920-572c-6be5-b5f6f7211990@gmail.com>
-In-Reply-To: <20210107204017.3382-3-s.e.golubtsov@gmail.com>
+From: Sergey Matyukevich <geomatsi@gmail.com>
+Subject: [RFC PATCH 0/2] gemalto: netmon driver
+Date: Sun, 10 Jan 2021 22:44:03 +0300
+Message-ID: <20210110194405.1994055-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8472841308472214715==
+--===============5784417363480523386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sergei,
+Hello Denis and all,
 
-On 1/7/21 2:40 PM, s.e.golubtsov(a)gmail.com wrote:
-> From: Sergei Golubtsov <s.e.golubtsov@gmail.com>
-> =
+This patch series implements netmon driver for gemalto modems that are
+able to provide basic measurements using AT+CQS and AT^SMONI commands.
 
-> Support for the Quectel EC200 USB modem series has been added. The model
-> identification AT command has been added as the first step in the
-> communication with a Quectel USB modem.
-> ---
->   plugins/quectel.c | 128 +++++++++++++++++++++++++++++-----------------
->   plugins/udevng.c  |   6 ++-
->   2 files changed, 85 insertions(+), 49 deletions(-)
-> =
-
-
-Applied, thanks.
+This patch series is intendedly marked as RFC. In addition to general
+feedback for this v1 I would like to clarify the right way to handle
+negative values that can be returned by modem. For instance, this
+is the case for the values measured in dBm including EC/n0 and RSCP.
+Currently such values are discarded by CELL_INFO_DICT_APPEND macro.
 
 Regards,
--Denis
+Sergey
 
---===============8472841308472214715==--
+
+Sergey Matyukevich (2):
+  gemalto: add netmon driver
+  plugin: gemalto: enable netmon
+
+ Makefile.am                         |   3 +-
+ drivers/gemaltomodem/gemaltomodem.c |   2 +
+ drivers/gemaltomodem/gemaltomodem.h |   3 +
+ drivers/gemaltomodem/netmon.c       | 609 ++++++++++++++++++++++++++++
+ plugins/gemalto.c                   |   6 +
+ 5 files changed, 622 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/gemaltomodem/netmon.c
+
+--===============5784417363480523386==--
 
