@@ -1,58 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============5361689448325672493=="
+Content-Type: multipart/mixed; boundary="===============8027483754740040642=="
 MIME-Version: 1.0
-From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: [RFC PATCH 2/2] plugin: gemalto: enable netmon
-Date: Sun, 10 Jan 2021 22:44:05 +0300
-Message-ID: <20210110194405.1994055-3-geomatsi@gmail.com>
-In-Reply-To: <20210110194405.1994055-1-geomatsi@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 1/2] gemalto: add netmon driver
+Date: Mon, 11 Jan 2021 13:28:58 -0600
+Message-ID: <2b75d01b-123c-65d4-cdbd-01131ed8de9e@gmail.com>
+In-Reply-To: <20210110194405.1994055-2-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5361689448325672493==
+--===============8027483754740040642==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Enable netmon functionality for Gemalto ELS81x modems.
----
- plugins/gemalto.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+Hi Sergey,
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 28ee3aff..135e2d26 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -48,6 +48,7 @@
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
- #include <ofono/location-reporting.h>
-+#include <ofono/netmon.h>
- =
+On 1/10/21 1:44 PM, Sergey Matyukevich wrote:
+> Implement network monitoring driver for gemalto modems that
+> are able to provide serving cell information and basic
+> measurements using AT+CQS and AT^SMONI commands.
+> ---
+>   Makefile.am                         |   3 +-
+>   drivers/gemaltomodem/gemaltomodem.c |   2 +
+>   drivers/gemaltomodem/gemaltomodem.h |   3 +
+>   drivers/gemaltomodem/netmon.c       | 609 ++++++++++++++++++++++++++++
+>   4 files changed, 616 insertions(+), 1 deletion(-)
+>   create mode 100644 drivers/gemaltomodem/netmon.c
+> =
 
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
-@@ -622,6 +623,7 @@ static void gemalto_post_sim(struct ofono_modem *modem)
- static void gemalto_post_online(struct ofono_modem *modem)
- {
- 	struct gemalto_data *data =3D ofono_modem_get_data(modem);
-+	const char *model =3D ofono_modem_get_string(modem, "Model");
- =
 
- 	DBG("%p", modem);
- =
+<snip>
 
-@@ -634,6 +636,10 @@ static void gemalto_post_online(struct ofono_modem *mo=
-dem)
- 	ofono_call_settings_create(modem, 0, "atmodem", data->app);
- 	ofono_call_meter_create(modem, 0, "atmodem", data->app);
- 	ofono_call_barring_create(modem, 0, "atmodem", data->app);
-+
-+	if (!g_strcmp0(model, GEMALTO_MODEL_ELS81x))
-+		ofono_netmon_create(modem, OFONO_VENDOR_GEMALTO,
-+					"gemaltomodem", data->app);
- }
- =
+> +static int gemalto_netmon_probe(struct ofono_netmon *netmon,
+> +					unsigned int vendor, void *user)
+> +{
+> +	GAtChat *chat =3D user;
+> +	struct netmon_driver_data *nmd;
+> +
+> +	DBG("gemalto netmon probe");
+> +
+> +	nmd =3D g_try_new0(struct netmon_driver_data, 1);
+> +	if (nmd =3D=3D NULL)
+> +		return -ENOMEM;
 
- static struct ofono_modem_driver gemalto_driver =3D {
---===============5361689448325672493==--
+Feel free to use g_new0.  We have given up using g_try_new0 since these err=
+ors =
+
+don't really occur on Linux.
+
+> +
+> +	nmd->chat =3D g_at_chat_clone(chat);
+> +
+> +	ofono_netmon_set_data(netmon, nmd);
+> +
+> +	g_idle_add(gemalto_delayed_register, netmon);
+> +
+> +	return 0;
+> +}
+
+Other than this, LGTM.
+
+Regards,
+-Denis
+--===============8027483754740040642==--
 
