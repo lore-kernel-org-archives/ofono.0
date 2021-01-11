@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8027483754740040642=="
+Content-Type: multipart/mixed; boundary="===============5677000123472467948=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 1/2] gemalto: add netmon driver
-Date: Mon, 11 Jan 2021 13:28:58 -0600
-Message-ID: <2b75d01b-123c-65d4-cdbd-01131ed8de9e@gmail.com>
-In-Reply-To: <20210110194405.1994055-2-geomatsi@gmail.com>
+Subject: Re: [RFC PATCH 0/2] gemalto: netmon driver
+Date: Mon, 11 Jan 2021 13:56:22 -0600
+Message-ID: <d88b88b9-c250-5dd9-f361-ea348704392f@gmail.com>
+In-Reply-To: <20210110194405.1994055-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8027483754740040642==
+--===============5677000123472467948==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,51 +16,47 @@ Content-Transfer-Encoding: quoted-printable
 Hi Sergey,
 
 On 1/10/21 1:44 PM, Sergey Matyukevich wrote:
-> Implement network monitoring driver for gemalto modems that
-> are able to provide serving cell information and basic
-> measurements using AT+CQS and AT^SMONI commands.
-> ---
->   Makefile.am                         |   3 +-
->   drivers/gemaltomodem/gemaltomodem.c |   2 +
->   drivers/gemaltomodem/gemaltomodem.h |   3 +
->   drivers/gemaltomodem/netmon.c       | 609 ++++++++++++++++++++++++++++
->   4 files changed, 616 insertions(+), 1 deletion(-)
->   create mode 100644 drivers/gemaltomodem/netmon.c
+> Hello Denis and all,
 > =
 
+> This patch series implements netmon driver for gemalto modems that are
+> able to provide basic measurements using AT+CQS and AT^SMONI commands.
+> =
 
-<snip>
+> This patch series is intendedly marked as RFC. In addition to general
 
-> +static int gemalto_netmon_probe(struct ofono_netmon *netmon,
-> +					unsigned int vendor, void *user)
-> +{
-> +	GAtChat *chat =3D user;
-> +	struct netmon_driver_data *nmd;
-> +
-> +	DBG("gemalto netmon probe");
-> +
-> +	nmd =3D g_try_new0(struct netmon_driver_data, 1);
-> +	if (nmd =3D=3D NULL)
-> +		return -ENOMEM;
+I guess you mean intentionally here...
 
-Feel free to use g_new0.  We have given up using g_try_new0 since these err=
-ors =
+> feedback for this v1 I would like to clarify the right way to handle
+> negative values that can be returned by modem. For instance, this
 
-don't really occur on Linux.
+So the short answer is: You're not supposed to even have negative numbers i=
+n AT =
 
-> +
-> +	nmd->chat =3D g_at_chat_clone(chat);
-> +
-> +	ofono_netmon_set_data(netmon, nmd);
-> +
-> +	g_idle_add(gemalto_delayed_register, netmon);
-> +
-> +	return 0;
-> +}
+commands.  And since oFono follows 27.007, which is itself based on AT comm=
+ands, =
 
-Other than this, LGTM.
+negative numbers do not really exist at the API level.
+
+Refer to ITU v.250 Section 5.4.2.1 "Numeric constants".  Strings are also =
+
+supposed to be formatted in a certain way, which the firmware isn't doing =
+
+properly either...  The fact that you have to resort to using =
+
+next_unquoted_string is kind of telling.
+
+> is the case for the values measured in dBm including EC/n0 and RSCP.
+> Currently such values are discarded by CELL_INFO_DICT_APPEND macro.
+
+I would guess your best bet would be to re-scale from what Gemalto firmware =
+
+reports into something that 27.007 recommends.  You may have to refer to 27=
+.007, =
+
+Section 8.69 to see what the scale is according to 3GPP.
 
 Regards,
 -Denis
---===============8027483754740040642==--
+--===============5677000123472467948==--
 
