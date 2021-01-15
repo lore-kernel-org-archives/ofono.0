@@ -1,59 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============9031808432101538734=="
+Content-Type: multipart/mixed; boundary="===============9110840648869579239=="
 MIME-Version: 1.0
 From: Sergey Matyukevich <geomatsi@gmail.com>
-Subject: Re: [RFC PATCH 0/2] gemalto: netmon driver
-Date: Tue, 12 Jan 2021 00:08:35 +0300
-Message-ID: <X/y+U7tgDxowIfyc@curiosity>
-In-Reply-To: <d88b88b9-c250-5dd9-f361-ea348704392f@gmail.com>
+Subject: [PATCH v2 0/3]  gemalto: netmon driver
+Date: Fri, 15 Jan 2021 19:25:44 +0300
+Message-ID: <20210115162547.17156-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9031808432101538734==
+--===============9110840648869579239==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Hello Denis and all,
 
-> > This patch series implements netmon driver for gemalto modems that are
-> > able to provide basic measurements using AT+CQS and AT^SMONI commands.
-> > =
-
-> > This patch series is intendedly marked as RFC. In addition to general
-> =
-
-> I guess you mean intentionally here...
-> =
-
-> > feedback for this v1 I would like to clarify the right way to handle
-> > negative values that can be returned by modem. For instance, this
-> =
-
-> So the short answer is: You're not supposed to even have negative numbers=
- in
-> AT commands.  And since oFono follows 27.007, which is itself based on AT
-> commands, negative numbers do not really exist at the API level.
-> =
-
-> Refer to ITU v.250 Section 5.4.2.1 "Numeric constants".  Strings are also
-> supposed to be formatted in a certain way, which the firmware isn't doing
-> properly either...  The fact that you have to resort to using
-> next_unquoted_string is kind of telling.
-> =
-
-> > is the case for the values measured in dBm including EC/n0 and RSCP.
-> > Currently such values are discarded by CELL_INFO_DICT_APPEND macro.
-> =
-
-> I would guess your best bet would be to re-scale from what Gemalto firmwa=
-re
-> reports into something that 27.007 recommends.  You may have to refer to
-> 27.007, Section 8.69 to see what the scale is according to 3GPP.
-
-Thanks a lot for pointing me in the right direction. I will get back
-with v2 once I introduce the suggested changes.
+This patch series implements netmon driver for gemalto modems that are
+able to provide basic measurements using AT+CQS and AT^SMONI commands.
+For now netmon driver is enabled for ELS81x modems.
 
 Regards,
 Sergey
---===============9031808432101538734==--
+
+v1 -> v2
+
+- use g_new0 instead of g_try_new0
+- remove rssi scaling: keep using 27.007 range
+- scale modem measurement reports to ranges recommended by 27.007
+
+Sergey Matyukevich (3):
+  gemalto: add netmon driver
+  plugin: gemalto: enable netmon
+  gemalto: netmon measurements scaling
+
+ Makefile.am                         |   3 +-
+ drivers/gemaltomodem/gemaltomodem.c |   2 +
+ drivers/gemaltomodem/gemaltomodem.h |   3 +
+ drivers/gemaltomodem/netmon.c       | 649 ++++++++++++++++++++++++++++
+ plugins/gemalto.c                   |   6 +
+ 5 files changed, 662 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/gemaltomodem/netmon.c
+
+--===============9110840648869579239==--
 
