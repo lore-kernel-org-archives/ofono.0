@@ -1,37 +1,20 @@
-Content-Type: multipart/mixed; boundary="===============5092141345100633046=="
+Content-Type: multipart/mixed; boundary="===============5790211051594321522=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH phonesim 6/7] Port to Qt 6
-Date: Mon, 25 Jan 2021 13:21:29 -0600
-Message-ID: <1fa4bbf2-2206-b73e-a187-4a6cd414ae3d@gmail.com>
-In-Reply-To: <20210118164621.52831-7-jbb.prv@gmx.de>
+From: kyliewwoods@gmail.com
+Subject: Re: Application of using the best VPN for Mac
+Date: Fri, 05 Feb 2021 00:42:08 +0000
+Message-ID: <20210205004208.2958.74762@ml01.vlan13.01.org>
+In-Reply-To: <20200604163021.2851.87293@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5092141345100633046==
+--===============5790211051594321522==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonah,
-
-On 1/18/21 10:46 AM, Jonah Br=C3=BCchert wrote:
-> ---
->   CMakeLists.txt              | 10 +++++++---
->   src/CMakeLists.txt          |  6 +++++-
->   src/control.cpp             |  8 +++-----
->   src/hardwaremanipulator.cpp |  1 -
->   src/phonesim.cpp            |  2 +-
->   src/qsimcommand.cpp         |  2 +-
->   src/qwsppdu.cpp             | 12 ++++++------
->   7 files changed, 23 insertions(+), 18 deletions(-)
-> =
-
-
-Can the code changes be made standalone, without the build-system bits?
-
-Regards,
--Denis
-
---===============5092141345100633046==--
+Really I am using this  https://iprovpn.com/download/mac-vpn for my mac mac=
+hine it's running pretty well and good without using any lack or error alwa=
+ys feel safe no one can trace your internet access that's a great thing.
+--===============5790211051594321522==--
 
