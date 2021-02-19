@@ -1,88 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============1884422335897709424=="
+Content-Type: multipart/mixed; boundary="===============2650191605909680052=="
 MIME-Version: 1.0
 From: Alexey Andreyev <aa13q@ya.ru>
-Subject: [PATCH] qmimodem: Add USSD indication support
-Date: Fri, 19 Feb 2021 18:21:01 +0300
-Message-ID: <187961613747980@mail.yandex.ru>
+Subject: Re: [PATCH] qmimodem: Add USSD indication support
+Date: Fri, 19 Feb 2021 18:30:32 +0300
+Message-ID: <8fe191b9-0c3b-45ad-8701-d5311b64b3a6@ya.ru>
+In-Reply-To: <187961613747980@mail.yandex.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1884422335897709424==
+--===============2650191605909680052==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Sorry for a noob html format, retrying from a custom client as plaintext:
 
---===============1884422335897709424==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.htm"
+Hello! My first patch, feel free to criticize :) This is to handle the USSD =
 
-PGRpdj48ZGl2PkhlbGxvISBNeSBmaXJzdCBwYXRjaCwgZmVlbCBmcmVlIHRvIGNyaXRpY2l6ZSA6
-KSBUaGlzIGlzIHRvIGhhbmRsZSB0aGUgVVNTRCBJbmRpY2F0aW9uIG1lc3NhZ2VzIHdpdGggdGhl
-IHFtaW1vZGVtIGRyaXZlci48L2Rpdj48ZGl2PkhpZ2hlci1sZXZlbCBLREUgUGxhc21hIE1vYmls
-ZSBpc3N1ZTogaHR0cHM6Ly9pbnZlbnQua2RlLm9yZy9wbGFzbWEtbW9iaWxlL3BsYXNtYS1kaWFs
-ZXIvLS9tZXJnZV9yZXF1ZXN0cy8zMzwvZGl2PjxkaXY+VGVzdGVkIHdpdGggUXVlY3RlbCBFRzI1
-LUcgKFBpbmVwaG9uZSBCSCksIGxvb2tzIGxpa2Ugd29ya2luZywgSSdtIGFibGUgdG8gcmVjZWl2
-ZSB0aGUgZXhwZWN0ZWQgUU1JIFVTU0QgSW5kaWNhdGlvbiBtZXNzYWdlcy48L2Rpdj48ZGl2PsKg
-PC9kaXY+PGRpdj4tLS08L2Rpdj48ZGl2PkZyb20gMmYwNDFlNmJhMTgzYTJmMmEzMzA5ZTEzOWFk
-ZWYzZDExNGJkYzg1YiBNb24gU2VwIDE3IDAwOjAwOjAwIDIwMDE8L2Rpdj48ZGl2PkZyb206IEFs
-ZXhleSBBbmRyZXlldiAmbHQ7YWExM3FAeWEucnUmZ3Q7PC9kaXY+PGRpdj5EYXRlOiBGcmksIDE5
-IEZlYiAyMDIxIDE1OjQ3OjQyICswMzAwPC9kaXY+PGRpdj5TdWJqZWN0OiBbUEFUQ0hdIHFtaW1v
-ZGVtOiBBZGQgVVNTRCBpbmRpY2F0aW9uIHN1cHBvcnQ8L2Rpdj48ZGl2PsKgPC9kaXY+PGRpdj5I
-YW5kbGUgVVNTRCBRTUkgaW5kaWNhdGlvbiBtZXNzYWdlcy48L2Rpdj48ZGl2PkFkZCBzdXBwb3J0
-IGZvciBVQ1MyIFVTUyBEYXRhIGNvZGluZyBzY2hlbWUuPC9kaXY+PGRpdj5DaGVjayBmb3IgVXNl
-ciBBY3Rpb24gVExWIHR5cGUuPC9kaXY+PGRpdj4tLS08L2Rpdj48ZGl2PmRyaXZlcnMvcW1pbW9k
-ZW0vdXNzZC5jIHwgNDUgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKys8
-L2Rpdj48ZGl2PjEgZmlsZSBjaGFuZ2VkLCA0NSBpbnNlcnRpb25zKCspPC9kaXY+PGRpdj7CoDwv
-ZGl2PjxkaXY+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvcW1pbW9kZW0vdXNzZC5jIGIvZHJpdmVycy9x
-bWltb2RlbS91c3NkLmM8L2Rpdj48ZGl2PmluZGV4IDFlNjEzMDMyLi4xODlkZTViYyAxMDA2NDQ8
-L2Rpdj48ZGl2Pi0tLSBhL2RyaXZlcnMvcW1pbW9kZW0vdXNzZC5jPC9kaXY+PGRpdj4rKysgYi9k
-cml2ZXJzL3FtaW1vZGVtL3Vzc2QuYzwvZGl2PjxkaXY+QEAgLTY3LDYgKzY3LDEyIEBAIHN0YXRp
-YyBpbnQgY29udmVydF9xbWlfZGNzX2dzbV9kY3MoaW50IHFtaV9kY3MsIGludCAqZ3NtX2Rjcyk8
-L2Rpdj48ZGl2PmNhc2UgUU1JX1VTU0RfRENTX0FTQ0lJOjwvZGl2PjxkaXY+KmdzbV9kY3MgPSBV
-U1NEX0RDU184QklUOzwvZGl2PjxkaXY+YnJlYWs7PC9kaXY+PGRpdj4rIGNhc2UgUU1JX1VTU0Rf
-RENTXzhCSVQ6PC9kaXY+PGRpdj4rICpnc21fZGNzID0gVVNTRF9EQ1NfOEJJVDs8L2Rpdj48ZGl2
-PisgYnJlYWs7PC9kaXY+PGRpdj4rIGNhc2UgUU1JX1VTU0RfRENTX1VDUzI6PC9kaXY+PGRpdj4r
-ICpnc21fZGNzID0gVVNTRF9EQ1NfVUNTMjs8L2Rpdj48ZGl2PisgYnJlYWs7PC9kaXY+PGRpdj5k
-ZWZhdWx0OjwvZGl2PjxkaXY+cmV0dXJuIDE7PC9kaXY+PGRpdj59PC9kaXY+PGRpdj5AQCAtNzQs
-NiArODAsNDIgQEAgc3RhdGljIGludCBjb252ZXJ0X3FtaV9kY3NfZ3NtX2RjcyhpbnQgcW1pX2Rj
-cywgaW50ICpnc21fZGNzKTwvZGl2PjxkaXY+cmV0dXJuIDA7PC9kaXY+PGRpdj59PC9kaXY+PGRp
-dj7CoDwvZGl2PjxkaXY+K3N0YXRpYyB2b2lkIGFzeW5jX2luZChzdHJ1Y3QgcW1pX3Jlc3VsdCAq
-cmVzdWx0LCB2b2lkICp1c2VyX2RhdGEpPC9kaXY+PGRpdj4rezwhLS0gLS0+PC9kaXY+PGRpdj4r
-IHN0cnVjdCBvZm9ub191c3NkICp1c3NkID0gdXNlcl9kYXRhOzwvZGl2PjxkaXY+KyBjb25zdCBz
-dHJ1Y3QgcW1pX3Vzc2RfZGF0YSAqcW1pX3Vzc2Q7PC9kaXY+PGRpdj4rIHVpbnQ4X3QgdXNlcl9h
-Y3Rpb25fcmVxdWlyZWQgPSAwOzwvZGl2PjxkaXY+KyBpbnQgbm90aWZ5X3N0YXR1cyA9IE9GT05P
-X1VTU0RfU1RBVFVTX05PVElGWTs8L2Rpdj48ZGl2PisgdWludDE2X3QgbGVuOzwvZGl2PjxkaXY+
-KyBpbnQgZ3NtX2Rjczs8L2Rpdj48ZGl2Pis8L2Rpdj48ZGl2PisgREJHKCIiKTs8L2Rpdj48ZGl2
-Pis8L2Rpdj48ZGl2PisgcW1pX3Vzc2QgPSBxbWlfcmVzdWx0X2dldChyZXN1bHQsIFFNSV9WT0lD
-RV9QQVJBTV9VU1NEX0lORF9EQVRBLCAmYW1wO2xlbik7PC9kaXY+PGRpdj4rIGlmIChxbWlfdXNz
-ZCA9PSBOVUxMKTwvZGl2PjxkaXY+KyByZXR1cm47PC9kaXY+PGRpdj4rPC9kaXY+PGRpdj4rIGlm
-ICh2YWxpZGF0ZV91c3NkX2RhdGEocW1pX3Vzc2QsIGxlbikpPC9kaXY+PGRpdj4rIGdvdG8gZXJy
-b3I7PC9kaXY+PGRpdj4rPC9kaXY+PGRpdj4rIGlmIChjb252ZXJ0X3FtaV9kY3NfZ3NtX2Rjcyhx
-bWlfdXNzZC0mZ3Q7ZGNzLCAmYW1wO2dzbV9kY3MpKTwvZGl2PjxkaXY+KyBnb3RvIGVycm9yOzwv
-ZGl2PjxkaXY+KzwvZGl2PjxkaXY+KyBpZiAocW1pX3Jlc3VsdF9nZXRfdWludDgocmVzdWx0LCBR
-TUlfVk9JQ0VfUEFSQU1fVVNTRF9JTkRfVVNFUl9BQ1RJT04sPC9kaXY+PGRpdj4rICZhbXA7dXNl
-cl9hY3Rpb25fcmVxdWlyZWQpKSB7PCEtLSAtLT48L2Rpdj48ZGl2PisgaWYgKHVzZXJfYWN0aW9u
-X3JlcXVpcmVkID09IFFNSV9VU1NEX1VTRVJfQUNUSU9OX1JFUVVJUkVEKSB7PCEtLSAtLT48L2Rp
-dj48ZGl2Pisgbm90aWZ5X3N0YXR1cyA9IE9GT05PX1VTU0RfU1RBVFVTX0FDVElPTl9SRVFVSVJF
-RDs8L2Rpdj48ZGl2PisgfTwvZGl2PjxkaXY+KyB9PC9kaXY+PGRpdj4rPC9kaXY+PGRpdj4rIG9m
-b25vX3Vzc2Rfbm90aWZ5KHVzc2QsIG5vdGlmeV9zdGF0dXMsIGdzbV9kY3MsPC9kaXY+PGRpdj4r
-IHFtaV91c3NkLSZndDtkYXRhLCBxbWlfdXNzZC0mZ3Q7bGVuZ3RoKTs8L2Rpdj48ZGl2PisgcmV0
-dXJuOzwvZGl2PjxkaXY+KzwvZGl2PjxkaXY+K2Vycm9yOjwvZGl2PjxkaXY+KyBvZm9ub191c3Nk
-X25vdGlmeSh1c3NkLCBPRk9OT19VU1NEX1NUQVRVU19URVJNSU5BVEVELCAwLCBOVUxMLCAwKTs8
-L2Rpdj48ZGl2Pit9PC9kaXY+PGRpdj4rPC9kaXY+PGRpdj5zdGF0aWMgdm9pZCBhc3luY19vcmln
-X2luZChzdHJ1Y3QgcW1pX3Jlc3VsdCAqcmVzdWx0LCB2b2lkICp1c2VyX2RhdGEpPC9kaXY+PGRp
-dj57PCEtLSAtLT48L2Rpdj48ZGl2PnN0cnVjdCBvZm9ub191c3NkICp1c3NkID0gdXNlcl9kYXRh
-OzwvZGl2PjxkaXY+QEAgLTE0MSw2ICsxODMsOSBAQCBzdGF0aWMgdm9pZCBjcmVhdGVfdm9pY2Vf
-Y2Ioc3RydWN0IHFtaV9zZXJ2aWNlICpzZXJ2aWNlLCB2b2lkICp1c2VyX2RhdGEpPC9kaXY+PGRp
-dj7CoDwvZGl2PjxkaXY+ZGF0YS0mZ3Q7dm9pY2UgPSBxbWlfc2VydmljZV9yZWYoc2VydmljZSk7
-PC9kaXY+PGRpdj7CoDwvZGl2PjxkaXY+KyBxbWlfc2VydmljZV9yZWdpc3RlcihkYXRhLSZndDt2
-b2ljZSwgUU1JX1ZPSUNFX1VTU0RfSU5ELDwvZGl2PjxkaXY+KyBhc3luY19pbmQsIHVzc2QsIE5V
-TEwpOzwvZGl2PjxkaXY+KzwvZGl2PjxkaXY+cW1pX3NlcnZpY2VfcmVnaXN0ZXIoZGF0YS0mZ3Q7
-dm9pY2UsIFFNSV9WT0lDRV9BU1lOQ19PUklHX1VTU0QsPC9kaXY+PGRpdj5hc3luY19vcmlnX2lu
-ZCwgdXNzZCwgTlVMTCk7PC9kaXY+PGRpdj7CoDwvZGl2PjxkaXY+LS08L2Rpdj48ZGl2PjIuMzAu
-MDwvZGl2PjxkaXY+wqA8L2Rpdj48L2Rpdj4=
---===============1884422335897709424==--
+Indication messages with the qmimodem driver.
+Higher-level KDE Plasma Mobile issue: =
+
+https://invent.kde.org/plasma-mobile/plasma-dialer/-/merge_requests/33
+Tested with Quectel EG25-G (Pinephone BH), looks like working, I'm able to =
+
+receive the expected QMI USSD Indication messages.
+
+---
+From 2f041e6ba183a2f2a3309e139adef3d114bdc85b Mon Sep 17 00:00:00 2001
+From: Alexey Andreyev <aa13q@ya.ru>
+Date: Fri, 19 Feb 2021 15:47:42 +0300
+Subject: [PATCH] qmimodem: Add USSD indication support
+
+Handle USSD QMI indication messages.
+Add support for UCS2 USS Data coding scheme.
+Check for User Action TLV type.
+---
+ drivers/qmimodem/ussd.c | 45 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
+
+diff --git a/drivers/qmimodem/ussd.c b/drivers/qmimodem/ussd.c
+index 1e613032..189de5bc 100644
+--- a/drivers/qmimodem/ussd.c
++++ b/drivers/qmimodem/ussd.c
+@@ -67,6 +67,12 @@ static int convert_qmi_dcs_gsm_dcs(int qmi_dcs, int =
+
+*gsm_dcs)
+ 	case QMI_USSD_DCS_ASCII:
+ 		*gsm_dcs =3D USSD_DCS_8BIT;
+ 		break;
++	case QMI_USSD_DCS_8BIT:
++			*gsm_dcs =3D USSD_DCS_8BIT;
++			break;
++	case QMI_USSD_DCS_UCS2:
++			*gsm_dcs =3D USSD_DCS_UCS2;
++			break;
+ 	default:
+ 		return 1;
+ 	}
+@@ -74,6 +80,42 @@ static int convert_qmi_dcs_gsm_dcs(int qmi_dcs, int =
+
+*gsm_dcs)
+ 	return 0;
+ }
+ =
+
++static void async_ind(struct qmi_result *result, void *user_data)
++{
++	struct ofono_ussd *ussd =3D user_data;
++	const struct qmi_ussd_data *qmi_ussd;
++	uint8_t user_action_required =3D 0;
++	int notify_status =3D OFONO_USSD_STATUS_NOTIFY;
++	uint16_t len;
++	int gsm_dcs;
++
++	DBG("");
++
++	qmi_ussd =3D qmi_result_get(result, QMI_VOICE_PARAM_USSD_IND_DATA, &len);
++	if (qmi_ussd =3D=3D NULL)
++			return;
++
++	if (validate_ussd_data(qmi_ussd, len))
++			goto error;
++
++	if (convert_qmi_dcs_gsm_dcs(qmi_ussd->dcs, &gsm_dcs))
++			goto error;
++
++	if (qmi_result_get_uint8(result, QMI_VOICE_PARAM_USSD_IND_USER_ACTION,
++			&user_action_required)) {
++		if (user_action_required =3D=3D QMI_USSD_USER_ACTION_REQUIRED) {
++			notify_status =3D OFONO_USSD_STATUS_ACTION_REQUIRED;
++		}
++	}
++
++	ofono_ussd_notify(ussd, notify_status, gsm_dcs,
++			qmi_ussd->data, qmi_ussd->length);
++	return;
++
++error:
++	ofono_ussd_notify(ussd, OFONO_USSD_STATUS_TERMINATED, 0, NULL, 0);
++}
++
+ static void async_orig_ind(struct qmi_result *result, void *user_data)
+ {
+ 	struct ofono_ussd *ussd =3D user_data;
+@@ -141,6 +183,9 @@ static void create_voice_cb(struct qmi_service =
+
+*service, void *user_data)
+ =
+
+ 	data->voice =3D qmi_service_ref(service);
+ =
+
++	qmi_service_register(data->voice, QMI_VOICE_USSD_IND,
++					async_ind, ussd, NULL);
++
+ 	qmi_service_register(data->voice, QMI_VOICE_ASYNC_ORIG_USSD,
+ 					async_orig_ind, ussd, NULL);
+ =
+
+-- =
+
+2.30.0
+
+
+--===============2650191605909680052==--
 
