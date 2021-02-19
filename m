@@ -1,140 +1,290 @@
-Content-Type: multipart/mixed; boundary="===============5670633093738857114=="
+Content-Type: multipart/mixed; boundary="===============2767074392508425651=="
 MIME-Version: 1.0
 From: ofono@market.talbothome.com
-Subject: [PATCH 07/09] MMSD: Update the README
-Date: Fri, 19 Feb 2021 01:04:37 +0000
-Message-ID: <20210219010437.2937.14692@ml01.vlan13.01.org>
+Subject: [PATCH 08/09] Fix a few Bugs in service.c
+Date: Fri, 19 Feb 2021 01:05:55 +0000
+Message-ID: <20210219010555.2937.52472@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5670633093738857114==
+--===============2767074392508425651==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch updates the README to allow users to see how to compile and run =
-MMSD,
-and how to configure the settings.
+This commit fixes a few bugs:
+- Makes sure "sent" has an accurate time (it currently only has a time of t=
+he start of epoch time)
+- Allows "Draft" to go to "Sent" on the dbus
+- Allows the time to be preserved on sent and recieved messages if mmsd is =
+closed and opened
+
+(cherry picked from commit f8597b2f6a57f96fa6f7ac8e8c8a4cf550f9d2e9)
 ---
- README | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 61 insertions(+), 5 deletions(-)
+ src/mmsutil.h |  2 ++
+ src/service.c | 60 +++++++++++++++++++++++++++++++++++++++------------
+ 2 files changed, 48 insertions(+), 14 deletions(-)
 
-diff --git a/README b/README
-index e33be69..cecc99f 100644
---- a/README
-+++ b/README
-@@ -2,20 +2,76 @@ Multimedia Messaging Service
- ****************************
+diff --git a/src/mmsutil.h b/src/mmsutil.h
+index 00ecc39..ec139f1 100644
+--- a/src/mmsutil.h
++++ b/src/mmsutil.h
+@@ -120,12 +120,14 @@ struct mms_retrieve_conf {
+ 	char *priority;
+ 	char *msgid;
+ 	time_t date;
++ 	char *datestamp;
+ };
  =
 
- Copyright (C) 2010-2011  Intel Corporation. All rights reserved.
-+Updated 2021 by: Mohammad Sadiq, kent, kop316, =
-
-+                 fuzzy7k, craftyguy, anteater
-+Parts adapted from: https://source.puri.sm/Librem5/purple-mm-sms
-+                    Copyright (C) 2018 Purism SPC
-+                    =
-
-+About
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D
-+mmsd is a lower level daemon that transmits and recieves MMSes. It works w=
-ith
-+both the ofono stack and the Modem Manager stack.
+ struct mms_send_req {
+ 	enum mms_message_status status;
+ 	char *to;
+ 	time_t date;
++ 	char *datestamp;
+ 	char *content_type;
+ 	gboolean dr;
+ };
+diff --git a/src/service.c b/src/service.c
+index 58cd747..f3e710f 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -18,6 +18,7 @@
+  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
+  *
+  */
++#define _XOPEN_SOURCE 700
  =
 
-+Please note that mmsd alone will not get MMS working! It is designed to wo=
-rk =
-
-+with a higher level chat application to facilitate fetching and =
-
-+sending MMS. It interfaces with other applications via the dbus.
+ #ifdef HAVE_CONFIG_H
+ #include <config.h>
+@@ -35,6 +36,8 @@
+ #include <glib.h>
+ #include <glib/gstdio.h>
+ #include <gdbus.h>
++#include <time.h>
++#include <stdio.h>
  =
 
--Compilation and installation
-+Compiling mmsd
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D
+ #include <gweb/gweb.h>
+ =
+
+@@ -129,6 +132,11 @@ static DBusConnection *connection;
+ =
+
+ static guint32 transaction_id_start =3D 0;
+ =
+
++
++static const char *time_to_str(const time_t *t);
++void debug_print(const char* s, void* data);
++
++
+ static void mms_load_settings(struct mms_service *service)
+ {
+ 	GError *error;
+@@ -220,6 +228,7 @@ static void emit_msg_status_changed(const char *path, c=
+onst char *new_status)
+ =
+
+ 	signal =3D dbus_message_new_signal(path, MMS_MESSAGE_INTERFACE,
+ 							"PropertyChanged");
++							=
+
+ 	if (signal =3D=3D NULL)
+ 		return;
+ =
+
+@@ -269,6 +278,7 @@ static DBusMessage *msg_mark_read(DBusConnection *conn,
+ 	g_free(state);
+ =
+
+ 	g_key_file_set_boolean(meta, "info", "read", TRUE);
++	mms->rc.status =3D MMS_MESSAGE_STATUS_READ;
+ =
+
+ 	mms_store_meta_close(service->identity, mms->uuid, meta, TRUE);
+ =
+
+@@ -722,6 +732,7 @@ static gboolean result_request_send_conf(struct mms_req=
+uest *request)
+ =
+
+ 	g_key_file_set_string(meta, "info", "state", "sent");
+ 	g_key_file_set_string(meta, "info", "id", msg->sc.msgid);
++	request->msg->sr.status =3D MMS_MESSAGE_STATUS_SENT;
+ =
+
+ 	mms_message_free(msg);
+ =
+
+@@ -1048,6 +1059,7 @@ static DBusMessage *send_message(DBusConnection *conn,
+ 	struct mms_service *service =3D data;
+ 	struct mms_request *request;
+ 	GKeyFile *meta;
++	const char *datestr;
+ =
+
+ 	msg =3D g_new0(struct mms_message, 1);
+ 	if (msg =3D=3D NULL)
+@@ -1060,7 +1072,13 @@ static DBusMessage *send_message(DBusConnection *con=
+n,
+ =
+
+ 	msg->sr.dr =3D service->use_delivery_reports;
+ =
+
+-	if (send_message_get_args(dbus_msg, msg) =3D=3D FALSE) {
++	time(&msg->sr.date);
++
++	datestr =3D time_to_str(&msg->sr.date);
++
++	msg->sr.datestamp =3D g_strdup(datestr);
++
++	if (send_message_get_args(dbus_msg, msg, service) =3D=3D FALSE) {
+ 		mms_debug("Invalid arguments");
+ =
+
+ 		release_attachement_data(msg->attachments);
+@@ -1100,6 +1118,7 @@ static DBusMessage *send_message(DBusConnection *conn,
+ 	if (meta =3D=3D NULL)
+ 		goto release_request;
+ =
+
++	g_key_file_set_string(meta, "info", "date",  msg->sr.datestamp);
+ 	g_key_file_set_string(meta, "info", "state", "draft");
+ =
+
+ 	if (service->use_delivery_reports) {
+@@ -1340,10 +1359,12 @@ static gboolean load_message_from_store(const char =
+*service_id,
+ 	char *state =3D NULL;
+ 	gboolean read_status;
+ 	char *data_path =3D NULL;
++	char *datestr =3D NULL;
+ 	gboolean success =3D FALSE;
+ 	gboolean tainted =3D FALSE;
+ 	void *pdu;
+ 	size_t len;
++	struct tm tm;
+ =
+
+ 	meta =3D mms_store_meta_open(service_id, uuid);
+ 	if (meta =3D=3D NULL)
+@@ -1355,6 +1376,13 @@ static gboolean load_message_from_store(const char *=
+service_id,
+ =
+
+ 	read_status =3D g_key_file_get_boolean(meta, "info", "read", NULL);
+ =
+
++	datestr =3D g_key_file_get_string(meta, "info", "date", NULL);
++	if (datestr !=3D NULL) {
++		strptime(datestr, "%Y-%m-%dT%H:%M:%S%z", &tm);
++	} else {
++		mms_error("src/service.c:load_message_from_store() There is no date stam=
+p!");
++	}
++    =
+
+ 	data_path =3D mms_store_get_path(service_id, uuid);
+ 	if (data_path =3D=3D NULL)
+ 		goto out;
+@@ -1373,25 +1401,28 @@ static gboolean load_message_from_store(const char =
+*service_id,
+ =
+
+ 	msg->uuid =3D g_strdup(uuid);
+ =
+
+-	if (strcmp(state, "received") =3D=3D 0
+-			&& msg->type =3D=3D MMS_MESSAGE_TYPE_RETRIEVE_CONF) {
++	if (strcmp(state, "received") =3D=3D 0 && msg->type =3D=3D MMS_MESSAGE_TY=
+PE_RETRIEVE_CONF) {
++        msg->rc.datestamp =3D g_strdup(datestr);
++        msg->rc.date =3D mktime(&tm);
+ 		if (read_status =3D=3D TRUE)
+ 			msg->rc.status =3D MMS_MESSAGE_STATUS_READ;
+ 		else
+ 			msg->rc.status =3D MMS_MESSAGE_STATUS_RECEIVED;
+-	} else if (strcmp(state, "downloaded") =3D=3D 0
+-			&& msg->type =3D=3D MMS_MESSAGE_TYPE_RETRIEVE_CONF) {
++	} else if (strcmp(state, "downloaded") =3D=3D 0 && msg->type =3D=3D MMS_M=
+ESSAGE_TYPE_RETRIEVE_CONF) {
+ 		msg->rc.status =3D MMS_MESSAGE_STATUS_DOWNLOADED;
+ 		if (msg->transaction_id =3D=3D NULL)
+ 			msg->transaction_id =3D "";
+-	} else if (strcmp(state, "sent") =3D=3D 0
+-			&& msg->type =3D=3D MMS_MESSAGE_TYPE_SEND_REQ)
++	} else if (strcmp(state, "sent") =3D=3D 0 && msg->type =3D=3D MMS_MESSAGE=
+_TYPE_SEND_REQ) {
++        msg->sr.datestamp =3D g_strdup(datestr);
++        msg->sr.date =3D mktime(&tm);
+ 		msg->sr.status =3D MMS_MESSAGE_STATUS_SENT;
+-	else if (strcmp(state, "draft") =3D=3D 0
+-			&& msg->type =3D=3D MMS_MESSAGE_TYPE_SEND_REQ)
++    }
++	else if (strcmp(state, "draft") =3D=3D 0 && msg->type =3D=3D MMS_MESSAGE_=
+TYPE_SEND_REQ) {
++        msg->sr.datestamp =3D g_strdup(datestr);
++        msg->sr.date =3D mktime(&tm);
+ 		msg->sr.status =3D MMS_MESSAGE_STATUS_DRAFT;
+-	else if (msg->type !=3D MMS_MESSAGE_TYPE_NOTIFICATION_IND &&
+-			msg->type !=3D MMS_MESSAGE_TYPE_DELIVERY_IND)
++    }
++	else if (msg->type !=3D MMS_MESSAGE_TYPE_NOTIFICATION_IND && msg->type !=
+=3D MMS_MESSAGE_TYPE_DELIVERY_IND)
+ 		goto out;
+ =
+
+ 	success =3D TRUE;
+@@ -1880,14 +1911,13 @@ static void append_rc_msg_properties(DBusMessageIte=
+r *dict,
+ static void append_sr_msg_properties(DBusMessageIter *dict,
+ 					struct mms_message *msg)
+ {
+-	const char *date =3D time_to_str(&msg->rc.date);
+ 	const char *status =3D mms_message_status_get_string(msg->sr.status);
+ =
+
+ 	mms_dbus_dict_append_basic(dict, "Status",
+ 					DBUS_TYPE_STRING, &status);
+ =
+
+ 	mms_dbus_dict_append_basic(dict, "Date",
+-					DBUS_TYPE_STRING,  &date);
++					DBUS_TYPE_STRING,  &msg->sr.datestamp);
+ =
+
+ 	if (msg->sr.to !=3D NULL)
+ 		append_msg_recipients(dict, msg);
+@@ -2121,6 +2151,9 @@ static gboolean result_request_notify_resp(struct mms=
+_request *request)
+ 	if (meta =3D=3D NULL)
+ 		return FALSE;
+ =
+
++    const char *datestr =3D time_to_str(&msg->rc.date);
++    msg->rc.datestamp =3D g_strdup(datestr);
++    g_key_file_set_string(meta, "info", "date",  msg->rc.datestamp);
+ 	g_key_file_set_string(meta, "info", "state", "received");
+ =
+
+ 	mms_store_meta_close(request->service->identity,
+@@ -2537,7 +2570,6 @@ void mms_service_bearer_notify(struct mms_service *se=
+rvice, mms_bool_t active,
+ 	if (active =3D=3D FALSE)
+ 		goto interface_down;
+ =
+
 -
- In order to compile proxy daemon you need following software packages:
- 	- GCC compiler
- 	- D-Bus library
- 	- GLib library
+ 	DBG("interface %s proxy %s", interface, proxy);
  =
 
-+Installing mmsd
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D
-+
- To configure run:
--	./configure --prefix=3D/usr
-+    ./bootstrap-configure --prefix=3D/usr/
- =
-
- Configure automatically searches for all required components and packages.
- =
-
--To compile and install run:
--	make && make install
-+To compile, run:
-+    make
-+	=
-
-+And to Install:
-+    make install
-+
-+mmsd will be installed in /${prefix}/libexec (if you are following this gu=
-ide,
-+it is /usr/libexec )
-+
-+To uninstall, simply remove the "mmsd" binary from /${prefix}/libexec or r=
-un:
-+    sudo make uninstall
-+
-+Note that you must manually configure your favorite service manager to run =
-
-+the daemon, as this installer does not configure it to autorun.
-+
-+Testing out mmsd
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D
-+To configure, run:
-+    ./bootstrap-configure --enable-debug --enable-maintainer-mode
-+
-+Make it:
-+    make =
-
-+
-+Run daemon in foreground with debugging:
-+    ./src/mmsd -n -d 'src/*'
-+
-+General Configuration
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D
-+On first run, mmsd will write a settings file at
-+"$HOME/.mms/$PLUGIN/mms"
-+
-+IMPORTANT NOTE: If you change settings in this file, mmsd MUST BE RESTARTE=
-D =
-
-+                for the changes to take effect!
-+
-+This settings file use sane defaults, but you can change them:
-+
-+UseDeliveryReports
-+        Whether you want delivery reports for MMSes you send
-+
-+TotalMaxAttachmentSize
-+        The maximum size all of your attachments can be before mmsd reject=
-s it.
-+        NOTE: This value is carrier specific! Changing this value to a hig=
-her
-+              number may cause your carrier to silently reject MMSes you s=
-end.
-+              CHANGE AT YOUR OWN RISK!
-\ No newline at end of file
+ 	if (service->web !=3D NULL) {
 -- =
 
 2.30.0
---===============5670633093738857114==--
+--===============2767074392508425651==--
 
