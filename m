@@ -1,170 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7355828209146592682=="
+Content-Type: multipart/mixed; boundary="===============4800439380337531111=="
 MIME-Version: 1.0
 From: ofono@market.talbothome.com
-Subject: Two Patches for MMSD
-Date: Thu, 18 Feb 2021 19:01:13 +0000
-Message-ID: <20210218190113.2937.66552@ml01.vlan13.01.org>
+Subject: [PATCH] Fix mmsd to work with T-mobile
+Date: Fri, 19 Feb 2021 00:57:49 +0000
+Message-ID: <20210219005749.2937.62779@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7355828209146592682==
+--===============4800439380337531111==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+This commit is taken from anteater https://sr.ht/~anteater/mms-stack/
+and has an additional change to fix a hack that was put in there.
 
-It was suggested to me to directly add patches here for MMSD. So I have two=
- such patches, and I am working to clean up my code base so it is easier to=
- get all of the patches. The following patches enable MMSD to work with bot=
-h T-Mobile USA and AT&T USA. =
+This commit enables mmsd to work on T-mobile USA.
 
+---
+ Makefile.am       |   3 +-
+ gweb/gresolv.c    |  73 ++++++++++++++-
+ gweb/gweb.c       |   1 +
+ plugins/ofono.c   |  11 ++-
+ src/mmsutil.c     | 233 ++++++++++++++++++++++++++++++++++++++--------
+ src/mmsutil.h     |  17 ++++
+ src/service.c     |  59 ++++++++++--
+ test/send-message |  24 ++---
+ 8 files changed, 357 insertions(+), 64 deletions(-)
 
-
-My git repository is here: https://source.puri.sm/kop316/mmsd
-
-
-----------------START AT&T PATCH------------------------
-diff --git a/gweb/gweb.c b/gweb/gweb.c
-index f72e1375de98858b5f6f7dbabc4af5618380abc3..2fa2a45e5867e8367a25efd64f0=
-1d9b5210aa04f 100644
---- a/gweb/gweb.c
-+++ b/gweb/gweb.c
-@@ -1309,7 +1309,8 @@ static guint do_request(GWeb *web, const char *url,
- 			session->address =3D g_strdup(session->host);
- =
-
- 		memset(&hints, 0, sizeof(struct addrinfo));
--		hints.ai_flags =3D AI_NUMERICHOST;
-+        /* Comment out next line to have AT&T MMS proxy work */
-+		//hints.ai_flags =3D AI_NUMERICHOST;
- 		hints.ai_family =3D session->web->family;
- =
-
- 		if (session->addr !=3D NULL) {
-diff --git a/patch.diff b/patch.diff
-new file mode 100644
-index 0000000000000000000000000000000000000000..f4f4e341a2f45f7b07bf2b80b9b=
-577ff0b562633
---- /dev/null
-+++ b/patch.diff
-@@ -0,0 +1,29 @@
-+diff --git a/gweb/gweb.c b/gweb/gweb.c
-+index f72e1375de98858b5f6f7dbabc4af5618380abc3..2fa2a45e5867e8367a25efd64f=
-01d9b5210aa04f 100644
-+--- a/gweb/gweb.c
-++++ b/gweb/gweb.c
-+@@ -1309,7 +1309,8 @@ static guint do_request(GWeb *web, const char *url,
-+ 			session->address =3D g_strdup(session->host);
-+ =
-
-+ 		memset(&hints, 0, sizeof(struct addrinfo));
-+-		hints.ai_flags =3D AI_NUMERICHOST;
-++        /* Comment out next line to have AT&T MMS proxy work */
-++		//hints.ai_flags =3D AI_NUMERICHOST;
-+ 		hints.ai_family =3D session->web->family;
-+ =
-
-+ 		if (session->addr !=3D NULL) {
-+diff --git a/src/service.c b/src/service.c
-+index e5bde351556a08b9fbc0db9488fd929413bc07d8..daedca59ab65eac071724b513b=
-bd39c885adb79d 100644
-+--- a/src/service.c
-++++ b/src/service.c
-+@@ -2531,6 +2531,9 @@ void mms_service_bearer_notify(struct mms_service *s=
-ervice, mms_bool_t active,
-+ =
-
-+ 	g_web_set_debug(service->web, (GWebDebugFunc)debug_print, NULL);
-+ =
-
-++	/* Explicitly close connections to work with AT&T */
-++	g_web_set_close_connection(service->web,TRUE);
-++
-+ 	/* Sometimes no proxy is reported as string instead of NULL */
-+ 	if (g_strcmp0(proxy, "") !=3D 0)
-+ 		g_web_set_proxy(service->web, proxy);
-+
-diff --git a/src/service.c b/src/service.c
-index e5bde351556a08b9fbc0db9488fd929413bc07d8..f0966a83258d0186dff955fe2b4=
-b79c439f229eb 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -56,6 +56,7 @@
- =
-
- #define MAX_ATTACHMENTS_NUMBER 25
- #define MAX_ATTEMPTS 3
-+#define MAX_ATTACHMENT_TOTAL_SIZE 1000000
- =
-
- #define SETTINGS_STORE "mms"
- #define SETTINGS_GROUP "Settings"
-@@ -418,6 +419,7 @@ static gboolean send_message_get_attachments(DBusMessag=
-eIter *top_iter,
- {
- 	DBusMessageIter attachments;
- 	unsigned int attach_num =3D 0;
-+	unsigned int attach_total_size =3D 0;
- =
-
- 	dbus_message_iter_recurse(top_iter, &attachments);
- =
-
-@@ -430,8 +432,10 @@ static gboolean send_message_get_attachments(DBusMessa=
-geIter *top_iter,
- 		struct mms_attachment *attach;
- 		void *ptr;
- =
-
--		if (++attach_num > MAX_ATTACHMENTS_NUMBER)
-+		if (++attach_num > MAX_ATTACHMENTS_NUMBER) {
-+			mms_error("Error: Too many attachments!");
- 			return FALSE;
-+		}
- =
-
- 		dbus_message_iter_recurse(&attachments, &entry);
- =
-
-@@ -466,6 +470,14 @@ static gboolean send_message_get_attachments(DBusMessa=
-geIter *top_iter,
- 			return FALSE;
- 		}
- =
-
-+		attach_total_size =3D attach_total_size + attach->length;
-+		mms_debug("Total attachment size: %d", attach_total_size);
-+
-+		if (attach_total_size > MAX_ATTACHMENT_TOTAL_SIZE) {
-+			mms_error("Error: Total Attachment size too large!");
-+			return FALSE;
-+		}
-+
- 		attach->data =3D ptr;
- =
-
- 		attach->content_id =3D g_strdup(id);
-@@ -2531,6 +2543,9 @@ void mms_service_bearer_notify(struct mms_service *se=
-rvice, mms_bool_t active,
- =
-
- 	g_web_set_debug(service->web, (GWebDebugFunc)debug_print, NULL);
- =
-
-+	/* Explicitly close connections to work with AT&T */
-+	g_web_set_close_connection(service->web,TRUE);
-+
- 	/* Sometimes no proxy is reported as string instead of NULL */
- 	if (g_strcmp0(proxy, "") !=3D 0)
- 		g_web_set_proxy(service->web, proxy);
-
-----------END AT&T PATCH------------------------
-
----------------START TMOBILE PATCH----------------------
 diff --git a/Makefile.am b/Makefile.am
-index ee2c715bb935c1e26d81d5db831913883a887a7b..99fdb766ee1204ac840d7c6fe76=
-513ac1ce75a9b 100644
+index ee2c715..99fdb76 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -88,7 +88,8 @@ unit_test_wsputil_SOURCES =3D unit/test-wsputil.c src/wsp=
@@ -182,8 +47,7 @@ l.h \
 
  TESTS =3D unit/test-wsputil unit/test-mmsutil
 diff --git a/gweb/gresolv.c b/gweb/gresolv.c
-index 79abc9b709585c2cc76bb9494c46c135b96d8c30..bb1c32de136831f15db8a10f3c5=
-b482517732c71 100644
+index 79abc9b..bb1c32d 100644
 --- a/gweb/gresolv.c
 +++ b/gweb/gresolv.c
 @@ -35,6 +35,7 @@
@@ -351,8 +215,7 @@ t char *hostname,
 
  	lookup =3D g_try_new0(struct resolv_lookup, 1);
 diff --git a/gweb/gweb.c b/gweb/gweb.c
-index 4c2f95c1a1a2d25d1cfe4bd7c94f6403311a6124..f72e1375de98858b5f6f7dbabc4=
-af5618380abc3 100644
+index 4c2f95c..f72e137 100644
 --- a/gweb/gweb.c
 +++ b/gweb/gweb.c
 @@ -1008,6 +1008,7 @@ static inline int bind_socket(int sk, int index, int =
@@ -366,8 +229,7 @@ family)
  					interface, IF_NAMESIZE);
  	if (err < 0)
 diff --git a/plugins/ofono.c b/plugins/ofono.c
-index e7324a7bedce08be62713e12c5e27a8fcf7399df..24a147a77a3b0180f8d8572c2cb=
-8b83ad2fe3c2f 100644
+index e7324a7..24a147a 100644
 --- a/plugins/ofono.c
 +++ b/plugins/ofono.c
 @@ -396,11 +396,14 @@ static void check_context_active(struct modem_data *m=
@@ -435,8 +297,7 @@ ntext_active);
  		mms_service_bearer_notify(modem->service, FALSE, NULL, NULL);
  		return;
 diff --git a/src/mmsutil.c b/src/mmsutil.c
-index a9a12eb2d4efe16a3889d7dafc9a36463d626874..5fcf358c8464b2a8703589e0dcc=
-82dc92629db87 100644
+index a9a12eb..5fcf358 100644
 --- a/src/mmsutil.c
 +++ b/src/mmsutil.c
 @@ -32,6 +32,7 @@
@@ -869,8 +730,7 @@ er header)
  		return NULL;
  	case MMS_HEADER_STATUS:
 diff --git a/src/mmsutil.h b/src/mmsutil.h
-index e32c76142d39e9393b974ed1ab6bcf74416a7797..00ecc3944771c2af761213b4442=
-edd432bc2e40d 100644
+index e32c761..00ecc39 100644
 --- a/src/mmsutil.h
 +++ b/src/mmsutil.h
 @@ -50,6 +50,23 @@ enum mms_message_rsp_status {
@@ -899,8 +759,7 @@ edd432bc2e40d 100644
  	MMS_MESSAGE_NOTIFY_STATUS_RETRIEVED =3D		129,
  	MMS_MESSAGE_NOTIFY_STATUS_REJECTED =3D		130,
 diff --git a/src/service.c b/src/service.c
-index b3ecc1e4202c6ebefb0ee92bf7aa0da3f624155c..e5bde351556a08b9fbc0db9488f=
-d929413bc07d8 100644
+index b3ecc1e..082e3bb 100644
 --- a/src/service.c
 +++ b/src/service.c
 @@ -609,7 +609,7 @@ static void emit_message_added(const struct mms_service=
@@ -1182,26 +1041,18 @@ terface, proxy);
 
  	if (service =3D=3D NULL)
  		return;
-@@ -2460,8 +2504,12 @@ void mms_service_bearer_notify(struct mms_service *s=
-ervice, mms_bool_t active,
- 	service->bearer_setup =3D FALSE;
- 	service->bearer_active =3D active;
+@@ -2463,6 +2507,7 @@ void mms_service_bearer_notify(struct mms_service *se=
+rvice, mms_bool_t active,
+ 	if (active =3D=3D FALSE)
+ 		goto interface_down;
  =
 
--	if (active =3D=3D FALSE)
--		goto interface_down;
-+	if (active =3D=3D FALSE) {
-+		DBG("ignoring inactive");
-+		service->bearer_active =3D TRUE;
-+		interface =3D g_strdup("wwan0");
-+		//goto interface_down;
-+	}
- =
-
++
  	DBG("interface %s proxy %s", interface, proxy);
  =
 
-@@ -2481,6 +2529,8 @@ void mms_service_bearer_notify(struct mms_service *se=
+ 	if (service->web !=3D NULL) {
+@@ -2481,6 +2526,8 @@ void mms_service_bearer_notify(struct mms_service *se=
 rvice, mms_bool_t active,
  	if (service->web =3D=3D NULL)
  		return;
@@ -1213,8 +1064,7 @@ rvice, mms_bool_t active,
  	if (g_strcmp0(proxy, "") !=3D 0)
  		g_web_set_proxy(service->web, proxy);
 diff --git a/test/send-message b/test/send-message
-index 558fdaa3fb563e826cd07d14aeaf067ef71c446f..8477e79ec452a93b23e6c48cc8c=
-71a505321c76f 100755
+index 558fdaa..8477e79 100755
 --- a/test/send-message
 +++ b/test/send-message
 @@ -5,23 +5,23 @@ import dbus
@@ -1290,6 +1140,8 @@ s', path),
 
 -print path
 +print(path)
--------------END TMOBILE PATCH-----------------------------
---===============7355828209146592682==--
+-- =
+
+2.20.1
+--===============4800439380337531111==--
 
