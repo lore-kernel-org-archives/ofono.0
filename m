@@ -1,156 +1,140 @@
-Content-Type: multipart/mixed; boundary="===============5107488642458799426=="
+Content-Type: multipart/mixed; boundary="===============5670633093738857114=="
 MIME-Version: 1.0
 From: ofono@market.talbothome.com
-Subject: [PATCH 06/10] MMSD: Allow for a user configurable max attachments size
-Date: Fri, 19 Feb 2021 01:03:48 +0000
-Message-ID: <20210219010348.2937.32968@ml01.vlan13.01.org>
+Subject: [PATCH 07/09] MMSD: Update the README
+Date: Fri, 19 Feb 2021 01:04:37 +0000
+Message-ID: <20210219010437.2937.14692@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5107488642458799426==
+--===============5670633093738857114==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-To prevent a chat program from accidentally sending too large of an MMS,
-this patch watches the attachments and sends back a failure if it is too la=
-rge.
-The default on here is 1.1 Megabytes (this is the default max size on Andro=
-id).
-I also made it user changable.
-
+This patch updates the README to allow users to see how to compile and run =
+MMSD,
+and how to configure the settings.
 ---
- src/service.c | 38 ++++++++++++++++++++++++++++++++++----
- 1 file changed, 34 insertions(+), 4 deletions(-)
+ README | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 61 insertions(+), 5 deletions(-)
 
-diff --git a/src/service.c b/src/service.c
-index a9b07f6..58cd747 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -56,6 +56,7 @@
+diff --git a/README b/README
+index e33be69..cecc99f 100644
+--- a/README
++++ b/README
+@@ -2,20 +2,76 @@ Multimedia Messaging Service
+ ****************************
  =
 
- #define MAX_ATTACHMENTS_NUMBER 25
- #define MAX_ATTEMPTS 3
-+#define DEFAULT_MAX_ATTACHMENT_TOTAL_SIZE 1100000
+ Copyright (C) 2010-2011  Intel Corporation. All rights reserved.
++Updated 2021 by: Mohammad Sadiq, kent, kop316, =
+
++                 fuzzy7k, craftyguy, anteater
++Parts adapted from: https://source.puri.sm/Librem5/purple-mm-sms
++                    Copyright (C) 2018 Purism SPC
++                    =
+
++About
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D
++mmsd is a lower level daemon that transmits and recieves MMSes. It works w=
+ith
++both the ofono stack and the Modem Manager stack.
  =
 
- #define SETTINGS_STORE "mms"
- #define SETTINGS_GROUP "Settings"
-@@ -100,6 +101,7 @@ struct mms_service {
- 	GHashTable *messages;
- 	GKeyFile *settings;
- 	gboolean use_delivery_reports;
-+	int max_attach_total_size;
- };
++Please note that mmsd alone will not get MMS working! It is designed to wo=
+rk =
+
++with a higher level chat application to facilitate fetching and =
+
++sending MMS. It interfaces with other applications via the dbus.
  =
 
- enum mms_request_type {
-@@ -146,7 +148,22 @@ static void mms_load_settings(struct mms_service *serv=
-ice)
- 		g_key_file_set_boolean(service->settings, SETTINGS_GROUP,
- 						"UseDeliveryReports",
- 						service->use_delivery_reports);
-+		error =3D NULL;
- 	}
+-Compilation and installation
++Compiling mmsd
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D
+-
+ In order to compile proxy daemon you need following software packages:
+ 	- GCC compiler
+ 	- D-Bus library
+ 	- GLib library
+ =
+
++Installing mmsd
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D
 +
-+	service->max_attach_total_size =3D
-+		g_key_file_get_integer(service->settings, SETTINGS_GROUP,
-+						"TotalMaxAttachmentSize", &error);
+ To configure run:
+-	./configure --prefix=3D/usr
++    ./bootstrap-configure --prefix=3D/usr/
+ =
+
+ Configure automatically searches for all required components and packages.
+ =
+
+-To compile and install run:
+-	make && make install
++To compile, run:
++    make
++	=
+
++And to Install:
++    make install
 +
-+	if (error) {
-+		g_error_free(error);
-+		service->max_attach_total_size =3D DEFAULT_MAX_ATTACHMENT_TOTAL_SIZE;
-+		g_key_file_set_integer(service->settings, SETTINGS_GROUP,
-+						"TotalMaxAttachmentSize",
-+						service->max_attach_total_size);
-+	}
-+	mms_debug("Maximum Attachment Total Size (in bytes): %d", service->max_at=
-tach_total_size);
++mmsd will be installed in /${prefix}/libexec (if you are following this gu=
+ide,
++it is /usr/libexec )
 +
- }
- =
-
- static void mms_request_destroy(struct mms_request *request)
-@@ -414,10 +431,11 @@ static gboolean send_message_get_recipients(DBusMessa=
-geIter *top_iter,
- }
- =
-
- static gboolean send_message_get_attachments(DBusMessageIter *top_iter,
--						struct mms_message *msg)
-+						struct mms_message *msg, struct mms_service *service)
- {
- 	DBusMessageIter attachments;
- 	unsigned int attach_num =3D 0;
-+	int attach_total_size =3D 0;
- =
-
- 	dbus_message_iter_recurse(top_iter, &attachments);
- =
-
-@@ -430,8 +448,10 @@ static gboolean send_message_get_attachments(DBusMessa=
-geIter *top_iter,
- 		struct mms_attachment *attach;
- 		void *ptr;
- =
-
--		if (++attach_num > MAX_ATTACHMENTS_NUMBER)
-+		if (++attach_num > MAX_ATTACHMENTS_NUMBER) {
-+			mms_error("Error: Too many attachments!");
- 			return FALSE;
-+		}
- =
-
- 		dbus_message_iter_recurse(&attachments, &entry);
- =
-
-@@ -466,6 +486,16 @@ static gboolean send_message_get_attachments(DBusMessa=
-geIter *top_iter,
- 			return FALSE;
- 		}
- =
-
-+		attach_total_size =3D attach_total_size + attach->length;
++To uninstall, simply remove the "mmsd" binary from /${prefix}/libexec or r=
+un:
++    sudo make uninstall
 +
-+		mms_debug("Total attachment size: %d", attach_total_size);
-+		mms_debug("Maximum Attachment Total Size (in bytes): %d", service->max_a=
-ttach_total_size);
++Note that you must manually configure your favorite service manager to run =
+
++the daemon, as this installer does not configure it to autorun.
 +
-+		if (attach_total_size > service->max_attach_total_size) {
-+			mms_error("Error: Total Attachment size too large!");
-+			return FALSE;
-+		}
++Testing out mmsd
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D
++To configure, run:
++    ./bootstrap-configure --enable-debug --enable-maintainer-mode
 +
- 		attach->data =3D ptr;
- =
++Make it:
++    make =
 
- 		attach->content_id =3D g_strdup(id);
-@@ -490,7 +520,7 @@ static gboolean send_message_get_attachments(DBusMessag=
-eIter *top_iter,
- }
- =
++
++Run daemon in foreground with debugging:
++    ./src/mmsd -n -d 'src/*'
++
++General Configuration
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D
++On first run, mmsd will write a settings file at
++"$HOME/.mms/$PLUGIN/mms"
++
++IMPORTANT NOTE: If you change settings in this file, mmsd MUST BE RESTARTE=
+D =
 
- static gboolean send_message_get_args(DBusMessage *dbus_msg,
--						struct mms_message *msg)
-+						struct mms_message *msg, struct mms_service *service)
- {
- 	DBusMessageIter top_iter;
- 	const char *smil;
-@@ -536,7 +566,7 @@ static gboolean send_message_get_args(DBusMessage *dbus=
-_msg,
- 	if (dbus_message_iter_get_arg_type(&top_iter) !=3D DBUS_TYPE_ARRAY)
- 		return FALSE;
- =
-
--	return send_message_get_attachments(&top_iter, msg);
-+	return send_message_get_attachments(&top_iter, msg, service);
- }
- =
-
- static struct mms_request *create_request(enum mms_request_type type,
++                for the changes to take effect!
++
++This settings file use sane defaults, but you can change them:
++
++UseDeliveryReports
++        Whether you want delivery reports for MMSes you send
++
++TotalMaxAttachmentSize
++        The maximum size all of your attachments can be before mmsd reject=
+s it.
++        NOTE: This value is carrier specific! Changing this value to a hig=
+her
++              number may cause your carrier to silently reject MMSes you s=
+end.
++              CHANGE AT YOUR OWN RISK!
+\ No newline at end of file
 -- =
 
 2.30.0
---===============5107488642458799426==--
+--===============5670633093738857114==--
 
