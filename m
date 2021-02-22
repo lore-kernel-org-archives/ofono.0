@@ -1,71 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============5231173789041448345=="
+Content-Type: multipart/mixed; boundary="===============1226571746211742997=="
 MIME-Version: 1.0
-From: Jupiter <jupiter.hce@gmail.com>
-Subject: [PATCH 4/4] Add SARA R4 vendor and enable vendor in gprs create
-Date: Mon, 22 Feb 2021 21:14:49 +1100
-Message-ID: <20210222101449.2809-5-jupiter.hce@gmail.com>
-In-Reply-To: <20210222101449.2809-1-jupiter.hce@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] qmimodem: Add USSD indication support
+Date: Mon, 22 Feb 2021 10:06:31 -0600
+Message-ID: <9f0a4bab-1365-207a-436b-cd2fe569c93e@gmail.com>
+In-Reply-To: <8fe191b9-0c3b-45ad-8701-d5311b64b3a6@ya.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5231173789041448345==
+--===============1226571746211742997==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: jupiter <jupiter.hce@gmail.com>
+Hi Alexey,
 
----
- plugins/gobi.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+On 2/19/21 9:30 AM, Alexey Andreyev wrote:
+> Sorry for a noob html format, retrying from a custom client as plaintext:
+> =
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 9b5d7cff..5472dd83 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -47,6 +47,7 @@
- #include <ofono/location-reporting.h>
- #include <ofono/log.h>
- #include <ofono/message-waiting.h>
-+#include <drivers/atmodem/vendor.h>
- =
+> Hello! My first patch, feel free to criticize :) This is to handle the US=
+SD =
 
- #include <drivers/qmimodem/qmi.h>
- #include <drivers/qmimodem/dms.h>
-@@ -496,9 +497,17 @@ static void gobi_post_online(struct ofono_modem *modem)
- 	struct gobi_data *data =3D ofono_modem_get_data(modem);
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
-+    const char* quirk;
-+    unsigned int vendor =3D 0;
- =
+> Indication messages with the qmimodem driver.
+> Higher-level KDE Plasma Mobile issue: =
 
- 	DBG("%p", modem);
- =
+> https://invent.kde.org/plasma-mobile/plasma-dialer/-/merge_requests/33
+> Tested with Quectel EG25-G (Pinephone BH), looks like working, I'm able t=
+o =
 
-+    quirk =3D ofono_modem_get_string(modem, "Quirk");
-+    if (quirk) {
-+	    DBG("Debug: vendor =3D OFONO_VENDOR_UBLOX_SARA_R4");
-+        vendor =3D OFONO_VENDOR_UBLOX_SARA_R4;
-+    }
-+
- 	if (data->features & GOBI_NAS) {
- 		ofono_netreg_create(modem, 0, "qmimodem", data->device);
- 		ofono_netmon_create(modem, 0, "qmimodem", data->device);
-@@ -508,7 +517,7 @@ static void gobi_post_online(struct ofono_modem *modem)
- 		ofono_ussd_create(modem, 0, "qmimodem", data->device);
- =
+> receive the expected QMI USSD Indication messages.
+> =
 
- 	if (data->features & GOBI_WDS) {
--		gprs =3D ofono_gprs_create(modem, 0, "qmimodem", data->device);
-+		gprs =3D ofono_gprs_create(modem, vendor, "qmimodem", data->device);
- 		gc =3D ofono_gprs_context_create(modem, 0, "qmimodem",
- 							data->device);
- =
+> ---
+>  From 2f041e6ba183a2f2a3309e139adef3d114bdc85b Mon Sep 17 00:00:00 2001
+> From: Alexey Andreyev <aa13q@ya.ru>
+> Date: Fri, 19 Feb 2021 15:47:42 +0300
+> Subject: [PATCH] qmimodem: Add USSD indication support
+> =
 
--- =
+> Handle USSD QMI indication messages.
+> Add support for UCS2 USS Data coding scheme.
+> Check for User Action TLV type.
+> ---
+> drivers/qmimodem/ussd.c | 45 +++++++++++++++++++++++++++++++++++++++++
+> 1 file changed, 45 insertions(+)
+> =
 
-2.17.1
 
---===============5231173789041448345==--
+I had to hand-edit this patch for it to apply and then fix up the whitespac=
+e =
+
+formatting.  Please get git send-email working properly for future submissi=
+ons.
+
+Applied, thanks.
+
+Regards,
+-Denis
+--===============1226571746211742997==--
 
