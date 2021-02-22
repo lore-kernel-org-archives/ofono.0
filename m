@@ -1,62 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============1226571746211742997=="
+Content-Type: multipart/mixed; boundary="===============8414857356282020267=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] qmimodem: Add USSD indication support
-Date: Mon, 22 Feb 2021 10:06:31 -0600
-Message-ID: <9f0a4bab-1365-207a-436b-cd2fe569c93e@gmail.com>
-In-Reply-To: <8fe191b9-0c3b-45ad-8701-d5311b64b3a6@ya.ru>
+Subject: Re: [PATCH 1/4] SARA R4 QMI support
+Date: Mon, 22 Feb 2021 10:12:24 -0600
+Message-ID: <768c5ff2-d93d-97d3-d5e8-a1cbfe29e089@gmail.com>
+In-Reply-To: <20210222101449.2809-2-jupiter.hce@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1226571746211742997==
+--===============8414857356282020267==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexey,
+Hi Jupiter,
 
-On 2/19/21 9:30 AM, Alexey Andreyev wrote:
-> Sorry for a noob html format, retrying from a custom client as plaintext:
-> =
+On 2/22/21 4:14 AM, Jupiter wrote:
+> From: jupiter <jupiter.hce@gmail.com>
 
-> Hello! My first patch, feel free to criticize :) This is to handle the US=
-SD =
+Please provide a complete and properly capitalized real name with your =
 
-> Indication messages with the qmimodem driver.
-> Higher-level KDE Plasma Mobile issue: =
+submission, otherwise I can't apply it.
 
-> https://invent.kde.org/plasma-mobile/plasma-dialer/-/merge_requests/33
-> Tested with Quectel EG25-G (Pinephone BH), looks like working, I'm able t=
-o =
-
-> receive the expected QMI USSD Indication messages.
 > =
 
 > ---
->  From 2f041e6ba183a2f2a3309e139adef3d114bdc85b Mon Sep 17 00:00:00 2001
-> From: Alexey Andreyev <aa13q@ya.ru>
-> Date: Fri, 19 Feb 2021 15:47:42 +0300
-> Subject: [PATCH] qmimodem: Add USSD indication support
+>   plugins/udevng.c | 41 +++++++++++++++++++++++++++++++++++++++++
+>   1 file changed, 41 insertions(+)
 > =
 
-> Handle USSD QMI indication messages.
-> Add support for UCS2 USS Data coding scheme.
-> Check for User Action TLV type.
-> ---
-> drivers/qmimodem/ussd.c | 45 +++++++++++++++++++++++++++++++++++++++++
-> 1 file changed, 45 insertions(+)
+> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index 34ac1cc0..63d95055 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -1194,6 +1194,45 @@ static gboolean setup_ublox(struct modem_info *mod=
+em)
+>   	return TRUE;
+>   }
+>   =
+
+> +static gboolean setup_ubloxqmi(struct modem_info *modem) {
+> +	const char *qmi =3D NULL, *net =3D NULL, *gps =3D NULL, *aux =3D NULL;
+> +	GSList *list;
+> +
+> +	DBG("%s", modem->syspath);
+> +
+> +	for (list =3D modem->devices; list; list =3D g_slist_next(list)) {
+> +		struct device_info *info =3D list->data;
+> +
+> +		DBG("%s %s %s %s %s", info->devnode, info->interface,
+> +				info->number, info->label, info->subsystem);
+> +
+> +		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
+> +				g_strcmp0(info->number, "03") =3D=3D 0) {
+> +			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
+> +				net =3D info->devnode;
+> +			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
+> +				qmi =3D info->devnode;
+> +		}
+> +	}
+> +
+> +	DBG("qmi=3D%s net=3D%s", qmi, net);
+> +
+> +	if (qmi =3D=3D NULL || net =3D=3D NULL)
+> +		return FALSE;
+> +
+> +	DBG("qmi=3D%s net=3D%s", qmi, net);
+> +
+> +	ofono_modem_set_string(modem->modem, "Device", qmi);
+> +	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
+> +    ofono_modem_set_string(modem->modem, "Quirk", "SARAR4");
+
+you seem to be mixing tabs and spaces for indentation.  Please fix that
+
+> +
+> +	DBG("gps=3D%s aux=3D%s", gps, aux);
+> +
+> +	ofono_modem_set_driver(modem->modem, "gobi");
+> +
+> +	return TRUE;
+> +}
+> +
+>   static gboolean setup_gemalto(struct modem_info* modem)
+>   {
+>   	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL,
+> @@ -1441,6 +1480,7 @@ static struct {
+>   	{ "quectel",	setup_quectel	},
+>   	{ "quectelqmi",	setup_quectelqmi},
+>   	{ "ublox",	setup_ublox	},
+> +    { "ubloxqmi",   setup_ubloxqmi  },
+
+Also here
+
+>   	{ "gemalto",	setup_gemalto	},
+>   	{ "xmm7xxx",	setup_xmm7xxx	},
+>   	{ "mbim",	setup_mbim	},
+> @@ -1850,6 +1890,7 @@ static struct {
+>   	{ "ublox",	"cdc_ncm",	"1546", "110a"	},
+>   	{ "ublox",	"rndis_host",	"1546", "1146"	},
+>   	{ "ublox",	"cdc_acm",	"1546", "1146"	},
+> +    { "ubloxqmi",   "qmi_wwan", "05c6", "90b2"  },
+
+and here
+
+>   	{ "gemalto",	"option",	"1e2d",	"0053"	},
+>   	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
+>   	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
 > =
 
-
-I had to hand-edit this patch for it to apply and then fix up the whitespac=
-e =
-
-formatting.  Please get git send-email working properly for future submissi=
-ons.
-
-Applied, thanks.
 
 Regards,
 -Denis
---===============1226571746211742997==--
+--===============8414857356282020267==--
 
