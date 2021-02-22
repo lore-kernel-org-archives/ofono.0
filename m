@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6852924559596227638=="
+Content-Type: multipart/mixed; boundary="===============6985093457035406017=="
 MIME-Version: 1.0
 From: Jupiter <jupiter.hce@gmail.com>
-Subject: [PATCH v3 4/4] Change 4: Add SARA R4 vendor and enable vendor in gprs
- create
-Date: Mon, 22 Feb 2021 20:08:59 +1100
-Message-ID: <20210222090859.2883-5-jupiter.hce@gmail.com>
+Subject: [PATCH v3 3/4] Change 3: Check SARA R4 vendor ID,
+ need to make it conditional on the actions being attach and detach
+Date: Mon, 22 Feb 2021 20:08:58 +1100
+Message-ID: <20210222090859.2883-4-jupiter.hce@gmail.com>
 In-Reply-To: <20210222090859.2883-1-jupiter.hce@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6852924559596227638==
+--===============6985093457035406017==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,56 +17,68 @@ Content-Transfer-Encoding: quoted-printable
 From: jupiter <jupiter.hce@gmail.com>
 
 ---
- plugins/gobi.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ drivers/qmimodem/gprs.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 9b5d7cff..5472dd83 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -47,6 +47,7 @@
- #include <ofono/location-reporting.h>
+diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+index 896a9e4c..64d90257 100644
+--- a/drivers/qmimodem/gprs.c
++++ b/drivers/qmimodem/gprs.c
+@@ -26,6 +26,7 @@
  #include <ofono/log.h>
- #include <ofono/message-waiting.h>
+ #include <ofono/modem.h>
+ #include <ofono/gprs.h>
 +#include <drivers/atmodem/vendor.h>
  =
 
- #include <drivers/qmimodem/qmi.h>
- #include <drivers/qmimodem/dms.h>
-@@ -496,9 +497,17 @@ static void gobi_post_online(struct ofono_modem *modem)
- 	struct gobi_data *data =3D ofono_modem_get_data(modem);
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
-+    const char* quirk;
-+    unsigned int vendor =3D 0;
+ #include "qmi.h"
+ #include "nas.h"
+@@ -35,6 +36,7 @@
+ #include "qmimodem.h"
  =
 
- 	DBG("%p", modem);
+ struct gprs_data {
++    unsigned int vendor;
+ 	struct qmi_device *dev;
+ 	struct qmi_service *nas;
+ 	struct qmi_service *wds;
+@@ -284,6 +286,18 @@ static void qmi_set_attached(struct ofono_gprs *gprs, =
+int attached,
  =
 
-+    quirk =3D ofono_modem_get_string(modem, "Quirk");
-+    if (quirk) {
-+	    DBG("Debug: vendor =3D OFONO_VENDOR_UBLOX_SARA_R4");
-+        vendor =3D OFONO_VENDOR_UBLOX_SARA_R4;
+ 	DBG("attached %d", attached);
+ =
+
++    if (data->vendor =3D=3D OFONO_VENDOR_UBLOX_SARA_R4) {
++        /* This assumes neither 'attach' nor 'detach' are
++         * necessary... if 'attach' is required, then you'll
++         * need to make this section conditional on the action
++         * being 'detach'
++         */
++	    DBG("Debug vendor =3D OFONO_VENDOR_UBLOX_SARA_R4");
++        CALLBACK_WITH_SUCCESS(cb, cbd->data);
++        g_free(cbd);
++        return;
 +    }
-+
- 	if (data->features & GOBI_NAS) {
- 		ofono_netreg_create(modem, 0, "qmimodem", data->device);
- 		ofono_netmon_create(modem, 0, "qmimodem", data->device);
-@@ -508,7 +517,7 @@ static void gobi_post_online(struct ofono_modem *modem)
- 		ofono_ussd_create(modem, 0, "qmimodem", data->device);
++    =
+
+ 	if (attached)
+ 		action =3D QMI_NAS_ATTACH_ACTION_ATTACH;
+ 	else
+@@ -406,6 +420,7 @@ static int qmi_gprs_probe(struct ofono_gprs *gprs,
+ 	DBG("");
  =
 
- 	if (data->features & GOBI_WDS) {
--		gprs =3D ofono_gprs_create(modem, 0, "qmimodem", data->device);
-+		gprs =3D ofono_gprs_create(modem, vendor, "qmimodem", data->device);
- 		gc =3D ofono_gprs_context_create(modem, 0, "qmimodem",
- 							data->device);
+ 	data =3D g_new0(struct gprs_data, 1);
++    data->vendor =3D vendor;
+ =
+
+ 	ofono_gprs_set_data(gprs, data);
  =
 
 -- =
 
 2.17.1
 
---===============6852924559596227638==--
+--===============6985093457035406017==--
 
