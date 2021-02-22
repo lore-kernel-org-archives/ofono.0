@@ -1,127 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============2650191605909680052=="
+Content-Type: multipart/mixed; boundary="===============2004261034045785513=="
 MIME-Version: 1.0
-From: Alexey Andreyev <aa13q@ya.ru>
-Subject: Re: [PATCH] qmimodem: Add USSD indication support
-Date: Fri, 19 Feb 2021 18:30:32 +0300
-Message-ID: <8fe191b9-0c3b-45ad-8701-d5311b64b3a6@ya.ru>
-In-Reply-To: <187961613747980@mail.yandex.ru>
+From: Jupiter <jupiter.hce@gmail.com>
+Subject: [PATCH v3 1/4] Change 1: SARA R4 QMI support
+Date: Mon, 22 Feb 2021 20:08:56 +1100
+Message-ID: <20210222090859.2883-2-jupiter.hce@gmail.com>
+In-Reply-To: <20210222090859.2883-1-jupiter.hce@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2650191605909680052==
+--===============2004261034045785513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Sorry for a noob html format, retrying from a custom client as plaintext:
-
-Hello! My first patch, feel free to criticize :) This is to handle the USSD =
-
-Indication messages with the qmimodem driver.
-Higher-level KDE Plasma Mobile issue: =
-
-https://invent.kde.org/plasma-mobile/plasma-dialer/-/merge_requests/33
-Tested with Quectel EG25-G (Pinephone BH), looks like working, I'm able to =
-
-receive the expected QMI USSD Indication messages.
+From: jupiter <jupiter.hce@gmail.com>
 
 ---
-From 2f041e6ba183a2f2a3309e139adef3d114bdc85b Mon Sep 17 00:00:00 2001
-From: Alexey Andreyev <aa13q@ya.ru>
-Date: Fri, 19 Feb 2021 15:47:42 +0300
-Subject: [PATCH] qmimodem: Add USSD indication support
+ plugins/udevng.c | 41 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
 
-Handle USSD QMI indication messages.
-Add support for UCS2 USS Data coding scheme.
-Check for User Action TLV type.
----
- drivers/qmimodem/ussd.c | 45 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 45 insertions(+)
-
-diff --git a/drivers/qmimodem/ussd.c b/drivers/qmimodem/ussd.c
-index 1e613032..189de5bc 100644
---- a/drivers/qmimodem/ussd.c
-+++ b/drivers/qmimodem/ussd.c
-@@ -67,6 +67,12 @@ static int convert_qmi_dcs_gsm_dcs(int qmi_dcs, int =
-
-*gsm_dcs)
- 	case QMI_USSD_DCS_ASCII:
- 		*gsm_dcs =3D USSD_DCS_8BIT;
- 		break;
-+	case QMI_USSD_DCS_8BIT:
-+			*gsm_dcs =3D USSD_DCS_8BIT;
-+			break;
-+	case QMI_USSD_DCS_UCS2:
-+			*gsm_dcs =3D USSD_DCS_UCS2;
-+			break;
- 	default:
- 		return 1;
- 	}
-@@ -74,6 +80,42 @@ static int convert_qmi_dcs_gsm_dcs(int qmi_dcs, int =
-
-*gsm_dcs)
- 	return 0;
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 34ac1cc0..63d95055 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1194,6 +1194,45 @@ static gboolean setup_ublox(struct modem_info *modem)
+ 	return TRUE;
  }
  =
 
-+static void async_ind(struct qmi_result *result, void *user_data)
-+{
-+	struct ofono_ussd *ussd =3D user_data;
-+	const struct qmi_ussd_data *qmi_ussd;
-+	uint8_t user_action_required =3D 0;
-+	int notify_status =3D OFONO_USSD_STATUS_NOTIFY;
-+	uint16_t len;
-+	int gsm_dcs;
++static gboolean setup_ubloxqmi(struct modem_info *modem) {
++	const char *qmi =3D NULL, *net =3D NULL, *gps =3D NULL, *aux =3D NULL;
++	GSList *list;
 +
-+	DBG("");
++	DBG("%s", modem->syspath);
 +
-+	qmi_ussd =3D qmi_result_get(result, QMI_VOICE_PARAM_USSD_IND_DATA, &len);
-+	if (qmi_ussd =3D=3D NULL)
-+			return;
++	for (list =3D modem->devices; list; list =3D g_slist_next(list)) {
++		struct device_info *info =3D list->data;
 +
-+	if (validate_ussd_data(qmi_ussd, len))
-+			goto error;
++		DBG("%s %s %s %s %s", info->devnode, info->interface,
++				info->number, info->label, info->subsystem);
 +
-+	if (convert_qmi_dcs_gsm_dcs(qmi_ussd->dcs, &gsm_dcs))
-+			goto error;
-+
-+	if (qmi_result_get_uint8(result, QMI_VOICE_PARAM_USSD_IND_USER_ACTION,
-+			&user_action_required)) {
-+		if (user_action_required =3D=3D QMI_USSD_USER_ACTION_REQUIRED) {
-+			notify_status =3D OFONO_USSD_STATUS_ACTION_REQUIRED;
++		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
++				g_strcmp0(info->number, "03") =3D=3D 0) {
++			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
++				net =3D info->devnode;
++			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
++				qmi =3D info->devnode;
 +		}
 +	}
 +
-+	ofono_ussd_notify(ussd, notify_status, gsm_dcs,
-+			qmi_ussd->data, qmi_ussd->length);
-+	return;
++	DBG("qmi=3D%s net=3D%s", qmi, net);
 +
-+error:
-+	ofono_ussd_notify(ussd, OFONO_USSD_STATUS_TERMINATED, 0, NULL, 0);
++	if (qmi =3D=3D NULL || net =3D=3D NULL)
++		return FALSE;
++
++	DBG("qmi=3D%s net=3D%s", qmi, net);
++
++	ofono_modem_set_string(modem->modem, "Device", qmi);
++	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
++    ofono_modem_set_string(modem->modem, "Quirk", "SARAR4");
++
++	DBG("gps=3D%s aux=3D%s", gps, aux);
++
++	ofono_modem_set_driver(modem->modem, "gobi");
++
++	return TRUE;
 +}
 +
- static void async_orig_ind(struct qmi_result *result, void *user_data)
+ static gboolean setup_gemalto(struct modem_info* modem)
  {
- 	struct ofono_ussd *ussd =3D user_data;
-@@ -141,6 +183,9 @@ static void create_voice_cb(struct qmi_service =
-
-*service, void *user_data)
- =
-
- 	data->voice =3D qmi_service_ref(service);
- =
-
-+	qmi_service_register(data->voice, QMI_VOICE_USSD_IND,
-+					async_ind, ussd, NULL);
-+
- 	qmi_service_register(data->voice, QMI_VOICE_ASYNC_ORIG_USSD,
- 					async_orig_ind, ussd, NULL);
- =
-
+ 	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL,
+@@ -1441,6 +1480,7 @@ static struct {
+ 	{ "quectel",	setup_quectel	},
+ 	{ "quectelqmi",	setup_quectelqmi},
+ 	{ "ublox",	setup_ublox	},
++    { "ubloxqmi",   setup_ubloxqmi  },
+ 	{ "gemalto",	setup_gemalto	},
+ 	{ "xmm7xxx",	setup_xmm7xxx	},
+ 	{ "mbim",	setup_mbim	},
+@@ -1850,6 +1890,7 @@ static struct {
+ 	{ "ublox",	"cdc_ncm",	"1546", "110a"	},
+ 	{ "ublox",	"rndis_host",	"1546", "1146"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1146"	},
++    { "ubloxqmi",   "qmi_wwan", "05c6", "90b2"  },
+ 	{ "gemalto",	"option",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
 -- =
 
-2.30.0
+2.17.1
 
-
---===============2650191605909680052==--
+--===============2004261034045785513==--
 
