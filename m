@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6985093457035406017=="
+Content-Type: multipart/mixed; boundary="===============1536288372662142466=="
 MIME-Version: 1.0
 From: Jupiter <jupiter.hce@gmail.com>
-Subject: [PATCH v3 3/4] Change 3: Check SARA R4 vendor ID,
- need to make it conditional on the actions being attach and detach
-Date: Mon, 22 Feb 2021 20:08:58 +1100
-Message-ID: <20210222090859.2883-4-jupiter.hce@gmail.com>
-In-Reply-To: <20210222090859.2883-1-jupiter.hce@gmail.com>
+Subject: [PATCH 1/4] SARA R4 QMI support
+Date: Mon, 22 Feb 2021 21:14:46 +1100
+Message-ID: <20210222101449.2809-2-jupiter.hce@gmail.com>
+In-Reply-To: <20210222101449.2809-1-jupiter.hce@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6985093457035406017==
+--===============1536288372662142466==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,68 +16,79 @@ Content-Transfer-Encoding: quoted-printable
 From: jupiter <jupiter.hce@gmail.com>
 
 ---
- drivers/qmimodem/gprs.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ plugins/udevng.c | 41 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
 
-diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
-index 896a9e4c..64d90257 100644
---- a/drivers/qmimodem/gprs.c
-+++ b/drivers/qmimodem/gprs.c
-@@ -26,6 +26,7 @@
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/gprs.h>
-+#include <drivers/atmodem/vendor.h>
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 34ac1cc0..63d95055 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1194,6 +1194,45 @@ static gboolean setup_ublox(struct modem_info *modem)
+ 	return TRUE;
+ }
  =
 
- #include "qmi.h"
- #include "nas.h"
-@@ -35,6 +36,7 @@
- #include "qmimodem.h"
- =
-
- struct gprs_data {
-+    unsigned int vendor;
- 	struct qmi_device *dev;
- 	struct qmi_service *nas;
- 	struct qmi_service *wds;
-@@ -284,6 +286,18 @@ static void qmi_set_attached(struct ofono_gprs *gprs, =
-int attached,
- =
-
- 	DBG("attached %d", attached);
- =
-
-+    if (data->vendor =3D=3D OFONO_VENDOR_UBLOX_SARA_R4) {
-+        /* This assumes neither 'attach' nor 'detach' are
-+         * necessary... if 'attach' is required, then you'll
-+         * need to make this section conditional on the action
-+         * being 'detach'
-+         */
-+	    DBG("Debug vendor =3D OFONO_VENDOR_UBLOX_SARA_R4");
-+        CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+        g_free(cbd);
-+        return;
-+    }
-+    =
-
- 	if (attached)
- 		action =3D QMI_NAS_ATTACH_ACTION_ATTACH;
- 	else
-@@ -406,6 +420,7 @@ static int qmi_gprs_probe(struct ofono_gprs *gprs,
- 	DBG("");
- =
-
- 	data =3D g_new0(struct gprs_data, 1);
-+    data->vendor =3D vendor;
- =
-
- 	ofono_gprs_set_data(gprs, data);
- =
-
++static gboolean setup_ubloxqmi(struct modem_info *modem) {
++	const char *qmi =3D NULL, *net =3D NULL, *gps =3D NULL, *aux =3D NULL;
++	GSList *list;
++
++	DBG("%s", modem->syspath);
++
++	for (list =3D modem->devices; list; list =3D g_slist_next(list)) {
++		struct device_info *info =3D list->data;
++
++		DBG("%s %s %s %s %s", info->devnode, info->interface,
++				info->number, info->label, info->subsystem);
++
++		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
++				g_strcmp0(info->number, "03") =3D=3D 0) {
++			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
++				net =3D info->devnode;
++			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
++				qmi =3D info->devnode;
++		}
++	}
++
++	DBG("qmi=3D%s net=3D%s", qmi, net);
++
++	if (qmi =3D=3D NULL || net =3D=3D NULL)
++		return FALSE;
++
++	DBG("qmi=3D%s net=3D%s", qmi, net);
++
++	ofono_modem_set_string(modem->modem, "Device", qmi);
++	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
++    ofono_modem_set_string(modem->modem, "Quirk", "SARAR4");
++
++	DBG("gps=3D%s aux=3D%s", gps, aux);
++
++	ofono_modem_set_driver(modem->modem, "gobi");
++
++	return TRUE;
++}
++
+ static gboolean setup_gemalto(struct modem_info* modem)
+ {
+ 	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL,
+@@ -1441,6 +1480,7 @@ static struct {
+ 	{ "quectel",	setup_quectel	},
+ 	{ "quectelqmi",	setup_quectelqmi},
+ 	{ "ublox",	setup_ublox	},
++    { "ubloxqmi",   setup_ubloxqmi  },
+ 	{ "gemalto",	setup_gemalto	},
+ 	{ "xmm7xxx",	setup_xmm7xxx	},
+ 	{ "mbim",	setup_mbim	},
+@@ -1850,6 +1890,7 @@ static struct {
+ 	{ "ublox",	"cdc_ncm",	"1546", "110a"	},
+ 	{ "ublox",	"rndis_host",	"1546", "1146"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1146"	},
++    { "ubloxqmi",   "qmi_wwan", "05c6", "90b2"  },
+ 	{ "gemalto",	"option",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
 -- =
 
 2.17.1
 
---===============6985093457035406017==--
+--===============1536288372662142466==--
 
