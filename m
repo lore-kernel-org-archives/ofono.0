@@ -1,82 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============6156880553755715014=="
+Content-Type: multipart/mixed; boundary="===============5037591977156861514=="
 MIME-Version: 1.0
-From: Bing Jupiter <jupiter.hce@gmail.com>
-Subject: [PATCH v2 4/4] Make SARA R4 vendor ID conditional being attach and
- detach
-Date: Wed, 24 Feb 2021 19:39:24 +1100
-Message-ID: <20210224083924.3480-5-jupiter.hce@gmail.com>
-In-Reply-To: <20210224083924.3480-1-jupiter.hce@gmail.com>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: Re: [PATCH v2 1/4] SARA R4 QMI support
+Date: Wed, 24 Feb 2021 09:49:06 +0100
+Message-ID: <ee7b5b4c-ce71-f132-d3e2-6d75fe01b86e@norrbonn.se>
+In-Reply-To: <20210224083924.3480-2-jupiter.hce@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6156880553755715014==
+--===============5037591977156861514==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/qmimodem/gprs.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+Hi Jupiter,
 
-diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
-index 896a9e4c..90203dd3 100644
---- a/drivers/qmimodem/gprs.c
-+++ b/drivers/qmimodem/gprs.c
-@@ -26,6 +26,7 @@
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/gprs.h>
-+#include <drivers/atmodem/vendor.h>
- =
+Please add a description to your patch.  Something along these lines:
 
- #include "qmi.h"
- #include "nas.h"
-@@ -35,6 +36,7 @@
- #include "qmimodem.h"
- =
+This adds support for the uBlox SARA-R4 modem.
 
- struct gprs_data {
-+	unsigned int vendor;
- 	struct qmi_device *dev;
- 	struct qmi_service *nas;
- 	struct qmi_service *wds;
-@@ -284,6 +286,18 @@ static void qmi_set_attached(struct ofono_gprs *gprs, =
-int attached,
- =
+Unlike other uBlox devices, this modem is actually a Qualcomm part and =
 
- 	DBG("attached %d", attached);
- =
+therefore supports the QMI protocol.  For that reason, this doesn't just =
 
-+	if (data->vendor =3D=3D OFONO_VENDOR_UBLOX_SARA_R4) {
-+	/* This assumes neither 'attach' nor 'detach' are
-+	 * necessary... if 'attach' is required, then you'll
-+	 * need to make this section conditional on the action
-+	 * being 'detach'
-+	 */
-+		DBG("Debug vendor =3D OFONO_VENDOR_UBLOX_SARA_R4");
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+		g_free(cbd);
-+		return;
-+	}
-+    =
+jack into the usual uBlox modem framework.
 
- 	if (attached)
- 		action =3D QMI_NAS_ATTACH_ACTION_ATTACH;
- 	else
-@@ -406,6 +420,7 @@ static int qmi_gprs_probe(struct ofono_gprs *gprs,
- 	DBG("");
- =
+The modem has a quirk in that it fails to reconnect to the network if a =
 
- 	data =3D g_new0(struct gprs_data, 1);
-+	data->vendor =3D vendor;
- =
+NAS detach is issued when connectivity is lost; therefore, we need to =
 
- 	ofono_gprs_set_data(gprs, data);
- =
+add some 'vendor' handling to the QMI gprs atom to account for this.
 
--- =
+This has been tested... how?
 
-2.25.1
+Hope that helps,
+Jonas
 
---===============6156880553755715014==--
+On 24/02/2021 09:39, Bing Jupiter wrote:
+> ---
+>   plugins/udevng.c | 41 +++++++++++++++++++++++++++++++++++++++++
+>   1 file changed, 41 insertions(+)
+> =
+
+> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index 34ac1cc0..9941145f 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -1194,6 +1194,45 @@ static gboolean setup_ublox(struct modem_info *mod=
+em)
+>   	return TRUE;
+>   }
+>   =
+
+> +static gboolean setup_ubloxqmi(struct modem_info *modem) {
+> +	const char *qmi =3D NULL, *net =3D NULL, *gps =3D NULL, *aux =3D NULL;
+> +	GSList *list;
+> +
+> +	DBG("%s", modem->syspath);
+> +
+> +	for (list =3D modem->devices; list; list =3D g_slist_next(list)) {
+> +		struct device_info *info =3D list->data;
+> +
+> +		DBG("%s %s %s %s %s", info->devnode, info->interface,
+> +				info->number, info->label, info->subsystem);
+> +
+> +		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
+> +				g_strcmp0(info->number, "03") =3D=3D 0) {
+> +			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
+> +				net =3D info->devnode;
+> +			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
+> +				qmi =3D info->devnode;
+> +		}
+> +	}
+> +
+> +	DBG("qmi=3D%s net=3D%s", qmi, net);
+> +
+> +	if (qmi =3D=3D NULL || net =3D=3D NULL)
+> +		return FALSE;
+> +
+> +	DBG("qmi=3D%s net=3D%s", qmi, net);
+> +
+> +	ofono_modem_set_string(modem->modem, "Device", qmi);
+> +	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
+> +	ofono_modem_set_string(modem->modem, "Quirk", "SARAR4");
+> +
+> +	DBG("gps=3D%s aux=3D%s", gps, aux);
+> +
+> +	ofono_modem_set_driver(modem->modem, "gobi");
+> +
+> +	return TRUE;
+> +}
+> +
+>   static gboolean setup_gemalto(struct modem_info* modem)
+>   {
+>   	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL,
+> @@ -1441,6 +1480,7 @@ static struct {
+>   	{ "quectel",	setup_quectel	},
+>   	{ "quectelqmi",	setup_quectelqmi},
+>   	{ "ublox",	setup_ublox	},
+> +	{ "ubloxqmi",   setup_ubloxqmi  },
+>   	{ "gemalto",	setup_gemalto	},
+>   	{ "xmm7xxx",	setup_xmm7xxx	},
+>   	{ "mbim",	setup_mbim	},
+> @@ -1850,6 +1890,7 @@ static struct {
+>   	{ "ublox",	"cdc_ncm",	"1546", "110a"	},
+>   	{ "ublox",	"rndis_host",	"1546", "1146"	},
+>   	{ "ublox",	"cdc_acm",	"1546", "1146"	},
+> +	{ "ubloxqmi",   "qmi_wwan", "05c6", "90b2"  },
+>   	{ "gemalto",	"option",	"1e2d",	"0053"	},
+>   	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
+>   	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
+>=20
+--===============5037591977156861514==--
 
