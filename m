@@ -1,51 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7798462220684739571=="
+Content-Type: multipart/mixed; boundary="===============3732308589954342006=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v1 5/5] Use tabs as Denis required
-Date: Tue, 23 Feb 2021 14:08:20 -0600
-Message-ID: <08ea8330-e97c-2326-5c91-806f26d98958@gmail.com>
-In-Reply-To: <20210223044653.4933-6-jupiter.hce@gmail.com>
+From: Bing Jupiter <jupiter.hce@gmail.com>
+Subject: [PATCH v2 0/4] oFono uBlox SARA R4 QMI 
+Date: Wed, 24 Feb 2021 19:39:20 +1100
+Message-ID: <20210224083924.3480-1-jupiter.hce@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7798462220684739571==
+--===============3732308589954342006==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jupiter,
+Hi Denis,
 
-On 2/22/21 10:46 PM, Bing Jupiter wrote:
-> From: Jupiter <jupiter.hce@gmail.com>
+Hope it can be accepted.
 
-Please make sure your authorship information is updated in the commit meta-=
-data =
+Thank you.
 
-as well for  all the patches you're submitting.
+Kind regards,
 
-> =
+- Jupiter
 
-> ---
->   drivers/atmodem/vendor.h |  2 +-
->   drivers/qmimodem/gprs.c  | 26 +++++++++++++-------------
->   plugins/gobi.c           | 14 +++++++-------
->   plugins/udevng.c         |  6 +++---
->   4 files changed, 24 insertions(+), 24 deletions(-)
-> =
+Bing Jupiter (4):
+  SARA R4 QMI support
+  Enable SARA R4 vendor ID for gprs create
+  Add SARA R4 vendor ID
+  Make SARA R4 vendor ID conditional being attach and detach
 
+ drivers/atmodem/vendor.h |  1 +
+ drivers/qmimodem/gprs.c  | 15 +++++++++++++++
+ plugins/gobi.c           | 11 ++++++++++-
+ plugins/udevng.c         | 41 ++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 67 insertions(+), 1 deletion(-)
 
-No, please don't do it this way.  This patch should not  exist.  Instead ta=
-ke =
+-- =
 
-the changes from this patch and amend the previous 4 patches.  In other wor=
-ds, =
+2.25.1
 
-the previous 4 patches should be following the coding style as documented i=
-n =
-
-doc/coding-style.txt.
-
-Regards,
--Denis
---===============7798462220684739571==--
+--===============3732308589954342006==--
 
