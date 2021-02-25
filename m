@@ -1,64 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============8876944588178228320=="
+Content-Type: multipart/mixed; boundary="===============7799900527382945043=="
 MIME-Version: 1.0
 From: Christopher Talbot <chris@talbothome.com>
-Subject: [PATCH 3/9] Ensure Compatibility with AT&T
-Date: Wed, 24 Feb 2021 19:44:33 -0500
-Message-ID: <516fcb0a72a70d9f95ecea1a45fa261ce3f3f2ec.camel@talbothome.com>
+Subject: [PATCH 4/9] Fix issue if there is an empty string in encoded text
+Date: Wed, 24 Feb 2021 19:45:26 -0500
+Message-ID: <799fae706773af11b74f9e11d1c8b264b7642a0a.camel@talbothome.com>
 In-Reply-To: <20210225003933.2871.63570@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8876944588178228320==
+--===============7799900527382945043==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch fixes two issues to ensure compatibility with AT&T:
-1) Explicity close connections to the mmsc
-2) Allow MMS Proxies that are domain names
+
+A swedish carrier sends an empty string in the subject line. This
+patch allows mmsd to handle it
 ---
- gweb/gweb.c   | 3 ++-
- src/service.c | 3 +++
- 2 files changed, 5 insertions(+), 1 deletion(-)
+ src/mmsutil.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/gweb/gweb.c b/gweb/gweb.c
-index f72e137..995d12f 100644
---- a/gweb/gweb.c
-+++ b/gweb/gweb.c
-@@ -1309,7 +1309,8 @@ static guint do_request(GWeb *web, const char
-*url,
- 			session->address =3D g_strdup(session->host);
+diff --git a/src/mmsutil.c b/src/mmsutil.c
+index 9430bf1..615198f 100644
+--- a/src/mmsutil.c
++++ b/src/mmsutil.c
+@@ -297,6 +297,13 @@ static gboolean extract_encoded_text(struct
+wsp_header_iter *iter, void *user)
+ 	p =3D wsp_header_iter_get_val(iter);
+ 	l =3D wsp_header_iter_get_val_len(iter);
  =
 
- 		memset(&hints, 0, sizeof(struct addrinfo));
--		hints.ai_flags =3D AI_NUMERICHOST;
-+		/* Comment out next line to have AT&T MMS proxy work */
-+		//hints.ai_flags =3D AI_NUMERICHOST;
- 		hints.ai_family =3D session->web->family;
- =
-
- 		if (session->addr !=3D NULL) {
-diff --git a/src/service.c b/src/service.c
-index c7ef255..a3b90c5 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -2527,6 +2527,9 @@ void mms_service_bearer_notify(struct mms_service
-*service, mms_bool_t active,
- =
-
- 	g_web_set_debug(service->web, (GWebDebugFunc)debug_print,
-NULL);
- =
-
-+	/* Explicitly close connections to work with AT&T */
-+	g_web_set_close_connection(service->web,TRUE);
++	if(l =3D=3D 0) {
++		DBG("Length is 0! Returning empty string");
++		dec_text =3D g_strdup("");
++		*out =3D dec_text;
++		return TRUE;
++	}
 +
- 	/* Sometimes no proxy is reported as string instead of NULL */
- 	if (g_strcmp0(proxy, "") !=3D 0)
- 		g_web_set_proxy(service->web, proxy);
+ 	switch (wsp_header_iter_get_val_type(iter)) {
+ 	case WSP_VALUE_TYPE_TEXT:
+ 		/* Text-string */
 -- =
 
 2.30.0
 
---===============8876944588178228320==--
+--===============7799900527382945043==--
 
