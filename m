@@ -1,85 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============7220063068513999993=="
+Content-Type: multipart/mixed; boundary="===============8551120689683736190=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Quectel EC25 vs. ofonod 1.29 (on PinePhone)
-Date: Thu, 08 Apr 2021 00:56:42 +0200
-Message-ID: <20210407225642.GA23328@duo.ucw.cz>
+From: dalton@ubports.com
+Subject: Re: Quectel EC25 vs. ofonod 1.29 (on PinePhone)
+Date: Wed, 07 Apr 2021 23:51:27 +0000
+Message-ID: <20210407235127.2848.76714@ml01.vlan13.01.org>
+In-Reply-To: <20210407225642.GA23328@duo.ucw.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7220063068513999993==
+--===============8551120689683736190==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Pavel,
 
-I'm fighting with Quectel EG25 modem (included in PinePhone).
+I can only speak for Ubuntu Touch and Plasma Mobile, but we're using the QM=
+I interface provided by the EG25G. We had more trouble trying to use the AT=
+ interface than it seemed worth working on. One problem was, indeed, having=
+ trouble receiving the RING indication reliably. Another was trying to get =
+WWAN set up correctly.
 
-AT+CGMM                                                                    =
-     =
+Ubuntu Touch messily applies QMI call patches to oFono in a branch on our G=
+itHub repository of it: https://github.com/ubports/ofono/tree/xenial_-_edge=
+_-_pine. I'll send another reply once I know where Plasma Mobile gets its b=
+uilds. Hopefully they've got a bit cleaner commit log.
 
-EG25                                                                       =
-     =
-
-                                                                           =
-     =
-
-OK                                                                         =
-     =
-
-
-ofonod 1.29 does not provide incoming calls indication. (Incoming
-messages seem to work okay).
-
-Talking to modem directly... I don't see "RING" either.
-
-Best I can do is get CDIP notification, and then ask using CLCC...
-
-+CDIP: "",128                                                              =
-     =
-
-AT+CLCC                                                                    =
-     =
-
-+CLCC: 1,1,0,1,0,"",128                                                    =
-     =
-
-+CLCC: 2,1,4,0,0,"+420XXXXXXX",145                                         =
-   =
-
-                                                                           =
-     =
-
-OK                                                                         =
-     =
-
-                                                                           =
-     =
-
-
-If someone knows what is going on there... let me know.
-
-(It is possible that the modem has also QMI interface...?
-https://wiki.merproject.org/wiki/Adaptations/PinePhone64#Modem_EC25)
-
-Best regards,
-									Pavel
-
--- =
-
-http://www.livejournal.com/~pavelmachek
-
---===============7220063068513999993==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlGMEVBQkVDQUIwV0lRUlBmUE83cjBlQWhr
-MDEwdjB3NS9CcWxkdjY4Z1VDWUc0NHFnQUtDUkF3NS9CcWxkdjYKOGlpMEFKOUtYQlpGaHZuVGth
-ME90QnZsait2eGZrNEZnUUNmY0xkSVMzMVFDRDRBMzlEMGJtNXNUT3JkNkF3PQo9bkgyOAotLS0t
-LUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
-
---===============7220063068513999993==--
+You will have problems with the modem further than you're having now, thoug=
+h: for one, it likes to fall off of USB every now and again when waking fro=
+m sleep. We're currently investigating this issue since all PinePhone opera=
+ting systems have devised workarounds that are far more complicated than th=
+e issue seems to warrant. If you want to talk more PinePhone development, I=
+ recommend you join us at #pinedev on freenode or #pine-dev:matrix.org
+--===============8551120689683736190==--
 
