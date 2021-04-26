@@ -1,39 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8672654921589755011=="
+Content-Type: multipart/mixed; boundary="===============2881926519895368183=="
 MIME-Version: 1.0
 From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH 1/2] sim-auth: Remove watch if open_channel fails
-Date: Mon, 26 Apr 2021 11:17:33 +0300
-Message-ID: <20210426081734.2460416-1-slava.monich@jolla.com>
+Subject: [PATCH 2/2] sim-auth: Only close open sessions
+Date: Mon, 26 Apr 2021 11:17:34 +0300
+Message-ID: <20210426081734.2460416-2-slava.monich@jolla.com>
+In-Reply-To: <20210426081734.2460416-1-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8672654921589755011==
+--===============2881926519895368183==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Otherwise open_channel won't be called again after a failure.
+Session has to be open in order to have a valid session_id
 ---
- src/sim-auth.c | 2 ++
- 1 file changed, 2 insertions(+)
+ src/sim.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/src/sim-auth.c b/src/sim-auth.c
-index 0e13b533..3c3f35e7 100644
---- a/src/sim-auth.c
-+++ b/src/sim-auth.c
-@@ -367,6 +367,8 @@ static void get_session_cb(ofono_bool_t active, int ses=
-sion_id,
- error:
- 	__ofono_dbus_pending_reply(&sa->pending->msg,
- 			__ofono_error_failed(sa->pending->msg));
-+	__ofono_sim_remove_session_watch(sa->pending->session,
-+			sa->pending->watch_id);
- 	g_free(sa->pending);
- 	sa->pending =3D NULL;
- }
+diff --git a/src/sim.c b/src/sim.c
+index 793ff64a..3319ecee 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -3805,7 +3805,8 @@ void __ofono_sim_remove_session_watch(struct ofono_si=
+m_aid_session *session,
+ {
+ 	__ofono_watchlist_remove_item(session->watches, id);
+ =
+
+-	if (g_slist_length(session->watches->items) =3D=3D 0) {
++	if (g_slist_length(session->watches->items) =3D=3D 0 &&
++			session->state =3D=3D SESSION_STATE_OPEN) {
+ 		/* last watcher, close session */
+ 		session->state =3D SESSION_STATE_CLOSING;
+ 		session->sim->driver->close_channel(session->sim,
 -- =
 
 2.25.1
 
---===============8672654921589755011==--
+--===============2881926519895368183==--
 
