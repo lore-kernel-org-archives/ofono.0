@@ -1,32 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============0896823054855321296=="
+Content-Type: multipart/mixed; boundary="===============4158814702062575961=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] sim-auth: Remove watch if open_channel fails
-Date: Fri, 30 Apr 2021 09:31:26 -0500
-Message-ID: <b64fbd30-f85b-0ee3-4f41-0ffe231620ff@gmail.com>
-In-Reply-To: <20210426081734.2460416-1-slava.monich@jolla.com>
+Subject: Re: [PATCH] build: require glib >= 2.60
+Date: Fri, 30 Apr 2021 09:47:16 -0500
+Message-ID: <202f89ca-e8c1-b95c-0efc-bb71d9249e01@gmail.com>
+In-Reply-To: <20210308093314.30554-1-wjs890204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0896823054855321296==
+--===============4158814702062575961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
-
-On 4/26/21 3:17 AM, Slava Monich wrote:
-> Otherwise open_channel won't be called again after a failure.
+On 3/8/21 3:33 AM, JongSeok Won wrote:
+> g_utf8_validate_len() is support after glib 2.60
 > ---
->   src/sim-auth.c | 2 ++
->   1 file changed, 2 insertions(+)
+>   configure.ac | 4 ++--
+>   1 file changed, 2 insertions(+), 2 deletions(-)
 > =
 
 
-Both applied, thanks.
+Applied, thanks.
 
 Regards,
 -Denis
-
---===============0896823054855321296==--
+--===============4158814702062575961==--
 
