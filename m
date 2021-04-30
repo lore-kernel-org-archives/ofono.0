@@ -1,42 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============2075197621464440150=="
+Content-Type: multipart/mixed; boundary="===============0896823054855321296=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH] simutil: Fill unused part of AID with FFs
-Date: Thu, 29 Apr 2021 19:09:21 +0300
-Message-ID: <20210429160921.3153725-1-slava.monich@jolla.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] sim-auth: Remove watch if open_channel fails
+Date: Fri, 30 Apr 2021 09:31:26 -0500
+Message-ID: <b64fbd30-f85b-0ee3-4f41-0ffe231620ff@gmail.com>
+In-Reply-To: <20210426081734.2460416-1-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2075197621464440150==
+--===============0896823054855321296==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Correct handling of short AIDs will take more than that, but
-leaving part of the array uninitialized is wrong in any case.
----
- src/simutil.c | 1 +
- 1 file changed, 1 insertion(+)
+Hi Slava,
 
-diff --git a/src/simutil.c b/src/simutil.c
-index 5d2aa6a2..e648c918 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -1588,6 +1588,7 @@ GSList *sim_parse_app_template_entries(const unsigned=
- char *buffer, int len)
- 			goto error;
- =
+On 4/26/21 3:17 AM, Slava Monich wrote:
+> Otherwise open_channel won't be called again after a failure.
+> ---
+>   src/sim-auth.c | 2 ++
+>   1 file changed, 2 insertions(+)
+> =
 
- 		memcpy(app.aid, aid, app.aid_len);
-+		memset(app.aid + app.aid_len, 0xff, 16 - app.aid_len);
- =
 
- 		app.type =3D (app.aid[5] << 8) | app.aid[6];
- =
+Both applied, thanks.
 
--- =
+Regards,
+-Denis
 
-2.25.1
-
---===============2075197621464440150==--
+--===============0896823054855321296==--
 
