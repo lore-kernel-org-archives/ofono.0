@@ -1,197 +1,241 @@
-Content-Type: multipart/mixed; boundary="===============6312050575834301067=="
+Content-Type: multipart/mixed; boundary="===============0719862003243421550=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim-auth: Parse auth response according to TS 31.102
-Date: Mon, 03 May 2021 16:20:44 -0500
-Message-ID: <7a2e4d9e-1b41-1498-be00-ebecec64044b@gmail.com>
-In-Reply-To: <20210503140435.3559338-1-slava.monich@jolla.com>
+From: Smitty <me@smitop.com>
+Subject: [PATCH] Better display serving cell info
+Date: Sat, 08 May 2021 19:12:26 -0400
+Message-ID: <20210508231225.18672-1-me@smitop.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6312050575834301067==
+--===============0719862003243421550==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Fixes some missing space in the output:
+[ Mobile Country Code =3D 722 ]
+Instead of:
+[ Mobile Country Code =3D 722]
 
-On 5/3/21 9:04 AM, Slava Monich wrote:
-> ---
+This also unifies the display logic between {get,test}-serving-cell-info
+---
+ test/get-serving-cell-info  | 48 ++++++++++++++++++++-----------
+ test/test-serving-cell-info | 56 +++++++++++++++++++++++++++++++------
+ 2 files changed, 80 insertions(+), 24 deletions(-)
 
-So what is this trying to fix?  I mean I can understand 1 line patch fixes =
-that =
+diff --git a/test/get-serving-cell-info b/test/get-serving-cell-info
+index 7a5d8981..b9609bdf 100755
+--- a/test/get-serving-cell-info
++++ b/test/get-serving-cell-info
+@@ -38,51 +38,67 @@ cqi =3D 'ChannelQualityIndicator'
+ print("Current serving cell information:")
+ =
 
-come without a description.  These tend to be self-evident.  300+ line diff =
+ if tech in servingcell:
+-	print("    [ Radio Access Technology =3D %s]" % (servingcell[tech]))
++	print("    [ Radio Access Technology =3D %s ]" \
++		% (servingcell[tech]))
+ =
 
-needs a least some explanation.
+ if mcc in servingcell:
+-	print("    [ Mobile Country Code =3D %s]" % (servingcell[mcc]))
++	print("    [ Mobile Country Code =3D %s ]" \
++		% (servingcell[mcc]))
+ =
 
->   src/sim-auth.c      |  34 ++++++-----
->   src/simutil.c       | 146 +++++++++++++++++++++++++++++++++-----------
->   src/simutil.h       |  13 ++--
->   unit/test-simutil.c | 125 ++++++++++++++++++++++++++++---------
->   4 files changed, 234 insertions(+), 84 deletions(-)
+ if mnc in servingcell:
+-	print("    [ Mobile Network Code =3D %s]" % (servingcell[mnc]))
++	print("    [ Mobile Network Code =3D %s ]" \
++		% (servingcell[mnc]))
+ =
 
-This really should be broken down into at least 2 commits. See HACKING, =
+ if lac in servingcell:
+-	print("    [ Location Area Code =3D %d]" % (servingcell[lac]))
++	print("    [ Location Area Code =3D %d ]" \
++		% (servingcell[lac]))
+ =
 
-'Submitting Patches' section, item 3.
+ if cid in servingcell:
+-	print("    [ Cell Identity =3D %d]" % (servingcell[cid]))
++	print("    [ Cell Identity =3D %d ]" \
++		% (servingcell[cid]))
+ =
 
-> =
+ if psc in servingcell:
+-	print("    [ Primary Scrambling Code =3D %d]" % (servingcell[psc]))
++	print("    [ Primary Scrambling Code =3D %d ]" \
++		% (servingcell[psc]))
+ =
 
-> diff --git a/src/sim-auth.c b/src/sim-auth.c
-> index 3c3f35e7..6dab52ee 100644
-> --- a/src/sim-auth.c
-> +++ b/src/sim-auth.c
-> @@ -207,14 +207,10 @@ static void handle_umts(struct ofono_sim_auth *sa, =
-const uint8_t *resp,
->   	DBusMessage *reply =3D NULL;
->   	DBusMessageIter iter;
->   	DBusMessageIter dict;
-> -	const uint8_t *res =3D NULL;
-> -	const uint8_t *ck =3D NULL;
-> -	const uint8_t *ik =3D NULL;
-> -	const uint8_t *auts =3D NULL;
-> -	const uint8_t *kc =3D NULL;
-> +	struct data_block res, ck, ik, auts, sres, kc;
->   =
+ if rssi in servingcell:
+-	print("    [ Signal Strength =3D %d]" % (servingcell[rssi]))
++	print("    [ Signal Strength =3D %d ]" \
++		% (servingcell[rssi]))
+ =
 
->   	if (!sim_parse_umts_authenticate(resp, len, &res, &ck, &ik,
-> -			&auts, &kc))
-> +			&auts, &sres, &kc))
->   		goto umts_end;
->   =
+ if rxlev in servingcell:
+-	print("    [ Received Signal Strength =3D %d]" % (servingcell[rxlev]))
++	print("    [ Received Signal Strength =3D %d ]" \
++		% (servingcell[rxlev]))
+ =
 
->   	reply =3D dbus_message_new_method_return(sa->pending->msg);
-> @@ -224,15 +220,23 @@ static void handle_umts(struct ofono_sim_auth *sa, =
-const uint8_t *resp,
->   	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
->   			"{say}", &dict);
->   =
+ if ber in servingcell:
+-	print("    [ Bit Error Rate =3D %d]" % (servingcell[ber]))
++	print("    [ Bit Error Rate =3D %d ]" \
++		% (servingcell[ber]))
+ =
 
-> -	if (auts) {
-> -		append_dict_byte_array(&dict, "AUTS", auts, 14);
-> -	} else {
-> -		append_dict_byte_array(&dict, "RES", res, 8);
-> -		append_dict_byte_array(&dict, "CK", ck, 16);
-> -		append_dict_byte_array(&dict, "IK", ik, 16);
-> -		if (kc)
-> -			append_dict_byte_array(&dict, "Kc", kc, 8);
-> -	}
-> +	if (auts.data)
-> +		append_dict_byte_array(&dict, "AUTS", auts.data, auts.len);
-> +
-> +	if (sres.data)
-> +		append_dict_byte_array(&dict, "SRES", sres.data, sres.len);
+ if rscp in servingcell:
+-	print("    [ Received Signal Code Power =3D %d]" % (servingcell[rscp]))
++	print("    [ Received Signal Code Power =3D %d ]" \
++		% (servingcell[rscp]))
+ =
 
-You're modifying the behavior of the D-Bus API without actually updating th=
-e =
+ if ecn0 in servingcell:
+-	print("    [ Received Energy Ratio =3D %d]" % (servingcell[ecn0]))
++	print("    [ Received Energy Ratio =3D %d ]" \
++		% (servingcell[ecn0]))
+ =
 
-relevant docs.
+ if rsrq in servingcell:
+-	print("    [ Reference Signal Received Quality =3D %d]" % (servingcell[rs=
+rq]))
++	print("    [ Reference Signal Received Quality =3D %d ]" \
++		% (servingcell[rsrq]))
+ =
 
-Also, this part looks suspect.  SRES is only done in GSM context, so should=
-n't =
+ if rsrp in servingcell:
+-	print("    [ Reference Signal Received Power =3D %d]" % (servingcell[rsrp=
+]))
++	print("    [ Reference Signal Received Power =3D %d ]" \
++		% (servingcell[rsrp]))
+ =
 
-this be taken care sim_parse_gsm_authenticate()?
+ if earfcn in servingcell:
+-	print("    [ E-UTRA Absolue Radio Frequency Channel =3D %d ]" % (servingc=
+ell[earfcn]))
++	print("    [ E-UTRA Absolue Radio Frequency Channel =3D %d ]" \
++		% (servingcell[earfcn]))
+ =
 
-> +
-> +	if (res.data)
-> +		append_dict_byte_array(&dict, "RES", res.data, res.len);
-> +
-> +	if (ck.data)
-> +		append_dict_byte_array(&dict, "CK", ck.data, ck.len);
-> +
-> +	if (ik.data)
-> +		append_dict_byte_array(&dict, "IK", ik.data, ik.len);
-> +
-> +	if (kc.data)
-> +		append_dict_byte_array(&dict, "Kc", kc.data, kc.len);
->   =
+ if eband in servingcell:
+-	print("    [ E-UTRA operating Band =3D %d ]" % (servingcell[eband]))
++	print("    [ E-UTRA operating Band =3D %d ]" \
++		% (servingcell[eband]))
+ =
 
->   	dbus_message_iter_close_container(&iter, &dict);
->   =
+ if cqi in servingcell:
+-	print("    [ Channel Quality Indicator =3D %d ]" % (servingcell[cqi]))
++	print("    [ Channel Quality Indicator =3D %d ]" \
++		% (servingcell[cqi]))
+ =
 
-> diff --git a/src/simutil.c b/src/simutil.c
-> index 5d2aa6a2..30b76f05 100644
-> --- a/src/simutil.c
-> +++ b/src/simutil.c
-> @@ -1672,63 +1672,135 @@ int sim_build_gsm_authenticate(unsigned char *bu=
-ffer, int len,
->   	return build_authenticate(buffer, rand, NULL);
->   }
->   =
+ print('')
+diff --git a/test/test-serving-cell-info b/test/test-serving-cell-info
+index 498ce88b..df4a9b52 100755
+--- a/test/test-serving-cell-info
++++ b/test/test-serving-cell-info
+@@ -30,39 +30,79 @@ class NetworkMonitorAgent(dbus.service.Object):
+ 		psc =3D 'PrimaryScramblingCode'
+ 		rssi =3D 'Strength'
+ 		ber =3D 'BitErrorRate'
++		rxlev =3D 'ReceivedSignalStrength'
++		rscp =3D 'ReceivedSignalCodePower'
++		ecn0 =3D 'ReceivedEnergyRatio'
++		rsrq =3D 'ReferenceSignalReceivedQuality'
++		rsrp =3D 'ReferenceSignalReceivedPower'
++		earfcn =3D 'EARFCN'
++		eband =3D 'EBand'
++		cqi =3D 'ChannelQualityIndicator'
+ =
 
-> -gboolean sim_parse_umts_authenticate(const unsigned char *buffer,
-> -		int len, const unsigned char **res, const unsigned char **ck,
-> -		const unsigned char **ik, const unsigned char **auts,
-> -		const unsigned char **kc)
-> +gboolean sim_parse_umts_authenticate(const unsigned char *buffer, int le=
-n,
-> +		struct data_block *res, struct data_block *ck,
-> +		struct data_block *ik, struct data_block *auts,
-> +		struct data_block *sres, struct data_block *kc)
+ 		if tech in servingcell:
+-			print("    [ Radio Access Technology =3D %s]" \
++			print("    [ Radio Access Technology =3D %s ]" \
+ 				% (servingcell[tech]))
+ =
 
-At least by my reading of 33.102, lengths of ck, ik, kc and sres are set in =
+ 		if mcc in servingcell:
+-			print("    [ Mobile Country Code =3D %s]" \
++			print("    [ Mobile Country Code =3D %s ]" \
+ 				% (servingcell[mcc]))
+ =
 
-stone, are they not?
+ 		if mnc in servingcell:
+-			print("    [ Mobile Network Code =3D %s]" \
++			print("    [ Mobile Network Code =3D %s ]" \
+ 				% (servingcell[mnc]))
+ =
 
-Also, RFC 4187 also sets in stone the definition of AUTS (and RES, AUTN, et=
-c). =
+ 		if lac in servingcell:
+-			print("    [ Location Area Code =3D %d]" \
++			print("    [ Location Area Code =3D %d ]" \
+ 				% (servingcell[lac]))
+ =
 
-So you probably have to explain how and when AUTS length could be not in li=
-ne =
+ 		if cid in servingcell:
+-			print("    [ Cell Identity =3D %d]" \
++			print("    [ Cell Identity =3D %d ]" \
+ 				% (servingcell[cid]))
+ =
 
-with that RFC?  The authentication API is mostly meant to be used by =
+ 		if psc in servingcell:
+-			print("    [ Primary Scrambling Code =3D %d]" \
++			print("    [ Primary Scrambling Code =3D %d ]" \
+ 				% (servingcell[psc]))
+ =
 
-implementations of this RFC, so we would need to take appropriate steps tha=
-t =
+ 		if rssi in servingcell:
+-			print("    [ Signal Strength =3D %d]" \
++			print("    [ Signal Strength =3D %d ]" \
+ 				% (servingcell[rssi]))
+ =
 
-nothing is broken by this change.
++		if rxlev in servingcell:
++			print("    [ Received Signal Strength =3D %d ]" \
++				% (servingcell[rxlev]))
++
+ 		if ber in servingcell:
+-			print("    [ Bit Error Rate =3D %d]" \
++			print("    [ Bit Error Rate =3D %d ]" \
+ 				% (servingcell[ber]))
+ =
 
->   {
-> -	if (len < 16 || !buffer)
-> +	const unsigned char *ptr =3D buffer;
-> +	const unsigned char *end =3D ptr + len;
-> +	unsigned int l;
-> +
-> +	if (!buffer || len < 2)
->   		return FALSE;
->   =
++		if rscp in servingcell:
++			print("    [ Received Signal Code Power =3D %d ]" \
++				% (servingcell[rscp]))
++
++		if ecn0 in servingcell:
++			print("    [ Received Energy Ratio =3D %d ]" \
++				% (servingcell[ecn0]))
++
++		if rsrq in servingcell:
++			print("    [ Reference Signal Received Quality =3D %d ]" \
++				% (servingcell[rsrq]))
++
++		if rsrp in servingcell:
++			print("    [ Reference Signal Received Power =3D %d ]" \
++				% (servingcell[rsrp]))
++
++		if earfcn in servingcell:
++			print("    [ E-UTRA Absolue Radio Frequency Channel =3D %d ]" \
++				% (servingcell[earfcn]))
++
++		if eband in servingcell:
++			print("    [ E-UTRA operating Band =3D %d ]" \
++				% (servingcell[eband]))
++
++		if cqi in servingcell:
++			print("    [ Channel Quality Indicator =3D %d ]" \
++				% (servingcell[cqi]))
++
+ 		print('')
+ =
 
-> -	switch (buffer[0]) {
-> +	memset(res, 0, sizeof(*res));
-> +	memset(ck, 0, sizeof(*ck));
-> +	memset(ik, 0, sizeof(*ik));
-> +	memset(kc, 0, sizeof(*kc));
-> +	memset(auts, 0, sizeof(*auts));
-> +	memset(sres, 0, sizeof(*sres));
+ if __name__ =3D=3D '__main__':
+-- =
 
-Generally we don't like side-effecting arguments on error.  If you're going =
+2.27.0
 
-through the trouble of introducing a new structure, might as well just have=
- it =
-
-represent the result of the parse operation and cut down on arguments.  May=
-be =
-
-something like:
-
-struct sim_auth_umts_result {
-	uint8_t success;
-	union {
-		struct {
-			const unsigned char *auts;
-			uint8_t auts_len;
-		}
-		struct {
-			const unsigned char *res;
-			uint8_t res_len;
-			const unsigned char *ck;
-			const unsigned char *ik;
-			const unsigned char *ic;
-		}
-	};
-}
-
-Regards,
--Denis
---===============6312050575834301067==--
+--===============0719862003243421550==--
 
