@@ -1,105 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2376404588436680840=="
+Content-Type: multipart/mixed; boundary="===============3181424084116622809=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: Re: [PATCH v5 1/4] Detect SARA R4 QMI device
-Date: Wed, 12 May 2021 09:55:33 +0200
-Message-ID: <19a38925-618a-906b-6578-17b98122958c@kerlink.fr>
-In-Reply-To: <20210512074053.6718-2-jupiter.hce@gmail.com>
+From: Jonas Bonn <jonas@norrbonn.se>
+Subject: Re: [PATCH v5 0/4]
+Date: Wed, 12 May 2021 11:17:02 +0200
+Message-ID: <615ae9a1-060f-4f61-4e7d-f6b4bc872863@norrbonn.se>
+In-Reply-To: <20210512074053.6718-1-jupiter.hce@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2376404588436680840==
+--===============3181424084116622809==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Denis,
 
-I didn't go through the whole patch but I think you mixed 4 spaces with
-tab.
+If we're going to get anywhere with this, the onus probably falls on you =
 
-The same problem exist in your 4 patches.
+to do some cleanup work on these patches.  I'll write some comments on =
 
-Best Regards,
+the patches and maybe you can munge those into the commit messages...?
 
-Christophe
+Bing Jupiter has been running this modem (uBlox SARA R4) for well over a =
 
-On 5/12/21 9:40 AM, Bing Jupiter wrote:
-> ---
->  plugins/udevng.c | 42 ++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 42 insertions(+)
->
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index 34ac1cc0..46bf5532 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -1194,6 +1194,46 @@ static gboolean setup_ublox(struct modem_info *mod=
-em)
->  	return TRUE;
->  }
->  =
+year with these patches so they are somewhat tested.  That said, this =
 
-> +static gboolean setup_ubloxqmi(struct modem_info *modem) {
-> +	const char *qmi =3D NULL, *net =3D NULL, *gps =3D NULL, *aux =3D NULL;
-> +	GSList *list;
-> +
-> +	DBG("%s", modem->syspath);
-> +
-> +	for (list =3D modem->devices; list; list =3D g_slist_next(list)) {
-> +		struct device_info *info =3D list->data;
-> +
-> +		DBG("%s %s %s %s %s", info->devnode, info->interface,
-> +				info->number, info->label, info->subsystem);
-> +
-> +		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
-> +				g_strcmp0(info->number, "03") =3D=3D 0) {
-> +			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
-> +				net =3D info->devnode;
-> +			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
-> +				qmi =3D info->devnode;
-> +		}
-> +	}
-> +
-> +	DBG("qmi=3D%s net=3D%s", qmi, net);
-> +
-> +	if (qmi =3D=3D NULL || net =3D=3D NULL)
-> +		return FALSE;
-> +
-> +	DBG("qmi=3D%s net=3D%s", qmi, net);
-> +
-> +	ofono_modem_set_string(modem->modem, "Device", qmi);
-> +	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
-> +    ofono_modem_set_string(modem->modem, "Quirk", "SARAR4");
-Here
-> +
-> +
-> +	DBG("gps=3D%s aux=3D%s", gps, aux);
-> +
-> +	ofono_modem_set_driver(modem->modem, "gobi");
-> +
-> +	return TRUE;
-> +}
-> +
->  static gboolean setup_gemalto(struct modem_info* modem)
->  {
->  	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL,
-> @@ -1441,6 +1481,7 @@ static struct {
->  	{ "quectel",	setup_quectel	},
->  	{ "quectelqmi",	setup_quectelqmi},
->  	{ "ublox",	setup_ublox	},
-> +    { "ubloxqmi",   setup_ubloxqmi  },
-Here
->  	{ "gemalto",	setup_gemalto	},
->  	{ "xmm7xxx",	setup_xmm7xxx	},
->  	{ "mbim",	setup_mbim	},
-> @@ -1850,6 +1891,7 @@ static struct {
->  	{ "ublox",	"cdc_ncm",	"1546", "110a"	},
->  	{ "ublox",	"rndis_host",	"1546", "1146"	},
->  	{ "ublox",	"cdc_acm",	"1546", "1146"	},
-> +    { "ubloxqmi",   "qmi_wwan", "05c6", "90b2"  },
-Here
->  	{ "gemalto",	"option",	"1e2d",	"0053"	},
->  	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
->  	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
---===============2376404588436680840==--
+modem isn't without issues, but it appears to me that those are mostly =
+
+firmware related at this point.  Yeah, not great advertising for the =
+
+product; probably best to stay away from it altogether, really...
+
+/Jonas
+
+On 12/05/2021 09:40, Bing Jupiter wrote:
+> Cleaned up comments and resubmit
+> =
+
+> Bing Jupiter (4):
+>    Detect SARA R4 QMI device
+>    Detect SARA R4 QMI device
+>    Detect SARA R4 QMI device
+>    Detect SARA R4 QMI device
+> =
+
+>   drivers/atmodem/vendor.h |  1 +
+>   drivers/qmimodem/gprs.c  | 10 ++++++++++
+>   plugins/gobi.c           | 11 ++++++++++-
+>   plugins/udevng.c         | 42 ++++++++++++++++++++++++++++++++++++++++
+>   4 files changed, 63 insertions(+), 1 deletion(-)
+>=20
+--===============3181424084116622809==--
 
