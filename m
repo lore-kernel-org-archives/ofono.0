@@ -1,90 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============6914541209377602044=="
+Content-Type: multipart/mixed; boundary="===============6424413165470336256=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@norrbonn.se>
-Subject: Re: [PATCH v5 4/4] Detect SARA R4 QMI device
-Date: Wed, 12 May 2021 11:27:55 +0200
-Message-ID: <3c640684-a7c7-6ece-1543-02d1dad1b9d2@norrbonn.se>
-In-Reply-To: <20210512074053.6718-5-jupiter.hce@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v5 0/4]
+Date: Fri, 14 May 2021 12:00:49 -0500
+Message-ID: <3cce7264-b232-0744-8277-8ba5be09e6ae@gmail.com>
+In-Reply-To: <615ae9a1-060f-4f61-4e7d-f6b4bc872863@norrbonn.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6914541209377602044==
+--===============6424413165470336256==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jonas,
 
-This patch is fine, with one little fix below.
-
-Patch message:
-
-All QMI devices are currently piggy-backing on the 'gobi' driver to set =
-
-up the QMI atoms.  For the SARA R4, this works with the addition of a quirk.
-
-This patch adds the handling of a SARA R4 quirk to the 'gobi' driver.
-
-On 12/05/2021 09:40, Bing Jupiter wrote:
-> ---
->   plugins/gobi.c | 11 ++++++++++-
->   1 file changed, 10 insertions(+), 1 deletion(-)
+On 5/12/21 4:17 AM, Jonas Bonn wrote:
+> Hi Denis,
 > =
 
-> diff --git a/plugins/gobi.c b/plugins/gobi.c
-> index 9b5d7cff..5472dd83 100644
-> --- a/plugins/gobi.c
-> +++ b/plugins/gobi.c
-> @@ -47,6 +47,7 @@
->   #include <ofono/location-reporting.h>
->   #include <ofono/log.h>
->   #include <ofono/message-waiting.h>
-> +#include <drivers/atmodem/vendor.h>
->   =
+> If we're going to get anywhere with this, the onus probably falls on you =
+to do =
 
->   #include <drivers/qmimodem/qmi.h>
->   #include <drivers/qmimodem/dms.h>
-> @@ -496,9 +497,17 @@ static void gobi_post_online(struct ofono_modem *mod=
-em)
->   	struct gobi_data *data =3D ofono_modem_get_data(modem);
->   	struct ofono_gprs *gprs;
->   	struct ofono_gprs_context *gc;
-> +    const char* quirk;
-> +    unsigned int vendor =3D 0;
->   =
+> some cleanup work on these patches.=C2=A0 I'll write some comments on the=
+ patches and =
 
->   	DBG("%p", modem);
->   =
+> maybe you can munge those into the commit messages...?
 
-> +    quirk =3D ofono_modem_get_string(modem, "Quirk");
-> +    if (quirk) {
+What now? ;)
 
-Probably should have done:
+Anyway, I am not taking this set since all patches seem to be whitespace da=
+maged =
 
-if (quirk && !strcmp(quirk, "SARAR4")) {
+and this needs cleanup anyway.
 
-/Jonas
+> =
 
+> Bing Jupiter has been running this modem (uBlox SARA R4) for well over a =
+year =
 
-> +	    DBG("Debug: vendor =3D OFONO_VENDOR_UBLOX_SARA_R4");
-> +        vendor =3D OFONO_VENDOR_UBLOX_SARA_R4;
-> +    }
-> +
->   	if (data->features & GOBI_NAS) {
->   		ofono_netreg_create(modem, 0, "qmimodem", data->device);
->   		ofono_netmon_create(modem, 0, "qmimodem", data->device);
-> @@ -508,7 +517,7 @@ static void gobi_post_online(struct ofono_modem *mode=
-m)
->   		ofono_ussd_create(modem, 0, "qmimodem", data->device);
->   =
+> with these patches so they are somewhat tested.=C2=A0 That said, this mod=
+em isn't =
 
->   	if (data->features & GOBI_WDS) {
-> -		gprs =3D ofono_gprs_create(modem, 0, "qmimodem", data->device);
-> +		gprs =3D ofono_gprs_create(modem, vendor, "qmimodem", data->device);
->   		gc =3D ofono_gprs_context_create(modem, 0, "qmimodem",
->   							data->device);
->   =
+> without issues, but it appears to me that those are mostly firmware relat=
+ed at =
 
->=20
---===============6914541209377602044==--
+> this point.=C2=A0 Yeah, not great advertising for the product; probably b=
+est to stay =
+
+> away from it altogether, really...
+
+This is driver code, so unless there's something obviously wrong I'm fine t=
+aking =
+
+it.  But it should at least comply with doc/coding-style.txt and someone sh=
+ould =
+
+have ran checkpatch.pl against it to check for issues.
+
+Given that a v6 is needed, do you want to work with Jupiter to make the =
+
+editorial changes to the commit descriptions?
+
+Regards,
+-Denis
+--===============6424413165470336256==--
 
