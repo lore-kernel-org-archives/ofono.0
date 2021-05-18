@@ -1,68 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============6424413165470336256=="
+Content-Type: multipart/mixed; boundary="===============4143063497964696607=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v5 0/4]
-Date: Fri, 14 May 2021 12:00:49 -0500
-Message-ID: <3cce7264-b232-0744-8277-8ba5be09e6ae@gmail.com>
-In-Reply-To: <615ae9a1-060f-4f61-4e7d-f6b4bc872863@norrbonn.se>
+From: hoangnambohung@gmail.com
+Subject: Re: Forking on MMSD
+Date: Tue, 18 May 2021 03:56:28 +0000
+Message-ID: <20210518035628.2829.6230@ml01.vlan13.01.org>
+In-Reply-To: <20210427091556.GA9745@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6424413165470336256==
+--===============4143063497964696607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+V=E1=BB=9Bi ph=C6=B0=C6=A1ng ch=C3=A2m =E2=80=9CS=C3=A1ng t=E1=BA=A1o =E2=
+=80=93 B=E1=BB=81n v=E1=BB=AFng =E2=80=93 Hi=E1=BB=87u qu=E1=BA=A3=E2=80=9D=
+, Arhome kh=C3=B4ng ng=E1=BB=ABng n=E1=BB=97 l=E1=BB=B1c c=E1=BA=A3 v=E1=BB=
+=81 nh=C3=A2n l=E1=BB=B1c, v=E1=BA=ADt l=E1=BB=B1c, uy t=C3=ADn th=C6=B0=C6=
+=A1ng hi=E1=BB=87u nh=E1=BA=B1m mang =C4=91=E1=BA=BFn nhi=E1=BB=81u c=C3=B4=
+ng tr=C3=ACnh x=C3=A2y d=E1=BB=B1ng d=C3=A2n d=E1=BB=A5ng v=E1=BB=9Bi ch=E1=
+=BA=A5t l=C6=B0=E1=BB=A3ng =C4=91=E1=BA=A1t chu=E1=BA=A9n, c=C3=B3 t=C3=ADn=
+h th=E1=BA=A9m m=E1=BB=B9 cao c=C5=A9ng nh=C6=B0 =C4=91=C3=A1p l=E1=BA=A1i =
+ni=E1=BB=81m tin m=C3=A0 kh=C3=A1ch h=C3=A0ng =C4=91=C3=A3 g=E1=BB=ADi g=E1=
+=BA=AFm v=C3=A0o c=C3=B4ng ty. =
 
-On 5/12/21 4:17 AM, Jonas Bonn wrote:
-> Hi Denis,
-> =
+Ch=C3=BAng t=C3=B4i chuy=C3=AAn v=E1=BB=81:
+https://arhome.vn/thi-cong-noi-that.html - thi c=C3=B4ng n=E1=BB=99i th=E1=
+=BA=A5t =
 
-> If we're going to get anywhere with this, the onus probably falls on you =
-to do =
+https://arhome.vn/thiet-ke-noi-that.html - thi=E1=BA=BFt k=E1=BA=BF n=E1=BB=
+=99i th=E1=BA=A5t =
 
-> some cleanup work on these patches.=C2=A0 I'll write some comments on the=
- patches and =
+https://arhome.vn/thiet-ke-biet-thu.html  - thi=E1=BA=BFt k=E1=BA=BF bi=E1=
+=BB=87t th=E1=BB=B1 =
 
-> maybe you can munge those into the commit messages...?
+https://arhome.vn/thiet-ke-nha-pho.html  - thi=E1=BA=BFt k=E1=BA=BF nh=C3=
+=A0 ph=E1=BB=91 =
 
-What now? ;)
+https://arhome.vn/thiet-ke-thi-cong-noi-that-tron-goi.html - thi c=C3=B4ng =
+n=E1=BB=99i th=E1=BA=A5t  =
 
-Anyway, I am not taking this set since all patches seem to be whitespace da=
-maged =
+https://arhome.vn/bao-gia-thi-cong-noi-that-tron-goi-can-3-ngu-iris-garden.=
+html -thi c=C3=B4ng n=E1=BB=99i th=E1=BA=A5t tr=E1=BB=8Dn g=C3=B3i =
 
-and this needs cleanup anyway.
+http://arhome.vn/nhung-dac-trung-cua-thiet-ke-biet-thu-phong-cach-tan-co-di=
+en.html -bi=E1=BB=87t th=E1=BB=B1 t=C3=A2n c=E1=BB=95 =C4=91i=E1=BB=83n =
 
-> =
 
-> Bing Jupiter has been running this modem (uBlox SARA R4) for well over a =
-year =
-
-> with these patches so they are somewhat tested.=C2=A0 That said, this mod=
-em isn't =
-
-> without issues, but it appears to me that those are mostly firmware relat=
-ed at =
-
-> this point.=C2=A0 Yeah, not great advertising for the product; probably b=
-est to stay =
-
-> away from it altogether, really...
-
-This is driver code, so unless there's something obviously wrong I'm fine t=
-aking =
-
-it.  But it should at least comply with doc/coding-style.txt and someone sh=
-ould =
-
-have ran checkpatch.pl against it to check for issues.
-
-Given that a v6 is needed, do you want to work with Jupiter to make the =
-
-editorial changes to the commit descriptions?
-
-Regards,
--Denis
---===============6424413165470336256==--
+ch=C3=BAng t=C3=B4i s=E1=BA=BD l=C3=A0 n=C6=A1i =C4=91=E1=BB=83 qu=C3=BD v=
+=E1=BB=8B g=E1=BB=ADi ch=E1=BB=8Dn ni=E1=BB=81m tin.
+--===============4143063497964696607==--
 
