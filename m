@@ -1,30 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4156740495937846868=="
+Content-Type: multipart/mixed; boundary="===============1087586411738386463=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: [ANNOUNCE] IRC moved to OFTC
-Date: Tue, 15 Jun 2021 09:24:23 -0500
-Message-ID: <19796435-77ed-33b1-840b-35339863958b@gmail.com>
+From: Sergey Matyukevich <geomatsi@gmail.com>
+Subject: [PATCH 0/3] gemalto: radio-setings driver
+Date: Sun, 04 Jul 2021 18:53:45 +0300
+Message-ID: <20210704155348.432964-1-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4156740495937846868==
+--===============1087586411738386463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi all,
 
-Due to recent changes on freenode IRC network, we have decided to move the =
-IRC =
-
-channel to OFTC.  Please update your IRC clients to the new channel at =
-
-irc://irc.oftc.net/#ofono.
-
-We will keep the #ofono channel on Freenode for now to help with the transi=
-tion.
+This patch series includes Gemalto specific radio-settings driver
+and minor ussd fix.
 
 Regards,
--Denis
---===============4156740495937846868==--
+Sergey
+
+Sergey Matyukevich (3):
+  gemalto: add radio-settings driver
+  plugins: gemalto: add radio-settings atom
+  plugins: gemalto: move ussd atom to post_online
+
+ Makefile.am                           |   1 +
+ drivers/gemaltomodem/gemaltomodem.c   |   2 +
+ drivers/gemaltomodem/gemaltomodem.h   |   3 +
+ drivers/gemaltomodem/radio-settings.c | 267 ++++++++++++++++++++++++++
+ plugins/gemalto.c                     |   6 +-
+ 5 files changed, 277 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/gemaltomodem/radio-settings.c
+
+--===============1087586411738386463==--
 
