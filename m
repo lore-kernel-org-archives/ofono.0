@@ -1,20 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7837023645812467953=="
+Content-Type: multipart/mixed; boundary="===============5414226778790323768=="
 MIME-Version: 1.0
-From: niklojohnson1992@gmail.com
-Subject: Re: Application of using the best VPN for Mac
-Date: Wed, 07 Jul 2021 07:09:21 +0000
-Message-ID: <20210707070921.2743.39024@ml01.vlan13.01.org>
-In-Reply-To: <20200604163021.2851.87293@ml01.vlan13.01.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] gemalto: add radio-settings driver
+Date: Thu, 15 Jul 2021 13:12:03 -0500
+Message-ID: <2a42248f-7c99-5f24-a450-651645ec366c@gmail.com>
+In-Reply-To: <20210704155348.432964-2-geomatsi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7837023645812467953==
+--===============5414226778790323768==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Myassignmenthelp provides best assignment help services for student in Unit=
-ed State.=C2=A0We have been catering to the assignment writing needs of the=
- students in all the cities in USA. https://myassignmenthelp.com/us/
---===============7837023645812467953==--
+Hi Sergey,
+
+On 7/4/21 10:53 AM, Sergey Matyukevich wrote:
+> Add support for Gemalto specific radio settings.
+> =
+
+> ---
+>   Makefile.am                           |   1 +
+>   drivers/gemaltomodem/gemaltomodem.c   |   2 +
+>   drivers/gemaltomodem/gemaltomodem.h   |   3 +
+>   drivers/gemaltomodem/radio-settings.c | 267 ++++++++++++++++++++++++++
+>   4 files changed, 273 insertions(+)
+>   create mode 100644 drivers/gemaltomodem/radio-settings.c
+> =
+
+
+I went ahead and applied this with a 2 lines amended: changing 'enum =
+
+ofono_access_mode' to 'unsigned int'.  I recently updated all the drivers i=
+n =
+
+commit 1d86dbc6 ("radio-settings: Do not use enum ofono_access_mode").  So =
+I did =
+
+a similar amend here for consistency.
+
+Regards,
+-Denis
+--===============5414226778790323768==--
 
