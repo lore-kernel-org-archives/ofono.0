@@ -1,72 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============1027895132136460281=="
+Content-Type: multipart/mixed; boundary="===============6604280461129279530=="
 MIME-Version: 1.0
-From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
-Subject: Bug/Oversight in gatchat/gatresult.c with negative numbers
-Date: Tue, 20 Jul 2021 17:11:45 +0100
-Message-ID: <8171168c-ee95-46c2-48bf-006dbfb59309@dynamicdevices.co.uk>
+From: Kaylee Brown <kayleebrown402@gmail.com>
+Subject: Re: [PATCH_v4 0/5] Private network request to ConnMan
+Date: Wed, 21 Jul 2021 19:49:08 +0000
+Message-ID: <20210721194908.2743.31645@ml01.vlan13.01.org>
+In-Reply-To: <1304690513-3137-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1027895132136460281==
+--===============6604280461129279530==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+It would be best if you always went for those solution providers who have a=
+ finance assignment expert for helping you to complete the assignment on ti=
+me and in a proper manner. A reliable solution provider will provide you gu=
+arantee for their services and a money-back guarantee. A professional servi=
+ce provider will keep your assignments 100% confidential with excellent qua=
+lity work. Now, it's easy to hire a professional to complete your finance a=
+ssignments as you have to fill in specific details about your project. Afte=
+r paying for it, you have to wait for its delivery. You might go onto the w=
+rong site and tend to do more for your assignments which is not done profes=
+sionally, so always make sure that the site is genuine before hiring it. =
 
-I'm doing a bit of work with Ofono again, extending support for a =
 
-Quectel EG91 - handling additional cell strength information which seems =
-
-necessary for LTE.
-
-I'm using Quectel's AT+QCOPS which is returning some negative signal =
-
-strengths and after some investigation I've spotted that =
-
-gatresult::g_at_result_iter_next_number() doesn't handle negative numbers.
-
-No doubt there's a better solution than mine, but this does appear to work.
-
-Cheers,
-
-Alex
-
---- ofono-1.22.org/gatchat/gatresult.c=C2=A0 2011-10-11 18:21:45.000000000 =
-+0000
-+++ ofono-1.22/gatchat/gatresult.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 2021-07-20=
- 15:50:06.300001000 +0000
-@@ -262,6 +262,7 @@
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int end;
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int len;
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int value =3D 0;
-+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int sign =3D 1;
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 char *line;
-
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (iter =3D=3D NULL)
-@@ -276,10 +277,16 @@
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 pos =3D iter->line_pos;
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 end =3D pos;
-
-+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if(line[end] =3D=3D '-') {
-+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 sign =3D -1;
-+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 end +=3D 1;
-+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
-+
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 while (line[end] >=3D '0' && li=
-ne[end] <=3D '9') {
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 value =3D value * 10 + (int)(line[end] - '0');
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 end +=3D 1;
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
-+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 value =3D sign * value;
-
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (pos =3D=3D end)
- =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 return FALSE;
-
---===============1027895132136460281==--
+https://www.edumagnate.com/finance-assignment-help.html
+--===============6604280461129279530==--
 
