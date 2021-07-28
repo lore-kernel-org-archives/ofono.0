@@ -1,77 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7993145583504652948=="
+Content-Type: multipart/mixed; boundary="===============4198349880462908637=="
 MIME-Version: 1.0
-From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
-Subject: Re: Bug/Oversight in gatchat/gatresult.c with negative numbers
-Date: Tue, 27 Jul 2021 16:02:11 +0100
-Message-ID: <89eb7908-9a19-5058-a962-4e6963015a9d@dynamicdevices.co.uk>
-In-Reply-To: <a581d123-5632-ec7f-208e-e7ef7a96a00b@gmail.com>
+From: ajlennon@dynamicdevices.co.uk
+Subject: Documentation on when to free structures in/after callbacks
+Date: Wed, 28 Jul 2021 16:32:24 +0000
+Message-ID: <20210728163224.2797.88718@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7993145583504652948==
+--===============4198349880462908637==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sebastian,
+Hi all,
 
-Please see below:
+I'm trying to write a driver for Quectel modems as I need some specific bit=
+s and bobs - mainly signal strengths for the serving cell and neighbourhood=
+ cells
 
-On 27/07/2021 15:38, Denis Kenzior wrote:
-> Hi Alex,
->
-> On 7/20/21 11:11 AM, Alex J Lennon wrote:
->> Hi all,
->>
->> I'm doing a bit of work with Ofono again, extending support for a =
+I can't quite get my head around when I am supposed to provide free() funct=
+ions to to calls and when to free in callbacks on success or error conditio=
+ns.
 
->> Quectel EG91 - handling additional cell strength information which =
+Is there a bit of a document somewhere somebody could direct me to that exp=
+lains this?
 
->> seems necessary for LTE.
->>
->> I'm using Quectel's AT+QCOPS which is returning some negative signal =
+Or maybe I am overthinking and somebody could just explain the logic behind=
+ it?
 
->> strengths and after some investigation I've spotted that =
-
->> gatresult::g_at_result_iter_next_number() doesn't handle negative =
-
->> numbers.
->
-> AT commands do not have a concept of negative numbers.=C2=A0 v.250 Sectio=
-n =
-
-> 5.3.1:
-> <number> may be a string of one or more characters from "0" through =
-
-> "9" representing a decimal
-> integer value. Commands that expect a <number> are noted in the =
-
-> description of the command (see
-> clause 6).
->
-> I don't recall any other vendor using negative values in AT commands.
->
-> If you want to add a negative number parser to GAtChat, then please =
-
-> make it a separate method, so that it is very clear that a vendor =
-
-> 'extension' is being worked around.
->
-> Regards,
-> -Denis
-
-
-The team at Ofono are suggesting that Quectel (EG91) should not be =
-
-returning negative numbers in AT command responses
-
-These are returned to an AT+QCOPS command where signal strength is given.
-
-Can you comment?
-
-Thanks,
+Thanks!
 
 Alex
-
---===============7993145583504652948==--
+--===============4198349880462908637==--
 
