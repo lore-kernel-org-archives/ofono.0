@@ -1,28 +1,23 @@
-Content-Type: multipart/mixed; boundary="===============2959705198304632995=="
+Content-Type: multipart/mixed; boundary="===============8544337046097734779=="
 MIME-Version: 1.0
-From: nalso@naver.com
-Subject: Re: Question about static analysis
-Date: Thu, 12 Aug 2021 01:33:51 +0000
-Message-ID: <20210812013351.2797.60752@ml01.vlan13.01.org>
-In-Reply-To: <62ca3f8c-672c-c3a3-d5b4-2f7256e3899c@jolla.com>
+From: kokushibotsugikuna@hotmail.com
+Subject: LSM99
+Date: Mon, 16 Aug 2021 11:29:32 +0000
+Message-ID: <20210816112932.2778.47609@ml01.vlan13.01.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2959705198304632995==
+--===============8544337046097734779==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava
+service site LSM99 online casino that will make you enjoy online gambling g=
+ames. Win great prizes You may be a millionaire within Overnight, we provid=
+e online betting games. Many types of slots, baccarat, lottery, football be=
+tting, online betting games, other formats are available for use in all for=
+ms. All done within one website, no need to change websites anymore.
 
-Thanks for the clear explanation.
-I respect your opinion use g_slist_delete_link()  instead of g_slist_remove=
-().
-
-And other way, g_slist_remove () look like free data of element. so not nee=
-d g_free() before use g_slist_remove().
-
-Thankyou.
-song
---===============2959705198304632995==--
+https://tinyurl.com/3mxec8re
+--===============8544337046097734779==--
 
