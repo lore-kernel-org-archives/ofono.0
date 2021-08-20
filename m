@@ -1,38 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============0412231465386873156=="
+Content-Type: multipart/mixed; boundary="===============5551729616053492112=="
 MIME-Version: 1.0
 From: Jupiter <jupiter.hce@gmail.com>
-Subject: Re: [PATCH v5 4/4] Detect SARA R4 QMI device
-Date: Thu, 19 Aug 2021 15:56:11 +1000
-Message-ID: <CAA=hcWTLbZ2d3He3dMW4qS941Jb6+6PLUo7Mz42hmZSvO64BHQ@mail.gmail.com>
-In-Reply-To: <3c640684-a7c7-6ece-1543-02d1dad1b9d2@norrbonn.se>
+Subject: Failed dbus on Hardknott oFono 1.31
+Date: Fri, 20 Aug 2021 20:57:04 +1000
+Message-ID: <CAA=hcWSyr3-zdT829OFMNCBM6GgdDU1-01i5REh3khs6w=+W4Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0412231465386873156==
+--===============5551729616053492112==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-Any chance that patch can be processed?
+I upgraded from Zeus to Hardknotte, I was able to run dbus to get
+interface properties, but I failed on Hardknotte ofono 1.31. Has
+anyone got oFono 1.31 dbus work?
 
-Thank you very much.
+Thank you.
 
 Kind regards,
 
-Jupiter
-
-
-On 5/12/21, Jonas Bonn <jonas@norrbonn.se> wrote:
-> Hi Denis,
->
-> This patch is fine, with one little fix below.
->
-> Patch message:
->
-> All QMI devices are currently piggy-backing on the 'gobi' driver to set
-> up the QMI atoms.  For the SARA R4, this works with the addition of a
-> quirk.
---===============0412231465386873156==--
+- jupiter
+--===============5551729616053492112==--
 
