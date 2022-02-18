@@ -1,22 +1,24 @@
 Received: from mxout02.lancloud.ru (mxout02.lancloud.ru [45.84.86.82])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E1B62919
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8330E2F2D
 	for <ofono@lists.linux.dev>; Fri, 18 Feb 2022 09:02:33 +0000 (UTC)
 Received: from LanCloud
-DKIM-Filter: OpenDKIM Filter v2.11.0 mxout02.lancloud.ru BD26722F19FC
+DKIM-Filter: OpenDKIM Filter v2.11.0 mxout02.lancloud.ru 9B03E22F1C6C
 Received: from LanCloud
 Received: from LanCloud
 Received: from LanCloud
 Received: by spb1wst017.omp.ru (Postfix, from userid 10000)
-	id C2E8EBA015F; Fri, 18 Feb 2022 11:53:41 +0300 (MSK)
+	id EB8CABA0164; Fri, 18 Feb 2022 11:53:41 +0300 (MSK)
 From: <d.grigorev@omp.ru>
 To: <ofono@lists.linux.dev>
 CC: Denis Grigorev <d.grigorev@omp.ru>
-Subject: [PATCH 0/6] Fix issues found with static analyzer
-Date: Fri, 18 Feb 2022 11:52:54 +0300
-Message-ID: <20220218085300.22585-1-d.grigorev@omp.ru>
+Subject: [PATCH 5/6] emulator: Avoid potential null dereference
+Date: Fri, 18 Feb 2022 11:52:59 +0300
+Message-ID: <20220218085300.22585-6-d.grigorev@omp.ru>
 X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20220218085300.22585-1-d.grigorev@omp.ru>
+References: <20220218085300.22585-1-d.grigorev@omp.ru>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -30,26 +32,24 @@ X-ClientProxiedBy: LFEXT02.lancloud.ru (fd00:f066::142) To
 
 From: Denis Grigorev <d.grigorev@omp.ru>
 
-This patch series fixes several minor issues found with SVACE static
-analyzer.
+---
+ src/emulator.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Denis Grigorev (6):
-  phonebook: Fix potential buffer overflow
-  stemodem: Fix buffer size allocated for rtnl_msg
-  sms: Fix buffer size allocated for SMS PDU
-  atmodem: Fix potential buffer overflow
-  emulator: Avoid potential null dereference
-  voicecall: Avoid potential double free
-
- drivers/atmodem/sim.c        | 2 +-
- drivers/atmodem/sms.c        | 2 +-
- drivers/stemodem/caif_rtnl.c | 5 +++--
- src/emulator.c               | 3 ++-
- src/phonebook.c              | 2 +-
- src/stkutil.c                | 2 +-
- src/voicecall.c              | 3 ---
- 7 files changed, 9 insertions(+), 10 deletions(-)
-
+diff --git a/src/emulator.c b/src/emulator.c
+index b3afb3da..9a0bf8cd 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -1700,7 +1700,8 @@ int ofono_emulator_start_codec_negotiation(struct ofono_emulator *em,
+ 		 * Report we're done even if we don't have done any
+ 		 * negotiation as the other side may have to clean up.
+ 		 */
+-		cb(0, data);
++		if (cb)
++			cb(0, data);
+ 
+ 		/*
+ 		 * If we didn't received any +BAC during the SLC setup the
 -- 
 2.17.1
 
