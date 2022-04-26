@@ -1,43 +1,46 @@
-Received: from web01.alroma.de (web01.alroma.de [109.230.198.51])
+Received: from mx4.wds.net (mx4.wds.net [193.41.10.2])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 760A02115
-	for <ofono@lists.linux.dev>; Sat, 16 Apr 2022 18:40:09 +0000 (UTC)
-Received: by web01.alroma.de (Postfix, from userid 1075)
-	id 65752AB93B; Sat, 16 Apr 2022 20:34:46 +0200 (CEST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E81797E
+	for <ofono@lists.linux.dev>; Tue, 26 Apr 2022 00:51:13 +0000 (UTC)
+Received: from web02.wds.net (www.stockmeyer-stiftung.de [193.41.10.15])
+	by mx4.wds.net (Postcow) with ESMTP id D1DC5A2424
+	for <ofono@lists.linux.dev>; Tue, 26 Apr 2022 02:42:44 +0200 (CEST)
+Received: by web02.wds.net (Postfix, from userid 81)
+	id 6F1B32813C3; Tue, 26 Apr 2022 02:42:44 +0200 (CEST)
+Received: from phpmailer ([92.246.84.133]) 
+	by www.stockmeyer.de with HTTPS (PHPMailer);
+	Tue, 26 Apr 2022 00:42:44 +0000
+Date: Tue, 26 Apr 2022 00:42:44 +0000
 To: ofono@lists.linux.dev
-Subject: Newsletter Abo.
-X-PHP-Originating-Script: 1075:class.t3lib_div.php
-From: Quartier Latin Kaldenkirchen <info@quartier-latin.info>
+From: Stockmeyer <noreply@wds.net>
+Reply-to: noreply@wds.net
+Subject: Ihr Kontakt zu uns
+Message-ID: <cd0ee7706d7d8dbe7e449329452d0b12@www.stockmeyer.de>
+X-Priority: 3
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <20220416183446.65752AB93B@web01.alroma.de>
-Date: Sat, 16 Apr 2022 20:34:46 +0200 (CEST)
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="iso-8859-1"
+X-Rspamd-Pre-Result: action=no action;
+	module=Unknown lua;
+	ip matched with forward hosts
+X-Spamd-Result: default: False [0.00 / 15.00]
+X-Rspamd-Queue-Id: D1DC5A2424
+Authentication-Results: mx4.wds.net;
+	none
 
-Hallo =F0=9F=92=99 Patsy sent you a private message. View message:=
- http://bit.do/fT436?4ye =F0=9F=92=99,
+Sehr geehrte/r b0kaebxu <p><a
+href="https://www.quante-design.de/index/set-country-code/price_country_id/13?comingFrom=%68%74%74%70%73%3a%2f%2f%6c%6f%63%61%6c%67%69%72%6c%70%6c%61%63%65%2e%6c%69%66%65%2f%3f%75%3d%32%76%74%70%64%30%64%26%6f%3d%79%77%75%67%75%75%39%26%6d%3d%31%26%64%7a%61"><img
+src="http://insta-sex.com/app/img/offers/tube/chat.png"></a></p>,
 
-schoen, dass Du hast den Newsletter des Quartier Latin in Kaldenkirchen=
- abonieren moechtest.
+vielen Dank für Ihre Nachricht!
+Bitte beachten Sie, dass wir Zeit zur Prüfung Ihres Anliegens benötigen und
+uns so bald wie möglich mit Ihnen in Verbindung setzen.
 
-WICHTIG:
-
-Damit die Anmeldung abgeschlossen ist, musst Du bitte auf diesen=
- Link klicken:
-http://quartier-latin.info/start/newsletter/?&cmd=3Dsetfixed&sFK=3Dapprov=
-e&rU=3D28531&fD%5B_FIELDLIST%5D=3Duid&fD%5Bhidden%5D=3D0&aC=3Db94ef01b
-
-Wenn Dich jemand anders ohne Dein Wissen eingetragen hat, nutze=
- diesen Link um Deine Daten zu l=F6schen
-http://quartier-latin.info/start/newsletter/?&cmd=3Dsetfixed&sFK=3DDELETE=
-&rU=3D28531&fD%5B_FIELDLIST%5D=3Duid&aC=3Db94ef01b
-
-Solltest du Deine Daten aendern wollen, klick hier ...
-http://quartier-latin.info/start/newsletter/?&cmd=3Dedit&aC=3Db94ef01b&rU=
-=3D28531
+Mit freundlichen Grüßen
+Ihr Stockmeyer-Team
