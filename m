@@ -1,50 +1,50 @@
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
+Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA7A32F27
-	for <ofono@lists.linux.dev>; Fri, 16 Sep 2022 09:31:51 +0000 (UTC)
-Received: by mail-ed1-f54.google.com with SMTP id 29so30632999edv.2
-        for <ofono@lists.linux.dev>; Fri, 16 Sep 2022 02:31:51 -0700 (PDT)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D91832F27
+	for <ofono@lists.linux.dev>; Fri, 16 Sep 2022 09:31:55 +0000 (UTC)
+Received: by mail-ej1-f47.google.com with SMTP id kr11so2006430ejc.8
+        for <ofono@lists.linux.dev>; Fri, 16 Sep 2022 02:31:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=references:in-reply-to:message-id:date:subject:cc:to:from:from:to
          :cc:subject:date;
-        bh=1P8zWgjxXRGWAnYqpkK8wa9ppeizUCgCCInUR0OhS/I=;
-        b=UOpfiuhxAGl+74BWWrLMCjAFaXAx8/Gf8cRXNf4I+YJDU6rVVfZPM03t/nmOUjzZBx
-         DcYplB1O5tniltzXskpEtAD03f0XElNj2NhLj5P21vN4tG9LhQ2aybbWNWKOlPadgKeN
-         6GZN+SAIsy1XD9BPRKsS7dTQ/9J6pYQHWQvgBnuK/c3myFy8W+3jVkzt18qCOdAoIB4z
-         gA1CZwAkT/+K+xU47UeYpKzaDKPNyg9MTKaCNYfH3YYhAWuypMBNOGePEYGj4r/Km0hY
-         n5vfrdM2JzrGKjaUKEMy44ze2DBiBrP9uJsQ6sFoFf00O+Yf6PhX1WcCBZXMt5R4jWjf
-         kCqg==
+        bh=zt6KSsxsmYIIeU0Vo54OP4ZAuepdlvlcKxQpkGsO7b4=;
+        b=juny+lCjSs7Od9HR2nDSZc7jw6uSY2fn+UhEc3GUH8zndduTxZDeKP1pzlE0JF2Hp+
+         54lUtQ8wZJGKS3h3I4BxUYTdzCmIMzqKB8/NRAmVc+a1GE+LWB4v8BjS0OHU61qmyR1O
+         c5rPD1TBmyV9apDw6k19NWbCB7pWi+NoNZhaSGOc6SReEdrxpxWAPF5vCU63HItZwt5e
+         1kk5gciDVE4MvYhFz3eNhADIRMvQviiIjTii24BrDLdu+OvV0zqS5ddfRnxrvjrCMxn6
+         +EAvv3dm9gNP1Bz7irD2blvul7MiW4Q9DhPuyMSZCjyLCCGOvYUq6KfrDlEH4Nt0vudt
+         IwdA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=references:in-reply-to:message-id:date:subject:cc:to:from
          :x-gm-message-state:from:to:cc:subject:date;
-        bh=1P8zWgjxXRGWAnYqpkK8wa9ppeizUCgCCInUR0OhS/I=;
-        b=LxRV2ttql4bXlzaEFAR3Me5VLlY4eSvZSxW+Gmn+tg6lc5CJov20d0jGNRaHUIvx/W
-         ez8XFWcsh5CKYhF+dAeFXJQ0mJutV50PowJlbXJSoHeegeXwIXCY/zgyMt7AUSP04Trq
-         Eyw4X5+5Gtsr5GA29V3Lq/p74g7obtI6dseE/RkvMN3xr9fsidxToPvEbC6XTboenF/D
-         dSll25okI544xjFxmLn9dg12ApY/FT8hyjZMYDSHKN8EkTG8LcaC/ZQqdoRlk9/iLlYl
-         DJf5HtVIBI6efAU5e715QaE2y5OYujjteRdRgvO1nojjrJrusgVGOeG7R/A7DqRlMaos
-         F4uQ==
-X-Gm-Message-State: ACrzQf3YKiYJdWqqCbcuIDaQ3h/B3pD2kxn/dNZCHGstwtMH5qpV+/lX
-	t7+ZEDmnJTsCFNkA113pauPZCV8YnEva8A==
-X-Google-Smtp-Source: AMsMyM41s/+cUWJTtR9MHpSoyHpLQeG0o5OIkQ1t7AsVl8P7bZkl/2+iUnh9wzmAhNXSM8+ftqrJyA==
-X-Received: by 2002:a05:6402:298e:b0:451:129e:1b35 with SMTP id eq14-20020a056402298e00b00451129e1b35mr3196455edb.79.1663320710306;
-        Fri, 16 Sep 2022 02:31:50 -0700 (PDT)
+        bh=zt6KSsxsmYIIeU0Vo54OP4ZAuepdlvlcKxQpkGsO7b4=;
+        b=M12xzF8C4XcIucsiCo8qTVXP2uCj2eGf5Rkc88vqKcVFbyDD8V49axi/z/yUuDW6kK
+         cxn877Vtl4myxduM8Gds7UPH5yELVZo/FST4wKB8QEyv7XHHzk6HDwueP+6+hcfbBPii
+         cRIFFmCin7zvQRHXnGfl1lWywsKuuSbxEiavbc4T8MpeabifmoWHS3wwyVMk6r4JoqZF
+         IdaqjL2n970bK/qHFXe6k7oU5vKZ/u8XSRQGqsODU9ASXbkeMHvlKqXT45trsZfBtYKB
+         lN5PaMbil0Q8S68QR1Dzj9mEns7jPwQVgencHOf2gPfmxaD0YVEn4aJtIXap1n4xZXJ2
+         oleQ==
+X-Gm-Message-State: ACrzQf01DomqmIn6/kjQ87QjkK4a90k0zmPDocc4bPeHdPu7BZt/11lM
+	yyO/daAkvC43kNS7C55tMAvmuWpF/uP9mA==
+X-Google-Smtp-Source: AMsMyM746+YH27dVh4eOW2KMBm2Hf2lH4+Y8X0h/J8jD/6grJ9MBiBYq8ywfP1v86i2Rwpv4uYUisQ==
+X-Received: by 2002:a17:906:4fc4:b0:73d:d4e9:2d6e with SMTP id i4-20020a1709064fc400b0073dd4e92d6emr2944414ejw.165.1663320714149;
+        Fri, 16 Sep 2022 02:31:54 -0700 (PDT)
 Received: from localhost.localdomain ([46.249.74.23])
-        by smtp.gmail.com with ESMTPSA id w15-20020a50fa8f000000b00452bea2a0bfsm4611434edr.44.2022.09.16.02.31.49
+        by smtp.gmail.com with ESMTPSA id w15-20020a50fa8f000000b00452bea2a0bfsm4611434edr.44.2022.09.16.02.31.53
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Fri, 16 Sep 2022 02:31:49 -0700 (PDT)
+        Fri, 16 Sep 2022 02:31:53 -0700 (PDT)
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 To: ofono@lists.linux.dev
 Cc: merlijn@wizzup.org,
 	tony@atomide.com,
 	pavel@ucw.cz,
 	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH 1/2] qmimodem: Remove service create request on timeout
-Date: Fri, 16 Sep 2022 12:31:02 +0300
-Message-Id: <1663320663-26277-2-git-send-email-ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH 2/2] qmimodem: Fix shared service creation logic
+Date: Fri, 16 Sep 2022 12:31:03 +0300
+Message-Id: <1663320663-26277-3-git-send-email-ivo.g.dimitrov.75@gmail.com>
 X-Mailer: git-send-email 1.9.1
 In-Reply-To: <1663320663-26277-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
 References: <1663320663-26277-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
@@ -54,157 +54,241 @@ List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 
-Otherwise callback will be called on late response with dangling user_data.
+qmi_service_create_shared() tries to find already created service of the
+same type and if it fails to find one, start a creation of a new service.
+This creation takes some time, so if while it is not complete, any new
+calls to qmi_service_create_shared() will still fail to find a service of
+that type and will start creation. This can easily lead to client ids
+exhaustion and service creation failures.
+
+Fix that by adding logic that delays responses to any shared service
+creation requests after the first one, until that request either fails or
+succeeds.
 ---
- drivers/qmimodem/qmi.c | 66 ++++++++++++++++++++++++++++++++------------------
- 1 file changed, 43 insertions(+), 23 deletions(-)
+ drivers/qmimodem/qmi.c | 130 ++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 96 insertions(+), 34 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 4cd1530..fc4534a 100644
+index fc4534a..e66e8d8 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -1147,7 +1147,7 @@ struct discover_data {
- 	qmi_discover_func_t func;
- 	void *user_data;
- 	qmi_destroy_func_t destroy;
--	uint8_t tid;
-+	uint16_t tid;
- 	guint timeout;
- };
+@@ -260,6 +260,10 @@ static gboolean __service_compare_shared(gpointer key, gpointer value,
+ 	struct qmi_service *service = value;
+ 	uint8_t type = GPOINTER_TO_UINT(user_data);
  
-@@ -1245,41 +1245,53 @@ done:
- 	__qmi_device_discovery_complete(data->device, &data->super);
++	/* ignore those that are in process of creation */
++	if (GPOINTER_TO_UINT(key) & 0x80000000)
++		return FALSE;
++
+ 	if (service->type == type)
+ 		return TRUE;
+ 
+@@ -736,6 +740,10 @@ static void service_notify(gpointer key, gpointer value, gpointer user_data)
+ 	struct qmi_result *result = user_data;
+ 	GList *list;
+ 
++	/* ignore those that are in process of creation */
++	if (GPOINTER_TO_UINT(key) & 0x80000000)
++		return;
++
+ 	for (list = g_list_first(service->notify_list); list;
+ 						list = g_list_next(list)) {
+ 		struct qmi_notify *notify = list->data;
+@@ -1967,12 +1975,58 @@ static void service_create_data_free(gpointer user_data)
+ 	g_free(data);
  }
  
--static gboolean discover_reply(gpointer user_data)
-+static struct qmi_request *find_control_request(struct qmi_device *device,
-+						uint16_t tid)
- {
--	struct discover_data *data = user_data;
--	struct qmi_device *device = data->device;
--	unsigned int tid = data->tid;
- 	GList *list;
- 	struct qmi_request *req = NULL;
-+	unsigned int _tid = tid;
- 
--	data->timeout = 0;
--
--	/* remove request from queues */
--	if (tid != 0) {
-+	if (_tid != 0) {
- 		list = g_queue_find_custom(device->req_queue,
--				GUINT_TO_POINTER(tid), __request_compare);
-+				GUINT_TO_POINTER(_tid), __request_compare);
- 
- 		if (list) {
- 			req = list->data;
- 			g_queue_delete_link(device->req_queue, list);
- 		} else {
- 			list = g_queue_find_custom(device->control_queue,
--				GUINT_TO_POINTER(tid), __request_compare);
-+				GUINT_TO_POINTER(_tid), __request_compare);
- 
- 			if (list) {
- 				req = list->data;
- 				g_queue_delete_link(device->control_queue,
--								list);
-+							list);
- 			}
- 		}
- 	}
- 
-+	return req;
-+}
++struct service_create_shared_data {
++	struct discovery super;
++	struct qmi_service *service;
++	struct qmi_device *device;
++	qmi_create_func_t func;
++	void *user_data;
++	qmi_destroy_func_t destroy;
++	guint timeout;
++};
 +
-+static gboolean discover_reply(gpointer user_data)
++static gboolean service_create_shared_reply(gpointer user_data)
 +{
-+	struct discover_data *data = user_data;
-+	struct qmi_device *device = data->device;
-+	struct qmi_request *req;
-+
-+	/* remove request from queues */
-+	req = find_control_request(device, data->tid);
++	struct service_create_shared_data *data = user_data;
 +
 +	data->timeout = 0;
++	data->func(data->service, data->user_data);
 +
- 	if (data->func)
- 		data->func(data->user_data);
- 
--	__qmi_device_discovery_complete(data->device, &data->super);
--	__request_free(req, NULL);
-+	__qmi_device_discovery_complete(device, &data->super);
++	__qmi_device_discovery_complete(data->device, &data->super);
 +
-+	if (req)
-+		__request_free(req, NULL);
- 
- 	return FALSE;
- }
-@@ -1289,7 +1301,6 @@ bool qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
- {
- 	struct discover_data *data;
- 	struct qmi_request *req;
--	uint8_t tid;
- 
- 	if (!device)
- 		return false;
-@@ -1316,11 +1327,9 @@ bool qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
- 			QMI_CTL_GET_VERSION_INFO,
- 			NULL, 0, discover_callback, data);
- 
--	tid = __request_submit(device, req);
--
--	data->tid = tid;
--
-+	data->tid = __request_submit(device, req);
- 	data->timeout = g_timeout_add_seconds(5, discover_reply, data);
++	return FALSE;
++}
 +
- 	__qmi_device_discovery_started(device, &data->super);
- 
- 	return true;
-@@ -1940,6 +1949,7 @@ struct service_create_data {
- 	void *user_data;
- 	qmi_destroy_func_t destroy;
- 	guint timeout;
-+	uint16_t tid;
- };
- 
- static void service_create_data_free(gpointer user_data)
-@@ -1960,11 +1970,21 @@ static void service_create_data_free(gpointer user_data)
++static void service_create_shared_pending_reply(struct qmi_device *device,
++						unsigned int type,
++						struct qmi_service *service)
++{
++	gpointer key = GUINT_TO_POINTER(type | 0x80000000);
++	GList **shared = g_hash_table_lookup(device->service_list, key);
++	GList *l;
++
++	g_hash_table_steal(device->service_list, key);
++
++	for (l = *shared; l; l = l->next) {
++		struct service_create_shared_data *shared_data = l->data;
++
++		shared_data->service = qmi_service_ref(service);
++		shared_data->timeout = g_timeout_add(
++				0, service_create_shared_reply, shared_data);
++	}
++
++	g_list_free(*shared);
++	g_free(shared);
++}
++
  static gboolean service_create_reply(gpointer user_data)
  {
  	struct service_create_data *data = user_data;
-+	struct qmi_device *device = data->device;
-+	struct qmi_request *req;
-+
-+	/* remove request from queues */
-+	req = find_control_request(device, data->tid);
+ 	struct qmi_device *device = data->device;
+ 	struct qmi_request *req;
  
- 	data->timeout = 0;
--	data->func(NULL, data->user_data);
- 
--	__qmi_device_discovery_complete(data->device, &data->super);
-+	if (data->func)
-+		data->func(NULL, data->user_data);
++	service_create_shared_pending_reply(device, data->type, NULL);
 +
-+	__qmi_device_discovery_complete(device, &data->super);
-+
-+	if (req)
-+		__request_free(req, NULL);
+ 	/* remove request from queues */
+ 	req = find_control_request(device, data->tid);
  
- 	return FALSE;
- }
-@@ -2063,9 +2083,9 @@ static bool service_create(struct qmi_device *device,
- 			client_req, sizeof(client_req),
- 			service_create_callback, data);
+@@ -2039,6 +2093,8 @@ static void service_create_callback(uint16_t message, uint16_t length,
+ 				GUINT_TO_POINTER(hash_id), service);
  
--	__request_submit(device, req);
--
-+	data->tid = __request_submit(device, req);
- 	data->timeout = g_timeout_add_seconds(8, service_create_reply, data);
+ done:
++	service_create_shared_pending_reply(device, data->type, service);
 +
+ 	data->func(service, data->user_data);
+ 	qmi_service_unref(service);
+ 
+@@ -2052,15 +2108,23 @@ static bool service_create(struct qmi_device *device,
+ 	struct service_create_data *data;
+ 	unsigned char client_req[] = { 0x01, 0x01, 0x00, type };
+ 	struct qmi_request *req;
++	GList **shared;
++	unsigned int type_val = type;
+ 	int i;
+ 
+-	data = g_try_new0(struct service_create_data, 1);
+-	if (!data)
++	if (!device->version_list)
+ 		return false;
+ 
+-	if (!device->version_list)
++	shared = g_try_new0(GList *, 1);
++	if (!shared)
+ 		return false;
+ 
++	data = g_try_new0(struct service_create_data, 1);
++	if (!data) {
++		g_free(shared);
++		return false;
++	}
++
+ 	data->super.destroy = service_create_data_free;
+ 	data->device = device;
+ 	data->type = type;
+@@ -2088,19 +2152,13 @@ static bool service_create(struct qmi_device *device,
+ 
  	__qmi_device_discovery_started(device, &data->super);
  
++	/* Mark service creation as pending */
++	g_hash_table_insert(device->service_list,
++			GUINT_TO_POINTER(type_val | 0x80000000), shared);
++
  	return true;
+ }
+ 
+-struct service_create_shared_data {
+-	struct discovery super;
+-	struct qmi_service *service;
+-	struct qmi_device *device;
+-	qmi_create_func_t func;
+-	void *user_data;
+-	qmi_destroy_func_t destroy;
+-	guint timeout;
+-};
+-
+ static void service_create_shared_data_free(gpointer user_data)
+ {
+ 	struct service_create_shared_data *data = user_data;
+@@ -2118,23 +2176,11 @@ static void service_create_shared_data_free(gpointer user_data)
+ 	g_free(data);
+ }
+ 
+-static gboolean service_create_shared_reply(gpointer user_data)
++bool qmi_service_create_shared(struct qmi_device *device, uint8_t type,
++			qmi_create_func_t func, void *user_data,
++			qmi_destroy_func_t destroy)
+ {
+-	struct service_create_shared_data *data = user_data;
+-
+-	data->timeout = 0;
+-	data->func(data->service, data->user_data);
+-
+-	__qmi_device_discovery_complete(data->device, &data->super);
+-
+-	return FALSE;
+-}
+-
+-bool qmi_service_create_shared(struct qmi_device *device,
+-				uint8_t type, qmi_create_func_t func,
+-				void *user_data, qmi_destroy_func_t destroy)
+-{
+-	struct qmi_service *service;
++	gpointer service;
+ 	unsigned int type_val = type;
+ 
+ 	if (!device || !func)
+@@ -2143,8 +2189,14 @@ bool qmi_service_create_shared(struct qmi_device *device,
+ 	if (type == QMI_SERVICE_CONTROL)
+ 		return false;
+ 
+-	service = g_hash_table_find(device->service_list,
++	service = g_hash_table_lookup(device->service_list,
++				GUINT_TO_POINTER(type_val | 0x80000000));
++	if (!service) {
++		service = g_hash_table_find(device->service_list,
+ 			__service_compare_shared, GUINT_TO_POINTER(type_val));
++	} else
++		type_val |= 0x80000000;
++
+ 	if (service) {
+ 		struct service_create_shared_data *data;
+ 
+@@ -2153,17 +2205,27 @@ bool qmi_service_create_shared(struct qmi_device *device,
+ 			return false;
+ 
+ 		data->super.destroy = service_create_shared_data_free;
+-		data->service = qmi_service_ref(service);
+ 		data->device = device;
+ 		data->func = func;
+ 		data->user_data = user_data;
+ 		data->destroy = destroy;
+ 
+-		data->timeout = g_timeout_add(0,
+-					service_create_shared_reply, data);
++		if (!data)
++			return false;
++
++		if (!(type_val & 0x80000000)) {
++			data->service = qmi_service_ref(service);
++			data->timeout = g_timeout_add(
++					0, service_create_shared_reply, data);
++		} else {
++			GList **l = service;
++
++			*l = g_list_prepend(*l, data);
++		}
++
+ 		__qmi_device_discovery_started(device, &data->super);
+ 
+-		return 0;
++		return true;
+ 	}
+ 
+ 	return service_create(device, type, func, user_data, destroy);
 -- 
 1.9.1
 
