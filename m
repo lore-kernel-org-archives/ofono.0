@@ -1,43 +1,43 @@
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43B1A3FC7
-	for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 18:11:22 +0000 (UTC)
-Received: by mail-wr1-f52.google.com with SMTP id m14so8247108wrg.13
-        for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 10:11:22 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9BC163D0
+	for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 18:11:23 +0000 (UTC)
+Received: by mail-wr1-f49.google.com with SMTP id r2so8262015wrv.7
+        for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 10:11:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=shruggie-ro.20210112.gappssmtp.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=2KbCHvUxnOjBfBV1L5S8k95qdHWxF8IN19kFZqqtS3o=;
-        b=NmkdoeKWNZn6onWoqXdUjePZe/Qas825O3rQbgzzC4s79GA6mZ9Gy/zLglQzb6QXhK
-         0GHhvVxZ/GGha7M5Y+Ynv4aamlIHbX01nnyNQDBg9fdEqhZ8RLLihjwhDDTIabZlPmCd
-         9D3ZPvzTATdSHHmYmrP+5TatYVUwNVZy45k4zRoUAT5Q8LhMzYbT2fC8EJYUhd04ZZcS
-         p1QSA0e65t1+ruKlt5KCEW2fnXvbTUOxahnakUJ2Uu1I3nWqM/HefFu3RvAYcvvqeybL
-         LfdAzFMlnSsHtOcAORDciUJEzRMc+QTinaZXID9bJTUgSp8hKFBqTBU0Icho11k8RNA+
-         +lHA==
+        bh=4wLsfT0VcS3DrwX2Ne6aWvj9Mct0vZ6Dq3LubHcJMBg=;
+        b=yBjlk8AK4CTIGbsR2iIci0/T5YxEHJFV43YX3+b1MKHxnMekNicUxRtd3M5YFJdHlQ
+         zMur2GabY7aYntlYVo95rO3XSSBTxJnO8J5lDQifrbuEhS3Q6V/WKOSTqF38uWnGvnUu
+         a3a0Fu0Y0gY/f9Nte21Fu7quFfc1U3Hqu7TvzOUCM3iT25SdEQnchPiom75ei8XBGoKg
+         j1ypzxz+ofgSeje5vafdtWEHvo678XbybdT+uHn8B33kGsnCL2BstbTwfcERgvjyk4ek
+         i9CINJwlit68Hc1L2uPFZqqHyYjKdGhSglHuDFwmOy+3tOLUBjeiXtDpWIWHh3wDMO2u
+         4Vrg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=2KbCHvUxnOjBfBV1L5S8k95qdHWxF8IN19kFZqqtS3o=;
-        b=yDYnJlZD8ZK/Pej7t/QVNhZoE9Ak1j91ao58OJf2NUXsVutLTb6k08ID9U2S//St1g
-         bBfiqTL0rXq9Ib0tNyguNeo0jr11bwEaEmaXQx9vPUQW3hezAsdc79+kmHgMZex+TgbM
-         enT8WT4X7FB0OC+o4XDn5uvyt79Z9k7PL5aQu04pSz65SBsoHpg2KMW3LbDtkfUVLa/c
-         IbB+YwYmBeaUHyNPpBGTTAYCaLlvNCF+pHRqW+jGKKWRIkovzUrMidTADxzZJMVucQEM
-         BT9iY+/mFo620SA1EjgzLBJukGKzxc/zPzj1ke7v1vtQYo69TjFxRaNzTwxnY3YmJFkJ
-         Wm/Q==
-X-Gm-Message-State: AO0yUKU6dS2EmkPf5V/i6prA9SRskIrut1Y9tePSNmsHSgBXEwAEz0Gf
-	xZB28gmbvxurl0eq9zc/Kx7Jp3vFTEc5ZAWuzRsuDw==
-X-Google-Smtp-Source: AK7set9re7Kv1oP2Sr8T/MpOvgLeAOSOIgo2+SY6Q/DCZErlHx13hgFzbpXDOowqfuTEr9OLO0MZRg==
-X-Received: by 2002:adf:cd10:0:b0:2be:338f:bc55 with SMTP id w16-20020adfcd10000000b002be338fbc55mr15397905wrm.66.1676139080271;
-        Sat, 11 Feb 2023 10:11:20 -0800 (PST)
+        bh=4wLsfT0VcS3DrwX2Ne6aWvj9Mct0vZ6Dq3LubHcJMBg=;
+        b=qBwXlpRXWgKpAVmRzJ8WfpjJsH3MiTYOClNPmXn+3Nmspas/Tp5dviAiSx7JfSkzGr
+         08jEc/EdYmUueUEZFGqdQ2e3EoNVYdYAM719W5UfAUwTD7HFDIL2JjIc1D1xfFFr1FuC
+         vmMV5ZE9GM6ciPxs6v4m99QcucvneJOXNw2BEtnzeZfNVvDQBtQaHRJFYoDxeTGc+/w6
+         UmV0RZ19xITj2FeVZ94wxaAWSKBNweFFSXtI2vo2e11ItwslM/YzX6bU1brjql12IUZs
+         VdNK/7ZTbbXYdJJKTjAxkZ/4sZXy9RuBLmnvGhXm75FzDo4cXeReR/e7ulg2pPtmzUo8
+         pemw==
+X-Gm-Message-State: AO0yUKXQi/S8L+6KB8P+s64Kt27OYN4QRoNXkt4E3RTK0QCeUImKJc9g
+	YWLPRb7Q5m0Sr5btVdqmdcqtm1IvywZHoxu+MGKRwg==
+X-Google-Smtp-Source: AK7set/Fr++Pr7TOla99ot0Ywr1A+B9sGVj+N5x+EzXTxgVmk1a1Txs6fdkM1TpMVY1HFC0zXmPIkw==
+X-Received: by 2002:a05:6000:108d:b0:2bf:bf05:85ac with SMTP id y13-20020a056000108d00b002bfbf0585acmr7058990wrw.23.1676139081904;
+        Sat, 11 Feb 2023 10:11:21 -0800 (PST)
 Received: from neptune.. ([188.27.130.91])
-        by smtp.gmail.com with ESMTPSA id j4-20020adff544000000b002c54fb024b2sm1716825wrp.61.2023.02.11.10.11.18
+        by smtp.gmail.com with ESMTPSA id j4-20020adff544000000b002c54fb024b2sm1716825wrp.61.2023.02.11.10.11.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 11 Feb 2023 10:11:19 -0800 (PST)
+        Sat, 11 Feb 2023 10:11:21 -0800 (PST)
 From: Alexandru Ardelean <alex@shruggie.ro>
 To: ofono@lists.linux.dev
 Cc: alex@shruggie.ro,
@@ -45,9 +45,9 @@ Cc: alex@shruggie.ro,
 	matthias.gruhler@stihl.de,
 	mircea.caprioru@flowkernel.ro,
 	stephanie.altenburg@stihl.de
-Subject: [RESEND PATCH 2/5] gprs: rework have_active_contexts() to check for non-active contexts
-Date: Sat, 11 Feb 2023 20:11:02 +0200
-Message-Id: <20230211181105.7220-3-alex@shruggie.ro>
+Subject: [RESEND PATCH 3/5] gprs: extend on_lte() to check for M1 and Nb-IOT techs
+Date: Sat, 11 Feb 2023 20:11:03 +0200
+Message-Id: <20230211181105.7220-4-alex@shruggie.ro>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20230211181105.7220-1-alex@shruggie.ro>
 References: <20230211181105.7220-1-alex@shruggie.ro>
@@ -59,87 +59,49 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-While trying to add LTE support to the Quectel BG95-M3 modem, we've run
-into a bit of a chicken-n-egg dilemma.
+The BG95 is an LTE modem with Cat M1 and NB-IoT techs.
+So, when it happens that the modem registers to one of these techs (in our
+case Cat M1), and there is no GSM advertised by the operator, the modem
+will not attach.
 
-While ofono has enumerated (successfully) the GPRS contexts (from the
-modem), we got only one (IP), but it's not active.
+Following the current logic of LTE, it looks like we just need to extend
+the "on_lte()" function to allow for these techs.
 
-And trying to activate it, would yield a NotAttached error (via DBus).
-
-The BG95-M3 modem supports Cat M1/Cat NB2/EGPRS LTE.
-
-This situation would show up when trying to connect to an operator that
-only has "lte-cat-m1" tech (and nothing else). If it the operator would
-also advertise "gsm" tech, ofono would connect via "gsm".
-
-Now, this could be a particularity of this modem (BG95-M3), in which case
-it may be an idea to add a hook into the quectel plugin/driver to check the
-attached status.
-
-But for now, it seems that allowing the Attached state to be reported for
-any present GPRS contexts (even non-active), seems to work.
-
-For EUTRAN, this behavior is still maintained.
+Also, not checking the .read_settings callback existence. That looks like a
+hack done for EUTRAN. In our case, the BG95 is controlled by AT commands,
+so there is no .read_settings hook yet, and we don't seem to need it.
 ---
  src/gprs.c | 16 ++++++++++++----
  1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/src/gprs.c b/src/gprs.c
-index 950b40fc..4befe88a 100644
+index 4befe88a..e2758545 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
-@@ -1515,18 +1515,24 @@ void ofono_gprs_resume_notify(struct ofono_gprs *gprs)
- 	update_suspended_property(gprs, FALSE);
- }
+@@ -1615,11 +1615,19 @@ static void detach_active_contexts(struct ofono_gprs *gprs)
  
--static gboolean have_active_contexts(struct ofono_gprs *gprs)
-+static gboolean have_contexts(struct ofono_gprs *gprs, bool must_be_active)
+ static gboolean on_lte(struct ofono_gprs *gprs)
  {
- 	GSList *l;
- 	struct pri_context *ctx;
-+	int ctx_count = 0;
+-	if (ofono_netreg_get_technology(gprs->netreg) ==
+-			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
+-		return TRUE;
++	int tech = ofono_netreg_get_technology(gprs->netreg);
  
- 	for (l = gprs->contexts; l; l = l->next) {
- 		ctx = l->data;
- 
- 		if (ctx->active == TRUE)
- 			return TRUE;
-+
-+		ctx_count++;
- 	}
- 
-+	if (!must_be_active && ctx_count > 0)
+-	return FALSE;
++	switch (tech) {
++	case ACCESS_TECHNOLOGY_NB_IOT_M1:
++	case ACCESS_TECHNOLOGY_NB_IOT_NB1:
 +		return TRUE;
-+
- 	return FALSE;
++	case ACCESS_TECHNOLOGY_EUTRAN:
++		if (have_read_settings(gprs))
++			return TRUE;
++		/* fall-through */
++	default:
++		return FALSE;
++	}
  }
  
-@@ -1621,7 +1627,8 @@ static void gprs_attached_update(struct ofono_gprs *gprs)
- 	ofono_bool_t attached;
- 	int status = gprs->status;
- 
--	if (on_lte(gprs))
-+	if (on_lte(gprs)) {
-+		int tech = ofono_netreg_get_technology(gprs->netreg);
- 		/*
- 		 * For LTE we attached status reflects successful context
- 		 * activation.
-@@ -1630,11 +1637,12 @@ static void gprs_attached_update(struct ofono_gprs *gprs)
- 		 * expect the gprs status to be unknown. That must not
- 		 * result in detaching...
- 		 */
--		attached = have_active_contexts(gprs);
--	else
-+		attached = have_contexts(gprs, tech == ACCESS_TECHNOLOGY_EUTRAN);
-+	} else {
- 		attached = gprs->driver_attached &&
- 			(status == NETWORK_REGISTRATION_STATUS_REGISTERED ||
- 				status == NETWORK_REGISTRATION_STATUS_ROAMING);
-+	}
- 
- 	if (attached == gprs->attached)
- 		return;
+ static void gprs_attached_update(struct ofono_gprs *gprs)
 -- 
 2.34.1
 
