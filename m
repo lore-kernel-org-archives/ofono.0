@@ -1,43 +1,43 @@
-Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9BC163D0
-	for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 18:11:23 +0000 (UTC)
-Received: by mail-wr1-f49.google.com with SMTP id r2so8262015wrv.7
-        for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 10:11:23 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6FB43FC7
+	for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 18:11:25 +0000 (UTC)
+Received: by mail-wr1-f51.google.com with SMTP id bu23so8259772wrb.8
+        for <ofono@lists.linux.dev>; Sat, 11 Feb 2023 10:11:25 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=shruggie-ro.20210112.gappssmtp.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=4wLsfT0VcS3DrwX2Ne6aWvj9Mct0vZ6Dq3LubHcJMBg=;
-        b=yBjlk8AK4CTIGbsR2iIci0/T5YxEHJFV43YX3+b1MKHxnMekNicUxRtd3M5YFJdHlQ
-         zMur2GabY7aYntlYVo95rO3XSSBTxJnO8J5lDQifrbuEhS3Q6V/WKOSTqF38uWnGvnUu
-         a3a0Fu0Y0gY/f9Nte21Fu7quFfc1U3Hqu7TvzOUCM3iT25SdEQnchPiom75ei8XBGoKg
-         j1ypzxz+ofgSeje5vafdtWEHvo678XbybdT+uHn8B33kGsnCL2BstbTwfcERgvjyk4ek
-         i9CINJwlit68Hc1L2uPFZqqHyYjKdGhSglHuDFwmOy+3tOLUBjeiXtDpWIWHh3wDMO2u
-         4Vrg==
+        bh=eintdJZvyIx1oR+4QA461c5ZWeQ70w4xrxbtOaABqp4=;
+        b=3rg4bkCsrph4E+TGYMKceAesLZrfCFT5zRq38ZZayTgK+lj+ITn9zTTEPCLryTPpxZ
+         D3eoK7PMxw95UmaIHsDKn1bhSSHjvbOaz+bzARO7cBRblOA/mthcLZT3l79KLZNm9SOY
+         /40WTOBBPlNTlHyxeje5dWtSRAoVJLYd+P0XTu04LwbJOu5y1KzwUehrWynkZ23oHjtO
+         QQtbyCSdJNSWAUIqL3aK9EKky9nci7PgycCPvb3Rip4+i9cFfeiGJfs2rB1mCWIckJpK
+         k3ME+cPXu2N2aQnbvvr3z9iLgBx/xb/zZwT9RcALvUOGqYglKDHl1QnsLI9HAlashfEL
+         fYFw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=4wLsfT0VcS3DrwX2Ne6aWvj9Mct0vZ6Dq3LubHcJMBg=;
-        b=qBwXlpRXWgKpAVmRzJ8WfpjJsH3MiTYOClNPmXn+3Nmspas/Tp5dviAiSx7JfSkzGr
-         08jEc/EdYmUueUEZFGqdQ2e3EoNVYdYAM719W5UfAUwTD7HFDIL2JjIc1D1xfFFr1FuC
-         vmMV5ZE9GM6ciPxs6v4m99QcucvneJOXNw2BEtnzeZfNVvDQBtQaHRJFYoDxeTGc+/w6
-         UmV0RZ19xITj2FeVZ94wxaAWSKBNweFFSXtI2vo2e11ItwslM/YzX6bU1brjql12IUZs
-         VdNK/7ZTbbXYdJJKTjAxkZ/4sZXy9RuBLmnvGhXm75FzDo4cXeReR/e7ulg2pPtmzUo8
-         pemw==
-X-Gm-Message-State: AO0yUKXQi/S8L+6KB8P+s64Kt27OYN4QRoNXkt4E3RTK0QCeUImKJc9g
-	YWLPRb7Q5m0Sr5btVdqmdcqtm1IvywZHoxu+MGKRwg==
-X-Google-Smtp-Source: AK7set/Fr++Pr7TOla99ot0Ywr1A+B9sGVj+N5x+EzXTxgVmk1a1Txs6fdkM1TpMVY1HFC0zXmPIkw==
-X-Received: by 2002:a05:6000:108d:b0:2bf:bf05:85ac with SMTP id y13-20020a056000108d00b002bfbf0585acmr7058990wrw.23.1676139081904;
-        Sat, 11 Feb 2023 10:11:21 -0800 (PST)
+        bh=eintdJZvyIx1oR+4QA461c5ZWeQ70w4xrxbtOaABqp4=;
+        b=rZuV3zmCCP0lwpTUjNcRPOTO2MfkMPvPv/vZTbqPx3iGeJb3Qt5a5/WruBTYFJWoH6
+         FDzCQrvpGeQt8lRsDfeRBjXzn5HNBjFLqw8MRssGbDWSaSGyZ8gi/gJuuc/dVPKTQfxh
+         oPQPtTzH5sd+PAqRJ9CvZvewUSjgkgPDIaF+frALZ8HqyCai8Ru+h5774EkxIlBtC3h5
+         Te11VLdAuHqZtR5rcFa3IlOO+OfZIkx2YqX05bLa3xwh/mRvSG5Au2SzKRM1DOpB8Hh9
+         EcrUku1cIrNdy5lj2FpJNuwuIqKz27rTB8WhC5jf6jESUcaccy3A2JqqOapQyxyeVngu
+         brkw==
+X-Gm-Message-State: AO0yUKVmDM/aYTRhbkec/y9rDKEyUfovhNmYSa1VrRX2ebxTyn9muqON
+	Mz3KZCfExdEbVEXgAnjOH2//VI+QyPodVzB6lQGsIA==
+X-Google-Smtp-Source: AK7set/omFMeq48HgA/U7pEHVPATqvdvcJ8AJMDLLFVI7H5UbvU90agzJjvI6jhHwrLR318LGHkdeg==
+X-Received: by 2002:a5d:6188:0:b0:2c5:49e1:b2cb with SMTP id j8-20020a5d6188000000b002c549e1b2cbmr5083257wru.37.1676139083649;
+        Sat, 11 Feb 2023 10:11:23 -0800 (PST)
 Received: from neptune.. ([188.27.130.91])
-        by smtp.gmail.com with ESMTPSA id j4-20020adff544000000b002c54fb024b2sm1716825wrp.61.2023.02.11.10.11.20
+        by smtp.gmail.com with ESMTPSA id j4-20020adff544000000b002c54fb024b2sm1716825wrp.61.2023.02.11.10.11.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 11 Feb 2023 10:11:21 -0800 (PST)
+        Sat, 11 Feb 2023 10:11:23 -0800 (PST)
 From: Alexandru Ardelean <alex@shruggie.ro>
 To: ofono@lists.linux.dev
 Cc: alex@shruggie.ro,
@@ -45,9 +45,9 @@ Cc: alex@shruggie.ro,
 	matthias.gruhler@stihl.de,
 	mircea.caprioru@flowkernel.ro,
 	stephanie.altenburg@stihl.de
-Subject: [RESEND PATCH 3/5] gprs: extend on_lte() to check for M1 and Nb-IOT techs
-Date: Sat, 11 Feb 2023 20:11:03 +0200
-Message-Id: <20230211181105.7220-4-alex@shruggie.ro>
+Subject: [RESEND PATCH 4/5] plugins: quectel: re-organize code for ussd & lte init
+Date: Sat, 11 Feb 2023 20:11:04 +0200
+Message-Id: <20230211181105.7220-5-alex@shruggie.ro>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20230211181105.7220-1-alex@shruggie.ro>
 References: <20230211181105.7220-1-alex@shruggie.ro>
@@ -59,49 +59,50 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The BG95 is an LTE modem with Cat M1 and NB-IoT techs.
-So, when it happens that the modem registers to one of these techs (in our
-case Cat M1), and there is no GSM advertised by the operator, the modem
-will not attach.
-
-Following the current logic of LTE, it looks like we just need to extend
-the "on_lte()" function to allow for these techs.
-
-Also, not checking the .read_settings callback existence. That looks like a
-hack done for EUTRAN. In our case, the BG95 is controlled by AT commands,
-so there is no .read_settings hook yet, and we don't seem to need it.
+The BG95 modem (family) supports LTE, but not USSD.
+So, we'll split the init of the LTE separately, and add a helper function
+(called quectel_model_supports_lte()) which will return true if the modem
+supports LTE.
 ---
- src/gprs.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
+ plugins/quectel.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 4befe88a..e2758545 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1615,11 +1615,19 @@ static void detach_active_contexts(struct ofono_gprs *gprs)
+diff --git a/plugins/quectel.c b/plugins/quectel.c
+index f933723d..464845ff 100644
+--- a/plugins/quectel.c
++++ b/plugins/quectel.c
+@@ -128,6 +128,17 @@ enum quectel_power_event {
  
- static gboolean on_lte(struct ofono_gprs *gprs)
- {
--	if (ofono_netreg_get_technology(gprs->netreg) ==
--			ACCESS_TECHNOLOGY_EUTRAN && have_read_settings(gprs))
--		return TRUE;
-+	int tech = ofono_netreg_get_technology(gprs->netreg);
+ static const char dbus_hw_interface[] = OFONO_SERVICE ".quectel.Hardware";
  
--	return FALSE;
-+	switch (tech) {
-+	case ACCESS_TECHNOLOGY_NB_IOT_M1:
-+	case ACCESS_TECHNOLOGY_NB_IOT_NB1:
++static ofono_bool_t quectel_model_supports_lte(enum quectel_model model)
++{
++	switch (model) {
++	case QUECTEL_EC21:
++	case QUECTEL_EC200:
 +		return TRUE;
-+	case ACCESS_TECHNOLOGY_EUTRAN:
-+		if (have_read_settings(gprs))
-+			return TRUE;
-+		/* fall-through */
 +	default:
 +		return FALSE;
 +	}
++}
++
+ static ofono_bool_t has_serial_connection(struct ofono_modem *modem)
+ {
+ 
+@@ -1356,10 +1367,11 @@ static void quectel_post_sim(struct ofono_modem *modem)
+ 	ofono_phonebook_create(modem, data->vendor, "atmodem", data->aux);
+ 	ofono_call_volume_create(modem, data->vendor, "atmodem", data->aux);
+ 
+-	if (data->model == QUECTEL_EC21 || data->model == QUECTEL_EC200) {
++	if (data->model == QUECTEL_EC21 || data->model == QUECTEL_EC200)
+ 		ofono_ussd_create(modem, data->vendor, "atmodem", data->aux);
++
++	if (quectel_model_supports_lte(data->model))
+ 		ofono_lte_create(modem, data->vendor, "atmodem", data->aux);
+-	}
  }
  
- static void gprs_attached_update(struct ofono_gprs *gprs)
+ static void quectel_post_online(struct ofono_modem *modem)
 -- 
 2.34.1
 
