@@ -1,120 +1,133 @@
-Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
+Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16EBA9446
-	for <ofono@lists.linux.dev>; Fri, 17 Feb 2023 17:04:53 +0000 (UTC)
-Received: by mail-lj1-f179.google.com with SMTP id r28so1809016ljk.1
-        for <ofono@lists.linux.dev>; Fri, 17 Feb 2023 09:04:53 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74ED4125B8
+	for <ofono@lists.linux.dev>; Wed, 10 May 2023 15:32:25 +0000 (UTC)
+Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-3062b101ae1so4798786f8f.2
+        for <ofono@lists.linux.dev>; Wed, 10 May 2023 08:32:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=shruggie-ro.20210112.gappssmtp.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=6vsOUsAGOia7JU7X2ma8oasKQTmpxbtX8xAaaSDWbnw=;
-        b=OgEnOVBN4P7Vfuc0XiUW/cAcNgC6Hs0bZGP2F+CybVKTcMe3IRNr1nW02iqNSHmvcc
-         4uuofIVTtksXqyBMQi9JJ5kx46VGGtcA7ceA4/WJq0LChua6G50XjSTgUpL2z96w3h0K
-         g4rKwxAqO/vsm/TQaDvk2qUkzx368bqszUwiK8Eex77xH2ZwU4dvnJUTPtA16gPc+Ai8
-         SaC1C6tkSV6JtXB93VAOxvM+drqoHDadHs+W/EIgTlRZMp1H06smDlaiXVqmKgyTTnSA
-         qJmEfHuaKpvvdlTeHb8ENPuxANykRsm0thYa9t5Zxpu44aiKO7/k4Z9tvUI9yQ2LA62/
-         M/Uw==
+        d=gmail.com; s=20221208; t=1683732743; x=1686324743;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:to
+         :from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=XrzBCAgl4qRulqgNaHZwSa5TcD3MSQLcd5RmDN+E75I=;
+        b=qZa51Up+OqWqItymfdABXqXBEQvkZaIVFgQL9Z1NVamx9yGiejknuF25OiY4/D5S/I
+         CFIKr2UY93zVc5alnx2HrKKHXmNEW5CFn3SPfsdjnMdjHqe8f2vyr3khTTOkym4jnVOW
+         Hm3bxsRpULBansVqUxyGUHFoYYloz7Rnv8SL0xF+QT2hWE0ZQYDQXSC8/sH2VMMY8dpo
+         jRZKUMyKtjundXREx7IHddg8DtpfYfyO0996cVjbK78suAQUX9Yyoh3WIN6ilQ0rsQ2z
+         nQGWDgcDn6dzSxSQs/trMbN6RKBiA5W9c9yjfvuD9AcUH8O4CLURUK3rGhVmrlj76Uov
+         sLEg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+        d=1e100.net; s=20221208; t=1683732743; x=1686324743;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:to
+         :from:sender:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=6vsOUsAGOia7JU7X2ma8oasKQTmpxbtX8xAaaSDWbnw=;
-        b=gIlQDmIC3NFvPJaekWtpF1xlZf2rFxi83pqlR6RGRoaVQxIh/UqIdKMsbfyNE/IHid
-         ENDkErYCJJTBlzKpH3qANq582KtZcvh6CwIq3K4Uae72jDnCRmbMcMNQqw5birks3JuH
-         H13zMu19zEaxPZTMTiwacrp3UxFnb3hsR/y1g+7sjHyYReVqHC2/q1T+Bwhh7ncS1Q8f
-         RVfXELI9jU0CqtM9IOBTfB58x9W0GW/1gTz8bpdoEsNo2pyMnwzZR114Nt8VF0fO7rF/
-         CDQANm2F+tY+aw/cZVidxPW3IM6xgNanVQrcSpXAXz6/5QGUuOqtAHZ2YdR4EUCXP8fs
-         +2kA==
-X-Gm-Message-State: AO0yUKXs67XKpzDokx2uKnRjzfLPtDFbdFwcbZOBUtT19Msggp6/zUlh
-	BjMnRX5OcAONHs6pme/xGTVdFbh8aVR083RYz7gA5w==
-X-Google-Smtp-Source: AK7set/LPjt3chs+qJlTKYZkTurVseCpBcMFwA7WjNmnw3uU26MHXJLSyHIMq0whrSE6tQAlS3R+kxxmYlow5wM1CE8=
-X-Received: by 2002:a05:651c:1688:b0:293:4647:364a with SMTP id
- bd8-20020a05651c168800b002934647364amr592446ljb.3.1676653491815; Fri, 17 Feb
- 2023 09:04:51 -0800 (PST)
+        bh=XrzBCAgl4qRulqgNaHZwSa5TcD3MSQLcd5RmDN+E75I=;
+        b=Qkw64iEyfUEveWnmn3S/qJ5NBttkR2v44md9uLL4NyZaDJdaw/V2bilu1ttFIncwHZ
+         RWFTcVY2yDpnFi9m/PRre8/gJb19wNWWdJbxLcxoWD43EEr5w8Vkumxzwdc5hCwGLqkf
+         VB/B6nKake2+twPvha/pbSg9cGyaetHNaRJDZKJLnMf5ZHG6VYIVlz+WhBi8nxNRIsQg
+         OaWu03J+wn0wI7WepVvy3Dzlwj0AZw8qQV5KuxoH6bigNBF8bB1VwrSCYVoUFsvfvAIp
+         F2ClBnFhnMekSeQQAywOD5EdFkLCLKoP4pNtqczIt4wICcVISow3T5KDSjBEQkL0BzTT
+         TF1g==
+X-Gm-Message-State: AC+VfDwMg9ygrF2rUGVt73uTikH7z/4raZ/csabFugjsdQCl+CGprh/z
+	bBbjhgwk7bcUWmsNFY9bugz6PRqvva4=
+X-Google-Smtp-Source: ACHHUZ5m4/i7C3eULRENv/8CyeLzhFcwLaFdSipp5jbZP2XKUnKCq3+bPQBefH0aYRjSOuZ/RTp0aQ==
+X-Received: by 2002:a5d:4745:0:b0:306:3ad3:94f2 with SMTP id o5-20020a5d4745000000b003063ad394f2mr12427064wrs.42.1683732742849;
+        Wed, 10 May 2023 08:32:22 -0700 (PDT)
+Received: from adam-laptop-hp.localnet ([90.242.101.28])
+        by smtp.gmail.com with ESMTPSA id x10-20020adfffca000000b002e61e002943sm17599236wrs.116.2023.05.10.08.32.22
+        for <ofono@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 10 May 2023 08:32:22 -0700 (PDT)
+Sender: Adam Pigg <piggz1@gmail.com>
+From: Adam Pigg <adam@piggz.co.uk>
+To: ofono@lists.linux.dev
+Subject: USB Hub resets - EG25 / Pinephone Pro
+Date: Wed, 10 May 2023 16:32:22 +0100
+Message-ID: <3234634.44csPzL39Z@adam-laptop-hp>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20230211181105.7220-1-alex@shruggie.ro> <20230211181105.7220-4-alex@shruggie.ro>
- <849beb97-9939-ae1d-a6e8-24dd66097ada@gmail.com>
-In-Reply-To: <849beb97-9939-ae1d-a6e8-24dd66097ada@gmail.com>
-From: Alexandru Ardelean <alex@shruggie.ro>
-Date: Fri, 17 Feb 2023 19:04:40 +0200
-Message-ID: <CAH3L5QpifTqU+UL6ic88YZ=yjuqc9u5_MbOn65Sbon2ENcyD7g@mail.gmail.com>
-Subject: Re: [RESEND PATCH 3/5] gprs: extend on_lte() to check for M1 and
- Nb-IOT techs
-To: Denis Kenzior <denkenz@gmail.com>
-Cc: ofono@lists.linux.dev, patrick.frick@stihl.de, matthias.gruhler@stihl.de, 
-	mircea.caprioru@flowkernel.ro, stephanie.altenburg@stihl.de
+Content-Transfer-Encoding: quoted-printable
 Content-Type: text/plain; charset="UTF-8"
 
-On Mon, Feb 13, 2023 at 6:52 PM Denis Kenzior <denkenz@gmail.com> wrote:
->
-> Hi Alexandru,
->
-> On 2/11/23 12:11, Alexandru Ardelean wrote:
-> > The BG95 is an LTE modem with Cat M1 and NB-IoT techs.
-> > So, when it happens that the modem registers to one of these techs (in our
-> > case Cat M1), and there is no GSM advertised by the operator, the modem
-> > will not attach.
-> >
->
-> oFono doesn't really grok these technology types.  It must be taught to handle
-> them properly.
+Hi
 
-Ack.
-It's what we want to do.
+Im just really seeking some ideas on how to handle the modem in the pinepho=
+ne=20
+pro.
 
->
-> > Following the current logic of LTE, it looks like we just need to extend
-> > the "on_lte()" function to allow for these techs.
->
-> Or maybe treat them specially if they're not handled like LTE?
+Initially, all is good, and the modem works, however, after enabling power=
+=20
+management and allowing the phone to suspend/resume, ive hit a problem wher=
+e=20
+on resume, the usb hun the modem is connected to resets.  This causes the=20
+modem to dissapear/reappear.
 
-Ah.
-So, I may be a bit confused here about what LTE refers to (or which
-you are referring to).
-To me LTE is EUTRAN, Cat M1 and NB-IoT.
-But maybe, you are referring to LTE as just EUTRAN, and the others are
-specific cases that need to be handled differently.
-That is fine from my side.
+When it re-appears, my debugging has found that devices probed initially ar=
+e=20
+now not present (a usbmisc and wwan device), however, the 3 modem tty devic=
+es=20
+are there. See below from some debug logs
 
->
-> >
-> > Also, not checking the .read_settings callback existence. That looks like a
-> > hack done for EUTRAN. In our case, the BG95 is controlled by AT commands,
-> > so there is no .read_settings hook yet, and we don't seem to need it.
->
-> For LTE support, .read_settings must be implemented.  That is because you need
-> to obtain the default context details (see my reply to the previous patch).
-> This is needed for matching default context to provisioned ones, etc.
+This causes the ofono plugin to not register a device (the wwan device is=20
+required for this), which isnt ideal on a mobile phone.
 
-Will see maybe about this .read_settings hook.
-Maybe we treat LTE Cat M1 entirely differently.
-Who knows?
-But if we do get QMI to work (at some point), then this is not required anymore.
+Any ideas are welcomed on how to handle this.
 
->
-> If NB_IOT* acts differently than LTE in this regard, then modifying on_lte() is
-> probably not the right approach.
+Kind Regards
 
-Hmmm.
-So we don't use NB-IoT. It's a requirement (for us) to disable it.
-We're just using LTE Cat M1.
-I guess I put it there inertially after looking into the list of LTE enums.
+Adam Pigg
 
 
->
-> > ---
-> >   src/gprs.c | 16 ++++++++++++----
-> >   1 file changed, 12 insertions(+), 4 deletions(-)
-> >
->
-> Regards,
-> -Denis
->
+
+
+    On Boot:
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/udevng.c:create_modem=
+()=20
+/sys/devices/platform/fe3c0000.usb/usb1/1-1
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/udevng.c:create_modem=
+()=20
+driver=3Dquectelqmi
+    May 08 18:14:10 PinePhonePro ofonod[353]: src/modem.c:ofono_modem_creat=
+e()=20
+name: (null), type: quectelqmi
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /sys/devices/platform/fe3c0000.usb/usb1/1-1
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB0 255/255/255 00 (null) tty
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB1 255/0/0 01 (null) tty
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB2 255/0/0 02 (null) tty
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB3 255/0/0 03 (null) tty
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/cdc-wdm0 255/255/255 04 (null) usbmisc
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() wwan0 255/255/255 04 (null) net
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() qmi=3D/dev/cdc-wdm0 net=3Dwwan0
+    May 08 18:14:10 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() qmi=3D/dev/cdc-wdm0 net=3Dwwan0
+    =E2=80=8B
+    =E2=80=8B
+    On Resume:
+    May 08 18:15:05 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /sys/devices/platform/fe3c0000.usb/usb1/1-1
+    May 08 18:15:05 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB0 255/255/255 00 (null) tty
+    May 08 18:15:05 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB1 255/0/0 01 (null) tty
+    May 08 18:15:05 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB2 255/0/0 02 (null) tty
+    May 08 18:15:05 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() /dev/ttyUSB3 255/0/0 03 (null) tty
+    May 08 18:15:05 PinePhonePro ofonod[353]: plugins/
+udevng.c:setup_quectelqmi() qmi=3D(null) net=3D(null)
+    =E2=80=8B
+
+
+
