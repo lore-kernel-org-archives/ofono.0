@@ -1,123 +1,67 @@
-Received: from mail-oa1-f41.google.com (mail-oa1-f41.google.com [209.85.160.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from fallback22.i.mail.ru (fallback22.i.mail.ru [79.137.243.74])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D2FF4A23
-	for <ofono@lists.linux.dev>; Tue, 27 Jun 2023 02:03:30 +0000 (UTC)
-Received: by mail-oa1-f41.google.com with SMTP id 586e51a60fabf-1b0138963ffso2829946fac.0
-        for <ofono@lists.linux.dev>; Mon, 26 Jun 2023 19:03:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1687831409; x=1690423409;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=aXRbFfElGOAvJe3wAPC9Cy4xvEvJBBAvd5e2W52sbzQ=;
-        b=mLPDF4rYsPz64CWptgLKPDKwHnIPIhLGI/ekvErVFTNudc59kq7F1YBOMYZxtI0hgZ
-         vYXEyDgh1TI65Sr8QY82N5F6YPwCfl6UKF+1MBkJa62pAmzLe3Z63xY7KR43bKtWtzBw
-         2y2prUOuow/B80I/HBrerMkTIFIAI4f80sLEgmpTKuBt8cSR9K5ti1P5tJYqjZvpZ+qT
-         gNrwuNWb0xrfIoYAb/RkhYKE/79BEXR7tqy8lgHY/rCUmZDVz0LoJvcJHrk7H7nvYXQH
-         2PEpUmAU/Q2OWFIRlgQErpCbz3YdgNhHU9H8eGgNOi+JucN8rthHkc4SxcBWdYE8mcTT
-         Aosw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1687831409; x=1690423409;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=aXRbFfElGOAvJe3wAPC9Cy4xvEvJBBAvd5e2W52sbzQ=;
-        b=PKppSDJOl8duC9uaf3ecymdAo6/FWVUlciAlsaxm/BVdiBgGuX4YXUqEHXfvQgVTw9
-         VQhurJfp+WU+yZpVJPK1UFI/f1OiXhgI2S3PnSv3SSTlJnEXFNRfgbC+DI8TfKox+YU9
-         Xqt34xibZ/Hjkc9hIAfDV2HV58oHPfLnXHQX+8q33vrIsLI4boiJboXnaAOQnpfmaYhT
-         CBV0pGrfzD6gi+8fPz6ayjffabrIDhBPyao04vFWfSLjhekLnBD7UfBC+Gog0F6IaMBx
-         bxlpPUoWQnaMZLIZTqDL29yX8CS1I4xNBVn/VD06AABRVpre39M5VndVDuxpM/JtW9lB
-         nCdg==
-X-Gm-Message-State: AC+VfDyW4oEls/DlIp6foaeZU8l+O41IokzqUJRkE5Lu53bb3D9CpQnl
-	hLllHLcyryXRFwDmu4nOWJFKZtMG+uY=
-X-Google-Smtp-Source: ACHHUZ6Ii6mv2ch+LvI5iDg7T4RnXasAPyypMLSvnE5ZCJlV2GCMiq4lA+G3JwifgOSrd8EQ0GgUBA==
-X-Received: by 2002:a05:6870:3446:b0:1b0:2a7f:5887 with SMTP id i6-20020a056870344600b001b02a7f5887mr5715741oah.49.1687831409443;
-        Mon, 26 Jun 2023 19:03:29 -0700 (PDT)
-Received: from [10.0.2.15] (cpe-70-114-247-242.austin.res.rr.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id pu4-20020a0568709e8400b001a66a48a68asm4372417oab.57.2023.06.26.19.03.28
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 26 Jun 2023 19:03:28 -0700 (PDT)
-Message-ID: <ac04efc6-4e0b-1d76-4016-eaaf5be80b4e@gmail.com>
-Date: Mon, 26 Jun 2023 20:54:19 -0500
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DDDE4C7F
+	for <ofono@lists.linux.dev>; Wed,  5 Jul 2023 08:30:27 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru; s=mailru;
+	h=Content-Transfer-Encoding:MIME-Version:Content-Type:References:In-Reply-To:Date:To:From:Subject:Message-ID:From:Subject:Content-Type:Content-Transfer-Encoding:To:Cc; bh=Hh8ZM0kObpSMVgmxqeiOBWi6DfxD1RHN97ANTh5rEFA=;
+	t=1688545828;x=1688635828; 
+	b=OtbJYAtfUAjvzS2MXyyuDtd1N6xWSCrB8xIZo4zwV9qTJ/Nh1AsKCIy6ABDgaRe3zgQXk0nGLCyyWpXbHbuU6F8GfJ11lG4ecXEqI5SHk72JxViTLYsb+yZJQkv/VOMbAxhepmlI2ORLgqfzlCWVikT/Eh2lPstfNaJirRcYVvo=;
+Received: from [10.12.4.25] (port=35110 helo=smtp54.i.mail.ru)
+	by fallback22.i.mail.ru with esmtp (envelope-from <m.lyubimov@aqsi.ru>)
+	id 1qGxbH-009dZ2-9t
+	for ofono@lists.linux.dev; Wed, 05 Jul 2023 11:10:59 +0300
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru; s=mailru;
+	h=Content-Transfer-Encoding:MIME-Version:Content-Type:References:In-Reply-To:Date:To:From:Subject:Message-ID:From:Subject:Content-Type:Content-Transfer-Encoding:To:Cc; bh=Hh8ZM0kObpSMVgmxqeiOBWi6DfxD1RHN97ANTh5rEFA=;
+	t=1688544659;x=1688634659; 
+	b=UNJfKDnf263cRwNyHIaKK8+ZOB5/PK07XRXy/3JITdniXFGGjxVALzijsd/lMPnlmtXtlAt7+kR1bgb5EKB8CJQdEbwvJ6a+w9rsdJsz5B+n2O16GvioRUwWTH7CEQzt4jvp6FoP8/HVCvvyUdm/vo3mB5dskdygMZuW/qbMCqc=;
+Received: by smtp54.i.mail.ru with esmtpa (envelope-from <m.lyubimov@aqsi.ru>)
+	id 1qGxb8-004e8i-7p
+	for ofono@lists.linux.dev; Wed, 05 Jul 2023 11:10:51 +0300
+Message-ID: <cb255f1096e1018ea26ccf25d09943ee9c3c5b36.camel@aqsi.ru>
+Subject: Re: Ofono: adding support for the SIMCom A7605E-H
+From: =?koi8-r?Q?=EC=C0=C2=C9=CD=CF=D7_?= =?koi8-r?Q?=ED=C1=CB=D3=C9=CD?=
+	 <m.lyubimov@aqsi.ru>
+To: ofono@lists.linux.dev
+Date: Wed, 05 Jul 2023 13:10:48 +0500
+In-Reply-To: <ac04efc6-4e0b-1d76-4016-eaaf5be80b4e@gmail.com>
+References: <2af6ef8c3d5c9437da480e59d4012c81a0f66b6f.camel@aqsi.ru>
+	 <ac04efc6-4e0b-1d76-4016-eaaf5be80b4e@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.36.5-0ubuntu1 
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.12.0
-Subject: Re: Ofono: adding support for the SIMCom A7605E-H
-Content-Language: en-US
-To: =?UTF-8?B?0JvRjtCx0LjQvNC+0LIg0JzQsNC60YHQuNC8?= <m.lyubimov@aqsi.ru>,
- ofono@lists.linux.dev
-References: <2af6ef8c3d5c9437da480e59d4012c81a0f66b6f.camel@aqsi.ru>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <2af6ef8c3d5c9437da480e59d4012c81a0f66b6f.camel@aqsi.ru>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
+X-Mailru-Src: smtp
+X-7564579A: B8F34718100C35BD
+X-77F55803: 4F1203BC0FB41BD90EBD74C6BAAC9DBAE23CD95C274A153CFC6B5948C61D86E6182A05F538085040B66140A82DABF7487AD9F6C74B083B3758808F58D10E054307F3F2C3C5F8E3B6
+X-7FA49CB5: FF5795518A3D127A4AD6D5ED66289B5278DA827A17800CE716FAD50E497B9C14EA1F7E6F0F101C67BD4B6F7A4D31EC0BCC500DACC3FED6E28638F802B75D45FF8AA50765F79006377E85B0EC44E8FD73EA1F7E6F0F101C6723150C8DA25C47586E58E00D9D99D84E1BDDB23E98D2D38BE5CCB53A13BC8DBADA86847724DF99B0AAF2151FB095AED8CC7F00164DA146DAFE8445B8C89999728AA50765F7900637D2AD7660D07C2C48389733CBF5DBD5E9C8A9BA7A39EFB766F5D81C698A659EA7CC7F00164DA146DA9985D098DBDEAEC8A999322EAAB3F9C2F6B57BC7E6449061A352F6E88A58FB86F5D81C698A659EA73AA81AA40904B5D98AA50765F7900637254CDB394D352967D81D268191BDAD3D3666184CF4C3C14F3FC91FA280E0CE3D1A620F70A64A45A98AA50765F7900637A451E1E29F2EDBED6D1867E19FE1407959CC434672EE6371089D37D7C0E48F6C8AA50765F79006377F98CFD14CA0B037EFF80C71ABB335746BA297DBC24807EABDAD6C7F3747799A
+X-C1DE0DAB: 0D63561A33F958A59B5751ABD30D1A7A885565B2D7E52CF9D4C195A55BD471C6F87CCE6106E1FC07E67D4AC08A07B9B065B78C30F681404DCB5012B2E24CD356
+X-C8649E89: 1C3962B70DF3F0ADBF74143AD284FC7177DD89D51EBB7742DC8270968E61249B1004E42C50DC4CA955A7F0CF078B5EC49A30900B95165D349320586B19AD2C72368ECE8BB4D88326944BEBE5AC4B8747670FBE2AA287571823C74EE1054B9DFE1D7E09C32AA3244C7BE834E73FB24CEFDBDBD03AB280E59D8894E9C85370243EBC4AF6B5DE6957CB5DA084F8E80FEBD38EDF88D74BAC437670101D478F77020B37E69C174A41D00C
+X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5ycPtXkTV4k65bRjmOUUP8cvGozZ33TWg5HZplvhhXbhDGzqmQDTd6OAevLeAnq3Ra9uf7zvY2zzsIhlcp/Y7m53TZgf2aB4JOg4gkr2bioj/F+CT1pYZlsKohJGAQ5Rmw==
+X-Mailru-Sender: 8F0A18E209ABDF42A59E14250D05070F644887DBB3C6D72F399CCA9A61A77F2F6B40D4FD6E59C7325D68521865CF3C5293AC9912533B2342953ADA4C1418A8160CF35AF5341388420FBD6B69799305375FEEDEB644C299C0ED14614B50AE0675
+X-Mras: Ok
+X-7564579A: 646B95376F6C166E
+X-77F55803: 6242723A09DB00B4FB54E86DD7FF5B39714A1D1D1F496F3282A8D5EC2BF37D1468F3CF0E9FE49B69B4080B1323EBFC57EB8BB27AB52F67196C10AD08948D3401FD41096B07386C16
+X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5xhPKz0ZEsZ5k6NOOPWz5QAiZSCXKGQRq3/7KxbCLSB2ESzQkaOXqCBFZPLWFrEGlV1shfWe2EVcxl5toh0c/aCGOghz/frdRhzMe95NxDFdr2FD4uy5x8JfBbfk8gmBUg==
+X-Mailru-MI: C000000000000800
+X-Mras: Ok
 
-Hi Максим,
+Good afternoon! Thanks for your reply.
 
-On 6/22/23 04:24, Любимов Максим wrote:
-> Hello Denis Kenzior
-> 
+I followed your advice and got the PPP connection data log using the
+g_at_ppp_set_recording function. The resulting file did not open in
+wireshark. Subsequent analysis of the data showed that the file
+contained URCs from the modem, which caused no responses from the
+server, buffer overflows, and disconnection of the PPP connection.
 
-Sorry for the late reply, was traveling last week.
+I redirected the URC to a different port and everything works fine now.
 
-> I'm working on adding SIMCom A7605E-H (A7602E-H) modem support to
-> ofono. By now, I have prepared a version of the modem driver that works
-> according to the manufacturer's recommendations. But there is a problem
+Best Regards,
+Lyubimov Maxim
 
-Great!
 
-> related to the functioning of the PPP connection. After activating the
-> context in ofono, the PPP connection is established, and the /dev/ppp0
-
-It is 2023, didn't think I'd hear the term 'PPP' again :)
-
-> device appears on the system. But when I send a ping to an external
-> server, after a few replies (1-100), the replies from the server stop
-> coming.
-
-So the IPCP is brought up successfully.  Sometimes these devices want DHCP to be 
-run on the link or they assume there's nothing on the other side?
-
-> 
-> The manufacturer provides instructions for the modem, which describes
-> the procedure for setting up a PPP connection through pppd. By
-> following this instruction, the connection is stable and ping responses
-> are not interrupted.
-
-But hmm, you say pppd works just fine..
-
-> 
-> I checked if the previously sent commands to the modem from ofono
-> affect the stability of the connection. To do this, I launched ofono,
-> in which all the procedures for polling and configuring the modem were
-> carried out. The context in ofono was not active. Next, I started pppd
-> with a script written according to the manufacturer's recommendations,
-> so the context activation was performed using pppd from the place where
-> ofono would have done it. After that, the /dev/ppp0 device also
-> appeared in the system, but the ping responses from the server come
-> steadily. Therefore, we can conclude that the problem lies in the
-> implementation of the PPP protocol in ofono, which for some reason is
-> incompatible with the SIMCom A7605E-H modem.
-
-You may want to post the pppd script, though I have honestly not used pppd in 
-10+ years.
-
-> 
-> How would you comment on this situation and in what direction would you
-> advise moving to solve this problem?
-
-I would capture the pppd negotiation in PCAP and do the same with oFono (see 
-g_at_ppp_set_recording()).  You can also try gatchat/gsmdial which performs most 
-of the same basic steps as the atmodem gprs-context driver and can (optionally, 
-with a command line argument) capture PCAPs  directly.
-
-Then we can try and compare what might be different between the two.
-
-Regards,
--Denis
