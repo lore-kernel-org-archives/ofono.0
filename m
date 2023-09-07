@@ -1,67 +1,65 @@
-Received: from fallback22.i.mail.ru (fallback22.i.mail.ru [79.137.243.74])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oo1-f45.google.com (mail-oo1-f45.google.com [209.85.161.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DDDE4C7F
-	for <ofono@lists.linux.dev>; Wed,  5 Jul 2023 08:30:27 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru; s=mailru;
-	h=Content-Transfer-Encoding:MIME-Version:Content-Type:References:In-Reply-To:Date:To:From:Subject:Message-ID:From:Subject:Content-Type:Content-Transfer-Encoding:To:Cc; bh=Hh8ZM0kObpSMVgmxqeiOBWi6DfxD1RHN97ANTh5rEFA=;
-	t=1688545828;x=1688635828; 
-	b=OtbJYAtfUAjvzS2MXyyuDtd1N6xWSCrB8xIZo4zwV9qTJ/Nh1AsKCIy6ABDgaRe3zgQXk0nGLCyyWpXbHbuU6F8GfJ11lG4ecXEqI5SHk72JxViTLYsb+yZJQkv/VOMbAxhepmlI2ORLgqfzlCWVikT/Eh2lPstfNaJirRcYVvo=;
-Received: from [10.12.4.25] (port=35110 helo=smtp54.i.mail.ru)
-	by fallback22.i.mail.ru with esmtp (envelope-from <m.lyubimov@aqsi.ru>)
-	id 1qGxbH-009dZ2-9t
-	for ofono@lists.linux.dev; Wed, 05 Jul 2023 11:10:59 +0300
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru; s=mailru;
-	h=Content-Transfer-Encoding:MIME-Version:Content-Type:References:In-Reply-To:Date:To:From:Subject:Message-ID:From:Subject:Content-Type:Content-Transfer-Encoding:To:Cc; bh=Hh8ZM0kObpSMVgmxqeiOBWi6DfxD1RHN97ANTh5rEFA=;
-	t=1688544659;x=1688634659; 
-	b=UNJfKDnf263cRwNyHIaKK8+ZOB5/PK07XRXy/3JITdniXFGGjxVALzijsd/lMPnlmtXtlAt7+kR1bgb5EKB8CJQdEbwvJ6a+w9rsdJsz5B+n2O16GvioRUwWTH7CEQzt4jvp6FoP8/HVCvvyUdm/vo3mB5dskdygMZuW/qbMCqc=;
-Received: by smtp54.i.mail.ru with esmtpa (envelope-from <m.lyubimov@aqsi.ru>)
-	id 1qGxb8-004e8i-7p
-	for ofono@lists.linux.dev; Wed, 05 Jul 2023 11:10:51 +0300
-Message-ID: <cb255f1096e1018ea26ccf25d09943ee9c3c5b36.camel@aqsi.ru>
-Subject: Re: Ofono: adding support for the SIMCom A7605E-H
-From: =?koi8-r?Q?=EC=C0=C2=C9=CD=CF=D7_?= =?koi8-r?Q?=ED=C1=CB=D3=C9=CD?=
-	 <m.lyubimov@aqsi.ru>
-To: ofono@lists.linux.dev
-Date: Wed, 05 Jul 2023 13:10:48 +0500
-In-Reply-To: <ac04efc6-4e0b-1d76-4016-eaaf5be80b4e@gmail.com>
-References: <2af6ef8c3d5c9437da480e59d4012c81a0f66b6f.camel@aqsi.ru>
-	 <ac04efc6-4e0b-1d76-4016-eaaf5be80b4e@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.36.5-0ubuntu1 
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A74E14C7C
+	for <ofono@lists.linux.dev>; Thu,  7 Sep 2023 16:49:21 +0000 (UTC)
+Received: by mail-oo1-f45.google.com with SMTP id 006d021491bc7-5738cb00eebso680058eaf.2
+        for <ofono@lists.linux.dev>; Thu, 07 Sep 2023 09:49:21 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20221208; t=1694105360; x=1694710160; darn=lists.linux.dev;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=IHt/fetpCz/ZAsSNtYDACTrpOb9InAvE2RT8zuF++OY=;
+        b=Re+vvB6tbcqrIFY4ZFekh0KBD0YPXwcb6DZCaC0L1aHQExqEkrVxIjjuuEadXn460E
+         yvKBGV4xg7a4ZW56AsHQJGQ2Bgq9LxrRzJqAlMzXGumpNPvQV3r0Kv9t1gPNEP0MJ5+B
+         C+70thgEK9RyLFDG+xdK8nBfzN/FUOZfo1fn/m3wcQJAB5QYGqdPHah5lIAbqyNRM0St
+         9zZFILXOVPBf0Fl4be2kSSCgDXXvAKmDR9MNO47RFb+wCaNv2qKaOrTCX2IDRrPa35yb
+         i58kZcRaj/T9i0DakWq1UU+IAwSyynzQvC8BNkIKZWkSZ1tT2xio7ZqsxjmV+p/EqJxu
+         3Z3Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1694105360; x=1694710160;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=IHt/fetpCz/ZAsSNtYDACTrpOb9InAvE2RT8zuF++OY=;
+        b=cIPMpJNffjvQnYFPQJGucTAq4KKAUxfV/TG/k0wFNzg0N0VlQ0inZrCruIC7AvbzRg
+         l1LUxkeVvSDE8m56MxyDLRdQjbYMM18R8d/gdw6e2IC9Q4RnK+2QhemAdo+OSOY8gnW7
+         kpA43eVs5bdmbg35CkvUQX9EM+SLrhGa2V+ssPa4E8PPkmykmqyjGs1tGP5mEaZ4Tkon
+         xqcufQIKwgKav2utsu6wzs+xBQYXaa+cZFS7QJJsnAwRSPE5jFgstwquyklcy2x4mUq6
+         2TDwcw6djxd7RQClO/VnfgqLgvS9eUDyVkzCn7MIICNUHwr4/sAgAZZ6ZeQm7jqcHGbN
+         V1mg==
+X-Gm-Message-State: AOJu0Yz95pQ4ekD6RUi+yU3+D0d4lBOrZtSypRGPDuuSf5zzvp1+Y5YQ
+	F+gZ9Kw5WLtQMr6aQ5yPw29Oh2eSlSoeXNFjWq69+QruDRU=
+X-Google-Smtp-Source: AGHT+IGcPBlVNpqr97gN78JNqP4pqlYxw63lxCp6bEnPNTBj+RgM6groQ3/qxjyePIXsaay7RRUpRTvmFWef5EDYPZE=
+X-Received: by 2002:a4a:3802:0:b0:571:aceb:26ce with SMTP id
+ c2-20020a4a3802000000b00571aceb26cemr161635ooa.1.1694105358870; Thu, 07 Sep
+ 2023 09:49:18 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-Mailru-Src: smtp
-X-7564579A: B8F34718100C35BD
-X-77F55803: 4F1203BC0FB41BD90EBD74C6BAAC9DBAE23CD95C274A153CFC6B5948C61D86E6182A05F538085040B66140A82DABF7487AD9F6C74B083B3758808F58D10E054307F3F2C3C5F8E3B6
-X-7FA49CB5: FF5795518A3D127A4AD6D5ED66289B5278DA827A17800CE716FAD50E497B9C14EA1F7E6F0F101C67BD4B6F7A4D31EC0BCC500DACC3FED6E28638F802B75D45FF8AA50765F79006377E85B0EC44E8FD73EA1F7E6F0F101C6723150C8DA25C47586E58E00D9D99D84E1BDDB23E98D2D38BE5CCB53A13BC8DBADA86847724DF99B0AAF2151FB095AED8CC7F00164DA146DAFE8445B8C89999728AA50765F7900637D2AD7660D07C2C48389733CBF5DBD5E9C8A9BA7A39EFB766F5D81C698A659EA7CC7F00164DA146DA9985D098DBDEAEC8A999322EAAB3F9C2F6B57BC7E6449061A352F6E88A58FB86F5D81C698A659EA73AA81AA40904B5D98AA50765F7900637254CDB394D352967D81D268191BDAD3D3666184CF4C3C14F3FC91FA280E0CE3D1A620F70A64A45A98AA50765F7900637A451E1E29F2EDBED6D1867E19FE1407959CC434672EE6371089D37D7C0E48F6C8AA50765F79006377F98CFD14CA0B037EFF80C71ABB335746BA297DBC24807EABDAD6C7F3747799A
-X-C1DE0DAB: 0D63561A33F958A59B5751ABD30D1A7A885565B2D7E52CF9D4C195A55BD471C6F87CCE6106E1FC07E67D4AC08A07B9B065B78C30F681404DCB5012B2E24CD356
-X-C8649E89: 1C3962B70DF3F0ADBF74143AD284FC7177DD89D51EBB7742DC8270968E61249B1004E42C50DC4CA955A7F0CF078B5EC49A30900B95165D349320586B19AD2C72368ECE8BB4D88326944BEBE5AC4B8747670FBE2AA287571823C74EE1054B9DFE1D7E09C32AA3244C7BE834E73FB24CEFDBDBD03AB280E59D8894E9C85370243EBC4AF6B5DE6957CB5DA084F8E80FEBD38EDF88D74BAC437670101D478F77020B37E69C174A41D00C
-X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5ycPtXkTV4k65bRjmOUUP8cvGozZ33TWg5HZplvhhXbhDGzqmQDTd6OAevLeAnq3Ra9uf7zvY2zzsIhlcp/Y7m53TZgf2aB4JOg4gkr2bioj/F+CT1pYZlsKohJGAQ5Rmw==
-X-Mailru-Sender: 8F0A18E209ABDF42A59E14250D05070F644887DBB3C6D72F399CCA9A61A77F2F6B40D4FD6E59C7325D68521865CF3C5293AC9912533B2342953ADA4C1418A8160CF35AF5341388420FBD6B69799305375FEEDEB644C299C0ED14614B50AE0675
-X-Mras: Ok
-X-7564579A: 646B95376F6C166E
-X-77F55803: 6242723A09DB00B4FB54E86DD7FF5B39714A1D1D1F496F3282A8D5EC2BF37D1468F3CF0E9FE49B69B4080B1323EBFC57EB8BB27AB52F67196C10AD08948D3401FD41096B07386C16
-X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5xhPKz0ZEsZ5k6NOOPWz5QAiZSCXKGQRq3/7KxbCLSB2ESzQkaOXqCBFZPLWFrEGlV1shfWe2EVcxl5toh0c/aCGOghz/frdRhzMe95NxDFdr2FD4uy5x8JfBbfk8gmBUg==
-X-Mailru-MI: C000000000000800
-X-Mras: Ok
+From: Mohamed Ali Fodha <fodha.mohamed.ali@gmail.com>
+Date: Thu, 7 Sep 2023 17:49:07 +0100
+Message-ID: <CAAcv5+6TL4qU9N-CsVDjusG=p-c4ZL3LYQQdCZyLDA4TkvJn3Q@mail.gmail.com>
+Subject: LET context deactivation
+To: ofono@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
 
-Good afternoon! Thanks for your reply.
+Hello,
 
-I followed your advice and got the PPP connection data log using the
-g_at_ppp_set_recording function. The resulting file did not open in
-wireshark. Subsequent analysis of the data showed that the file
-contained URCs from the modem, which caused no responses from the
-server, buffer overflows, and disconnection of the PPP connection.
+I am using SIM7600 chip with ofono 1.31, when I set Online to true,
+the internet context is activated and it is not possible to deactivate
+it at all using the following command:
 
-I redirected the URC to a different port and everything works fine now.
+dbus-send --system --type=method_call --print-reply --dest=org.ofono
+/csim7x00_0/context1 org.ofono.ConnectionContext.SetProperty
+string:"Active" variant:boolean:false
 
-Best Regards,
-Lyubimov Maxim
+According to the log I saw always activate_primary which is
+automatically called after above command.
 
+Any idea how to disable the automatic LTE context which is created?
 
+Thank you n advance,
+Mohamed Ali
