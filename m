@@ -1,65 +1,91 @@
-Received: from mail-oo1-f45.google.com (mail-oo1-f45.google.com [209.85.161.45])
+Received: from mail-ot1-f41.google.com (mail-ot1-f41.google.com [209.85.210.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A74E14C7C
-	for <ofono@lists.linux.dev>; Thu,  7 Sep 2023 16:49:21 +0000 (UTC)
-Received: by mail-oo1-f45.google.com with SMTP id 006d021491bc7-5738cb00eebso680058eaf.2
-        for <ofono@lists.linux.dev>; Thu, 07 Sep 2023 09:49:21 -0700 (PDT)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD24610EE
+	for <ofono@lists.linux.dev>; Fri,  8 Sep 2023 02:24:03 +0000 (UTC)
+Received: by mail-ot1-f41.google.com with SMTP id 46e09a7af769-6bcb5df95c5so1242572a34.1
+        for <ofono@lists.linux.dev>; Thu, 07 Sep 2023 19:24:03 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1694105360; x=1694710160; darn=lists.linux.dev;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=IHt/fetpCz/ZAsSNtYDACTrpOb9InAvE2RT8zuF++OY=;
-        b=Re+vvB6tbcqrIFY4ZFekh0KBD0YPXwcb6DZCaC0L1aHQExqEkrVxIjjuuEadXn460E
-         yvKBGV4xg7a4ZW56AsHQJGQ2Bgq9LxrRzJqAlMzXGumpNPvQV3r0Kv9t1gPNEP0MJ5+B
-         C+70thgEK9RyLFDG+xdK8nBfzN/FUOZfo1fn/m3wcQJAB5QYGqdPHah5lIAbqyNRM0St
-         9zZFILXOVPBf0Fl4be2kSSCgDXXvAKmDR9MNO47RFb+wCaNv2qKaOrTCX2IDRrPa35yb
-         i58kZcRaj/T9i0DakWq1UU+IAwSyynzQvC8BNkIKZWkSZ1tT2xio7ZqsxjmV+p/EqJxu
-         3Z3Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1694105360; x=1694710160;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+        d=gmail.com; s=20221208; t=1694139843; x=1694744643; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=IHt/fetpCz/ZAsSNtYDACTrpOb9InAvE2RT8zuF++OY=;
-        b=cIPMpJNffjvQnYFPQJGucTAq4KKAUxfV/TG/k0wFNzg0N0VlQ0inZrCruIC7AvbzRg
-         l1LUxkeVvSDE8m56MxyDLRdQjbYMM18R8d/gdw6e2IC9Q4RnK+2QhemAdo+OSOY8gnW7
-         kpA43eVs5bdmbg35CkvUQX9EM+SLrhGa2V+ssPa4E8PPkmykmqyjGs1tGP5mEaZ4Tkon
-         xqcufQIKwgKav2utsu6wzs+xBQYXaa+cZFS7QJJsnAwRSPE5jFgstwquyklcy2x4mUq6
-         2TDwcw6djxd7RQClO/VnfgqLgvS9eUDyVkzCn7MIICNUHwr4/sAgAZZ6ZeQm7jqcHGbN
-         V1mg==
-X-Gm-Message-State: AOJu0Yz95pQ4ekD6RUi+yU3+D0d4lBOrZtSypRGPDuuSf5zzvp1+Y5YQ
-	F+gZ9Kw5WLtQMr6aQ5yPw29Oh2eSlSoeXNFjWq69+QruDRU=
-X-Google-Smtp-Source: AGHT+IGcPBlVNpqr97gN78JNqP4pqlYxw63lxCp6bEnPNTBj+RgM6groQ3/qxjyePIXsaay7RRUpRTvmFWef5EDYPZE=
-X-Received: by 2002:a4a:3802:0:b0:571:aceb:26ce with SMTP id
- c2-20020a4a3802000000b00571aceb26cemr161635ooa.1.1694105358870; Thu, 07 Sep
- 2023 09:49:18 -0700 (PDT)
+        bh=I0qntbtEX9RT8lz19R/9Gp84G1CbeC6t2vxa7/u3tM4=;
+        b=CSmipFuOgtjvrdu3Jxu9tVkndRdk86xjyAhXBOGNMg85P70sPpjRpi3lHsEh1PAQXk
+         MiRPmdl2IrzWqVnlpIqGsRKWnIhwSudjj8DX/wNoNVehZRr+Aca3RfhxKIuleIQJR/Ev
+         yEjsYtzCo48xcTPzjtqryn7Yf5NpQg63V+iIEcuRQUBbHKuER6Ym/oOejQ+1jJakUyas
+         XVKF9yX9fnvOCXQRsayUlM9mG7nrdhMvK7oqI28xpuw69gy59obf+EiuNdCOUyI6pLI8
+         Og0RPdhWdl4DjtOEvPW4vKXuuGT0LJqpYrLVUeSnLv9PS+u5N6MPA05thwXSQiGrXTys
+         16IA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1694139843; x=1694744643;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=I0qntbtEX9RT8lz19R/9Gp84G1CbeC6t2vxa7/u3tM4=;
+        b=bm5hzgEUaLrmvfx/lZ9MmwPHrhfcDi7K2mkczISnMtvI/iaiqhhpU5iJcP1OjbFzxp
+         0arriGDWXdeREArB6tIDVB/SvhfkiJLaQbkshIDKToSHbMQYmKnmroeYtrY4699oqT5C
+         nHRumsLdvdgQVUGkNjD1igHpmwao873VoqaR8SDtPPQm4EhGqSCSAXS0Lzw5EKkcqgOC
+         UsI4XYVeheTRgOLW58oyGqp1pYEY17WdPOPtMeAis2sN5swZOpZWDfFGOd1dQ4uqpgeL
+         7nW3qfeDJoZJm68ilEFhZSjOaSC73OajINcgElA4Sny/GwEheXxZ5IjtnWKRxdBBL6TI
+         onng==
+X-Gm-Message-State: AOJu0Yw1Ohyd7h5jWLZdcBHBr0Z1UM9saAuQ5iJ5is6A8ktHw7hlRzg4
+	v6hzyS2bjb4D6X8Sm0ciNQg=
+X-Google-Smtp-Source: AGHT+IFjDrq7IOhYlG2qml2oix5hR0AfPyImowoPbDP584uAbYmZxBzmXcLmkSMohSyp/7xIxCJM9g==
+X-Received: by 2002:a05:6830:1e48:b0:6bf:612:6c78 with SMTP id e8-20020a0568301e4800b006bf06126c78mr1135773otj.35.1694139842778;
+        Thu, 07 Sep 2023 19:24:02 -0700 (PDT)
+Received: from [172.16.49.130] (cpe-70-114-247-242.austin.res.rr.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id f7-20020a9d7b47000000b006b87f593877sm312185oto.37.2023.09.07.19.24.01
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 07 Sep 2023 19:24:02 -0700 (PDT)
+Message-ID: <dc3b5e51-1b6e-f6e6-958b-0a6fba17d4a4@gmail.com>
+Date: Thu, 7 Sep 2023 21:23:58 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-From: Mohamed Ali Fodha <fodha.mohamed.ali@gmail.com>
-Date: Thu, 7 Sep 2023 17:49:07 +0100
-Message-ID: <CAAcv5+6TL4qU9N-CsVDjusG=p-c4ZL3LYQQdCZyLDA4TkvJn3Q@mail.gmail.com>
-Subject: LET context deactivation
-To: ofono@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.13.0
+Subject: Re: LET context deactivation
+Content-Language: en-US
+To: Mohamed Ali Fodha <fodha.mohamed.ali@gmail.com>, ofono@lists.linux.dev
+References: <CAAcv5+6TL4qU9N-CsVDjusG=p-c4ZL3LYQQdCZyLDA4TkvJn3Q@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <CAAcv5+6TL4qU9N-CsVDjusG=p-c4ZL3LYQQdCZyLDA4TkvJn3Q@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello,
+Hi Mohamed,
 
-I am using SIM7600 chip with ofono 1.31, when I set Online to true,
-the internet context is activated and it is not possible to deactivate
-it at all using the following command:
+On 9/7/23 11:49, Mohamed Ali Fodha wrote:
+> Hello,
+> 
+> I am using SIM7600 chip with ofono 1.31, when I set Online to true,
+> the internet context is activated and it is not possible to deactivate
+> it at all using the following command:
 
-dbus-send --system --type=method_call --print-reply --dest=org.ofono
-/csim7x00_0/context1 org.ofono.ConnectionContext.SetProperty
-string:"Active" variant:boolean:false
+Note that on LTE the default bearer is activated when registering to the 
+network.  One context always exists while registered to LTE.
 
-According to the log I saw always activate_primary which is
-automatically called after above command.
+> 
+> dbus-send --system --type=method_call --print-reply --dest=org.ofono
+> /csim7x00_0/context1 org.ofono.ConnectionContext.SetProperty
+> string:"Active" variant:boolean:false
+> 
+> According to the log I saw always activate_primary which is
+> automatically called after above command.
 
-Any idea how to disable the automatic LTE context which is created?
+Are you running connman or something else along side oFono? Sounds like 
+something is setting the context back up.
 
-Thank you n advance,
-Mohamed Ali
+> 
+> Any idea how to disable the automatic LTE context which is created?
+> 
+
+Hard to answer this without more context / info / logs.
+
+Regards,
+-Denis
+
