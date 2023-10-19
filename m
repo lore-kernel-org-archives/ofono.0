@@ -1,49 +1,49 @@
-Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
+Received: from mail-oi1-f182.google.com (mail-oi1-f182.google.com [209.85.167.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9199D38C
-	for <ofono@lists.linux.dev>; Thu, 19 Oct 2023 01:29:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98C5A38C
+	for <ofono@lists.linux.dev>; Thu, 19 Oct 2023 01:30:59 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="b2dcUlim"
-Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-1e993765c1bso4733859fac.3
-        for <ofono@lists.linux.dev>; Wed, 18 Oct 2023 18:29:03 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PCXEIwoB"
+Received: by mail-oi1-f182.google.com with SMTP id 5614622812f47-3b2f507c03cso320414b6e.2
+        for <ofono@lists.linux.dev>; Wed, 18 Oct 2023 18:30:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1697678942; x=1698283742; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+        d=gmail.com; s=20230601; t=1697679058; x=1698283858; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=7vyK1KHZqUU/iZx0d102WDaBpGygjuk0uXy2F3d5EFY=;
-        b=b2dcUlimg2dkZkcwtLCEJ96Mw2etFuPykp2qSy8hddRaOh832QIso5cYdbZfDzRtP1
-         n8xq7sPqsR/ty8+0lz7E0D65roERpMeZwJdOTdAay2bOREgXNsVqaL87MZyUQRXkEtXd
-         0KTkAXPUzNWgJOX9ET5dab1qC3ZWYHybXcCBQjVGuXOAVEfuG8vTIle4Hu3tSUy52oGm
-         SoDfp0+cl75sJp8/awx+X2FTWG/va29+2sHYcf5OZIarNII2JbKTorzvIXTGd9WfQv3/
-         BY0MCdLHVbMBLRgROgmw4lbaET8ja6MiHkXRsnJ3T107FAJqjYt5Nvv9RR0ZUykaif+r
-         4u2g==
+        bh=TPv+WrnW/g0nIODkQ9OX5C20TtSgxxC3hHXig6XCIq0=;
+        b=PCXEIwoBmdN5HYCHCIJ8DUUSRrRI4qKUgDmmiN/t7zY0iV0MzA1/DHvK9sLiBlJFKJ
+         Sfrm/0Skttfz84sdAYZfhowg/yiyynyuv77JJEfi8XM0fcdvuNKWqzFjKbZQS6dCtAUW
+         y/on2zpHRRlGHB7PpNgk0n0h/w3nkgLEBhtQg5PXOyDnBe+Gk71L+pBvtRRRxdd1IcSu
+         Th7wYJgXDWY8cuvoe4gPx0W8C+EUUAdbPAma121174bJjFzx02pX9jxfjG9uHp/rwd+v
+         SBbkubL51rWonGHJjg5PAHwLVpbMNAIgsLD9OJ4D2Csrtpls+JxH6K2UN8EPkNVgGMTj
+         d3Xg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1697678942; x=1698283742;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+        d=1e100.net; s=20230601; t=1697679058; x=1698283858;
+        h=content-transfer-encoding:in-reply-to:from:references:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=7vyK1KHZqUU/iZx0d102WDaBpGygjuk0uXy2F3d5EFY=;
-        b=ez+xzt/z38PVabvsTrb2ZUak4BmhngTmKHIA/XeIpxnLIFcezvmEaF6DKk6wPLmCdl
-         eConma1cpDIpbrl7R1gTsxg47YcL9vOtK3JdiXZ32vcRkrNTMLXavcXWMl+otKmZBA0S
-         2/NWnGgsQ96nc8q9MFX5aFbRzsd+l3TMNXEwBqd3hjJriwicMgtlkAVjPuBFGIrQ6isx
-         uiciEHeJWbTaxrFlvc4sfKcT7L/Ph821nIvowdJbmBVl8TND2OmZKElgVdxzL7zJH0/v
-         tAA60wkahjnOJsfp8MyyfXlvMzNi9muLkVx+c1iy6EHBQBByc65EdTkusabrOCgq13RK
-         FNcA==
-X-Gm-Message-State: AOJu0YzzqY2SIGq92QzhYW5PgrfQ/yXBxoam1tuGis8yNZD51ypnAy77
-	+D/aKo2+yRd3uUJfP084+SCYE6Vnjms=
-X-Google-Smtp-Source: AGHT+IGsrEXUTpr+igB0u2N/FRcJx6uH0VoQyXbLGS3KMVPxEoz1C9wFWIdi7r4pWkKOHOqiZ10EAw==
-X-Received: by 2002:a05:6870:179f:b0:1e9:88c2:ba80 with SMTP id r31-20020a056870179f00b001e988c2ba80mr1220098oae.30.1697678942558;
-        Wed, 18 Oct 2023 18:29:02 -0700 (PDT)
+        bh=TPv+WrnW/g0nIODkQ9OX5C20TtSgxxC3hHXig6XCIq0=;
+        b=bjtNI38wTgC0yQQgYvgTMNVz9Vpr+MfwCIda/J7LILjmh8g5ZnB3FNuISZu7Q4wrVc
+         Bc7vOWV9GSxWUZk8UpiN4XlRW8P9AnZaUTTnEzBq+C0oqaTt+YIZRo85RY6FkqR3HCbV
+         a1HwN5gSOVQ/IHsD0EPqyJOvggCjZb+51uNSQDz4PO0LLQBy+HNfcbnZBN/YdytVm/+u
+         yODjVRLveZ/R8xWcFB1ZSUAgCOdRw4qjsQeu7QWeDLfl3BFBkHwLFyoircywGtuO2Jc8
+         bLb2tSeS0/pVm0pe0Gs7XZD1PwoxFiK+nY8c/o/fgOEnVVXAZUe+uxTen6RWbenY1J6k
+         8euQ==
+X-Gm-Message-State: AOJu0Yy5dvW+ZAKQ9fu6LitgUU8/kGj7X8Ck3PGhKT7yAWSYrDqhgxGf
+	IlvmsFGX0IGB6ZTzYEGUeHAuTkcMtXg=
+X-Google-Smtp-Source: AGHT+IFVMtOENrXv5hTZJYtrpNEeBJr1+VXDfuneXMoamOfjEXmu0c4BUv4Ik/wn5DL16aCp1O84ZA==
+X-Received: by 2002:a05:6808:3097:b0:3a8:5ff0:6b52 with SMTP id bl23-20020a056808309700b003a85ff06b52mr970390oib.15.1697679058525;
+        Wed, 18 Oct 2023 18:30:58 -0700 (PDT)
 Received: from [172.16.49.130] (cpe-70-114-247-242.austin.res.rr.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id h21-20020a056870d25500b001e96eba5abdsm941607oac.26.2023.10.18.18.29.01
+        by smtp.googlemail.com with ESMTPSA id bk39-20020a0568081a2700b003b2e3e0284fsm646156oib.53.2023.10.18.18.30.57
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 18 Oct 2023 18:29:02 -0700 (PDT)
-Message-ID: <62d170cb-151d-4f72-81b8-419bede2c990@gmail.com>
-Date: Wed, 18 Oct 2023 20:28:59 -0500
+        Wed, 18 Oct 2023 18:30:58 -0700 (PDT)
+Message-ID: <bf40fdd6-e09a-4151-b5c8-24e5553c147f@gmail.com>
+Date: Wed, 18 Oct 2023 20:30:55 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -51,47 +51,30 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 01/15] Skipping AT+CUAD sending for QUECTEL_EC2X vendor
+Subject: Re: [PATCH 02/15] drivers: adding support for the SIMCom A7605E-H
 Content-Language: en-US
 To: MaxLyubimov <m.lyubimov@aqsi.ru>, ofono@lists.linux.dev
-Cc: Sergei Golubtsov <sg@aqsi.ru>
 References: <20231017104902.717947-1-m.lyubimov@aqsi.ru>
+ <20231017104902.717947-2-m.lyubimov@aqsi.ru>
 From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20231017104902.717947-1-m.lyubimov@aqsi.ru>
+In-Reply-To: <20231017104902.717947-2-m.lyubimov@aqsi.ru>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-Hi Max,
+Hi Maxim,
 
 On 10/17/23 05:48, MaxLyubimov wrote:
-> From: Sergei Golubtsov <sg@aqsi.ru>
-> 
-> This workarounds bug in EC200A firmware which leads to modem
-> reset in case of usage of some SIM cards when sending the next
-> command
+> The features of the SIMCom A7605E-H modem are taken into account in the atmodem driver
 > ---
->   drivers/atmodem/sim.c | 10 +++++++++-
->   1 file changed, 9 insertions(+), 1 deletion(-)
+>   drivers/atmodem/gprs.c               |  59 ++++++-
+>   drivers/atmodem/sim.c                |   7 +-
+>   drivers/simcommodem/radio-settings.c | 236 +++++++++++++++++++++++++++
+>   3 files changed, 298 insertions(+), 4 deletions(-)
+>   create mode 100644 drivers/simcommodem/radio-settings.c
 > 
 
-<snip>
-
-> +
-> +	/* QUECTEL EC2X reboots when executing the AT+CUAD command with SIM cards
-> +	of some operators */
-
-Note doc/coding-style.txt item M2.  Also note that this line is > 80 chars.  I 
-fixed this for you.
-
-> +	if (sd->vendor == OFONO_VENDOR_QUECTEL_EC2X)
-> +		goto error;
-> +
-> +	cbd = cb_data_new(cb, data);
->   
->   	if (g_at_chat_send(sd->chat, "AT+CUAD", cuad_prefix,
->   			at_discover_apps_cb, cbd, g_free) > 0)
-
-Applied, thanks.
+This patch fails because you're trying to add a file that already exists 
+upstream (radio-settings.c)
 
 Regards,
 -Denis
