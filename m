@@ -1,49 +1,49 @@
-Received: from mail-oi1-f182.google.com (mail-oi1-f182.google.com [209.85.167.182])
+Received: from mail-ot1-f54.google.com (mail-ot1-f54.google.com [209.85.210.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98C5A38C
-	for <ofono@lists.linux.dev>; Thu, 19 Oct 2023 01:30:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F01F38C
+	for <ofono@lists.linux.dev>; Thu, 19 Oct 2023 01:42:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PCXEIwoB"
-Received: by mail-oi1-f182.google.com with SMTP id 5614622812f47-3b2f507c03cso320414b6e.2
-        for <ofono@lists.linux.dev>; Wed, 18 Oct 2023 18:30:59 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FeZaieaP"
+Received: by mail-ot1-f54.google.com with SMTP id 46e09a7af769-6c49f781855so4902274a34.3
+        for <ofono@lists.linux.dev>; Wed, 18 Oct 2023 18:42:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1697679058; x=1698283858; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1697679734; x=1698284534; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:references:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=TPv+WrnW/g0nIODkQ9OX5C20TtSgxxC3hHXig6XCIq0=;
-        b=PCXEIwoBmdN5HYCHCIJ8DUUSRrRI4qKUgDmmiN/t7zY0iV0MzA1/DHvK9sLiBlJFKJ
-         Sfrm/0Skttfz84sdAYZfhowg/yiyynyuv77JJEfi8XM0fcdvuNKWqzFjKbZQS6dCtAUW
-         y/on2zpHRRlGHB7PpNgk0n0h/w3nkgLEBhtQg5PXOyDnBe+Gk71L+pBvtRRRxdd1IcSu
-         Th7wYJgXDWY8cuvoe4gPx0W8C+EUUAdbPAma121174bJjFzx02pX9jxfjG9uHp/rwd+v
-         SBbkubL51rWonGHJjg5PAHwLVpbMNAIgsLD9OJ4D2Csrtpls+JxH6K2UN8EPkNVgGMTj
-         d3Xg==
+        bh=W4deDNf97bF0Dik6JvjSGO6llOzn2ef2zTdIvLSLTB4=;
+        b=FeZaieaPLzpyrKIYkSOfh+FIA8go9g2GpyZbJFLA7sphfHXgZAr65xF9wEnEl2Cf7g
+         pOpfz6NHruvakNIICKSXeDgMGa4KatIZXTd01P1jSi3MsCX6sO5bBXEyRfXxOKnWTi8y
+         Oe3P58PPJ7un1RLGZmsFiY9PKgZxU0Xfppsww8NU5QYago1RSms2IHPi14jjJGGsRycX
+         UGCvWOYp+aoymOnNa4gLM3aBJ2CpwwnYPYHO3+1qfXfCuYz8HOZMGLvMDL1rY5J90R0N
+         qq2Fes5HtPCavxGJ2YCvFFni5umK83yFqd2DoZVWucBionB/qrMVMa2IJE79h17/44UY
+         5rbg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1697679058; x=1698283858;
+        d=1e100.net; s=20230601; t=1697679734; x=1698284534;
         h=content-transfer-encoding:in-reply-to:from:references:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=TPv+WrnW/g0nIODkQ9OX5C20TtSgxxC3hHXig6XCIq0=;
-        b=bjtNI38wTgC0yQQgYvgTMNVz9Vpr+MfwCIda/J7LILjmh8g5ZnB3FNuISZu7Q4wrVc
-         Bc7vOWV9GSxWUZk8UpiN4XlRW8P9AnZaUTTnEzBq+C0oqaTt+YIZRo85RY6FkqR3HCbV
-         a1HwN5gSOVQ/IHsD0EPqyJOvggCjZb+51uNSQDz4PO0LLQBy+HNfcbnZBN/YdytVm/+u
-         yODjVRLveZ/R8xWcFB1ZSUAgCOdRw4qjsQeu7QWeDLfl3BFBkHwLFyoircywGtuO2Jc8
-         bLb2tSeS0/pVm0pe0Gs7XZD1PwoxFiK+nY8c/o/fgOEnVVXAZUe+uxTen6RWbenY1J6k
-         8euQ==
-X-Gm-Message-State: AOJu0Yy5dvW+ZAKQ9fu6LitgUU8/kGj7X8Ck3PGhKT7yAWSYrDqhgxGf
-	IlvmsFGX0IGB6ZTzYEGUeHAuTkcMtXg=
-X-Google-Smtp-Source: AGHT+IFVMtOENrXv5hTZJYtrpNEeBJr1+VXDfuneXMoamOfjEXmu0c4BUv4Ik/wn5DL16aCp1O84ZA==
-X-Received: by 2002:a05:6808:3097:b0:3a8:5ff0:6b52 with SMTP id bl23-20020a056808309700b003a85ff06b52mr970390oib.15.1697679058525;
-        Wed, 18 Oct 2023 18:30:58 -0700 (PDT)
+        bh=W4deDNf97bF0Dik6JvjSGO6llOzn2ef2zTdIvLSLTB4=;
+        b=DROcoERQtxvaNPcIePd3DicrBhwrLE0Cd7xtvwGjLjSlQXL5m7VvqICX0P5/mwLaJX
+         +ORoycJ5cJf0Hs64Cm9WA91i6eFEt9yGH/0q7XOAOmlp4y8IismSeq2SZv1BJkeKXCNy
+         BjxiY9vcL3KruhRtdRk5FxwNnmR7DqxpOICCVSjWbmBDlrRUXUDlA3IkfTqXQ94TGMCL
+         jI/ZeZ5EX2OUdE0Phmha7bwyMwCBEyO5Zc6jwPBgfoFVIoo8vOnjU35pjEH6hcPRod+T
+         vGrJ5VHKvl7y0jG37B7wAhRK3S2wtlKsB89OriuT8fW4+gFKoxrr7kzvU6K1sd2LaYb4
+         5HCg==
+X-Gm-Message-State: AOJu0Yzx+U7Iq8wYmqdNj0HIr7aCN+J9YAG6v1UocvzoF5pzD/zcaBxx
+	NbhoWKEJ4PzNCaobAzc+5PxIYWpZxBI=
+X-Google-Smtp-Source: AGHT+IEabfM7xJ3dVV/YVf7RXvOLhsm24lMBfSQWQiaWKC/pmu2T9bVdO9QK+AUUKmSUZaO4joskGA==
+X-Received: by 2002:a05:6830:905:b0:6bf:2476:a97e with SMTP id v5-20020a056830090500b006bf2476a97emr1120300ott.5.1697679734171;
+        Wed, 18 Oct 2023 18:42:14 -0700 (PDT)
 Received: from [172.16.49.130] (cpe-70-114-247-242.austin.res.rr.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id bk39-20020a0568081a2700b003b2e3e0284fsm646156oib.53.2023.10.18.18.30.57
+        by smtp.googlemail.com with ESMTPSA id a26-20020a9d6e9a000000b006bee51de9f6sm857743otr.18.2023.10.18.18.42.13
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 18 Oct 2023 18:30:58 -0700 (PDT)
-Message-ID: <bf40fdd6-e09a-4151-b5c8-24e5553c147f@gmail.com>
-Date: Wed, 18 Oct 2023 20:30:55 -0500
+        Wed, 18 Oct 2023 18:42:13 -0700 (PDT)
+Message-ID: <2d194620-ed30-4763-aced-ca89b450132c@gmail.com>
+Date: Wed, 18 Oct 2023 20:42:12 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -51,31 +51,118 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 02/15] drivers: adding support for the SIMCom A7605E-H
+Subject: Re: [PATCH 03/15] plugins: adding support for the SIMCom A7605E-H
 Content-Language: en-US
 To: MaxLyubimov <m.lyubimov@aqsi.ru>, ofono@lists.linux.dev
 References: <20231017104902.717947-1-m.lyubimov@aqsi.ru>
- <20231017104902.717947-2-m.lyubimov@aqsi.ru>
+ <20231017104902.717947-3-m.lyubimov@aqsi.ru>
 From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20231017104902.717947-2-m.lyubimov@aqsi.ru>
+In-Reply-To: <20231017104902.717947-3-m.lyubimov@aqsi.ru>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 Hi Maxim,
 
 On 10/17/23 05:48, MaxLyubimov wrote:
-> The features of the SIMCom A7605E-H modem are taken into account in the atmodem driver
+> The udevng plugin has been modified to detect the SIMCom A7605E-H modem and the simcom_a76xx plugin has been added to work with it
 > ---
->   drivers/atmodem/gprs.c               |  59 ++++++-
->   drivers/atmodem/sim.c                |   7 +-
->   drivers/simcommodem/radio-settings.c | 236 +++++++++++++++++++++++++++
->   3 files changed, 298 insertions(+), 4 deletions(-)
->   create mode 100644 drivers/simcommodem/radio-settings.c
-> 
+>   plugins/simcom_a76xx.c | 323 +++++++++++++++++++++++++++++++++++++++++
+>   plugins/udevng.c       |  55 +++++++
 
-This patch fails because you're trying to add a file that already exists 
-upstream (radio-settings.c)
+Please see HACKING, 'Submitting patches' section, item 3.
+
+>   2 files changed, 378 insertions(+)
+>   create mode 100644 plugins/simcom_a76xx.c
+> 
+> diff --git a/plugins/simcom_a76xx.c b/plugins/simcom_a76xx.c
+> new file mode 100644
+> index 00000000..059773b5
+> --- /dev/null
+> +++ b/plugins/simcom_a76xx.c
+> @@ -0,0 +1,323 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *  Copyright (C) 2009  Collabora Ltd. All rights reserved.
+> + *  Copyright 2018 Purism SPC
+
+Copyrights seem suspect?
+
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+> + *
+> + */
+> +
+> +/*
+> + * This file was originally copied from g1.c and
+> + * modified by Bob Ham <bob.ham@puri.sm>
+> + */
+> +
+
+In fact this looks 95% the same to plugins/simcom7100.c.  Can we unify the two?
+
+Also, you still have lines > 80 chars here.
+
+<snip>
+
+> +#ifdef HAVE_CONFIG_H> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index f6580aba..7fccf670 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -1554,6 +1554,59 @@ static gboolean setup_sim7x00(struct modem_info *modem)
+>   	return TRUE;
+>   }
+>   
+> +static gboolean setup_simcom_a76xx(struct modem_info *modem)
+> +{
+> +	const char *diag = NULL, *gps = NULL;
+> +	const char *mdm = NULL, *ppp = NULL;
+> +	GSList *list;
+> +
+> +	DBG("%s", modem->syspath);
+> +
+> +	for (list = modem->devices; list; list = list->next) {
+> +		struct device_info *info = list->data;
+> +		const char *subsystem =
+> +				udev_device_get_subsystem(info->udev_device);
+> +
+> +		DBG("%s %s %s %s %s %s", info->devnode, info->interface,
+> +						info->number, info->label,
+> +						info->sysattr, subsystem);
+> +
+> +		/*
+> +		 * SIMCom a76xx serial port layout:
+> +		 * 2: DIAG
+> +		 * 3: NMEA
+> +		 * 4: AT
+> +		 * 5: AT/PPP
+> +		 */
+> +		if (g_strcmp0(subsystem, "tty") == 0) {
+> +			if (g_strcmp0(info->interface, "255/0/0") == 0) {
+> +				if (g_strcmp0(info->number, "02") == 0)
+> +					diag = info->devnode;
+> +				else if (g_strcmp0(info->number, "03") == 0)
+> +					gps = info->devnode;
+> +				else if (g_strcmp0(info->number, "04") == 0)
+> +					mdm = info->devnode;
+> +				else if (g_strcmp0(info->number, "05") == 0)
+> +					ppp = info->devnode;
+
+Again, this block seems rather similar to what is in setup_simcom.  Just the 
+interface numbers are different.  Please unify the two.
 
 Regards,
 -Denis
-
