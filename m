@@ -1,49 +1,49 @@
-Received: from mail-oi1-f179.google.com (mail-oi1-f179.google.com [209.85.167.179])
+Received: from mail-ot1-f50.google.com (mail-ot1-f50.google.com [209.85.210.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFE806AAB
-	for <ofono@lists.linux.dev>; Sun, 29 Oct 2023 20:41:19 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D01BDD299
+	for <ofono@lists.linux.dev>; Sun, 29 Oct 2023 20:59:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZDgEINpE"
-Received: by mail-oi1-f179.google.com with SMTP id 5614622812f47-3b2e4107f47so2794529b6e.2
-        for <ofono@lists.linux.dev>; Sun, 29 Oct 2023 13:41:19 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IBH2UUlP"
+Received: by mail-ot1-f50.google.com with SMTP id 46e09a7af769-6ce29d1db6eso2395760a34.1
+        for <ofono@lists.linux.dev>; Sun, 29 Oct 2023 13:59:11 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1698612079; x=1699216879; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1698613150; x=1699217950; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:references:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=3BqnS/S3nC0CT5IhRhbyjZ0iSfUIkD0lISye8JRCPzI=;
-        b=ZDgEINpEv1NmDkfVY7DJXc6lAQEvTuvbKgx25wO5d3oUxPSLpXpAjxVaUdxofNfHer
-         IktYq8/5BNuxMxD3Z+RmqWvpVBlCRuFCNM/HIc1GggD0ce8WDKc8x2Dq0xDvBMP6Rgku
-         WNKMk6r6zzsa06/ZZGSGY7wlDlB4QMzFoRbWBmzPkCNvEQl3pgpsKJQKnQPGpcWwU2Wk
-         WztEYIrgZjcXHhB/PyDZIUcbKFdnL9kGiyRJ/zajvJhst9jio2c0n+mFmW/Zj1BZbUX5
-         lSp1aI2hPvrgbtLn29K7oBywqV9bEuRts4BqMCec1l05IK7ASt0vbgdKguONDa5O5XZ2
-         UeZw==
+        bh=O0zN6Bbh7HcbWz+CFnIAdo5ls9AWJjjP4kVR5Turat8=;
+        b=IBH2UUlP1T+6djxlyWkudVE9trTfEceEfTRkSisQrCPpoLnVOGc9yJks+99mfk9ofJ
+         2i0xvnMxOccKp9lcADzwsxPXqFEglbQ9cF/Bunohp9MQJEkSg+s/ysR0YndB5+CHkU5a
+         8jZljAMdU7+qp7B9TsKCnEwz+WE8Vfum63P+Qv7vyMCZnTy6/uBQZJMguC9aEnaVa7Fo
+         l7tJyGVaMOt+/idgP4bWPhTS9dgiIwKgrInJDT/FOTHbMr7fDKrcxEkg9syKQ77cLfgA
+         Qx3Sby7aZvttKHHN9yJMU94prBuSd1nVgZrb5qFBG/0gmCGJPjrH0DnC7wXbtRNOXaBz
+         I2uA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698612079; x=1699216879;
+        d=1e100.net; s=20230601; t=1698613150; x=1699217950;
         h=content-transfer-encoding:in-reply-to:from:references:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=3BqnS/S3nC0CT5IhRhbyjZ0iSfUIkD0lISye8JRCPzI=;
-        b=AI5LHJ0FB96WMBNAyAdM3LR07ly4TUBk37Ug61h/meLTpB84Qlf4R+DV8jXEe0EKNa
-         YJKqPBCLQ1AiDul5Zs3XVgqFO2U+75yDYyYQlyqbL8nM26Nfk9PPECZlhW4uXATRqPKJ
-         5WFAVGdr/66tlN9D9L0CKXFvfH1FyB1WVG+Qe3KUM+0Cu9qE6hKu2vxxcYhDSYjLS78K
-         boZj/gMIvGQPhgeTmyEOvU0/O7bGVVJS+so3uEtjQmxiL3HUzavBJEBcS2qGMz+TnSDZ
-         FClyy1nczeeF9UI8un6FHwNq6iVwqcKeNn98pGSZNeaEk2eH2qtAS8eP9jeZ0TeqVdwS
-         YgFw==
-X-Gm-Message-State: AOJu0YyqJdJb9T/VM3Xvi+6h5bX2SBa8PsBSa0sVAU52TOhy9gQ3J+7r
-	QERg5JnVUclncoVJjypPHBAAebznFDw=
-X-Google-Smtp-Source: AGHT+IHR9E2K9rqJIe4FNl6iFgYwiXFFav2cy39ij/4yuSH7sl7m3MyptqV4B5tyEDlDRDGsH7DktQ==
-X-Received: by 2002:a05:6808:17a5:b0:3ae:126b:8c2b with SMTP id bg37-20020a05680817a500b003ae126b8c2bmr13353632oib.30.1698612078846;
-        Sun, 29 Oct 2023 13:41:18 -0700 (PDT)
+        bh=O0zN6Bbh7HcbWz+CFnIAdo5ls9AWJjjP4kVR5Turat8=;
+        b=eTsxMTz6uO7rgKzXWyr4YBqY1X46LTwlgLuCTobAkhdhULGGsG5F6BMLT3xoIPiQVg
+         6gOa6ePjf7TAEAyvEwAL7efMhSfHYYlY2qiXxO+fvLlZqrwCQVnWurnTIaNaD0ZqAui9
+         a+WtITyX4IIluz0MFmslvJG3fyxdv3kTZkOM4jww+MpxUdhX5WIcmDCBKlzKNXJSrLjn
+         ntuX/9vABWdiolYvO4ZmnMe9sADntlN3SX4FZYWR72gMccUIXA5WRsCvUFzxjT7LwCMl
+         4xry09y2L8ewW16Z4YSvt+x24dKaqb6xx3wS1h3JcEi9qcO3W0n+gQDrH4Qhgvxq7AUT
+         FzTw==
+X-Gm-Message-State: AOJu0YyUuO930Z4+IYDss7IEbwjM2FwRMEgz7BcXV8WGefFxALMnfRt2
+	+pQStSamXc5Fa2W0a5/WXeoM/Ob5pW8=
+X-Google-Smtp-Source: AGHT+IGxuhP438JD10/av2Rc+DdMrGqQLkiZSjzEaboVueEGzpcJdpqsLlLa31/F2+3pHkbV4ttTwQ==
+X-Received: by 2002:a05:6808:f03:b0:3b2:f344:3a41 with SMTP id m3-20020a0568080f0300b003b2f3443a41mr4889329oiw.2.1698613150722;
+        Sun, 29 Oct 2023 13:59:10 -0700 (PDT)
 Received: from [172.16.49.130] (cpe-70-114-247-242.austin.res.rr.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 8-20020a544188000000b003af732a2054sm1149983oiy.57.2023.10.29.13.41.17
+        by smtp.googlemail.com with ESMTPSA id f7-20020a05680814c700b003af6eeed9b6sm1151934oiw.27.2023.10.29.13.59.09
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 29 Oct 2023 13:41:18 -0700 (PDT)
-Message-ID: <f4832121-d043-463a-9803-aaaf06f69aad@gmail.com>
-Date: Sun, 29 Oct 2023 15:41:16 -0500
+        Sun, 29 Oct 2023 13:59:10 -0700 (PDT)
+Message-ID: <d78baea0-813c-414d-bf8d-d9a06fbdb5fa@gmail.com>
+Date: Sun, 29 Oct 2023 15:59:08 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -51,91 +51,67 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 03/15] plugins: adding support for the SIMCom A7605E-H
+Subject: Re: [PATCH 14/15] gatchat: added command completion by timeout
 Content-Language: en-US
 To: =?UTF-8?B?0JvRjtCx0LjQvNC+0LIg0JzQsNC60YHQuNC8?= <m.lyubimov@aqsi.ru>,
  ofono@lists.linux.dev
 References: <20231017104902.717947-1-m.lyubimov@aqsi.ru>
- <20231017104902.717947-3-m.lyubimov@aqsi.ru>
- <2d194620-ed30-4763-aced-ca89b450132c@gmail.com>
- <497f810bce97564712e05c2633a45fe244d93481.camel@aqsi.ru>
+ <20231017104902.717947-14-m.lyubimov@aqsi.ru>
+ <4a003c7d-4cee-4111-8bed-2bb51e5f510b@gmail.com>
+ <d9591456ec4294c216445b6b0b73d2b54d94c2e0.camel@aqsi.ru>
 From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <497f810bce97564712e05c2633a45fe244d93481.camel@aqsi.ru>
+In-Reply-To: <d9591456ec4294c216445b6b0b73d2b54d94c2e0.camel@aqsi.ru>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
 Hi Максим,
 
-On 10/27/23 04:01, Любимов Максим wrote:
+On 10/27/23 04:45, Любимов Максим wrote:
+> On 18/10/2023 в 21:21 -0500, Denis Kenzior wrote:
+>> So I think you're going to need to give a bit more context for how
+>> this is
+>> expected to work.  There are commands (on older modems) that can take
+>> minutes to
+>> complete.  This is why multiplexers were invented.  Now this is
+>> probably quite
+>> rare, but I imagine it can still happen.
 > 
-> 
-> On 18/10/2023 в 20:42 -0500, Denis Kenzior wrote:
->> On 10/17/23 05:48, MaxLyubimov wrote:
->>> The udevng plugin has been modified to detect the SIMCom A7605E-H
->>> modem and the simcom_a76xx plugin has been added to work with it
->>> ---
->>>    plugins/simcom_a76xx.c | 323
->>> +++++++++++++++++++++++++++++++++++++++++
->>>    plugins/udevng.c       |  55 +++++++
->>
->> Please see HACKING, 'Submitting patches' section, item 3.
-> 
-> I deliberately divided the patch into several parts so that they
-> affected only one directory, does this patch only affect the plugins
-> directory or did I understand something wrong?
+> This functionality was added because some modems sometimes do not
+> respond to the command. Therefore, there is an endless wait for a
+> response and blocking of other functions with a message that the action
 
-After having another look, please ignore my comment.  You're fine.
+Ok, but which modems?  Do you have an OFONO_AT_DEBUG log trace you can share?
 
-<snip>
+Anyhow, at the very least you need to make this an opt-in feature.  As I pointed 
+out, opting in *all* modem drivers into this functionality will break some of them.
 
->>> + *  Copyright (C) 2008-2011  Intel Corporation. All rights
->>> reserved.
->>> + *  Copyright (C) 2009  Collabora Ltd. All rights reserved.
->>> + *  Copyright 2018 Purism SPC
->>
->> Copyrights seem suspect?
+> is still in progress. It was experimentally verified that if the
+> command is repeated, the modem can immediately respond to it and there
+> will be no blocking. What do you suggest to do if the modem does not
+> respond to the command either after a minute, or after an hour, never?
+
+Call the vendor and have them fix their firmware? :)  But seriously, how many 
+commands are we talking about?  If it is one, then handle it specifically for 
+that command.  If it is a dozen, create a utility function.
+
+I'm not convinced adding this functionality directly to GAtChat is the right 
+approach.  There is no such thing as 'AT command timeout' in V.250 specification 
+or any other standard.  AT command cancellation as a concept exists, but it only 
+works sometimes and only for some commands, and isn't what you're doing here 
+from what I can tell.
+
+What you're describing is vendor specific behavior and has to be treated as such.
+
 > 
-> I slightly modified the file plugins/sim7100.c, I left the copyright
-> unchanged
+>> Also, what happens if the command times out?  You generate a
+>> synthetic CME 100
+>> error, but what then?
 > 
-
-Ok, fair enough.
-
->>
->> In fact this looks 95% the same to plugins/simcom7100.c.  Can we
->> unify the two?
-> 
-> Simcom modems of the SIM7x00 and A76xx series are built on different
-> chips, Qualcomm and ASR, respectively, so their functionality is very
-> different. I may try to combine these plugins, so the commands are
-> generally compatible. But I don’t have a SIM7x00 series modem, so I
-> won’t be able to check the correctness of my modification. There is
-> also a question about the name of the plugin, SIM7100 is the name of a
-> series of modems, as well as A76xx, how to combine them in the name of
-> one plugin?
+> The function that sent the command must take action based on its
+> operating logic, for example, repeat the command, or fail.
 > 
 
-I would rename this driver to simcom.c and try your best to combine the two. 
-Even if you somehow break the 7100, then someone with a 7100 can come in and 
-complain.  We'll then fix it.  In fact, I think we even had a simcom.c before.
-
->>
->> Again, this block seems rather similar to what is in
->> setup_simcom.  Just the
->> interface numbers are different.  Please unify the two.
-> 
-> I divided the code to make it more readable, since setup_sim7x00
-> configures qmi, which is not supported in simcom a76xx, and the
-> setup_simcom function, as far as I understand, is not used because
-> there is no modem driver named simcom. Which of these setup_sim7x00 or
-> setup_simcom functions should I use to add a simcom a76xx?
-
-Long term I think I want to get rid of QMI setup in all vendor setup functions. 
-Almost always these are the same across all modems in QMI mode, just the 
-interface numbers might be slightly different.  Probably just need to create a 
-lookup table instead.
-
-So for now, I would just modify the setup_simcom function with the A76xx details.
+Okay, so where is this code?
 
 Regards,
 -Denis
