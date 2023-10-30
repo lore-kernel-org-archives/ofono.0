@@ -1,72 +1,119 @@
-Received: from fallback24.i.mail.ru (fallback24.i.mail.ru [79.137.243.78])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f49.google.com (mail-oa1-f49.google.com [209.85.160.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8F327494
-	for <ofono@lists.linux.dev>; Mon, 30 Oct 2023 08:11:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=aqsi.ru
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=aqsi.ru
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29E65179BA
+	for <ofono@lists.linux.dev>; Mon, 30 Oct 2023 14:30:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=aqsi.ru header.i=@aqsi.ru header.b="Qnve3YtK";
-	dkim=pass (1024-bit key) header.d=aqsi.ru header.i=@aqsi.ru header.b="XWI2g/Ia"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru; s=mailru;
-	h=Content-Transfer-Encoding:MIME-Version:Content-Type:Date:To:From:Subject:Message-ID:From:Subject:Content-Type:Content-Transfer-Encoding:To:Cc; bh=hoIwZ1mNUWpCY1TprZM4yVGilkUukeKTMrBoxtDjmdM=;
-	t=1698653463;x=1698743463; 
-	b=Qnve3YtKr0OEuwtfnCirMR7P/OMi9bDVTn+ElTN2Wb3B3WpvO9w9dVkA7RdjiFdNFpbrPYECxAfXRpCQaXyHM7V52LKx88A4mIp1hudZ2tYqm1tSx1xBovrbPtrEe14cKcJ100Daier722HeBv251Szif6nQIN0rIfUBeBqI1CA=;
-Received: from [10.12.4.17] (port=37708 helo=smtp46.i.mail.ru)
-	by fallback24.i.mail.ru with esmtp (envelope-from <m.lyubimov@aqsi.ru>)
-	id 1qxMjR-002HOx-Hn
-	for ofono@lists.linux.dev; Mon, 30 Oct 2023 10:30:41 +0300
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru;
-	s=mailru; h=Content-Transfer-Encoding:MIME-Version:Content-Type:Date:To:From:
-	Subject:Message-ID:From:Sender:Reply-To:To:Cc:Content-Type:
-	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:
-	References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:
-	List-Owner:List-Archive:X-Cloud-Ids:Disposition-Notification-To;
-	bh=hoIwZ1mNUWpCY1TprZM4yVGilkUukeKTMrBoxtDjmdM=; t=1698651041; x=1698741041; 
-	b=XWI2g/IaNLCX+LzY3AWF+Z+wNLUE1NtE4yMfhEU06gdFI35dhLAJvntkmssDX7+hl+WKFq8qzpk
-	UE6NLtyX7mKtH57sh4dYb5eOjTTxbYk9Uqhma7+ljqX5Bw97or9Ae1hZ6DgIMMj5Verj12aX9Tnjz
-	e2HRxvT6Yf9XLNiq0Zc=;
-Received: by smtp46.i.mail.ru with esmtpa (envelope-from <m.lyubimov@aqsi.ru>)
-	id 1qxMjH-00E744-2U
-	for ofono@lists.linux.dev; Mon, 30 Oct 2023 10:30:32 +0300
-Message-ID: <043f75988608c0ca35b862dea5c92c1e0c6f8f51.camel@aqsi.ru>
-Subject: Modem: Add Reboot and SwitchOff methods
-From: Lyubimov Maxim <m.lyubimov@aqsi.ru>
-To: ofono@lists.linux.dev
-Date: Mon, 30 Oct 2023 12:30:28 +0500
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.36.5-0ubuntu1 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IAV1uQex"
+Received: by mail-oa1-f49.google.com with SMTP id 586e51a60fabf-1efa01323b4so1386447fac.3
+        for <ofono@lists.linux.dev>; Mon, 30 Oct 2023 07:30:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1698676202; x=1699281002; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=BMbuscUa93lqigo5m4/xk7UFuhkta4J+gfrnE3mCjrc=;
+        b=IAV1uQex/fARB6FnzFWEWA8tKzBaep0+6FT3L1XpP/v24BO+Y2m4WXLGvJwrwZfjyD
+         T/lgCjx5lnZ9O4tJx98qlVBeQoH4PXSHT3XQxqkhDqKVQb38NH6Bz5O2YL30hB6YwzG0
+         cY366PaXiQlT4LEguFNQAYU+WYMFy+gPdNEO5KOdWBCAQf/IF12C8W3SjluNQ8W0xtfn
+         /ump70mKInLEC7nOf0f1KVM4f8wzeyDbvIpMTJm3UUqqNSQ/AYz6V2LIZFEdyPg2To9y
+         EOpgk7d8VjCxT8y09ZxGeL+XcFT2g0XlPSckPonGf2Nw9jfSfaUlt1hXyf5hymGcAJMK
+         s6wA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1698676202; x=1699281002;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=BMbuscUa93lqigo5m4/xk7UFuhkta4J+gfrnE3mCjrc=;
+        b=H+hUdkH2+8fj0pKUEdJcmSWVn1Vq091oLSEIZYJHpBesW6fW0q51YozeNZkSkpTi1m
+         J19dwT20oc7Bo5a/QfI/J+2NE3959opi6IcXqs9+L9Gk3awE44fk14CxttY1KZO1VPuT
+         s1AHnjdOH/l968+UqEU9FREEB0uYZG8uMl7o5UMgqekSGuf/7K++zJwnkybxxrwyPTHl
+         6MnLKrc1dMkbizHbKlFR7uSd1er5xRK8BZQrGPDVJOOeLmeVmuXvguV3e6Thj4lsc441
+         1CGXnzkLxZMC1aJIGVKK2cci3jxUGGE/PTubL4Df5gPOayFwExrO1sdPYkLZOBRzWtZs
+         Jttg==
+X-Gm-Message-State: AOJu0YxZakkcsnefM+mahPcwaspGJ4er7LM+1qwf0I575iiw09456ac8
+	51t27OTBG63hH15riUGwxT+rMoycnzg=
+X-Google-Smtp-Source: AGHT+IEstCBYCo73kYh5wLu73a2PQ4E7gLXIb64VJGRT+FSV6//xb4jDYu3hFL3EINdbha04ItZ+5A==
+X-Received: by 2002:a05:6871:5c47:b0:1e9:e76c:2706 with SMTP id os7-20020a0568715c4700b001e9e76c2706mr13933814oac.52.1698676201995;
+        Mon, 30 Oct 2023 07:30:01 -0700 (PDT)
+Received: from [172.16.49.130] (cpe-70-114-247-242.austin.res.rr.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id jq1-20020a05687c30c100b001c02f12abd0sm1598863oac.38.2023.10.30.07.30.01
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 30 Oct 2023 07:30:01 -0700 (PDT)
+Message-ID: <a96bcf59-705b-45cd-b734-72c5378eb482@gmail.com>
+Date: Mon, 30 Oct 2023 09:29:59 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-Mailru-Src: smtp
-X-7564579A: EEAE043A70213CC8
-X-77F55803: 4F1203BC0FB41BD94942643C2CB1DCCA0C3D3AC4EDAB8E79C1099B2EDB0DE52F182A05F5380850404C228DA9ACA6FE270576303B963E64DEEF4CB7AB5C764ED61491315DE1CF22223DE3B1307D875B02
-X-7FA49CB5: FF5795518A3D127A4AD6D5ED66289B5278DA827A17800CE72E4E5201E1C2E308EA1F7E6F0F101C67BD4B6F7A4D31EC0BCC500DACC3FED6E28638F802B75D45FF8AA50765F790063764345650F0BBEB0B8638F802B75D45FF36EB9D2243A4F8B5A6FCA7DBDB1FC311F39EFFDF887939037866D6147AF826D82ADEF2FDC5B8C2C2E8E975B431186741117882F4460429724CE54428C33FAD305F5C1EE8F4F765FCF80095D1E77F4578A471835C12D1D9774AD6D5ED66289B52BA9C0B312567BB23117882F4460429728776938767073520B28585415E75ADA9618001F51B5FD3F9D2E47CDBA5A96583BA9C0B312567BB2376E601842F6C81A19E625A9149C048EE4B6963042765DA4B1DCA69B2CC609F68D8FC6C240DEA76429C9F4D5AE37F343AA9539A8B242431040A6AB1C7CE11FEE36D3A1509E11137119735652A29929C6CC4224003CC836476E2F48590F00D11D6E2021AF6380DFAD1A18204E546F3947CD2DCF9CF1F528DBC2E808ACE2090B5E1725E5C173C3A84C3C5EA940A35A165FF2DBA43225CD8A89F29C2079CDE5AC98035872C767BF85DA2F004C90652538430E4A6367B16DE6309
-X-C1DE0DAB: 0D63561A33F958A570840B3BED741F723B497117576D1BADD7CCF45F4E8D1599F87CCE6106E1FC07E67D4AC08A07B9B0724336BCC0EE1BA89C5DF10A05D560A950611B66E3DA6D700B0A020F03D25A0997E3FB2386030E77
-X-C8649E89: 1C3962B70DF3F0ADBF74143AD284FC7177DD89D51EBB7742DC8270968E61249B1004E42C50DC4CA955A7F0CF078B5EC49A30900B95165D34AA13E2DDB90678626B0F4D1D5BAEED4D8A345A6BD08EA6F5112053AA3EB844134CD57516DB7F2E841D7E09C32AA3244CA0A8571094B666B604FC6AFBA7C759DD408A6A02710B7304BC4AF6B5DE6957CB5DA084F8E80FEBD38EDF88D74BAC437670101D478F77020B37E69C174A41D00C
-X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5ycPtXkTV4k65bRjmOUUP8cvGozZ33TWg5HZplvhhXbhDGzqmQDTd6OAevLeAnq3Ra9uf7zvY2zzsIhlcp/Y7m53TZgf2aB4JOg4gkr2biojbL9S8ysBdXgwhA9MXJdgR1DoiEwjDvi8
-X-Mailru-Sender: 8F0A18E209ABDF42A59E14250D05070F88E10D4470E42BF3EC50E36F8A1A1BDA76CD77B6B7C1ECDF5D68521865CF3C5293AC9912533B2342953ADA4C1418A8160CF35AF5341388420FBD6B69799305375FEEDEB644C299C0ED14614B50AE0675
-X-Mras: Ok
-X-7564579A: B8F34718100C35BD
-X-77F55803: 6242723A09DB00B4B09DFC738A27773C0AADAB31483B3DEE66B7C3446E6DE20E049FFFDB7839CE9E22A93F7FB77D71FCD6C6C6753980613D84B6879D599CA0E8B42894F8806920F8
-X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5xhPKz0ZEsZ5k6NOOPWz5QAiZSCXKGQRq3/7KxbCLSB2ESzQkaOXqCBFZPLWFrEGlV1shfWe2EVcxl5toh0c/aCGOghz/frdRhzMe95NxDFd/ps9sdOGr8gjze6BwOT/ig==
-X-Mailru-MI: C000000000000800
-X-Mras: Ok
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 14/15] gatchat: added command completion by timeout
+Content-Language: en-US
+To: =?UTF-8?B?0JvRjtCx0LjQvNC+0LIg0JzQsNC60YHQuNC8?= <m.lyubimov@aqsi.ru>,
+ ofono@lists.linux.dev
+References: <20231017104902.717947-1-m.lyubimov@aqsi.ru>
+ <20231017104902.717947-14-m.lyubimov@aqsi.ru>
+ <4a003c7d-4cee-4111-8bed-2bb51e5f510b@gmail.com>
+ <d9591456ec4294c216445b6b0b73d2b54d94c2e0.camel@aqsi.ru>
+ <d78baea0-813c-414d-bf8d-d9a06fbdb5fa@gmail.com>
+ <681f57cc7909dcbd58b6fa273d11cd96904b5eb5.camel@aqsi.ru>
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <681f57cc7909dcbd58b6fa273d11cd96904b5eb5.camel@aqsi.ru>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-Hi Denis
+Hi Максим,
 
-Some modems have special commands to reboot and shutdown, I think it
-would be useful to add support for these commands to the modem
-management interface to be able to reboot or shutdown the modem,
-because some modems cannot be turned off by other means.
+>>
+>> Ok, but which modems?  Do you have an OFONO_AT_DEBUG log trace you
+>> can share?
+> 
+> Similar behavior is observed on simcom modems. There are no logs yet,
+> but it clearly shows that there is no response to the command.
 
-Best regards,
-Lyubimov Maxim
+A log would be useful to help me understand what is happening.
 
+> 
+>> Anyhow, at the very least you need to make this an opt-in
+>> feature.  As I pointed
+>> out, opting in *all* modem drivers into this functionality will break
+>> some of them.
+> 
+> I can suggest adding a property to the modem driver data that will
+> enable this function for it.
 
+Sure, that's fine.
+
+> 
+> Multiple commands that are sent over an interface shared with a PPP
+> connection. I have a suspicion that when switching from data
+> transmission to command processing, the modem does not process AT
+> commands through this interface. But the time frame for this switch is
+> not clear.
+
+Most devices come setup with 2-3 pre-multiplexed AT command ports.  Most modem 
+drivers without a high-speed network interface follow the following pattern:
+- One AT command port for most AT commands, always active (Modem)
+- One AT command port for PPP.  This port is used to send CGDCONT/CGDATA 
+commands and is suspended for the duration of the PPP session (Data)
+
+Are you saying that when the PPP session is ended (NO CARRIER sent?) then 
+subsequent commands sent to the Data port time out?  Or what is happening?
+
+>> What you're describing is vendor specific behavior and has to be
+>> treated as such.
+> 
+> How to properly handle a lack of response to a command? Should I add a
+> property to the modem driver to enable this feature in GAtChat? Or
+> should we separately process the lack of response for those commands
+> for which such modem behavior was observed?
+
+I'd like to better understand the problem before offering solutions.  What you 
+outline above are all possible strategies.
+
+Regards,
+-Denis
