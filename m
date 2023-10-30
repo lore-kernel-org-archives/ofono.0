@@ -1,12 +1,21 @@
-Received: from smtp56.i.mail.ru (smtp56.i.mail.ru [95.163.41.94])
+Received: from fallback18.i.mail.ru (fallback18.i.mail.ru [79.137.243.73])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49C4846AD
-	for <ofono@lists.linux.dev>; Mon, 30 Oct 2023 07:04:57 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC06E610D
+	for <ofono@lists.linux.dev>; Mon, 30 Oct 2023 07:32:56 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=aqsi.ru
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=aqsi.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=aqsi.ru header.i=@aqsi.ru header.b="I3VuQ/LO"
+	dkim=pass (1024-bit key) header.d=aqsi.ru header.i=@aqsi.ru header.b="iF90X5wz";
+	dkim=pass (1024-bit key) header.d=aqsi.ru header.i=@aqsi.ru header.b="rE0HZe5X"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru; s=mailru;
+	h=Content-Transfer-Encoding:MIME-Version:Content-Type:References:In-Reply-To:Date:To:From:Subject:Message-ID:From:Subject:Content-Type:Content-Transfer-Encoding:To:Cc; bh=R1oESAw3VV4sMCnsqCUZUDX4o3IIgoaBolPg5nh0Xc4=;
+	t=1698651176;x=1698741176; 
+	b=iF90X5wzF/RQmmGMTQwZHw1bvCTYp0GOVjsgU/iq+zzaX+LEDe3/DtSygK8tnLHfrQzxgrhKPK1MjdzFOJNtXSmOgpvgt8C6bLqGA1FZLvcWggP4T79PcieAZ3KnEwnt+IWe9Ioh6y38p1p2pcTJwM3GYYy9dxzEExvoDSbBPrA=;
+Received: from [10.12.4.8] (port=49022 helo=smtp35.i.mail.ru)
+	by fallback18.i.mail.ru with esmtp (envelope-from <m.lyubimov@aqsi.ru>)
+	id 1qxMRF-002jhE-GA
+	for ofono@lists.linux.dev; Mon, 30 Oct 2023 10:11:53 +0300
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru;
 	s=mailru; h=Content-Transfer-Encoding:MIME-Version:Content-Type:References:
 	In-Reply-To:Date:To:From:Subject:Message-ID:From:Sender:Reply-To:To:Cc:
@@ -14,24 +23,24 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=aqsi.ru;
 	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
 	List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:
 	List-Archive:X-Cloud-Ids:Disposition-Notification-To;
-	bh=eXYwOP6Vz/HcextosyD0TOPpcrhvepZvySbbGu4Q3Hg=; t=1698649498; x=1698739498; 
-	b=I3VuQ/LOvJaUv2c7mweqNfruAZVNuk3haOav4YA7fh3J5fX4wZYAHBVpus0faEfD5R40fvssA6U
-	vDLFsUT4jqXCJroZKn5GSn3h2pUFI+FocTg7qP7OJfiVEPIxf8vHGKOC1RY/BjgkayjNdtNTMEoXS
-	bY71pCBtm3oWXvlZi2s=;
-Received: by smtp56.i.mail.ru with esmtpa (envelope-from <m.lyubimov@aqsi.ru>)
-	id 1qxMKO-00B4gn-1B; Mon, 30 Oct 2023 10:04:49 +0300
-Message-ID: <681f57cc7909dcbd58b6fa273d11cd96904b5eb5.camel@aqsi.ru>
-Subject: Re: [PATCH 14/15] gatchat: added command completion by timeout
+	bh=R1oESAw3VV4sMCnsqCUZUDX4o3IIgoaBolPg5nh0Xc4=; t=1698649913; x=1698739913; 
+	b=rE0HZe5X0jYbMDwX1D25USpW3haDIIuGCF9Xch9T6LBcXZNQvZn0jTB4Z/Hbtqa+d4KUQzf4U4G
+	MkEZqlb7wRiIo7GJbkyrES1QouoMmjExy4Cj5xGtlgKJW+yuivvcTy+GFNwLCcHIcB41iWiOz0GEg
+	EHODohUZHRCLLFWB6P4=;
+Received: by smtp35.i.mail.ru with esmtpa (envelope-from <m.lyubimov@aqsi.ru>)
+	id 1qxMR5-00DNsc-2c; Mon, 30 Oct 2023 10:11:44 +0300
+Message-ID: <2289c2c633f5fa7a9a64a958ad2f10bb8b4a815f.camel@aqsi.ru>
+Subject: Re: [PATCH 03/15] plugins: adding support for the SIMCom A7605E-H
 From: =?koi8-r?Q?=EC=C0=C2=C9=CD=CF=D7_?= =?koi8-r?Q?=ED=C1=CB=D3=C9=CD?=
 	 <m.lyubimov@aqsi.ru>
 To: Denis Kenzior <denkenz@gmail.com>, ofono@lists.linux.dev
-Date: Mon, 30 Oct 2023 12:04:45 +0500
-In-Reply-To: <d78baea0-813c-414d-bf8d-d9a06fbdb5fa@gmail.com>
+Date: Mon, 30 Oct 2023 12:11:39 +0500
+In-Reply-To: <f4832121-d043-463a-9803-aaaf06f69aad@gmail.com>
 References: <20231017104902.717947-1-m.lyubimov@aqsi.ru>
-	 <20231017104902.717947-14-m.lyubimov@aqsi.ru>
-	 <4a003c7d-4cee-4111-8bed-2bb51e5f510b@gmail.com>
-	 <d9591456ec4294c216445b6b0b73d2b54d94c2e0.camel@aqsi.ru>
-	 <d78baea0-813c-414d-bf8d-d9a06fbdb5fa@gmail.com>
+	 <20231017104902.717947-3-m.lyubimov@aqsi.ru>
+	 <2d194620-ed30-4763-aced-ca89b450132c@gmail.com>
+	 <497f810bce97564712e05c2633a45fe244d93481.camel@aqsi.ru>
+	 <f4832121-d043-463a-9803-aaaf06f69aad@gmail.com>
 Content-Type: text/plain; charset="UTF-8"
 User-Agent: Evolution 3.36.5-0ubuntu1 
 Precedence: bulk
@@ -41,86 +50,28 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Authentication-Results: smtp56.i.mail.ru; auth=pass smtp.auth=m.lyubimov@aqsi.ru smtp.mailfrom=m.lyubimov@aqsi.ru
 X-Mailru-Src: smtp
 X-4EC0790: 10
-X-7564579A: B8F34718100C35BD
-X-77F55803: 4F1203BC0FB41BD9C931D0C4A91E713028A6B45E8800B8D808196D39FA30EE0600894C459B0CD1B989CE8CD474134E72061D90D9F9F7EF63C0A82397A3ABD1EF3D433D207E322D29
-X-7FA49CB5: FF5795518A3D127A4AD6D5ED66289B5278DA827A17800CE7A0175C48BD57B26BC2099A533E45F2D0395957E7521B51C2CFCAF695D4D8E9FCEA1F7E6F0F101C6778DA827A17800CE721B3E54BB37EA0B4EA1F7E6F0F101C6723150C8DA25C47586E58E00D9D99D84E1BDDB23E98D2D38BE5CCB53A13BC8DBA575265265C9BC84E207E7E793E5EF444CC7F00164DA146DAFE8445B8C89999728AA50765F7900637DCE3DBD6F8E38AFD389733CBF5DBD5E9C8A9BA7A39EFB766F5D81C698A659EA7CC7F00164DA146DA9985D098DBDEAEC817119E5299B287EEF6B57BC7E6449061A352F6E88A58FB86F5D81C698A659EA73AA81AA40904B5D9A18204E546F3947CF254576263B31EA9040F9FF01DFDA4A84AD6D5ED66289B523666184CF4C3C14F6136E347CC761E07725E5C173C3A84C3B1CCBFDB748CB1BDBA3038C0950A5D36B5C8C57E37DE458B330BD67F2E7D9AF16D1867E19FE14079C09775C1D3CA48CFE97D2AE7161E217F1DD303D21008E298D5E8D9A59859A8B6B372FE9A2E580EFC725E5C173C3A84C347EB90A91F51F428089D37D7C0E48F6C5571747095F342E88FB05168BE4CE3AF
-X-C1DE0DAB: 0D63561A33F958A5B3889E71CD9E043D03A6A5E73C16A1C7E882F8738B50D074F87CCE6106E1FC07E67D4AC08A07B9B0CE135D2742255B35CB5012B2E24CD356
-X-C8649E89: 1C3962B70DF3F0ADBF74143AD284FC7177DD89D51EBB7742424CF958EAFF5D571004E42C50DC4CA955A7F0CF078B5EC49A30900B95165D346EDE9E12965E8CD5BB9C69064CA86590A10EBA2C7AF6DE94C82E76CF0C3CE0F74B2894A09E54D6AC1D7E09C32AA3244C2A478D84F363AEEFEDB0911BD67037A4795D98D676DD64D03A1A83191EB2B8F05DA084F8E80FEBD38EDF88D74BAC437670101D478F77020B37E69C174A41D00C
-X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5ycPtXkTV4k65bRjmOUUP8cvGozZ33TWg5HZplvhhXbhDGzqmQDTd6OAevLeAnq3Ra9uf7zvY2zzsIhlcp/Y7m53TZgf2aB4JOg4gkr2biojlPsYOQq/FJBfuj1wxCFFzA==
-X-Mailru-Sender: 8F0A18E209ABDF42A59E14250D05070FFDCEB27E6DF0A16D7625611360404B057B550B4BA35CC43C5D68521865CF3C5293AC9912533B2342953ADA4C1418A8160CF35AF5341388420FBD6B69799305375FEEDEB644C299C0ED14614B50AE0675
+X-7564579A: 78E4E2B564C1792B
+X-77F55803: 4F1203BC0FB41BD9C931D0C4A91E7130B053ED87D1EB8A50D1C643B633114BAA00894C459B0CD1B9B3105D5973FA24F0E9A88821DC0A6D44C0A82397A3ABD1EF60A5641D7A8B2059
+X-7FA49CB5: FF5795518A3D127A4AD6D5ED66289B5278DA827A17800CE7DD4CC05688AD5D0CEA1F7E6F0F101C67BD4B6F7A4D31EC0BCC500DACC3FED6E28638F802B75D45FF8AA50765F7900637ECAF4C2CEE0D0B2F8638F802B75D45FF36EB9D2243A4F8B5A6FCA7DBDB1FC311F39EFFDF887939037866D6147AF826D87423D78D51BE3F7E58E8914389708151117882F4460429724CE54428C33FAD305F5C1EE8F4F765FC587F3D2152687E5CA471835C12D1D9774AD6D5ED66289B52BA9C0B312567BB23117882F4460429728776938767073520140C956E756FBB7A28451B159A507268D2E47CDBA5A96583BA9C0B312567BB2376E601842F6C81A19E625A9149C048EE9647ADFADE5905B11C9461EB66F04EBFD8FC6C240DEA76429C9F4D5AE37F343AA9539A8B242431040A6AB1C7CE11FEE3F254576263B31EA9302FCEF25BFAB345C4224003CC836476E2F48590F00D11D6E2021AF6380DFAD1A18204E546F3947CD2DCF9CF1F528DBC2E808ACE2090B5E1725E5C173C3A84C317B107DEF921CE79089D37D7C0E48F6C8AA50765F7900637BBB18AC9CB13DF7B731C566533BA786AA5CC5B56E945C8DA
+X-C1DE0DAB: 0D63561A33F958A5A20233F6A5479F309096F2A10DA1EB62A53FAAFAEFEB1E04F87CCE6106E1FC07E67D4AC08A07B9B082B967D547A19D2FCB5012B2E24CD356
+X-C8649E89: 1C3962B70DF3F0ADBF74143AD284FC7177DD89D51EBB7742424CF958EAFF5D571004E42C50DC4CA955A7F0CF078B5EC49A30900B95165D348F1757F8DFBC5C33EC631AC4BC22B7F5582D2D92655C91E8B0882F022D0DCF59B6C8E817122A83221D7E09C32AA3244CDF086ED6E6F0A753AEDCCFC0FD4EA36DA8CE788DE68312053A1A83191EB2B8F05DA084F8E80FEBD38EDF88D74BAC437670101D478F77020B37E69C174A41D00C
+X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5ycPtXkTV4k65bRjmOUUP8cvGozZ33TWg5HZplvhhXbhDGzqmQDTd6OAevLeAnq3Ra9uf7zvY2zzsIhlcp/Y7m53TZgf2aB4JOg4gkr2biojlPsYOQq/FJDvAK/wXhMJBg==
+X-Mailru-Sender: 8F0A18E209ABDF42A59E14250D05070FA21CB17B91381C45FC776A5BDE6B753362FB2668C6B138E05D68521865CF3C5293AC9912533B2342953ADA4C1418A8160CF35AF5341388420FBD6B69799305375FEEDEB644C299C0ED14614B50AE0675
+X-Mras: Ok
+X-7564579A: 646B95376F6C166E
+X-77F55803: 6242723A09DB00B4B09DFC738A27773C0AADAB31483B3DEE8F0D78E3A106B26A049FFFDB7839CE9E22A93F7FB77D71FCDF38244BD3E60AF217A9D5915E6462E560FFA3D22D689A8A
+X-D57D3AED: 3ZO7eAau8CL7WIMRKs4sN3D3tLDjz0dLbV79QFUyzQ2Ujvy7cMT6pYYqY16iZVKkSc3dCLJ7zSJH7+u4VD18S7Vl4ZUrpaVfd2+vE6kuoey4m4VkSEu530nj6fImhcD4MUrOEAnl0W826KZ9Q+tr5xhPKz0ZEsZ5k6NOOPWz5QAiZSCXKGQRq3/7KxbCLSB2ESzQkaOXqCBFZPLWFrEGlV1shfWe2EVcxl5toh0c/aCGOghz/frdRhzMe95NxDFd/ps9sdOGr8gwEttSL9GrnQ==
+X-Mailru-MI: C000000000000800
 X-Mras: Ok
 
-Hi, Denis
+Hi Denis
 
-> > > So I think you're going to need to give a bit more context for
-> > > how
-> > > this is
-> > > expected to work.  There are commands (on older modems) that can
-> > > take
-> > > minutes to
-> > > complete.  This is why multiplexers were invented.  Now this is
-> > > probably quite
-> > > rare, but I imagine it can still happen.
-> > 
-> > This functionality was added because some modems sometimes do not
-> > respond to the command. Therefore, there is an endless wait for a
-> > response and blocking of other functions with a message that the
-> > action
-> 
-> Ok, but which modems?  Do you have an OFONO_AT_DEBUG log trace you
-> can share?
+> So for now, I would just modify the setup_simcom function with the
+> A76xx details.
 
-Similar behavior is observed on simcom modems. There are no logs yet,
-but it clearly shows that there is no response to the command.
-
-> Anyhow, at the very least you need to make this an opt-in
-> feature.  As I pointed 
-> out, opting in *all* modem drivers into this functionality will break
-> some of them.
-
-I can suggest adding a property to the modem driver data that will
-enable this function for it.
-
-> > is still in progress. It was experimentally verified that if the
-> > command is repeated, the modem can immediately respond to it and
-> > there
-> > will be no blocking. What do you suggest to do if the modem does
-> > not
-> > respond to the command either after a minute, or after an hour,
-> > never?
-> 
-> Call the vendor and have them fix their firmware? :)  But seriously,
-> how many 
-> commands are we talking about?  If it is one, then handle it
-> specifically for 
-> that command.  If it is a dozen, create a utility function.
-
-Multiple commands that are sent over an interface shared with a PPP
-connection. I have a suspicion that when switching from data
-transmission to command processing, the modem does not process AT
-commands through this interface. But the time frame for this switch is
-not clear.
-
-> I'm not convinced adding this functionality directly to GAtChat is
-> the right 
-> approach.  There is no such thing as 'AT command timeout' in V.250
-> specification 
-> or any other standard.  AT command cancellation as a concept exists,
-> but it only 
-> works sometimes and only for some commands, and isn't what you're
-> doing here 
-> from what I can tell.
-> 
-> What you're describing is vendor specific behavior and has to be
-> treated as such.
-
-How to properly handle a lack of response to a command? Should I add a
-property to the modem driver to enable this feature in GAtChat? Or
-should we separately process the lack of response for those commands
-for which such modem behavior was observed?
+Ok
 
 Best regards,
 Lyubimov Maxim
