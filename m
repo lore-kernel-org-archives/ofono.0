@@ -1,139 +1,109 @@
-Received: from mail-oa1-f41.google.com (mail-oa1-f41.google.com [209.85.160.41])
+Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 100AE3C1E
-	for <ofono@lists.linux.dev>; Mon,  6 Nov 2023 03:03:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B47211C83
+	for <ofono@lists.linux.dev>; Wed,  8 Nov 2023 10:29:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NwZesaWD"
-Received: by mail-oa1-f41.google.com with SMTP id 586e51a60fabf-1f0656b5c99so1590497fac.1
-        for <ofono@lists.linux.dev>; Sun, 05 Nov 2023 19:03:22 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="E8rrmy8b"
+Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-9d267605ceeso1016678366b.2
+        for <ofono@lists.linux.dev>; Wed, 08 Nov 2023 02:29:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1699239802; x=1699844602; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=KCP7tfD9mtUs06lt6q1FYXKx905mODT3EtJGsuK2N8w=;
-        b=NwZesaWDUsVe5nfKKL1vIoDoWQJpmtR2an+jAVNNbqr/eiR1FO/AtDQNGhv0WQieI1
-         f0K+gKNdtt00JU+WRkrKS+DhoXCmfVGy0cGQtjWDLPfJy9NVkWGrkAnz8TZ6rvoCCqW9
-         T2jcoXmPpq7yA+etzn2ZmeWaiguCuNH3e+TmHi+o0Tqr45a1mLBUY1yGwCIqeu4OhDVk
-         YEKS6SS9PYdAa697jh/Mv+w7uw0fDVQxw8O9mUzaTlGNIGtdeq730Mn6LPF0AfXHj+Xt
-         zdvHIPmnd0PrA3bge8/keefYP2o2MlGeYltY2qulaKRfMmXMqCrNl6aGyD8ddtqKoBsH
-         8XmA==
+        d=gmail.com; s=20230601; t=1699439348; x=1700044148; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=LPXoDYM/dgX2TDWJPKM4KeEJ93mEPGg+dPGj76p/O/I=;
+        b=E8rrmy8bYfaWN/SWQ4NxR8BNCvrDc+Oy+CdMBT4BuexkcvW+Q/O9hsa5kva5XC5AEM
+         OYGfErnGjBPWsCq/3SQ3mvdijB0qEHs0bW/4vRzm353XEdySIf4c2HmF/7NwfpMFmJ7p
+         +F9xSLpAv8zMDm0Vi/fVhbLxa7zPg0Lsm2vGKtJWHTF4ZoJJDgovhZ9S164acLDLD/as
+         Jjl+3jIHbgj702qlNUnL1RabpSXBnFjQXWXfhAem5RGulxFmRXwhrszCXRchEaEShQ/k
+         G6b8fvG6Lp83PAV+0zPV1uBOGWpyIdWp8YBJfCan4P2tjp98vryJ7Wdgaq4JhrfzXN25
+         vg0w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1699239802; x=1699844602;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=KCP7tfD9mtUs06lt6q1FYXKx905mODT3EtJGsuK2N8w=;
-        b=GDS3rpSV+jDZmcqYyl5MwL3RGHPtNUVqvr6YFg1sPI70jbOAiTK9QCgIiNhh2dN3sG
-         d5+JkIsOBYI7kuERLTTI5RrZiWK9eaXaRateuL1L6YeF++wvB64KwxfCPJNI1wWLDArb
-         CjE87GzrCPyBUFijO2i6yJ1wMB74/GLadQ9dYAubh0+MVO2xKlqnKJL4hDB3fH2/xkkL
-         Z1UIJsEaETk1Gjk9iW+z3XwZOL+CPDYOkISSBZou/geDzWxWCFyF0mhqLURz0dt1ovWr
-         4OK2mGwD8moK6Lk8TufVp00KXztc0WgOohWUGZOD5lQEdpWkiX6bXVvxGOti71FIhryD
-         H4dQ==
-X-Gm-Message-State: AOJu0Ywr6AX8Vfwbzk1oQyCFvPK7JhFeyghcF2dUxzVGbEgwTJq8tN7s
-	KkM/GTFs9MKeJYx+yeDy8Uw=
-X-Google-Smtp-Source: AGHT+IFCVEQeSLQHmIL26ZRUZN9j9DNJFHYPkKh0ujeWZv7m+CMMyTVSN2JPZT/DGYK6ralSWpj99w==
-X-Received: by 2002:a05:6870:8a22:b0:1e9:e364:fad3 with SMTP id p34-20020a0568708a2200b001e9e364fad3mr4983967oaq.4.1699239801877;
-        Sun, 05 Nov 2023 19:03:21 -0800 (PST)
-Received: from [172.16.49.130] (cpe-70-114-247-242.austin.res.rr.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id z9-20020a056870e14900b001e98b1544fesm1263100oaa.9.2023.11.05.19.03.20
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 05 Nov 2023 19:03:21 -0800 (PST)
-Message-ID: <540c9645-cc9a-4eda-96b1-4ee710a21891@gmail.com>
-Date: Sun, 5 Nov 2023 21:03:19 -0600
+        d=1e100.net; s=20230601; t=1699439348; x=1700044148;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=LPXoDYM/dgX2TDWJPKM4KeEJ93mEPGg+dPGj76p/O/I=;
+        b=eOYay5RR/NcvnhvicsmTBsGCnnELsz+DolB9WBznzsg0uF69ZZtE1SeK48VrZqEapo
+         bBeAFvFQymFyqBdaPBTeFNBRFyz2jmP7PlU1EFRDQEcbOcuAShBroBf8TQah48OYXKof
+         c3HKhA0r94crYVipWfYNkzMUMoXxMd7I18p9a7Qd/WVg/YRdqmdoRwG+8Yk+hukdjuIe
+         a8BSznO+ceTevCvZj64JnebYlSXQ0BEFfP551I/GgI/WsSyn8ai4uaEEkX0Nk86n0RJv
+         DT09KvdYw7wq/Y7cWahUlyCGy7SjhUSBIVdl0Ym5AGJYYcqUpgDACPUjXoVH1aYTb2ZQ
+         +jeA==
+X-Gm-Message-State: AOJu0YwW6ggOKG7v5hlLOwOPPT9ecjvgfeMQlCFVYjN7ZBjYC0EIDdjZ
+	VmqCsLtgrxtGy1d3O4NnifI=
+X-Google-Smtp-Source: AGHT+IHnEV/t893p13ImmmMI3V1RgdVf9ppLf8Va+NzsadDBiIumXM3Zx8acaswReSwSmsn2tGqoZQ==
+X-Received: by 2002:a17:906:c190:b0:9be:834a:f80b with SMTP id g16-20020a170906c19000b009be834af80bmr920813ejz.75.1699439347555;
+        Wed, 08 Nov 2023 02:29:07 -0800 (PST)
+Received: from tp440p.steeds.sam ([69.63.64.50])
+        by smtp.gmail.com with ESMTPSA id h11-20020a17090634cb00b009b28ad521f4sm820280ejb.4.2023.11.08.02.29.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 08 Nov 2023 02:29:06 -0800 (PST)
+Date: Wed, 8 Nov 2023 12:29:02 +0200
+From: Sicelo <absicsz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+Subject: Re: isimodem: reporting operator name to core from unsolicited
+ indications
+Message-ID: <ZUti7nteHmcie5a7@tp440p.steeds.sam>
+References: <ZUZqIXkQNnen4Bfv@tp440p.steeds.sam>
+ <540c9645-cc9a-4eda-96b1-4ee710a21891@gmail.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: isimodem: reporting operator name to core from unsolicited
- indications
-Content-Language: en-US
-To: Sicelo <absicsz@gmail.com>, ofono@lists.linux.dev
-Cc: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-References: <ZUZqIXkQNnen4Bfv@tp440p.steeds.sam>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <ZUZqIXkQNnen4Bfv@tp440p.steeds.sam>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <540c9645-cc9a-4eda-96b1-4ee710a21891@gmail.com>
 
-Hi Sicelo,
+Hi Denis
 
-On 11/4/23 10:58, Sicelo wrote:
-> Hi
+On Sun, Nov 05, 2023 at 09:03:19PM -0600, Denis Kenzior wrote:
+> > 	ofonod[27080]: PN_NETWORK (0x0A): NET_OPER_NAME_READ_REQ [id=0xE5 utid=0x2E len=8]:
+> > 	ofonod[27080]:     * 2E E5 00 3F 00 00 00 00                         : ....?....
+> > 	ofonod[27080]: PN_NETWORK (0x0A): NET_OPER_NAME_READ_RESP [id=0xE6 utid=0x2E len=10]:
+> > 	ofonod[27080]:     * 2E E6 01 00 00 00 00 00 00 00                   : ...........
+> > 	ofonod[27080]: gisi: normal RESP to 0xb6c8d0e0 [res=0x0A, id=0xE6, utid=0x2E]
+> > 	ofonod[27080]: drivers/isimodem/network-registration.c:check_response_status() Request failed: NET_CAUSE_COMMUNICATION_ERROR
+> > 	ofonod[27080]: src/network.c:current_operator_callback() 0x57c940, 0
+> > 	ofonod[27080]: src/network.c:current_operator_callback() Error during current operator
+> > 
+> Funny, so it fails at random?
+
+Yes. I am guessing that the RESP is directly from the modem, so this
+failure is nothing that we can do anything about.
+
+> Refer to ofono_netreg_status_notify implementation here:
+> https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/src/network.c#n1347
 > 
-> With isimodem (on Nokia N900), there are cases where the request to get
-> the current operator name fails. This seems to be operator-specific,
-> since it works fine with other operators for exactly the same raw
-> packets.  The ISI trace looks something like:
+> Every time the network registration status is notified to the core, and it
+> is roaming / registered, the driver current_operator method is invoked.
 > 
-> 	ofonod[27080]: PN_NETWORK (0x0A): NET_OPER_NAME_READ_REQ [id=0xE5 utid=0x2E len=8]:
-> 	ofonod[27080]:     * 2E E5 00 3F 00 00 00 00                         : ....?....
-> 	ofonod[27080]: PN_NETWORK (0x0A): NET_OPER_NAME_READ_RESP [id=0xE6 utid=0x2E len=10]:
-> 	ofonod[27080]:     * 2E E6 01 00 00 00 00 00 00 00                   : ...........
-> 	ofonod[27080]: gisi: normal RESP to 0xb6c8d0e0 [res=0x0A, id=0xE6, utid=0x2E]
-> 	ofonod[27080]: drivers/isimodem/network-registration.c:check_response_status() Request failed: NET_CAUSE_COMMUNICATION_ERROR
-> 	ofonod[27080]: src/network.c:current_operator_callback() 0x57c940, 0
-> 	ofonod[27080]: src/network.c:current_operator_callback() Error during current operator
-> 
+> You can try to handle the NET_REG_STATUS_IND in the driver
 
-Funny, so it fails at random?
+This is what the POC patch I posted tries to do.
 
-> However, there are also some frequent unsolicited NET_REG_STATUS_IND
-> messages that contain the operator name (SZ 02/Eswatini Mobile in the
-> snippet below):
-> 
-> 	ofonod[27080]: PN_NETWORK (0x0A): NET_REG_STATUS_IND [id=0xE2 utid=0x00 len=124]:
-> 	ofonod[27080]:     * 00 E2 00 04 00 18 00 02 00 00 00 05 00 53 00 5A : ..............S.Z
-> 	ofonod[27080]:     * 00 20 00 30 00 32 01 00 01 00 00 00 09 18 01 2D : ...0.2.........-
-> 	ofonod[27080]:     * 00 64 7A 36 56 F3 20 02 00 01 02 01 01 00 00 1F : .dz6V...........
-> 	ofonod[27080]:     * 01 01 01 00 E3 24 03 00 00 0F 00 45 00 73 00 77 : .....$.....E.s.w
-> 	ofonod[27080]:     * 00 61 00 74 00 69 00 6E 00 69 00 20 00 4D 00 6F : .a.t.i.n.i...M.o
-> 	ofonod[27080]:     * 00 62 00 69 00 6C 00 65 E3 24 02 00 00 0E 00 45 : .b.i.l.e.$.....E
-> 	ofonod[27080]:     * 00 73 00 77 00 61 00 74 00 69 00 6E 00 69 00 4D : .s.w.a.t.i.n.i.M
-> 	ofonod[27080]:     * 00 6F 00 62 00 69 00 6C 00 65 00 00             : .o.b.i.l.e..
-> 	ofonod[27080]: gisi: No error information IND to 0xb6c8f2a0 [res=0x0A, id=0xE2, utid=0x00]
-> 
-> They are handled by isimodem/network-registration.c:reg_status_ind_cb,
-> which currently does not extract the operator name info.
+> cache it and
+> invoke the above notify function to the core. Then in the current_operator
+> driver function, return the cached name.
 
-Refer to ofono_netreg_status_notify implementation here:
-https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/src/network.c#n1347
+This is where my lack of skill gets exposed - reg_status_ind_cb only has
+access to netreg of type ofono_netreg, and nd of type netreg_data.
+However the notify function, as called from name_get_resp_cb, requires
+to be passed structs of type ofono_netreg_operator_cb_t,
+ofono_network_operator and isi_cb_data. I am not sure I see how to pass
+these from reg_status_ind_cb.
 
-Every time the network registration status is notified to the core, and it is 
-roaming / registered, the driver current_operator method is invoked.
+So essentially I have two questions:
+ 1. Where can I cache the name? I think nd->nitz_name is fine, but
+ perhaps there is a better option
+ 2. How can I make the cached name available in name_get_resp_cb?
 
-You can try to handle the NET_REG_STATUS_IND in the driver, cache it and invoke 
-the above notify function to the core.  Then in the current_operator driver 
-function, return the cached name.
+Will appreciate suggestions. I guess it is something very simple but
+that eludes me.
 
-> 
-> Storing it in `nd->nitz_name` as in the `name_ind_cb` function,
-> https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/drivers/isimodem/network-registration.c#n882
-> does not appear to be enough, since this does not have a related 'sync'
-> to core. So I think that function is also not fully functionally yet.
-
-Looks like the NITZ name is returned in cell_info_resp_cb().  Basically what 
-this does is it runs NET_CELL_INFO_GET_REQ in order to obtain the operator 
-MCC/MNC.  Then it also copies in the NITZ name if available.  Doesn't look like 
-this path was well tested.
-
-Seems your driver uses a different path, one going through create_name_get_req()?
-
-I suppose what you can try is to return the nitz name if the name_get_resp_cb() 
-fails to parse the operator name.  Just make sure to reset the nitz name to 
-empty if the network registration is lost.
-
-> 
-> I would appreciate some pointers/suggestions, then I can test on device
-> and submit a proper patch.
-> 
-
-Regards,
--Denis
-
+Sicelo
