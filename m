@@ -1,30 +1,52 @@
-Received: from castle.weinholt.se (castle.weinholt.se [194.54.164.22])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90AAA134A0
-	for <ofono@lists.linux.dev>; Fri, 10 Nov 2023 10:05:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=weinholt.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=weinholt.se
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A732134D3
+	for <ofono@lists.linux.dev>; Fri, 10 Nov 2023 10:20:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=weinholt.se header.i=@weinholt.se header.b="5sf/MrQ+"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=weinholt.se
-	; s=castle2021; h=MIME-Version:Message-ID:Subject:To:From:Date:references:
-	user-agent:in-reply-to:content-transfer-encoding:content-language;
-	bh=cR9DhogpICZzoky9pz+9MYwDlkYPKK8rdD8bXJ7DLZo=; b=5sf/MrQ+gu4N5wv/cWTjx/7Mgp
-	ytat6de1klT2PMgrcB0uxHmvoS9ObptxTz3HLuoSQfOO/xuFlvsvqSW2XyKj5NKZprExJVsuaOlur
-	KSrYX1PvB8JYUDQL6wZexB78MZjUbm3q9T9PGTn3HXSo3nD+xByLk48r6AZel7dhpVI6jFfvLNbWu
-	AoMohtpKuLrjTeCL6ivRPh3KAcZ1LGIriUp3H+EHNNme1m+i9yLiO5yDQdob9ZYr+Mfq+OaqyG0iK
-	vQvJMy+/9C/nJQipoSfTjLV5soCL6l1+oJO+weP9Heg8XUeXS9Ivrk+Oi2LOwstLWnbgh9VqTi2G4
-	citrjdEw==;
-Received: from weinholt by castle.weinholt.se with local (Exim 4.96)
-	(envelope-from <g@weinholt.se>)
-	id 1r1NxJ-0021dk-2Q;
-	Fri, 10 Nov 2023 09:37:37 +0000
-Date: Fri, 10 Nov 2023 09:37:37 +0000
-From: "G. Weinholt" <g@weinholt.net>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iKJNLRss"
+Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-9bf86b77a2aso310741866b.0
+        for <ofono@lists.linux.dev>; Fri, 10 Nov 2023 02:20:20 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1699611618; x=1700216418; darn=lists.linux.dev;
+        h=content-disposition:mime-version:message-id:subject:to:from:date
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=1DfSHPougute44Z8mdYKRUzIrZw/mWGEcvWBAJa3wKs=;
+        b=iKJNLRssx1MrC2I9jW6Lp3DPiG1QQMCIqutr7maLE0kj03GY4bsatTjj9Qlzd+nROu
+         ePFinX9RkkxUUnmVqUEmCMpoYC8uOFBLr2QJ0Ldr8Dp7PeiLeroUzxKMJ6CVE0RcKW3C
+         aYBqmnbSfq1LLfM/4ogKCKVKG+nFNPsvB8qxG4bZVcw+x1a9AY48FA0tliHfge3f6XxW
+         ou3HatopSywqppcULRkcdsRcM2EKtxiWTfErmxNzoS96TOWL7arbRGUU/eG+g1QpBZ8r
+         43tAjU6G6qkLeYweM2KhAWezWdVoj6KUaGKn3bEtlY/oqiiLQTfPIScuWpan6zXNEYSa
+         w9bQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1699611618; x=1700216418;
+        h=content-disposition:mime-version:message-id:subject:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=1DfSHPougute44Z8mdYKRUzIrZw/mWGEcvWBAJa3wKs=;
+        b=rbFkSRHPUodowvkEKgflnL4DugpJnYJdBEgU6ddD16KMV7tUT153oiC2O3fopaJNXx
+         r5oP/KIeoG1zD3l2j7yv80B2/0gHt83tgdsw/tZsnh+F+5JvESBIOg8YmWcNeHeB7iDO
+         4on1xilaKrNXtPFiRG605/XRZA1W/doEhp1csy1Oy0QwR+/1DSHTV2w24we7Z7O06eGH
+         PoM3eFP7YJNmfilQuHb/7/+urH8Y7nbTDo2PpzX5dpFiQOowYk2HrUmW/wBVSP6yLIti
+         DLkS8srM2KDiQcF2VDCvMe8JN1J3pxXXxfbkiy8UUKhbfVv/2+cD4sjoQljwJarpopXH
+         6eKQ==
+X-Gm-Message-State: AOJu0YwAAdTov0iWdQh08krc3amE2sFM+01hFVWCLVhgQ3yVUOJLu27k
+	I60ZeXGz2w+O1DzYZ59x9uodo+Bv47uglw==
+X-Google-Smtp-Source: AGHT+IFVib7H5r2qmphclEtMLw2+NaD4oV5tmOlofRs4vGZzpzggLXpW0b0IjRHygQV4XTZNKZveaQ==
+X-Received: by 2002:a17:906:4f12:b0:9e6:4156:af4e with SMTP id t18-20020a1709064f1200b009e64156af4emr670639eju.22.1699611618389;
+        Fri, 10 Nov 2023 02:20:18 -0800 (PST)
+Received: from tp440p.steeds.sam ([69.63.64.50])
+        by smtp.gmail.com with ESMTPSA id qt19-20020a170906ecf300b009a1be9c29d7sm3746150ejb.179.2023.11.10.02.20.17
+        for <ofono@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 10 Nov 2023 02:20:18 -0800 (PST)
+Date: Fri, 10 Nov 2023 12:20:14 +0200
+From: Sicelo <absicsz@gmail.com>
 To: ofono@lists.linux.dev
-Subject: SIM7600G-H: cid 1 activated before atom registered
-Message-ID: <ZU354V7zyCseX1r2@castle.weinholt.se>
+Subject: Improper Handling for Messages That Do Not Specify Source/Address
+ Port 
+Message-ID: <ZU4D3kXFAvCHs55i@tp440p.steeds.sam>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -33,41 +55,30 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Organization: Weinholt Consulting AB - =?iso-8859-1?Q?G?=
- =?iso-8859-1?Q?=F6teborg=2C_V=E4stra_G=F6talan?= =?iso-8859-1?Q?d?= -
- 559403-2707 - https://weinholt.net
 
-Hello,
+Hi
 
-I have been troubleshooting a problem with a SIM7600G-H modem where the
-LTE network does not come up after reboot. It can be worked around by
-restarting ofono or connman.
+While running ofono in debug mode, I discovered that there are certain
+types of sms-like messages that arrive in ofono core, but are discarded
+without being sent to the client. For these, the ofono log shows a lot
+of:
 
-A symptom of the problem is that the context can't be activated manually
-because GPRS is marked as not attached. I've verified with both the modem
-and Onomondo's signaling logs that GPRS is attached and oFono is wrong.
+  ofonod[3424627]: Got an 8-bit encoded message, however no valid src/address port, ignore
 
-# dbus-send --print-reply --system --dest=org.ofono  \
- /sim7x00_0/context1 org.ofono.ConnectionContext.SetProperty  \
- string:"Active" variant:boolean:"true"
-Error org.ofono.Error.NotAttached: GPRS is not attached
-# mdmcmd /dev/serial/by-id/usb-SimTech_*-if02-port0 uart 'AT+CGATT?'
-Starting with device
-+/dev/serial/by-id/usb-SimTech__Incorporated_SimTech__Incorporated_0123456789ABCDEF-if02-port0, command
-+AT+CGATT?
-Received buffer: AT+CGATT?
-+CGATT: 1
+These messages are valid, and ofono should not discard them. In my case,
+for example, the messages come in while connected to mobile data. They
+are sent by the carrier periodically to notify me about the credit that
+has been deducted from my prepaid plan.
 
-OK
+At first, I thought the issue was on the isimodem driver, but I later
+found the same log on my laptop, whose modem uses plugin/ericsson-mbm.
 
-There is an interesting log message: "cid 1 activated before atom
-registered". This message was added in the commit "gprs: Ignore activated
-contexts during init, list them later". That commit was followed by
-another commit: "atmodem: Implement the list_activated_contexts callback".
+I am currently working on other issues that I have with ofono on my
+platform (isimodem), otherwise I would try to work on it.
 
-I found that reverting the first commit makes the problem go away. But the
-proper fix is probably to implement list_activated_contexts in the
-qmimodem driver, as was done for the atmodem driver. Maybe other drivers
-are also affected.
+Hope the report is clear enough. I can provide more information if
+needed.
 
-/weinholt
+Sincerely
+Sicelo
+
