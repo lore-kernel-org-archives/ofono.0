@@ -1,53 +1,53 @@
-Received: from mail-io1-f46.google.com (mail-io1-f46.google.com [209.85.166.46])
+Received: from mail-il1-f172.google.com (mail-il1-f172.google.com [209.85.166.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 61A0F1E521
-	for <ofono@lists.linux.dev>; Tue, 19 Dec 2023 18:41:18 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60E0F2628B
+	for <ofono@lists.linux.dev>; Tue, 19 Dec 2023 18:41:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VetiePcx"
-Received: by mail-io1-f46.google.com with SMTP id ca18e2360f4ac-7b7fdde8b56so11068139f.1
-        for <ofono@lists.linux.dev>; Tue, 19 Dec 2023 10:41:18 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="enO/uBAk"
+Received: by mail-il1-f172.google.com with SMTP id e9e14a558f8ab-35fa08df8afso19412935ab.3
+        for <ofono@lists.linux.dev>; Tue, 19 Dec 2023 10:41:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1703011277; x=1703616077; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1703011278; x=1703616078; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=dNYgPRJLKkZELSNj0mQSY/vA+jJVdikezjzsZe+sNJE=;
-        b=VetiePcxew5yNYEL2kC9mzQyKqsLMKM2/KxaBIYTYaWDUuMDzrn37+pE8aFhLRNBGr
-         mm3RIKLQFn8t7OMkgSbmmxTnrI7ktYPHFRWNVb43X61I9H7w4HKi4n4OHLBpu3FdPDsR
-         x36phy+75o9KZa3dvtjpL4Yo1sqE+3YYq+Px7jI68foL3MYLfeZxGvZ3gTRC1UG8ND5X
-         ASyeGGMubxi+NXMOYSniZthnLrE3Oy8YhgJun1RT2278Azj66Pmz5OSaA37BIwSWMgHh
-         eo/1qjNN9rDUMTclqQUPnk/LSDsBXDbj/wWS14aPfE39mX2ch3vNhxou8o3EhDSby8jh
-         zIAw==
+        bh=cwPNF7sgLcc/huZQAVNjyX1VGDIQSQxMNNYgdAAJnAM=;
+        b=enO/uBAkZbrus26tJCoMYuO3RJ7Dye0YlFuca0QwQb1ctObZbV/qBHmSaC7QufRx+p
+         5vDEhNcb5NiWm+KuMI+2QvBnR2z6ngdzLtJu8AHg8wp6pfn0Tae4y17noL1jHhiURvf7
+         QoERhFJrDijsjE7kkU23Fr+MNHfIETe3GhtgzL6OvxZHePAMTgojUaG2+IEVcq6R2MSN
+         rP/zVLwzqhfNZGXSvXn5/QQgkNeMVQ9glPPZh358d5vJh5IQnSnp2EeGC7uekcrfBMKa
+         A0jqn/HBBowH2M3yumOk0QFWfnjy/k5sAf5jvlEOUqQOYV0REVAN2dZv/StDQ21OH6nE
+         yTGA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1703011277; x=1703616077;
+        d=1e100.net; s=20230601; t=1703011278; x=1703616078;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=dNYgPRJLKkZELSNj0mQSY/vA+jJVdikezjzsZe+sNJE=;
-        b=l708XfqCxmERGQtgzBM91O6RpNPoBWsaIFNlhYQ5bZA4c3tKstYjQ38KSmjYw/9/et
-         ZQOEZZDycGeLahYySLDRsMBzaveSNebiKu0iWR8n7IsXUIv3rJiD7LLaYsPT985RT4AJ
-         RZNEuGOieC672l2c9+52+DnrKmRESDwoPp7G4uGT3+UpCUlo9LKbMWXS4JrWwlkCg3hb
-         TttDR2KmCO4s/1hmce77OFOCvykYiyFG4GcEvsGN9WRvCl8qbSXa5oDebg+MFdmd1G+l
-         S3RtHAQ/Z5vHPT7S6xiXBr8k889Ec2sah8yZC0zAvwFjKSq5yXzetzXYO8KmFiUCLxzB
-         FpcA==
-X-Gm-Message-State: AOJu0YzHY3ux3Xlp+BZDjlAFXVDM5pl4OSNeXmtfWWmtXBLzI8e9ObgN
-	mE6VwnRpgPtxUiBbzBUJe62glAmA+tM=
-X-Google-Smtp-Source: AGHT+IEoyNx2N6t82HIxXtdKJ5pfDQ230shcM5yMVFcO5LB/gSyOKrQPKhaJ1jTx3u00ibWHzz6l8A==
-X-Received: by 2002:a6b:e714:0:b0:7b7:350b:1ed3 with SMTP id b20-20020a6be714000000b007b7350b1ed3mr19636823ioh.10.1703011277410;
-        Tue, 19 Dec 2023 10:41:17 -0800 (PST)
+        bh=cwPNF7sgLcc/huZQAVNjyX1VGDIQSQxMNNYgdAAJnAM=;
+        b=ufBFSzRrsLQP/p1oWhYbqi2K6pVappiQPS4p7JinWSyYp74MSHdrDNZIYGFTvHHu8I
+         oBJyTjEdQak0YUs5bl+tEQSYKjPs2vInS7zkwnHgV2INiPhDZ4heqKDNdR+NHCH3hPAD
+         Fi71jFYRvaDBzEvlSPwTKx8K4UpFm6eH3hy0JVqVZPTBWITPvexBObov0lhin/L6NoRv
+         y30Yrmv8t0bKPJxkondA9c3pdCMdp1sJYzinrjvvO7dtd97n2KsDWTZPIQAV3bcWQNk6
+         Rl/lYvpppR2NoNBM6XTxvsxgt12x8p3jAKPKv9xdiHljypGRI1BV6sY+pKdzKAq6LRLi
+         AL5Q==
+X-Gm-Message-State: AOJu0YxBLsQnHPodADZ7SqVCQGB/F6z/4Dh8h/R+/MsIwfVlE9UPkXI8
+	t7enzWakZAIQTCqZCj8g7eAPjyP/M64=
+X-Google-Smtp-Source: AGHT+IFp2xtSAJVe8xNXpcFn7gFHiWeFDvmaFYt3hM+txLWcIDDW1EGXbrC3UXl+LAJ6npaFS/AFPQ==
+X-Received: by 2002:a05:6e02:214b:b0:35d:59a2:127f with SMTP id d11-20020a056e02214b00b0035d59a2127fmr27104066ilv.43.1703011278331;
+        Tue, 19 Dec 2023 10:41:18 -0800 (PST)
 Received: from localhost.localdomain ([136.33.23.24])
-        by smtp.gmail.com with ESMTPSA id co13-20020a0566383e0d00b0046b406d9d95sm1549213jab.38.2023.12.19.10.41.16
+        by smtp.gmail.com with ESMTPSA id co13-20020a0566383e0d00b0046b406d9d95sm1549213jab.38.2023.12.19.10.41.17
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 19 Dec 2023 10:41:17 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 09/15] provision: Add new module
-Date: Tue, 19 Dec 2023 12:37:06 -0600
-Message-ID: <20231219184016.420116-9-denkenz@gmail.com>
+Subject: [PATCH v2 10/15] gprs: Use the new provisioning module
+Date: Tue, 19 Dec 2023 12:37:07 -0600
+Message-ID: <20231219184016.420116-10-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20231219184016.420116-1-denkenz@gmail.com>
 References: <20231219184016.420116-1-denkenz@gmail.com>
@@ -59,125 +59,76 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This module will replace the gprs-provision module.  The new provisiondb
-supercedes all other plugins in capability and there's no desire to
-maintain the old code any longer.
 ---
- Makefile.am     |  3 +-
- src/ofono.h     |  5 ++++
- src/provision.c | 73 +++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 80 insertions(+), 1 deletion(-)
- create mode 100644 src/provision.c
+ src/gprs.c | 23 ++++++++++++++++-------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 3023ed0c..cfa05bf7 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -726,7 +726,8 @@ src_ofonod_SOURCES = $(builtin_sources) $(gatchat_sources) src/ofono.ver \
- 			src/netmon.c src/lte.c src/ims.c \
- 			src/netmonagent.c src/netmonagent.h \
- 			src/module.c \
--			src/provisiondb.h src/provisiondb.c
-+			src/provisiondb.h src/provisiondb.c \
-+			src/provision.c
+diff --git a/src/gprs.c b/src/gprs.c
+index 27aeb68c..40642324 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2376,6 +2376,7 @@ static void provision_context(const struct ofono_gprs_provision_data *ap,
+ {
+ 	unsigned int id;
+ 	struct pri_context *context = NULL;
++	enum ofono_gprs_context_type type;
  
- src_ofonod_LDADD = gdbus/libgdbus-internal.la $(builtin_libadd) $(ell_ldadd) \
- 			@GLIB_LIBS@ @DBUS_LIBS@ -ldl
-diff --git a/src/ofono.h b/src/ofono.h
-index e289ff08..6a8c53a1 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -582,6 +582,11 @@ void __ofono_nettime_info_received(struct ofono_modem *modem,
- #include <ofono/sim-auth.h>
+ 	/* Sanity check */
+ 	if (ap == NULL)
+@@ -2408,10 +2409,19 @@ static void provision_context(const struct ofono_gprs_provision_data *ap,
+ 							gprs->last_context_id);
+ 	else
+ 		id = l_uintset_find_unused_min(gprs->used_pids);
++
+ 	if (id > l_uintset_get_max(gprs->used_pids))
+ 		return;
  
- #include <ofono/gprs-provision.h>
-+bool __ofono_provision_get_settings(const char *mcc,
-+				const char *mnc, const char *spn,
-+				struct ofono_gprs_provision_data **settings,
-+				size_t *count);
+-	context = pri_context_create(gprs, ap->name, ap->type);
++	/*
++	 * Right now oFono is not setup to handle contexts with multiple
++	 * types due to the way the D-Bus API is structured.  This mainly
++	 * affects Internet + MMS contexts.  For now, work around this
++	 * by selecting the primary (lowest bit) context type
++	 */
++	type = 1 << (__builtin_ffs(ap->type) - 1);
 +
- ofono_bool_t __ofono_gprs_provision_get_settings(const char *mcc,
- 				const char *mnc, const char *spn,
- 				struct ofono_gprs_provision_data **settings,
-diff --git a/src/provision.c b/src/provision.c
-new file mode 100644
-index 00000000..e419d15c
---- /dev/null
-+++ b/src/provision.c
-@@ -0,0 +1,73 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *  Copyright (C) 2023  Cruise, LLC
-+ *
-+ *  SPDX-License-Identifier: GPL-2.0-only
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <stddef.h>
-+
-+#include "provisiondb.h"
-+#include "ofono.h"
-+
-+static struct provision_db *pdb;
-+
-+bool __ofono_provision_get_settings(const char *mcc,
-+				const char *mnc, const char *spn,
-+				struct ofono_gprs_provision_data **settings,
-+				size_t *count)
-+{
-+	size_t n_contexts;
-+	struct ofono_gprs_provision_data *contexts;
-+	int r;
++	context = pri_context_create(gprs, ap->name, type);
+ 	if (context == NULL)
+ 		return;
+ 
+@@ -2429,7 +2439,7 @@ static void provision_context(const struct ofono_gprs_provision_data *ap,
+ 	strcpy(context->context.apn, ap->apn);
+ 	context->context.proto = ap->proto;
+ 
+-	if (ap->type == OFONO_GPRS_CONTEXT_TYPE_MMS) {
++	if (type == OFONO_GPRS_CONTEXT_TYPE_MMS) {
+ 		if (ap->message_proxy != NULL)
+ 			strcpy(context->message_proxy, ap->message_proxy);
+ 
+@@ -2454,11 +2464,10 @@ static void provision_contexts(struct ofono_gprs *gprs, const char *mcc,
+ 				const char *mnc, const char *spn)
+ {
+ 	struct ofono_gprs_provision_data *settings;
+-	int count;
+-	int i;
++	size_t count;
 +	size_t i;
-+
-+	if (mcc == NULL || strlen(mcc) == 0 || mnc == NULL || strlen(mnc) == 0)
-+		return false;
-+
-+	r = provision_db_lookup(pdb, mcc, mnc, spn, &contexts, &n_contexts);
-+	if (r < 0)
-+		return false;
-+
-+	DBG("Obtained %zd contexts for %s%s, spn: %s",
-+			n_contexts, mcc, mnc, spn);
-+
-+	for (i = 0; i < n_contexts; i++) {
-+		struct ofono_gprs_provision_data *ap = contexts + i;
-+
-+		DBG("APN: %s, Type: %x, Proto: %x",
-+				ap->apn, ap->type, ap->proto);
-+
-+		if (ap->type & OFONO_GPRS_CONTEXT_TYPE_MMS)
-+			DBG("MMS Proxy: %s, MMSC: %s", ap->message_proxy,
-+					ap->message_center);
-+	}
-+
-+	*count = n_contexts;
-+	*settings = contexts;
-+
-+	return true;
-+}
-+
-+static int provision_init(void)
-+{
-+	DBG("");
-+
-+	pdb = provision_db_new_default();
-+
-+	if (!pdb)
-+		l_warn("Unable to open provisioning database!");
-+
-+	return 0;
-+}
-+
-+static void provision_exit(void)
-+{
-+	provision_db_free(pdb);
-+}
-+
-+OFONO_MODULE(provision, provision_init, provision_exit)
+ 
+-	if (__ofono_gprs_provision_get_settings(mcc, mnc, spn,
+-						&settings, &count) == FALSE) {
++	if (!__ofono_provision_get_settings(mcc, mnc, spn, &settings, &count)) {
+ 		ofono_warn("Provisioning failed");
+ 		return;
+ 	}
+@@ -2466,7 +2475,7 @@ static void provision_contexts(struct ofono_gprs *gprs, const char *mcc,
+ 	for (i = 0; i < count; i++)
+ 		provision_context(&settings[i], gprs);
+ 
+-	__ofono_gprs_provision_free_settings(settings, count);
++	l_free(settings);
+ }
+ 
+ static void remove_non_active_context(struct ofono_gprs *gprs,
 -- 
 2.43.0
 
