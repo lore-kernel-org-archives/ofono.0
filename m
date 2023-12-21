@@ -1,20 +1,20 @@
 Received: from mx01.omp.ru (mx01.omp.ru [90.154.21.10])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FF641D69C
-	for <ofono@lists.linux.dev>; Thu, 21 Dec 2023 14:39:12 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3E47846B
+	for <ofono@lists.linux.dev>; Thu, 21 Dec 2023 14:39:16 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=omp.ru
 Received: from spb1wst017.omp.ru (109.73.39.18) by msexch01.omp.ru
  (10.188.4.12) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id 15.2.1258.12; Thu, 21 Dec
- 2023 17:39:09 +0300
+ 2023 17:39:12 +0300
 From: Denis Grigorev <d.grigorev@omp.ru>
 To: <ofono@lists.linux.dev>
 CC: <denkenz@gmail.com>, <d.grigorev@omp.ru>
-Subject: [PATCH 1/2] smsutil: Check that address fits in memory
-Date: Thu, 21 Dec 2023 17:16:37 +0300
-Message-ID: <20231221141638.19774-2-d.grigorev@omp.ru>
+Subject: [PATCH 2/2] smsutil: Check that submit report fits in memory
+Date: Thu, 21 Dec 2023 17:16:38 +0300
+Message-ID: <20231221141638.19774-3-d.grigorev@omp.ru>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20231221141638.19774-1-d.grigorev@omp.ru>
 References: <20231221141638.19774-1-d.grigorev@omp.ru>
@@ -57,26 +57,32 @@ X-KSE-Attachment-Filter-Triggered-Rules: Clean
 X-KSE-Attachment-Filter-Triggered-Filters: Clean
 X-KSE-BulkMessagesFiltering-Scan-Result: InTheLimit
 
-This addresses CVE-2023-4233.
+This addresses CVE-2023-4234.
 ---
- src/smsutil.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ src/smsutil.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
 diff --git a/src/smsutil.c b/src/smsutil.c
-index 8e57a065..e9551b0d 100644
+index e9551b0d..6edf9ee6 100644
 --- a/src/smsutil.c
 +++ b/src/smsutil.c
-@@ -647,6 +647,10 @@ gboolean sms_decode_address_field(const unsigned char *pdu, int len,
- 	out->numbering_plan = bit_field(addr_type, 0, 4);
+@@ -942,10 +942,16 @@ static gboolean decode_submit_report(const unsigned char *pdu, int len,
+ 			return FALSE;
  
- 	if (out->number_type != SMS_NUMBER_TYPE_ALPHANUMERIC) {
-+		/* BCD number consumes half as much memory */
-+		if (byte_len * 2 >= (int) sizeof(out->address))
-+			return FALSE;
+ 		if (out->type == SMS_TYPE_SUBMIT_REPORT_ERROR) {
++			if (expected > (int) sizeof(out->submit_err_report.ud))
++				return FALSE;
 +
- 		extract_bcd_number(pdu + *offset, byte_len, out->address);
- 		*offset += byte_len;
- 	} else {
+ 			out->submit_err_report.udl = udl;
+ 			memcpy(out->submit_err_report.ud,
+ 					pdu + offset, expected);
+ 		} else {
++			if (expected > (int) sizeof(out->submit_ack_report.ud))
++				return FALSE;
++
+ 			out->submit_ack_report.udl = udl;
+ 			memcpy(out->submit_ack_report.ud,
+ 					pdu + offset, expected);
 -- 
 2.17.1
 
