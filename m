@@ -1,88 +1,95 @@
-Received: from mx01.omp.ru (mx01.omp.ru [90.154.21.10])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+Received: from mail-io1-f43.google.com (mail-io1-f43.google.com [209.85.166.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3E47846B
-	for <ofono@lists.linux.dev>; Thu, 21 Dec 2023 14:39:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=omp.ru
-Received: from spb1wst017.omp.ru (109.73.39.18) by msexch01.omp.ru
- (10.188.4.12) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id 15.2.1258.12; Thu, 21 Dec
- 2023 17:39:12 +0300
-From: Denis Grigorev <d.grigorev@omp.ru>
-To: <ofono@lists.linux.dev>
-CC: <denkenz@gmail.com>, <d.grigorev@omp.ru>
-Subject: [PATCH 2/2] smsutil: Check that submit report fits in memory
-Date: Thu, 21 Dec 2023 17:16:38 +0300
-Message-ID: <20231221141638.19774-3-d.grigorev@omp.ru>
-X-Mailer: git-send-email 2.17.1
-In-Reply-To: <20231221141638.19774-1-d.grigorev@omp.ru>
-References: <20231221141638.19774-1-d.grigorev@omp.ru>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46AD62C849
+	for <ofono@lists.linux.dev>; Fri, 22 Dec 2023 19:26:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Dylq2nRK"
+Received: by mail-io1-f43.google.com with SMTP id ca18e2360f4ac-7ba9f24acf8so28886239f.2
+        for <ofono@lists.linux.dev>; Fri, 22 Dec 2023 11:26:07 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1703273166; x=1703877966; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=HjOY/h9di1AwQQDvTvXd+FRUHJQ4u+QgtT6LUgMUiVM=;
+        b=Dylq2nRKSrge/P5YiXUUiE3H2j76BVJO/FTbvkcaDKm258ObChJRBSp9SIbYbkjiEe
+         B7AUA8zv4Y8ZFDReo2d3ruaMUzOtzraHQOxUSNUEfnhA6ul1499yJn85J/jOzc0JcZxy
+         bDBPJdD6F5qSfdBlH9avdEldhdIMdGdjlqumXUGc79pmmrCq+zT9BPElBdiUQUwmAPHB
+         tFygNXeTFZRaeoKx3SzVVb7AgWzF8Kfn7+yjjIFGaodwEaN4cYWSmbbHzEQ06mpwb8lK
+         Yy7xdv7TY/HEHNHS+4YLiD1T87yenEhcwwQMpfGVweT1ct43dzh2dKeGzu4F+PjJiLrg
+         cNbA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1703273166; x=1703877966;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=HjOY/h9di1AwQQDvTvXd+FRUHJQ4u+QgtT6LUgMUiVM=;
+        b=SD0FnkG9M6NQH4VLEiULMHhwI+7l7i7uDzX/rGjwClyGbec2/fNqzODe9MCfYOPD2O
+         KQuc9V7OCR6TxavpQOC84PDaPaxkRSuPCUGjO7aZbun3U0LN9vqf5/F40mXLdwSBHZf9
+         usuTBwm58ltjTb1ibc+GYt/u/9H4tknTLUEXHO1rLkk88i4UtXJqr5ZELZ4nCkfq87WV
+         DnUp/8XLB2fbPD3gY49tH/6IoKDYfD0oJSWlhYUAQliZPTSHn/rWK9/kqgKZdzm4vwX4
+         0zG0L/kqaH16p+iCa178cOLYyZC60uJiRNOuCMqHSBIKmDFa3mkIVDtdkFiPXQROYYrI
+         C1GQ==
+X-Gm-Message-State: AOJu0Yyy563Du3/hCq8aVH23AByq658AMhkSfHdcQeJk+B9mDmPivRAA
+	PMZxNxwOQpY/XDwy8N/o2L5JjTsnnns=
+X-Google-Smtp-Source: AGHT+IHFyzN2LDt1jAoFucVMWnDzn29C5G+tN/LQVZi4avzGyc9pYeK263lM2PrRqEGokcBVoaL5AQ==
+X-Received: by 2002:a05:6602:2a53:b0:7b3:ebe2:a89f with SMTP id k19-20020a0566022a5300b007b3ebe2a89fmr2745078iov.21.1703273166404;
+        Fri, 22 Dec 2023 11:26:06 -0800 (PST)
+Received: from [172.16.49.130] ([136.33.23.24])
+        by smtp.googlemail.com with ESMTPSA id bq15-20020a056638468f00b0046922414bd3sm1188327jab.87.2023.12.22.11.26.05
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 22 Dec 2023 11:26:06 -0800 (PST)
+Message-ID: <aa3428d5-1611-4b40-953a-273b2b9b84f8@gmail.com>
+Date: Fri, 22 Dec 2023 13:26:05 -0600
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-ClientProxiedBy: msexch01.omp.ru (10.188.4.12) To msexch01.omp.ru
- (10.188.4.12)
-X-KSE-ServerInfo: msexch01.omp.ru, 9
-X-KSE-AntiSpam-Interceptor-Info: scan successful
-X-KSE-AntiSpam-Version: 6.1.0, Database issued on: 12/21/2023 14:23:47
-X-KSE-AntiSpam-Status: KAS_STATUS_NOT_DETECTED
-X-KSE-AntiSpam-Method: none
-X-KSE-AntiSpam-Rate: 0
-X-KSE-AntiSpam-Info: Lua profiles 182278 [Dec 21 2023]
-X-KSE-AntiSpam-Info: Version: 6.1.0.3
-X-KSE-AntiSpam-Info: Envelope from: d.grigorev@omp.ru
-X-KSE-AntiSpam-Info: LuaCore: 7 0.3.7 6d6bf5bd8eea7373134f756a2fd73e9456bb7d1a
-X-KSE-AntiSpam-Info: {rep_avail}
-X-KSE-AntiSpam-Info: {Tracking_from_domain_doesnt_match_to}
-X-KSE-AntiSpam-Info:
-	d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;109.73.39.18:7.1.2;127.0.0.199:7.1.2;omp.ru:7.1.1;spb1wst017.omp.ru:7.1.1
-X-KSE-AntiSpam-Info: ApMailHostAddress: 109.73.39.18
-X-KSE-AntiSpam-Info: Rate: 0
-X-KSE-AntiSpam-Info: Status: not_detected
-X-KSE-AntiSpam-Info: Method: none
-X-KSE-AntiSpam-Info: Auth:dmarc=temperror header.from=omp.ru;spf=temperror
- smtp.mailfrom=omp.ru;dkim=none
-X-KSE-Antiphishing-Info: Clean
-X-KSE-Antiphishing-ScanningType: Heuristic
-X-KSE-Antiphishing-Method: None
-X-KSE-Antiphishing-Bases: 12/21/2023 14:28:00
-X-KSE-Antivirus-Interceptor-Info: scan successful
-X-KSE-Antivirus-Info: Clean, bases: 12/21/2023 10:52:00 AM
-X-KSE-Attachment-Filter-Triggered-Rules: Clean
-X-KSE-Attachment-Filter-Triggered-Filters: Clean
-X-KSE-BulkMessagesFiltering-Scan-Result: InTheLimit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/2] smsutil: Check that address fits in memory
+Content-Language: en-US
+To: Denis Grigorev <d.grigorev@omp.ru>, ofono@lists.linux.dev
+References: <20231221141638.19774-1-d.grigorev@omp.ru>
+ <20231221141638.19774-2-d.grigorev@omp.ru>
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20231221141638.19774-2-d.grigorev@omp.ru>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-This addresses CVE-2023-4234.
----
- src/smsutil.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+Hi Denis,
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index e9551b0d..6edf9ee6 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -942,10 +942,16 @@ static gboolean decode_submit_report(const unsigned char *pdu, int len,
- 			return FALSE;
- 
- 		if (out->type == SMS_TYPE_SUBMIT_REPORT_ERROR) {
-+			if (expected > (int) sizeof(out->submit_err_report.ud))
-+				return FALSE;
-+
- 			out->submit_err_report.udl = udl;
- 			memcpy(out->submit_err_report.ud,
- 					pdu + offset, expected);
- 		} else {
-+			if (expected > (int) sizeof(out->submit_ack_report.ud))
-+				return FALSE;
-+
- 			out->submit_ack_report.udl = udl;
- 			memcpy(out->submit_ack_report.ud,
- 					pdu + offset, expected);
--- 
-2.17.1
+On 12/21/23 08:16, Denis Grigorev wrote:
+> This addresses CVE-2023-4233.
+> ---
+>   src/smsutil.c | 4 ++++
+>   1 file changed, 4 insertions(+)
+> 
+> diff --git a/src/smsutil.c b/src/smsutil.c
+> index 8e57a065..e9551b0d 100644
+> --- a/src/smsutil.c
+> +++ b/src/smsutil.c
+> @@ -647,6 +647,10 @@ gboolean sms_decode_address_field(const unsigned char *pdu, int len,
+>   	out->numbering_plan = bit_field(addr_type, 0, 4);
+>   
+>   	if (out->number_type != SMS_NUMBER_TYPE_ALPHANUMERIC) {
+> +		/* BCD number consumes half as much memory */
+> +		if (byte_len * 2 >= (int) sizeof(out->address))
 
+Unfortunately this is not precise enough.  The AddressValue field is limited to 
+10 bytes, or 20 bcd characters.  sizeof(out->address) is 23 due to UTF8 
+representation of certain GSM characters.  It might be better to check addr_len 
+above instead.
+
+> +			return FALSE;
+> +
+>   		extract_bcd_number(pdu + *offset, byte_len, out->address);
+>   		*offset += byte_len;
+>   	} else {
+
+Regards,
+-Denis
