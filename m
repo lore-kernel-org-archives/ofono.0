@@ -1,89 +1,75 @@
-Received: from mx01.omp.ru (mx01.omp.ru [90.154.21.10])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+Received: from mail-oa1-f47.google.com (mail-oa1-f47.google.com [209.85.160.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1959D10A1A
-	for <ofono@lists.linux.dev>; Fri, 29 Dec 2023 10:30:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=omp.ru
-Received: from localhost.localdomain (178.71.215.224) by msexch01.omp.ru
- (10.188.4.12) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id 15.2.1258.12; Fri, 29 Dec
- 2023 13:30:34 +0300
-From: Denis Grigorev <d.grigorev@omp.ru>
-To: <ofono@lists.linux.dev>
-CC: <denkenz@gmail.com>, <d.grigorev@omp.ru>
-Subject: [PATCH v3] smsutil: Validate the length of the address field
-Date: Fri, 29 Dec 2023 13:30:04 +0300
-Message-ID: <20231229103004.78670-1-d.grigorev@omp.ru>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20231228095152.68478-1-d.grigorev@omp.ru>
-References: <20231228095152.68478-1-d.grigorev@omp.ru>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D5A91549A
+	for <ofono@lists.linux.dev>; Tue,  2 Jan 2024 17:18:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="T0ieSPpx"
+Received: by mail-oa1-f47.google.com with SMTP id 586e51a60fabf-203fe0e3fefso5071876fac.2
+        for <ofono@lists.linux.dev>; Tue, 02 Jan 2024 09:18:38 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1704215918; x=1704820718; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=xFhQ7EplByPQgTPwpYVFeppgiO9ynLintoKtiPNnJD8=;
+        b=T0ieSPpxrOUq23dTO2MtTJpnJBkNkLObO+MSHSLb/+KWl+BNFyvyvPscY6JW7TUrtC
+         xiXhpdRk8Yt2jKF5Te+GkDgoJZc8KBHGe/kzWvV9n39a9rcdJNe+0UwSFShXfN2n3wKs
+         DQ73EKjX/GxQ3urNailvrvFB6d74Uj5hD39Rix/09ESiUkW2u0HcTMdkMqljVjIP1Q9G
+         maV38ELqqkIguI2rUTLtJFcES+NQWk+VsmDn8OyWE+3vNKAcS/bJ9FF5dLAwDIv9KVW0
+         wf2hROoqUGoETsXo3NCKMB9kCV1jChhVojgkHKeT1/AjYTJxggq072bZobNO2KNzcjew
+         A7aw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1704215918; x=1704820718;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=xFhQ7EplByPQgTPwpYVFeppgiO9ynLintoKtiPNnJD8=;
+        b=l05yA1SX5RhpowHQVFv9aUwUHSaBPIsFmP1JXlCa+lmdsCxjyT75dPmo9T+Kf0f40B
+         ZhwVjk4xkM+l33M/O3GHG8338vJQrDxus1RSIO9+gSrxSs89sVf/O5XvDm7deYfCsfeU
+         cXIJ8EJdA0hhJRH2p26srRjOvxeViLjDFi5RDefr4aeXyHkjt2FCuSHGkmb01L85hP7z
+         6efSDdL8Pr3GLepx/aHXJ2pnmJOx+dTPABo9vI7V8C+ghRMFDlb+MZoel1gW0oKLKi3r
+         7ATF3iPh7cfUjw9BfmbDcs64+TMBZaZPfzhqdgsuX21E+T6LelKiW33YlA/IrdIdQl61
+         e1mQ==
+X-Gm-Message-State: AOJu0YzwsngB970VBoyOxed5SRT+qc10aIfzdOpfaE1CKMjxa7iKhGSj
+	3Q3hGkrX6ws2TYrSPYNTdOEq4YjaFBc=
+X-Google-Smtp-Source: AGHT+IGAUt4AgXfKbroOMvH4r9pBr60frBSpFo5rlze3aj2muBA5ul2jsPNry6byUNJ+JjWuNwCOtg==
+X-Received: by 2002:a05:6871:b13:b0:1fb:3700:ee1b with SMTP id fq19-20020a0568710b1300b001fb3700ee1bmr14482269oab.47.1704215918116;
+        Tue, 02 Jan 2024 09:18:38 -0800 (PST)
+Received: from [172.16.49.130] (216.106.68.145.reverse.socket.net. [216.106.68.145])
+        by smtp.googlemail.com with ESMTPSA id ti10-20020a056871890a00b0020316ca60a6sm5689927oab.1.2024.01.02.09.18.37
+        for <ofono@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 02 Jan 2024 09:18:37 -0800 (PST)
+Message-ID: <b0600c2c-79ef-443e-bcf3-235ff99ab4f0@gmail.com>
+Date: Tue, 2 Jan 2024 11:18:37 -0600
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: msexch01.omp.ru (10.188.4.12) To msexch01.omp.ru
- (10.188.4.12)
-X-KSE-ServerInfo: msexch01.omp.ru, 9
-X-KSE-AntiSpam-Interceptor-Info: scan successful
-X-KSE-AntiSpam-Version: 6.1.0, Database issued on: 12/29/2023 10:22:39
-X-KSE-AntiSpam-Status: KAS_STATUS_NOT_DETECTED
-X-KSE-AntiSpam-Method: none
-X-KSE-AntiSpam-Rate: 59
-X-KSE-AntiSpam-Info: Lua profiles 182426 [Dec 29 2023]
-X-KSE-AntiSpam-Info: Version: 6.1.0.3
-X-KSE-AntiSpam-Info: Envelope from: d.grigorev@omp.ru
-X-KSE-AntiSpam-Info: LuaCore: 7 0.3.7 6d6bf5bd8eea7373134f756a2fd73e9456bb7d1a
-X-KSE-AntiSpam-Info: {rep_avail}
-X-KSE-AntiSpam-Info: {Tracking_from_domain_doesnt_match_to}
-X-KSE-AntiSpam-Info: {relay has no DNS name}
-X-KSE-AntiSpam-Info: {SMTP from is not routable}
-X-KSE-AntiSpam-Info:
-	d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;127.0.0.199:7.1.2;omp.ru:7.1.1
-X-KSE-AntiSpam-Info: ApMailHostAddress: 178.71.215.224
-X-KSE-AntiSpam-Info: {DNS response errors}
-X-KSE-AntiSpam-Info: Rate: 59
-X-KSE-AntiSpam-Info: Status: not_detected
-X-KSE-AntiSpam-Info: Method: none
-X-KSE-AntiSpam-Info: Auth:dmarc=temperror header.from=omp.ru;spf=temperror
- smtp.mailfrom=omp.ru;dkim=none
-X-KSE-Antiphishing-Info: Clean
-X-KSE-Antiphishing-ScanningType: Heuristic
-X-KSE-Antiphishing-Method: None
-X-KSE-Antiphishing-Bases: 12/29/2023 10:26:00
-X-KSE-Antivirus-Interceptor-Info: scan successful
-X-KSE-Antivirus-Info: Clean, bases: 12/29/2023 8:08:00 AM
-X-KSE-Attachment-Filter-Triggered-Rules: Clean
-X-KSE-Attachment-Filter-Triggered-Filters: Clean
-X-KSE-BulkMessagesFiltering-Scan-Result: InTheLimit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 01/15] build: Fix typo that breaks --fsanitize=leak
+ check
+Content-Language: en-US
+To: ofono@lists.linux.dev
+References: <20231219184016.420116-1-denkenz@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20231219184016.420116-1-denkenz@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-This addresses CVE-2023-4233.
----
- v1 -> v2: Validate Address-Length instead of comparing with mem size.
- v2 -> v3: Remove extra space
+On 12/19/23 12:36, Denis Kenzior wrote:
+> ---
+>   acinclude.m4 | 3 +--
+>   1 file changed, 1 insertion(+), 2 deletions(-)
+> 
 
- src/smsutil.c | 4 ++++
- 1 file changed, 4 insertions(+)
+I went ahead and applied this build patch from this series
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index c25dbdbf..27c5065a 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -627,6 +627,10 @@ gboolean sms_decode_address_field(const unsigned char *pdu, int len,
- 	if (!next_octet(pdu, len, offset, &addr_len))
- 		return FALSE;
- 
-+	/* According to 23.040 9.1.2.5 Address-Length must not exceed 20 */
-+	if (addr_len > 20)
-+		return FALSE;
-+
- 	if (sc && addr_len == 0) {
- 		out->address[0] = '\0';
- 		return TRUE;
--- 
-2.34.1
+Regards,
+-Denis
 
