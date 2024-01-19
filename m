@@ -1,114 +1,111 @@
-Received: from mail-oi1-f174.google.com (mail-oi1-f174.google.com [209.85.167.174])
+Received: from mail-ot1-f43.google.com (mail-ot1-f43.google.com [209.85.210.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93B4356448
-	for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 17:19:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A56AD57867
+	for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 21:11:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705684798; cv=none; b=MsDRNZ3Opx+isl2hZ26dJdua2qL7dmznoV1giquCVzPf4aF+VDI0q2pDt9A60PipKM59fYFcemA7XD+3UrhtWAEPFrShZ/x3GVXnQTctDm/AyZQTtljc5UEjKvM/N22RomA2HijozBxLSddDtBrN2oumoW3A1huqffOgdU8tMoA=
+	t=1705698668; cv=none; b=gNND+qJMfCB3qbdEDWxnIDRhoJBC/eXwqBkw8kSL+BhfpSePd4i9coeNht2wMdBi38FMsUbKl6KLzUMS5G8xxDFdeLTuk+pXpF7xKF9xw25kY6mOmXTSbDjh1i3F7XffNUs1TxRoXcfL7g8fFbxx7eM7eqkCKBwU7hfS6uYxX60=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705684798; c=relaxed/simple;
-	bh=+UqRjqIjyUFkBeldtl0lr9pwnYq+Sf+q8Oipbz+BmRY=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=WNx/yAwJnrRvuPz0aZ3r1Eg8Sd34xJoX6WelmgHJbwHUO8NN13Z6vMz/Zx46+ptvvPj2bOilR3osLnSEotHsg3pQVgatCB5FQ/oZAieBEjCFF0x9hjkU9Hv4lLNr9axZUJOUbuhV/GCaFU1EFDm7qPbFmJO/8rkjrj/Yfs+vkfg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ENrcBf7u; arc=none smtp.client-ip=209.85.167.174
+	s=arc-20240116; t=1705698668; c=relaxed/simple;
+	bh=6QdXd38SSlBQcG0K/3ipWfBdZiQSUD5sV6fE6xjl8Mo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=bo+UKlQsc6VuPsRDs7TwEkC3BsFnOjZRmR0RQc2zV51Jlm5oqd8GpqHXFAoeZRV6D6enfc3UCwNYlAUG0oprCXa9mvEnx6fL9ltnqaaVB9P5Parim2cDCkSDesHdmVwjqAZsb5J1q3RXNYqwB7Q4BBFueUo0XNqXx1fiEdCzH3E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dQCQQN71; arc=none smtp.client-ip=209.85.210.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ENrcBf7u"
-Received: by mail-oi1-f174.google.com with SMTP id 5614622812f47-3bda741ad7dso415588b6e.1
-        for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 09:19:57 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dQCQQN71"
+Received: by mail-ot1-f43.google.com with SMTP id 46e09a7af769-6dc83674972so620952a34.1
+        for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 13:11:06 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1705684796; x=1706289596; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=UnbHKlvabpA5e/3I4b+GyIPHwCwq646uSMLbhm6kox0=;
-        b=ENrcBf7uu8n/Wd8l9Ctg/N5K9oaZPjK2Ii3V0Ol9qcljdXgtzaVvY5Au9ObOFl0Qu7
-         kpJPMOheu6GyI67NJ4XFjy4+pR2yoAuAlrpe49D55kb8VrnfvyXCjh8RBraNCOmXnjww
-         jW6iuYsxCRmrVc87bNcXheEuz7byVxj2rmVZr8iigj+r8RN8okX7cp9XRYfkjSq/7/3Z
-         oNg7/KxInnpKABIAO5AX5ssZSOsxdLFTz4UYCUOKk66v0qzhPMVJfUyy+LErFbaV11L4
-         x2oZAQ9938A0NussbrFexS0m22FtM7ivVrQ0/XFStPE4+y7ihhPW79xzNlr9IHg13AjS
-         2cFg==
+        d=gmail.com; s=20230601; t=1705698665; x=1706303465; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=QTECqhclkcQEf7Zis94yWVh0FXThprpO9RslCeEURq4=;
+        b=dQCQQN71oTtpLLLCy4g13pzYDNmCdfsXCng0ApXphKGbO+cVeC4VD3j9fZJulnC5py
+         /NPndnlKd+3Oh9qgsZjj7I8j//YvTMHppHaPyRYP+wVfi8qVCi1fKd9vfrG33r4obXU5
+         evc9ItIHNwb3VoB9b43OJFt0wFKKusuCQa9fN8j5e0LokcTBqKVL8+II0iDVvIzFRv/i
+         JoOxpo7bAhZxGRbj4EiCb0KvXByh2GDZmqi2K24Js1fjv39qabJYO/V1iD7egU3OGLRN
+         8Fda9bdddqxa2zmDwKTTvOs3uLpYPTse4RNzO////5ZAFPdY0EQ5DMqnWOergUemsxfm
+         buaw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1705684796; x=1706289596;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=UnbHKlvabpA5e/3I4b+GyIPHwCwq646uSMLbhm6kox0=;
-        b=hZ4pkBUC3WKRM7OiNWRrPdOgdr+45+PYbeAKKVx4yy/lgN48Kaptt7PZVipbXN9jDj
-         ulwn513uzmXqfe30SrPPbIgR9+6vfsyLRArH9m1rt5WjFnDF5kQruK0iAXF22ID3z170
-         ACQisCq1s9zbVk/6z9cU/VFeLGQR46lOTAc4qQb/PdH/4QIxKjmD1gbxg3MA1oPW31eI
-         AcclFPFhD8vgtiEsXPhR8HvqPyrZmxj6+fACJxNAhzjxTqyPpghNnTKCMeJEqvjrcUDw
-         38RUdsTKXcOeWODLUyXr0iQYDgDcPu4j4nuh5uSo7nQNS6EvxB80HHT4Rkvl8dGIBExw
-         Ow1Q==
-X-Gm-Message-State: AOJu0Ywws+XAwdWPcXgCR++7kWBu5JJYPQWOUtmO8tJhKsQc9lzdZ8le
-	kLToP95+LhCj1xR9PYDRL9q80vmr99JT33Y/epGW+9v8UcKlwVpNNlcH3Ske
-X-Google-Smtp-Source: AGHT+IH5OJBe3KBU1bjrM25lXvzS2zkuREIumqmjZxoP9mCXkfx7EM60ciQBj3VWsoAgnVBzyoujWQ==
-X-Received: by 2002:a05:6870:420c:b0:206:e340:39d8 with SMTP id u12-20020a056870420c00b00206e34039d8mr141177oac.19.1705684796528;
-        Fri, 19 Jan 2024 09:19:56 -0800 (PST)
-Received: from [172.16.49.130] (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id zd27-20020a056871279b00b00210b451fe96sm924517oab.47.2024.01.19.09.19.56
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 19 Jan 2024 09:19:56 -0800 (PST)
-Message-ID: <c66954ea-81b8-41bd-b261-aade6edd48c3@gmail.com>
-Date: Fri, 19 Jan 2024 11:19:55 -0600
+        d=1e100.net; s=20230601; t=1705698665; x=1706303465;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=QTECqhclkcQEf7Zis94yWVh0FXThprpO9RslCeEURq4=;
+        b=QKiXUP5wElC6irBxr+egmjnGC3GIIj7x/yvFMwbGNLGtOXblzEGpDcsnqlXkvGeWIA
+         7GiDcqLymoHxD8c+pq71pdkiLxOc3nURmp4vXLv3i/PdQIxdTKJkcsh7CmbjHn6KV1Eb
+         ikhUr58tn6KJnvpQvAoHrrwyk7tz1ERXaD5eOTzKMWIQEedkP+qBvoxpig54VVzQf9RX
+         XHnnn3dPmao2N83nm5lZ9ETUctgcGhZdh/X4dJmZTf9y9BS406BeEh8E7W+7icpWlqU0
+         XmCyigtxykb4lEcfUMyf0TbduQBTYbEZA+qMkkcWx9WBCLdy88489yKH4piliw4wo6qf
+         hYoA==
+X-Gm-Message-State: AOJu0Yya33R/U6vhrtWcKWSPnBPvSqOI9KetrDqawT0MbKsAlbT2l8Uo
+	aWcxIjjIyK6PLvlVMDOHctZivGDechEWnWGvd4mD0YgzwRsOBS0ETExJoxai
+X-Google-Smtp-Source: AGHT+IFPgibZAYrBWxCQCQUUnFGl5kySJEFJ636kCG3woxItig3gBpr03wcL8HyeJD8XO1JnNvltcw==
+X-Received: by 2002:a9d:7dc5:0:b0:6dd:f078:b8f3 with SMTP id k5-20020a9d7dc5000000b006ddf078b8f3mr408357otn.76.1705698665542;
+        Fri, 19 Jan 2024 13:11:05 -0800 (PST)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id l47-20020a056830336f00b006e0d8709ff3sm457597ott.39.2024.01.19.13.11.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 19 Jan 2024 13:11:05 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 01/14] include: Allow multiple context types
+Date: Fri, 19 Jan 2024 15:09:37 -0600
+Message-ID: <20240119211017.474598-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] gatchat: fix unref
-Content-Language: en-US
-To: Maxim Lyubimov <m.lyubimov@aqsi.ru>, ofono@lists.linux.dev
-References: <20240119111017.1407534-1-m.lyubimov@aqsi.ru>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20240119111017.1407534-1-m.lyubimov@aqsi.ru>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi Maxim,
+---
+ include/gprs-context.h   | 8 ++++----
+ include/gprs-provision.h | 4 +++-
+ 2 files changed, 7 insertions(+), 5 deletions(-)
 
-On 1/19/24 05:10, Maxim Lyubimov wrote:
-> If the new_bytes handler processes a modem shutdown URC, it results in
-
-So new_bytes would call into at_chat_match_notify(), and one of the callbacks 
-invoked would call g_at_chat_unref?
-
-> a call to the g_at_chat_unref function, which includes a call to the
-> chat_cleanup function, which clears the list of URC handlers that
-
-This should be taken care of by in_notify being set?  Hmm... I guess you end up 
-unrefing the last chat...
-
-Do you have a backtrace or asan output by any chance?
-
-> continue to be traversed after the current handler has completed, and
-> may lead to errors. To correct the situation, the at_chat_ref function
-> has been added, which is called at the beginning of the new_bytes
-
-The original intent with the re-entrancy guards was to stop processing input 
-once g_at_chat_unref has been called.  In theory, if all chats have been cleaned 
-up via g_at_chat_unref, then the calls to:
-	at_chat_cancel_group(chat->parent, chat->group);
-	g_at_chat_unregister_all(chat);
-
-...should unregister all notifications and commands.  So I think what you 
-propose here is okay...  But I wonder if a more explicit stop of processing 
-would be better.  Maybe:
-  - Do not invoke chat_cleanup if in_read_handler is TRUE in at_chat_unref()
-  - Invoke chat_cleanup in addition to g_free at the end of new_bytes?
-
-> handler. Added a call to the at_chat_unref function at the end of the
-> new_bytes handler. Added at_chat_ref function call to g_at_chat_clone.
-> The previous partial solution to this problem has been removed.
-> ---
->   gatchat/gatchat.c | 84 +++++++++++++++++++++++------------------------
->   1 file changed, 41 insertions(+), 43 deletions(-)
-> 
-
-Regards,
--Denis
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index 75958284..81055d89 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -33,10 +33,10 @@ struct ofono_modem;
+ 
+ enum ofono_gprs_context_type {
+ 	OFONO_GPRS_CONTEXT_TYPE_ANY = 0,
+-	OFONO_GPRS_CONTEXT_TYPE_INTERNET,
+-	OFONO_GPRS_CONTEXT_TYPE_MMS,
+-	OFONO_GPRS_CONTEXT_TYPE_WAP,
+-	OFONO_GPRS_CONTEXT_TYPE_IMS,
++	OFONO_GPRS_CONTEXT_TYPE_INTERNET	= 0x0001,
++	OFONO_GPRS_CONTEXT_TYPE_MMS		= 0x0002,
++	OFONO_GPRS_CONTEXT_TYPE_WAP		= 0x0004,
++	OFONO_GPRS_CONTEXT_TYPE_IMS		= 0x0008,
+ };
+ 
+ struct ofono_gprs_primary_context {
+diff --git a/include/gprs-provision.h b/include/gprs-provision.h
+index 2dd792b5..75808e66 100644
+--- a/include/gprs-provision.h
++++ b/include/gprs-provision.h
+@@ -26,10 +26,12 @@
+ extern "C" {
+ #endif
+ 
++#include <stdint.h>
++
+ #include "gprs-context.h"
+ 
+ struct ofono_gprs_provision_data {
+-	enum ofono_gprs_context_type type;
++	uint32_t type; /* Multiple types can be set in a bitmap */
+ 	enum ofono_gprs_proto proto;
+ 	char *name;
+ 	char *apn;
+-- 
+2.43.0
 
