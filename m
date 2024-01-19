@@ -1,62 +1,62 @@
-Received: from mail-ot1-f46.google.com (mail-ot1-f46.google.com [209.85.210.46])
+Received: from mail-ot1-f41.google.com (mail-ot1-f41.google.com [209.85.210.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 313AC5786C
-	for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 21:11:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B3CEB57333
+	for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 21:11:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705698674; cv=none; b=MdCTbWnzazvl7GWzwTI6y5HeBXWLlMMMT22FJvU7e4jAVzbKyLP2xI7pEOhJiRPwW0jF29orrt3OYrA3csyMXtcdMfaOV5//ugL/wQsBJsMV1NcsDl13xZk9OmGjPskkbLMqjR2/XP8RfBb28M3feGuNqr5yOwHMQUuKOpm3Rmk=
+	t=1705698674; cv=none; b=EGMSzrQ7Ji00zetHj+A6zkM1Q0hw/MgLQ+GHBqu/TnJlFKQ7s16zUWVWQVAmNSSX43zp+D607AU42KWGd68bAdBCIuNVIUu24QhTRK8ZAOch1jxm63G2wLkleygGGJgxY2DqsHg9MImyMcqgZH2TXr9XkvduZ24sT/szj1ZpIdY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1705698674; c=relaxed/simple;
-	bh=Uc03OiWKQW6PyyXc5OxqFNRUbibqY8NT8Bh5BPHM3ws=;
+	bh=7Cqb5i0T+sl5NxxfFg2nZZ814txMq7BnlX8BU70Tk1Y=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=PRXrkI8Eu1e/5JDoav0VM202+kAJ8X5ltSHcF+Gz3YpXy4hhTupEPsslzN3/YlrzHb/sPyDXAgR9xHRFuTVA0qGNHPCfU7lmal0Pz07gNW3f0J/pf4d3oal6TE2rQ3HjFTAhtFTxGiFbWr2GepnNA5rl0vl4kQhQfXXVtw3wpf4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YorOuJmg; arc=none smtp.client-ip=209.85.210.46
+	 MIME-Version; b=tI6LrnvAPLbFol6frGltFzRHHD5g7CGCx9O1GhH/VYcwZXIocAlpDuZtdz6GW9G73vRSzI6txrKc7H0SMZVcpJcedzd2MOB3XO52Ht2sgHuqyRHX9CrrQSGYWx4oQMJ7aAQ5+2VVxiXW+CZcIZX4PoWHXmLKE94/O+Uyc+L9FQ8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hCC0TuHs; arc=none smtp.client-ip=209.85.210.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YorOuJmg"
-Received: by mail-ot1-f46.google.com with SMTP id 46e09a7af769-6ddeec84e35so743149a34.3
-        for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 13:11:07 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hCC0TuHs"
+Received: by mail-ot1-f41.google.com with SMTP id 46e09a7af769-6e0d86d4659so674318a34.1
+        for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 13:11:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1705698667; x=1706303467; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1705698668; x=1706303468; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=K9MdSCn2oCIxmUNaOF6VyzHNTZ9hiEqeUV1595UpBeQ=;
-        b=YorOuJmg9C8rCLcZkRAG8Lm+2SvHVtSX51It8XjfBU+q3K6ZPiBPBhX/v/kRFp4ERK
-         uiJEJa/xXB77n622wmS+lM+pvgnSpP3N3RlE9B/UVb5EvfCzHRYAlzDrp2B2Xk8lN7i6
-         /QKkvEXMMmY9knqGtvjMcHmmGonIAa/zsm/rpX9ehyXRU81Dkk3KrvTRvxRpwwMSGlQa
-         3/+NGwph7jPaffv3h0XsQE9KF6oeIEWFNi0KRoXMNroL9eJQeRSToZO4K9IjrrJEmsQS
-         KGUdex2n1FRv5jJDTi6JEAJwS42P3JW5MrrBmOz8MueBnvkdl84hxHMkb59mBL5+b8Hi
-         q7fg==
+        bh=NIZTXA0ftUY7phAG6R5D8n53ij/XDSH5h4tV5g+fQ48=;
+        b=hCC0TuHsJGCWNmBJiGyMwux7qMLaRJBCh20kRESi62yFqEJ9dMLSvIBcl29+dIY9JX
+         ug0IUguFz9Z2FacFDCYtyp7I6qYVmnw+Zv5oj9vm7ZwYZJUiuHqHnkTHDaeirxqjR3Zu
+         gPbfAgOgLcMrdWaT20opQtC6OQApzAFPH1YNGVURcGokWErNPkt02LziPAihVa9TBuyb
+         3I+5uKr48bnYMGX9qwha5Jkibjih69+YD/Ng82pDpmPCqH9hh/l/C5CU/spS+j4fN2NE
+         fUtUS+EW5RSGt5pzFV3MWfgsd48T0zmEQPO7WHosxmrpQo5TVWbKe/R4Sv8cLe9SCeCA
+         2yTQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1705698667; x=1706303467;
+        d=1e100.net; s=20230601; t=1705698668; x=1706303468;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=K9MdSCn2oCIxmUNaOF6VyzHNTZ9hiEqeUV1595UpBeQ=;
-        b=ck9k8VXfSsb+OK2+q+Ij9RkQoxsTXXBYCPY95CASNoqIlv+MZukPfTn4C6WgErRHna
-         OWbDKN0EV51X8UCF++YnnYidaLMEPG3dNOlP0PPDnDQ5/RZLui4/dJsh3afhS9vG+Vpe
-         aOJQK3hIDU2kMKbK8QWJlynTp/SnGfO9dTfmqQhw0K8yEC9O8Yw4GGNX50qaBj5baq3I
-         dLaEZ5EXBEUNt9il76XMWcyImpWP7412azUi4GtqKlSywfDZadeD1A43p4V4nDbEd+JA
-         vER1WgOWyXDY2tw8pg7DB1MhdlUyYT/IXvXE8OYYsPT/dIJNZBj708jP6NDUYFepVYna
-         6n2w==
-X-Gm-Message-State: AOJu0Yxz64bUh9P/+3d7UpVuO23pz7gMMCRv72ke6QRz+Ksk8KeQtKz8
-	ch72I5lpxMjCdTpjHoTlXKZFijWOggeOkoU+BJ9SbncPmNu6YSpFX63IGOt8
-X-Google-Smtp-Source: AGHT+IFmtIUiUH6lsJT47PYZE8TQXx2HlFiu8sdVTkplNdwjh5IsHSoBUkyKDDVk6Z4uiEhbpXSWNw==
-X-Received: by 2002:a9d:7dd2:0:b0:6dc:7e7e:cd6b with SMTP id k18-20020a9d7dd2000000b006dc7e7ecd6bmr495574otn.44.1705698667067;
-        Fri, 19 Jan 2024 13:11:07 -0800 (PST)
+        bh=NIZTXA0ftUY7phAG6R5D8n53ij/XDSH5h4tV5g+fQ48=;
+        b=PEN6ndlIr6/jRnh5QISBbhECePoYSjPA3VPxecyrUeYejHjYpYEGuxXDICCShMHSBP
+         Jh9LGmJ/gQNRXU0hCemG0qEbalhVaDwPzAEeCAFBDmxdcmpw4ewfQGp4GSl1ZW1p2N+W
+         VL/7v/UJ1NzUyJ3NuiwMOir+w/zUG3+cxfrK7cYm+pdJCQeXPfX3uiMdmniF88kSeR9N
+         XC4JGgKoR+t0pFZRldQQ4ZQCkbvcnAXpARYAOW5oDEA65MNo9m+jh89qGqBQIpg0gTZ3
+         GaqQsM5XpFRfTiuzFm7EKSlql9iXyG3KuDylPPIEurFc8dDAMRPLaxDIG1vbsMeKKuiE
+         VOYA==
+X-Gm-Message-State: AOJu0YyEWjsP2O+h7E/xGA/ZqeBpS+YTLZ2+4Q65ClIy72XFRZJ+3fa7
+	bsK447/fs5vJLLAD9ZveTW3SRuqyR568NsGrlB4nrg1BXzaJFTNpR/Zu/NcR
+X-Google-Smtp-Source: AGHT+IHy6Ex3A3BHlmInQQvRPc44zRQkMJDWqAYvv1Sl7BPYkPVshtoUMDNO3sMOhTYghX6i0PNMIw==
+X-Received: by 2002:a05:6830:151a:b0:6dd:e425:8fec with SMTP id k26-20020a056830151a00b006dde4258fecmr425922otp.34.1705698668471;
+        Fri, 19 Jan 2024 13:11:08 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id l47-20020a056830336f00b006e0d8709ff3sm457597ott.39.2024.01.19.13.11.06
+        by smtp.gmail.com with ESMTPSA id l47-20020a056830336f00b006e0d8709ff3sm457597ott.39.2024.01.19.13.11.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 19 Jan 2024 13:11:06 -0800 (PST)
+        Fri, 19 Jan 2024 13:11:08 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 03/14] doc: docs for intermediate provisioning db format
-Date: Fri, 19 Jan 2024 15:09:39 -0600
-Message-ID: <20240119211017.474598-3-denkenz@gmail.com>
+Subject: [PATCH 04/14] tools: Add provision.py
+Date: Fri, 19 Jan 2024 15:09:40 -0600
+Message-ID: <20240119211017.474598-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240119211017.474598-1-denkenz@gmail.com>
 References: <20240119211017.474598-1-denkenz@gmail.com>
@@ -68,165 +68,765 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Introduce a new provisioning file format to be used by oFono.  This
-format will be an 'intermediate' format, that will be converted to a
-binary format for use on the actual device.  This allows expensive and
-error prone (not to mention hard to secure) parsing of XML files
-(such asmobile-broadband-provider-info or Android apns-conf.xml) to be
-avoided.
+Introduce a new tool that will convert the intermediate JSON format
+(documented in doc/provision.rst) to the binary provisioning format,
+which will be used by ofonod's default provisioning plugin for
+automatically setting up carrier specific settings.
 
-JSON was chosen since it is a much more readable format compared to
-XML.
+The tool also supports import of and conversion of
+'mobile-broadband-provider-info' XML files to the new intermediate JSON
+file format.  This is accomplished using:
+  % tools/provisiontool mbpi-convert --outfile=provision.json
+
+Conversion of JSON intermediate format to binary format is accomplished
+using:
+  % tools/provisiontool generate --infile=provision.json
+
+By default, the output will be placed in the same directory in the file
+'provision.db'.  Alternatively, the output file can be specified using
+the --outfile option.
+
+Finally, the tool supports a simple selftest method, which can be
+invoked as follows:
+  % tools/provisiontool selftest
 ---
- doc/provision.rst | 139 ++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 139 insertions(+)
- create mode 100644 doc/provision.rst
+ tools/provisiontool | 727 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 727 insertions(+)
+ create mode 100755 tools/provisiontool
 
-diff --git a/doc/provision.rst b/doc/provision.rst
-new file mode 100644
-index 00000000..ed496e77
+diff --git a/tools/provisiontool b/tools/provisiontool
+new file mode 100755
+index 00000000..79273277
 --- /dev/null
-+++ b/doc/provision.rst
-@@ -0,0 +1,139 @@
-+Carrier Settings Provisioning Database
-+======================================
++++ b/tools/provisiontool
+@@ -0,0 +1,727 @@
++#!/usr/bin/python3
++#
++# oFono - Open Source Telephony
++# Copyright (C) 2023  Cruise, LLC
++#
++# SPDX-License-Identifier: GPL-2.0-only
++import xml.etree.ElementTree as ET
++import sys
++import json
++import bisect
++from argparse import ArgumentParser, FileType
++from pathlib import Path
++import random
++import struct
++import ctypes
 +
-+Carrier settings provisioning is performed automatically whenever a new,
-+not previously used SIM card is detected for the first time.  Settings such as
-+APN, username, password settings as well as the default bearer settings can be
-+provisioned automatically if a matching database entry is found.
++class ProviderInfo:
++    sort_order_map = { v : pos for pos, v in
++                      enumerate( ['name',
++                                  'apn',
++                                  'type',
++                                  'protocol',
++                                  'mmsc',
++                                  'mmsproxy',
++                                  'authentication',
++                                  'username',
++                                  'password'] ) }
 +
-+Matches are performed based on the following information:
-+    * SIM Mobile Country Code (MCC)
-+    * SIM Mobile Network Code (MNC)
-+    * SIM Service Provider Name (SPN)
++    @classmethod
++    def rawimport(cls, entry):
++        if 'name' not in entry:
++            raise SystemExit('No name for entry: ' + str(entry))
 +
-+The carrier settings provisioning database is represented in JSON format and is
-+converted to a binary format at installation time.
++        info = ProviderInfo(entry['name'])
 +
-+JSON Structure
-+--------------
-+**(List):**
-+    List of mobile network provider objects.  Top level element.
++        for networkid in entry.get('ids', []):
++            if not info.add_id(networkid):
++                raise SystemExit('Invalid network id: ' + str(networkid))
 +
-+    Example:
-+    ``[{"name": "Operator XYZ", ...}, {"name": "Operator ZYX", ...}]``
++        if 'spn' in entry:
++            if not info.set_spn(entry['spn']):
++                raise SystemExit('Invalid spn: ' + str(spn))
 +
-+    - **name (String):**
-+        The name of the mobile network provider.  This field is a freeform
-+        string that identifies the provider.  This field is used purely for
-+        human consumption and not used by the provisioning logic.
++        for apn in entry.get('apns', []):
++            if not info.add_context(apn):
++                raise SystemExit('Invalid apn: ' + str(apn))
 +
-+        This field is `required`.
++        if not info.is_valid():
++            raise SystemExit('Invalid entry: ' + str(entry))
 +
-+        Example: "Operator XYZ"
++        return info
 +
-+    - **ids (List of Strings):**
-+        Unique identifiers associated with the mobile network provider.  This
-+        is a list of all MCC+MNC identifiers associated with this provider.
++    def __init__(self, name):
++        self.context_list = []
++        self.mccmnc_list = []
++        self.name = name
++        self.spn = None
 +
-+        This field is `required`.
++    @staticmethod
++    def is_valid_id(id_string, expected_lengths):
++        """
++        Check if the identifier string is valid.
 +
-+        Example: ``["99955", "99956", "99901", "99902"]``
++        Parameters:
++        - id_string: The id string to check.
++        - expected_lengths (tuple): A tuple representing the valid range of
++          lengths.
 +
-+    - **spn (String):**
-+        Service Provider Name associated with the mobile network provider.  This
-+        field is typically used to differentiate MVNOs from non-MVNO providers.
++        Returns:
++        - bool: True if the MCC string is valid, False otherwise.
++        """
++        if not id_string.isdigit():
++            return False
 +
-+        This field is `optional`.
++        if len(id_string) not in expected_lengths:
++            return False
 +
-+        Example: "ZYX"
++        if int(id_string) == 0:
++            return False
 +
-+    - **apns (List):**
-+        List of access points associated with the mobile network provider.  At
-+        least one entry must be present in the list.
++        return True
 +
-+        This field is `required`.
++    def add_mccmnc(self, mcc, mnc):
++        if not self.is_valid_id(mcc, (3,)) or not self.is_valid_id(mnc, (2, 3)):
++            return False
 +
-+        - **name (String):**
-+            The descriptive name of the access point.  If present, will be
-+            reflected in the oFono context name after successful provisioning.
++        bisect.insort(self.mccmnc_list, mcc + mnc)
++        return True
 +
-+            This field is `optional`.
++    def add_id(self, mccmnc):
++        if not self.is_valid_id(mccmnc, (5,6)):
++            return False
 +
-+            Example: "Internet"
++        if int(mccmnc[:3]) == 0 or int(mccmnc[3:]) == 0:
++            return False
 +
-+        - **apn (String):**
-+            Access Point Name - Setting required for successful bearer
-+            activation.  Provided by the carrier.
++        bisect.insort(self.mccmnc_list, mccmnc)
++        return True
 +
-+            This field is `required`.
++    def set_spn(self, spn):
++        if len(spn) == 0 or len(spn) > 254:
++            return False
 +
-+            Example: "internet"
++        self.spn = spn
++        return True
 +
-+        - **type (List of Strings):**
-+            The types of connections supported by the access point.  The
-+            following types are recognized:
++    def add_context(self, info):
++        info = dict(sorted(info.items(),
++                      key = lambda pair: self.sort_order_map[pair[0]]))
++        self.context_list.append(info)
 +
-+            - "internet": Used for general internet access.
-+            - "mms": Used for Multimedia Messaging Service (MMS).
-+            - "wap": Used for Wireless Application Protocol (WAP).
-+            - "ims": Used for IP Multimedia Subsystem (IMS).
-+            - "supl": Used for Secure User Plane Location (SUPL).
-+            - "ia": Used for Initial Attach in LTE networks.
++        return True
 +
-+            This field is `required`.
++    def is_valid(self):
++        return len(self.context_list) and len(self.mccmnc_list)
 +
-+            Example: ``["internet", "mms"]``
++    def __str__(self):
++        s = 'Provider \'' + self.name + '\''
 +
-+        - **authentication (String):**
-+            Authentication method used for the connection.  The following types
-+            are recognized:
++        if (self.spn != None):
++            s += ' [SPN:\'' + self.spn + '\']'
 +
-+            - "chap": CHAP authentication
-+            - "pap": PAP authentication
-+            - "none": No authentication is used
++        s+= ' ' + str(self.mccmnc_list) + '\n'
 +
-+            This field is `optional`.
++        for context in self.context_list:
++            s += '\t' + str(context) + '\n'
 +
-+            Example: "none"
++        return s
 +
-+        - **username (String):**
-+            Username used for authenticating to the access point.
++class MobileBroadbandProviderInfo:
++    usage_to_type = { 'internet' : ['internet'],
++                        'mms' : ['mms'],
++                        'wap' : ['wap'],
++                        'mms-internet-hipri' : ['internet', 'mms'],
++                        'mms-internet-hipri-fota' : ['internet','mms'],
++                     }
++    @classmethod
++    def type_from_usage(cls, usage):
++        return cls.usage_to_type[usage]
 +
-+            This field is `optional`.
++    def __init__(self, xml_path):
++        self.tree = ET.parse(xml_path)
 +
-+            Example: "username"
++    def parse(self, xml_path):
++        providers = []
 +
-+        - **password (String):**
-+            Password used for authenticating to the access point.
++        try:
++            tree = ET.parse(xml_path)
++            root = tree.getroot()
 +
-+            This field is `optional`.
++            for provider in root.findall('.//provider'):
++                name = provider.find('name')
++                if name is None or not name.text:
++                    continue;
 +
-+            Example: "temp123"
++                info = ProviderInfo(name.text)
 +
-+        - **protocol (String):**
-+            Network protocol used for the connection.  The following types are
-+            recognized:
++                for networkid in provider.findall('gsm/network-id'):
++                    info.add_mccmnc(networkid.get('mcc'), networkid.get('mnc'))
 +
-+            - "ipv4": IPv4 only
-+            - "ipv6": IPv6 only
-+            - "ipv4v6": Dual protocol, both IPv4 and IPv6 will be negotiated
++                for apn in provider.findall('gsm/apn'):
++                    context = {}
 +
-+            If omitted, then `"ipv4v6"` will be assumed.
++                    context['apn'] = apn.get('value')
++                    if context['apn'] == None:
++                        continue
 +
-+            This field is `optional`.
++                    # Usage is missing for some APNs, skip such contexts for now
++                    usage = apn.find('usage')
++                    if usage is None or usage.get('type') is None:
++                        continue;
 +
-+            Example: "ipv4"
++                    context['type'] = self.type_from_usage(usage.get('type'))
++                    if context['type'] == None:
++                        sys.stderr.write("Unable to convert type: %s\n" %
++                                            usage.get('type'))
++                        continue
 +
-+        - **mmsc (String):**
-+            Multimedia Messaging Service Center - URL for MMS.
++                    if 'mms' in context['type']:
++                        mmsc = apn.find('mmsc')
 +
-+            This field is `required` for MMS contexts.
++                        # Ignore MMS contexts with no MMSC since it is needed
++                        # to send messages
++                        if mmsc is None or not mmsc.text:
++                            continue
 +
-+            Example: "foobar.mmsc:80"
++                        context['mmsc'] = mmsc.text
 +
-+        - **mmsproxy (String):**
-+            Proxy server for Multimedia Messaging Service (MMS).
++                        mmsproxy = apn.find('mmsproxy')
++                        if mmsproxy is not None and mmsproxy.text:
++                            context['mmsproxy'] = mmsproxy.text
 +
-+            This field is `optional`.
++                    username = apn.find('username')
++                    if username is not None and username.text:
++                        context['username'] = username.text
 +
-+            Example: "mms.proxy.net"
++                    password = apn.find('password')
++                    if password is not None and password.text:
++                        context['password'] = password.text
++
++                    authentication = apn.find('authentication')
++                    if authentication is not None:
++                        context['authentication'] = authentication.get('method')
++
++                    context_name = apn.find('name')
++                    if context_name != None:
++                        context['name'] = context_name.text
++
++                    info.add_context(context)
++
++                if info.is_valid():
++                    providers.append(info)
++
++        except ET.ParseError as e:
++            print(f"Error parsing XML: {e}")
++
++        return providers
++
++class ProvisionContext(ctypes.LittleEndianStructure):
++    _pack_ = 1
++    _fields_ = [
++        ('type', ctypes.c_uint32),
++        ('protocol', ctypes.c_uint32),
++        ('authentication', ctypes.c_uint32),
++        ('reserved', ctypes.c_uint32),
++        ('name_offset', ctypes.c_uint64),
++        ('apn_offset', ctypes.c_uint64),
++        ('username_offset', ctypes.c_uint64),
++        ('password_offset', ctypes.c_uint64),
++        ('mmsproxy_offset', ctypes.c_uint64),
++        ('mmsc_offset', ctypes.c_uint64)
++    ]
++
++    authentication_dict = { 'chap' : 0, 'pap' : 1, 'none' : 2 }
++    protocol_dict = { 'ipv4' : 0, 'ipv6' : 1, 'ipv4v6' : 2 }
++    attrs = ['name', 'apn', 'username', 'password', 'mmsproxy', 'mmsc']
++
++    @classmethod
++    def type_to_context_type(cls, types):
++        r = 0
++
++        for t in types:
++            if t == 'internet':
++                r |= 0x0001
++            elif t == 'mms':
++                r |= 0x0002
++            elif t == 'wap':
++                r |= 0x0004
++            elif t == 'ims':
++                r |= 0x0008
++            elif t == 'supl':
++                r |= 0x0010
++            elif t == 'ia':
++                r |= 0x0020
++
++        return r
++
++    def __init__(self, apn, strings):
++        self.type = self.type_to_context_type(apn['type'])
++        self.protocol = self.protocol_dict[apn.get('protocol', 'ipv4v6')]
++        self.authentication = self.authentication_dict[apn.get('authentication',
++                                                               'chap')]
++
++        for s in self.attrs:
++            offset = strings.add_string(apn.get(s, None))
++            setattr(self, s + '_offset', offset)
++
++class ProvisionData(ctypes.LittleEndianStructure):
++    _pack_ = 1
++    _fields_ = [
++        ('spn_offset', ctypes.c_uint64),
++        ('context_offset', ctypes.c_uint64)
++    ]
++
++    def __init__(self, spn, offset, strings):
++        self.spn_offset = strings.add_string(spn)
++        self.context_offset = offset
++
++class ProvisionNode(ctypes.LittleEndianStructure):
++    _pack_ = 1
++    _fields_ = [
++        ('bit_offsets', ctypes.c_uint64 * 2),
++        ('mccmnc', ctypes.c_uint32),
++        ('diff', ctypes.c_int32),
++        ('provision_data_count', ctypes.c_uint64)
++    ]
++
++    style = "bold"
++    fmt_connection = '\t"%s/%d" -> "%s/%d"[color="#%06x"];\n'
++    fmt_declaration = '\t"%s/%d"[style=%s, color="#%06x"];\n'
++    red = 0xff0000
++    green = 0x00ff00
++
++    def __init__(self, key, diff):
++        self.bit = [None, None]
++        self.key = key
++        self.diff = diff
++        self.entries = {}
++        self.node_offset = 0
++
++    def choose(self, key):
++        return (key >> (31 - self.diff)) & 1
++
++    def print_graphviz(self, f):
++        f.write(self.fmt_declaration % (format(self.key, '032b'),
++                                        self.diff, self.style,
++                                        random.randint(0, 0x00ffffff)))
++        f.write(self.fmt_connection % (format(self.key, '032b'), self.diff,
++                                       format(self.bit[0].key, '032b'),
++                                       self.bit[0].diff, self.red))
++        f.write(self.fmt_connection % (format(self.key, '032b'), self.diff,
++                                       format(self.bit[1].key, '032b'),
++                                       self.bit[1].diff, self.green))
++
++        if (self.diff < self.bit[0].diff):
++            self.bit[0].print_graphviz(f)
++
++        if (self.diff < self.bit[1].diff):
++            self.bit[1].print_graphviz(f)
++
++    def __str__(self):
++        s = format(self.key, '032b') + '/' + str(self.diff)
++        return s
++
++class MccMncTree:
++    @staticmethod
++    def clz(v):
++        count = 32
++        while count and v:
++            v = v >> 1
++            count = count - 1
++
++        return count
++
++    @staticmethod
++    def diff(key1, key2):
++        xor = key1 ^ key2;
++        return MccMncTree.clz(xor)
++
++    def __init__(self):
++        self.root = ProvisionNode(key = 0, diff = -1)
++        self.root.bit[0] = self.root
++        self.root.bit[1] = self.root
++        self.n_nodes = 1
++
++    def print_graphviz(self):
++        f = open("step%d.dot" % self.n_nodes, "w")
++        # Use 'dot -Tx11' to visualize
++        f.write('digraph trie {\n')
++        self.root.print_graphviz(f)
++        f.write('}\n')
++        f.close()
++
++    def find_closest(self, key):
++        parent = self.root
++        child = self.root.bit[0]
++
++        while parent.diff < child.diff:
++            parent = child
++            child = child.bit[child.choose(key)]
++
++        return child
++
++    def find(self, key):
++        found = self.find_closest(key)
++        if found.key == key:
++            return found
++
++        return None
++
++    def insert(self, key, attr, value):
++        node = self.find_closest(key);
++        if node.key == key:
++            node.entries[attr] = value
++            return
++
++        bit = self.diff(node.key, key)
++        parent = self.root
++        child = self.root.bit[0]
++
++        while (parent.diff < child.diff) and (child.diff < bit):
++            parent = child
++            child = child.bit[child.choose(key)]
++
++        node = ProvisionNode(key, bit)
++        bit = node.choose(key)
++        node.bit[bit] = node
++        node.bit[not bit] = child
++
++        node.entries[attr] = value
++
++        if parent == self.root:
++            self.root.bit[0] = node
++        else:
++            bit = parent.choose(key)
++            parent.bit[bit] = node
++
++        self.n_nodes += 1
++
++    def traverse_recursive(self, node, bit, visitor):
++        if node == self.root:
++            return
++
++        if node.diff <= bit:
++            visitor.visit(node)
++            return
++
++        self.traverse_recursive(node.bit[0], node.diff, visitor)
++        self.traverse_recursive(node.bit[1], node.diff, visitor)
++
++    def traverse(self, visitor):
++        self.traverse_recursive(self.root.bit[0], -1, visitor)
++
++class StringAccumulator:
++    def __init__(self):
++        self.data = bytearray(b'\x00') # So offsets are never 0 used for NULL
++        self.offsets = {}
++
++    def add_string(self, s):
++        if s is None:
++            return 0
++
++        if s in self.offsets:
++            return self.offsets[s]
++
++        offset = len(self.data)
++        self.data.extend(s.encode('utf-8'))
++        self.data.append(0)
++        self.offsets[s] = offset
++
++        return offset
++
++    def get_bytes(self):
++        return self.data
++
++class ProvisionDatabase(ctypes.LittleEndianStructure):
++    _pack_ = 1
++    _fields_ = [
++        ('version', ctypes.c_uint64),
++        ('file_size', ctypes.c_uint64),
++        ('header_size', ctypes.c_uint64),
++        ('node_struct_size', ctypes.c_uint64),
++        ('provision_data_struct_size', ctypes.c_uint64),
++        ('context_struct_size', ctypes.c_uint64),
++        ('nodes_offset', ctypes.c_uint64),
++        ('nodes_size', ctypes.c_uint64),
++        ('contexts_offset', ctypes.c_uint64),
++        ('contexts_size', ctypes.c_uint64),
++        ('strings_offset', ctypes.c_uint64),
++        ('strings_size', ctypes.c_uint64)
++    ]
++
++    class CalculateNodeOffsetVisitor:
++        def __init__(self):
++            self.current_offset = 0
++        def visit(self, node):
++            node.node_offset = self.current_offset
++
++            # Node data is followed by at least one ProvisionData object, with
++            # the only exception being root, which has no data by definition
++            self.current_offset += ctypes.sizeof(ProvisionNode)
++            self.current_offset += (ctypes.sizeof(ProvisionData) *
++                                    len(node.entries))
++
++    class SerializeVisitor:
++        def __init__(self, buffer):
++            self.buffer = buffer
++
++        def visit(self, node):
++            # Node doesn't quite fit the C structure definition, so do this
++            # manually by using struct.pack
++            self.buffer.extend(struct.pack('<QQIiQ',
++                                           node.bit[0].node_offset,
++                                           node.bit[1].node_offset,
++                                           node.key, node.diff,
++                                           len(node.entries)))
++
++            for spn in sorted(node.entries):
++                pd = node.entries[spn]
++                self.buffer.extend(bytes(pd))
++
++    def __init__(self, provider_infos):
++        self.strings = StringAccumulator()
++        self.contexts = bytearray()
++        self.tree = MccMncTree()
++
++        for info in provider_infos:
++            pd = ProvisionData(info.spn, len(self.contexts), self.strings)
++
++            self.contexts.extend(struct.pack('<Q', len(info.context_list)))
++
++            for context in info.context_list:
++                self.contexts.extend(bytes(ProvisionContext(context,
++                                                            self.strings)))
++
++            for mccmnc in info.mccmnc_list:
++                # Sort None spns as '' so they're first in the list when
++                # the SerializeVisitor sorts the entries dict
++                spn = info.spn if info.spn is not None else ''
++
++                # 2 and 3 byte MNCs are treated differently, even if evaluate
++                # to the same integer.  For example, 02 and 002 are different
++                # MNCs.  In practice this doesn't actually happen except on
++                # test networks, but account for this possibility by using the
++                # upper 10 bits for the MCC, followed by a single bit which
++                # signifies whether a 3 byte MNC is used, followed by 10 bits
++                # of the MNC
++                key = int(mccmnc[:3]) << 11 | int(mccmnc[3:])
++                if len(mccmnc[3:]) == 3:
++                    key |= 1 << 10
++
++                self.tree.insert(key, spn, pd)
++
++        visitor = self.CalculateNodeOffsetVisitor()
++        visitor.visit(self.tree.root)
++        self.tree.traverse(visitor)
++
++        self.version = 1
++        self.header_size = ctypes.sizeof(ProvisionDatabase)
++        self.file_size = self.header_size
++        self.node_struct_size = ctypes.sizeof(ProvisionNode)
++        self.provision_data_struct_size = ctypes.sizeof(ProvisionData)
++        self.context_struct_size = ctypes.sizeof(ProvisionContext)
++        self.nodes_offset = self.header_size
++        self.nodes_size = visitor.current_offset
++        self.file_size += self.nodes_size
++        self.contexts_offset = self.nodes_offset + self.nodes_size
++        self.contexts_size = len(self.contexts)
++        self.file_size += self.contexts_size
++        self.strings_offset = self.contexts_offset + self.contexts_size
++        self.strings_size = len(self.strings.get_bytes())
++        self.file_size += self.strings_size
++
++    def serialize(self):
++        buffer = bytearray()
++        buffer.extend(bytes(self))
++
++        visitor = self.SerializeVisitor(buffer)
++        visitor.visit(self.tree.root)
++        self.tree.traverse(visitor)
++
++        buffer.extend(self.contexts)
++        buffer.extend(self.strings.get_bytes())
++
++        return buffer
++
++class ProviderInfoJSONEncoder(json.JSONEncoder):
++    def default(self, obj):
++        if isinstance(obj, ProviderInfo):
++            asdict = { 'name' : obj.name, 'ids' : obj.mccmnc_list }
++
++            if (obj.spn != None):
++                asdict['spn'] = obj.spn
++
++            asdict.update({'apns' : obj.context_list})
++            return asdict
++
++        return json.JSONEncoder.default(self, obj)
++
++def mbpi_convert(args):
++    xml_path = '/usr/share/mobile-broadband-provider-info/serviceproviders.xml'
++    mbpi = MobileBroadbandProviderInfo(xml_path)
++    provider_infos = mbpi.parse(xml_path)
++
++    try:
++        if args.outfile is None:
++            out = sys.stdout
++        else:
++            out = args.outfile.open('w', encoding='utf-8')
++
++        with out as outfile:
++            json.dump(provider_infos, outfile, ensure_ascii=False, indent=2,
++                      cls=ProviderInfoJSONEncoder)
++    except ValueError as e:
++        raise SystemExit(e)
++
++def generate(args):
++    try:
++        json_dict = json.load(args.infile)
++    except ValueError as e:
++        raise SystemExit(e)
++
++    provider_infos = []
++
++    for entry in json_dict:
++        info = ProviderInfo.rawimport(entry)
++        provider_infos.append(info)
++
++    db = ProvisionDatabase(provider_infos)
++    with args.outfile.open('wb') as outfile:
++        outfile.write(db.serialize())
++
++def selftest(args):
++    tree = MccMncTree()
++
++    # Generate random key this many times and insert it into the tree
++    # There will be some collisions, so count the number of items inserted
++    # Then run the lookup and make sure the same number of items can be found
++    times = 100000
++    for i in range(0, times):
++        key = random.randint(10000, 999999)
++        tree.insert(key, None, None)
++
++    n_inserted = tree.n_nodes
++    print("Created a tree with %d nodes (1 root)" % n_inserted)
++
++    n_found = 0
++    expected_keys = []
++
++    for i in range(10000, 1000000):
++        if tree.find(i):
++            n_found += 1
++            expected_keys.append(i)
++
++    expected_keys = sorted(expected_keys)
++
++    print("Found %d nodes (not including root)" % n_found)
++    assert n_found == n_inserted - 1
++
++    class GetKeysVisitor:
++        def __init__(self):
++            self.keys = []
++
++        def visit(self, node):
++            self.keys.append(node.key)
++
++    visitor = GetKeysVisitor()
++    tree.traverse(visitor)
++    assert visitor.keys == expected_keys
++
++    sample_json = """[
++    {
++      "name": "Operator XYZ",
++      "ids": [
++        "99955", "99956", "99901", "99902"
++      ],
++      "apns": [
++        {
++          "name": "Internet",
++          "apn": "internet",
++          "type": [
++            "internet"
++          ],
++          "authentication": "none",
++          "protocol": "ipv4"
++        },
++        {
++          "name": "IMS+MMS",
++          "apn": "imsmms",
++          "type": [
++            "ims", "mms"
++          ],
++          "mmsc": "foobar.mmsc:80",
++          "mmsproxy": "mms.proxy.net",
++          "authentication": "pap",
++          "protocol": "ipv6"
++        }
++      ]
++    },
++    {
++      "name": "Operator ZYX",
++      "ids": [
++        "99998", "99999", "99901", "99902"
++      ],
++      "spn": "ZYX",
++      "apns": [
++        {
++          "name": "ZYX",
++          "apn": "zyx",
++          "type": [
++            "internet"
++          ],
++          "authentication": "none",
++          "protocol": "ipv4"
++        }
++      ]
++    }
++    ]"""
++    try:
++        json_dict = json.loads(sample_json)
++    except ValueError as e:
++        raise SystemExit(e)
++
++    provider_infos = []
++
++    for entry in json_dict:
++        info = ProviderInfo.rawimport(entry)
++        provider_infos.append(info)
++
++    db = ProvisionDatabase(provider_infos)
++    expected_strings = bytearray(b'\x00Internet\x00internet\x00IMS+MMS\x00' +
++                b'imsmms\x00mms.proxy.net\x00foobar.mmsc:80\x00ZYX\x00zyx\x00')
++    assert(expected_strings == db.strings.get_bytes())
++
++    with open('sample.db', 'wb') as outfile:
++        outfile.write(db.serialize())
++
++if __name__ == "__main__":
++    parser = ArgumentParser(description='Parse command line arguments')
++    subparsers = parser.add_subparsers(title='subcommands', dest='command')
++
++    # mbpi-convert command
++    mbpi_convert_parser = subparsers.add_parser('mbpi-convert',
++                        help='Convert mobile-broadband-provider-info database')
++    mbpi_convert_parser.add_argument('--outfile', type=Path, default=None,
++                        help='Output file path', required=False,)
++    mbpi_convert_parser.set_defaults(func=mbpi_convert)
++
++    # generate command
++    generate_parser = subparsers.add_parser('generate',
++                                            help='Generate binary provider db')
++    generate_parser.add_argument('--outfile', type=Path, default='provision.db',
++                                 help='Output file path', required=False)
++    generate_parser.add_argument('--infile', type=FileType(encoding='utf-8'),
++                                 help='Input JSON db', default=sys.stdin)
++    generate_parser.set_defaults(func=generate)
++
++    # selftest command
++    selftest_parser = subparsers.add_parser('selftest',
++                        help='Run self-tests')
++    selftest_parser.set_defaults(func=selftest)
++
++    args = parser.parse_args()
++    if hasattr(args, 'func'):
++        args.func(args)
++    else:
++        parser.print_help()
 -- 
 2.43.0
 
