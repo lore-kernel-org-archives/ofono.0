@@ -1,62 +1,62 @@
-Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
+Received: from mail-ot1-f46.google.com (mail-ot1-f46.google.com [209.85.210.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68DFA5786B
-	for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 21:11:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 313AC5786C
+	for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 21:11:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705698672; cv=none; b=qZyBbommIAaeYQ4F0DYjG6O3Mn/+FBxZsCwnyKrEy4SxZ8h/3DI9oIA1/EFC5XyWx4LiVTQ+KwHHnk+W+uxbRHLG4qKsIR7pjM6AusXWWL/E0DC181zZ0ZW3EiHX85weh3n43FDiFAS79bbS3O7dg4q6CPCw1QmK7OPCrkBgcq8=
+	t=1705698674; cv=none; b=MdCTbWnzazvl7GWzwTI6y5HeBXWLlMMMT22FJvU7e4jAVzbKyLP2xI7pEOhJiRPwW0jF29orrt3OYrA3csyMXtcdMfaOV5//ugL/wQsBJsMV1NcsDl13xZk9OmGjPskkbLMqjR2/XP8RfBb28M3feGuNqr5yOwHMQUuKOpm3Rmk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705698672; c=relaxed/simple;
-	bh=KDzvomcN4xzDTamNBSjghWEvT81meXc3FZBiCOT1/zo=;
+	s=arc-20240116; t=1705698674; c=relaxed/simple;
+	bh=Uc03OiWKQW6PyyXc5OxqFNRUbibqY8NT8Bh5BPHM3ws=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=fk9ioMYO+4zuLMmK6Jhh0CebsW/OqHj0pHN7HAeFDg5AY8gnqqQ+3l6sqnl4azAIhslnXL5YnC+QBu3soRs6vLcp7Zsz462BNnudVm91AXM0dogzh0WsNAEVzL5TO/CPSOK1KngrAL13WF3agZGeiPEk3h9ROE3C0Gp6eOadwq0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SNgqPSPH; arc=none smtp.client-ip=209.85.210.51
+	 MIME-Version; b=PRXrkI8Eu1e/5JDoav0VM202+kAJ8X5ltSHcF+Gz3YpXy4hhTupEPsslzN3/YlrzHb/sPyDXAgR9xHRFuTVA0qGNHPCfU7lmal0Pz07gNW3f0J/pf4d3oal6TE2rQ3HjFTAhtFTxGiFbWr2GepnNA5rl0vl4kQhQfXXVtw3wpf4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YorOuJmg; arc=none smtp.client-ip=209.85.210.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SNgqPSPH"
-Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-6dddf12f280so753068a34.0
-        for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 13:11:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YorOuJmg"
+Received: by mail-ot1-f46.google.com with SMTP id 46e09a7af769-6ddeec84e35so743149a34.3
+        for <ofono@lists.linux.dev>; Fri, 19 Jan 2024 13:11:07 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1705698670; x=1706303470; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1705698667; x=1706303467; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Qfe7mEOBPJQ1MMAvXBTczmOIv+6oIstGV2JVuZ0RaUM=;
-        b=SNgqPSPHs00rWVrNwyAiUae+Au/HCTex9gOZ5mltmiTVMLzPYYNT3nyyHpKc+0aVPf
-         dVpzi87+vPMK7jK8JubCFW9s5RhiK5Ok3kiSabR03KErtIi6wTtNmttMoRmMATmL+h8V
-         KbxEWVL6GpyOFBVXxGGzbVe/EdtA6syKnH9db39HvVmvlLQ5ClDmxhqCULl5vn27t1I5
-         fUnM/n0BTQvc/+ENmNI1oG+uel80JzmTaPxOmANb/CA4hyoLBDcewg/F8CJ7vUerCU8A
-         SNwNOtC/wQVfyK1Og7zWtYA0cfNBf8fa6SsL1QKiV/E+wp1nfOZVNPA/5p7JkbJ4QYxH
-         klIw==
+        bh=K9MdSCn2oCIxmUNaOF6VyzHNTZ9hiEqeUV1595UpBeQ=;
+        b=YorOuJmg9C8rCLcZkRAG8Lm+2SvHVtSX51It8XjfBU+q3K6ZPiBPBhX/v/kRFp4ERK
+         uiJEJa/xXB77n622wmS+lM+pvgnSpP3N3RlE9B/UVb5EvfCzHRYAlzDrp2B2Xk8lN7i6
+         /QKkvEXMMmY9knqGtvjMcHmmGonIAa/zsm/rpX9ehyXRU81Dkk3KrvTRvxRpwwMSGlQa
+         3/+NGwph7jPaffv3h0XsQE9KF6oeIEWFNi0KRoXMNroL9eJQeRSToZO4K9IjrrJEmsQS
+         KGUdex2n1FRv5jJDTi6JEAJwS42P3JW5MrrBmOz8MueBnvkdl84hxHMkb59mBL5+b8Hi
+         q7fg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1705698670; x=1706303470;
+        d=1e100.net; s=20230601; t=1705698667; x=1706303467;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=Qfe7mEOBPJQ1MMAvXBTczmOIv+6oIstGV2JVuZ0RaUM=;
-        b=mffXs3qWoe+51kVyd8vVgdYn9+fW9/m/x2txYnfTyttFDC8OuIVqhx/4rklpxx2wLl
-         SnhBUoocaR81f2rl0gEBbrYJjv8x341UdsayslIDEyEYr24XFWhykVnv3El5Jcc40WKY
-         A9UZ5XIAqrJds9NsOwSyOWCL1DGS0de7Cio4DUv+biCJiBCJDeeyMW26UmUKREGWsa7R
-         0769NGv8WP9k+lmQl/inhpc77DwX6MM+ay82bGJdyKDTGw5S/xljAiPHEWUQRon2Vo/I
-         dMVT3ULRX6psi8EsNRAa60A7lhgKwnVVQIZVeR9CnKnzx/+6aLio9i6pS6Lu7xBwsRwP
-         JqsA==
-X-Gm-Message-State: AOJu0Yzc/2SSsTJF8w9wcGq+FzGLun4KAORBxr0mLhWRjN0FCGd0WinT
-	qa7ntHSQScSpxy4NlYLD1yAOmMSo1Y39tIei7FGtkNCKbUq+9suS+8QSbZMR
-X-Google-Smtp-Source: AGHT+IEIbgir1KbH7nq+X7xPb2pHFRLohFanp6QVKqjFzVJWiZKey9Ab3R0c4Ph0v0looUb6kYkXJw==
-X-Received: by 2002:a9d:6d97:0:b0:6e0:acf2:f041 with SMTP id x23-20020a9d6d97000000b006e0acf2f041mr488967otp.7.1705698670293;
-        Fri, 19 Jan 2024 13:11:10 -0800 (PST)
+        bh=K9MdSCn2oCIxmUNaOF6VyzHNTZ9hiEqeUV1595UpBeQ=;
+        b=ck9k8VXfSsb+OK2+q+Ij9RkQoxsTXXBYCPY95CASNoqIlv+MZukPfTn4C6WgErRHna
+         OWbDKN0EV51X8UCF++YnnYidaLMEPG3dNOlP0PPDnDQ5/RZLui4/dJsh3afhS9vG+Vpe
+         aOJQK3hIDU2kMKbK8QWJlynTp/SnGfO9dTfmqQhw0K8yEC9O8Yw4GGNX50qaBj5baq3I
+         dLaEZ5EXBEUNt9il76XMWcyImpWP7412azUi4GtqKlSywfDZadeD1A43p4V4nDbEd+JA
+         vER1WgOWyXDY2tw8pg7DB1MhdlUyYT/IXvXE8OYYsPT/dIJNZBj708jP6NDUYFepVYna
+         6n2w==
+X-Gm-Message-State: AOJu0Yxz64bUh9P/+3d7UpVuO23pz7gMMCRv72ke6QRz+Ksk8KeQtKz8
+	ch72I5lpxMjCdTpjHoTlXKZFijWOggeOkoU+BJ9SbncPmNu6YSpFX63IGOt8
+X-Google-Smtp-Source: AGHT+IFmtIUiUH6lsJT47PYZE8TQXx2HlFiu8sdVTkplNdwjh5IsHSoBUkyKDDVk6Z4uiEhbpXSWNw==
+X-Received: by 2002:a9d:7dd2:0:b0:6dc:7e7e:cd6b with SMTP id k18-20020a9d7dd2000000b006dc7e7ecd6bmr495574otn.44.1705698667067;
+        Fri, 19 Jan 2024 13:11:07 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id l47-20020a056830336f00b006e0d8709ff3sm457597ott.39.2024.01.19.13.11.09
+        by smtp.gmail.com with ESMTPSA id l47-20020a056830336f00b006e0d8709ff3sm457597ott.39.2024.01.19.13.11.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 19 Jan 2024 13:11:10 -0800 (PST)
+        Fri, 19 Jan 2024 13:11:06 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 06/14] tools: lookup-apn: Use the new provision_db utils
-Date: Fri, 19 Jan 2024 15:09:42 -0600
-Message-ID: <20240119211017.474598-6-denkenz@gmail.com>
+Subject: [PATCH 03/14] doc: docs for intermediate provisioning db format
+Date: Fri, 19 Jan 2024 15:09:39 -0600
+Message-ID: <20240119211017.474598-3-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240119211017.474598-1-denkenz@gmail.com>
 References: <20240119211017.474598-1-denkenz@gmail.com>
@@ -68,259 +68,165 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Migrate lookup-apn tool to use the new provision.db binary file format.
+Introduce a new provisioning file format to be used by oFono.  This
+format will be an 'intermediate' format, that will be converted to a
+binary format for use on the actual device.  This allows expensive and
+error prone (not to mention hard to secure) parsing of XML files
+(such asmobile-broadband-provider-info or Android apns-conf.xml) to be
+avoided.
 
-The typical usage is now changed as follows:
-  % tools/lookup-apn --file=sample.db 999 02
+JSON was chosen since it is a much more readable format compared to
+XML.
 ---
- Makefile.am        |   6 +-
- tools/lookup-apn.c | 173 ++++++++++++++++++++++++++-------------------
- 2 files changed, 103 insertions(+), 76 deletions(-)
+ doc/provision.rst | 139 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 139 insertions(+)
+ create mode 100644 doc/provision.rst
 
-diff --git a/Makefile.am b/Makefile.am
-index b3a016cf..3023ed0c 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -661,7 +661,6 @@ builtin_sources += plugins/provision.c
- 
- builtin_modules += file_provision
- builtin_sources += plugins/file-provision.c
--
- endif
- 
- if MAINTAINER_MODE
-@@ -1010,8 +1009,9 @@ tools_auto_enable_LDADD = gdbus/libgdbus-internal.la @GLIB_LIBS@ @DBUS_LIBS@
- tools_get_location_SOURCES = tools/get-location.c
- tools_get_location_LDADD = @GLIB_LIBS@ @DBUS_LIBS@
- 
--tools_lookup_apn_SOURCES = plugins/mbpi.c plugins/mbpi.h tools/lookup-apn.c
--tools_lookup_apn_LDADD = @GLIB_LIBS@
-+tools_lookup_apn_SOURCES = src/provisiondb.h src/provisiondb.c \
-+				tools/lookup-apn.c
-+tools_lookup_apn_LDADD = $(ell_ldadd)
- 
- tools_tty_redirector_SOURCES = tools/tty-redirector.c
- tools_tty_redirector_LDADD = @GLIB_LIBS@
-diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
-index 884b32a0..ff791993 100644
---- a/tools/lookup-apn.c
-+++ b/tools/lookup-apn.c
-@@ -1,115 +1,142 @@
- /*
-- *
-  *  oFono - Open Source Telephony
-- *
-  *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2023  Cruise, LLC
-  *
-- *  This program is free software; you can redistribute it and/or modify
-- *  it under the terms of the GNU General Public License version 2 as
-- *  published by the Free Software Foundation.
-- *
-- *  This program is distributed in the hope that it will be useful,
-- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-- *  GNU General Public License for more details.
-- *
-- *  You should have received a copy of the GNU General Public License
-- *  along with this program; if not, write to the Free Software
-- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-- *
-+ *  SPDX-License-Identifier: GPL-2.0-only
-  */
- 
- #ifdef HAVE_CONFIG_H
- #include <config.h>
- #endif
- 
-+#include <stdio.h>
- #include <stdlib.h>
-+#include <getopt.h>
-+#include <errno.h>
- 
--#include <glib.h>
-+#include <ell/ell.h>
- 
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/modem.h>
- #include <ofono/gprs-provision.h>
- 
--#include "plugins/mbpi.h"
-+#include "provisiondb.h"
- 
--static void lookup_apn(const char *match_mcc, const char *match_mnc,
--						gboolean allow_duplicates)
--{
--	GSList *l;
--	GSList *apns;
--	GError *error = NULL;
-+static const char *option_file;
- 
--	g_print("Searching for info for network: %s%s\n", match_mcc, match_mnc);
-+static int lookup_apn(const char *match_mcc, const char *match_mnc,
-+							const char *match_spn)
-+{
-+	struct provision_db *pdb;
-+	struct ofono_gprs_provision_data *contexts;
-+	size_t n_contexts;
-+	int r;
-+	size_t i;
+diff --git a/doc/provision.rst b/doc/provision.rst
+new file mode 100644
+index 00000000..ed496e77
+--- /dev/null
++++ b/doc/provision.rst
+@@ -0,0 +1,139 @@
++Carrier Settings Provisioning Database
++======================================
 +
-+	if (option_file) {
-+		fprintf(stdout, "Opening database at: '%s'\n", option_file);
-+		pdb = provision_db_new(option_file);
-+	} else {
-+		fprintf(stdout, "Opening database in default location\n");
-+		pdb = provision_db_new_default();
-+	}
- 
--	apns = mbpi_lookup_apn(match_mcc, match_mnc, allow_duplicates, &error);
-+	if (!pdb) {
-+		fprintf(stdout, "Database opening failed\n");
-+		return -EIO;
-+	}
- 
--	if (apns == NULL) {
--		if (error != NULL) {
--			g_printerr("Lookup failed: %s\n", error->message);
--			g_error_free(error);
--		}
-+	fprintf(stdout, "Searching for info for network: %s%s, spn: %s\n",
-+			match_mcc, match_mnc, match_spn ? match_spn : "<None>");
- 
--		return;
-+	r = provision_db_lookup(pdb, match_mcc, match_mnc, match_spn,
-+					&contexts, &n_contexts);
-+	if (r < 0) {
-+		fprintf(stderr, "Unable to lookup: %s\n", strerror(-r));
-+		return r;
- 	}
- 
--	for (l = apns; l; l = l->next) {
--		struct ofono_gprs_provision_data *ap = l->data;
-+	for (i = 0; i < n_contexts; i++) {
-+		struct ofono_gprs_provision_data *ap = contexts + i;
++Carrier settings provisioning is performed automatically whenever a new,
++not previously used SIM card is detected for the first time.  Settings such as
++APN, username, password settings as well as the default bearer settings can be
++provisioned automatically if a matching database entry is found.
 +
-+		fprintf(stdout, "\nName: %s\n", ap->name);
-+		fprintf(stdout, "APN: %s\n", ap->apn);
-+		fprintf(stdout, "Type: %x\n", ap->type);
-+		fprintf(stdout, "Proto: %x\n", ap->proto);
- 
--		g_print("\n");
--		g_print("Name: %s\n", ap->name);
--		g_print("APN: %s\n", ap->apn);
--		g_print("Type: %s\n", mbpi_ap_type(ap->type));
--		g_print("Username: %s\n", ap->username);
--		g_print("Password: %s\n", ap->password);
-+		if (ap->username)
-+			fprintf(stdout, "Username: %s\n", ap->username);
- 
--		mbpi_ap_free(ap);
-+		if (ap->password)
-+			fprintf(stdout, "Password: %s\n", ap->password);
++Matches are performed based on the following information:
++    * SIM Mobile Country Code (MCC)
++    * SIM Mobile Network Code (MNC)
++    * SIM Service Provider Name (SPN)
 +
-+		if (ap->type & OFONO_GPRS_CONTEXT_TYPE_MMS) {
-+			if (ap->message_proxy)
-+				fprintf(stdout, "Message Proxy: %s\n",
-+							ap->message_proxy);
-+			fprintf(stdout, "Message Center: %s\n",
-+							ap->message_center);
-+		}
- 	}
- 
--	g_slist_free(apns);
-+	l_free(contexts);
++The carrier settings provisioning database is represented in JSON format and is
++converted to a binary format at installation time.
 +
-+	provision_db_free(pdb);
++JSON Structure
++--------------
++**(List):**
++    List of mobile network provider objects.  Top level element.
 +
-+	return 0;
- }
- 
--static gboolean option_version = FALSE;
--static gboolean option_duplicates = FALSE;
-+static void usage(void)
-+{
-+	printf("lookup-apn\nUsage:\n");
-+	printf("lookup-apn [options] <mcc> <mnc> [spn]\n");
-+	printf("Options:\n"
-+			"\t-v, --version	Show version\n"
-+			"\t-f, --file		Provision DB file to use\n"
-+			"\t-h, --help		Show help options\n");
-+}
- 
--static GOptionEntry options[] = {
--	{ "version", 'v', 0, G_OPTION_ARG_NONE, &option_version,
--				"Show version information and exit" },
--	{ "allow-duplicates", 0, 0, G_OPTION_ARG_NONE, &option_duplicates,
--				"Allow duplicate access point types" },
--	{ NULL },
-+static const struct option options[] = {
-+	{ "version",	no_argument,		NULL, 'v' },
-+	{ "help",	no_argument,		NULL, 'h' },
-+	{ "file",	required_argument,	NULL, 'f' },
-+	{ },
- };
- 
- int main(int argc, char **argv)
- {
--	GOptionContext *context;
--	GError *error = NULL;
--
--	context = g_option_context_new(NULL);
--	g_option_context_add_main_entries(context, options, NULL);
--
--	if (g_option_context_parse(context, &argc, &argv, &error) == FALSE) {
--		if (error != NULL) {
--			g_printerr("%s\n", error->message);
--			g_error_free(error);
--		} else
--			g_printerr("An unknown error occurred\n");
--		exit(1);
-+	for (;;) {
-+		int opt = getopt_long(argc, argv, "f:vh", options, NULL);
++    Example:
++    ``[{"name": "Operator XYZ", ...}, {"name": "Operator ZYX", ...}]``
 +
-+		if (opt < 0)
-+			break;
++    - **name (String):**
++        The name of the mobile network provider.  This field is a freeform
++        string that identifies the provider.  This field is used purely for
++        human consumption and not used by the provisioning logic.
 +
-+		switch (opt) {
-+		case 'f':
-+			option_file = optarg;
-+			break;
-+		case 'v':
-+			printf("%s\n", VERSION);
-+			return EXIT_SUCCESS;
-+		case 'h':
-+			usage();
-+			return EXIT_SUCCESS;
-+		default:
-+			return EXIT_FAILURE;
-+		}
- 	}
- 
--	g_option_context_free(context);
--
--	if (option_version == TRUE) {
--		g_print("%s\n", VERSION);
--		exit(0);
-+	if (argc - optind > 3) {
-+		fprintf(stderr, "Invalid command line parameters\n");
-+		return EXIT_FAILURE;
- 	}
- 
--	if (argc < 2) {
--		g_printerr("Missing parameters\n");
--		exit(1);
-+	if (argc - optind < 2) {
-+		fprintf(stderr, "Missing MCC MNC parameters\n");
-+		return EXIT_FAILURE;
- 	}
- 
--	lookup_apn(argv[1], argv[2], option_duplicates);
--
--	return 0;
-+	return lookup_apn(argv[optind], argv[optind + 1],
-+			argc - optind == 3 ? argv[optind + 2] : NULL);
- }
++        This field is `required`.
++
++        Example: "Operator XYZ"
++
++    - **ids (List of Strings):**
++        Unique identifiers associated with the mobile network provider.  This
++        is a list of all MCC+MNC identifiers associated with this provider.
++
++        This field is `required`.
++
++        Example: ``["99955", "99956", "99901", "99902"]``
++
++    - **spn (String):**
++        Service Provider Name associated with the mobile network provider.  This
++        field is typically used to differentiate MVNOs from non-MVNO providers.
++
++        This field is `optional`.
++
++        Example: "ZYX"
++
++    - **apns (List):**
++        List of access points associated with the mobile network provider.  At
++        least one entry must be present in the list.
++
++        This field is `required`.
++
++        - **name (String):**
++            The descriptive name of the access point.  If present, will be
++            reflected in the oFono context name after successful provisioning.
++
++            This field is `optional`.
++
++            Example: "Internet"
++
++        - **apn (String):**
++            Access Point Name - Setting required for successful bearer
++            activation.  Provided by the carrier.
++
++            This field is `required`.
++
++            Example: "internet"
++
++        - **type (List of Strings):**
++            The types of connections supported by the access point.  The
++            following types are recognized:
++
++            - "internet": Used for general internet access.
++            - "mms": Used for Multimedia Messaging Service (MMS).
++            - "wap": Used for Wireless Application Protocol (WAP).
++            - "ims": Used for IP Multimedia Subsystem (IMS).
++            - "supl": Used for Secure User Plane Location (SUPL).
++            - "ia": Used for Initial Attach in LTE networks.
++
++            This field is `required`.
++
++            Example: ``["internet", "mms"]``
++
++        - **authentication (String):**
++            Authentication method used for the connection.  The following types
++            are recognized:
++
++            - "chap": CHAP authentication
++            - "pap": PAP authentication
++            - "none": No authentication is used
++
++            This field is `optional`.
++
++            Example: "none"
++
++        - **username (String):**
++            Username used for authenticating to the access point.
++
++            This field is `optional`.
++
++            Example: "username"
++
++        - **password (String):**
++            Password used for authenticating to the access point.
++
++            This field is `optional`.
++
++            Example: "temp123"
++
++        - **protocol (String):**
++            Network protocol used for the connection.  The following types are
++            recognized:
++
++            - "ipv4": IPv4 only
++            - "ipv6": IPv6 only
++            - "ipv4v6": Dual protocol, both IPv4 and IPv6 will be negotiated
++
++            If omitted, then `"ipv4v6"` will be assumed.
++
++            This field is `optional`.
++
++            Example: "ipv4"
++
++        - **mmsc (String):**
++            Multimedia Messaging Service Center - URL for MMS.
++
++            This field is `required` for MMS contexts.
++
++            Example: "foobar.mmsc:80"
++
++        - **mmsproxy (String):**
++            Proxy server for Multimedia Messaging Service (MMS).
++
++            This field is `optional`.
++
++            Example: "mms.proxy.net"
 -- 
 2.43.0
 
