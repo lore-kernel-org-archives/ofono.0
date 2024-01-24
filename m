@@ -1,95 +1,93 @@
-Received: from mail-oo1-f45.google.com (mail-oo1-f45.google.com [209.85.161.45])
+Received: from mail-oi1-f180.google.com (mail-oi1-f180.google.com [209.85.167.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACF897CF3D
-	for <ofono@lists.linux.dev>; Wed, 24 Jan 2024 16:52:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF24D1350D1
+	for <ofono@lists.linux.dev>; Wed, 24 Jan 2024 21:14:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706115132; cv=none; b=TAkIBgMo8wxT/y3VDbSrhFUp//ve+jT2xYayNDmTZLr4laoyd5WBex465o4SQxbwxXRryVK2oBJ2oRuJI/AbrC7Jow1j8x206VZsQ0dEFg9AE757lHOOjF0dkc8Oc6QAv5gKCIZw9+CL51swAaXYGDzwQLzXCYhCe30h3qK4xjU=
+	t=1706130849; cv=none; b=tNXFnznHj3/QC/IEkSpahklF+TdykDHVIcNGrlAEy0/oeij5ixm6pV3OINuO63z7rshj5JayjL1Oq8Pd0SASC+drPNmSPVhZ9AlEtm8934OdKdeP09wi+Wk+sgPvTe8VXsjoCuwhNDGBrn64Xk3QH0d54GO86x7orU3vdMoO9nI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706115132; c=relaxed/simple;
-	bh=5Th2NTDQVuKFdwGEYm8XsAwTOCg14T6oXtum/FapnPk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=Yoq/7g7SdLmSC5yW+A/cAjv54Zv//5msjARyss2ML7TVcUeRQWbjZFzwR+CZyVI29uCdKKUXSGQDrHhu5zxbuoTAXAj1JjgrrDJDuUqkl/nrM3zktDLfPjDqLyIWvxxrlpS8707we5Xjv0jrfiLxeDLTQX3kj5O0VoYiCU+FJxA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Sa0XrHGw; arc=none smtp.client-ip=209.85.161.45
+	s=arc-20240116; t=1706130849; c=relaxed/simple;
+	bh=OTpnF8wBaH461nBqPMFltMg16Hcz9roFOGtNIJhg+Z8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=XNRs17N5TmESyVziInQ9egCu0y9lz+tWHJcKauCbpS7+eFtBf2NUFPRBPeN01wM0lC5HR+hOUsPQ7n69zn3QFnaJSKL8NQXUOBxpSJOAVYkaGvAt5uZD2dluW4EfX8mo4x6cigv0mnYn4X3BnKkYpSM6osZX/FOJcZzbbKV2CFw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VPMqX8lo; arc=none smtp.client-ip=209.85.167.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Sa0XrHGw"
-Received: by mail-oo1-f45.google.com with SMTP id 006d021491bc7-5993047a708so2919024eaf.3
-        for <ofono@lists.linux.dev>; Wed, 24 Jan 2024 08:52:10 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VPMqX8lo"
+Received: by mail-oi1-f180.google.com with SMTP id 5614622812f47-3bd9030d68fso3585306b6e.3
+        for <ofono@lists.linux.dev>; Wed, 24 Jan 2024 13:14:06 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706115129; x=1706719929; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=8Dh9crdsw4i3q42Vp6+U+a9sPyc6asN3TDegNQd9iU8=;
-        b=Sa0XrHGwynSq6pU0WKL1PqMtLSTEdKT98zB0k2gt/LuQaVe9f2CfZeGnMPF2UiI8NI
-         2/NjQ2Y9f8ksUxosudkIuQzH3h94xLcQqw68r1t3j6QsoOYdotJRnVrPRf2mvKAbwcOl
-         a/R+yuHhi4u0RRLScwhzwq1RJv5OBMBWwkv3lRcEu2zZF0vUp91nWvuutnnFRog+3IJ/
-         TL4XXvGgl18L8KkqC6qdUJdDZRpZnaHoHV+Cr6zb/l1FTSVv84Jvkt5tFO2MkIHLPGog
-         QkPVIYpYHnE0M6CHlQbypCKG6Vg0FCeOnYP9//D1G6NzG3FbVomGJUdusWHv319ybg6w
-         UD4g==
+        d=gmail.com; s=20230601; t=1706130846; x=1706735646; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=gNhDHln08Azxi2EnQy1WNPfjtieEQtjUVMWvH5VM5GI=;
+        b=VPMqX8loWEm8LtLcmcQhyZjfqujXKNrpWSb58CqPiwT/NFV3bruSDqLlUuAGpq5a+8
+         SijHYC66EgvuS/F5/sJF7iZ5hy5l02t0oMiTw1QiRaMlhi0goA1On/LYf09PfyzrkASF
+         A0r153l7RnCvT6DaWWzGI3Pwejux2NY0RMwPlYXPMxJk3lXo3hGwnLaUdGiRM4kp3yMz
+         SDLtqGD4gHAqMqG6Rm/4mRzNqrLzKFx+zVuC2+OlaK0Z9luK8m2rmqOMwAZXnX63wtGu
+         s/rWQJLCpMUcg54UKUD8nvwJ0zy6ht5fCVsOX9atU76hBOWjZD0ff28Tbuu7LJJLNLMT
+         AXLA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706115129; x=1706719929;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=8Dh9crdsw4i3q42Vp6+U+a9sPyc6asN3TDegNQd9iU8=;
-        b=cc3yuPxUqxpKAE447G89fiM2Y/DLWYOpzmtkrL677C3A8Gu3kqjt/vRStgtLneAx3d
-         1gRt/3ntDv8r21KHJLHjEX7/xWxBZyhHq6TBkmiq7b/OTaj3gGP8XI9fi/tcjIZSOxN9
-         5qovk4SX5vSTljEEu6cZh9pq01LU+on+/IHPuIiOx2QEEQyD5PXhp5yox6K1bzlMffgS
-         JggOfvX8KELMSv6C8mXbFT/n4/uWqDQMM7X3gx43LDVq2LtG0t8vUUm8kup3Dg587ukr
-         /Y/T7D4OpsitmCfDHU554uU1Vj1YOefvseuC8GN4IKTrGuBaH2sDHZ5JFT8lFA7JnGsW
-         vxmQ==
-X-Gm-Message-State: AOJu0YxWtA0+9g2SnL4MqLQQCCZnCivYcRbtsFsqR14r82s0yMupyatE
-	LgmQnO5eV1Ro6CQdcWdeU1KecDQ4SgsZGSplQS0mIKDXetqYci48rTU1kLGs
-X-Google-Smtp-Source: AGHT+IFsnq3pVINq1BYIrFwr7U8KBpyYJeISj+/5x/sAQYlwTrn5FlQn+Jd0xSDY/EMDjriLq8VQzA==
-X-Received: by 2002:a4a:cf12:0:b0:599:93cc:afd2 with SMTP id l18-20020a4acf12000000b0059993ccafd2mr1449367oos.10.1706115129729;
-        Wed, 24 Jan 2024 08:52:09 -0800 (PST)
-Received: from [172.16.49.130] (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id h29-20020a4ae8dd000000b00595b35927a3sm29899ooe.39.2024.01.24.08.52.09
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 24 Jan 2024 08:52:09 -0800 (PST)
-Message-ID: <443333a7-7e43-48c8-8a63-fd4ab0365b36@gmail.com>
-Date: Wed, 24 Jan 2024 10:52:07 -0600
+        d=1e100.net; s=20230601; t=1706130846; x=1706735646;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=gNhDHln08Azxi2EnQy1WNPfjtieEQtjUVMWvH5VM5GI=;
+        b=UjINtDpxkBEpiVWD59mBc6MdGqN8/lVuqs7qaWpsemRdnZJrm98eLHGQghuvF7eHm5
+         6MbZSLjJVpy2ri0IsIXBEY4s1DltIypbpspQ5eH1kL0qdYlaq8gu4Ab65O8BXMefqdot
+         /ikXqH/4NS4hpuNVw90hxEN2X7tq65AjTAsQr7fmOL9ZhmNzubx8PFqOZsCWhVob0yuS
+         thJZNWX3NizLc7lrJ0Z9t+UL20h3eTnkWHjgYSNLD40yO833YyGuJ4SpPWaA5AsBkNw0
+         obtjEwooswav5hkApEK9q80i1meD4hx3a4+cNfJbhx7vRaDSdX0AaB0HKOLxw4H/HXCl
+         ByWA==
+X-Gm-Message-State: AOJu0YzbkhJZLxE/ap7UDExeNL0bXY8+wuTDfYdhLgoGvgcPSswR++LB
+	yt8ttthuw+oCrIVMRLs8ZTJKcVEJthxWAHrlun5n7vNtC6OmehLy7ISQ2klc
+X-Google-Smtp-Source: AGHT+IFflII7wAIBRrGq6Mo++ZOle7qr3NJUPpkmx/AKcbv1ArouNPDAC52E4B50JbkOW23wKCF3xQ==
+X-Received: by 2002:a05:6808:bc7:b0:3bd:cf03:2331 with SMTP id o7-20020a0568080bc700b003bdcf032331mr2035143oik.94.1706130845801;
+        Wed, 24 Jan 2024 13:14:05 -0800 (PST)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id t27-20020a0568080b3b00b003bdac23eb89sm2003318oij.34.2024.01.24.13.14.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 24 Jan 2024 13:14:05 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 1/4] core: Remove unused declarations from ofono.h
+Date: Wed, 24 Jan 2024 15:12:59 -0600
+Message-ID: <20240124211317.611706-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] gatchat: fix g_at_chat_unref in notify handler
-Content-Language: en-US
-To: Maxim Lyubimov <m.lyubimov@aqsi.ru>, ofono@lists.linux.dev
-References: <20240123150035.1477546-1-m.lyubimov@aqsi.ru>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20240123150035.1477546-1-m.lyubimov@aqsi.ru>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi Maxim,
+Fixes: 36a11599 ("gprs-provision: Remove no longer used atom/driver")
+---
+ src/ofono.h | 8 --------
+ 1 file changed, 8 deletions(-)
 
-On 1/23/24 09:00, Maxim Lyubimov wrote:
-> If the new_bytes handler processes a modem shutdown URC, it results in
-> a call to the g_at_chat_unref function, which includes a call to the
-> chat_cleanup function, which clears the list of URC handlers that
-> continue to be traversed after the current handler has completed, and
-> may lead to errors. To correct the situation, the chat_cleanup function
-> is not called in the at_chat_unref function if the in_read_handler flag
-> is set. In the new_bytes function, if the destroyed flag is set, the
-> chat_cleanup function is called before calling g_free. Additional
-> checks have been added to the chat_cleanup function.
-> ---
->   gatchat/gatchat.c | 102 +++++++++++++++++++++++++++-------------------
->   1 file changed, 60 insertions(+), 42 deletions(-)
-> 
-
-Looks good.  There's no need to move some of these functions around now though. 
-I sent a (much smaller) v3 of this patch so it goes through CI.  Please take a 
-look as well.
-
-Regards,
--Denis
+diff --git a/src/ofono.h b/src/ofono.h
+index 6a8c53a1..42298e43 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -587,14 +587,6 @@ bool __ofono_provision_get_settings(const char *mcc,
+ 				struct ofono_gprs_provision_data **settings,
+ 				size_t *count);
+ 
+-ofono_bool_t __ofono_gprs_provision_get_settings(const char *mcc,
+-				const char *mnc, const char *spn,
+-				struct ofono_gprs_provision_data **settings,
+-				int *count);
+-void __ofono_gprs_provision_free_settings(
+-				struct ofono_gprs_provision_data *settings,
+-				int count);
+-
+ #include <ofono/emulator.h>
+ 
+ enum ofono_emulator_slc_condition {
+-- 
+2.43.0
 
