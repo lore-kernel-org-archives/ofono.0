@@ -1,62 +1,62 @@
-Received: from mail-oi1-f172.google.com (mail-oi1-f172.google.com [209.85.167.172])
+Received: from mail-oi1-f177.google.com (mail-oi1-f177.google.com [209.85.167.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D83CE762E1
-	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D2D40762CE
+	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706649749; cv=none; b=kHnao4Thkw65+QlD5SNHadY1UmDgLyty34otHyPmrUlqCg1t93alCVOmFF4H1P8I9V6Hn/l4DXFvMGxbUw5pJXz7jEgkT4c+rFYydOGxjmHPxYwKXuvEM1zB5Fi8z/nUeHWD8a/1WuL2P9MRR6sqKuLvdz0eKTqGzpy01j9SBZA=
+	t=1706649750; cv=none; b=sFgKv1xSsHIEgEomrMXQl38Brnv4U+I56GNUFB/6Hfmo2UXwlc+F6oIvd7LG8JLJXy+JCN3kPNtogFsvJcL7A9G9iQ29fI+nxQ1Aq1inWOINpK+oESh5Xdn1i0nhNDIHF4Yp6GS5dbZk/mGnX0a7JFcrvbTWjAz5q5CQKIOysCg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706649749; c=relaxed/simple;
-	bh=7mCWKmsWvh/ZoiGpWL5uPaBYS2+/oCLqsMZR+ujRYuA=;
+	s=arc-20240116; t=1706649750; c=relaxed/simple;
+	bh=ocOP2ENWgfeKcfkofb/GowR+z0pPyYIU9FELfhLwGkg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=WswYvUqyu17QhsbObbusjUi7YQjw2DaIpv0Isu7l/EMtB6o5XddvxY3QPrn3DdBZT/TvpxvmaGWyPg42WexGZL3AaOAdCbgrnQuQwBbCsqe8Z3bBNuaqQPGe0IjSUMdly287lTIooaGQ/a123CovyfIY2qmc++zhPqVjYUEsv2w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=EwD7zTXA; arc=none smtp.client-ip=209.85.167.172
+	 MIME-Version; b=NRjPI12I1k2OOSkzxxvKhjJNOX49bY36m1Fi/pBJIBH92AIKJYEk0xhRW9voaDrFcyf+9304oy89yhIBSDCpcG4aGBKMoYDMu4f6EEiBxZAlPhJtQU69n1qjyzCK07ICwog3glhUZ7MxuLXpnhD1+uxVFvkDijhmTTZ8OeknU90=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YBbRiiK1; arc=none smtp.client-ip=209.85.167.177
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EwD7zTXA"
-Received: by mail-oi1-f172.google.com with SMTP id 5614622812f47-3beb504c985so62579b6e.0
-        for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:27 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YBbRiiK1"
+Received: by mail-oi1-f177.google.com with SMTP id 5614622812f47-3bb9d54575cso3287959b6e.2
+        for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:28 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706649746; x=1707254546; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706649747; x=1707254547; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=B7IP0miPNvtr+ajfcDCLcomjndNqqOknwYRYE7egskI=;
-        b=EwD7zTXAw7/1aOE4o0iQbDvNn8abJrtLm//RxofJCGhvVlfFt16xjSqiH/oAY8bqVp
-         gFuoKO+RqfL/YAawJQ6MEKATv8JCnEeVdhwAwRHelCU0Y95Ey/gQPOjF4xYppC9sRMKJ
-         1zuHewsEauj7oXlEs6XZNWmwztOPuIXE1nQ7azxWV0V2LYn/fQB7iHUoRAKyOmHMlmA8
-         i1bjNcuzewzBgIicE7DT5GOqBByhhsQDCk0AmvEhDd598Sn2ko6Mj9yXG9LYEA2uIjrx
-         JOLBSEmKCFRiWeUM1ldEF1S1SR+SKM2Xx8HqIcTU/JEParq8xGFih/AiS0IGzcAdrrYM
-         t9Pw==
+        bh=xJ/Hif7k39MhIpB+VGwN9tPfBsV5uUV3MaA8EewrxfE=;
+        b=YBbRiiK11BTSgh9PGLAkIgaD7a1Yo0b0uIMEnhQ74Q9gpGFFufyYfhpB7vzTvqKMXJ
+         4EIjtv2Q828hqQTdht9cTbTVib8Tzyg5AUAO54j4vBWAo4X4NMKHb92MeHe3YUOiIeoa
+         uCMxyvhRf8shcu5FEJo5VwVawL9PZ3sM/I98AFTd4v9gzASKUyudGkIPxQQp+pIsjI9Z
+         tC7ROOAWM5GYvNKMS0DeCe7cVVcoxvycGb50IYKm1KF0Ubw2tad7Rqmk3Dptv6rRpx9T
+         uFm9ZkSAQAOeIAFyB467EIyy8drDv22dALChAHFMohYsYM2dX5Uq7biexQBZVoLIsZwv
+         pKzQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706649746; x=1707254546;
+        d=1e100.net; s=20230601; t=1706649747; x=1707254547;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=B7IP0miPNvtr+ajfcDCLcomjndNqqOknwYRYE7egskI=;
-        b=ZmhW5kx20ztrPEVA7ttj4th2+FqyDvZIKk6NWL9UGAFkBxoyizJSfeXfAX/n3ZkBNT
-         8/ZDHdVpZ7CMktbHysk4fGe9pFAhi/GaqCXdaL4yXJq/GKQ+1oukmDeP4SRkT+XbXmdx
-         5heCeX8oKhPvj0i6NnAlKTQouoMfcfEGxMp8fHFkMZhAXFn4DAdt5yCOHbrV9IxYkam+
-         zW+g48Oii/GoOAviN8AAApoBB1M3LM3+oSetLsWgHIdGwqEElqKpjhX0O6tAZgV/ibf2
-         m3kycr4VjWnCjq4gBgIDKclhZiK2hI8Lsbtf69rnJ8cXBARY+fvVv/OPLhItceGq8hnB
-         ruwg==
-X-Gm-Message-State: AOJu0YxKJEWmECSWXCeImg7JrRmDHidFEU8+AY1N3htleq003q3jhzg/
-	lRI9CKTJ8VCEVjOZuh8kbxgTYU/X1hnwb5C7vO/OBwYeCH68GtcEk/OlTGK6
-X-Google-Smtp-Source: AGHT+IHcyiSxXlpZ6XBiyLvZtim8sasUUE2O7Cr5IEHkfQZd1yYVlTWUc2Vy5eNVnN7L6OCHtTsE7A==
-X-Received: by 2002:a05:6871:e78a:b0:218:6f54:966f with SMTP id qb10-20020a056871e78a00b002186f54966fmr581835oac.9.1706649746496;
-        Tue, 30 Jan 2024 13:22:26 -0800 (PST)
+        bh=xJ/Hif7k39MhIpB+VGwN9tPfBsV5uUV3MaA8EewrxfE=;
+        b=I32vIoZed00ZDDnNMVeubF17Oz63QnDMN21Dm73QBU3xPyMRFAH1FbNix4rRMn3EgD
+         7WWEDa0BR5CIArcRasUtcD7wCUstqddFkuATNt8lyL297JqgT1K1Fiz9upFBw5eee8xk
+         Gu3bewvIB6ob1UftM+USkwahdK/U6nPOWksQNjfIvZWJAlCqKlYBg0dDd3HDzWYyVl0o
+         F2Uz3B1YgYOTsfXkQ8mGom5OQvbInaonB3Tgk2zX2Ap/TyF+mDl5j181IMfLH20sP02e
+         1WsnPXEWqRQN700LVVACKD9z9IzN/4OO/5AnQT74McmlnMiA6TEw7Upz7DbJ8bGqocAc
+         dZLA==
+X-Gm-Message-State: AOJu0Yw0PVQUZDu0Oej4mV2FnTxO2SO1kqKUDrewyF8hpnnx3trqV04K
+	GhakkYfEWPpOWZV3yF2CACLd1HVXpylcM9p//svzgB0s0L6Ho3BjpHGB3xH1
+X-Google-Smtp-Source: AGHT+IHF4L6SCzzoU+BldagY80b0562wNKMrEetKveXbpdP/O1cw8ZBeomLxCFcodc50V5QHS3KFoQ==
+X-Received: by 2002:a05:6871:4e48:b0:214:4761:d39f with SMTP id uj8-20020a0568714e4800b002144761d39fmr9165486oab.34.1706649747793;
+        Tue, 30 Jan 2024 13:22:27 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.25
+        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.27
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jan 2024 13:22:26 -0800 (PST)
+        Tue, 30 Jan 2024 13:22:27 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 03/17] build: Bring in more ell classes
-Date: Tue, 30 Jan 2024 15:21:08 -0600
-Message-ID: <20240130212137.814082-3-denkenz@gmail.com>
+Subject: [PATCH 05/17] storage: Introduce storage_get_file_path()
+Date: Tue, 30 Jan 2024 15:21:10 -0600
+Message-ID: <20240130212137.814082-5-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240130212137.814082-1-denkenz@gmail.com>
 References: <20240130212137.814082-1-denkenz@gmail.com>
@@ -68,99 +68,102 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Some ell classes are still not used by oFono.  Bring them all into the
-build for future use.
+There are multiple locations where the same steps are followed to
+produce a file path for a given storage location.  Pull this logic into
+a single function and expose it for potential use by other modules.
+While here, convert use of GLib functions to ell.
 ---
- Makefile.am | 34 ++++++++++++++++++++++++++++------
- 1 file changed, 28 insertions(+), 6 deletions(-)
+ src/storage.c | 36 +++++++++++++++++-------------------
+ src/storage.h |  1 +
+ 2 files changed, 18 insertions(+), 19 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 79645e767b05..5221b1cca138 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -36,8 +36,8 @@ ell_headers = ell/util.h \
- 			ell/checksum.h \
- 			ell/netlink.h \
- 			ell/genl.h \
--			ell/dbus.h \
- 			ell/rtnl.h \
-+			ell/dbus.h \
- 			ell/dbus-service.h \
- 			ell/dbus-client.h \
- 			ell/hwdb.h \
-@@ -52,14 +52,20 @@ ell_headers = ell/util.h \
- 			ell/file.h \
- 			ell/dir.h \
- 			ell/net.h \
-+			ell/dhcp.h \
-+			ell/dhcp6.h \
- 			ell/cert.h \
- 			ell/ecc.h \
- 			ell/ecdh.h \
- 			ell/time.h \
-+			ell/gpio.h \
- 			ell/path.h \
-+			ell/icmp6.h \
-+			ell/acd.h \
- 			ell/cleanup.h \
-+			ell/netconfig.h \
- 			ell/sysctl.h \
--			ell/gpio.h
-+			ell/minheap.h
+diff --git a/src/storage.c b/src/storage.c
+index 05d9b88a0237..c7bbb1c6142a 100644
+--- a/src/storage.c
++++ b/src/storage.c
+@@ -171,45 +171,43 @@ error_create_dirs:
+ 	return r;
+ }
  
- ell_sources = ell/private.h \
- 			ell/missing.h \
-@@ -103,30 +109,46 @@ ell_sources = ell/private.h \
- 			ell/uintset.c \
- 			ell/base64.c \
- 			ell/asn1-private.h \
--			ell/pem.c \
- 			ell/pem-private.h \
-+			ell/pem.c \
- 			ell/tls-private.h \
- 			ell/tls.c \
- 			ell/tls-record.c \
--			ell/tls-suites.c \
- 			ell/tls-extensions.c \
-+			ell/tls-suites.c \
- 			ell/uuid.c \
- 			ell/key.c \
- 			ell/file.c \
- 			ell/dir.c \
- 			ell/net-private.h \
- 			ell/net.c \
-+			ell/dhcp-private.h \
-+			ell/dhcp.c \
-+			ell/dhcp-transport.c \
-+			ell/dhcp-lease.c \
-+			ell/dhcp6-private.h \
-+			ell/dhcp6.c \
-+			ell/dhcp6-transport.c \
-+			ell/dhcp6-lease.c \
-+			ell/dhcp-util.c \
-+			ell/dhcp-server.c \
- 			ell/cert-private.h \
- 			ell/cert.c \
--			ell/ecc-external.c \
-+			ell/cert-crypto.c \
- 			ell/ecc-private.h \
-+			ell/ecc-external.c \
- 			ell/ecc.c \
- 			ell/ecdh.c \
- 			ell/time.c \
- 			ell/time-private.h \
-+			ell/gpio.c \
- 			ell/path.c \
-+			ell/icmp6.c \
-+			ell/icmp6-private.h \
-+			ell/acd.c \
-+			ell/netconfig.c \
- 			ell/sysctl.c \
--			ell/gpio.c
-+			ell/minheap.c
+-GKeyFile *storage_open(const char *imsi, const char *store)
++char *storage_get_file_path(const char *imsi, const char *store)
+ {
+-	GKeyFile *keyfile;
+-	char *path;
+-
+ 	if (store == NULL)
+ 		return NULL;
  
- ell_shared = ell/useful.h ell/asn1-private.h
+ 	if (imsi)
+-		path = g_strdup_printf(STORAGEDIR "/%s/%s", imsi, store);
++		return l_strdup_printf(STORAGEDIR "/%s/%s", imsi, store);
+ 	else
+-		path = g_strdup_printf(STORAGEDIR "/%s", store);
++		return l_strdup_printf(STORAGEDIR "/%s", store);
++}
  
+-	keyfile = g_key_file_new();
++GKeyFile *storage_open(const char *imsi, const char *store)
++{
++	GKeyFile *keyfile;
++	char *path = storage_get_file_path(imsi, store);
+ 
+-	if (path) {
+-		g_key_file_load_from_file(keyfile, path, 0, NULL);
+-		g_free(path);
+-	}
++	if (!path)
++		return NULL;
++
++	keyfile = g_key_file_new();
++	g_key_file_load_from_file(keyfile, path, 0, NULL);
++	l_free(path);
+ 
+ 	return keyfile;
+ }
+ 
+ void storage_sync(const char *imsi, const char *store, GKeyFile *keyfile)
+ {
+-	char *path;
++	char *path = storage_get_file_path(imsi, store);
+ 	char *data;
+ 	gsize length = 0;
+ 
+-	if (imsi)
+-		path = g_strdup_printf(STORAGEDIR "/%s/%s", imsi, store);
+-	else
+-		path = g_strdup_printf(STORAGEDIR "/%s", store);
+-
+ 	if (path == NULL)
+ 		return;
+ 
+ 	if (create_dirs(path, S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
+-		g_free(path);
++		l_free(path);
+ 		return;
+ 	}
+ 
+@@ -218,7 +216,7 @@ void storage_sync(const char *imsi, const char *store, GKeyFile *keyfile)
+ 	g_file_set_contents(path, data, length, NULL);
+ 
+ 	g_free(data);
+-	g_free(path);
++	l_free(path);
+ }
+ 
+ void storage_close(const char *imsi, const char *store, GKeyFile *keyfile,
+diff --git a/src/storage.h b/src/storage.h
+index 4dc792ccf7f9..3a1e64493546 100644
+--- a/src/storage.h
++++ b/src/storage.h
+@@ -32,6 +32,7 @@ ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
+ 			const char *path_fmt, ...)
+ 	__attribute__((format(printf, 4, 5)));
+ 
++char *storage_get_file_path(const char *imsi, const char *store);
+ GKeyFile *storage_open(const char *imsi, const char *store);
+ void storage_sync(const char *imsi, const char *store, GKeyFile *keyfile);
+ void storage_close(const char *imsi, const char *store, GKeyFile *keyfile,
 -- 
 2.43.0
 
