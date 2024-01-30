@@ -1,62 +1,62 @@
-Received: from mail-oa1-f54.google.com (mail-oa1-f54.google.com [209.85.160.54])
+Received: from mail-oa1-f53.google.com (mail-oa1-f53.google.com [209.85.160.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19C58762CE
-	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B50571B48
+	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706649748; cv=none; b=Km+cEeKozRKkmflfQR+XWjQTPijwVbE+NOXb4nHsxYzOPryj5Vs1lK+dkb14AUqORkPf7Wrm6KzKndgBKqfGd2Snfb3/rnWEd/CA3SlINSTX2rGyzPbLpnJ3LbdCmyejhn/xzKiZIb1yIX4ORCTJt7qtr8xrm3Kn/MIcdGyPscc=
+	t=1706649749; cv=none; b=mjhBLLIPcxrYKwDU23FtZ5wgzILJ2bQlDPstYnlS0NjueXb4+NZ1E03EWKkz3DhrOoxNGfzxtDI8VUGqWProkuogMLTLmg3NIBOZkSAB5JwKW3H25PAKKpdB69tqmwCfkeaTRH/7F6PaP4h8DA1VZSXk3I0gEk4Mv0uz/XMf//g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706649748; c=relaxed/simple;
-	bh=qNc3Wp33P3lSTcU0kj7FRg41RP3A3W0tLQ/un102U/8=;
+	s=arc-20240116; t=1706649749; c=relaxed/simple;
+	bh=hyPteJ2jqQQhUP5+JZGTuesBhi4L5h/BiDZrMdVQw7A=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=J/eBZWeLwEppr01k7p5SG4pnHuPCAC4cNDmJaCFNUTVV33ghESkGdZAeKHF6ivDrfyjt8cGXr8fQCr3IQBtMvvJlfxtLTVcP8mXLZ4S0V5z91tjBUD60DzE86JBClXe/i8b6qCypkPzyqs4SNujyjSacPHXSXw4YsquaidHkTd8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FdtBdkC6; arc=none smtp.client-ip=209.85.160.54
+	 MIME-Version; b=V8z8Ca6iOKRm3I1qTRyCsinL16egojaxe7O+pY3dvHcUF7w0BmFCYJgWABeia8pgg7ZEqAtAXEie0eYOdhmIOIRJxHKUMrKuA7LU0ZgSo6FPB35wIr5yv9P3l3v/vp3BQSHyUwoIyc6aP9Y4aw1IArZi3XGy4LpMqk1gF3+QhJQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JiWV9q0+; arc=none smtp.client-ip=209.85.160.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FdtBdkC6"
-Received: by mail-oa1-f54.google.com with SMTP id 586e51a60fabf-214ca209184so1995958fac.1
-        for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:26 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JiWV9q0+"
+Received: by mail-oa1-f53.google.com with SMTP id 586e51a60fabf-214d1139620so1286044fac.3
+        for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:27 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706649746; x=1707254546; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706649747; x=1707254547; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=XcCKwqfJOURxSpC+fkwQR4gkkhDdnHZ6bLx/qbhv6Ek=;
-        b=FdtBdkC6++tQcN+PQBf0MzZgGkIMkj4Dv7Oh3bcHChLEwynrWMSDiG4ByxPSa4PCFG
-         XJ82CwCFJs581f+pS94iiqfs1tbk5RDbdISerm3yVK4t/upOUpcxzLHvONamIMa+n0HD
-         7q9BU7gWgJn2kUT/vCrW1co+4dEaAeJNoWQIvLdK+uRapXeqBT4XMm5F4qRCtHFdeO7X
-         0TpKFmxHmlAJ0eKUbLX1tlg+8vXufxzxAxLSGjB0xsldurspmXhYd91ecoamGa9YdjG4
-         8LnqblN8mhH7hj4fnHhqbTQhlaQsbzj7nZQahRXe4GsC+W3ajY8o20k588yEbApb9Smb
-         gsGw==
+        bh=td95VSf+KXU7eik86JTqU2W3lIsWJfE2VRdq1kJg8nc=;
+        b=JiWV9q0+SBU7sYGlKYo51Uxrc7ugWy9RcJoMtf7WJm94oidfsOJc2hsmcG4rQ1aN2D
+         gjm333+hH8GI95/0Z0OBh1geRnpbEQvClNJmjdkKV0Gv33Y3XMuxoth7SHYlxDXYGRwC
+         nl33J+McoW1KoTjHHJMQPDgFOdAOYLpbDi4UbsN1QLAbq8pn4aLIIzJmKaStcgRtMVUD
+         dORVF2LGOfOJdQ2pwUlAz5bmfBAwhkfP5/zd6hyCwsYZKJU7q5nnTWHyGSvBQ1YQk/dI
+         UEuSIDkG4UYG9CrSLAZOtboqpPVtnKp0E8cP/JmFIEPKkJTi+Wi84eVsJOuUX1YSXOiY
+         3Ysg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706649746; x=1707254546;
+        d=1e100.net; s=20230601; t=1706649747; x=1707254547;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=XcCKwqfJOURxSpC+fkwQR4gkkhDdnHZ6bLx/qbhv6Ek=;
-        b=sFu8JuUEONzpVC2Hunk8ClyerHkzzT12kzv7sOa6wGnHUvir40p63HF5o+s94XdSJT
-         Gj0dLkZ1tqmOrsMqRspMEkWJrQf8gaZ6stVm8h+nii+6TgR4RaUEUis9B3ev3exQqMmp
-         3rkFZgIpB6y+7PgOnKp4IhLhBVVp+gQLBy8ZE7Vw6aOqve7amwTTHBUCdNrhQC4GCrzm
-         bpwo80rTmIom/MHLRCrVGnkXrMesRHuW/xNIEIydxAFULO+hgtWzfnsY3yT+L5HUFIcN
-         pZDa6bLok0lhV2K6ieBkkOvZTM7FsirbJ6VEpPtYJtutvD+fuD6JUNyLu2TQ+pIMsvvT
-         kPkw==
-X-Gm-Message-State: AOJu0YxsIL59uqp5tyOR5ZRNrubmBuqK2FOoPUkSez8NMNZAabp+T3Gl
-	oeszFuB84J9lctZ1bAvGFHjre+zn+Kpay1Y8omzWjYzQEzj5HtVezakYdwJb
-X-Google-Smtp-Source: AGHT+IGyRT46+CNoqtunqNjByujf+tQh4cOcuOh71Au64u10ssmUj3GWFFiQ4WC9lc490OWHRxtybA==
-X-Received: by 2002:a05:6870:51e:b0:210:9bd3:ad86 with SMTP id j30-20020a056870051e00b002109bd3ad86mr11368941oao.41.1706649745808;
-        Tue, 30 Jan 2024 13:22:25 -0800 (PST)
+        bh=td95VSf+KXU7eik86JTqU2W3lIsWJfE2VRdq1kJg8nc=;
+        b=PJ2wr86ko4clpbVRa9+LdXgpxVcAVu5LHhKIzGx48pigDK6d6B9INy6WnPZyognZuB
+         LHY+Dc2vEkDTpks/ou65kz5UJ+NF6hEYZbVoRMhfBffTsTt+UiyXdDzTg7SwSVwI6xJm
+         mXD1WrsyoLnejvjTvshOKO/9EVy9I7r3qlAFLgjOSb62ElXmJ+dDte1NfumzLiZxQjc2
+         4Q+84PezI9A4J5qkzzs0Y88MnSipz+N9uiUawEd6gIykrtJB1wq7KV+2mpYmuHUzxyh4
+         xZ8+czrXJkrYTCoi8T4+of+lbuDFtd81M7AKpIoNKLQAEWjBBXSiHN6G05qmEexPrITY
+         JJKA==
+X-Gm-Message-State: AOJu0Yyh0ZZnB+KjRwTnuV+KvX1Wh+eHagTHGmIqPNF2JD4wKBZ9WctL
+	kGh6codoP0NBAx7J12VdPI30+3iM+/Bzg5WvF4Z71K1U+mspGL7xjttcS0tG
+X-Google-Smtp-Source: AGHT+IFncILvXeARyNTNVEV2ThSUA179G4pEMezH/lMMiKWaMNHLSLt6hLp5ZKd7l1j3TGqvh+JJQg==
+X-Received: by 2002:a05:6870:65a2:b0:210:ad69:e985 with SMTP id fp34-20020a05687065a200b00210ad69e985mr6735628oab.51.1706649747090;
+        Tue, 30 Jan 2024 13:22:27 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.25
+        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jan 2024 13:22:25 -0800 (PST)
+        Tue, 30 Jan 2024 13:22:26 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 02/17] build: Only enable backtrace(3) in maintainer mode
-Date: Tue, 30 Jan 2024 15:21:07 -0600
-Message-ID: <20240130212137.814082-2-denkenz@gmail.com>
+Subject: [PATCH 04/17] provisiondb: Remove some duplicate MCCMNC entries
+Date: Tue, 30 Jan 2024 15:21:09 -0600
+Message-ID: <20240130212137.814082-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240130212137.814082-1-denkenz@gmail.com>
 References: <20240130212137.814082-1-denkenz@gmail.com>
@@ -68,83 +68,46 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Using backtrace() is of no use when building with PIE (which most
-distro compilers do by default) and prevents catching the coredump
-for later retracing, which is needed since distros usually don't
-install debug symbols by default either.
-
-This patch thus only enables backtrace() when --enable-maintainer-mode
-is passed and also tries to explicitly disable PIE.
-
-This commit is based on the following commit from 'iwd':
-b6910e121082 ("build: only enable backtrace(3) in maintainer mode")
 ---
- configure.ac | 11 +++++++++++
- src/log.c    |  8 ++++----
- 2 files changed, 15 insertions(+), 4 deletions(-)
+ provision.json | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 
-diff --git a/configure.ac b/configure.ac
-index c18cfa3a696f..551f863538ed 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -110,6 +110,17 @@ AC_ARG_ENABLE(ubsan, AS_HELP_STRING([--enable-ubsan],
- AC_CHECK_FUNCS(explicit_bzero)
- AC_CHECK_FUNCS(rawmemchr)
- 
-+# In maintainer mode: try to build with application backtrace and disable PIE.
-+if (test "${USE_MAINTAINER_MODE}" = yes); then
-+	AC_SEARCH_LIBS([backtrace], [execinfo],
-+		[
-+			AC_DEFINE([HAVE_BACKTRACE], [1],
-+				[Define to 1 if you have backtrace(3).])
-+			CFLAGS="$CFLAGS -fno-PIE"
-+			LDFLAGS="$LDFLAGS -no-pie"
-+		])
-+fi
-+
- AC_CHECK_FUNC(signalfd, dummy=yes,
- 			AC_MSG_ERROR(signalfd support is required))
- 
-diff --git a/src/log.c b/src/log.c
-index b33a7d262474..a8b4ef10eaae 100644
---- a/src/log.c
-+++ b/src/log.c
-@@ -30,7 +30,7 @@
- #include <stdlib.h>
- #include <string.h>
- #include <syslog.h>
--#ifdef __GLIBC__
-+#ifdef HAVE_BACKTRACE
- #include <execinfo.h>
- #endif
- #include <dlfcn.h>
-@@ -115,7 +115,7 @@ void ofono_debug(const char *format, ...)
- 	va_end(ap);
- }
- 
--#ifdef __GLIBC__
-+#ifdef HAVE_BACKTRACE
- static void print_backtrace(unsigned int offset)
- {
- 	void *frames[99];
-@@ -303,7 +303,7 @@ int __ofono_log_init(const char *program, const char *debug,
- 	if (detach == FALSE)
- 		option |= LOG_PERROR;
- 
--#ifdef __GLIBC__
-+#ifdef HAVE_BACKTRACE
- 	signal_setup(signal_handler);
- #endif
- 
-@@ -320,7 +320,7 @@ void __ofono_log_cleanup(void)
- 
- 	closelog();
- 
--#ifdef __GLIBC__
-+#ifdef HAVE_BACKTRACE
- 	signal_setup(SIG_DFL);
- #endif
- 
+diff --git a/provision.json b/provision.json
+index ae9a08482254..77d5bb977254 100644
+--- a/provision.json
++++ b/provision.json
+@@ -14145,7 +14145,6 @@
+       "310070",
+       "310080",
+       "310090",
+-      "310090",
+       "310150",
+       "310170",
+       "310280",
+@@ -14153,8 +14152,6 @@
+       "310410",
+       "310560",
+       "310670",
+-      "310670",
+-      "310680",
+       "310680",
+       "310950",
+       "311070",
+@@ -14309,7 +14306,6 @@
+       "310011",
+       "310012",
+       "311480",
+-      "311480",
+       "311481",
+       "311482",
+       "311483",
+@@ -15038,4 +15034,4 @@
+       }
+     ]
+   }
+-]
+\ No newline at end of file
++]
 -- 
 2.43.0
 
