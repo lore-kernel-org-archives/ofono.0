@@ -1,35 +1,61 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f48.google.com (mail-oa1-f48.google.com [209.85.160.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73FEF1CF83
-	for <ofono@lists.linux.dev>; Fri, 26 Jan 2024 15:40:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D2D871B48
+	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706283626; cv=none; b=e5vMChs0LNjHHH3ZvM3wKMlHICUvDMtpARhGCx3tBeEPPfVMDYasGV/Zdx4xZZX0UXLibDCNfma2ZEK52qwiHEd1+yme3PMGSOVrM8bhTQkFZnJF1V0ABfRtlLQvsf8J4+cxwleUrUqSq52w5DJ9xytw9wtKNxA/nqlh8l4CGv8=
+	t=1706649747; cv=none; b=jTME+Tw46xmvtb8T/c/dyfVRIFOtw975iyo7PEBCOQDTo/zS8Ze2WNbjhlo//ZKIg9H8SaBOPfceOQXcad7fhE0NxkVYQqxa7jj0Fvm4C3v91dgQ4BiU68dtjbSDYZrooRbchzeDUnKX9xKrKpLUruwbdS/qe2MwwWpnNnT3Ikc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706283626; c=relaxed/simple;
-	bh=ltZPZ2eM87eFpYHGBLdNti4Y/Ue76PpgqyqLJ6zOxHc=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=ZCRnrDzNyTvyg7iO3iCPcyr4K686wKG6Ew1PfbYBOf/8BmHSctjIWulIgqB5V78Z6i6/oCM11aI2QG7JmsP0f0vGQpa6Iruv//CVC1ZWfyBpZHyXjjl8LiwTGt7gL0e+0hv0ApGg/q8jpxhzjYZvYyX0/soqM5OUkpU3Okx2xa4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=QMp7Ak0i; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1706649747; c=relaxed/simple;
+	bh=b2/Q+G77z9qtdxIyClU4hIsTCIq5g9yuq0eg3wyEvrU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=goXzJhllyI8GvJimW1pTeuDHocSiBIIlmAPU1RWbOwntsYkXdfqrUZacevqptkcitBlba8iuYWmDpKuVEZs3obP+TI1hNrdxFwkesXg6CEyeM0xgg6fLdGE92t/iP35lBp/dFW9bOndYELYWXw0r0DJPPBiGMzrBqVLjR7e3ANg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aEexMeQ2; arc=none smtp.client-ip=209.85.160.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="QMp7Ak0i"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 61B89C43390;
-	Fri, 26 Jan 2024 15:40:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1706283625;
-	bh=ltZPZ2eM87eFpYHGBLdNti4Y/Ue76PpgqyqLJ6zOxHc=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=QMp7Ak0iiPZSJU6yw7gYyNQNY9O/UAbPrO6fmLZJJMzNbNT6AlB4x/UZHs76iBu8G
-	 8tTHRteyjgvl3LSfkkLnov8Ytpv+FygqhQqxiCzI5SRL7RfhZNd4rNYPQHPUN7mNox
-	 YD4LlfocWXkMeEm3wKYMG44BkB29g+tQQRoO4x1wUFRriZCnAvyCLTkWZr/IyUQhNw
-	 6dfUTBXblD8KEUNZKFQa8CXsrt7aJZ5ogHuWu6f4CKSHRjhI33f7dNpOeaA/M/zPO3
-	 RUZnLDN9FMrFH12TCWIDCPebkvZ65laPNXq7MQht81c/1MPnq/b9NLFvNc/Ih8rxwr
-	 qJqfEH6RO+HzQ==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 4954DD8C961;
-	Fri, 26 Jan 2024 15:40:25 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aEexMeQ2"
+Received: by mail-oa1-f48.google.com with SMTP id 586e51a60fabf-218642337c9so2278439fac.3
+        for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:26 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706649745; x=1707254545; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=QL2/69l/hPQNUE7M6NPnzmVVlli3t5FRfvoixHWe4mY=;
+        b=aEexMeQ2fVY8zC1xXpYhHfRhQIz9Trgdlti7YNPDKd+DFae80LX09ZZYWVTWYqtlPa
+         ZKKTME3dnp8ls7XCccHendJ2ukBCUB9ZHE+l5dhwi7Wwfa1uL594dlt04WL6phtrfs16
+         pWUIXjIcDN5HFaMhsx+/Zu4w7VHUz0u0DqnGX8w5TsUxSxBVocjp9zbDovwSw2wjzPiV
+         50bogzk9slZepvp5GYjL3w4abaHvbdlMsUISccIHIn03Qb1qwOPIMfPv993QNdbCOgtB
+         BNJL606vDHSRaNTvnGpE8+WZROr0LJEoNcEWWY6KcGZlyeqKLuvFE8JsbzEQ8DXtLyhV
+         QYNQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706649745; x=1707254545;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=QL2/69l/hPQNUE7M6NPnzmVVlli3t5FRfvoixHWe4mY=;
+        b=AS6JLr6qVYFLf+7oOqUswdACzKsnAYqPBkCIG3gtgmJtTuul7I7L2U48Dx37Ok23ro
+         7l2IhA+Uzq+62wpDGK5UApgJcE2VyCa78y+9hDtPwm5poYVe6oylGPN5IDwsynKsWVMV
+         38AdIj5NLumxqSOBln7Evi3ceFjasAgZ966aEZqeGxfwzIhVIr6Q1TYnxv1E2j3XwFl1
+         KqhUbvrlxYsGNd/sr6stkMcJ+PkHHn+fwAEvUsb1ijbvOE18M49kpEzpR4vGwo/t+Loz
+         yda4FCRONlUcLVJHAsKrdFI7uTtrj/ZBA8EvgxA5bE5DF7w8hhG2tEbZ90xoAn2dcdwW
+         8bmQ==
+X-Gm-Message-State: AOJu0YyeDXDysqPWhbgn1dyTtLPRqx9BFcozuu8alLfJRwR+NGi9Y/65
+	wa/XV7zpDRepY1WT7rG3sM0wDJDcUEHy9HHlKvTlJqrqeRiH/n5/cAM5tDP3
+X-Google-Smtp-Source: AGHT+IGMQ42y6SXkXomvfxwGKURuN9PrcP2hhbMiGOCXuYR1taTqsrgeWuhP2vt/Qn88B5ZC/uxbIA==
+X-Received: by 2002:a05:6870:2c8c:b0:206:4d0e:c190 with SMTP id oh12-20020a0568702c8c00b002064d0ec190mr12605552oab.52.1706649745262;
+        Tue, 30 Jan 2024 13:22:25 -0800 (PST)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.24
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 30 Jan 2024 13:22:24 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 01/17] umlrunner: Also mount /var/lib as tmpfs
+Date: Tue, 30 Jan 2024 15:21:06 -0600
+Message-ID: <20240130212137.814082-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,34 +63,28 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH v2] provision: Add MCC/MNC combos and APNs to db
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <170628362529.28119.12789014735998383689.git-patchwork-notify@kernel.org>
-Date: Fri, 26 Jan 2024 15:40:25 +0000
-References: <20240125224903.4731-1-bfukano@gmail.com>
-In-Reply-To: <20240125224903.4731-1-bfukano@gmail.com>
-To: Brian Fukano <bfukano@gmail.com>
-Cc: ofono@lists.linux.dev
 
-Hello:
+/var/lib is used by oFono to store various long term settings.  Make
+sure the settings from the system are not used by mistake.  Also, since
+the host filesystem is mounted read-only, updating of /var/lib locations
+by oFono wouldn't work anyway, which might be confusing.
+---
+ tools/umlrunner | 2 ++
+ 1 file changed, 2 insertions(+)
 
-This patch was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Thu, 25 Jan 2024 14:49:03 -0800 you wrote:
-> Add additional MCC/MNC combos and APNs to provisioning db needed by Cruise
-> ---
->  provision.json | 23 +++++++++++++++++++++--
->  1 file changed, 21 insertions(+), 2 deletions(-)
-
-Here is the summary with links:
-  - [v2] provision: Add MCC/MNC combos and APNs to db
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4e48785557c5
-
-You are awesome, thank you!
+diff --git a/tools/umlrunner b/tools/umlrunner
+index c1d4c9864487..bb2f24a6dbb9 100755
+--- a/tools/umlrunner
++++ b/tools/umlrunner
+@@ -45,6 +45,8 @@ mounts_common = [
+     MountInfo('tmpfs', 'tmpfs', '/etc', '', 0),
+     MountInfo('tmpfs', 'tmpfs', '/usr/share/dbus-1', 'mode=0755',
+               MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_STRICTATIME),
++    MountInfo('tmpfs', 'tmpfs', '/var/lib', 'mode=0755',
++              MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_STRICTATIME),
+ ]
+ 
+ dev_table = [
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.43.0
 
