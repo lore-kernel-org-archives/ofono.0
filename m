@@ -1,62 +1,62 @@
-Received: from mail-oa1-f41.google.com (mail-oa1-f41.google.com [209.85.160.41])
+Received: from mail-oa1-f50.google.com (mail-oa1-f50.google.com [209.85.160.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2961278B55
-	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC8CA78B5A
+	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706649753; cv=none; b=ig/kUPFBaZjlpAvrA568ogkfnrvfvOZEgr3ALgS9q9i6Grn9MUSu+DPYg4kvxwB1PrgQM3Zj2pgCAHlrk39Y2VlyOJ6n9Y4W4z4GUHYg3S7F8p0RAOIUOIYMnVAeoIMHNHMQYvL0o5xExFVcnNPlzh/3edCv3JoSL+Ng6B7L7PA=
+	t=1706649754; cv=none; b=tgcPUQC97bpGyHXMRyVnkgnw1FJtzQkorPjvwADFL/sg2syM+iHEHoSDSqvWjOmFk7u1E9FSlMzmVidn4ng/ABkzKuXtQBiViuUu3ok19P5Q/sq2EwZ2INeIm55Xuww55KCN1ZsidKnmZ6BPkJXXsCORbhUS+t7Kgz9qCzKG5Ao=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706649753; c=relaxed/simple;
-	bh=6yxi50K1Wx9rlrL0qY8bOPY+9mfiHds5hJg8RRkZ7LU=;
+	s=arc-20240116; t=1706649754; c=relaxed/simple;
+	bh=Ru9cnxY5z7jn1+SaaalHqbxHAuR5Dfg/n3Bmt3Es1pc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=I5tH7iUovQ4WYINuLSJmv2SeeSKecUr3jKmbZRGLbWAHHezr9MiiCySkZd1ti+h7YozYvyulzRpjTMP1b3Bl0feAa/zpA62cBXXcPN4619iqsHnENHbSieDeL8076pMag00WVxgadECTikd/6iUWRk/VBcLVtX6dMyPHtNFoaMk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LYw5NyIm; arc=none smtp.client-ip=209.85.160.41
+	 MIME-Version; b=pWZrcltACwl2L8vhaeTvTmrT5pbp5qQ8bENxil1mLU4663bYpghRDz1NbUnv0oy03Kc2JsXbsrtB3T8osMOX14lWvBvdmNynSyO3il0U73aUKIQ7EFvJJtwFK/h+AQO2wZOZQEq6wMzMUvqNs7JZ8TqgAYtxqnr8PR2P/a4n12M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Y2I4gmY7; arc=none smtp.client-ip=209.85.160.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LYw5NyIm"
-Received: by mail-oa1-f41.google.com with SMTP id 586e51a60fabf-214410e969cso120752fac.0
-        for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:31 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Y2I4gmY7"
+Received: by mail-oa1-f50.google.com with SMTP id 586e51a60fabf-2187ec01d6bso1903839fac.1
+        for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:32 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706649751; x=1707254551; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706649752; x=1707254552; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=5MgbNqvldYRKRfhzhD0Oj6pcvP1XJSeq4OjuQVjxM90=;
-        b=LYw5NyImeDnvimmoD6Xf/Y9UEQxJU1a4lq13WyYo8F7lyo6ZGsKAxEaNtql6IVt3eX
-         crW8qCK7f77fmKJCuVuN9RT6zkzRxD4xkIBFsG+npkMTRwO0+QiTUIUN2KXCPsxLNkRT
-         fYpG1tqArKvNC2Pkrwz8rfBqsDCdxDfD4LBmFMde5OT3MAN0GWaIjuw7d4BZmYS1+6Vc
-         Rvv+FEsJg1Su8ogPOQd0QLyXsmOBtH9hUFvAzPfSMgxljhYLecv6bT9OQztwhH7wwd5u
-         tkTJFpU+PpFQpy/SXr5WhpGx7rjnQ2+MO0IXY+xyMipK1jokq1z3VjxnxFbT0QkMt8/d
-         sx/A==
+        bh=3b/xiaWHOZdD9/xLRCljPPRZg717vMewN+EC/KiIntk=;
+        b=Y2I4gmY7sACHBJO9eT1W8BC5gEVcIyRviCWz3AfhS+MzOW2xg746T0BV5ybdmEckFb
+         aIyzFQxj+tUkdO3UZxZ0yxS096MiJKhT/Ajia3m0XIqLl7/VqVauzCZiVCFHHSy9A0KA
+         jjnHvuF4nzn2vZq+iVY/1yW0oqaVNoNxwaoD5oy91mvh25i+17xVUXcM2INHH6giZm0G
+         2qfxjU5YHzNksgd6GTVUHwSXxglXWedktrZi70WU/TqcaSjKiaYGDn+KSLm8s0Pw1AZe
+         Psg6+LRzpCuVU1iXOku/fByYt5eldPsi+HJjZ/N9wyrPD53SCbR3c4qImWT4vdH+4gRK
+         xx5A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706649751; x=1707254551;
+        d=1e100.net; s=20230601; t=1706649752; x=1707254552;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=5MgbNqvldYRKRfhzhD0Oj6pcvP1XJSeq4OjuQVjxM90=;
-        b=sLmRi2MN570dNST5Fjvq1D3tMgxHi2yyPHeNWx8lxHbMH65Jdb+w0Ig4DFlC5O8FIS
-         +haVwTAqidL4DWBTzN0fXq8KgLRds9MYpQpJkq3S+nU4006HRsRwTr6sa2Kx9M4zal2T
-         0eHxsx8tYSgk9gdzWRbXbOuOupYRK9ydsYbd1qs/yEMp9zuHDkv+T90afhQULyeAix+I
-         +CEbZ5mITHCYR3P6PoJMzZuGuoz1Y1DymbjC7tYo5juOLst6FH/N/t/0TvMNnwxzkk3C
-         iF3M5qZVvhKlkgV1gG6VLAu+PRGb4PZ8I7QdoC3ztn5chq3RoPjmfEXTKZ0LnUAN3Jq9
-         1u7A==
-X-Gm-Message-State: AOJu0YxBKZ8lykLn60JHkhe7OxzavQsucWYzTPpRLN6Qz+9JVaHxfVii
-	EoaWeZ6gbuQirjTtBKbhM70iPo3WwXWPe4iB/rfg7REWB3uxfQSy06kgwgbp
-X-Google-Smtp-Source: AGHT+IH+KhA2toHMxZmRDCP52ELi62Dwghed5OQr10bAPDwnGeyL6XSNiabi/AnEK58/Jbl9MZ5NTQ==
-X-Received: by 2002:a05:6870:8197:b0:210:c514:2303 with SMTP id k23-20020a056870819700b00210c5142303mr871185oae.31.1706649751175;
+        bh=3b/xiaWHOZdD9/xLRCljPPRZg717vMewN+EC/KiIntk=;
+        b=IccmFJVZPTAkbxbBv/BIBrPH0ZyMOcD7TptmgK0hI57qqfdvHBQPIucw4qf+I1XNIu
+         3g/Q0ir8oeORnWficVjEpn78o0r4ldV0gJIAnSZe6gj2nuSfWsy1cBnKUGHWkk0vFQeM
+         FcJFEAQJFfJ++xU7amse2I7ydnhVJGTAA2+uVDxRgmfh+Eh0dTLyfu1svlq5UmeJzNZI
+         ekciQelzr+LazQQICyxlXPttneOVEVM4iX0Cd0KjmlQyYhSy2kaSYrkzimDhCB84Sn6f
+         l0sgPd6pGIRnr+ykVzd9L2JaL7HJDkCxzv4yL84319qm+pIMuJ+2RCN8NurZfNa8TquE
+         5ewQ==
+X-Gm-Message-State: AOJu0YxwLlQfsltoC4hpHxvPRznYUIzBhEF26XWjvUSrdG9TdbXrZYOT
+	oiasXI4d9YB2tA6oSr8wFo1rptDgwwOZwRvSeYwTmD24x4ctzLZ1opJG6Rfx
+X-Google-Smtp-Source: AGHT+IFZfWdUvFNzpEi63mZTChQl+kC/up5fNlKtWQRHexvs2prIPBCuvb+mW2EaCQKq35Xtrxuvww==
+X-Received: by 2002:a05:6871:6ac:b0:210:b5fa:4977 with SMTP id l44-20020a05687106ac00b00210b5fa4977mr9296459oao.52.1706649751792;
         Tue, 30 Jan 2024 13:22:31 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.30
+        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.31
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jan 2024 13:22:30 -0800 (PST)
+        Tue, 30 Jan 2024 13:22:31 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 10/17] storage: Use l_malloc
-Date: Tue, 30 Jan 2024 15:21:15 -0600
-Message-ID: <20240130212137.814082-10-denkenz@gmail.com>
+Subject: [PATCH 11/17] storage: Remove mode argument
+Date: Tue, 30 Jan 2024 15:21:16 -0600
+Message-ID: <20240130212137.814082-11-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240130212137.814082-1-denkenz@gmail.com>
 References: <20240130212137.814082-1-denkenz@gmail.com>
@@ -68,42 +68,77 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Instead of g_try_malloc
+oFono should be making all sub-directories in STORAGEDIR (typically
+/var/lib/ofono) as owner readable/writable.  No other permissions make
+sense.  Remove the mode argument from the function signature to make
+this explicit.
 ---
- src/storage.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ src/storage.c | 10 ++++++----
+ src/storage.h |  2 +-
+ 2 files changed, 7 insertions(+), 5 deletions(-)
 
 diff --git a/src/storage.c b/src/storage.c
-index 89c11cac4452..1c873474a927 100644
+index 1c873474a927..f169195c8df7 100644
 --- a/src/storage.c
 +++ b/src/storage.c
-@@ -61,10 +61,7 @@ int create_dirs(const char *filename, const mode_t mode)
- 	if (!err && S_ISREG(st.st_mode))
- 		return 0;
+@@ -37,6 +37,8 @@
  
--	dir = g_try_malloc(strlen(filename) + 1);
--	if (dir == NULL)
--		return -1;
--
-+	dir = l_malloc(strlen(filename) + 1);
- 	strcpy(dir, "/");
+ #include "storage.h"
  
- 	for (prev = filename; (next = strchr(prev + 1, '/')); prev = next) {
-@@ -75,12 +72,12 @@ int create_dirs(const char *filename, const mode_t mode)
- 		strncat(dir, prev + 1, next - prev);
- 
- 		if (mkdir(dir, mode) == -1 && errno != EEXIST) {
--			g_free(dir);
-+			l_free(dir);
- 			return -1;
- 		}
- 	}
- 
--	g_free(dir);
-+	l_free(dir);
- 	return 0;
++#define STORAGE_DIR_MODE (S_IRUSR | S_IWUSR | S_IXUSR)
++
+ const char *ofono_config_dir(void)
+ {
+ 	return CONFIGDIR;
+@@ -47,7 +49,7 @@ const char *ofono_storage_dir(void)
+ 	return STORAGEDIR;
  }
  
+-int create_dirs(const char *filename, const mode_t mode)
++int create_dirs(const char *filename)
+ {
+ 	struct stat st;
+ 	char *dir;
+@@ -71,7 +73,7 @@ int create_dirs(const char *filename, const mode_t mode)
+ 
+ 		strncat(dir, prev + 1, next - prev);
+ 
+-		if (mkdir(dir, mode) == -1 && errno != EEXIST) {
++		if (mkdir(dir, STORAGE_DIR_MODE) == -1 && errno != EEXIST) {
+ 			l_free(dir);
+ 			return -1;
+ 		}
+@@ -133,7 +135,7 @@ ssize_t write_file(const unsigned char *buffer, size_t len,
+ 	tmp_path = l_strdup_printf("%s.XXXXXX.tmp", path);
+ 
+ 	r = -1;
+-	if (create_dirs(path, mode | S_IXUSR) != 0)
++	if (create_dirs(path) != 0)
+ 		goto error_create_dirs;
+ 
+ 	fd = L_TFR(g_mkstemp_full(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, mode));
+@@ -204,7 +206,7 @@ void storage_sync(const char *imsi, const char *store, GKeyFile *keyfile)
+ 	if (path == NULL)
+ 		return;
+ 
+-	if (create_dirs(path, S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
++	if (create_dirs(path) != 0) {
+ 		l_free(path);
+ 		return;
+ 	}
+diff --git a/src/storage.h b/src/storage.h
+index 76069949e747..46efd2d1a208 100644
+--- a/src/storage.h
++++ b/src/storage.h
+@@ -22,7 +22,7 @@
+ #include <fcntl.h>
+ #include <sys/types.h>
+ 
+-int create_dirs(const char *filename, const mode_t mode);
++int create_dirs(const char *filename);
+ 
+ ssize_t read_file(unsigned char *buffer, size_t len,
+ 			const char *path_fmt, ...)
 -- 
 2.43.0
 
