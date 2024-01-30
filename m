@@ -1,62 +1,62 @@
-Received: from mail-ot1-f50.google.com (mail-ot1-f50.google.com [209.85.210.50])
+Received: from mail-oa1-f50.google.com (mail-oa1-f50.google.com [209.85.160.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CD3B78B67
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1DBAD76C87
 	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.50
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706649754; cv=none; b=TFxWHNm1AxpIccztLduqzRpWbT1+z6NA27JZWNphYnCAzP+jpukmtQ1CEhE2IYdFaIQYAWluVdkA2K6NcETb/k7bWGBDvBHHSfnlavKh0xO87XOGxDKrl7ECT5lORbmE3eCNWBpGN7V4RXSCtJC2P+sy0ATqxht/NENbSSC0IuM=
+	t=1706649755; cv=none; b=TitjPvYC2A1YPSIa1hnQ3bpQw2U+D4b24abUJkib9sATy3X3ebqEZrQKSku8XDkyrbUh7XhdFN02w/dPLaKLvXF44QZdMewRrFVLIt+IpNAc7YfAL/NonCDrLKdW+0XkI5YRBnxGZnvZ+jYwSVX4lHZLq8K1m9A3UJLGsotUlk4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706649754; c=relaxed/simple;
-	bh=/uXtfSHX87EDIJNjKQPz57XQhZZz2/lp7t+34gMs9mM=;
+	s=arc-20240116; t=1706649755; c=relaxed/simple;
+	bh=mYxwPgYSG4byzJilt5DBxW9ht5h0BDDnE1RQtYELBqY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=kBwvaQcDBSffNyNc0VQjIaJAcx8Z+9Tsw63Y9tBI7wnnqKsZs5Fdov1pU3VbcqVXye1sLqxo1TLDGcicxAlJE4nKMlREBe+o5/7IZQ6fe4vZJVWnLlho+SUsMvui+SUzUn9/DTFY7tihlHLvOy/3Mh1OZ9A2yCb2jsnjb9bE5jA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Pezqnu0n; arc=none smtp.client-ip=209.85.210.50
+	 MIME-Version; b=oHwx9/KShKPtvTTUOrJxEOkWcHILgQIY66oorVYs98TxinBCXCGjeZlayrkr4jtSGHQe9PICIwNm7DBxGTmf6WYG0ma9f9PutwDVeGeokD/FpFkRdmg1FULx4Euvlg3ILHZ1zl2JTXyGvYhi5mQfSkockXwOdxxVnskvUeSIpxI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PRBG/Z51; arc=none smtp.client-ip=209.85.160.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Pezqnu0n"
-Received: by mail-ot1-f50.google.com with SMTP id 46e09a7af769-6dc8b280155so2624722a34.0
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PRBG/Z51"
+Received: by mail-oa1-f50.google.com with SMTP id 586e51a60fabf-214ca209184so1996019fac.1
         for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706649752; x=1707254552; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706649753; x=1707254553; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Q1C0XNc0vkyWjPp1kouWBIVc2BKOna9atKyAcwc+BVs=;
-        b=Pezqnu0n++mrs6xE70sXHNVjmJK+UWX4uQtCewWm3d2svdVy08ZkCzc/jOeyrxViae
-         IkahcPOI83rG6ox7U3QAKO4KgkUp7nCfjlm5PLL80CI/DJXsAqBf2qC8da42iJvSoqFA
-         kX8/NKrLZ2yLs7/Ym6L2pbT5AGqbsDszx85h63UbDWhoX6yr/oEzxDWh0E9nYx8u9ClT
-         JJRTYURAZd4R6ZqpvVU7imdfMcNpsHcONAm1pHMKq4J+xvlF5f4/b8lWDjCKKSvWSo7X
-         2jMcQZfCRyXc1d+g+jQcqhuqmpu9CmXy8hhrQjkVGOgyD1c6BIBgf4cJBPbELh46e82L
-         roWA==
+        bh=w9W7uBfXrrWqqZB7aYpdTIdvqR93StqblSi5KfQSWLo=;
+        b=PRBG/Z51cpB/JJbe5d885izKf9ogVWrgJV1dix8pdQRRjWr99Wmx99azySB/AmN2rL
+         5PYRpGGYLzizynLr9ydy3dRM3RO64uIeZZFRDmvUBXyZ1lCxkwtpFy9fltT54T0IoH/S
+         GukNGJn8Ys6CMNin/RJBscQ2V7DwcjVSibl0/QfUOPNOL+dZGhOtQxL3XS+9GO+3WR6d
+         dt6pQc235aPfdVBPyLC/DoRHz9Q5U2HxGrubA2UpEafEI2YsxAIlNh53QvqnQjvanQS0
+         LK6Pom7GPBVd1nKe6mWZVEvYHIqEWW4AK/AmqyI7LElCstg28eTu1Hv5g8PozLmrwdR2
+         9oXQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706649752; x=1707254552;
+        d=1e100.net; s=20230601; t=1706649753; x=1707254553;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=Q1C0XNc0vkyWjPp1kouWBIVc2BKOna9atKyAcwc+BVs=;
-        b=UBolGKLer+yH1my23/peqPHFFex5ozKUrmDb236WsnBkRqnuJRcQ1llAK2jxyxKxJo
-         mmBehlZLaR8lyMW3IErV+7apzgqmx8uMEGQNrLSAi7q6rRugRe0Ftc3G90vcNiY1Yrrp
-         5ysNCuKWL8uoqWXdMsD+1d4djwRXGwJNnRk1ZQGvd8UXqs32iR7LrmGbro9WCNkUpdu4
-         KSj+AVHiRskJkAWYLsfsh7NoAfHUgvt2r+36vQhcEhGfFqZuqeHT8UVgOoCAj4RruB2p
-         TFlzVWyDsNoCgMULgjO7DrWcy84vj18GSgxXyNXKB797mYD19opSEh3tUm5A7QVq1wDR
-         vAQQ==
-X-Gm-Message-State: AOJu0YylaihXtyl16x4neuJnsSGdMIiJN19dXaATq1sJ9R/folq8I+JR
-	k/sQISPbDdnlUFc1FUv9L7WTjIOZ9Z9Boaa+ZmDTiJakKLdPl8M7jkRC0gf9
-X-Google-Smtp-Source: AGHT+IF6oUNQqedX8g6mm9pL7sDEXP0bfH9T/Vacpuqi65hXyriwllVd/uAGd3HuaZNhF8+NblQOXQ==
-X-Received: by 2002:a05:6870:eca2:b0:214:b208:ddd2 with SMTP id eo34-20020a056870eca200b00214b208ddd2mr5413044oab.46.1706649752306;
-        Tue, 30 Jan 2024 13:22:32 -0800 (PST)
+        bh=w9W7uBfXrrWqqZB7aYpdTIdvqR93StqblSi5KfQSWLo=;
+        b=X2eFuxH143iGVQCilLQmbzXYIz0wOu+rtWWrjQrRXxiD2NvjglwrrHfIn1YEmWw3w3
+         EQD0EQMo3SI1K+Pw8GW+bxiIoboCSgAEGLuwOhWihhBt/e1arxF20kxdTBy0iOp+lw7N
+         uNlGlZVbjvaxBDW0lEp/7FC6oIi18/dfKS8jD9I1mRl0rRa+RkSin5cuQ6idGpLE5LMV
+         AZlnSf72kZRlhQ13RkMqH7OsA0RJcZX7DQXy7bqoxNrQX0MLignJTRtTH1h/Or/OyqmJ
+         gaxTZnBH1vkBjo/MHDo61aihGJHtQgsFNvFYZdDd5dMa7vMUjKnHtIG1Ydp3zrlm+1mX
+         lkBw==
+X-Gm-Message-State: AOJu0YyMhWbf+ocDuaBdg1Z1h6heuXTO71Mc9Xa359r7c1NsN0CGY0I3
+	QlaM3T+HuP44UmlPD092f1sqxP4Cf5PNQOdoOPjZuKUlV+8VNvjDCbZwZ9EF
+X-Google-Smtp-Source: AGHT+IG9MFYeRky1APfrx5CKoVGCvkA3dNNp8t0Qmqj634JcPnCTppNWrYEAG9lixghuK3J6yNGbtQ==
+X-Received: by 2002:a05:6870:3287:b0:203:ef0f:7042 with SMTP id q7-20020a056870328700b00203ef0f7042mr11423944oac.21.1706649753016;
+        Tue, 30 Jan 2024 13:22:33 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.31
+        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.32
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 30 Jan 2024 13:22:32 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 12/17] storage: Use void * instead of unsigned char *
-Date: Tue, 30 Jan 2024 15:21:17 -0600
-Message-ID: <20240130212137.814082-12-denkenz@gmail.com>
+Subject: [PATCH 13/17] storage: use l_file_set_contents
+Date: Tue, 30 Jan 2024 15:21:18 -0600
+Message-ID: <20240130212137.814082-13-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240130212137.814082-1-denkenz@gmail.com>
 References: <20240130212137.814082-1-denkenz@gmail.com>
@@ -68,56 +68,79 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This allows passing both binary and string data to write_file() and
-read_file()
+Use ell convenience function to set the file contents.
 ---
- src/storage.c | 6 ++----
- src/storage.h | 6 ++----
- 2 files changed, 4 insertions(+), 8 deletions(-)
+ src/storage.c | 41 ++++++-----------------------------------
+ 1 file changed, 6 insertions(+), 35 deletions(-)
 
 diff --git a/src/storage.c b/src/storage.c
-index f169195c8df7..30e004e75d91 100644
+index 30e004e75d91..130fcc9ce4a7 100644
 --- a/src/storage.c
 +++ b/src/storage.c
-@@ -83,8 +83,7 @@ int create_dirs(const char *filename)
- 	return 0;
+@@ -3,6 +3,7 @@
+  *  oFono - Open Source Telephony
+  *
+  *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2024  Cruise, LLC
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License version 2 as
+@@ -121,50 +122,20 @@ ssize_t read_file(void *buffer, size_t len, const char *path_fmt, ...)
+ ssize_t write_file(const void *buffer, size_t len, const char *path_fmt, ...)
+ {
+ 	va_list ap;
+-	char *tmp_path, *path;
+-	ssize_t r;
+-	int fd;
+-	mode_t mode = S_IRUSR | S_IWUSR;
++	char *path;
++	int r;
+ 
+ 	va_start(ap, path_fmt);
+ 	path = l_strdup_vprintf(path_fmt, ap);
+ 	va_end(ap);
+ 
+-	tmp_path = l_strdup_printf("%s.XXXXXX.tmp", path);
+-
+-	r = -1;
+-	if (create_dirs(path) != 0)
++	r = create_dirs(path);
++	if (r < 0)
+ 		goto error_create_dirs;
+ 
+-	fd = L_TFR(g_mkstemp_full(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, mode));
+-	if (fd == -1)
+-		goto error_mkstemp_full;
+-
+-	r = L_TFR(write(fd, buffer, len));
+-
+-	L_TFR(close(fd));
+-
+-	if (r != (ssize_t) len) {
+-		r = -1;
+-		goto error_write;
+-	}
+-
+-	/*
+-	 * Now that the file contents are written, rename to the real
+-	 * file name; this way we are uniquely sure that the whole
+-	 * thing is there.
+-	 */
+-	unlink(path);
+-
+-	/* conserve @r's value from 'write' */
+-	if (link(tmp_path, path) == -1)
+-		r = -1;
++	r = l_file_set_contents(path, buffer, len);
+ 
+-error_write:
+-	unlink(tmp_path);
+-error_mkstemp_full:
+ error_create_dirs:
+-	l_free(tmp_path);
+ 	l_free(path);
+ 	return r;
  }
- 
--ssize_t read_file(unsigned char *buffer, size_t len,
--			const char *path_fmt, ...)
-+ssize_t read_file(void *buffer, size_t len, const char *path_fmt, ...)
- {
- 	va_list ap;
- 	char *path;
-@@ -119,8 +118,7 @@ ssize_t read_file(unsigned char *buffer, size_t len,
-  * file with a temporary name and when closed, it is renamed to the
-  * specified name (@path_fmt+args).
-  */
--ssize_t write_file(const unsigned char *buffer, size_t len,
--			const char *path_fmt, ...)
-+ssize_t write_file(const void *buffer, size_t len, const char *path_fmt, ...)
- {
- 	va_list ap;
- 	char *tmp_path, *path;
-diff --git a/src/storage.h b/src/storage.h
-index 46efd2d1a208..135674c6f517 100644
---- a/src/storage.h
-+++ b/src/storage.h
-@@ -24,12 +24,10 @@
- 
- int create_dirs(const char *filename);
- 
--ssize_t read_file(unsigned char *buffer, size_t len,
--			const char *path_fmt, ...)
-+ssize_t read_file(void *buffer, size_t len, const char *path_fmt, ...)
- 	__attribute__((format(printf, 3, 4)));
- 
--ssize_t write_file(const unsigned char *buffer, size_t len,
--			const char *path_fmt, ...)
-+ssize_t write_file(const void *buffer, size_t len, const char *path_fmt, ...)
- 	__attribute__((format(printf, 3, 4)));
- 
- char *storage_get_file_path(const char *imsi, const char *store);
 -- 
 2.43.0
 
