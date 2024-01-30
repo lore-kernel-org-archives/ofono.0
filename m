@@ -1,62 +1,62 @@
-Received: from mail-oa1-f44.google.com (mail-oa1-f44.google.com [209.85.160.44])
+Received: from mail-oi1-f181.google.com (mail-oi1-f181.google.com [209.85.167.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C6E3762EE
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E73F3762E1
 	for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 21:22:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.44
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706649750; cv=none; b=LFSbUOgUUp/0tOzel2b4bqxK64wamNzOfX08rNi0afkb0uYY1pcO/QglK9c7FaHTIm1HASWh0NionTWoVtzOei2bX2EmAF8rHSZtZEWC/RjFOHWPX8F0L5KVYg1bxfoQQeAaJ09YaxELtaBh/a7DwRjCIE1BOzqGx5+5uqEh1xY=
+	t=1706649751; cv=none; b=Q0pTL19NF9qcyo5+GqPorUdycX+3lwPCEUewfIJRrTuFaQySzpc7eAkx6lqtcd0AF5mmXFi8zWVrMAANTEiuwL0e6x8IYttJV/omPtNQd+pwLGfKXA+uwYiDgncoNoWboTj85ix4P6lIFpvH11yzf4IUAWO/pYChqgaZvedP0Qk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706649750; c=relaxed/simple;
-	bh=40HRVDw1RTKi4soStL55YwXnBGZc0jxZnzuvjOlhIUQ=;
+	s=arc-20240116; t=1706649751; c=relaxed/simple;
+	bh=Ngatuek6+l25zNh0xP6q04ZFRNN40k61978NO7LmAp4=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GJQD51t0IGejebjn4nKzAJimS7nCjPJPTRYHjDGKCQjy0jPAk35dYQHr/ebUX7CH5qtQD3Mzcm73j7hoi3f5bk7Bju12y6i3euWAccDAtkIGwhDFakkylDtUj1faqJtAwW0z+U5QYhISf8r1o/Tc+MKTeN6Z6pOQeGgonAa9VR4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Cwi14a6A; arc=none smtp.client-ip=209.85.160.44
+	 MIME-Version; b=DVLgmLpHqc+z5dztxhvtOe5PzYqlO6HzsR1bMWjnDaTR2cm46XrNf0WMY1aSx9+nUXAqAfcW9PdKIWjfNCtz2++cWXWMdBdXGpkpPymcAIBkVfNDKFe+sAf256edg6WwqBXHt84mwVU53KPSdgWRRvjgmjyj+bqgBEfE70nYb6A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mAuYrjdt; arc=none smtp.client-ip=209.85.167.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Cwi14a6A"
-Received: by mail-oa1-f44.google.com with SMTP id 586e51a60fabf-204f50f305cso3182740fac.3
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mAuYrjdt"
+Received: by mail-oi1-f181.google.com with SMTP id 5614622812f47-3bb9b28acb4so3158054b6e.2
         for <ofono@lists.linux.dev>; Tue, 30 Jan 2024 13:22:29 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706649748; x=1707254548; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706649749; x=1707254549; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=+WEpQGXsL5Z7LPeMPtMuaTVdpXfGJCDv4AbBy0SUiyY=;
-        b=Cwi14a6AcyjjxOQm9Z8z3bQRlfCE1Db8rRJvAuKwnR7zFjVROi6mzgtsXcB2nDyC5e
-         XxPV4mAOjJDkbqCI1pA207rxNZOWfl/a7Y6mq167IornLen/lC2pweTGn6FM88mbA9//
-         Fajbnyaqa/+r02cM5g4DOFEXqkJtico6n70zLxj27IhmR8C2gnxskpNFcDvipNN822I5
-         ze0GFeW4ohlpDC3IOopR6kmFR7Lt83SD5YneC1b60mB6roKe+t+RaYesY+8vAEB950xN
-         cCSchGvdiFp8PqaULOD6JAU66U3l2jxtwLRXHRfsGZxm7fstkw08QlPef9Ykm/8f2AK/
-         Chqw==
+        bh=6IAtEmaXu1T49urJjbCViXJjnctMYSLnV5sU6xtoewQ=;
+        b=mAuYrjdtbLZ52SFY63GMAmBJHuvx0tdNPYXlEuuN6zq2/MrhmSl4EOf4b1XYLoPmTP
+         qFQI3KSTy4liZdrB15dQYWCT8t5KhIRmvLaKPJ1T1ci8qIgtBPRHRCNm2XrddLLs6jAE
+         qwSNKxdYUwNmIJL+Fegtq3dcq5rVvpvNtjy0RFaV7n8tC6futxYHNCtkX7Zo+o9qUocB
+         ljWEWI6illpCt0K10BaU0LRO2RJ9VKP4Nh5H1EocWsvyxnoGEL1plryTxMzJot/b8YWv
+         6Gz3tku/Mlr6hWR5lZSPd8tg3n+OJavb9dUMiIQricEILxlWYS5FKfJcTzgc6K+X6HPU
+         Rq0w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706649748; x=1707254548;
+        d=1e100.net; s=20230601; t=1706649749; x=1707254549;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=+WEpQGXsL5Z7LPeMPtMuaTVdpXfGJCDv4AbBy0SUiyY=;
-        b=o7o6yjv0JqwP2+Rqpi/UhPrCREDwJjuK6zVdHHu8pyoRyrr84BIMSvGla2v10Xa0eX
-         gq8jDvqYsBSQGZ/UnXK12dT/qcl15Hr21GJVKB8oQlfjypVKqnfO8s+3h0g75TyHTAUw
-         PsjvpQCKv3t/iPEoy1yDuVhjY5IsUkpPKLut/ocKmTbbRkwh5QA3hsH7twBYcxdOvlJx
-         bZ0nMTWUf8wzQ40BdAc47LD9/h26fgGhCnMr919vFko0mVeBplkUeTR7elLxsgUvmnUc
-         Dgg36yKW/IMZ0JGWKp4ZUK+uKlbxkILdBRkRAKhzXT+8OtuKBIrBZznNzMyVxzecE+YJ
-         1FQg==
-X-Gm-Message-State: AOJu0YyELKRj6gqbCEGxEnhBO2VMki89oiQob0Qu78LCPv/uW4aE4+Fw
-	f5JeF3klqYF98okfOhcVUyWh/v26MdoYyzXYqCZgi9b/rS2NkMdMBdXQ8sWJ
-X-Google-Smtp-Source: AGHT+IEinxFgZ8ZiLsTcB4sVf0rCVSdALAS1j/zRj8zgsi2gDhmS0PO4flfpKSj7lxpH4d/emMzsPA==
-X-Received: by 2002:a05:6871:b191:b0:218:55c9:bb20 with SMTP id an17-20020a056871b19100b0021855c9bb20mr438562oac.21.1706649748321;
+        bh=6IAtEmaXu1T49urJjbCViXJjnctMYSLnV5sU6xtoewQ=;
+        b=hAVliCF5Z0MQm4InPLTWee0jhXzVNzk5pd00Zt+1NimT5B3VwJ3nAkBpiIuseOVCgY
+         D2B57CAq5FgOtSGHGLIomcA451ovVurDxUF0Pi8r1QxzIzfbGpihP/p+OKqkhsxvCuAb
+         IM0oBKSBObdEadmcEaIN0z2OeG/A/MIZ6MFT4x/+J4CTkvQQss1mq0IgtDU4MCE4DlkU
+         ZvazdbZLiHwK3owJJ9U+kkZE0MTzFhenVNdMtIzk5hg+jTYrJ4qj4f51LOwJQ8INtDqP
+         kN4kZv7Y2978RPaxMH/TpYiI/CCtYMCiV94W0RTqVZcLinqSrYkhhXMFtQ0ojmuIojdC
+         IK8A==
+X-Gm-Message-State: AOJu0YxI5d/cmER8YCivcRD89t/0Iyn0Xboe3WlREhJJCJ4gUw9z19Yx
+	pajwi9e5w0lrS1VGRTMjnWmILKSof+3Q/kyQZ0mY+t1INiJ0gxG/EADO7vcS
+X-Google-Smtp-Source: AGHT+IGeTHYb5JcYqTapxfiF6P9fZ9fRVSycqGXxpHpTMK5c2cugywzK65lo6FkUmYkz79Drud2HEg==
+X-Received: by 2002:a05:6870:610a:b0:214:294d:7835 with SMTP id s10-20020a056870610a00b00214294d7835mr6635367oae.28.1706649748869;
         Tue, 30 Jan 2024 13:22:28 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.27
+        by smtp.gmail.com with ESMTPSA id n1-20020a056870a44100b002185412083bsm2105786oal.0.2024.01.30.13.22.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 30 Jan 2024 13:22:28 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 06/17] storage: Convert g_strdup_* use to l_strdup_*
-Date: Tue, 30 Jan 2024 15:21:11 -0600
-Message-ID: <20240130212137.814082-6-denkenz@gmail.com>
+Subject: [PATCH 07/17] common: Drop GLib use from gprs_auth_proto_to_string
+Date: Tue, 30 Jan 2024 15:21:12 -0600
+Message-ID: <20240130212137.814082-7-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240130212137.814082-1-denkenz@gmail.com>
 References: <20240130212137.814082-1-denkenz@gmail.com>
@@ -68,53 +68,97 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+Refactor this function to use bool from stdbool.h as well as drop usage
+of GLib in favor of ell.
 ---
- src/storage.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ src/common.c | 15 ++++++++-------
+ src/common.h |  3 ++-
+ src/gprs.c   |  4 ++--
+ 3 files changed, 12 insertions(+), 10 deletions(-)
 
-diff --git a/src/storage.c b/src/storage.c
-index c7bbb1c6142a..2313835a49ce 100644
---- a/src/storage.c
-+++ b/src/storage.c
-@@ -93,12 +93,12 @@ ssize_t read_file(unsigned char *buffer, size_t len,
- 	int fd;
+diff --git a/src/common.c b/src/common.c
+index 9a55990b6435..79094ee4906c 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -28,6 +28,7 @@
+ #include <errno.h>
  
- 	va_start(ap, path_fmt);
--	path = g_strdup_vprintf(path_fmt, ap);
-+	path = l_strdup_vprintf(path_fmt, ap);
- 	va_end(ap);
+ #include <glib.h>
++#include <ell/ell.h>
  
- 	fd = L_TFR(open(path, O_RDONLY));
- 
--	g_free(path);
-+	l_free(path);
- 
- 	if (fd == -1)
- 		return -1;
-@@ -129,10 +129,10 @@ ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
- 	int fd;
- 
- 	va_start(ap, path_fmt);
--	path = g_strdup_vprintf(path_fmt, ap);
-+	path = l_strdup_vprintf(path_fmt, ap);
- 	va_end(ap);
- 
--	tmp_path = g_strdup_printf("%s.XXXXXX.tmp", path);
-+	tmp_path = l_strdup_printf("%s.XXXXXX.tmp", path);
- 
- 	r = -1;
- 	if (create_dirs(path, mode | S_IXUSR) != 0)
-@@ -166,8 +166,8 @@ error_write:
- 	unlink(tmp_path);
- error_mkstemp_full:
- error_create_dirs:
--	g_free(tmp_path);
--	g_free(path);
-+	l_free(tmp_path);
-+	l_free(path);
- 	return r;
+ #include <ofono/types.h>
+ #include <ofono/gprs-context.h>
+@@ -747,20 +748,20 @@ const char *gprs_proto_to_string(enum ofono_gprs_proto proto)
+ 	return NULL;
  }
  
+-gboolean gprs_proto_from_string(const char *str, enum ofono_gprs_proto *proto)
++bool gprs_proto_from_string(const char *str, enum ofono_gprs_proto *proto)
+ {
+-	if (g_str_equal(str, "ip")) {
++	if (l_streq0(str, "ip")) {
+ 		*proto = OFONO_GPRS_PROTO_IP;
+-		return TRUE;
+-	} else if (g_str_equal(str, "ipv6")) {
++		return true;
++	} else if (l_streq0(str, "ipv6")) {
+ 		*proto = OFONO_GPRS_PROTO_IPV6;
+-		return TRUE;
++		return true;
+ 	} else if (g_str_equal(str, "dual")) {
+ 		*proto = OFONO_GPRS_PROTO_IPV4V6;
+-		return TRUE;
++		return true;
+ 	}
+ 
+-	return FALSE;
++	return false;
+ }
+ 
+ const char *gprs_auth_method_to_string(enum ofono_gprs_auth_method auth)
+diff --git a/src/common.h b/src/common.h
+index 3d30e2497ebb..779de7278446 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -19,6 +19,7 @@
+  *
+  */
+ 
++#include <stdbool.h>
+ #include <glib.h>
+ 
+ #include <ofono/types.h>
+@@ -185,7 +186,7 @@ gboolean is_valid_apn(const char *apn);
+ const char *call_status_to_string(enum call_status status);
+ 
+ const char *gprs_proto_to_string(enum ofono_gprs_proto proto);
+-gboolean gprs_proto_from_string(const char *str, enum ofono_gprs_proto *proto);
++bool gprs_proto_from_string(const char *str, enum ofono_gprs_proto *proto);
+ 
+ const char *gprs_auth_method_to_string(enum ofono_gprs_auth_method auth);
+ gboolean gprs_auth_method_from_string(const char *str,
+diff --git a/src/gprs.c b/src/gprs.c
+index 7b681d850c21..3eb7df83ac54 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1087,7 +1087,7 @@ static DBusMessage *pri_set_proto(struct pri_context *ctx,
+ 	GKeyFile *settings = ctx->gprs->settings;
+ 	enum ofono_gprs_proto proto;
+ 
+-	if (gprs_proto_from_string(str, &proto) == FALSE)
++	if (!gprs_proto_from_string(str, &proto))
+ 		return __ofono_error_invalid_format(msg);
+ 
+ 	if (ctx->context.proto == proto)
+@@ -3162,7 +3162,7 @@ static gboolean load_context(struct ofono_gprs *gprs, const char *group)
+ 	if (protostr == NULL)
+ 		protostr = g_strdup("ip");
+ 
+-	if (gprs_proto_from_string(protostr, &proto) == FALSE)
++	if (!gprs_proto_from_string(protostr, &proto))
+ 		goto error;
+ 
+ 	username = g_key_file_get_string(gprs->settings, group,
 -- 
 2.43.0
 
