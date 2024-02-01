@@ -1,60 +1,60 @@
-Received: from mail-oi1-f173.google.com (mail-oi1-f173.google.com [209.85.167.173])
+Received: from mail-oi1-f180.google.com (mail-oi1-f180.google.com [209.85.167.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E10985627
-	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 20:24:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED9C32B9C2
+	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 20:45:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706819081; cv=none; b=cd+lsSNqsHetvmrwQXpn6Q8n+MFiGIPBOTvorjLCGo2A4v3gKj7TwBMZy/6iaqhbkvHULGKiQ/IomTa8oR1+A4R2+3nCWiTVXazjSeV54tfoydDNY12LuWqzNNDM7VpQQQ4Z/qQirN6f4M/dB7YpFBrxzcwMTDedH7p+Tr0P59o=
+	t=1706820302; cv=none; b=EiVFQKQy8+C+y5vM3XEpnH/5McB7l8LLbOYyYZLIqYZnbyMfhLXaW36zxgE2lK+SAAmpZQyWZmMoLIs7MA2j9dDyZw6QVQr5ybgz1aa7ZEgQntX2mEHmPQGw3FDxC3LGzPb+/LWqXCmTt2pUYrgwP45FcNgEWN/QRNChWN/+4pU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706819081; c=relaxed/simple;
-	bh=gcZoiSBVEN3CIu3uttfxRfR/2VDR2nngHzardZYsGzI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=H9Zb2Kye+am4d3WP7WYpYDZxJAEk/sIwLxZaPJOSKGGOzvWMstqsNrHw+l5osSk4RZmDY7E8M75HZC7kmm0FbmcUN90JuCJjbl3cTvcDfNo6dnzfsiopgqm7gag4aRUIZrTA1ml491GzVUZXhskJc70gz7i/qYsDGVv9r6qV5nc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=culfFDzw; arc=none smtp.client-ip=209.85.167.173
+	s=arc-20240116; t=1706820302; c=relaxed/simple;
+	bh=kgJdM6fKyuuW6fQ8vFUKAruTlkxCnfUQCQ3PgLIUYRo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TnuHuy2Bi6SjeJD8sIpa4ZHkIfaCZllE7Zo6lAn7w64KLF+zXF6xAUnlooQnQjmxoOTmJH1vv0qatIeMUAB1Srz1N9a5jFBnwyubHEAkgbAVKWP/77p7Jm+tfpQOAxx/alO1MpdAW4lfIN2vtK501HJyf8hme3KpmgexkWFnrVE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Yw8/EMs2; arc=none smtp.client-ip=209.85.167.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="culfFDzw"
-Received: by mail-oi1-f173.google.com with SMTP id 5614622812f47-3be5973913bso741825b6e.3
-        for <ofono@lists.linux.dev>; Thu, 01 Feb 2024 12:24:39 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Yw8/EMs2"
+Received: by mail-oi1-f180.google.com with SMTP id 5614622812f47-3be6b977516so944253b6e.2
+        for <ofono@lists.linux.dev>; Thu, 01 Feb 2024 12:45:00 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706819078; x=1707423878; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706820300; x=1707425100; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=+1C0yg6uFh8sCAjDdY85xicfXH9d0bBDqNDQpCaOZ4M=;
-        b=culfFDzwtmJPN4cYfukQN17j+FnDX8secxyspqsNqezhkrz+WdoERKCyiF1cVOGcAI
-         TKUc0I1s6wTkvkgpzqi8BwF6BrJQCRGr7B+FLSZ+f1LvoLxCS1zWiVYKnVOXczyjGiVp
-         gMO/wRDKokqcGlCscTx5h7vDFRk4HPbEi2qxIFL7mgZZ4jMymgK8FufiWAp7L0zptrJb
-         C+Wc9m7pGpkXuTb2z2XkVNaHBhtaBzphO2+DOizexiLPe1PvULyS3N0ZlI4sRs1CWknf
-         DnTJp32YJ1+6KZncJHO+eXybLRMY9u6O5O/9xP5XHYB/pymS+skx3fgEcEQ3iADK9gkH
-         X56A==
+        bh=jF9LbRiHbtrnhos8mhQ+mcn+AJtqtZlJDXxvP+hFowY=;
+        b=Yw8/EMs2zwlr761xBOMixLSVDktvC3FDSbff3ZcLAwF+rvWjqlsNkCUoYLGhkLlPxm
+         g/R7PvpLcccZAgoPj7dj8Ked+wAExahnledJN/YKCtJa/Yg39lyHAi+fKIDy5YsM+3cs
+         RtUZC8dh9eeGejJl/3e4hn+NOJqW256diNH1lxwc9ZPtOqalwzsC0+CmJZMjlu+bw8mM
+         T63POgW9c3yfkjZcQP4dXoQLck1wqL7QSUc8pYl1MJDZFUbeokZfcu7ILQnvbI3Jc9sd
+         C8uRLBSR8CJrsrMwR7tgAYCCFtPiYfk8Y90B3B1pA1tF1d522EKAyNwg8dtOoNjmEDfn
+         xd6Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706819078; x=1707423878;
+        d=1e100.net; s=20230601; t=1706820300; x=1707425100;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=+1C0yg6uFh8sCAjDdY85xicfXH9d0bBDqNDQpCaOZ4M=;
-        b=mgQphtnlSHQFrZdDzpzsPgEhSYAe4fBYtpXcPf6BDBRr37Jy7k441jXze88vKR8nLu
-         OP6kSXygFeUPDuFss5ivvDEGfYDq+z/AMyR6Pna5LsI8JcK1xcydIL/OlTQjy9FOdnoz
-         OMutKSZFh3rA5wmQUPVX7fUAr8zirHPf+eGveLUIHJRryD5hfMyCApZw6dqS/XkzSgcR
-         0+B/57/2+WoF0FZ4Syd51/Up3L43m4/JNf86A3n6uxI3Wl+fFcXI8+q9SetYeanUE7uN
-         I+gOFRgHqbhttMpGTixbkc7KqZQrrIPNowmYMiBeVQA4hkv7et+NLkU/gYnHMNhShu+P
-         vSJQ==
-X-Gm-Message-State: AOJu0YxoHu+sAkZZ3kBqpxxg75lhHCfCOQfbYfZTeAE4/tSpBR1WqQat
-	hQwOvRxZjIC5RcFVs4NNHNo3NNkcjGGn3C0pVPxDSAnhd4aWS/qUrIw0Q8B5
-X-Google-Smtp-Source: AGHT+IGGqqBuF+/K7oBMGMZ5oTsow8GHicPmLbzvXM6vF2WAIJYxLC8WLXuuBBl9BzCMH9ZEm/PoFw==
-X-Received: by 2002:a05:6808:189c:b0:3bf:bb44:a002 with SMTP id bi28-20020a056808189c00b003bfbb44a002mr284588oib.7.1706819078260;
-        Thu, 01 Feb 2024 12:24:38 -0800 (PST)
+        bh=jF9LbRiHbtrnhos8mhQ+mcn+AJtqtZlJDXxvP+hFowY=;
+        b=gBV+R/TOBRhQwmPVdKqEDDFuDBGgyP5NsZtupO7S10xuHTGz6OArvNtCciBFpg9mfN
+         lpZ5Uuto4222QfhVUwrrFqQjtucAgGkVPeSzW3nnaLT6mgu0mGo5W7ek+NteyP7R1lgv
+         fCQbuA2yFjp0jZL7tH8k/heZJfkPdm70XYqn0z6gLdFtEz1uErY61Gz+vuZOg/nOcNDg
+         ojEGdzFtSawyd9ehdPOhs98v0L18wSTC/NSpWkLW5Xx0aep8h8SsUYlw1+x4GqjBAWHG
+         UF/1YgYIDsbx4VNTO1aXS4I9IajLSvwY7hboZIm1bBiEVk3Zbzrjjmcv/QlUI/BY2G0C
+         D6lA==
+X-Gm-Message-State: AOJu0YzIuYNET8LQ/+14st787pKTpQU7eaYXt2/KCpjdpXEjVf/vTjxV
+	7dEx3J2l7yUVbwAOwXcmLrBpyYNT8xfzbZqJVmdDnuDlzZNIaU9Ej8KLyo1q
+X-Google-Smtp-Source: AGHT+IHlaiS2z9yy7Xpbhk21E3nldwxIJNICl2seUMezOcpbwBnqQtIKZTr/GscvVjdPM4QHSpLN1g==
+X-Received: by 2002:a05:6870:c0a:b0:210:b77a:c3cf with SMTP id le10-20020a0568700c0a00b00210b77ac3cfmr3774774oab.41.1706820299659;
+        Thu, 01 Feb 2024 12:44:59 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id fu13-20020a0568082a6d00b003bf9e5edf7csm67756oib.47.2024.02.01.12.24.37
+        by smtp.gmail.com with ESMTPSA id os11-20020a0568707d0b00b00218e3695b3asm115907oab.51.2024.02.01.12.44.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 01 Feb 2024 12:24:37 -0800 (PST)
+        Thu, 01 Feb 2024 12:44:59 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH] build: Generate and install provision.db
-Date: Thu,  1 Feb 2024 14:23:33 -0600
-Message-ID: <20240201202350.951327-1-denkenz@gmail.com>
+Subject: [PATCH 1/2] doc: Prefer l_new instead of g_try*
+Date: Thu,  1 Feb 2024 14:43:59 -0600
+Message-ID: <20240201204412.951617-1-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
@@ -64,61 +64,39 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Run provisiontool to generate the provisioning database in binary format
-from the intermediate json format.  The database will be installed in
-pkgdata_DATA directory (typically /usr/share/ofono) when make install is
-performed.
+Using l_new and g_new* variants for small allocations has been the
+preferred approach for quite some time.  Update the coding style
+document to reflect that.
 ---
- .gitignore  | 1 +
- Makefile.am | 9 +++++++--
- 2 files changed, 8 insertions(+), 2 deletions(-)
+ doc/coding-style.txt | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
 
-diff --git a/.gitignore b/.gitignore
-index 0cfe5283ec35..27184e16e42b 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -24,6 +24,7 @@ stamp-h1
- build-aux
- autom4te.cache
- ell
-+provision.db
+diff --git a/doc/coding-style.txt b/doc/coding-style.txt
+index c27a2f275565..0ec1cd97e8ca 100644
+--- a/doc/coding-style.txt
++++ b/doc/coding-style.txt
+@@ -155,15 +155,12 @@ for (i = 0; i < 3; i++) {
+ }
  
- ofono.pc
- include/ofono
-diff --git a/Makefile.am b/Makefile.am
-index 5221b1cca138..8517bc0309d1 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -207,6 +207,11 @@ statedir = $(localstatedir)/lib/ofono
- state_DATA =
- endif
  
-+provision.db: provision.json
-+	$(AM_V_GEN)$(srcdir)/tools/provisiontool generate \
-+		--infile $< --outfile $@
-+pkgdata_DATA = provision.db
-+
- builtin_modules =
- builtin_sources =
- builtin_libadd =
-@@ -748,7 +753,7 @@ src_ofonod_LDFLAGS = -Wl,--export-dynamic \
+-M8: Use g_try_malloc instead of g_malloc
+-========================================
+-When g_malloc fails, the whole program would exit. Most of time, this is not
+-the expected behavior, and you may want to use g_try_malloc instead.
+-
+-Example:
+-additional = g_try_malloc(len - 1);  // correct
+-if (additional == NULL)
+-	return FALSE;
++M8: Prefer l_new when allocating small structures
++=================================================
++Small allocations (less than a page) in userspace Linux applications typically
++do not fail, and often there's nothing meaningful a program can do to recover.
++For small allocations, prefer using l_new (or the GLib equivalent g_new0)
++instead of g_try* functions.
  
- BUILT_SOURCES = $(local_headers) $(ell_built_sources) src/builtin.h
  
--CLEANFILES = $(BUILT_SOURCES) $(rules_DATA)
-+CLEANFILES = $(BUILT_SOURCES) $(rules_DATA) provision.db
- 
- plugindir = $(pkglibdir)/plugins
- 
-@@ -901,7 +906,7 @@ test_SCRIPTS = $(test_scripts)
- endif
- 
- EXTRA_DIST = src/genbuiltin plugins/ofono.rules plugins/ofono-speedup.rules \
--		tools/provisiontool \
-+		tools/provisiontool provision.json \
- 		unit/test-provision.json \
- 		$(doc_files) $(test_scripts)
- 
+ M9: Follow the order of include header elements
 -- 
 2.43.0
 
