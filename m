@@ -1,86 +1,124 @@
-Received: from mail-oo1-f50.google.com (mail-oo1-f50.google.com [209.85.161.50])
+Received: from mail-oi1-f173.google.com (mail-oi1-f173.google.com [209.85.167.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 391275F489
-	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 14:58:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E10985627
+	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 20:24:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706799499; cv=none; b=morl05jtfap9QdOPQq4WNBo+OL820WzOxi57DExCzO4AoLO6oiXxnpqE68qrhYukDuGiBlFWG+rOSnrubKWqszgO+bw454J1GHXGnlBMuXPc78kr0mwxT1mkRMUj4j2j2pCcVo9NSvUems0/y93rg7WXrA4lODkS7f6dydk+YS4=
+	t=1706819081; cv=none; b=cd+lsSNqsHetvmrwQXpn6Q8n+MFiGIPBOTvorjLCGo2A4v3gKj7TwBMZy/6iaqhbkvHULGKiQ/IomTa8oR1+A4R2+3nCWiTVXazjSeV54tfoydDNY12LuWqzNNDM7VpQQQ4Z/qQirN6f4M/dB7YpFBrxzcwMTDedH7p+Tr0P59o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706799499; c=relaxed/simple;
-	bh=RbRbsE5VHTnw+eErmzffprssyezGnugGjiKPrxJQDq0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=iOI220WaVAW2RwdAiKF1ytbirhOLflHZEl6WPU9uWt/wniCL8Qz0ceF3QYszvEL7s6tVQ7nLH+lm4dsJR5kKTlJCeCd5hXUtWjZH/MTXkuayZsOQPUVEnHk+AU+tvMU6Ki/4pRmUhuvx9nfajp6NDDqsVS8/Ip5oRgwo7jOYzTU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AncMmEE+; arc=none smtp.client-ip=209.85.161.50
+	s=arc-20240116; t=1706819081; c=relaxed/simple;
+	bh=gcZoiSBVEN3CIu3uttfxRfR/2VDR2nngHzardZYsGzI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=H9Zb2Kye+am4d3WP7WYpYDZxJAEk/sIwLxZaPJOSKGGOzvWMstqsNrHw+l5osSk4RZmDY7E8M75HZC7kmm0FbmcUN90JuCJjbl3cTvcDfNo6dnzfsiopgqm7gag4aRUIZrTA1ml491GzVUZXhskJc70gz7i/qYsDGVv9r6qV5nc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=culfFDzw; arc=none smtp.client-ip=209.85.167.173
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AncMmEE+"
-Received: by mail-oo1-f50.google.com with SMTP id 006d021491bc7-59a146e8c85so536897eaf.0
-        for <ofono@lists.linux.dev>; Thu, 01 Feb 2024 06:58:18 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="culfFDzw"
+Received: by mail-oi1-f173.google.com with SMTP id 5614622812f47-3be5973913bso741825b6e.3
+        for <ofono@lists.linux.dev>; Thu, 01 Feb 2024 12:24:39 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706799497; x=1707404297; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=B7ri/JZHGXirBrwJXw1x6mBUiLGvuB1ssTX9PwfKNM4=;
-        b=AncMmEE+RcsrTA6Cx6FkEzWcvHIEHWYhNCxLMNU52JbP+rPbByKLgkwt+zVPDB9tBb
-         5gBitSkuBhIgSeXVyZxH8Ltml6NYCpEg4j4zEuUM9CBXuxukaw9wwLBa0wJEGLIuTumq
-         1mGl3zXP2xG5cFh91ziAcPDOUlEepU7FravHw//Zcjpv/iGWXifkuvjqfsyd+qOvKdJG
-         ndQz9dULnjw8QTnGLAjuupf3peHonLxQn+9FnreCt5phSWopM8yJHISWd1c/LyHwlBuL
-         GIwuzXQK/USLBIdpkwsD+kjWNK/hL3UgI+jKv8I1kg017fiDXtBSsDMUA2ID7ZYes6k1
-         +h0Q==
+        d=gmail.com; s=20230601; t=1706819078; x=1707423878; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=+1C0yg6uFh8sCAjDdY85xicfXH9d0bBDqNDQpCaOZ4M=;
+        b=culfFDzwtmJPN4cYfukQN17j+FnDX8secxyspqsNqezhkrz+WdoERKCyiF1cVOGcAI
+         TKUc0I1s6wTkvkgpzqi8BwF6BrJQCRGr7B+FLSZ+f1LvoLxCS1zWiVYKnVOXczyjGiVp
+         gMO/wRDKokqcGlCscTx5h7vDFRk4HPbEi2qxIFL7mgZZ4jMymgK8FufiWAp7L0zptrJb
+         C+Wc9m7pGpkXuTb2z2XkVNaHBhtaBzphO2+DOizexiLPe1PvULyS3N0ZlI4sRs1CWknf
+         DnTJp32YJ1+6KZncJHO+eXybLRMY9u6O5O/9xP5XHYB/pymS+skx3fgEcEQ3iADK9gkH
+         X56A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706799497; x=1707404297;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=B7ri/JZHGXirBrwJXw1x6mBUiLGvuB1ssTX9PwfKNM4=;
-        b=B+0BteBvSi/v08aGeqLyAZLGWI30BHKgcj3/+Rvh8nI9KzeKfzjnVNGfH75Ndyek9V
-         WToVWLS+7yGgJYkbtNLRZkjjAMpSlRBt7LUrhYBHqf/Maiiu+DmD61u1OvmAWrfPkl/K
-         NjofBxG8sf9bY/QSTVBX/7rwD1BY/wLUXwre0jMN4vnQUDzVx2mthO9XUIuFmPXxm1vD
-         GTD2JKQJLfgeP8weXELOK+ePmeWJ3GZ9NI+X13kWbnk9rSWoBvAArE+rL5JarO3r3e9I
-         JLuwAbImOmfhAUtxm5KFdTyK3PBJ3uyw0RfgVN01Lmp9tKyxK6St0ymRItjd3Bl+uU3P
-         Ugiw==
-X-Gm-Message-State: AOJu0YzxItpIamP2UI8UOe/Ntq1LdNAE4rovD5F7dBuZKR+b2IaGCIw0
-	n6BCR7wa6/gX6MhY2JgB8za9rcsbi/Y/mm5cujibLqC9INDjnBdelqmTVLIv
-X-Google-Smtp-Source: AGHT+IFx3kJQdFwTRpy41ZQcJpuFJ570V7nVJqkia/3jhAB8zuFQ5EtUwLX+fTrvMoRoDhAs8geo7A==
-X-Received: by 2002:a4a:d089:0:b0:599:f5fb:65d2 with SMTP id i9-20020a4ad089000000b00599f5fb65d2mr4999589oor.5.1706799497266;
-        Thu, 01 Feb 2024 06:58:17 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCUXv+YMCeOfU0dGw/t33Zih9x6vvOjPTB8mJfq3Ju6I2qGoDgj08jbpUvOOs4Hkjc97dF1xBX5M+pZLoFkHZvd0abtD+90=
-Received: from [172.16.49.130] (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id l14-20020a4ae2ce000000b0059a096ee494sm2346629oot.47.2024.02.01.06.58.16
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 01 Feb 2024 06:58:16 -0800 (PST)
-Message-ID: <3ccd1cd5-de86-437f-a3fc-942bf04c484a@gmail.com>
-Date: Thu, 1 Feb 2024 08:58:15 -0600
+        d=1e100.net; s=20230601; t=1706819078; x=1707423878;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=+1C0yg6uFh8sCAjDdY85xicfXH9d0bBDqNDQpCaOZ4M=;
+        b=mgQphtnlSHQFrZdDzpzsPgEhSYAe4fBYtpXcPf6BDBRr37Jy7k441jXze88vKR8nLu
+         OP6kSXygFeUPDuFss5ivvDEGfYDq+z/AMyR6Pna5LsI8JcK1xcydIL/OlTQjy9FOdnoz
+         OMutKSZFh3rA5wmQUPVX7fUAr8zirHPf+eGveLUIHJRryD5hfMyCApZw6dqS/XkzSgcR
+         0+B/57/2+WoF0FZ4Syd51/Up3L43m4/JNf86A3n6uxI3Wl+fFcXI8+q9SetYeanUE7uN
+         I+gOFRgHqbhttMpGTixbkc7KqZQrrIPNowmYMiBeVQA4hkv7et+NLkU/gYnHMNhShu+P
+         vSJQ==
+X-Gm-Message-State: AOJu0YxoHu+sAkZZ3kBqpxxg75lhHCfCOQfbYfZTeAE4/tSpBR1WqQat
+	hQwOvRxZjIC5RcFVs4NNHNo3NNkcjGGn3C0pVPxDSAnhd4aWS/qUrIw0Q8B5
+X-Google-Smtp-Source: AGHT+IGGqqBuF+/K7oBMGMZ5oTsow8GHicPmLbzvXM6vF2WAIJYxLC8WLXuuBBl9BzCMH9ZEm/PoFw==
+X-Received: by 2002:a05:6808:189c:b0:3bf:bb44:a002 with SMTP id bi28-20020a056808189c00b003bfbb44a002mr284588oib.7.1706819078260;
+        Thu, 01 Feb 2024 12:24:38 -0800 (PST)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id fu13-20020a0568082a6d00b003bf9e5edf7csm67756oib.47.2024.02.01.12.24.37
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 01 Feb 2024 12:24:37 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH] build: Generate and install provision.db
+Date: Thu,  1 Feb 2024 14:23:33 -0600
+Message-ID: <20240201202350.951327-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] udevng: Add support for Quectel EG96 modem
-Content-Language: en-US
-To: Sean Nyekjaer <sean@geanix.com>, ofono@lists.linux.dev
-Cc: martin@geanix.com
-References: <20240131135728.3100070-1-sean@geanix.com>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20240131135728.3100070-1-sean@geanix.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi Sean,
+Run provisiontool to generate the provisioning database in binary format
+from the intermediate json format.  The database will be installed in
+pkgdata_DATA directory (typically /usr/share/ofono) when make install is
+performed.
+---
+ .gitignore  | 1 +
+ Makefile.am | 9 +++++++--
+ 2 files changed, 8 insertions(+), 2 deletions(-)
 
-On 1/31/24 07:57, Sean Nyekjaer wrote:
-> ---
->   plugins/udevng.c | 2 ++
->   1 file changed, 2 insertions(+)
-> 
-
-Applied, thanks.
-
-Regards,
--Denis
+diff --git a/.gitignore b/.gitignore
+index 0cfe5283ec35..27184e16e42b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -24,6 +24,7 @@ stamp-h1
+ build-aux
+ autom4te.cache
+ ell
++provision.db
+ 
+ ofono.pc
+ include/ofono
+diff --git a/Makefile.am b/Makefile.am
+index 5221b1cca138..8517bc0309d1 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -207,6 +207,11 @@ statedir = $(localstatedir)/lib/ofono
+ state_DATA =
+ endif
+ 
++provision.db: provision.json
++	$(AM_V_GEN)$(srcdir)/tools/provisiontool generate \
++		--infile $< --outfile $@
++pkgdata_DATA = provision.db
++
+ builtin_modules =
+ builtin_sources =
+ builtin_libadd =
+@@ -748,7 +753,7 @@ src_ofonod_LDFLAGS = -Wl,--export-dynamic \
+ 
+ BUILT_SOURCES = $(local_headers) $(ell_built_sources) src/builtin.h
+ 
+-CLEANFILES = $(BUILT_SOURCES) $(rules_DATA)
++CLEANFILES = $(BUILT_SOURCES) $(rules_DATA) provision.db
+ 
+ plugindir = $(pkglibdir)/plugins
+ 
+@@ -901,7 +906,7 @@ test_SCRIPTS = $(test_scripts)
+ endif
+ 
+ EXTRA_DIST = src/genbuiltin plugins/ofono.rules plugins/ofono-speedup.rules \
+-		tools/provisiontool \
++		tools/provisiontool provision.json \
+ 		unit/test-provision.json \
+ 		$(doc_files) $(test_scripts)
+ 
+-- 
+2.43.0
 
