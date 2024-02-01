@@ -1,61 +1,65 @@
-Received: from mail-oi1-f180.google.com (mail-oi1-f180.google.com [209.85.167.180])
+Received: from mail-ot1-f46.google.com (mail-ot1-f46.google.com [209.85.210.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED9C32B9C2
-	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 20:45:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82D6325556
+	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 20:45:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706820302; cv=none; b=EiVFQKQy8+C+y5vM3XEpnH/5McB7l8LLbOYyYZLIqYZnbyMfhLXaW36zxgE2lK+SAAmpZQyWZmMoLIs7MA2j9dDyZw6QVQr5ybgz1aa7ZEgQntX2mEHmPQGw3FDxC3LGzPb+/LWqXCmTt2pUYrgwP45FcNgEWN/QRNChWN/+4pU=
+	t=1706820303; cv=none; b=RN+Rdb2CtafCEQHEdCh4XjI/zTCtbWJ3tU2FX8xejUYHG5XgYOabysexshSFWUEeEFYdDTwlASeEDJDCVy1UT+W6nUjzjlNZZyRtf/KYRrNEKHcODHV8QvbLgxiHVBj5atSugOMWOutgKyE4+ZeRuBQZ4D1FJkrR2uqCx9xfUXQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706820302; c=relaxed/simple;
-	bh=kgJdM6fKyuuW6fQ8vFUKAruTlkxCnfUQCQ3PgLIUYRo=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TnuHuy2Bi6SjeJD8sIpa4ZHkIfaCZllE7Zo6lAn7w64KLF+zXF6xAUnlooQnQjmxoOTmJH1vv0qatIeMUAB1Srz1N9a5jFBnwyubHEAkgbAVKWP/77p7Jm+tfpQOAxx/alO1MpdAW4lfIN2vtK501HJyf8hme3KpmgexkWFnrVE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Yw8/EMs2; arc=none smtp.client-ip=209.85.167.180
+	s=arc-20240116; t=1706820303; c=relaxed/simple;
+	bh=Qx9+Ss7cJaIUhsV5yWZjUe9L+B9G1j3WRIEAT2mJr2g=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=JX7SX/Vznw4MFpezqBg4eX7Xd2/WHZIzXkyMn+72Fz2UxrE1swvmHs/wuF8W2fXg4pEO5kxm9NwV112U6gxpdC83cp1+z4GRhvRGBAZimNk/YCQhJgROeLQfUw0AGriyAjJ7l630YVmxiMaOqSfUh9wTPpbrEQKv6GkSVYs2plM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=l7uOBt0v; arc=none smtp.client-ip=209.85.210.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Yw8/EMs2"
-Received: by mail-oi1-f180.google.com with SMTP id 5614622812f47-3be6b977516so944253b6e.2
-        for <ofono@lists.linux.dev>; Thu, 01 Feb 2024 12:45:00 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l7uOBt0v"
+Received: by mail-ot1-f46.google.com with SMTP id 46e09a7af769-6e118da997cso721630a34.3
+        for <ofono@lists.linux.dev>; Thu, 01 Feb 2024 12:45:01 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1706820300; x=1707425100; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=jF9LbRiHbtrnhos8mhQ+mcn+AJtqtZlJDXxvP+hFowY=;
-        b=Yw8/EMs2zwlr761xBOMixLSVDktvC3FDSbff3ZcLAwF+rvWjqlsNkCUoYLGhkLlPxm
-         g/R7PvpLcccZAgoPj7dj8Ked+wAExahnledJN/YKCtJa/Yg39lyHAi+fKIDy5YsM+3cs
-         RtUZC8dh9eeGejJl/3e4hn+NOJqW256diNH1lxwc9ZPtOqalwzsC0+CmJZMjlu+bw8mM
-         T63POgW9c3yfkjZcQP4dXoQLck1wqL7QSUc8pYl1MJDZFUbeokZfcu7ILQnvbI3Jc9sd
-         C8uRLBSR8CJrsrMwR7tgAYCCFtPiYfk8Y90B3B1pA1tF1d522EKAyNwg8dtOoNjmEDfn
-         xd6Q==
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=zychsjfuReucCx+WlqNv7H+2ecVB9hvPTccaCbi2LYY=;
+        b=l7uOBt0v/ZxTU7b3MWtXgCUxdl+J+iqfVDJBFxwRIfXFxtxr5x46WJxW2LfLrWthyr
+         NgkJKruE5CAvME9AI90s3CIYk/bHoGoDm5v9RJtqJYMg0x+xGyrtK/Vj8Iw7DQagDjaR
+         OcsawJp9SY40h1+fFNrXHhTmPqfamdI/ozO0hMNdCPmL8kcv7Bmhbx3gN2v+rUqdNBHU
+         Yba0WYKqNQLJBuZd3DoU4pSBHXZ0wDQbNzzv8MzQHeYlfqq1+hTklI8g6DYwDiOvvJvf
+         JqQPUQFQBiriW4Z5ktkFQt+J8MJfL9NjWc9o/rH9BfPmyyXodg4DXDcBNxj2zlcNlQlv
+         /fQg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1706820300; x=1707425100;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=jF9LbRiHbtrnhos8mhQ+mcn+AJtqtZlJDXxvP+hFowY=;
-        b=gBV+R/TOBRhQwmPVdKqEDDFuDBGgyP5NsZtupO7S10xuHTGz6OArvNtCciBFpg9mfN
-         lpZ5Uuto4222QfhVUwrrFqQjtucAgGkVPeSzW3nnaLT6mgu0mGo5W7ek+NteyP7R1lgv
-         fCQbuA2yFjp0jZL7tH8k/heZJfkPdm70XYqn0z6gLdFtEz1uErY61Gz+vuZOg/nOcNDg
-         ojEGdzFtSawyd9ehdPOhs98v0L18wSTC/NSpWkLW5Xx0aep8h8SsUYlw1+x4GqjBAWHG
-         UF/1YgYIDsbx4VNTO1aXS4I9IajLSvwY7hboZIm1bBiEVk3Zbzrjjmcv/QlUI/BY2G0C
-         D6lA==
-X-Gm-Message-State: AOJu0YzIuYNET8LQ/+14st787pKTpQU7eaYXt2/KCpjdpXEjVf/vTjxV
-	7dEx3J2l7yUVbwAOwXcmLrBpyYNT8xfzbZqJVmdDnuDlzZNIaU9Ej8KLyo1q
-X-Google-Smtp-Source: AGHT+IHlaiS2z9yy7Xpbhk21E3nldwxIJNICl2seUMezOcpbwBnqQtIKZTr/GscvVjdPM4QHSpLN1g==
-X-Received: by 2002:a05:6870:c0a:b0:210:b77a:c3cf with SMTP id le10-20020a0568700c0a00b00210b77ac3cfmr3774774oab.41.1706820299659;
-        Thu, 01 Feb 2024 12:44:59 -0800 (PST)
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=zychsjfuReucCx+WlqNv7H+2ecVB9hvPTccaCbi2LYY=;
+        b=UeHtIraRA92AnNYlQE5QS5IotZHbaieVjhonEokbYjWlDyFpE/ffiXk2lyt5pVgLWn
+         NI/apBvII+aab59Mzb8gSgrjmjQzuwU7ik93I3Xg3JS7tDJK3+EpmHH69Biq44K9gwo/
+         W+68+wh1CgssL/BqtZEfNccPe4amVcRO9u4gH/uBg2e+wP41sAIQj78PnIcmvCFRxQXP
+         3A5D+CyU528A0YWIykpDai+OGYfrsC1K34bUZL2InuNKbwaxESpiheNiMkNH74ayvbvt
+         pvZvmxmNKF6ROf26smzCtG2Vuf0f/Zge8bySca6VcEybKS04PFZIcET3W39+WIjbU/l7
+         8vtQ==
+X-Gm-Message-State: AOJu0YwRym6Jbo9qjXjdulCwZTakyTJfgGZ/UxZxrjvLBcU4B+L33CDb
+	bdouqJNH7t9XprODE8cgBCkzwN+Y82bff2fXu1u6UOU3Z3l+/fyToLI+4EPS
+X-Google-Smtp-Source: AGHT+IHHOFBhnRyODF2Buo3UuKYDa7x3ndnav7qvt9tz2qpvcNTSE/6FThqw3BkHAiKRg0PoQUio6w==
+X-Received: by 2002:a05:6870:b690:b0:214:7e6b:db26 with SMTP id cy16-20020a056870b69000b002147e6bdb26mr6182566oab.30.1706820300298;
+        Thu, 01 Feb 2024 12:45:00 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id os11-20020a0568707d0b00b00218e3695b3asm115907oab.51.2024.02.01.12.44.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 01 Feb 2024 12:44:59 -0800 (PST)
+        Thu, 01 Feb 2024 12:45:00 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 1/2] doc: Prefer l_new instead of g_try*
-Date: Thu,  1 Feb 2024 14:43:59 -0600
-Message-ID: <20240201204412.951617-1-denkenz@gmail.com>
+Subject: [PATCH 2/2] doc: Remove rule 13 in favor of O3
+Date: Thu,  1 Feb 2024 14:44:00 -0600
+Message-ID: <20240201204412.951617-2-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20240201204412.951617-1-denkenz@gmail.com>
+References: <20240201204412.951617-1-denkenz@gmail.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -64,39 +68,67 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Using l_new and g_new* variants for small allocations has been the
-preferred approach for quite some time.  Update the coding style
-document to reflect that.
+Since oFono is slowly migrating to ell, remove rule M13 and indicate
+that rule O3 style is preferred to match the prevalent coding style in
+ell.  Many of the newer code additions have already been silently
+following these recommendations.  Make them explicit.
 ---
- doc/coding-style.txt | 15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+ doc/coding-style.txt | 38 ++++++++++++++++----------------------
+ 1 file changed, 16 insertions(+), 22 deletions(-)
 
 diff --git a/doc/coding-style.txt b/doc/coding-style.txt
-index c27a2f275565..0ec1cd97e8ca 100644
+index 0ec1cd97e8ca..96837f7687eb 100644
 --- a/doc/coding-style.txt
 +++ b/doc/coding-style.txt
-@@ -155,15 +155,12 @@ for (i = 0; i < 3; i++) {
- }
+@@ -241,28 +241,6 @@ However if the enum comes from an external header file outside ofono
+ we cannot make any assumption of how the enum is defined and this
+ rule might not apply.
  
- 
--M8: Use g_try_malloc instead of g_malloc
--========================================
--When g_malloc fails, the whole program would exit. Most of time, this is not
--the expected behavior, and you may want to use g_try_malloc instead.
+-M13: Check for pointer being NULL
+-=================================
+-
+-When checking if a pointer or a return value is NULL, explicitly compare to
+-NULL rather than use the shorter check with "!" operator.
 -
 -Example:
--additional = g_try_malloc(len - 1);  // correct
--if (additional == NULL)
--	return FALSE;
-+M8: Prefer l_new when allocating small structures
-+=================================================
-+Small allocations (less than a page) in userspace Linux applications typically
-+do not fail, and often there's nothing meaningful a program can do to recover.
-+For small allocations, prefer using l_new (or the GLib equivalent g_new0)
-+instead of g_try* functions.
- 
- 
- M9: Follow the order of include header elements
+-1)
+-array = g_try_new0(int, 20);
+-if (!array)	// Wrong
+-	return;
+-
+-2)
+-if (!g_at_chat_get_slave(chat))	// Wrong
+-	return -EINVAL;
+-
+-3)
+-array = g_try_new0(int, 20);
+-if (array == NULL)	// Correct
+-	return;
+-
+-
+ M14: Always use parenthesis with sizeof
+ =======================================
+ The expression argument to the sizeof operator should always be in
+@@ -347,3 +325,19 @@ v = voicecall_create(vc, call);
+ v->detect_time = time(NULL);
+ DBG("Registering new call: %d", call->id);
+ voicecall_dbus_register(v);
++
++O3: Prefer !foo when checking pointers for NULL or boolean values
++=================================================================
++
++When checking if a pointer or a return value is NULL, prefer the negation
++operator form.
++
++Example:
++1)
++array = g_try_new0(int, 2000000);
++if (!array)
++	return -ENOMEM;
++
++2)
++if (!g_at_chat_get_slave(chat))
++	return -EINVAL;
 -- 
 2.43.0
 
