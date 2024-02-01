@@ -1,65 +1,35 @@
-Received: from mail-ot1-f46.google.com (mail-ot1-f46.google.com [209.85.210.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82D6325556
-	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 20:45:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA0913F8D4
+	for <ofono@lists.linux.dev>; Thu,  1 Feb 2024 21:40:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706820303; cv=none; b=RN+Rdb2CtafCEQHEdCh4XjI/zTCtbWJ3tU2FX8xejUYHG5XgYOabysexshSFWUEeEFYdDTwlASeEDJDCVy1UT+W6nUjzjlNZZyRtf/KYRrNEKHcODHV8QvbLgxiHVBj5atSugOMWOutgKyE4+ZeRuBQZ4D1FJkrR2uqCx9xfUXQ=
+	t=1706823626; cv=none; b=abLvR8DHqdGlVHMOWuZtS5K+5e+f+JAZzRxuqupwN6I/IFR4tPBklAENtMPihl53BRaMOX12vSxp2FBXuztCWd0eka/EnWZbSet5RvuAxoBQlZfZa8hMa8vR6dhYtwNJtnbfSxR3p2IOHc47C5HQyBghgjQhw2jfiMeaENwONOg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706820303; c=relaxed/simple;
-	bh=Qx9+Ss7cJaIUhsV5yWZjUe9L+B9G1j3WRIEAT2mJr2g=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=JX7SX/Vznw4MFpezqBg4eX7Xd2/WHZIzXkyMn+72Fz2UxrE1swvmHs/wuF8W2fXg4pEO5kxm9NwV112U6gxpdC83cp1+z4GRhvRGBAZimNk/YCQhJgROeLQfUw0AGriyAjJ7l630YVmxiMaOqSfUh9wTPpbrEQKv6GkSVYs2plM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=l7uOBt0v; arc=none smtp.client-ip=209.85.210.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1706823626; c=relaxed/simple;
+	bh=1WKvK1YamOLrhi+N7sISORJLQvVhp/rhb//7H6CT2Tw=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=DuV21jbeR0P+T2aIn1yoe2gFFcofgMKQRBrZOcwEaI+XLpKV0rDb06SvfueSbQpgzlmUhnP2RLjo/BC7VRBDBGXawjGxFy+xUaMlefl9X7sTqZsKyIiMoi/M0FXPmqMSvN0/jg812Vq3Yr3R0k/mRhbp+xfoWzSw7LQ4OqKUDok=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=As5QI609; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l7uOBt0v"
-Received: by mail-ot1-f46.google.com with SMTP id 46e09a7af769-6e118da997cso721630a34.3
-        for <ofono@lists.linux.dev>; Thu, 01 Feb 2024 12:45:01 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706820300; x=1707425100; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=zychsjfuReucCx+WlqNv7H+2ecVB9hvPTccaCbi2LYY=;
-        b=l7uOBt0v/ZxTU7b3MWtXgCUxdl+J+iqfVDJBFxwRIfXFxtxr5x46WJxW2LfLrWthyr
-         NgkJKruE5CAvME9AI90s3CIYk/bHoGoDm5v9RJtqJYMg0x+xGyrtK/Vj8Iw7DQagDjaR
-         OcsawJp9SY40h1+fFNrXHhTmPqfamdI/ozO0hMNdCPmL8kcv7Bmhbx3gN2v+rUqdNBHU
-         Yba0WYKqNQLJBuZd3DoU4pSBHXZ0wDQbNzzv8MzQHeYlfqq1+hTklI8g6DYwDiOvvJvf
-         JqQPUQFQBiriW4Z5ktkFQt+J8MJfL9NjWc9o/rH9BfPmyyXodg4DXDcBNxj2zlcNlQlv
-         /fQg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706820300; x=1707425100;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=zychsjfuReucCx+WlqNv7H+2ecVB9hvPTccaCbi2LYY=;
-        b=UeHtIraRA92AnNYlQE5QS5IotZHbaieVjhonEokbYjWlDyFpE/ffiXk2lyt5pVgLWn
-         NI/apBvII+aab59Mzb8gSgrjmjQzuwU7ik93I3Xg3JS7tDJK3+EpmHH69Biq44K9gwo/
-         W+68+wh1CgssL/BqtZEfNccPe4amVcRO9u4gH/uBg2e+wP41sAIQj78PnIcmvCFRxQXP
-         3A5D+CyU528A0YWIykpDai+OGYfrsC1K34bUZL2InuNKbwaxESpiheNiMkNH74ayvbvt
-         pvZvmxmNKF6ROf26smzCtG2Vuf0f/Zge8bySca6VcEybKS04PFZIcET3W39+WIjbU/l7
-         8vtQ==
-X-Gm-Message-State: AOJu0YwRym6Jbo9qjXjdulCwZTakyTJfgGZ/UxZxrjvLBcU4B+L33CDb
-	bdouqJNH7t9XprODE8cgBCkzwN+Y82bff2fXu1u6UOU3Z3l+/fyToLI+4EPS
-X-Google-Smtp-Source: AGHT+IHHOFBhnRyODF2Buo3UuKYDa7x3ndnav7qvt9tz2qpvcNTSE/6FThqw3BkHAiKRg0PoQUio6w==
-X-Received: by 2002:a05:6870:b690:b0:214:7e6b:db26 with SMTP id cy16-20020a056870b69000b002147e6bdb26mr6182566oab.30.1706820300298;
-        Thu, 01 Feb 2024 12:45:00 -0800 (PST)
-Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id os11-20020a0568707d0b00b00218e3695b3asm115907oab.51.2024.02.01.12.44.59
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 01 Feb 2024 12:45:00 -0800 (PST)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 2/2] doc: Remove rule 13 in favor of O3
-Date: Thu,  1 Feb 2024 14:44:00 -0600
-Message-ID: <20240201204412.951617-2-denkenz@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20240201204412.951617-1-denkenz@gmail.com>
-References: <20240201204412.951617-1-denkenz@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="As5QI609"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 64FD3C43390;
+	Thu,  1 Feb 2024 21:40:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1706823626;
+	bh=1WKvK1YamOLrhi+N7sISORJLQvVhp/rhb//7H6CT2Tw=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=As5QI609ZXG0TTp6EPKIk3WAiEhXefgdtEndZCzpl9gYFO4q+19dm8Y93fWEiRaPW
+	 JXSS9t3OOdxA/oxVbJsq+oFuyk8akktIScmrdzMLZVP6a22XmnCxuHhzaJpLyqAmNf
+	 jykeEB/WvnRgA5gvgABEjSxDNOBFjh+M5BPCEfAUxv56m0RyDI34xTT2sjeWkqUYFQ
+	 Mt7e4j9f2Sb2nmbZHKiaH43HZqC5ymib9O9jsXs4yg3bAisVRdyhQSCuYUKyWJJke0
+	 aHJ/FLi30Gx0IlKo7JYXHgrZFKT0GHLq5an5E1tu2XdrsOkLHW+rVYli98Glw10U+C
+	 wGEr7dQO2wGCw==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 4AFE0C0C40E;
+	Thu,  1 Feb 2024 21:40:26 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -67,68 +37,38 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH] build: Generate and install provision.db
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <170682362630.14986.9850171207375566403.git-patchwork-notify@kernel.org>
+Date: Thu, 01 Feb 2024 21:40:26 +0000
+References: <20240201202350.951327-1-denkenz@gmail.com>
+In-Reply-To: <20240201202350.951327-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev
 
-Since oFono is slowly migrating to ell, remove rule M13 and indicate
-that rule O3 style is preferred to match the prevalent coding style in
-ell.  Many of the newer code additions have already been silently
-following these recommendations.  Make them explicit.
----
- doc/coding-style.txt | 38 ++++++++++++++++----------------------
- 1 file changed, 16 insertions(+), 22 deletions(-)
+Hello:
 
-diff --git a/doc/coding-style.txt b/doc/coding-style.txt
-index 0ec1cd97e8ca..96837f7687eb 100644
---- a/doc/coding-style.txt
-+++ b/doc/coding-style.txt
-@@ -241,28 +241,6 @@ However if the enum comes from an external header file outside ofono
- we cannot make any assumption of how the enum is defined and this
- rule might not apply.
- 
--M13: Check for pointer being NULL
--=================================
--
--When checking if a pointer or a return value is NULL, explicitly compare to
--NULL rather than use the shorter check with "!" operator.
--
--Example:
--1)
--array = g_try_new0(int, 20);
--if (!array)	// Wrong
--	return;
--
--2)
--if (!g_at_chat_get_slave(chat))	// Wrong
--	return -EINVAL;
--
--3)
--array = g_try_new0(int, 20);
--if (array == NULL)	// Correct
--	return;
--
--
- M14: Always use parenthesis with sizeof
- =======================================
- The expression argument to the sizeof operator should always be in
-@@ -347,3 +325,19 @@ v = voicecall_create(vc, call);
- v->detect_time = time(NULL);
- DBG("Registering new call: %d", call->id);
- voicecall_dbus_register(v);
-+
-+O3: Prefer !foo when checking pointers for NULL or boolean values
-+=================================================================
-+
-+When checking if a pointer or a return value is NULL, prefer the negation
-+operator form.
-+
-+Example:
-+1)
-+array = g_try_new0(int, 2000000);
-+if (!array)
-+	return -ENOMEM;
-+
-+2)
-+if (!g_at_chat_get_slave(chat))
-+	return -EINVAL;
+This patch was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Thu,  1 Feb 2024 14:23:33 -0600 you wrote:
+> Run provisiontool to generate the provisioning database in binary format
+> from the intermediate json format.  The database will be installed in
+> pkgdata_DATA directory (typically /usr/share/ofono) when make install is
+> performed.
+> ---
+>  .gitignore  | 1 +
+>  Makefile.am | 9 +++++++--
+>  2 files changed, 8 insertions(+), 2 deletions(-)
+
+Here is the summary with links:
+  - build: Generate and install provision.db
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=378b94a12adc
+
+You are awesome, thank you!
 -- 
-2.43.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
