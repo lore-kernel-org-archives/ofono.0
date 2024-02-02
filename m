@@ -1,62 +1,62 @@
-Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com [209.85.210.44])
+Received: from mail-ot1-f41.google.com (mail-ot1-f41.google.com [209.85.210.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E364985934
-	for <ofono@lists.linux.dev>; Fri,  2 Feb 2024 22:54:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D5DB25B697
+	for <ofono@lists.linux.dev>; Fri,  2 Feb 2024 22:54:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706914497; cv=none; b=CNjE7/6v121uF0t9Pca/NBHEHAIJhu/2YYpqUGzXiezNlk4Ewytn81CJqIOE+C9SmGCQ/TREv4rc/sNluPu7jAzwij2iqK5DtGVOC7RiEoGVut58DSGwmII5p4zswc6M88mMIgdZSrs9p7+htT3wL6ayT2VJUYgaHWv3zp39rdQ=
+	t=1706914498; cv=none; b=W+mo+D4uhDHea971+mpSibGNs1h6R5zTcsQ55hAsL9N1hwqFRv6ha8TZ3exWTaBX6BV4YMuBVvAuzif6MZGRJa1xERMp3Lls0b5Q1P4naOWAxTg/7xDnQvLcvNpYlwNo58VwuWaUF6035x4olstCraYKMeeRtOAjEMypeW503dg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706914497; c=relaxed/simple;
-	bh=SVq3h8lFWDedz+JfWGYEjrib5K0S3qC4CbGyaa7Vu8M=;
+	s=arc-20240116; t=1706914498; c=relaxed/simple;
+	bh=zYukKacgjBk5sjwZjSTp+TgvRl7rXLTUNOPT8nLntg8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Iaen6vo56opMx77xM1HoAKQWbbeLYlSvFaLnJN6QwH18ZZyw5U0KBHdFgzEghcGBuY3v897f7dh99wRzkipjQY/UOZto8PM9eUpYznQm0h9sRrRzyGYH9U7muhfT+DK/+QINjfdKYjBNCLPTs4bEfyZX4tpjhIx0bxG/Iky7FiA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VhrfgQCg; arc=none smtp.client-ip=209.85.210.44
+	 MIME-Version; b=QG//j9JgwfrmMEI4sNnoU6E3nPe03Hjhwgh4nC6Ab55GDd3osZyKOtvluICpHPdlRGKOjTc2tb1gLrxl889iSeP/PPkyRW0Yqb9bWcNCzs20EThMR242uHNtV9UiPo/O/7yoKDeaDjYXqeS417hBDMr/oSbbDkJLCAcFTX8EJy8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NxbBQxi6; arc=none smtp.client-ip=209.85.210.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VhrfgQCg"
-Received: by mail-ot1-f44.google.com with SMTP id 46e09a7af769-6e27401a244so1230484a34.0
-        for <ofono@lists.linux.dev>; Fri, 02 Feb 2024 14:54:55 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NxbBQxi6"
+Received: by mail-ot1-f41.google.com with SMTP id 46e09a7af769-6ddf26eba3cso1951993a34.0
+        for <ofono@lists.linux.dev>; Fri, 02 Feb 2024 14:54:56 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1706914495; x=1707519295; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=2WweB9jMXpj+jfBpvMM2LyldcXE3A5CZcgD4gDZEx9Q=;
-        b=VhrfgQCg/9U61noB4mLEvFzz8fvsyiwaYgKxeLGUdX6fNx04IxSqwXQHgWoiiMXK0C
-         q/YQMZJw6p/+hUFNfFCE5esihVkVEHI7rEdMOhUcuKfaXAurQEVEXh86m5GH9NeZ4bOt
-         belwZR7ymIs/eYvt+AnfWXq6chniwBKv36YQ5WmRrd2bfTMUSxvMwORVSIrW39re64j4
-         y+r46gqacR/fqQgX71S6BYFz9AyAbq2mwRDSguz5iW0fSJ09koO0AeUVVSZ1Mu3zjNbZ
-         tL+0lsKItCEkeJHIKLhYB9sMWw75wZAT0BcTxrKniQOUdsCV+yVGs58p0OG7SHN+AxJE
-         gaaw==
+        bh=hqSTsP42ny05nEPplpfoYzMkecwWrPoMKfxMzWZWMw8=;
+        b=NxbBQxi6xbxy4yUsgkjXLaMdLIir8TbulJM4rxO28HJJbNIxswEvbMjn7PMwGsm+Lo
+         uM+kSZUFHTqbLXirBjszu7psTr/UCyIHKtFZhKdAoBL2pM4mFkbdJWNh/mK8XoBsjAIY
+         y1u0uPS7WY7ta9gacMOVucXzjhQvOXJpbUVgfbH1QYfvTqayUPh8NlCX3oawIkaoq+Jz
+         UHJmG1z0pACd3N7jmVyTcrblAc1Kojdd/KsotjersSGCaWPMgZApr0ZFoTggbqeOXB15
+         3Z9dcZV3wDn0BlPthmfGl6G7Cx3l0svhTfUkAR0nTQ/0BJiI4AKS9iTCNZnb8t6LFcHK
+         fZqw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1706914495; x=1707519295;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=2WweB9jMXpj+jfBpvMM2LyldcXE3A5CZcgD4gDZEx9Q=;
-        b=uyZxgU5SYSknLACKZJtAyOlt38Xc8z/4sNTKCeXweJowvtew0s7WWnvp7+cgYCBAp/
-         2vKMhLUFoeRu0m+dqavDejkR+XaTTskatqfcaGRznuBjpNM0IOgqUuBmsWqWYica7LJQ
-         JvB1oHhu3K8v+jCKKrrwvo6fUXvgYkGmQKZtqupPxY08BJAYwl3pZIUKKVvkOn2pjLRp
-         pkTancQyPJgbdAIxiBD1/ZD51RHiM2DINBxxMCdcYdhMP71jLbGDd6uzLZbIp6nZ8hR9
-         0saARiZK4krGWfNO1VLf9y4RjO86P2cudrdFj7HxWI1+4NOKCZ+fOQG7A7TviNxpu85i
-         +oCA==
-X-Gm-Message-State: AOJu0Yy09lpociUJK0eFYUl5SJGMunfV1x23gEThILJBvQe9DLxp7Zlo
-	eyOLmSJbpTDWOzU+o39do7NLZHWQP+FwEZm34Cv1UnwR8k+iF3L2f+EBmzbF
-X-Google-Smtp-Source: AGHT+IFGgvHR4gLIle5VOn8l8YgHmenxtRjxzp0UwI/6zuv2ylN+OTfDSkzT+91Q+FgAeXSOknYvqA==
-X-Received: by 2002:a05:6830:1bc8:b0:6e1:79a:fc8f with SMTP id v8-20020a0568301bc800b006e1079afc8fmr3051153ota.35.1706914494860;
-        Fri, 02 Feb 2024 14:54:54 -0800 (PST)
+        bh=hqSTsP42ny05nEPplpfoYzMkecwWrPoMKfxMzWZWMw8=;
+        b=sbVeqRYWGKz7mgTA+MLcSZSYrVnVV9bxaTnVyb2a2Mkx1mpOUUObclVMaUMcDjXvq1
+         sVlh1ty114xhGngbKMIhcQ7h/kDpW2GcWXsShtxZYjabqeHOQWJlSZMQKriVxy8U+CUe
+         /DqEh7fcfYPDsBdXbuZEGAC5GHnLRaEbkoFuwkG+SphVwHG7Ra19m8WvEoGC9Aotcdi/
+         XSlNGJMeoUkGD2muKw7h3ayZo/FbPg2+qMqtw+rS0cSViWmpHSWZohAgtC8phap8JPN5
+         92s0JjwVtUl1Eao0TyuoH+rbayKZZLNmn0T2cjypCCEkKzDjrRovwDpcrnw8PfGRmv73
+         +F9w==
+X-Gm-Message-State: AOJu0YyyWLSvoLm21Bj2ygxDYJ3vjfqdyoUIbope5Tz0RCUUrE3MpFz7
+	9tZkMhwzgeuvRxb4XFVhIXA+1MdABpkZPVTduWik6NwRAQK8F5j6ZYTz00y5
+X-Google-Smtp-Source: AGHT+IGZpFu5Vm3VoOs/REof/QYMI8Q5JPjTrnhF2HpJLB0SLezgU0EANtOHGeuPqn7CVpKxEDlrBw==
+X-Received: by 2002:a9d:7dd0:0:b0:6dd:e530:8c12 with SMTP id k16-20020a9d7dd0000000b006dde5308c12mr7227827otn.4.1706914495638;
+        Fri, 02 Feb 2024 14:54:55 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id j20-20020a9d7d94000000b006e1424847d2sm563485otn.12.2024.02.02.14.54.54
+        by smtp.gmail.com with ESMTPSA id j20-20020a9d7d94000000b006e1424847d2sm563485otn.12.2024.02.02.14.54.55
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 02 Feb 2024 14:54:54 -0800 (PST)
+        Fri, 02 Feb 2024 14:54:55 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 03/18] build: Bring in more ell classes
-Date: Fri,  2 Feb 2024 16:53:35 -0600
-Message-ID: <20240202225405.993792-3-denkenz@gmail.com>
+Subject: [PATCH v2 04/18] build: Enable _auto_ syntax
+Date: Fri,  2 Feb 2024 16:53:36 -0600
+Message-ID: <20240202225405.993792-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240202225405.993792-1-denkenz@gmail.com>
 References: <20240202225405.993792-1-denkenz@gmail.com>
@@ -68,99 +68,20 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Some ell classes are still not used by oFono.  Bring them all into the
-build for future use.
 ---
- Makefile.am | 34 ++++++++++++++++++++++++++++------
- 1 file changed, 28 insertions(+), 6 deletions(-)
+ configure.ac | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/Makefile.am b/Makefile.am
-index 60ea9d193eac..8517bc0309d1 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -36,8 +36,8 @@ ell_headers = ell/util.h \
- 			ell/checksum.h \
- 			ell/netlink.h \
- 			ell/genl.h \
--			ell/dbus.h \
- 			ell/rtnl.h \
-+			ell/dbus.h \
- 			ell/dbus-service.h \
- 			ell/dbus-client.h \
- 			ell/hwdb.h \
-@@ -52,14 +52,20 @@ ell_headers = ell/util.h \
- 			ell/file.h \
- 			ell/dir.h \
- 			ell/net.h \
-+			ell/dhcp.h \
-+			ell/dhcp6.h \
- 			ell/cert.h \
- 			ell/ecc.h \
- 			ell/ecdh.h \
- 			ell/time.h \
-+			ell/gpio.h \
- 			ell/path.h \
-+			ell/icmp6.h \
-+			ell/acd.h \
- 			ell/cleanup.h \
-+			ell/netconfig.h \
- 			ell/sysctl.h \
--			ell/gpio.h
-+			ell/minheap.h
+diff --git a/configure.ac b/configure.ac
+index 551f863538ed..b866e5487443 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -299,4 +299,5 @@ AC_DEFINE_UNQUOTED(CONFIGDIR, "${configdir}",
+ AC_CONFIG_FILES(Makefile include/version.h src/ofono.service ofono.pc \
+ 		dundee/dundee.service)
  
- ell_sources = ell/private.h \
- 			ell/missing.h \
-@@ -103,30 +109,46 @@ ell_sources = ell/private.h \
- 			ell/uintset.c \
- 			ell/base64.c \
- 			ell/asn1-private.h \
--			ell/pem.c \
- 			ell/pem-private.h \
-+			ell/pem.c \
- 			ell/tls-private.h \
- 			ell/tls.c \
- 			ell/tls-record.c \
--			ell/tls-suites.c \
- 			ell/tls-extensions.c \
-+			ell/tls-suites.c \
- 			ell/uuid.c \
- 			ell/key.c \
- 			ell/file.c \
- 			ell/dir.c \
- 			ell/net-private.h \
- 			ell/net.c \
-+			ell/dhcp-private.h \
-+			ell/dhcp.c \
-+			ell/dhcp-transport.c \
-+			ell/dhcp-lease.c \
-+			ell/dhcp6-private.h \
-+			ell/dhcp6.c \
-+			ell/dhcp6-transport.c \
-+			ell/dhcp6-lease.c \
-+			ell/dhcp-util.c \
-+			ell/dhcp-server.c \
- 			ell/cert-private.h \
- 			ell/cert.c \
--			ell/ecc-external.c \
-+			ell/cert-crypto.c \
- 			ell/ecc-private.h \
-+			ell/ecc-external.c \
- 			ell/ecc.c \
- 			ell/ecdh.c \
- 			ell/time.c \
- 			ell/time-private.h \
-+			ell/gpio.c \
- 			ell/path.c \
-+			ell/icmp6.c \
-+			ell/icmp6-private.h \
-+			ell/acd.c \
-+			ell/netconfig.c \
- 			ell/sysctl.c \
--			ell/gpio.c
-+			ell/minheap.c
- 
- ell_shared = ell/useful.h ell/asn1-private.h
- 
++AC_DEFINE([_auto_], [__L_AUTODESTRUCT], [autodestruct syntax])
+ AC_OUTPUT
 -- 
 2.43.0
 
