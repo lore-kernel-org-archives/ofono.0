@@ -1,62 +1,62 @@
-Received: from mail-ot1-f53.google.com (mail-ot1-f53.google.com [209.85.210.53])
+Received: from mail-oa1-f42.google.com (mail-oa1-f42.google.com [209.85.160.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33D2B58ABB
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1073A58AAF
 	for <ofono@lists.linux.dev>; Mon,  5 Feb 2024 21:32:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.53
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707168761; cv=none; b=nsoB0uwfaK3M6VrShcVAf6vveLph3PLi3cvfI/pkbSsvplbXLLr6ldEVyVVDVsI15Do2kJWWlWHwPyB6mhAbe/JSud4Imf4ua2/V1TiwpQm2spOXGyaIToroMM2Vfbterb3HMRXxxKiaaFdgPaSk0KwPDr9kysnxyBQrTUxLzN4=
+	t=1707168762; cv=none; b=UVyerN8vcwqjTTfGPO/tA6Qn0HjFNCYBY3yJdiSmNjvyNjl7UC/nYYJI2TAbLHMhM5Y9cD0d5x9CWD0sAt66IW860I7ty249UonDgxx9j8+TTNrzs80wM3zxyuzlxzHkQYsVZZ9WFLkaRp6WG6FDHbusWUJwe7tZe8QSIhmY6LI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707168761; c=relaxed/simple;
-	bh=p2Rp7y9jYTVlSOlcLLc10yBJfZYukLIsypUfp8jcSIw=;
+	s=arc-20240116; t=1707168762; c=relaxed/simple;
+	bh=vzLtM6MkMBJ1TSuPItalVoVVtf6aSoh7YgQkGCV4wnE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=uQfLdhByY2A6ciHD0wY0uZgij116h08oLVVsLUZu4GMssXbbP14AqFSn0H+TQz0PmVX6k0j7bx1xzoiNE739grdNvN3SP4HNpa8HnorCbhx5/JXqRsDDbzoOaOwQTdWg4omCrR3/pLhX+/NImBOQSHGoAFkgDYFpt3wWY3twNCQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=M43I/rKr; arc=none smtp.client-ip=209.85.210.53
+	 MIME-Version; b=OMANZOlD3vmLjJmgecHnLJOAA79u/gdkrrZyCMcxNt5QbXsfeeClmPInV32Oet7NEIptxcJ0vHxw7UNBbef790m/hH1+x9P9Y7fxEsg6OGkzvY1oJ7cWrw2Rt955loWOvkAVwSBeHCZzfxLnAtcO76i0evXmS0zrufRMuKVPXBk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gPIKRKa8; arc=none smtp.client-ip=209.85.160.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="M43I/rKr"
-Received: by mail-ot1-f53.google.com with SMTP id 46e09a7af769-6e117eec348so95227a34.2
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gPIKRKa8"
+Received: by mail-oa1-f42.google.com with SMTP id 586e51a60fabf-214410e969cso2565034fac.0
         for <ofono@lists.linux.dev>; Mon, 05 Feb 2024 13:32:40 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1707168759; x=1707773559; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1707168760; x=1707773560; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=rW7lExWa4Tga5wjI9e2Nk+n83htnkzYELoCacuFZ6B4=;
-        b=M43I/rKriuOEiG8oBDX/If66FIGIVTgM3T2s+LB4V/m9IInYWOWVO86i4AxIvyNvXO
-         FQ90D9uEa1BqelToA8BSBh4TK/F3o56zaCLrzD2OcMi3XT1IGe7lvhsu3Q1HVVmLNe5+
-         ow4/qH0iBW+KIx3Sj9OAJRRxdZQzFbGk8Lv3WbvwgQUZTDSsGnuV/nEGlgein8bxBs7o
-         5rMz6yApfYtJCLdkixfOIbwEIeranoXoXrgbb4N07G6Dk2aR2khtCh2fyjM20AVMffOJ
-         sstu5NOT7gpzfHf9vFy52+K3jHqzXSJESgcKdRhnAlUPs4kfWjD1AKMrz6drdQ3eDORm
-         SFlw==
+        bh=JegzVh25QHy/lavJ0r4AuKJK1WDqy5LTxM4JiU9wnp4=;
+        b=gPIKRKa8HBLaDQCQ5NDomNcQVjF/ZJIiDCz923w8kbGfb8ycEvul0VrclQYu+n9Qth
+         3T4Ye6qynes+2FdeRip0JCnTorYVts0VZx6SbGVfc5wswooqntP5gDIpEfI/t2nq8j8m
+         yn6MxkVnjPfRnpmCYauZPO2FattnQbFBLZZ+/aborsa+W1H3PnLMIqrU1IUAfXeT039A
+         MyPqD8odva3N/eMbO6/1Lb6AP2Umc8oWJAA8j2LE5oBHPZ9xFrbx1m83JAtYWzCGJP8T
+         +7PMryLXWGIQrcIde/kUo/NfdZ4Y6I9wOsXgc5OqpE7dRyHOvay5bkduq5rQ8o/32YDU
+         QZzQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707168759; x=1707773559;
+        d=1e100.net; s=20230601; t=1707168760; x=1707773560;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=rW7lExWa4Tga5wjI9e2Nk+n83htnkzYELoCacuFZ6B4=;
-        b=HPioerfKHN9+babLWvM8N20nDE24cruP52R9tZ0ZI5PWTRwz0LYHWsDNUld941NlPY
-         8sdgHvLin5+bJIzqb0cW2+2H39LYI4r17uQW5fskRWOHI0BFDLGd13asTvb7J7/xGGma
-         KtDrt8E0lX6OYnETAe4kAoijKTYYukXduPvq3dbQpcUWUQkQLSZWrQGmEwSbX3GWZITs
-         456XjEnKe8NXKCCOjp91lSPY3bR5192vWaD+SbVr2S2OMq0ky/HCs+rPAbFSs4i1jKiD
-         qlBpx5qZPOYTiYQ5MrS5bd10olm6CvGtNVqRlTQllqAenZdpsRhXmTurKLbzoJ/gTiBs
-         vRvA==
-X-Gm-Message-State: AOJu0YwRK8bbGceGVqgzNM7XAwjMTptu5ahNsTNuqL515lUwZFenZz8j
-	XIaQltbTThxB6MLLiD1S53HnEuIxsBUIPBqnZTZQaJ2fxaCBE69mMXIJbBeg
-X-Google-Smtp-Source: AGHT+IGUJrww7eQ04cNf2MuR4iQCtq8ptOpBCxcbsSxaDieMSf2NUFPusG6I/Fo/17KHX2meEO7vTA==
-X-Received: by 2002:a05:6870:64a1:b0:218:565c:b6ba with SMTP id cz33-20020a05687064a100b00218565cb6bamr1073734oab.19.1707168759195;
+        bh=JegzVh25QHy/lavJ0r4AuKJK1WDqy5LTxM4JiU9wnp4=;
+        b=QDGlTfuDtgzlJC4tFAwy43kUIz9srTQwYHkChg3EA0H0QmiUddFX/uaVVVgTX1Eyhx
+         wKMujpC/ZO/oGNPu/pl3MjLlHErnruDN2AU+RvosEpCoH/sObOe0DpjKYPFwav7xV6Vu
+         EEJ55meh+wJuUHLZvcl4ZpHtJb2wCtgyQE6djLtgoAuKSpkJsiUuX7e8nqe+UNs2R513
+         6esQHHyfKc8VdokbKquKKUTvdtL88fyEqsBEnVLg72T+Tt3KDerYvoOyb8F+/uoZiGnW
+         h3KjX2hn9AFo820EB2YWenijtMMt7UZfmNSFYwKAhhEii51K3USraf/y2Iq7hOy1bDxL
+         pvGw==
+X-Gm-Message-State: AOJu0Yz4ULu+TGfwtCu6xtxsrLzesV8VdLwyj9PiHXjoc0jOBv7UdNLh
+	HD8NoBze972x/wpGKUs9hjO5KflyrnhlNSvl7V5pwE3TTerDOAGQQUKufC5o
+X-Google-Smtp-Source: AGHT+IECSLyMm+rgp0gnriXJZh6kPQhYuPDeCKBnubnCkM+MQtAazfFElfc17rF8WwvKz+hpM9L7Lw==
+X-Received: by 2002:a05:6870:8186:b0:218:d8c7:3bcd with SMTP id k6-20020a056870818600b00218d8c73bcdmr407181oae.21.1707168759925;
         Mon, 05 Feb 2024 13:32:39 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id mk10-20020a0568700d0a00b002190606a99esm153722oab.53.2024.02.05.13.32.38
+        by smtp.gmail.com with ESMTPSA id mk10-20020a0568700d0a00b002190606a99esm153722oab.53.2024.02.05.13.32.39
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 05 Feb 2024 13:32:38 -0800 (PST)
+        Mon, 05 Feb 2024 13:32:39 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 2/6] core: Remove g_utf8_strlen use
-Date: Mon,  5 Feb 2024 15:31:23 -0600
-Message-ID: <20240205213150.1001245-2-denkenz@gmail.com>
+Subject: [PATCH 3/6] unit: Remove g_utf8_strlen use
+Date: Mon,  5 Feb 2024 15:31:24 -0600
+Message-ID: <20240205213150.1001245-3-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240205213150.1001245-1-denkenz@gmail.com>
 References: <20240205213150.1001245-1-denkenz@gmail.com>
@@ -70,36 +70,31 @@ Content-Transfer-Encoding: 8bit
 
 Replace with l_utf8_strlen
 ---
- src/smsutil.c  | 2 +-
- src/stkagent.c | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ unit/test-sms.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index d07960190103..f46507f00e1c 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -549,7 +549,7 @@ gboolean sms_encode_address_field(const struct sms_address *in, gboolean sc,
- 		unsigned char *r;
+diff --git a/unit/test-sms.c b/unit/test-sms.c
+index 3bc099bcbdeb..154bb33ed244 100644
+--- a/unit/test-sms.c
++++ b/unit/test-sms.c
+@@ -1249,7 +1249,7 @@ static void test_prepare_concat(gconstpointer data)
+ 	sms_assembly_free(assembly);
+ }
  
- 		/* TP-OA's 10 octets transport 11 8-bit chars */
--		if (g_utf8_strlen(addr, strlen(addr)) > 11)
-+		if (l_utf8_strlen(addr) > 11)
- 			return FALSE;
+-static void test_limit(gunichar uni, int target_size, gboolean use_16bit)
++static void test_limit(gunichar uni, size_t target_size, gboolean use_16bit)
+ {
+ 	char *utf8;
+ 	char *decoded;
+@@ -1273,7 +1273,7 @@ static void test_limit(gunichar uni, int target_size, gboolean use_16bit)
+ 	g_assert(g_slist_length(l) == 255);
  
- 		gsm = convert_utf8_to_gsm(in->address, len, NULL, &written, 0);
-diff --git a/src/stkagent.c b/src/stkagent.c
-index 6c1f6d57093f..8748ec63022c 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -838,7 +838,7 @@ static void get_input_cb(DBusPendingCall *call, void *data)
- 		goto error;
- 	}
+ 	decoded = sms_decode_text(l);
+-	g_assert(g_utf8_strlen(decoded, -1) == target_size);
++	g_assert(l_utf8_strlen(decoded) == target_size);
  
--	len = g_utf8_strlen(string, -1);
-+	len = l_utf8_strlen(string);
- 
- 	if (len < agent->min_length || len > agent->max_length) {
- 		ofono_error("Length not acceptable");
+ 	g_free(decoded);
+ 	g_slist_free_full(l, g_free);
 -- 
 2.43.0
 
