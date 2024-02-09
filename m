@@ -1,35 +1,61 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f49.google.com (mail-oa1-f49.google.com [209.85.160.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 278956ABA
-	for <ofono@lists.linux.dev>; Tue,  6 Feb 2024 17:00:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DC2563B3
+	for <ofono@lists.linux.dev>; Fri,  9 Feb 2024 23:10:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707238830; cv=none; b=K7tJWaPWBoFqSGE5FJjdu+0TZ8xxtYzrE5Ilci0SLSb4Ykv4eOjnStrME6iQASjM4oBtnNaXNK3IGHCqVkcDG9+cAkgv4zbuZdAQo4qs254xSvZ22pRF0UJkT9sn0X6otuA+utMabAQPyEZ7cBzW389nt8UrT2KY5WD1217KO0E=
+	t=1707520252; cv=none; b=onAVZcmT/8blIje6Ad5gJ4W8UhYrLMVGjjQFYotK2UvBxTyMItHy+w3+6URpCiOvk+o2+q2i2nVRXFRh6K7MlGeQiIEyU/gAwSrt/QopK0imnmE3YU2VCB4lKRg4m4YaXuNM4MYMfklpynp5nzSCPdbFJSogmfYWwbBls3J26VU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707238830; c=relaxed/simple;
-	bh=DPk2IBlwDuUF40Xt7/vL7KVMUQ3si/5r/w79kOayFCI=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=VTIpXIjXddyPx6fDhft6jiksLyMxnBekg1MSTWnMaeP3SPct6NmdLWBNC0922aUQVY4i2Jeo8a4pTBn8eOU2ICU6pdA+IdRZalwXBd/Xbmetd3LAu3+w5RAPvKzFzpK6Rki6Qag1NsKX93XSR5sAVyRRcjCo/XzCQPeMAD11HqE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=tBR1dsz8; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1707520252; c=relaxed/simple;
+	bh=Crn1b2Ohiz2sQI2fio+8o+QIu3tmUwjDiXNxhHXmIGA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ZWIZVgE2EiMGh4npnOB8dhpRupmaLBobNVCP6nq6t2igtYBhb0gAsCmrxxVqPHAdXzGdfhhMFppY6KQMotQi0M+XpldhjS4nKiqmHEyQS3JKa+iUP8CG5rCCJbmTtE4upT8xzWWeSLKIbr8Q5j6vXiMnj+rSivChWZ/EZW0IJMk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lssm6odt; arc=none smtp.client-ip=209.85.160.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="tBR1dsz8"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id A0848C43390;
-	Tue,  6 Feb 2024 17:00:29 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1707238829;
-	bh=DPk2IBlwDuUF40Xt7/vL7KVMUQ3si/5r/w79kOayFCI=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=tBR1dsz8GspdQtzFLE+Bm71TIl+u7ExrSaRJ8xWMugrxDHM+OYwTduI5DlKTlvvxw
-	 rW9dLJAOTRiFLtJxY2H9TbphRTsDl9sp2cq4D7wtg0dos/Se65jF8J8rRn9BvqBF4H
-	 10K+U9a5oA2NOYXtmaTjT+KNkQy52csJPR5HVVAPMFmiZWNTvyOsyEIjnDX8OWW8Bg
-	 FmnEyWlZxxX6TnNlpri1V0JcgOpSy5ktqPufpyiV72lVYZ741Dx187ry66EiIJ/3r0
-	 b+XOW/vodIxGd5C1WaYWY7rHcgeY5MpuxxGlSPgLCQgj5RK6kTX6nf54wZhO3F8dGW
-	 nj7tq1QljqR6g==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 8AE62D8C97D;
-	Tue,  6 Feb 2024 17:00:29 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lssm6odt"
+Received: by mail-oa1-f49.google.com with SMTP id 586e51a60fabf-2143a96d185so616447fac.3
+        for <ofono@lists.linux.dev>; Fri, 09 Feb 2024 15:10:50 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1707520249; x=1708125049; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=7S3jdoxsrLy6E675l+Xz7HYlnkCFMMcIM10mNU7ZfUQ=;
+        b=lssm6odtq7nVwShtNJ4m3DGvmGFWcjp6UPpPR+vJmQXRJDRDPB6ky5SVU+XHhMPd5B
+         xL9gn6hUTTgCh+6er4VYi43/pIcpX9ApJM1KLJvHo3TTehEEh41roPy5ox/z3spR3izA
+         +hxdn2YMaTHth3GZeMpNWJioNt/mrkSDI2YAsHeXNYSVnjfFBhPvC4Sos/Hqu0/MY8g/
+         sOaz2GfyjF9Imjq9nmpovXgS3UyE7JMmWcg4eUjOL0HTYCAkCsdZUpaTX/BaRjrKerUI
+         NM0OlUdmOu/6z1dsryCxTEccdkFnilLAvF39fPsaE7dMkdnOBZVY5WE17BSBbFMbkiSd
+         t8FQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707520249; x=1708125049;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=7S3jdoxsrLy6E675l+Xz7HYlnkCFMMcIM10mNU7ZfUQ=;
+        b=QS+NVQO5Z3cz1K6QrDS2B+7hDy3rgKlqZr11euT1EcUUN/RGugrCYTl0k/41PDBVD5
+         jTU7SCqD+243qz3VdrQvY8BUfNDbIt3rC9ioht6OOjqNxiN1tFFLIyRZ8nWErSzcaJvG
+         ZQIfhZnjiLIrzCuZbZijWz4ZVApFVqvc2axXO3LDJm9h5Xg/rPKfhOFWPVrzTXDXG6z9
+         R8Hr7nUBU3g0HbT8Ofc4x7mVBPm38c8I3JZyP9QNTXOquhYwQBWtp4ZtYJ0bhpJPt5G2
+         gDwwjwYCVlvJfLObCYGbHryaemzblCXFi2ieHbIptWl4KwiPHVa6fNMn9oCr+9BdAdwm
+         cn9w==
+X-Gm-Message-State: AOJu0YwfPR41lDPuJIqr9T04YWdqUr7hv9/QzhEc39uiQNit/duYwRWA
+	TO17yW3Or0HEx3hrmgvhDfNnSEUlB7ZAJ/NTtocx6NnZayjry+xJQIxPhhZ5
+X-Google-Smtp-Source: AGHT+IHWyp5eO6ShQxPtAWr8cyYMK+/feJk4ymAj6pp9tdUUQBBPTeSIM0XpwIyPmEoeoKIZTWC+XA==
+X-Received: by 2002:a05:6870:355:b0:219:7981:30c0 with SMTP id n21-20020a056870035500b00219798130c0mr778126oaf.19.1707520249409;
+        Fri, 09 Feb 2024 15:10:49 -0800 (PST)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id hi17-20020a056870c99100b002199331d8c9sm115689oab.45.2024.02.09.15.10.48
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 09 Feb 2024 15:10:48 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH] tools: Don't use f-string syntax
+Date: Fri,  9 Feb 2024 17:09:48 -0600
+Message-ID: <20240209231001.1041957-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,35 +63,28 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH] build: Drop GLib 2.60 requirements
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <170723882956.19015.7333030902590522202.git-patchwork-notify@kernel.org>
-Date: Tue, 06 Feb 2024 17:00:29 +0000
-References: <20240206162453.1024228-1-denkenz@gmail.com>
-In-Reply-To: <20240206162453.1024228-1-denkenz@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>
-Cc: ofono@lists.linux.dev
 
-Hello:
+Some older Python 3.x versions do not support this syntax.
+provisiontool only had a single instance of this syntax use and it is
+easy enough to get rid of it.  This makes provisiontool compatible with
+older Python3 versions.
+---
+ tools/provisiontool | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-This patch was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Tue,  6 Feb 2024 10:24:34 -0600 you wrote:
-> Since g_utf8_validate_len is no longer used, requiring GLib 2.60 is no
-> longer needed.  Drop back to the original 2.32 requirement.
-> ---
->  configure.ac | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-
-Here is the summary with links:
-  - build: Drop GLib 2.60 requirements
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=d70bcc06096a
-
-You are awesome, thank you!
+diff --git a/tools/provisiontool b/tools/provisiontool
+index 792732778215..2067a66a9951 100755
+--- a/tools/provisiontool
++++ b/tools/provisiontool
+@@ -212,7 +212,7 @@ class MobileBroadbandProviderInfo:
+                     providers.append(info)
+ 
+         except ET.ParseError as e:
+-            print(f"Error parsing XML: {e}")
++            print("Error parsing XML: " + e)
+ 
+         return providers
+ 
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.43.0
 
