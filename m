@@ -1,62 +1,62 @@
-Received: from mail-oa1-f41.google.com (mail-oa1-f41.google.com [209.85.160.41])
+Received: from mail-oa1-f50.google.com (mail-oa1-f50.google.com [209.85.160.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A83875FF19
-	for <ofono@lists.linux.dev>; Tue, 13 Feb 2024 15:36:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1BF935EE98
+	for <ofono@lists.linux.dev>; Tue, 13 Feb 2024 15:36:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707838575; cv=none; b=F4qOCDoMrJ+iRqREcwBVI+/OECrsYhDZZ7ux9qq3OBZAUJbrwxEhlp7tRxBtSIExWJ3svcXykqJWrsEnaA9wZ2frzjeNYoqgIOVMyeEAmNfjI9ifrF97TLxAi0825UfTGiU+I+qms8IstEjLClUaODsORYS723dsDZIYz3NIovc=
+	t=1707838576; cv=none; b=PuFz1aCj44hSed+EDUijaBtWbooNAb5vy3Oy1lUtaj5ipwUBkgqg7JuvAa/PTpEkrm7Yca8/6cGRPzrLnZjC6xOxc0tobzwKa2L0QCOT8ryTPEG42LAFLPowKbr2KHYbeAun0nXd6dyzAigIffrLQZLV0FNEHlrKj7E6NKBCkkg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707838575; c=relaxed/simple;
-	bh=51KlFVjVQQBgV3dUwrvr6pRVrkInm1p0OJThcE4BxXg=;
+	s=arc-20240116; t=1707838576; c=relaxed/simple;
+	bh=uYF2A5QkuGe5qWaVBjlbOZP+SXkn8oGryV/1TStSD+c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Qgxz/djGlHojR5BMgeGGFfoXCJiPnYuCo0CiwKPS7PuOgNAntIIMBOyTTL6hR022XDT03o86AXjbM2c5u55aqz/9o7pqCWI6VkriEc8IAJcg5fZf5Rj/rzWpHjJygqoZRZilR12mkBAF0OZNyYHzru2NwgnwTlrX5IZWaosYx6g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NijWO2kM; arc=none smtp.client-ip=209.85.160.41
+	 MIME-Version; b=cMnMen7USq59R+vBXUwYK1vCVTyPRpFU+wXvA9r145fzgjdMZ9Gpn68yFWgH+HNygiAofqMjzpSvS6iulgdEbZB+/tXP5zLlEPBjJEsMhs66ErW2c5ClcsqYawwX9pekOYlov2hVnZx46JGAJaQCNveIZYVoJL51BJX9EakVPdY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cFH4SRja; arc=none smtp.client-ip=209.85.160.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NijWO2kM"
-Received: by mail-oa1-f41.google.com with SMTP id 586e51a60fabf-21922481a2fso3205298fac.0
-        for <ofono@lists.linux.dev>; Tue, 13 Feb 2024 07:36:13 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cFH4SRja"
+Received: by mail-oa1-f50.google.com with SMTP id 586e51a60fabf-218e3197784so2740520fac.0
+        for <ofono@lists.linux.dev>; Tue, 13 Feb 2024 07:36:14 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1707838572; x=1708443372; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1707838574; x=1708443374; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=+KU8714d1Ytb8k6N+teFTUslr4KoUAjWHuKOPRIzJEs=;
-        b=NijWO2kMKUZmcyR9UT5kiPa6ouuvsipFU+LlDAx2tqpvTLUjS3fQRChTvb51Yk4DEL
-         B0lJRGyFjFNVNtV5Y+7S7nZ3MYHf/kmPzm/jo/X6qhJdVGOy4O7hstdrrix74B04awth
-         z7+oxwG9dPvECNALf4OaWYvgzr6nhzoOBrJ49sTBfzRG8xRLZ5cNnEujEvBacAA36TCX
-         ce40EPQmty/L5WkDdPP64Q1qJj4t14eHgyMp6fAEl4a0LHG5tKQQmAEst69cxwBSwG0H
-         W5EkJWXAdzpg0hJK+nqaOLmVpyrgpPasc6faWLyCHSXUaRxTBWffs5XYTadShIVSIxNR
-         Nzog==
+        bh=USCgKvrth+Jll5yk+iyO/1iEpkZViw7E+RT05XL2yCA=;
+        b=cFH4SRjai/fik5Qso8gFRC4WYHcAdYnUOISAdZ+KwRa9pdsTmxTqwT5wVJ/qEELL/Q
+         O1Age6me4hVw72hXnMkr4pWEVKBqAGFU9nwVGCYun2QtscWN5+cN8Ph6zNFrDOqhgJB4
+         7WLhyBJc+RJ5qzTPA3rYGoCfiSF6ikpEvkKEO6xg1kkaH/zO34m/nPnveeJZlo+SrzIV
+         E87tUdvuY/Lw1Ltq33oZ3fmPU2PSg+p8ExWOBsNVWIZ6/QyXEGCvdpGrukYc/WKTYGi1
+         WF5OJYGjs12fB/GX3INpvnD01TAxJN1kjQqsrHs7srwmAy2LYbYBfs8dKuDENBm6pjCL
+         duxQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707838572; x=1708443372;
+        d=1e100.net; s=20230601; t=1707838574; x=1708443374;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=+KU8714d1Ytb8k6N+teFTUslr4KoUAjWHuKOPRIzJEs=;
-        b=j4tk9huzTn1MtRRVSDSaPH4CuEz/QTDSBP8bjxRCbisfKYCb37JS5tlFoHvgUGR7OE
-         oRoR5T8b6TvVjgJFOUeRrBvGSyQ9ivmuWt+BPHQUpgiS5sXY/lJgnKICOzsq628TIno2
-         WI5tydk07EfafQGBC5Qr6XQ3r/4Cu+2ELmh3txKXXPNKiVF9HizWTzFT5DF0MfNMKiuQ
-         YUObuHj+4i9OwHrBU/3ouZrzoY3wrCRLuBOsUUhRiOU9mixKHQPNp6x/8d9G6/396BF1
-         kKJTlZdgPL5El1IsaWPq/gpkbpat65LIwo4BP8X0/N3BMMjX3kOefgh03lFagmm+dcdG
-         UMxg==
-X-Gm-Message-State: AOJu0Yyw61ZcTOfj2enWjS/melJFBH8C3oDx4JwMdFrC1QUAyGMG5M12
-	xpWnfSvwjxsHry2SJ0bpsBFbD6muxKSuN3fr3Cgvpzzz4eQgzluW8pKpYZlK
-X-Google-Smtp-Source: AGHT+IFZ7dqSrvmnjUZ17l4pGTW8vnXpPU8OUMRsDfvJOzdtBv1JzKOKIDAtTPhabLNYl4NucYMaEQ==
-X-Received: by 2002:a05:6870:4723:b0:219:3054:3ea5 with SMTP id b35-20020a056870472300b0021930543ea5mr10147385oaq.45.1707838572595;
-        Tue, 13 Feb 2024 07:36:12 -0800 (PST)
+        bh=USCgKvrth+Jll5yk+iyO/1iEpkZViw7E+RT05XL2yCA=;
+        b=l8xVyW7ELKp8bUmr4A2om9nD+8D8brps3r4/KkpDMEtCi3SMtzQeJAN8OuVF6tKXI2
+         56gJtzPlrkiKP4tgXbpoV9syLG/J7SEEfEeFuVBkd0CXyVsfeymv61mQwB/wE60c6Nlo
+         zBcig8tLwJM7h/karNRcM7mHMftR4qlev5AScCA+3rZK1XPIP5XtHmFNvhcWJN0tHzYJ
+         0AzmefC/v0SfcY1GU7I/N9m4GrhzOHydMmEYLeyUhtC03SqXTLBmLCyciHQYruz92J95
+         TZZ5KLfcXOq+IsgjODl53r2GyoswARG5fz9RTj/fX+aKejyUnWDkFvaQnVfvcHaj52r/
+         SF8A==
+X-Gm-Message-State: AOJu0YzxP7O58/VoI4u3PqiHhFG2Yaznoz1NVzQle18JwlRjimbjkI28
+	/VzAIHd0az2po3cLFXCzzsDvpnztmOoxKXAooIknXmBRKUXzBqM8yGHH5BVZ
+X-Google-Smtp-Source: AGHT+IGNzxsjIYjBIC37FvsfmxnXPvbme98gYD26sLYZldCw9Z7FJenybQaB4gbuxHbXu+0/eZ06AQ==
+X-Received: by 2002:a05:6871:5316:b0:219:a838:df with SMTP id hx22-20020a056871531600b00219a83800dfmr12943426oac.49.1707838573998;
+        Tue, 13 Feb 2024 07:36:13 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id dx19-20020a056870769300b0021a0f032341sm1861999oab.22.2024.02.13.07.36.12
+        by smtp.gmail.com with ESMTPSA id dx19-20020a056870769300b0021a0f032341sm1861999oab.22.2024.02.13.07.36.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 13 Feb 2024 07:36:12 -0800 (PST)
+        Tue, 13 Feb 2024 07:36:13 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 2/6] smsutil: Move iso639_2_from_language to util
-Date: Tue, 13 Feb 2024 09:35:06 -0600
-Message-ID: <20240213153524.1085649-2-denkenz@gmail.com>
+Subject: [PATCH 4/6] unit: Add unit tests for language list parsers
+Date: Tue, 13 Feb 2024 09:35:08 -0600
+Message-ID: <20240213153524.1085649-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240213153524.1085649-1-denkenz@gmail.com>
 References: <20240213153524.1085649-1-denkenz@gmail.com>
@@ -68,362 +68,86 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Also while here, convert to using stdbool instead of gboolean
+Add unit tests for the newly moved sim_parse_language_list and
+sim_parse_eflp functions.
 ---
- src/sim.c     |   2 +-
- src/smsutil.c | 111 --------------------------------------------------
- src/smsutil.h |  27 +-----------
- src/util.c    | 111 ++++++++++++++++++++++++++++++++++++++++++++++++++
- src/util.h    |  26 ++++++++++++
- 5 files changed, 140 insertions(+), 137 deletions(-)
+ unit/test-simutil.c | 57 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 57 insertions(+)
 
-diff --git a/src/sim.c b/src/sim.c
-index 55ff5f448647..fedd000923b9 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -2211,7 +2211,7 @@ static GSList *parse_eflp(const unsigned char *eflp, int length)
- 	GSList *ret = NULL;
- 
- 	for (i = 0; i < length; i++) {
--		if (iso639_2_from_language(eflp[i], code) == FALSE)
-+		if (!iso639_2_from_language(eflp[i], code))
- 			continue;
- 
- 		ret = g_slist_prepend(ret, g_strdup(code));
-diff --git a/src/smsutil.c b/src/smsutil.c
-index f46507f00e1c..d4f28c01bd79 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -3937,117 +3937,6 @@ gboolean cbs_extract_app_port(const struct cbs *cbs, int *dst, int *src,
- 	return extract_app_port_common(&iter, dst, src, is_8bit);
+diff --git a/unit/test-simutil.c b/unit/test-simutil.c
+index 8364f200c665..4199991a4d2a 100644
+--- a/unit/test-simutil.c
++++ b/unit/test-simutil.c
+@@ -695,6 +695,59 @@ static void test_auth_build_parse(void)
+ 	g_assert(!memcmp(kc_b.data, kc, sizeof(kc)));
  }
  
--gboolean iso639_2_from_language(enum cbs_language lang, char *iso639)
--{
--	switch (lang) {
--	case CBS_LANGUAGE_GERMAN:
--		iso639[0] = 'd';
--		iso639[1] = 'e';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_ENGLISH:
--		iso639[0] = 'e';
--		iso639[1] = 'n';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_ITALIAN:
--		iso639[0] = 'i';
--		iso639[1] = 't';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_FRENCH:
--		iso639[0] = 'f';
--		iso639[1] = 'r';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_SPANISH:
--		iso639[0] = 'e';
--		iso639[1] = 's';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_DUTCH:
--		iso639[0] = 'n';
--		iso639[1] = 'l';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_SWEDISH:
--		iso639[0] = 's';
--		iso639[1] = 'v';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_DANISH:
--		iso639[0] = 'd';
--		iso639[1] = 'a';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_PORTUGESE:
--		iso639[0] = 'p';
--		iso639[1] = 't';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_FINNISH:
--		iso639[0] = 'f';
--		iso639[1] = 'i';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_NORWEGIAN:
--		iso639[0] = 'n';
--		iso639[1] = 'o';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_GREEK:
--		iso639[0] = 'e';
--		iso639[1] = 'l';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_TURKISH:
--		iso639[0] = 't';
--		iso639[1] = 'r';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_HUNGARIAN:
--		iso639[0] = 'h';
--		iso639[1] = 'u';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_POLISH:
--		iso639[0] = 'p';
--		iso639[1] = 'l';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_CZECH:
--		iso639[0] = 'c';
--		iso639[1] = 's';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_HEBREW:
--		iso639[0] = 'h';
--		iso639[1] = 'e';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_ARABIC:
--		iso639[0] = 'a';
--		iso639[1] = 'r';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_RUSSIAN:
--		iso639[0] = 'r';
--		iso639[1] = 'u';
--		iso639[2] = '\0';
--		return TRUE;
--	case CBS_LANGUAGE_ICELANDIC:
--		iso639[0] = 'i';
--		iso639[1] = 's';
--		iso639[2] = '\0';
--		return TRUE;
--	default:
--		iso639[0] = '\0';
--		break;
--	}
--
--	return FALSE;
--}
--
- char *cbs_decode_text(GSList *cbs_list, char *iso639_lang)
- {
- 	GSList *l;
-diff --git a/src/smsutil.h b/src/smsutil.h
-index 01487de4b67c..5389757c309c 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -19,6 +19,8 @@
-  *
-  */
- 
-+enum cbs_language;
-+
- #define CBS_MAX_GSM_CHARS 93
- #define SMS_MSGID_LEN 20
- 
-@@ -196,30 +198,6 @@ enum sms_pid_type {
- 	SMS_PID_TYPE_USIM_DOWNLOAD = 0x7f,
- };
- 
--enum cbs_language {
--	CBS_LANGUAGE_GERMAN = 0x0,
--	CBS_LANGUAGE_ENGLISH = 0x1,
--	CBS_LANGUAGE_ITALIAN = 0x2,
--	CBS_LANGUAGE_FRENCH = 0x3,
--	CBS_LANGUAGE_SPANISH = 0x4,
--	CBS_LANGUAGE_DUTCH = 0x5,
--	CBS_LANGUAGE_SWEDISH = 0x6,
--	CBS_LANGUAGE_DANISH = 0x7,
--	CBS_LANGUAGE_PORTUGESE = 0x8,
--	CBS_LANGUAGE_FINNISH = 0x9,
--	CBS_LANGUAGE_NORWEGIAN = 0xA,
--	CBS_LANGUAGE_GREEK = 0xB,
--	CBS_LANGUAGE_TURKISH = 0xC,
--	CBS_LANGUAGE_HUNGARIAN = 0xD,
--	CBS_LANGUAGE_POLISH = 0xE,
--	CBS_LANGUAGE_UNSPECIFIED = 0xF,
--	CBS_LANGUAGE_CZECH = 0x20,
--	CBS_LANGUAGE_HEBREW = 0x21,
--	CBS_LANGUAGE_ARABIC = 0x22,
--	CBS_LANGUAGE_RUSSIAN = 0x23,
--	CBS_LANGUAGE_ICELANDIC = 0x24
--};
--
- enum cbs_geo_scope {
- 	CBS_GEO_SCOPE_CELL_IMMEDIATE,
- 	CBS_GEO_SCOPE_PLMN,
-@@ -576,7 +554,6 @@ gboolean cbs_dcs_decode(guint8 dcs, gboolean *udhi, enum sms_class *cls,
- 			enum sms_charset *charset, gboolean *compressed,
- 			enum cbs_language *language, gboolean *iso639);
- 
--gboolean iso639_2_from_language(enum cbs_language lang, char *iso639);
- gboolean cbs_decode(const unsigned char *pdu, int len, struct cbs *out);
- gboolean cbs_encode(const struct cbs *cbs, int *len, unsigned char *pdu);
- gboolean cbs_extract_app_port(const struct cbs *cbs, int *dst, int *src,
-diff --git a/src/util.c b/src/util.c
-index 627be7eec097..0a5212a2bca4 100644
---- a/src/util.c
-+++ b/src/util.c
-@@ -3753,3 +3753,114 @@ unsigned char *convert_ucs2_to_gsm(const unsigned char *text, long len,
- 						GSM_DIALECT_DEFAULT,
- 						GSM_DIALECT_DEFAULT);
- }
-+
-+bool iso639_2_from_language(enum cbs_language lang, char *iso639)
++static void test_parse_language_list(void)
 +{
-+	switch (lang) {
-+	case CBS_LANGUAGE_GERMAN:
-+		iso639[0] = 'd';
-+		iso639[1] = 'e';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_ENGLISH:
-+		iso639[0] = 'e';
-+		iso639[1] = 'n';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_ITALIAN:
-+		iso639[0] = 'i';
-+		iso639[1] = 't';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_FRENCH:
-+		iso639[0] = 'f';
-+		iso639[1] = 'r';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_SPANISH:
-+		iso639[0] = 'e';
-+		iso639[1] = 's';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_DUTCH:
-+		iso639[0] = 'n';
-+		iso639[1] = 'l';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_SWEDISH:
-+		iso639[0] = 's';
-+		iso639[1] = 'v';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_DANISH:
-+		iso639[0] = 'd';
-+		iso639[1] = 'a';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_PORTUGESE:
-+		iso639[0] = 'p';
-+		iso639[1] = 't';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_FINNISH:
-+		iso639[0] = 'f';
-+		iso639[1] = 'i';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_NORWEGIAN:
-+		iso639[0] = 'n';
-+		iso639[1] = 'o';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_GREEK:
-+		iso639[0] = 'e';
-+		iso639[1] = 'l';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_TURKISH:
-+		iso639[0] = 't';
-+		iso639[1] = 'r';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_HUNGARIAN:
-+		iso639[0] = 'h';
-+		iso639[1] = 'u';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_POLISH:
-+		iso639[0] = 'p';
-+		iso639[1] = 'l';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_CZECH:
-+		iso639[0] = 'c';
-+		iso639[1] = 's';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_HEBREW:
-+		iso639[0] = 'h';
-+		iso639[1] = 'e';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_ARABIC:
-+		iso639[0] = 'a';
-+		iso639[1] = 'r';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_RUSSIAN:
-+		iso639[0] = 'r';
-+		iso639[1] = 'u';
-+		iso639[2] = '\0';
-+		return true;
-+	case CBS_LANGUAGE_ICELANDIC:
-+		iso639[0] = 'i';
-+		iso639[1] = 's';
-+		iso639[2] = '\0';
-+		return true;
-+	default:
-+		iso639[0] = '\0';
-+		break;
-+	}
++	static const unsigned char empty[] = {
++		0xff, 0xff, 0xff, 0xff, 0xff, 0xff
++	};
++	static const unsigned char efpl[] = {
++		'e', 'n', 0xff, 0xff, 'd', 'e', 'f', 'r', 0xff, 0xff, 'n', 'l'
++	};
 +
-+	return false;
++	char **parsed;
++	char *joined;
++
++	parsed = sim_parse_language_list(empty, sizeof(empty));
++	assert(!parsed);
++
++	parsed = sim_parse_language_list(efpl, sizeof(efpl));
++	assert(parsed);
++	joined = l_strjoinv(parsed, ':');
++	assert(!strcmp(joined, "en:de:fr:nl"));
++	l_strfreev(parsed);
++	l_free(joined);
++
++	parsed = sim_parse_language_list(efpl, sizeof(efpl) - 1);
++	assert(parsed);
++	joined = l_strjoinv(parsed, ':');
++	assert(!strcmp(joined, "en:de:fr"));
++	l_strfreev(parsed);
++	l_free(joined);
 +}
-diff --git a/src/util.h b/src/util.h
-index 3e7dfea3e8bc..a70fb49f7ae5 100644
---- a/src/util.h
-+++ b/src/util.h
-@@ -38,6 +38,30 @@ enum gsm_dialect {
- 	GSM_DIALECT_URDU,
- };
- 
-+enum cbs_language {
-+	CBS_LANGUAGE_GERMAN = 0x0,
-+	CBS_LANGUAGE_ENGLISH = 0x1,
-+	CBS_LANGUAGE_ITALIAN = 0x2,
-+	CBS_LANGUAGE_FRENCH = 0x3,
-+	CBS_LANGUAGE_SPANISH = 0x4,
-+	CBS_LANGUAGE_DUTCH = 0x5,
-+	CBS_LANGUAGE_SWEDISH = 0x6,
-+	CBS_LANGUAGE_DANISH = 0x7,
-+	CBS_LANGUAGE_PORTUGESE = 0x8,
-+	CBS_LANGUAGE_FINNISH = 0x9,
-+	CBS_LANGUAGE_NORWEGIAN = 0xA,
-+	CBS_LANGUAGE_GREEK = 0xB,
-+	CBS_LANGUAGE_TURKISH = 0xC,
-+	CBS_LANGUAGE_HUNGARIAN = 0xD,
-+	CBS_LANGUAGE_POLISH = 0xE,
-+	CBS_LANGUAGE_UNSPECIFIED = 0xF,
-+	CBS_LANGUAGE_CZECH = 0x20,
-+	CBS_LANGUAGE_HEBREW = 0x21,
-+	CBS_LANGUAGE_ARABIC = 0x22,
-+	CBS_LANGUAGE_RUSSIAN = 0x23,
-+	CBS_LANGUAGE_ICELANDIC = 0x24
-+};
 +
- char *convert_gsm_to_utf8(const unsigned char *text, long len, long *items_read,
- 				long *items_written, unsigned char terminator);
- 
-@@ -105,3 +129,5 @@ unsigned char *convert_ucs2_to_gsm_with_lang(const unsigned char *text,
- unsigned char *convert_ucs2_to_gsm(const unsigned char *text, long len,
- 					long *items_read, long *items_written,
- 					unsigned char terminator);
++static void test_parse_eflp(void)
++{
++	static const unsigned char empty[] = {
++		0xff, 0xff, 0xff, 0xff, 0xff, 0xff
++	};
++	static const unsigned char eflp[] = {
++		0x00, 0x01, 0x02, 0x03, 0x04, 0x05
++	};
 +
-+bool iso639_2_from_language(enum cbs_language lang, char *iso639);
++	char **parsed;
++	char *joined;
++
++	parsed = sim_parse_eflp(empty, sizeof(empty));
++	assert(!parsed);
++
++	parsed = sim_parse_eflp(eflp, sizeof(eflp));
++	assert(parsed);
++	joined = l_strjoinv(parsed, ':');
++	assert(!strcmp(joined, "de:en:it:fr:es:nl"));
++	l_strfreev(parsed);
++	l_free(joined);
++}
++
+ int main(int argc, char **argv)
+ {
+ 	g_test_init(&argc, &argv, NULL);
+@@ -716,5 +769,9 @@ int main(int argc, char **argv)
+ 	g_test_add_func("/testsimutil/2G path", test_get_2g_path);
+ 	g_test_add_func("/testsimutil/auth build parse", test_auth_build_parse);
+ 
++	g_test_add_func("/testsimutil/parse_language_list",
++						test_parse_language_list);
++	g_test_add_func("/testsimutil/parse_efpl", test_parse_eflp);
++
+ 	return g_test_run();
+ }
 -- 
 2.43.0
 
