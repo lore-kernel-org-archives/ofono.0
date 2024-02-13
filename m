@@ -1,35 +1,61 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oi1-f180.google.com (mail-oi1-f180.google.com [209.85.167.180])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9A1033E1
-	for <ofono@lists.linux.dev>; Tue, 13 Feb 2024 02:50:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E7665FF18
+	for <ofono@lists.linux.dev>; Tue, 13 Feb 2024 15:36:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707792624; cv=none; b=eB8Go8RyWmRmg9F/8b9B4/GHDR13FkxCLAar5BPztQbEw3P54dASbxo3+rRDaKugOvydPNTN25sdOjqyGc4jQolRI05bPYX5vfjQfWP4eo2rrGCXFOO084CA2QM0wMouS3E6EgTJuq0rikGv6LzZkvgrD7STjfG3/z/lRhtTtuk=
+	t=1707838574; cv=none; b=l7X1f1jCg7V/6Lt8o/GqFnbqRdbBF/lFwRgFmOFBQxqkz1XxqjsEjMWAdXzlzOgZ7e5gjHarYkVckf88Ehd50HWhOVn+RjZWLyvP/yLHwSZi36NUqTgvEA1aQhyPsIOpzn7V/Lz5zOk397j6BS+p/X769mz3Q2YsnIQz+Al4vq0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707792624; c=relaxed/simple;
-	bh=JxQKN+Oafq0GdJeqfLh1xQxGzihhFf/66spZXm7A9Io=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=Nc4Z3DPHCa4BTdH861t7rPEh/QW/HWQbfLSKhuyYPqzhs8YFKsEVRb8qdg9aVZJu7Vm00lbvmBgDuCLZG22xgxN12lPXCY2OCieYwY5D8fxAifXT+7Y4sQY3Z6b+2gZHpIYqdP9SBtZciLI6XbXTPc0Fyu3Fqea+XqYyMA0N80A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=aWlzvCf2; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1707838574; c=relaxed/simple;
+	bh=+EVAxLMO+PfbilI2o6Yzx5GIE07Z0j+hnPEKifAYhqs=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=CKwsHEvKTJ+ptJ0dZpUsxk5YkTD+W/Otd2u8GjiV8GiY2yulX8U8swOQttv9TXbNPYb+jPIqc8d0kjb5teefpM8y6cNfBbJ4bMq4aebhQp/p0OaZdW6VtZSbOjNwr6qJ4gpy4Dwff5fDfkRUALniQiaFK/G0hFp2v4eufiF7++E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=h19Q7Egk; arc=none smtp.client-ip=209.85.167.180
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="aWlzvCf2"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 85F59C43390;
-	Tue, 13 Feb 2024 02:50:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1707792624;
-	bh=JxQKN+Oafq0GdJeqfLh1xQxGzihhFf/66spZXm7A9Io=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=aWlzvCf2Ku0dGVPBzJ6XqTebeoV23IuDWvUT4VrxRIB6K6HwLNKoECYUtQUfHD4vI
-	 Vx+ZFfRZ8sNO5IXF3t5pZVT9AORESjVYsRyRrGCamf99GvHGgd/8UvIa8MKBP6bWog
-	 jlDlPL4E/tvoPDAl8yRH5jPmhAXwTAV+oeTLFDTrl+oRG8WB4o364hDCPQADh+t8rt
-	 sTXllgg3qG9+0rhbtIiXZE4S9WOfCWtCYVO7GGP0s+uPREJacm5kE1X5Nu7qiOf/kb
-	 PglkWlVzo6vDKc45oA+51u+V0sPgFSOFT4UxmZxrRGxr0klG60XjRORHUKaLYQ+QwO
-	 7FaiHdSQzxgfg==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 6C6D8D84BC6;
-	Tue, 13 Feb 2024 02:50:24 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="h19Q7Egk"
+Received: by mail-oi1-f180.google.com with SMTP id 5614622812f47-3c0449eaadaso778468b6e.1
+        for <ofono@lists.linux.dev>; Tue, 13 Feb 2024 07:36:13 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1707838572; x=1708443372; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=KdFTkdy8sVoQJ1BpsIrIdTM3Q0WaZNcs+I2zHkvL5zo=;
+        b=h19Q7EgkieOzgKjwRzq8sDIFt2Xt4R7tl6/d/vEiYFZ5cuTtpHVHD36IQV3yUbB2IA
+         Zafz+TU3Rktqnj7g2jGrIOIoPR1EkLq02HtLKaRssjPO7Oh0TdPlkuZrfgByS36rhG2k
+         L0jE+zK0FpxA8GmBzHryHc7uWpkKlqkilZwSMhuyE69ay7taA97PuXDPo5WisztiLy3w
+         +aGzeTs8fFjAmOdDnHhIUkN2YDUPfv7dYUWoYd4CZn+zEvZEHcogB05YIJIs7PiPk6K3
+         xUarduSSv6p9AQ+YEnBL3bG1LauGf1jsffjF+YMoaM3tVryCYshhSAhBFqat/4Wzjijo
+         pY1g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707838572; x=1708443372;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=KdFTkdy8sVoQJ1BpsIrIdTM3Q0WaZNcs+I2zHkvL5zo=;
+        b=S3wS8Mo+X4YH5sYwapj4H127G3vO1EXhPNFCdxKdBygtZqWuYn3byQiby+DxrJDON8
+         qAkRYM6Mhqp61pdGP9ALbnck6t2QFLTTiIeXEzte9NJQzPzh8O8UhN16dgMhNJ64Ap0l
+         tfVOnyXDXB0qcpSRqLWnvkeWJJh9xudtHH6G0fvptTxRvQeYJos8Uk0xWWWNMuQ4WSc/
+         F3FT2mFfsaVxl9m6bhNkGncJUYidoCpIZSNGaivCNGPQI4XVjrECzbDa1yJJVnDqoftl
+         8zYo/lFxlrHECRsZBP62q2lAddZDF1tZE3X6XRMlA+ZI1lAfBXaLi+XY6UPETaaVUZLj
+         X0sw==
+X-Gm-Message-State: AOJu0YyjKIoDkoBNEZUwTt9FLGGKUGvVjO0J2HuICc/0OQt2C8mmt8An
+	n/e7N80EkzCyTeNJgOqjmsx+baOKvEW6Qc+AIFH9IGytGGEaqFIjdAyEtcvg
+X-Google-Smtp-Source: AGHT+IGpT10BabIgawb6UMinGqFUkjx1zk9pS/R4LdGGzxlxqT4HAZybkNAWj0pUPDw6TMqu2IsY0g==
+X-Received: by 2002:a05:6870:b09:b0:219:7535:8d50 with SMTP id lh9-20020a0568700b0900b0021975358d50mr10714845oab.23.1707838571878;
+        Tue, 13 Feb 2024 07:36:11 -0800 (PST)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id dx19-20020a056870769300b0021a0f032341sm1861999oab.22.2024.02.13.07.36.11
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 13 Feb 2024 07:36:11 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 1/6] sim: Drop glib use from sim_efli_format
+Date: Tue, 13 Feb 2024 09:35:05 -0600
+Message-ID: <20240213153524.1085649-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,36 +63,67 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH] common: Drop GLib use from gprs_proto_to_string
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <170779262443.16179.9073956041195888707.git-patchwork-notify@kernel.org>
-Date: Tue, 13 Feb 2024 02:50:24 +0000
-References: <1707770140-20746-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
-In-Reply-To: <1707770140-20746-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
-To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Cc: ofono@lists.linux.dev, denkenz@gmail.com, absicsz@gmail.com
 
-Hello:
+Change the return signature to use bool instead of gboolean.
+Also, change g_ascii_isalpha use to l_ascii_isalpha.
+While here, also update array subscripts to follow the coding style,
+item M3
+---
+ src/sim.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 
-This patch was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Mon, 12 Feb 2024 22:35:40 +0200 you wrote:
-> there is one more g_str_equal usage(), fix that
-> 
-> Fixes 6f63dbbb ("common: Drop GLib use from gprs_auth_proto_to_string")
-> ---
->  src/common.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-
-Here is the summary with links:
-  - common: Drop GLib use from gprs_proto_to_string
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=1d7f24b5c15d
-
-You are awesome, thank you!
+diff --git a/src/sim.c b/src/sim.c
+index 33d00ac9a615..55ff5f448647 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -2155,15 +2155,15 @@ static void sim_efli_read_cb(int ok, int length, int record,
+ }
+ 
+ /* Detect whether the file is in EFli format, as opposed to 51.011 EFlp */
+-static gboolean sim_efli_format(const unsigned char *ef, int length)
++static bool sim_efli_format(const unsigned char *ef, int length)
+ {
+ 	int i;
+ 
+ 	if (length & 1)
+-		return FALSE;
++		return false;
+ 
+ 	for (i = 0; i < length; i += 2) {
+-		if (ef[i] == 0xff && ef[i+1] == 0xff)
++		if (ef[i] == 0xff && ef[i + 1] == 0xff)
+ 			continue;
+ 
+ 		/*
+@@ -2171,14 +2171,14 @@ static gboolean sim_efli_format(const unsigned char *ef, int length)
+ 		 * characters while CB DCS language codes are in ranges
+ 		 * (0 - 15) or (32 - 47), so the ranges don't overlap
+ 		 */
+-		if (g_ascii_isalpha(ef[i]) == 0)
+-			return FALSE;
++		if (l_ascii_isalpha(ef[i]) == 0)
++			return false;
+ 
+-		if (g_ascii_isalpha(ef[i+1]) == 0)
+-			return FALSE;
++		if (l_ascii_isalpha(ef[i + 1]) == 0)
++			return false;
+ 	}
+ 
+-	return TRUE;
++	return true;
+ }
+ 
+ static GSList *parse_language_list(const unsigned char *ef, int length)
+@@ -2261,7 +2261,7 @@ static void sim_efpl_read_cb(int ok, int length, int record,
+ 	struct ofono_sim *sim = userdata;
+ 	const char *path = __ofono_atom_get_path(sim->atom);
+ 	DBusConnection *conn = ofono_dbus_get_connection();
+-	gboolean efli_format = TRUE;
++	bool efli_format = true;
+ 	GSList *efli = NULL;
+ 	GSList *efpl = NULL;
+ 
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.43.0
 
