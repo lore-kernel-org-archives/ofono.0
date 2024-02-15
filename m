@@ -1,62 +1,62 @@
-Received: from mail-ed1-f43.google.com (mail-ed1-f43.google.com [209.85.208.43])
+Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B5C633C5
-	for <ofono@lists.linux.dev>; Thu, 15 Feb 2024 07:18:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8856633C5
+	for <ofono@lists.linux.dev>; Thu, 15 Feb 2024 07:18:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707981492; cv=none; b=U0vE+P7VsKwzY+LHHhgsVRrJaE5Tp1GnSQBMQH9J5UWr4RcdIKVyPCQ52MgnjZNSibUBQ2qND/pS36zsHqHjfsmBfd90WJPPl9m5ut1/hZyw7vleASIWUr7moxUU2XwqQbjvvF8X3rfJSOqoBkfBqy8WwPHHS/wkBTdiLXU3BOA=
+	t=1707981495; cv=none; b=ZCaGGHuiDIoT0gl4QvdwLSjqrkS+NEXsTkOCPUS7QpsXJqhOm05Ooqw57ZEfoViJuVnQazOcSfaUAjJ/Cwq5U9kzJcXGSXeZHs+TAogbMI9+FfknHmyfeey+C7ZNZoU7x4RqTmdl9TKg2zCoxaVg3MVheJyBlL01/T3Tj8HlE/E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707981492; c=relaxed/simple;
-	bh=8NARh7sk5RcmauTqHDOXQmnn3mPWGKzQHGrFsITFRrw=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=EGJG6PLJM4YB5vSg3OtsBnyP7LhcslVFRQ97R/Dme5Hffn+7n4l0Wz0yA5LNtguvjT8sWvvUbQB3VGy6KABgdfYTDtnYPvxCkVimNbeSMLruLxDmxKSbzjZbJjtxvpVjyDqVD6lzfmXAyNKEY8at0Xtz6TJMYVUWM8ZdrQK61/I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MBtimbdB; arc=none smtp.client-ip=209.85.208.43
+	s=arc-20240116; t=1707981495; c=relaxed/simple;
+	bh=JxRq1tZrQO++pyshQxpKFqadptkrfSDh9pYWzVvaTNs=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=dil1fjVydJ/Zx2uUNfFFk8xGHdTPveer2L7Yl3XrZntgkYfmBd8Nv31IogIdFC2rwYJ8MTaECYGr97BqmfhDNXtImX7mk1qQA1IoGNAyZknSB0fMh16U/5vEpZu8Di5kJEF0IfBU29MVXyuTSXjdTJLNi0og/t8xyzkE69WKgds=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=c1D6UkEJ; arc=none smtp.client-ip=209.85.167.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MBtimbdB"
-Received: by mail-ed1-f43.google.com with SMTP id 4fb4d7f45d1cf-55a5e7fa471so684690a12.1
-        for <ofono@lists.linux.dev>; Wed, 14 Feb 2024 23:18:10 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="c1D6UkEJ"
+Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-51171c9f4c0so656143e87.3
+        for <ofono@lists.linux.dev>; Wed, 14 Feb 2024 23:18:13 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1707981489; x=1708586289; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1707981491; x=1708586291; darn=lists.linux.dev;
         h=references:in-reply-to:message-id:date:subject:cc:to:from:from:to
          :cc:subject:date:message-id:reply-to;
-        bh=QxqGeUPcOZljKrUsEY8LRPyDDnN0zBJmTLLoI0x9rMc=;
-        b=MBtimbdBJzzRO3hJiD8m670UdnYnojYINVOSupPwBmO70J80pXO9vcV4/IAx6yYXqX
-         0hcxxvA5onhj5QK5JbjgTFLz6f5N7pCA6ZGxHLv3yjE9GSPMcj7r+BFCLHrT9MGh+aKU
-         KlUbzgViorK6Qh6sXrOKWc9dYWP6xtrD4YW1cjzI2rwQmC9kuEEUojheNHLyVckYbyEU
-         WfPmcfTDeUfdN3GcnN6w0ePlRLQJRk3jhNIthhn+fNuwGRk97wZqffvz+dPmD+a30aBU
-         hLJkf09rfDX1khDZ2xeCFOy3HPwl8splj5tgL0O1KMqIbMNLEuRTMpgFEg67OmNK+uGe
-         wq0g==
+        bh=n9eaJ6O6VEn9nDgBeSQZCXRmdo59/l8xGBTgYDWe0Dw=;
+        b=c1D6UkEJu4Nr2+ip7hULXeBywX4oyQE1/6o1mX1r6RFL4idV3q3MTFxMESk8Df2NOG
+         5YffUTiHYheNTmp/pPLfIY55G6axwDq5sYkvdciXr1Bli2pM3GL5FPAU4OcXXT1h/TZ7
+         w0rCsvkGnPQyUa6oCImyiH2g6md9fZULSiedHBrBoMUyyCW/quub5wCVyfqJLtfqs86V
+         yOKtJLmfTOUQRukDFoeq16xpZ5rEoE20xcxoC7RxsPRGpcscJWVzBVoweIfbU6Ty7pvg
+         JO4+WCeG73GoJB8xIGuOndAvERq2MqqYDwi3JHGDM/jpxjVs/x8ApaLMHaZHJrSNe5Cb
+         9Ndg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707981489; x=1708586289;
+        d=1e100.net; s=20230601; t=1707981491; x=1708586291;
         h=references:in-reply-to:message-id:date:subject:cc:to:from
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=QxqGeUPcOZljKrUsEY8LRPyDDnN0zBJmTLLoI0x9rMc=;
-        b=Lsu1cj9pZwhdiBqr/rbkxaB74zBTuCLV4uXfOr5mioxEdzsGdHuG7oIgXwzBROTItP
-         R3bF1kfDPMrcMZAUTjvwCCifKRjjUMA008lz//HTuRBGGTWZ6BXO5svJdsrtFV4fzzWf
-         i7YJ/i9B3AIagT18IO1buOzm52h2bNJXbiZXtWiWP9GE73M+/yz8eAbkD2e+OMMYs3zp
-         3GFhpTp4D0kOh70foeBSKXOP0CBY1wuDh/Tgd9qxcn+7KnfXqFyMxsvj7DWlpTxhA0Wg
-         W8v+rb/wWUhNLnW7LgM5L7PpvdB352YqSDLkU4lpK0wjW6pEIrBc9tWGRlazGeJOA7q9
-         Ulqg==
-X-Gm-Message-State: AOJu0Yw4kIV2juBsTU1x3HNr+B+aNmhxL5pjdRsJrjzxnxslMO1GjhIJ
-	uF1PsrkbZwYSEX6WvmTBldOCNF0mOFaFA+GWPHhMYfowYAzEZXXNqFdA5RYm
-X-Google-Smtp-Source: AGHT+IGSk+BrpwhkD1Q9iw5+ORi0vGnu+LnXXECGlXx5CyEEhs5k7+vYukkaXNXVL3IxAzj6LOacuA==
-X-Received: by 2002:aa7:d38e:0:b0:562:f25:b125 with SMTP id x14-20020aa7d38e000000b005620f25b125mr647971edq.36.1707981488705;
-        Wed, 14 Feb 2024 23:18:08 -0800 (PST)
+        bh=n9eaJ6O6VEn9nDgBeSQZCXRmdo59/l8xGBTgYDWe0Dw=;
+        b=CsgN5aMqVVb9VyrB3SVRxvt7uQhqf9JFFoM6VnykXPLkw3mVjQlD8aZsWOI6hPfyqE
+         sFWnMeX6yXoxYhBXnBLlOqbdEiVZURR+W7dL4LZZfsxklWz8oz48tYEzx4oI7yCRzM+P
+         15ii8lhN8GMnEssrpIC8DR8VBkjxPf91zFrYszFvzRxnzf/ARbeiMqIVf47LkNDiXGxV
+         5ooE6mAZGI3L9oUcNOQecwWah2iPs/sI2NKue2MCIra7425n2+SUJU9d022gQ1V/6nUo
+         kv+YHMUfmREpklx2oXmJmAcpq5JwBpNJWKils50g/B4n6vA4aJ2FSzYh6E1dP4CKes8N
+         6lZw==
+X-Gm-Message-State: AOJu0YxsVuvk7wJ/Gcimcx0jXnT8R2xrQEAVHadL45odVU02VknVxUg7
+	BPl3AO8mEP0bN+ch+S9fn22TAeh+KUoP8yionaW3WVaneJC7FUPmsrS+YRgR
+X-Google-Smtp-Source: AGHT+IENYPoy2CjjR4SjTYZV+M+lTmZF1FM0Mp0/HuFX4iUN9zmhXGr7+r/7gkdwDMyk22T0sM6WSg==
+X-Received: by 2002:ac2:518e:0:b0:511:6764:a8c7 with SMTP id u14-20020ac2518e000000b005116764a8c7mr779174lfi.10.1707981490240;
+        Wed, 14 Feb 2024 23:18:10 -0800 (PST)
 Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id v28-20020a50955c000000b0056003b75400sm293671eda.44.2024.02.14.23.18.08
+        by smtp.gmail.com with ESMTPSA id v28-20020a50955c000000b0056003b75400sm293671eda.44.2024.02.14.23.18.09
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Wed, 14 Feb 2024 23:18:08 -0800 (PST)
+        Wed, 14 Feb 2024 23:18:10 -0800 (PST)
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 To: ofono@lists.linux.dev
 Cc: denkenz@gmail.com,
 	absicsz@gmail.com,
 	merlijn@wizzup.org,
 	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH 1/2] qmimodem: implement call-barring driver
-Date: Thu, 15 Feb 2024 09:17:46 +0200
-Message-Id: <1707981467-2955-2-git-send-email-ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH 2/2] qmimodem: implement call-forwarding driver
+Date: Thu, 15 Feb 2024 09:17:47 +0200
+Message-Id: <1707981467-2955-3-git-send-email-ivo.g.dimitrov.75@gmail.com>
 X-Mailer: git-send-email 1.9.1
 In-Reply-To: <1707981467-2955-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
 References: <1707981467-2955-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
@@ -67,34 +67,33 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 
 ---
- Makefile.am                     |   3 +-
- drivers/qmimodem/call-barring.c | 264 ++++++++++++++++++++++++++++++++++++++++
- drivers/qmimodem/qmi.c          |   1 +
- drivers/qmimodem/voice.h        |   2 +
- plugins/gobi.c                  |   2 +
- 5 files changed, 271 insertions(+), 1 deletion(-)
- create mode 100644 drivers/qmimodem/call-barring.c
+ Makefile.am                        |   3 +-
+ drivers/qmimodem/call-forwarding.c | 352 +++++++++++++++++++++++++++++++++++++
+ drivers/qmimodem/voice.h           |   1 +
+ plugins/gobi.c                     |   3 +
+ 4 files changed, 358 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/qmimodem/call-forwarding.c
 
 diff --git a/Makefile.am b/Makefile.am
-index d8766e0..98f41e0 100644
+index 98f41e0..77df87a 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -387,7 +387,8 @@ builtin_sources += $(qmi_sources) \
- 			drivers/qmimodem/radio-settings.c \
+@@ -388,7 +388,8 @@ builtin_sources += $(qmi_sources) \
  			drivers/qmimodem/location-reporting.c \
  			drivers/qmimodem/netmon.c \
--			drivers/qmimodem/call-settings.c
-+			drivers/qmimodem/call-settings.c \
-+			drivers/qmimodem/call-barring.c
+ 			drivers/qmimodem/call-settings.c \
+-			drivers/qmimodem/call-barring.c
++			drivers/qmimodem/call-barring.c \
++			drivers/qmimodem/call-forwarding.c
  
  builtin_modules += gobi
  builtin_sources += plugins/gobi.c
-diff --git a/drivers/qmimodem/call-barring.c b/drivers/qmimodem/call-barring.c
+diff --git a/drivers/qmimodem/call-forwarding.c b/drivers/qmimodem/call-forwarding.c
 new file mode 100644
-index 0000000..dc84026
+index 0000000..45f25ae
 --- /dev/null
-+++ b/drivers/qmimodem/call-barring.c
-@@ -0,0 +1,264 @@
++++ b/drivers/qmimodem/call-forwarding.c
+@@ -0,0 +1,352 @@
 +/*
 + *  oFono - Open Source Telephony
 + *
@@ -121,66 +120,220 @@ index 0000000..dc84026
 +
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
-+#include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
 +
 +#include "qmi.h"
 +#include "voice.h"
 +#include "util.h"
 +
-+struct call_barring_data {
++struct call_forwarding_data {
 +	struct qmi_service *voice;
 +};
 +
-+static uint8_t lock_code_to_reason(const char *lock)
++struct call_forwarding_info_ext {
++	uint8_t active;
++	uint8_t cls;
++	uint8_t time;
++	uint8_t pind;
++	uint8_t sind;
++	uint8_t type;
++	uint8_t plan;
++	uint8_t len;
++	uint8_t number[0];
++};
++
++static int forw_type_to_reason(int type)
 +{
-+	if (!strcmp(lock, "AO"))
-+		return QMI_VOICE_SS_RSN_ALL_OUTGOING;
-+	else if (!strcmp(lock, "OI"))
-+		return QMI_VOICE_SS_RSN_OUT_INT;
-+	else if (!strcmp(lock, "OX"))
-+		return QMI_VOICE_SS_RSN_OUT_INT_EXT_TO_HOME;
-+	else if (!strcmp(lock, "AI"))
-+		return QMI_VOICE_SS_RSN_ALL_IN;
-+	else if (!strcmp(lock, "IR"))
-+		return QMI_VOICE_SS_RSN_IN_ROAMING;
-+	else if (!strcmp(lock, "AB"))
-+		return QMI_VOICE_SS_RSN_BAR_ALL;
-+	else if (!strcmp(lock, "AG"))
-+		return QMI_VOICE_SS_RSN_BAR_ALL_OUTGOING;
-+	else if (!strcmp(lock, "AC"))
-+		return QMI_VOICE_SS_RSN_BAR_ALL_IN;
-+	else {
-+		DBG("Unknown lock code %s", lock);
++	switch (type) {
++	case 0:
++		return QMI_VOICE_SS_RSN_FWD_UNCONDITIONAL;
++	case 1:
++		return QMI_VOICE_SS_RSN_FWD_MOBILE_BUSY;
++	case 2:
++		return QMI_VOICE_SS_RSN_FWD_NO_REPLY;
++	case 3:
++		return QMI_VOICE_SS_RSN_FWD_UNREACHABLE;
++	case 4:
++		return QMI_VOICE_SS_RSN_FWD_ALL;
++	case 5:
++		return QMI_VOICE_SS_RSN_FWD_ALL_CONDITIONAL;
++	default:
++		DBG("Unknown forwarding type %d", type);
 +		return 0;
 +	}
++}
++
++static void set_fwd_cond(struct ofono_call_forwarding_condition *cond,
++				int status, int cls, int time, int type,
++				uint8_t *number, uint8_t nlen)
++{
++	uint8_t maxlen = OFONO_MAX_PHONE_NUMBER_LENGTH;
++
++	cond->status = status;
++	cond->cls = cls;
++	cond->time = time;
++	cond->phone_number.type = type;
++
++	if (nlen < maxlen)
++		maxlen = nlen;
++
++	memcpy(&cond->phone_number.number, number, maxlen);
++	cond->phone_number.number[maxlen] = 0;
++}
++
++static void query_cb(struct qmi_result *result, void *user_data)
++{
++	struct cb_data *cbd = user_data;
++	ofono_call_forwarding_query_cb_t cb = cbd->cb;
++	const uint8_t *p;
++	uint8_t num;
++	uint16_t length;
++
++	DBG("");
++
++	if (qmi_result_set_error(result, NULL))
++		goto error;
++
++	/*
++	 * we want extended info, because of the number type.
++	 * FIXME - shall we fallback to 0x10 if there is no extended info?
++	 */
++	p = qmi_result_get(result, 0x16, &length);
++	if (p) {
++		struct ofono_call_forwarding_condition *list;
++		const uint8_t *end = p + length;
++		int i;
++
++		num = *p++;
++
++		list = g_new0(struct ofono_call_forwarding_condition, num);
++
++		for (i = 0; i < num; i++) {
++			struct call_forwarding_info_ext *info = (void *)p;
++			int type;
++
++			/* do not try to access beyond buffer end */
++			if (p + sizeof(*info) > end ||
++					p + sizeof(*info) + info->len > end) {
++				g_free(list);
++				goto error;
++			}
++
++			if (info->type == 1)
++				type = OFONO_NUMBER_TYPE_INTERNATIONAL;
++			else
++				type = OFONO_NUMBER_TYPE_UNKNOWN;
++
++			set_fwd_cond(&list[i], info->active, info->cls,
++					info->time, type, info->number,
++					info->len);
++			p += sizeof(*info) + info->len;
++		}
++
++		CALLBACK_WITH_SUCCESS(cb, num, list, cbd->data);
++		g_free(list);
++		return;
++	}
++
++error:
++	CALLBACK_WITH_FAILURE(cb, 0, NULL, cbd->data);
++}
++
++static void qmi_query(struct ofono_call_forwarding *cf, int type, int cls,
++			ofono_call_forwarding_query_cb_t cb, void *data)
++{
++	struct call_forwarding_data *cfd = ofono_call_forwarding_get_data(cf);
++	struct cb_data *cbd = cb_data_new(cb, data);
++	struct qmi_param *param;
++	uint8_t reason = forw_type_to_reason(type);
++
++	DBG("");
++
++	if (!cfd || !reason)
++		goto error;
++
++	param = qmi_param_new();
++	qmi_param_append_uint8(param, 0x01, reason);
++
++	if (cls != 7 /* BEARER_CLASS_DEFAULT */)
++		qmi_param_append_uint8(param, 0x10, cls);
++
++	if (qmi_service_send(cfd->voice, QMI_VOICE_GET_CALL_FWDING, param,
++				query_cb, cbd, g_free) > 0)
++		return;
++
++	qmi_param_free(param);
++error:
++	g_free(cbd);
++	CALLBACK_WITH_FAILURE(cb, 0, NULL, data);
 +}
 +
 +static void set_cb(struct qmi_result *result, void *user_data)
 +{
 +	struct cb_data *cbd = user_data;
-+	ofono_call_barring_set_cb_t cb = cbd->cb;
-+	uint16_t error;
++	ofono_call_forwarding_set_cb_t cb = cbd->cb;
 +
 +	DBG("");
 +
-+	if (!qmi_result_set_error(result, &error))
++	if (!qmi_result_set_error(result, NULL))
 +		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+	else {
-+		/* Check for invalid password error */
-+		if (error != 92 ||
-+				!qmi_result_get_uint16(result, 0x10, &error) ||
-+				error != 129)
-+			CALLBACK_WITH_FAILURE(cb, cbd->data);
-+		else
-+			CALLBACK_WITH_CME_ERROR(cb, 16, cbd->data);
-+	}
++	else
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +}
 +
-+static void qmi_set(struct ofono_call_barring *barr, const char *lock,
-+			int enable, const char *passwd, int cls,
-+			ofono_call_barring_set_cb_t cb, void *data)
++static void qmi_register(struct ofono_call_forwarding *cf, int type, int cls,
++				const struct ofono_phone_number *ph, int time,
++				ofono_call_forwarding_set_cb_t cb, void *data)
 +{
-+	struct call_barring_data *bd = ofono_call_barring_get_data(barr);
++	struct call_forwarding_data *cfd = ofono_call_forwarding_get_data(cf);
++	struct cb_data *cbd = cb_data_new(cb, data);
++	struct qmi_param *param;
++	struct __attribute__((__packed__)) {
++		uint8_t service;
++		uint8_t reason;
++	} ssd;
++	struct __attribute__((__packed__)) {
++		uint8_t type;
++		uint8_t plan;
++	} tpd;
++
++	DBG("");
++
++	ssd.reason = forw_type_to_reason(type);
++
++	if (!cfd || !ssd.reason)
++		goto error;
++
++	ssd.service = QMI_VOICE_SS_ACTION_REGISTER;
++
++	param = qmi_param_new();
++	qmi_param_append(param, 0x01, sizeof(ssd), &ssd);
++
++	if (cls != 7 /* BEARER_CLASS_DEFAULT */)
++		qmi_param_append_uint8(param, 0x10, cls);
++
++	qmi_param_append(param, 0x12, strlen(ph->number), ph->number);
++	qmi_param_append_uint8(param, 0x13, time);
++
++	tpd.type = ph->type == OFONO_NUMBER_TYPE_INTERNATIONAL ? 1 : 0;
++	tpd.plan = tpd.type;
++	qmi_param_append(param, 0x14, sizeof(tpd), &tpd);
++
++	if (qmi_service_send(cfd->voice, QMI_VOICE_SET_SUPS_SERVICE, param,
++				set_cb, cbd, g_free) > 0)
++		return;
++
++	qmi_param_free(param);
++error:
++	g_free(cbd);
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static void qmi_set(struct ofono_call_forwarding *cf, int type, int cls,
++			int service, ofono_call_forwarding_set_cb_t cb,
++			void *data)
++{
++	struct call_forwarding_data *cfd = ofono_call_forwarding_get_data(cf);
 +	struct cb_data *cbd = cb_data_new(cb, data);
 +	struct qmi_param *param;
 +	struct __attribute__((__packed__)) {
@@ -190,13 +343,12 @@ index 0000000..dc84026
 +
 +	DBG("");
 +
-+	ssd.reason = lock_code_to_reason(lock);
++	ssd.reason = forw_type_to_reason(type);
 +
-+	if (!bd || !ssd.reason)
++	if (!cfd || !ssd.reason)
 +		goto error;
 +
-+	ssd.service = enable ? QMI_VOICE_SS_ACTION_ACTIVATE :
-+				QMI_VOICE_SS_ACTION_DEACTIVATE;
++	ssd.service = service;
 +
 +	param = qmi_param_new();
 +	qmi_param_append(param, 0x01, sizeof(ssd), &ssd);
@@ -204,205 +356,126 @@ index 0000000..dc84026
 +	if (cls != 7 /* BEARER_CLASS_DEFAULT */)
 +		qmi_param_append_uint8(param, 0x10, cls);
 +
-+	qmi_param_append(param, 0x11, 4, passwd);
-+
-+	if (qmi_service_send(bd->voice, QMI_VOICE_SET_SUPS_SERVICE, param,
++	if (qmi_service_send(cfd->voice, QMI_VOICE_SET_SUPS_SERVICE, param,
 +				set_cb, cbd, g_free) > 0)
 +		return;
 +
 +	qmi_param_free(param);
++
 +error:
 +	g_free(cbd);
 +	CALLBACK_WITH_FAILURE(cb, data);
 +}
 +
-+static void query_cb(struct qmi_result *result, void *user_data)
++static void qmi_activate(struct ofono_call_forwarding *cf, int type, int cls,
++				ofono_call_forwarding_set_cb_t cb, void *data)
 +{
-+	struct cb_data *cbd = user_data;
-+	ofono_call_barring_query_cb_t cb = cbd->cb;
-+	uint8_t mask;
-+
-+	DBG("");
-+
-+	if (qmi_result_set_error(result, NULL) ||
-+			!qmi_result_get_uint8(result, 0x10, &mask)) {
-+		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+		return;
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(cb, mask, cbd->data);
++	qmi_set(cf, type, cls, QMI_VOICE_SS_ACTION_ACTIVATE, cb, data);
 +}
 +
-+static void qmi_query(struct ofono_call_barring *barr, const char *lock,
-+			int cls, ofono_call_barring_query_cb_t cb, void *data)
++static void qmi_deactivate(struct ofono_call_forwarding *cf, int type, int cls,
++				ofono_call_forwarding_set_cb_t cb, void *data)
 +{
-+	struct call_barring_data *bd = ofono_call_barring_get_data(barr);
-+	struct cb_data *cbd = cb_data_new(cb, data);
-+	struct qmi_param *param;
-+	uint8_t reason = lock_code_to_reason(lock);
-+
-+	DBG("");
-+
-+	if (!bd || !reason)
-+		goto error;
-+
-+	param = qmi_param_new();
-+	qmi_param_append_uint8(param, 0x01, reason);
-+
-+	if (cls != 7 /* BEARER_CLASS_DEFAULT */)
-+		qmi_param_append_uint8(param, 0x10, cls);
-+
-+	if (qmi_service_send(bd->voice, QMI_VOICE_GET_CALL_BARRING, param,
-+				query_cb, cbd, g_free) > 0)
-+		return;
-+
-+	qmi_param_free(param);
-+error:
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, -1, data);
++	qmi_set(cf, type, cls, QMI_VOICE_SS_ACTION_DEACTIVATE, cb, data);
 +}
 +
-+static void qmi_set_passwd(struct ofono_call_barring *barr, const char *lock,
-+				const char *old_passwd, const char *new_passwd,
-+				ofono_call_barring_set_cb_t cb, void *data)
++static void qmi_erase(struct ofono_call_forwarding *cf, int type, int cls,
++			ofono_call_forwarding_set_cb_t cb, void *data)
 +{
-+	struct call_barring_data *bd = ofono_call_barring_get_data(barr);
-+	struct cb_data *cbd = cb_data_new(cb, data);
-+	struct qmi_param *param;
-+	struct __attribute__((__packed__)) {
-+		uint8_t reason;
-+		uint8_t old_passwd[4];
-+		uint8_t new_passwd[4];
-+		uint8_t new_passwd_rpt[4];
-+	} ssd;
-+
-+	DBG("");
-+
-+	if (!bd)
-+		goto error;
-+
-+	ssd.reason = lock_code_to_reason(lock);
-+	memcpy(&ssd.old_passwd, old_passwd, 4);
-+	memcpy(&ssd.new_passwd, new_passwd, 4);
-+	memcpy(&ssd.new_passwd_rpt, new_passwd, 4);
-+
-+	param = qmi_param_new();
-+
-+	qmi_param_append(param, 0x01, sizeof(ssd), &ssd);
-+
-+	if (qmi_service_send(bd->voice, QMI_VOICE_SET_CALL_BARRING_PWD, param,
-+				set_cb, cbd, g_free) > 0)
-+		return;
-+
-+	qmi_param_free(param);
-+error:
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, data);
++	qmi_set(cf, type, cls, QMI_VOICE_SS_ACTION_ERASE, cb, data);
 +}
 +
 +static void create_voice_cb(struct qmi_service *service, void *user_data)
 +{
-+	struct ofono_call_barring *barr = user_data;
-+	struct call_barring_data *bd = ofono_call_barring_get_data(barr);
++	struct ofono_call_forwarding *cf = user_data;
++	struct call_forwarding_data *cfd = ofono_call_forwarding_get_data(cf);
 +
 +	DBG("");
 +
 +	if (!service) {
 +		ofono_error("Failed to request Voice service");
-+		ofono_call_barring_remove(barr);
++		ofono_call_forwarding_remove(cf);
 +		return;
 +	}
 +
-+	bd->voice = qmi_service_ref(service);
++	cfd->voice = qmi_service_ref(service);
 +
-+	ofono_call_barring_register(barr);
++	ofono_call_forwarding_register(cf);
 +}
 +
-+static int qmi_call_barring_probe(struct ofono_call_barring *barr,
++static int qmi_call_forwarding_probe(struct ofono_call_forwarding *cf,
 +					unsigned int vendor, void *user_data)
 +{
 +	struct qmi_device *device = user_data;
-+	struct call_barring_data *bd;
++	struct call_forwarding_data *cfd;
 +
 +	DBG("");
 +
-+	bd = g_new0(struct call_barring_data, 1);
++	cfd = g_new0(struct call_forwarding_data, 1);
 +
-+	ofono_call_barring_set_data(barr, bd);
++	ofono_call_forwarding_set_data(cf, cfd);
 +
 +	qmi_service_create_shared(device, QMI_SERVICE_VOICE,
-+					create_voice_cb, barr, NULL);
++					create_voice_cb, cf, NULL);
 +
 +	return 0;
 +}
 +
-+static void qmi_call_barring_remove(struct ofono_call_barring *barr)
++static void qmi_call_forwarding_remove(struct ofono_call_forwarding *cf)
 +{
-+	struct call_barring_data *bd = ofono_call_barring_get_data(barr);
++	struct call_forwarding_data *cfd = ofono_call_forwarding_get_data(cf);
 +
 +	DBG("");
 +
-+	ofono_call_barring_set_data(barr, NULL);
++	ofono_call_forwarding_set_data(cf, NULL);
 +
-+	if (bd->voice)
-+		qmi_service_unref(bd->voice);
++	if (cfd->voice)
++		qmi_service_unref(cfd->voice);
 +
-+	g_free(bd);
++	g_free(cfd);
 +}
 +
-+static const struct ofono_call_barring_driver driver = {
-+	.probe			= qmi_call_barring_probe,
-+	.remove			= qmi_call_barring_remove,
-+	.set			= qmi_set,
++static const struct ofono_call_forwarding_driver driver = {
++	.probe			= qmi_call_forwarding_probe,
++	.remove			= qmi_call_forwarding_remove,
++	.registration		= qmi_register,
++	.activation		= qmi_activate,
 +	.query			= qmi_query,
-+	.set_passwd		= qmi_set_passwd
++	.deactivation		= qmi_deactivate,
++	.erasure		= qmi_erase
 +};
 +
-+OFONO_ATOM_DRIVER_BUILTIN(call_barring, qmimodem, &driver)
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index fe663ec..7f0d605 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -466,6 +466,7 @@ static const struct {
- 	{ 0x0053, "HARDWARE_RESTRICTED"		},
- 	{ 0x0054, "ACK_NOT_SENT"		},
- 	{ 0x0055, "INJECT_TIMEOUT"		},
-+	{ 0x005c, "SUPS_FAILURE_CAUSE"		},
- 	{ }
- };
- 
++OFONO_ATOM_DRIVER_BUILTIN(call_forwarding, qmimodem, &driver)
 diff --git a/drivers/qmimodem/voice.h b/drivers/qmimodem/voice.h
-index 7755d2e..472d724 100644
+index 472d724..12c87be 100644
 --- a/drivers/qmimodem/voice.h
 +++ b/drivers/qmimodem/voice.h
-@@ -51,8 +51,10 @@ enum voice_commands {
- 	QMI_VOICE_SUPS_NOTIFICATION_IND =	0x32,
- 	QMI_VOICE_SET_SUPS_SERVICE =		0x33,
- 	QMI_VOICE_GET_CALL_WAITING =		0x34,
-+	QMI_VOICE_GET_CALL_BARRING =		0x35,
+@@ -54,6 +54,7 @@ enum voice_commands {
+ 	QMI_VOICE_GET_CALL_BARRING =		0x35,
  	QMI_VOICE_GET_CLIP =			0x36,
  	QMI_VOICE_GET_CLIR =			0x37,
-+	QMI_VOICE_SET_CALL_BARRING_PWD = 	0x39,
++	QMI_VOICE_GET_CALL_FWDING = 		0x38,
+ 	QMI_VOICE_SET_CALL_BARRING_PWD = 	0x39,
  	QMI_VOICE_CANCEL_USSD =			0x3c,
  	QMI_VOICE_USSD_RELEASE_IND =		0x3d,
- 	QMI_VOICE_USSD_IND =			0x3e,
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index a550016..a7ef552 100644
+index a7ef552..e98a07b 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -33,6 +33,7 @@
- #define OFONO_API_SUBJECT_TO_CHANGE
+@@ -34,6 +34,7 @@
  #include <ofono/plugin.h>
  #include <ofono/modem.h>
-+#include <ofono/call-barring.h>
+ #include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
  #include <ofono/call-settings.h>
  #include <ofono/devinfo.h>
  #include <ofono/netreg.h>
-@@ -757,6 +758,7 @@ static void gobi_post_online(struct ofono_modem *modem)
- 	if (data->features & GOBI_VOICE) {
+@@ -759,6 +760,8 @@ static void gobi_post_online(struct ofono_modem *modem)
  		ofono_ussd_create(modem, 0, "qmimodem", data->device);
  		ofono_call_settings_create(modem, 0, "qmimodem", data->device);
-+		ofono_call_barring_create(modem, 0, "qmimodem", data->device);
+ 		ofono_call_barring_create(modem, 0, "qmimodem", data->device);
++		ofono_call_forwarding_create(modem, 0, "qmimodem",
++						data->device);
  	}
  }
  
