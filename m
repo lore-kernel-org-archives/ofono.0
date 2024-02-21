@@ -1,62 +1,62 @@
-Received: from mail-oo1-f43.google.com (mail-oo1-f43.google.com [209.85.161.43])
+Received: from mail-oo1-f45.google.com (mail-oo1-f45.google.com [209.85.161.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FFEE81722
-	for <ofono@lists.linux.dev>; Wed, 21 Feb 2024 16:24:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A1F6681741
+	for <ofono@lists.linux.dev>; Wed, 21 Feb 2024 16:24:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708532668; cv=none; b=S3XJAcHfm0u0cowTrrtaleKLmNTvu/FjyRI4eUV4F9I/lCkjlOXT8RbntrKbWcyQqGvs4hF7Eq5tQ1BRpSYM4CAtCKszIkb1uDdIhVGGbgrqgSseNOFFsyJVXEMPTNn8eZorSQZ/30TuJnJbml8C/Sks+FAzOQ28Zz+dBEbqFHw=
+	t=1708532669; cv=none; b=h7wCHqSdbqbkBIDD20nSPvYDsas1SLNGfFyuAzJinzUZPUsdxkbZrLJbB3XyV57V8J5SokGpzB+UwVuHAWfvoS/Aj7L8Uxr7ikYirG/JEZLTHcNO26WsCbdlAtyh5bBsNELAFlPWyh+iQ4ZBQ3oIBxb+QTMi6VKf1NIxjbF5uvs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708532668; c=relaxed/simple;
-	bh=oZAG7gLYq384QCCbsCiXEvlN5OdbnZCMysDT4myrQag=;
+	s=arc-20240116; t=1708532669; c=relaxed/simple;
+	bh=i7tvfcKFmnVh78d8KtLw3QfEElFRS6FPwMN02y3MjuY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=gT62Yzg2/jxRVQYPf5HrdCC56/dzh0DVqowcbjQtcqL0QhLqr9ib30GZ4iXHPZZ60nU8uEPuEEFp/CJYfbdM8WG63NN3WqlbIMPvqdYaajWxkON5TPZM9cUnzRFdjFWyGodL8+kmYt4xU2o87Zn9VZx6zP3HKqqTObkWlKjzbZM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PlaJ5kEq; arc=none smtp.client-ip=209.85.161.43
+	 MIME-Version; b=SJ952RPsRhVReTLndYx9IJ8EtFjAG1Y3zHZ5DTfdV4hNcESG5jdF0qUzvC7QN3NDNgWjwXc/OMIY+WKX5LtNPg6KuY7lw7aIozVh9Wyh1xtZD9vJt+CrOTzre5ZS5kVruURMqrS1vw9wXaTSGSJFU197OEzbwhDa1YKek+JxObs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Q6YboZzG; arc=none smtp.client-ip=209.85.161.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PlaJ5kEq"
-Received: by mail-oo1-f43.google.com with SMTP id 006d021491bc7-58e256505f7so4695740eaf.3
-        for <ofono@lists.linux.dev>; Wed, 21 Feb 2024 08:24:26 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Q6YboZzG"
+Received: by mail-oo1-f45.google.com with SMTP id 006d021491bc7-59fd69bab3bso1064587eaf.2
+        for <ofono@lists.linux.dev>; Wed, 21 Feb 2024 08:24:27 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1708532666; x=1709137466; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=q6Yl1bcNNjiOrUrf96Cq3A7M9yPt8gATRmnTHmXaEWU=;
-        b=PlaJ5kEqIRN1NjIpPZV3qWj0C57kSQqGx61ikTCXP15Z2aUp0OzEX0Sl3wcByy93PG
-         V2iq6SsaOjbBeQdXPCA2BYZVloqGo8fwYaEGdZ0QV5jJ2TeydHC+YbDN8wgvVLBAWLWk
-         kbaNlEPsmyJVjoePZgMG6Yh3paGigNEf8W7Fo/E3WvVxjh7DZEFYvXDPSqwAMHvwaC+3
-         JHWKJ7ssle3rvL3VGZOxYjMmb92xPvVPaZyTK2DdsJrOmR1VR9AEZ7nyJ5DvT7WpypiP
-         mkRJ6UODL38n3tKoeEAa/lQyc+ovsW5ToFjuLraNBJtGq1PLisBl51+N12Y2QiBXPvgq
-         gYTQ==
+        bh=GUxnPqn+84Zt1123ccdhiKW5ymXzGKm/tisgzCQrOLY=;
+        b=Q6YboZzGjdJgOCl7GJfUeM51h03G8q43v9kMGYcrDMLJF174Ozz2p3r53sXnxLnRiU
+         3j8suZUK+dSzeEpd3tTK+Hzdpq6/IpxwYqhDBoHETAvJ/dJ2WkP2KvkxBH7MgqSrS+oA
+         EN0oGWBFxwfXSVmuba4HT4fiwPMpLFqKy4O69EG0ZkC6FgWFOUXyLkC6er2JOx46Kn14
+         lrlRkFjELjew8WdqT5RqgHrUvdMM+Po9Tx0e/nRCtwFkEAWS4op2DZUJTsVfVeQ5pEIx
+         SqG4ZRZ9auR9iDZIvud0MvOf398Vaf2GVMUX1WVN25gFx9zEjvZhhmkiKidmARgYQ+0c
+         aQRQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1708532666; x=1709137466;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=q6Yl1bcNNjiOrUrf96Cq3A7M9yPt8gATRmnTHmXaEWU=;
-        b=WQ3r8BB9arczbFodZ0kHEyNIYZqJsg9KIVF1OzaYjQgUuFODbS4ZVllurRMcf6TT2c
-         sE0HHVJU3LHyeU8lkZxLle71lCMFUvTEMW5c0ThWGipxTqd/dufZY8/ixMP88xZeRFAL
-         vT8Nll5O33cpbrso64NZ/3NrJLEfNSbKELuu4XvPQl65y1wwj08uQVTHtrChgsga+91b
-         zK/SzjwdQZg8tK4YxMCsqoauWRDbDEq4ge4PiQZqYGKJbN/J0nMbMLfn+KeH1sOMsjxr
-         rzgOayYVz3sFHh1Pf+am1562hI9l6LWsU5hVluoMNIQ9C+KMhlDBxVi4hRRX62J9RoB2
-         bfNg==
-X-Gm-Message-State: AOJu0Ywb+dLxpV16iqnmTifsxAbEqQgOw2+Z9ZdxshY/NbOMa1cRZ5hy
-	F2s83D+gs7TraM6W+QuEDdk4h6TQg9VQA3U+Ii38Tiy8fNcnlVjFGycQJWNE
-X-Google-Smtp-Source: AGHT+IG3tjamJH6AYUQrxTplQaqxCsrEh8rhA7YObU7K0+sHhF9APj80I1sqxwBZM5TEgbKgkuHBZg==
-X-Received: by 2002:a4a:9c46:0:b0:59f:fc2d:8179 with SMTP id c6-20020a4a9c46000000b0059ffc2d8179mr5509278ook.9.1708532665930;
-        Wed, 21 Feb 2024 08:24:25 -0800 (PST)
+        bh=GUxnPqn+84Zt1123ccdhiKW5ymXzGKm/tisgzCQrOLY=;
+        b=JK2kUUSMfUpU0Q7tptwA5oH2AfQ70xZGRVuwAVBlF/OtwioSmUNIb2mvHEAdzCFDDd
+         0wMPBGNRGYsjK8Tcvjf+IhD6GkMy56KGD/LlonGU8sVU1/ImvCRJ8olhFOBH3GQYJFVw
+         cLlEWY5aTKnPApK9S2Zjyj537ZSW5rZlCAIdDCEvHGyfu5Q0uQRqwAaDEn+ETrbcSMeC
+         IXn0Q7pjNHGDM7PwzPDd1CjrjAD+M9r3pQnOidVJlzu9LN4ECNXM6e9zVzBERfAY/nhf
+         6EzM2aTZuSp/g5xGJ9NMcKdJ1OWNDsQIf7ii1hUtCRy/EVSt0GhsG6CmflG0WzcfsG6H
+         jDgg==
+X-Gm-Message-State: AOJu0YzztPsciA2ak9SkZFNCXpxqAJWyr6eB/mhWV5me3By8CK8WomL7
+	PVsGHJOLA1tViW0XTFpgbWiavCOwrFxCx0/zh+X+7e6SNOgw1aXsEBEUarG/
+X-Google-Smtp-Source: AGHT+IGH//ey2u+AO701tYtJXfQw2bVLBIRDH2tB+MHZrvcBVKX5Ul3I9qgKrcBPSkhfWwDCv2Fi/w==
+X-Received: by 2002:a4a:dfac:0:b0:59f:e26f:fb1a with SMTP id k12-20020a4adfac000000b0059fe26ffb1amr8446002ook.3.1708532666554;
+        Wed, 21 Feb 2024 08:24:26 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id j25-20020a4a92d9000000b00594ee4b4339sm1905405ooh.28.2024.02.21.08.24.25
+        by smtp.gmail.com with ESMTPSA id j25-20020a4a92d9000000b00594ee4b4339sm1905405ooh.28.2024.02.21.08.24.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Feb 2024 08:24:25 -0800 (PST)
+        Wed, 21 Feb 2024 08:24:26 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 6/7] qmi: Introduce shutdown operation
-Date: Wed, 21 Feb 2024 10:23:19 -0600
-Message-ID: <20240221162335.1258315-6-denkenz@gmail.com>
+Subject: [PATCH v2 7/7] gobi: Fail if device could not be created
+Date: Wed, 21 Feb 2024 10:23:20 -0600
+Message-ID: <20240221162335.1258315-7-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240221162335.1258315-1-denkenz@gmail.com>
 References: <20240221162335.1258315-1-denkenz@gmail.com>
@@ -68,237 +68,25 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-On QMUX the shutdown operation waits for all low-level service handles
-to be released, then calls the shutdown callback / destroy functions.
-Low level service handles on QMUX protocol are released via
-qmi_service_unref, which in turn sends a QMUX control message.
-
-On the other hand, in QRTR, there is no need to explicitly release
-handles.  They are released automatically when the underlying QRTR
-socket is closed.
-
-Abstract the shutdown operation behind a shutdown method in the ops
-structure, and move the QMUX specific implementation there.  While here,
-change the return signature of qmi_device_shutdown to return an int,
-such that better error reporting can be supported.  For example, QRTR
-might choose not to implement the shutdown method entirely, in which
-case an -EOPNOTSUP will be returned.
+If for some reason the qmux device creation fails, indicate failure
+early and do not rely on the 5 second modem powered timeout.
 ---
- drivers/qmimodem/qmi.c | 129 ++++++++++++++++++++++++-----------------
- drivers/qmimodem/qmi.h |   2 +-
- 2 files changed, 77 insertions(+), 54 deletions(-)
+ plugins/gobi.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 59a10c8b8f8a..23229865183d 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -56,6 +56,9 @@ struct qmi_version {
- };
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index e22b8146cf93..4134c62d398e 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -431,6 +431,8 @@ static int gobi_enable(struct ofono_modem *modem)
+ 		return -EINVAL;
  
- struct qmi_device_ops {
-+	int (*shutdown)(struct qmi_device *device,
-+			qmi_shutdown_func_t shutdown_func,
-+			void *user, qmi_destroy_func_t destroy);
- 	void (*destroy)(struct qmi_device *device);
- };
- 
-@@ -77,10 +80,6 @@ struct qmi_device {
- 	uint8_t version_count;
- 	struct l_hashmap *service_list;
- 	unsigned int release_users;
--	qmi_shutdown_func_t shutdown_func;
--	void *shutdown_user_data;
--	qmi_destroy_func_t shutdown_destroy;
--	guint shutdown_source;
- 	const struct qmi_device_ops *ops;
- 	bool shutting_down : 1;
- 	bool destroyed : 1;
-@@ -91,6 +90,10 @@ struct qmi_device_qmux {
- 	uint16_t control_major;
- 	uint16_t control_minor;
- 	char *version_str;
-+	qmi_shutdown_func_t shutdown_func;
-+	void *shutdown_user_data;
-+	qmi_destroy_func_t shutdown_destroy;
-+	guint shutdown_source;
- };
- 
- struct qmi_service {
-@@ -971,6 +974,12 @@ struct qmi_device *qmi_device_ref(struct qmi_device *device)
- 	return device;
- }
- 
-+static void __qmi_device_shutdown_finished(struct qmi_device *device)
-+{
-+	if (device->destroyed)
-+		device->ops->destroy(device);
-+}
-+
- void qmi_device_unref(struct qmi_device *device)
- {
- 	if (!device)
-@@ -994,9 +1003,6 @@ void qmi_device_unref(struct qmi_device *device)
- 
- 	close(device->fd);
- 
--	if (device->shutdown_source)
--		g_source_remove(device->shutdown_source);
--
- 	l_hashmap_destroy(device->service_list, service_destroy);
- 
- 	l_free(device->version_list);
-@@ -1331,58 +1337,16 @@ static void release_client(struct qmi_device *device,
- 	__request_submit(device, req);
- }
- 
--static void shutdown_destroy(gpointer user_data)
--{
--	struct qmi_device *device = user_data;
--
--	if (device->shutdown_destroy)
--		device->shutdown_destroy(device->shutdown_user_data);
--
--	device->shutdown_source = 0;
--
--	if (device->destroyed)
--		l_free(device);
--}
--
--static gboolean shutdown_callback(gpointer user_data)
--{
--	struct qmi_device *device = user_data;
--
--	if (device->release_users > 0)
--		return TRUE;
--
--	device->shutting_down = true;
--
--	if (device->shutdown_func)
--		device->shutdown_func(device->shutdown_user_data);
--
--	device->shutting_down = true;
--
--	return FALSE;
--}
--
--bool qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
-+int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
- 				void *user_data, qmi_destroy_func_t destroy)
- {
- 	if (!device)
- 		return false;
- 
--	if (device->shutdown_source > 0)
--		return false;
--
--	__debug_device(device, "device %p shutdown", device);
--
--	device->shutdown_source = g_timeout_add_seconds_full(G_PRIORITY_DEFAULT,
--						0, shutdown_callback, device,
--						shutdown_destroy);
--	if (device->shutdown_source == 0)
--		return false;
-+	if (!device->ops->shutdown)
-+		return -ENOTSUP;
- 
--	device->shutdown_func = func;
--	device->shutdown_user_data = user_data;
--	device->shutdown_destroy = destroy;
--
--	return true;
-+	return device->ops->shutdown(device, func, user_data, destroy);
- }
- 
- static bool get_device_file_name(struct qmi_device *device,
-@@ -1581,16 +1545,75 @@ done:
- 	return res;
- }
- 
-+static void qmux_shutdown_destroy(gpointer user_data)
-+{
-+	struct qmi_device_qmux *qmux = user_data;
-+
-+	if (qmux->shutdown_destroy)
-+		qmux->shutdown_destroy(qmux->shutdown_user_data);
-+
-+	qmux->shutdown_source = 0;
-+
-+	__qmi_device_shutdown_finished(&qmux->super);
-+}
-+
-+static gboolean qmux_shutdown_callback(gpointer user_data)
-+{
-+	struct qmi_device_qmux *qmux = user_data;
-+
-+	if (qmux->super.release_users > 0)
-+		return TRUE;
-+
-+	qmux->super.shutting_down = true;
-+
-+	if (qmux->shutdown_func)
-+		qmux->shutdown_func(qmux->shutdown_user_data);
-+
-+	qmux->super.shutting_down = false;
-+
-+	return FALSE;
-+}
-+
-+static int qmi_device_qmux_shutdown(struct qmi_device *device,
-+					qmi_shutdown_func_t func,
-+					void *user_data,
-+					qmi_destroy_func_t destroy)
-+{
-+	struct qmi_device_qmux *qmux =
-+		l_container_of(device, struct qmi_device_qmux, super);
-+
-+	if (qmux->shutdown_source > 0)
-+		return -EALREADY;
-+
-+	__debug_device(&qmux->super, "device %p shutdown", &qmux->super);
-+
-+	qmux->shutdown_source = g_timeout_add_seconds_full(G_PRIORITY_DEFAULT,
-+						0, qmux_shutdown_callback,
-+						qmux, qmux_shutdown_destroy);
-+	if (qmux->shutdown_source == 0)
+ 	data->device = qmi_device_new_qmux(device);
++	if (!data->device)
 +		return -EIO;
-+
-+	qmux->shutdown_func = func;
-+	qmux->shutdown_user_data = user_data;
-+	qmux->shutdown_destroy = destroy;
-+
-+	return 0;
-+}
-+
- static void qmi_device_qmux_destroy(struct qmi_device *device)
- {
- 	struct qmi_device_qmux *qmux =
- 		l_container_of(device, struct qmi_device_qmux, super);
  
-+	if (qmux->shutdown_source)
-+		g_source_remove(qmux->shutdown_source);
-+
- 	l_free(qmux->version_str);
- 	l_free(qmux);
- }
- 
- static const struct qmi_device_ops qmux_ops = {
-+	.shutdown = qmi_device_qmux_shutdown,
- 	.destroy = qmi_device_qmux_destroy,
- };
- 
-diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-index ab0ee479c89d..df4bc39644a2 100644
---- a/drivers/qmimodem/qmi.h
-+++ b/drivers/qmimodem/qmi.h
-@@ -89,7 +89,7 @@ void qmi_device_set_debug(struct qmi_device *device,
- 
- bool qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
- 				void *user_data, qmi_destroy_func_t destroy);
--bool qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
-+int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
- 				void *user_data, qmi_destroy_func_t destroy);
- 
- bool qmi_device_has_service(struct qmi_device *device, uint16_t type);
+ 	if (getenv("OFONO_QMI_DEBUG"))
+ 		qmi_device_set_debug(data->device, gobi_debug, "QMI: ");
 -- 
 2.43.0
 
