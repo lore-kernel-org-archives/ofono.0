@@ -1,65 +1,35 @@
-Received: from mail-ot1-f54.google.com (mail-ot1-f54.google.com [209.85.210.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C241E6E5E4
-	for <ofono@lists.linux.dev>; Thu, 22 Feb 2024 20:16:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E99D47173E
+	for <ofono@lists.linux.dev>; Thu, 22 Feb 2024 20:50:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708633012; cv=none; b=N8LkG32qeCP2ZpqIRhFWAxoNWYiohEPqKsc+tT5EYDysm8CWS0Mg2fv3vXrSuVPgzIUX6uZ+ArsyslSn94eQ1/Zn0gYh+imuPs0VtTlwL6Eq4mNefI3vtRqEe8DW7E8wbKjKtonP+HBdf4Uzc9s6eYC/zOahSX6aOgfa25rh2m4=
+	t=1708635030; cv=none; b=mTcy7PaxgiadWnacXNDXBS3brPAnp13Jl6+3ljxY2Ozd9zhwaq0bg41Twgu3KH+aRVzVURdIWp226bDU0Ujv6XV8eOgFZ5pJg5rqAsYOn7uaNUC54r7cYYTjjbYTJADrA0fy9Tag13yAXPO0iB+yj9VDMxGQDpOLYn4zZ9RKVGc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708633012; c=relaxed/simple;
-	bh=gZ457g/Jl4FgaSAU2muNe4zABSqTBeScqdwIcCf2QgI=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=qWy3P7acvTkDnk5ZM/tRoLCHgI/6duf9Uoemf72lumh6opO+t0eG8RnvxqSCdhgHtrfsahrm1d7LZveZsvCbir5h7jHbvKit2XRDJmLoRWfWtq/k2hxPNO9VZcYKdO9vh6Q4A6L9576iH5noRnPRm3Ap1QuuuDWYA+ELiRsLmxo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bM4t/sr1; arc=none smtp.client-ip=209.85.210.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1708635030; c=relaxed/simple;
+	bh=5WermFbCzCda9L/LudarXv5p7+cSJyetmJDIepU2RJk=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=rUoWx5djWW71vbFP05XCNqfZZYOFL5WsuYj0OdvMSKoNvf0Izxaa5DBXYimb7oE0hZMdOeyPK5Z8HorvAYDABKeFzxIHMOUtloLzI49FbTHbuBGzarotHRZ6v4jAh2NmPBw6HtM3dG3WN9TJi6GRUfT2OFj3iHZ9yYd5HOMNOsM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Pmw37qVb; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bM4t/sr1"
-Received: by mail-ot1-f54.google.com with SMTP id 46e09a7af769-6ddca59e336so107916a34.0
-        for <ofono@lists.linux.dev>; Thu, 22 Feb 2024 12:16:50 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1708633009; x=1709237809; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=aQ+wgljsQYGCpixLwCvaa09CjLrMwUmYdVDp6sLZGzI=;
-        b=bM4t/sr1SPu1GtZ5o7JUkItCEzGMwo9BiWhRc8hgOzBXoSkpUTwHSwXA9BOJ4jL2vZ
-         l3J6JiUz6ueN7T7h94bqiOWiia8P8I4ZO7WVbh1vhH2dHd1aQBc44hNXsM7gwnxR3PMl
-         tXZQebzgWuNdMy0mstb/o9X3ZYMmlyABo7yHFbkz3zA5PluuZKw5LWuZpBMF5bLseYQR
-         11cZPO1CRE+WEDCHqmI2OafKxvFY5em0mUiRnVRFJHRkrBPPofrPW6v9Q4YPCyXAx5tb
-         WUE7YCLBbFQEVIHlpJwnvN4L/ZrUDNE1Oi/UgTNoYSukyVE5xEkhSDQf3q9mq02sP4p6
-         d2vw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708633009; x=1709237809;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=aQ+wgljsQYGCpixLwCvaa09CjLrMwUmYdVDp6sLZGzI=;
-        b=SeJVwN92OhPkd0M8D7Sf9Bb0+zL66+4yKShkv/EUI+mSOTEFyTCzTHBR81N0A5vJlT
-         E7YYipil3xx1TFNeba2GaBMh5ASrys/VgYRIocyKXQOGGWh6y07LskhNZuV9T3o5knOp
-         XQkE1ZehtRXtUXkdiMdpQhuToTw/dhbYR0kJKis2Am7T4O0fokg8Tz0uON1Q9+PHwmcx
-         nCSX00IHpMz+ZCIXfj40YnQNDowobLiNzLI9h/V0O6pQyWvlKeyp/gzpoh9oAGIDCWEB
-         pYRv4VW8Rxiq8rp7MXrIKFq2TeZjtMGMSbL1IZiHUes8UkY1rrk+FiguesYccBXbRygb
-         iRkQ==
-X-Gm-Message-State: AOJu0YzO0zrs+ua0i/hNL2TQycs8TZR9fLmKEz6u/eWKZGc3Gr45nTCT
-	rrGFu5UgHnu8xuhFeDbGiTAbg/ZxF9pqKeRxDdpd7L8SNxtDqfGrwLQJfStq
-X-Google-Smtp-Source: AGHT+IFtJjdx6CSNOn6Dki4B9HhLzK7ZuxkTd4TGC5gvD8T/ez1p/5+9E/+/aDWDg+P7TtKqIOMKKQ==
-X-Received: by 2002:a05:6830:1d0:b0:6e4:53b0:5817 with SMTP id r16-20020a05683001d000b006e453b05817mr1695540ota.0.1708633009637;
-        Thu, 22 Feb 2024 12:16:49 -0800 (PST)
-Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id k1-20020a4a9101000000b0059a14309a29sm2472353oog.16.2024.02.22.12.16.49
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 22 Feb 2024 12:16:49 -0800 (PST)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 4/4] gobi: Fail early if re-tried discovery fails
-Date: Thu, 22 Feb 2024 14:15:45 -0600
-Message-ID: <20240222201559.1293947-4-denkenz@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20240222201559.1293947-1-denkenz@gmail.com>
-References: <20240222201559.1293947-1-denkenz@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Pmw37qVb"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 895D2C43390;
+	Thu, 22 Feb 2024 20:50:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1708635029;
+	bh=5WermFbCzCda9L/LudarXv5p7+cSJyetmJDIepU2RJk=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=Pmw37qVbLyJNq8tbcuzPBlyUU1JMqozLP+C2azEl83ie4dLAT9vSQCeum39TBLh1E
+	 W05x8PvAY8kMaW90eG0ewh1d9FjzyXGSctlcMbXoqd5/OaQgK+dQGF7RsZS6JUkJuh
+	 7Qpuq6KaK9o8My2xukq9gFxA7Hx+x5p8GwkUyd3E/yQ5JsQX3zztckHdJPUP1rOtV/
+	 qMj1u/YmZqwcan8VOP+youFTlEotXYbvXSDqSuyqHDlhf0dVva6GsQ+no72CbepJNB
+	 kOp0TQn9v3EdkGHH06H9eR8lQsFGZ3dAQtFRdoF4ByR7IYl5PrWAFuQArSXOuFCovE
+	 49UMYd0WrHbpw==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 76DBBC395F1;
+	Thu, 22 Feb 2024 20:50:29 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -67,30 +37,45 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH 1/4] qmi: Introduce discover() driver method
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <170863502948.11350.17785563239272786860.git-patchwork-notify@kernel.org>
+Date: Thu, 22 Feb 2024 20:50:29 +0000
+References: <20240222201559.1293947-1-denkenz@gmail.com>
+In-Reply-To: <20240222201559.1293947-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev
 
----
- plugins/gobi.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+Hello:
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index c4e63b7b464f..99a7d5564ed8 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -406,11 +406,10 @@ static void discover_cb(void *user_data)
- 			data->features |= GOBI_VOICE;
- 
- 	if (!(data->features & GOBI_DMS)) {
--		if (++data->discover_attempts < 3) {
--			qmi_device_discover(data->device, discover_cb,
--								modem, NULL);
-+		if (++data->discover_attempts < 3 &&
-+				!qmi_device_discover(data->device, discover_cb,
-+								modem, NULL))
- 			return;
--		}
- 
- 		shutdown_device(modem);
- 		return;
+This series was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Thu, 22 Feb 2024 14:15:42 -0600 you wrote:
+> On QMUX the discover operation queries all available services by sending
+> a QMUX Control message and processing its reply.  The reply contains a
+> list of services and the corresponding major / minor version number.
+> 
+> QRTR has a similar, but much more dynamic mechanism utilizing the QRTR
+> nameserver.  Services on QRTR can appear and disappear freely compared
+> to services on QMUX.
+> 
+> [...]
+
+Here is the summary with links:
+  - [1/4] qmi: Introduce discover() driver method
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=a11e3942354c
+  - [2/4] gobi: heed the qmi_device_discover return
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ff5215050019
+  - [3/4] qmimodem: Fail early if discovery already complete
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=365293bf0451
+  - [4/4] gobi: Fail early if re-tried discovery fails
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=b95a03190891
+
+You are awesome, thank you!
 -- 
-2.43.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
