@@ -1,62 +1,62 @@
 Received: from mail-oa1-f50.google.com (mail-oa1-f50.google.com [209.85.160.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9BF312BE96
-	for <ofono@lists.linux.dev>; Mon, 26 Feb 2024 15:35:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7671212BEAF
+	for <ofono@lists.linux.dev>; Mon, 26 Feb 2024 15:35:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708961709; cv=none; b=njoa1UBTfw3kByLZm2r9Zm+fWNbJ9M2kpzjRecI6BsBk+i8cLNCt7ohrbGhx4OcZN8paryzAeilkafajaS8sAw9kAwNqMmoijFCMuFt1192Hr1c/gcqYTAS22nqkf59fQ3qSrFdqaAqfxe7s7JQR4e63Qi0oMrK6QwJhCwxISv8=
+	t=1708961709; cv=none; b=AVxn2om2lzV1rFWB2xpskRm7+y1bLjyezwBM8PgSqFFxV2XVFjHOK24AfNkPcJVHTqEnfGLSqATFcPRWwxwsj7cFA8OA+A/Rn/+fA8mOC7Fc02lCGD1LXZALmT7d60wYLNRVa2GSbLANobwspEHTKfB5Dmax9OPiPUUp/6pH8gs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1708961709; c=relaxed/simple;
-	bh=UbSADqgYldh/xATUh77EQyTdLcREq+26WctghklYPXk=;
+	bh=xEZxSXcCD67mBef/SXN0Cvscw/KtOJJZhtPHolxhpdk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ekEyH83QaECc+qmbg9C1MHaTDsrIoxtc7I7PhgWDIyYV3C6VpahjvObHHU5dcnuG28UzAVR9E4yyv057gDbtE/mRoYMshRxiuyBMBDkQGFUE4Gs3GHjPaQFV9IaGSBqyY/t7MzUaVtAZ6iRtAgkuOrbeTzEd1tCr4svIFPO5GTM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UM3pp4HU; arc=none smtp.client-ip=209.85.160.50
+	 MIME-Version; b=JrFUqgATkKJ2hAK8y4rj+ahtrrwQDULmW+CJeJGku0J1pk3006F1gDlRJmX7cPRclwQpbK6ekPUlko6obsESTe3wB7WoMIiWPcpI/NrneO7jmxCnrRZLF2J42JXGZlJ21NSQ/WpRunzs+/VuKG7eAwUF9YjzS8Lo8Wu8QuWWdpQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=fi7PXeTF; arc=none smtp.client-ip=209.85.160.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UM3pp4HU"
-Received: by mail-oa1-f50.google.com with SMTP id 586e51a60fabf-21f2f813e3bso1206383fac.0
-        for <ofono@lists.linux.dev>; Mon, 26 Feb 2024 07:35:07 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fi7PXeTF"
+Received: by mail-oa1-f50.google.com with SMTP id 586e51a60fabf-21433afcc53so1784343fac.3
+        for <ofono@lists.linux.dev>; Mon, 26 Feb 2024 07:35:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1708961706; x=1709566506; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1708961707; x=1709566507; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=CapTx0RywUqOfvsfwbDHkXRxcsLss7bEilJRojg6BQc=;
-        b=UM3pp4HUxeB0UkIFXUF0lJNcQtrP7EB7KH2tQXqLatrKwGERb8Cd/x1ancqgIVQiPK
-         HJoXjwAuOsSb4ffpW1AWcf1SIs1hs6lFCKrcURMkWM3cL/DXxgIF8l4mmY0U8Awl8p2S
-         IVFlY+MlFxT+lSvFjRs+phuBOGGSwqRtGeI17/kdE0JZfdCegdYi6nwnVGhUgw0CBzbC
-         JayLIb7Gx0BSno1n/R+5yK6y9PJXwA/r0nccfFCERRjDhEjGpKQ0FfGewa58Tgk7wf6r
-         wjuFp5YEdq0+sYwycYk109RzvASnLMlPFMV2+pgiZy/aAfrIW6+uYl/eKtZcIqlTstrr
-         W23A==
+        bh=vQrbnU9xR0agc1lrbNVhSCW3rOMxu0RLrIjSwe2tv4U=;
+        b=fi7PXeTFt29douXuCKb/9kt2+uwdHnYdOKLSg39MZ1zmYyKu+wy8CBP+ftJbA8j/+U
+         L3lMmzu9q05nvDOXD0a2iE1PFWJ5+FkBM5s2oH0y8SspHxihmjhIXUnCShyYWv7KPwxw
+         Azfh7wh9wG60XQudR51kAL1HpVawa6/PQxv4ilGxkia0Ayio3jyzADkZoT8jisCKd8+5
+         GwGigdYryWW4o+y3CloT6gkGCX/b2CgqThOX0YsdTQGWJ1nKVlW1N/q6+JFuBO4aE2Vp
+         Jk4SR7YTqa5TrUp9+h1eOhsN4MLfobA0BeBFrDAKVme9U/j8YTObHJiy6vuOUdwK61ic
+         KINA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708961706; x=1709566506;
+        d=1e100.net; s=20230601; t=1708961707; x=1709566507;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=CapTx0RywUqOfvsfwbDHkXRxcsLss7bEilJRojg6BQc=;
-        b=r7EDmMLQz6JwHE/3tMhrcUsfAbcjTYr9WHRydPd/4T6Mmml06J757SGZcb4ne7fTi7
-         IjMhMgt39Mle5Mk4Vsoe8FMdOQtA4vFZsCKi2Bo2791iiQZP2dvaSkeT37B9dz5+JjSv
-         NYE9/A0jSGflvccqg6Xvy9eyXj+taTpuISrG9vLiScz/wg8MV1wHJrqa/rWTq4SeI3gD
-         S+ELAmuX6c2Mq4gFLtR9LVrxnLPEtJxZPBsQqW/LW54cRM7kZCRZm25xdTmrOthsoft+
-         4PhU3tgxEE0GDs93XWMjed3sTc3tiVIDfC1OXY5Mgs89/YquDSWem+t+l+adYktRH6wW
-         Zr+Q==
-X-Gm-Message-State: AOJu0Yw5bHeqJHkINZdADq/odETAq+SqJgIAjl+Figh2ayRgtA0aIBU+
-	UWNqyRQkzET/CirbaCsDY6c/yL9d/KVi7cf7Iml9JLwTHYE8tDxjpU+SpQdW
-X-Google-Smtp-Source: AGHT+IGJc0aYgGpxRZ4z4n3J10kIA78Im4kyxQmV8tN5forQeLRKWdqen4VASjuMGfOCSOG+0pXi3Q==
-X-Received: by 2002:a05:6870:4153:b0:21e:6c0d:41c8 with SMTP id r19-20020a056870415300b0021e6c0d41c8mr3500844oad.16.1708961706653;
-        Mon, 26 Feb 2024 07:35:06 -0800 (PST)
+        bh=vQrbnU9xR0agc1lrbNVhSCW3rOMxu0RLrIjSwe2tv4U=;
+        b=w5H7pGdDy43Lc1GgeEUqXg/roUErQo0KfxakvDFVfylYHYnB7ChJt8WvCGGF0TPdKt
+         AakNgAhOLtTXwm/dZCLOMc0F7XmhJE9hSFpoYNJtBSUBpGBsWs0exM8vT3gmzWjot2PO
+         m4HwFr00/n4BY2k15S1L8y7CjI9xvHLOKsQtwNax4IoYm9NwmVNB6gdz0f7LYD5PapYc
+         KBYwGvG99tdtqHztivAi8EgGXWGWeuUrVBre1tkNF/HeYN4j/Sy2B3Tkt253cwNbBgHO
+         ufxhN9/ZjqhULqnS3tX07/++XfmprxGzIQ4pspChfHRf74pGn2BXFjk1NJtTRbCJlE6Q
+         Z9jg==
+X-Gm-Message-State: AOJu0Ywo3UFtRQp9po07jlT9rZ9yRerNsA44Bn98OvdWVDfrBk49s3g5
+	e4ZCa+9n5hpyXvmQVg9eJlCDvaQ+H0qpxuYGEprpl/P+XYuPa6fGuv5NFHVj
+X-Google-Smtp-Source: AGHT+IEr+Ewk5xLNQVQ+0PNv7/Y++sNa9U1K7zxpwV+9gjwJXqW/XbHWjkR1eng0S0z7ClmxRADX0Q==
+X-Received: by 2002:a05:6871:211:b0:21e:877d:78d6 with SMTP id t17-20020a056871021100b0021e877d78d6mr8502665oad.59.1708961707444;
+        Mon, 26 Feb 2024 07:35:07 -0800 (PST)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id eg14-20020a056870988e00b002201144306csm567048oab.53.2024.02.26.07.35.05
+        by smtp.gmail.com with ESMTPSA id eg14-20020a056870988e00b002201144306csm567048oab.53.2024.02.26.07.35.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 26 Feb 2024 07:35:06 -0800 (PST)
+        Mon, 26 Feb 2024 07:35:07 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 7/8] qmi: Move control_queue member to qmux subclass
-Date: Mon, 26 Feb 2024 09:34:26 -0600
-Message-ID: <20240226153459.1463304-7-denkenz@gmail.com>
+Subject: [PATCH 8/8] qmi: Make sure to set transaction id as LE16
+Date: Mon, 26 Feb 2024 09:34:27 -0600
+Message-ID: <20240226153459.1463304-8-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240226153459.1463304-1-denkenz@gmail.com>
 References: <20240226153459.1463304-1-denkenz@gmail.com>
@@ -68,160 +68,34 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-control_queue is only used by the QMUX transport.  Move it out from the
-qmi_device structure into the QMUX specific qmi_device_qmux structure.
+Transaction identifier for QMI service messages was always read in as
+LE16 value, however when allocating a request it was set in host byte
+order.  Fix that.
 ---
- drivers/qmimodem/qmi.c | 42 ++++++++++++++++++++++++------------------
- 1 file changed, 24 insertions(+), 18 deletions(-)
+ drivers/qmimodem/qmi.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 2af1d6463783..2371f178a4c4 100644
+index 2371f178a4c4..35751d7ce267 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -84,7 +84,6 @@ struct qmi_device_ops {
- struct qmi_device {
- 	struct l_io *io;
- 	struct l_queue *req_queue;
--	struct l_queue *control_queue;
- 	struct l_queue *service_queue;
- 	struct l_queue *discovery_queue;
- 	uint16_t next_service_tid;
-@@ -110,6 +109,7 @@ struct qmi_device_qmux {
- 	struct l_idle *shutdown_idle;
- 	unsigned int release_users;
- 	uint8_t next_control_tid;
-+	struct l_queue *control_queue;
- };
+@@ -670,13 +670,13 @@ static uint16_t __request_submit(struct qmi_device *device,
+ 	struct qmi_service_hdr *hdr =
+ 		(struct qmi_service_hdr *) &req->data[QMI_MUX_HDR_SIZE];
  
- struct qmi_service {
-@@ -820,7 +820,6 @@ static int qmi_device_init(struct qmi_device *device, int fd,
- 	l_io_set_close_on_destroy(device->io, true);
+-	hdr->type = 0x00;
+-	hdr->transaction = device->next_service_tid++;
++	req->tid = device->next_service_tid++;
  
- 	device->req_queue = l_queue_new();
--	device->control_queue = l_queue_new();
- 	device->service_queue = l_queue_new();
- 	device->discovery_queue = l_queue_new();
+ 	if (device->next_service_tid < 256)
+ 		device->next_service_tid = 256;
  
-@@ -846,7 +845,6 @@ void qmi_device_free(struct qmi_device *device)
+-	req->tid = hdr->transaction;
++	hdr->type = 0x00;
++	hdr->transaction = L_CPU_TO_LE16(req->tid);
  
- 	__debug_device(device, "device %p free", device);
- 
--	l_queue_destroy(device->control_queue, __request_free);
- 	l_queue_destroy(device->service_queue, __request_free);
- 	l_queue_destroy(device->req_queue, __request_free);
- 	l_queue_destroy(device->discovery_queue, __discovery_free);
-@@ -1194,6 +1192,8 @@ done:
- static int qmi_device_qmux_write(struct qmi_device *device,
- 					struct qmi_request *req)
- {
-+	struct qmi_device_qmux *qmux =
-+		l_container_of(device, struct qmi_device_qmux, super);
- 	struct qmi_mux_hdr *hdr;
- 	ssize_t bytes_written;
- 
-@@ -1210,7 +1210,7 @@ static int qmi_device_qmux_write(struct qmi_device *device,
- 	hdr = (struct qmi_mux_hdr *) req->data;
- 
- 	if (hdr->service == QMI_SERVICE_CONTROL)
--		l_queue_push_tail(device->control_queue, req);
-+		l_queue_push_tail(qmux->control_queue, req);
- 	else
- 		l_queue_push_tail(device->service_queue, req);
- 
-@@ -1243,7 +1243,7 @@ static void __rx_ctl_message(struct qmi_device_qmux *qmux,
- 		return;
- 	}
- 
--	req = l_queue_remove_if(qmux->super.control_queue, __request_compare,
-+	req = l_queue_remove_if(qmux->control_queue, __request_compare,
- 						L_UINT_TO_PTR(tid));
- 	if (!req)
- 		return;
-@@ -1383,22 +1383,21 @@ static void service_create_shared_data_free(void *user_data)
- 	l_free(data);
- }
- 
--static struct qmi_request *find_control_request(struct qmi_device *device,
-+static struct qmi_request *find_control_request(struct qmi_device_qmux *qmux,
- 						uint16_t tid)
- {
--	struct qmi_request *req = NULL;
--	unsigned int _tid = tid;
-+	struct qmi_request *req;
- 
--	if (_tid != 0) {
--		req = l_queue_remove_if(device->req_queue, __request_compare,
--						L_UINT_TO_PTR(_tid));
-+	if (!tid)
-+		return NULL;
- 
--		if (!req)
--			req = l_queue_remove_if(device->control_queue,
--							__request_compare,
--							L_UINT_TO_PTR(_tid));
--	}
-+	req = l_queue_remove_if(qmux->super.req_queue,
-+					__request_compare, L_UINT_TO_PTR(tid));
-+	if (req)
-+		return req;
- 
-+	req = l_queue_remove_if(qmux->control_queue,
-+					__request_compare, L_UINT_TO_PTR(tid));
- 	return req;
- }
- 
-@@ -1522,13 +1521,15 @@ static void qmux_discover_reply_timeout(struct l_timeout *timeout,
- {
- 	struct discover_data *data = user_data;
- 	struct qmi_device *device = data->device;
-+	struct qmi_device_qmux *qmux =
-+		l_container_of(device, struct qmi_device_qmux, super);
- 	struct qmi_request *req;
- 
- 	l_timeout_remove(data->timeout);
- 	data->timeout = NULL;
- 
- 	/* remove request from queues */
--	req = find_control_request(device, data->tid);
-+	req = find_control_request(qmux, data->tid);
- 
- 	if (data->func)
- 		data->func(data->user_data);
-@@ -1605,6 +1606,8 @@ static void qmux_client_create_reply(struct l_timeout *timeout, void *user_data)
- {
- 	struct qmux_client_create_data *data = user_data;
- 	struct qmi_device *device = data->device;
-+	struct qmi_device_qmux *qmux =
-+		l_container_of(device, struct qmi_device_qmux, super);
- 	struct qmi_request *req;
- 
- 	DBG("");
-@@ -1612,7 +1615,7 @@ static void qmux_client_create_reply(struct l_timeout *timeout, void *user_data)
- 	service_create_shared_pending_reply(device, data->type, NULL);
- 
- 	/* remove request from queues */
--	req = find_control_request(device, data->tid);
-+	req = find_control_request(qmux, data->tid);
- 
- 	l_timeout_remove(data->timeout);
- 	data->timeout = NULL;
-@@ -1829,6 +1832,8 @@ static void qmi_device_qmux_destroy(struct qmi_device *device)
- 	struct qmi_device_qmux *qmux =
- 		l_container_of(device, struct qmi_device_qmux, super);
- 
-+	l_queue_destroy(qmux->control_queue, __request_free);
-+
- 	if (qmux->shutdown_idle)
- 		l_idle_remove(qmux->shutdown_idle);
- 
-@@ -1863,6 +1868,7 @@ struct qmi_device *qmi_device_new_qmux(const char *device)
- 	}
- 
- 	qmux->next_control_tid = 1;
-+	qmux->control_queue = l_queue_new();
- 	l_io_set_read_handler(qmux->super.io, received_qmux_data, qmux, NULL);
- 
- 	return &qmux->super;
+ 	l_queue_push_tail(device->req_queue, req);
+ 	wakeup_writer(device);
 -- 
 2.43.0
 
