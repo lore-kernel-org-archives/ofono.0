@@ -1,81 +1,81 @@
-Received: from mx0a-003ede02.pphosted.com (mx0a-003ede02.pphosted.com [205.220.169.153])
+Received: from mx0b-003ede02.pphosted.com (mx0b-003ede02.pphosted.com [205.220.181.153])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C13586244
-	for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 21:55:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.169.153
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DBC597005A
+	for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 21:55:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.181.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709157323; cv=none; b=LyAHq4zE8qA3t4Kl5xX7QNka59In1fM7gDTvY0YYVOvCLrarZ2qHilh3U0z8KWXwFzowVyVVDL9BFE+CTK/z8R5VGxKj4GijWMqquW4hNXFfIyOLVKp2iVu2liNDBW67UzDjsOxNJz7vCaYkOFHUKn1JK8elqJIwHLaxQVyvRzs=
+	t=1709157323; cv=none; b=kinzAksHAAU9nMXB4l0RCwT44xex2cN6L7KCPWJy+4L8exSnC7pQOCQIWbxonRJ/1e+Ks9tyrh1+r+qEdfHdC/HxC3yCkMlk70j+OwWk/4x7KLsrihGW0+AwESvfVWeON/vGTzc+p6Kjcouk2yDWInvbTTYPwkVCa7CAchuAcBo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1709157323; c=relaxed/simple;
-	bh=PtVKPKXACHePnBQCQpjxqBhgy4wgRGNf+6PYU7G6wKA=;
+	bh=0nfuaSP6gKoMPLQfx+sWn3YgfpUNKb/jK2ZX+jHiCQU=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=qjr7044QG4s91Q4R4WbICnfNZ0dX5bVMnjoli0v2SPNKDL8MrovVYQ6sEh9WZwt40PX3yBuuUroDwF0lQGBT55UBhTZzzMVnV68tjKBzZUgSGLxcFUayLR3FqWJbtNMPXsWLyK90vTzeMInZ9ImgtjEDwO9v4LjUYHPzYkrm/K0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=bkhwUxPV; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=CvJ8qL+T; arc=none smtp.client-ip=205.220.169.153
+	 MIME-Version:Content-Type; b=RAnA/02DrmpRVoZD+KNNSOeatqgltd1/kd9jNkjlbXl4ZnCjaJ3Vzpg2zJFJffCm8+j24oQrDx7M4lJ/aiPQhgfN8YZX19A9oJwMpNzJ47ZduD6RvgILcDob24oanaJjWRZRhIFHKa3xJRQ6a7wjao5FlFuNJD1KNKsXyo6Ah2M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=F6EQpwY1; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=oMx9PE/i; arc=none smtp.client-ip=205.220.181.153
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="bkhwUxPV";
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="CvJ8qL+T"
-Received: from pps.filterd (m0286616.ppops.net [127.0.0.1])
-	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 41SD02dU028564
-	for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 13:55:15 -0800
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="F6EQpwY1";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="oMx9PE/i"
+Received: from pps.filterd (m0286620.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 41SDVp5R011822
+	for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 13:55:13 -0800
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
 	 h=from:to:cc:subject:date:message-id:in-reply-to:references
-	:mime-version:content-type; s=ppemail; bh=L6yPoWdmlQbD8Hky3/uBef
-	6MJ1eq/dO2PC0HlTk2Wrg=; b=bkhwUxPV/LiH3i75JyA5pOWwKs46MDzZAc+jfG
-	86RccJZBBvaA/BPfEXcFD/NLN3yXytsqGCYhA12pEnSi0rtsnLJD0tgsnORnRxX6
-	gv3oPKNpwdJyaOL2RkxrTTLKVcHq1rVdkiJLmWqZxIDE9IvN9/y9YS8YRvZ47qWc
-	zpwMyZ/LwhTiRMhDK8XhUjPLhodZV7j8INhF61/4RXYUxssRZvEX73pz/w0eZVxg
-	5fMxaDBfUPDKYYGgsQ23D+DmuAesCHchvLwcoogtLm4ezzo8vDP3Pf3uhHHzD3ex
-	dVyWDAI5oNFv+2j4H1igEw0Ln4wrHAx+7eS7pkM+xAALK47g==
-Received: from mail-ot1-f72.google.com (mail-ot1-f72.google.com [209.85.210.72])
-	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3wfewa3t07-1
+	:mime-version:content-type; s=ppemail; bh=jojanBxAb6l9xElYvxk2E5
+	dp7BQRcUgBKPh8s2VW6xw=; b=F6EQpwY1D7WkELtpeGJcxeXirPZp0vy2dPvMg3
+	L1/XhGWsEzjCGsCANh3U5qaLG4uFyC0Wkxqeo7fRxZ39r8oRi2SopeRQFPON7o9F
+	RvXxZKFzU40YJrvaSrwN4nikucmWR/a75ZZTiNrP+e9Glrv8PzWo320O9d4rkEHE
+	gWb3uGpSDILRPjA0qd7I9vt/vGE8sE1g3McMsjQjYBV8qA1ohd2w5BNOqNFhCl+t
+	HVtWLW0yYUw3v7MRG66C1KPWTzf/AOk3knCP3CKMq7MxDrRgzOr09MFl3kU/eqoX
+	HPFHV9ddKHch6T6sISROVTs3fJHnRZwFrmWe9RgXx1SH6rVw==
+Received: from mail-oa1-f71.google.com (mail-oa1-f71.google.com [209.85.160.71])
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3wgygr2fex-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 13:55:14 -0800 (PST)
-Received: by mail-ot1-f72.google.com with SMTP id 46e09a7af769-6e49d73202cso167945a34.1
-        for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 13:55:14 -0800 (PST)
+	for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 13:55:13 -0800 (PST)
+Received: by mail-oa1-f71.google.com with SMTP id 586e51a60fabf-21e7751f76fso171284fac.2
+        for <ofono@lists.linux.dev>; Wed, 28 Feb 2024 13:55:13 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=getcruise.com; s=google; t=1709157314; x=1709762114; darn=lists.linux.dev;
+        d=getcruise.com; s=google; t=1709157312; x=1709762112; darn=lists.linux.dev;
         h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
          :from:from:to:cc:subject:date:message-id:reply-to;
-        bh=L6yPoWdmlQbD8Hky3/uBef6MJ1eq/dO2PC0HlTk2Wrg=;
-        b=CvJ8qL+TgaEG37Ab6rmbm21QGa/39gDSlKJjwmPRqRt0LZq/LBdHvKcR1kdsA/5WHA
-         6Xf4PQR0d6ozAfOYQ5hqXiwCqzi2NKaWTMrpaEzK3AoYQgx7Cl2raK2xeU0FGeRNziFP
-         zlF8dUL+UI8fl6AZ+leEtjYX5xm0ikkNSsCEAJahs10v2GTCnwLQiYYpvtUdS7XYjpYT
-         dDAVjQqfTFRRjisYSLRFvtttevnf9bL0Vx11aen5PSzawjrZP8D6codijb6tGPBoXFGC
-         yorZ1x0mQE6FhqIS7uasPzzx9WDMzoLQENy2QIKbZROSmAUPBy6CGLy7PNYpf3funaWQ
-         S6/A==
+        bh=jojanBxAb6l9xElYvxk2E5dp7BQRcUgBKPh8s2VW6xw=;
+        b=oMx9PE/ihswrcTwLbaeJnIVkciatT6VJfMDw+gHK9llVMOr2t1mTcXYf7Tyf7Bf7xN
+         LONL6tjQB5fcBDU3/U2k1rLG3l0yPOwWbg3MdMJnG2Lhz9z2iLYvoR7JEQbJ63grPdQh
+         Z3Nm456cqu5rLDpgB0dDN24J12lfcArspjftPRsWHaf8kTEuukA56UETV6QibcQkPcC7
+         HXI43zC4pcO6U3Fa3XpCdJOmyvj6xpDxS4pKlJZk1lX0Iog2R3uylrnbDEQB3vZwkMVQ
+         z4Uzd/SzsIqatZtZZz/kMjT2ixqmulv2kQBpr6AafbYua/C3VzuP73ewQOwufHbMOBqu
+         +2QQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709157314; x=1709762114;
+        d=1e100.net; s=20230601; t=1709157312; x=1709762112;
         h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
          :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=L6yPoWdmlQbD8Hky3/uBef6MJ1eq/dO2PC0HlTk2Wrg=;
-        b=chJHZDhUsnE3mmxUiNTAAJcFjBlKe1bqA5K4JHYhXIu6EPZlLgWroHuAK+LwRTZWlG
-         02s2XBL4ow5JeyciODDDGIYHToxxQ9VEjFYN6eRjZQl6Ab78MlMo5eVqRRgaKlO51vD7
-         g0dq0He/KsDllbI2f1sBehfARA8CXhow1DcRoeAtkCP/F57No4Hud/M3WmetrElV2IQW
-         xoKBse4cI5bnou2PPPhqAuC9jjxu3St3lrqGb2LVjiy8tjvUq8cSvgQwSI1gIOogt5Aj
-         z/uB7FcSmPeGph8u0DazghzAWG0E3F7AykvZIEF9/7k56Cy3jvWN8xtD/9O3/ZB0nsvw
-         PZRA==
-X-Gm-Message-State: AOJu0Yzka5bR2b60DjZfipxR5jQko8vj+u+Qa22V4I+Sonzy6qnqkHve
-	ZdAsDE9quOq1aNLeC8KJZOiUhE7jagCAxxLKKpVyooZQxAV2YIgm1PBVCIWwbpV0ed4Jl4ZJlPJ
-	BBKrnk9REbbwpoyVUlFedS9uFyu7s9Ad8iPT9rZsCVEgU+zf48rHlQjF+ASaj7Wsk7IbJZSKcCI
-	2qeaYSm/4UhRsXxm/Oh5QmOgWRoOmQNJgeGPGJqouChOpRURE=
-X-Received: by 2002:a05:6870:170a:b0:21f:db0e:4aab with SMTP id h10-20020a056870170a00b0021fdb0e4aabmr148419oae.59.1709157312378;
+        bh=jojanBxAb6l9xElYvxk2E5dp7BQRcUgBKPh8s2VW6xw=;
+        b=EidLk4Q2VgD8p1vxFcjQr5nxKBbD3645B+jQbMXpp/Jr+3+xg6VMvJoBww/7a/kdBB
+         UpAbc3t+AnDfAUtiuApB+uvZBObsmCpwQDoK7iSzSU9YcD7V8jBbz/zj0Tz9iMh2yLm+
+         Yu4TQondRHDijNr3XLLRzBE/hqa5BbiMA4p+oGOwkiHjxsmcEeAMdC6aV6e9gzJN/wWe
+         auuu2oJHKhWqjGB1qPJkqqOu4/NAsQX2Fn5ndY28GbkD0ugdJffBRRktKgsD9xbSpSld
+         nXWtyWLjLs3M3rBBUAUdFF/95tSHlm3KWJIKkGh5tyxzbHwn1tmA+bjhUKFVKchkS4bc
+         /QCA==
+X-Gm-Message-State: AOJu0Yzh28Om6UNCWguHN9Y1d5sFMJ/ZZCnhPqlhFwA77Oxdu4n5T7/d
+	AizNIE/1g+sXsmX0vJ5UmrB/rDzBbNKdBMy8VvxyPrw4uKl6mzfnL7PMyV0nF03gXPAZ8vGcI9J
+	KOjCoBXJ313OSXvjj9I3n0I44L1UryT5FwzP+rs4UjlTs2ynBnPARX1nFXqYgUKMMz7JRXaGiRf
+	Z+B/IgJ+8Fd8p66hUIsjlxeVIgygvYZUCTdyfhSrm0iwKqvTw=
+X-Received: by 2002:a05:6870:f14a:b0:21e:8dc7:342e with SMTP id l10-20020a056870f14a00b0021e8dc7342emr154033oac.25.1709157312496;
         Wed, 28 Feb 2024 13:55:12 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEWmQG+nS6zdTlMNB5a5WWtx+UG5fxPumbeLYw8EhAqm1AfmUP9nkXuDDaV4yoeYRCpzLmnmA==
-X-Received: by 2002:a05:6870:170a:b0:21f:db0e:4aab with SMTP id h10-20020a056870170a00b0021fdb0e4aabmr148400oae.59.1709157312036;
-        Wed, 28 Feb 2024 13:55:12 -0800 (PST)
-Received: from localhost.localdomain ([140.177.178.112])
-        by smtp.gmail.com with ESMTPSA id z8-20020ae9f448000000b00787c6ed9a68sm33963qkl.91.2024.02.28.13.55.11
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+X-Google-Smtp-Source: AGHT+IGbGBLnCT8QfzIQAjU6Q9Ba6o1cYhW85k7Uzru7jKVMylMtCcrkgGMdlNdAwiTdXg81QFcwVg==
+X-Received: by 2002:a05:6870:f14a:b0:21e:8dc7:342e with SMTP id l10-20020a056870f14a00b0021e8dc7342emr153983oac.25.1709157311066;
         Wed, 28 Feb 2024 13:55:11 -0800 (PST)
+Received: from localhost.localdomain ([140.177.178.112])
+        by smtp.gmail.com with ESMTPSA id z8-20020ae9f448000000b00787c6ed9a68sm33963qkl.91.2024.02.28.13.55.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 28 Feb 2024 13:55:10 -0800 (PST)
 From: Steve Schrock <steve.schrock@getcruise.com>
 To: ofono@lists.linux.dev
 Cc: Steve Schrock <steve.schrock@getcruise.com>
-Subject: [PATCH 4/4] qmi: Enable basic client creation if it is not subclassed
-Date: Wed, 28 Feb 2024 21:53:19 +0000
-Message-Id: <20240228215319.153068-4-steve.schrock@getcruise.com>
+Subject: [PATCH 2/4] qmi: Add more service info to qmi_service
+Date: Wed, 28 Feb 2024 21:53:17 +0000
+Message-Id: <20240228215319.153068-2-steve.schrock@getcruise.com>
 X-Mailer: git-send-email 2.40.1
 In-Reply-To: <20240228215319.153068-1-steve.schrock@getcruise.com>
 References: <20240228215319.153068-1-steve.schrock@getcruise.com>
@@ -86,162 +86,116 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="US-ASCII"
-X-Proofpoint-GUID: rk5jz10jMW_f_ggxM-sKx45cs6cAa-bB
-X-Proofpoint-ORIG-GUID: rk5jz10jMW_f_ggxM-sKx45cs6cAa-bB
+X-Proofpoint-ORIG-GUID: WPbdxexpyOXrY6TsR3BZp-VRAXG4wCaN
+X-Proofpoint-GUID: WPbdxexpyOXrY6TsR3BZp-VRAXG4wCaN
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
  definitions=2024-02-28_08,2024-02-27_01,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 malwarescore=0
- impostorscore=0 bulkscore=0 suspectscore=0 mlxscore=0 adultscore=0
- lowpriorityscore=0 mlxlogscore=944 spamscore=0 priorityscore=1501
- clxscore=1015 phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2402120000 definitions=main-2402280174
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 clxscore=1015 impostorscore=0
+ mlxscore=0 adultscore=0 suspectscore=0 priorityscore=1501 spamscore=0
+ bulkscore=0 malwarescore=0 phishscore=0 mlxlogscore=999 lowpriorityscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2402120000
+ definitions=main-2402280173
 
-QRTR does not require client ID allocation requests.
+QRTR will need to know the node and port for writes.
 ---
- drivers/qmimodem/qmi.c | 93 ++++++++++++++++++++++++++++++++++--------
- 1 file changed, 76 insertions(+), 17 deletions(-)
+ drivers/qmimodem/qmi.c | 29 ++++++++++++++---------------
+ 1 file changed, 14 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index afa7b962..6e4c99dc 100644
+index aca4df0d..a297a77f 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -1388,6 +1388,25 @@ static uint8_t __ctl_request_submit(struct qmi_device_qmux *qmux,
- 	return req->tid;
+@@ -118,9 +118,7 @@ struct qmi_device_qmux {
+ struct qmi_service {
+ 	int ref_count;
+ 	struct qmi_device *device;
+-	uint8_t type;
+-	uint16_t major;
+-	uint16_t minor;
++	struct qmi_service_info info;
+ 	uint8_t client_id;
+ 	uint16_t next_notify_id;
+ 	struct l_queue *notify_list;
+@@ -315,7 +313,7 @@ static void __service_find_by_type(const void *key, void *value,
+ 	if (L_PTR_TO_UINT(key) & 0x80000000)
+ 		return;
+ 
+-	if (service->type == data->type)
++	if (service->info.service_type == data->type)
+ 		data->found_service = service;
  }
  
-+static struct qmi_service *service_create(struct qmi_device *device,
-+			const struct qmi_service_info *info, uint8_t client_id)
-+{
-+	struct qmi_service *service = l_new(struct qmi_service, 1);
-+
-+	service->ref_count = 1;
-+	service->device = device;
-+	service->client_id = client_id;
-+	service->notify_list = l_queue_new();
-+
-+	memcpy(&service->info, info, sizeof(service->info));
-+
-+	__debug_device(device, "service created [client=%d,type=%d]",
+@@ -1689,17 +1687,18 @@ static void qmux_client_create_callback(uint16_t message, uint16_t length,
+ 	service->ref_count = 1;
+ 	service->device = data->device;
+ 
+-	service->type = data->type;
+-	service->major = data->major;
+-	service->minor = data->minor;
++	service->info.service_type = data->type;
++	service->info.major = data->major;
++	service->info.minor = data->minor;
+ 
+ 	service->client_id = client_id->client;
+ 	service->notify_list = l_queue_new();
+ 
+ 	__debug_device(device, "service created [client=%d,type=%d]",
+-					service->client_id, service->type);
 +					service->client_id,
 +					service->info.service_type);
-+
-+	return service;
-+}
-+
- static void service_create_shared_reply(struct l_idle *idle, void *user_data)
- {
- 	struct service_create_shared_data *data = user_data;
-@@ -1398,6 +1417,20 @@ static void service_create_shared_reply(struct l_idle *idle, void *user_data)
- 	DISCOVERY_DONE(data, data->service, data->user_data);
+ 
+-	hash_id = service->type | (service->client_id << 8);
++	hash_id = service->info.service_type | (service->client_id << 8);
+ 
+ 	l_hashmap_replace(device->service_list, L_UINT_TO_PTR(hash_id),
+ 				service, (void **) &old_service);
+@@ -2528,12 +2527,12 @@ void qmi_service_unref(struct qmi_service *service)
+ 	qmi_service_cancel_all(service);
+ 	qmi_service_unregister_all(service);
+ 
+-	hash_id = service->type | (service->client_id << 8);
++	hash_id = service->info.service_type | (service->client_id << 8);
+ 
+ 	l_hashmap_remove(device->service_list, L_UINT_TO_PTR(hash_id));
+ 
+ 	if (device->ops->client_release)
+-		device->ops->client_release(device, service->type,
++		device->ops->client_release(device, service->info.service_type,
+ 							service->client_id);
+ 
+ 	l_free(service);
+@@ -2544,7 +2543,7 @@ const char *qmi_service_get_identifier(struct qmi_service *service)
+ 	if (!service)
+ 		return NULL;
+ 
+-	return __service_type_to_string(service->type);
++	return __service_type_to_string(service->info.service_type);
  }
  
-+static void service_create_shared_no_discovery_reply(struct l_idle *idle,
-+								void *user_data)
-+{
-+	struct service_create_shared_data *data = user_data;
-+
-+	l_idle_remove(data->idle);
-+	data->idle = NULL;
-+
-+	if (data->func)
-+		data->func(data->service, data->user_data);
-+
-+	__discovery_free(&data->super);
-+}
-+
- static void service_create_shared_pending_reply(struct qmi_device *device,
- 						unsigned int type,
- 						struct qmi_service *service)
-@@ -1664,6 +1697,7 @@ static void qmux_client_create_callback(uint16_t message, uint16_t length,
- 	struct qmi_device *device = data->device;
- 	struct qmi_service *service = NULL;
- 	struct qmi_service *old_service = NULL;
-+	struct qmi_service_info info;
- 	const struct qmi_result_code *result_code;
- 	const struct qmi_client_id *client_id;
- 	uint16_t len;
-@@ -1686,21 +1720,12 @@ static void qmux_client_create_callback(uint16_t message, uint16_t length,
- 	if (client_id->service != data->type)
- 		goto done;
- 
--	service = l_new(struct qmi_service, 1);
--
--	service->ref_count = 1;
--	service->device = data->device;
-+	memset(&info, 0, sizeof(service->info));
-+	info.service_type = data->type;
-+	info.major = data->major;
-+	info.minor = data->minor;
- 
--	service->info.service_type = data->type;
--	service->info.major = data->major;
--	service->info.minor = data->minor;
--
--	service->client_id = client_id->client;
--	service->notify_list = l_queue_new();
--
--	__debug_device(device, "service created [client=%d,type=%d]",
--					service->client_id,
--					service->info.service_type);
-+	service = service_create(device, &info, client_id->client);
- 
- 	hash_id = service_list_create_hash(service->info.service_type,
- 							service->client_id);
-@@ -2443,6 +2468,43 @@ bool qmi_service_create_shared(struct qmi_device *device, uint16_t type,
- 	if (type == QMI_SERVICE_CONTROL)
+ bool qmi_service_get_version(struct qmi_service *service,
+@@ -2554,10 +2553,10 @@ bool qmi_service_get_version(struct qmi_service *service,
  		return false;
  
-+	if (!device->ops->client_create) {
-+		struct service_create_shared_data *data;
-+
-+		/*
-+		 * The hash id is simply the service type in this case. There
-+		 * is no "pending" state for discovery and no client id.
-+		 */
-+		service = l_hashmap_lookup(device->service_list,
-+						L_UINT_TO_PTR(type_val));
-+		if (!service) {
-+			const struct qmi_service_info *info;
-+
-+			info = __find_service_info_by_type(device, type);
-+			if (!info)
-+				return false;
-+
-+			service = service_create(device, info, 0);
-+			l_hashmap_insert(device->service_list,
-+					L_UINT_TO_PTR(type_val), service);
-+		}
-+
-+		data = l_new(struct service_create_shared_data, 1);
-+
-+		data->super.destroy = service_create_shared_data_free;
-+		data->device = device;
-+		data->func = func;
-+		data->user_data = user_data;
-+		data->destroy = destroy;
-+
-+		data->service = qmi_service_ref(service);
-+		data->idle = l_idle_create(
-+				service_create_shared_no_discovery_reply,
-+				data, NULL);
-+
-+		return true;
-+	}
-+
- 	shared = l_hashmap_lookup(device->service_list,
- 					L_UINT_TO_PTR(type_val | 0x80000000));
+ 	if (major)
+-		*major = service->major;
++		*major = service->info.major;
  
-@@ -2486,9 +2548,6 @@ bool qmi_service_create_shared(struct qmi_device *device, uint16_t type,
- 		return true;
- 	}
+ 	if (minor)
+-		*minor = service->minor;
++		*minor = service->info.minor;
  
--	if (!device->ops->client_create)
--		return -ENOTSUP;
--
- 	r = device->ops->client_create(device, type, func, user_data, destroy);
- 	return r == 0;
+ 	return true;
  }
+@@ -2631,7 +2630,7 @@ uint16_t qmi_service_send(struct qmi_service *service,
+ 	data->user_data = user_data;
+ 	data->destroy = destroy;
+ 
+-	req = __request_alloc(service->type, service->client_id,
++	req = __request_alloc(service->info.service_type, service->client_id,
+ 				message,
+ 				param ? param->data : NULL,
+ 				param ? param->length : 0,
 -- 
 2.43.2
 
