@@ -1,84 +1,81 @@
 Received: from mx0a-003ede02.pphosted.com (mx0a-003ede02.pphosted.com [205.220.169.153])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 28AA759B47
-	for <ofono@lists.linux.dev>; Fri,  1 Mar 2024 22:19:05 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B4A359B4E
+	for <ofono@lists.linux.dev>; Fri,  1 Mar 2024 22:19:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.169.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709331548; cv=none; b=DFVDdbiz5PGXL+CvYVX2Vfk3YLdUcYg9JIwSrp8HeOgwtfandN0/9Hb/+w7Vv2eO9xk+9gIe3UWfAlwxeGGDpaTEIswhDKHhvHQijOE/p2hPy9r0uF1/vYHBi7Jqn3Hk/GYEk2/UzhhLtle4CBLVO4Pep5PCD3JvK+LvG8LY12I=
+	t=1709331550; cv=none; b=ZiCi8IIqIVm3sYxhDPIg9n+VNF6rx0ZSpfQo2GrCbRF/+lxTVlHWHuvs/LmP7u3wyJkk7HKvm3Lu23dvQaJMKXQh+tviB8YZy2luIo870wTnjaaOO6ws7U+BPabk94Jy9ybQokDQ2+3XrEKIbbKiv8kav9npaXXY6cGTAEm0V4M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709331548; c=relaxed/simple;
-	bh=DbYSjLuUCMFNPXs75vX0WyKVL1iXV00m4dt2BRNrRt0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=QgZE1dnfptKpyhrShV88iwHHVpylhfeOq25EQLsA73NgBJGtLcVe52m0FFgGX71KI4mP0CDsLKngIALEwsRqXJ0IhOuua32LuJKnPFffJt+DRimh0peQxyrKJSy5Jqt+bzMflT/bRXpNZCO+eimi1YWCDZvWuWsL2vQdh6M+jSk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=C2JJHHrn; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=nRmw1Pg8; arc=none smtp.client-ip=205.220.169.153
+	s=arc-20240116; t=1709331550; c=relaxed/simple;
+	bh=/evW93q/I4eEioOXydPbCyDa/nNlwvam9yqsOfrVGRE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=qdp6Y5PzeDkztBaPeYHtDp/iAwB3oPs/g43PcTepCGrVaSqlJlvpMwJFsEZjTznsjuy2RjkSYM4QS5PPvGEYsaFUVshVjefBFMi4NWAfUcXv2fBfWnjOYgndA+IkZtYFtrDpf1QER6qRTTubznAxspsxmCWKKWLf7UgQDsHedGQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=UsaDEYYM; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=lqXxF0hb; arc=none smtp.client-ip=205.220.169.153
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="C2JJHHrn";
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="nRmw1Pg8"
-Received: from pps.filterd (m0286616.ppops.net [127.0.0.1])
-	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 421H8dR0003242
-	for <ofono@lists.linux.dev>; Fri, 1 Mar 2024 14:19:05 -0800
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="UsaDEYYM";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="lqXxF0hb"
+Received: from pps.filterd (m0286615.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 421DpOeq031338
+	for <ofono@lists.linux.dev>; Fri, 1 Mar 2024 14:19:08 -0800
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
-	 h=from:to:cc:subject:date:message-id:in-reply-to:references
-	:mime-version:content-type; s=ppemail; bh=gqht7k2Z4GlK4raYu0S+bk
-	+KiAT1T13/Tx0jjfYu9mM=; b=C2JJHHrn9a9Ma3LwFaDJY6wov3Et03TdvR1lJ6
-	Wz+BjtKIkfKZfdQteCFj1UkNe7rw0BScqFw4gzrjUYYFQpImP+BbsU6uvIWnbwRk
-	h0QDMa0z4arRU51YVnPAf0DUAJH6zSLSqUG/pdJP/nhbs4zJWTZel4ueKUWma3I8
-	CUZtDwPkSxvDqnvNMi8BWXCtR2grpR4VMOtomGooU4A1hhrF2PFUnmHdyhn4l32R
-	hoXW/rWbd9aVbYirKjLoBDFpv32+kDchGFRKhFSLK0PAavNZwxuC6wFOapOeDaRI
-	bK4fHlt/F69hN1S+FX5objLsWRpIdHZin4ZvsqzH6EpJbbew==
+	 h=from:to:cc:subject:date:message-id:mime-version:content-type;
+	 s=ppemail; bh=lx3PKlAeXHCwAUfyO/YzDk/6VoMZEcxAhny/2Rz9PGI=; b=U
+	saDEYYMJI9RiDpV4Fk3eVTOVU76QSDykKIjeiR6t7+qjWgzCo0MzSr1ziCkC1N7A
+	Hh2DlaJ9U1xFzL65H4sbA4jQhDg+MHAYox4WqQqI2ELds7TWdm+SZJMnN3+Z+m72
+	74jgSUBGG8aywqnHnvBvY582IxbRbKsCLHhiBnmAA4e2Ok6KC/nu5WKvDRXYY/HJ
+	++8MZoq0xLTaFb0LxktypjmNgrs5jQAjWL0wzDXQvRZoHYyvOCE5erxGprJq4hap
+	sA6LY1i81FxnZd0/VAsx1kDSWG+prMGQQftuK91/tMMlezxi1/Rhps1h/bw/SXne
+	j/wPwOq2vskT4emoUN3zA==
 Received: from mail-il1-f197.google.com (mail-il1-f197.google.com [209.85.166.197])
-	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3wkk5mrbb3-1
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3wjbv9a73s-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <ofono@lists.linux.dev>; Fri, 01 Mar 2024 14:19:05 -0800 (PST)
-Received: by mail-il1-f197.google.com with SMTP id e9e14a558f8ab-3653092aee9so28998825ab.0
-        for <ofono@lists.linux.dev>; Fri, 01 Mar 2024 14:19:05 -0800 (PST)
+	for <ofono@lists.linux.dev>; Fri, 01 Mar 2024 14:19:08 -0800 (PST)
+Received: by mail-il1-f197.google.com with SMTP id e9e14a558f8ab-365b4dc6c3eso27412375ab.2
+        for <ofono@lists.linux.dev>; Fri, 01 Mar 2024 14:19:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=getcruise.com; s=google; t=1709331544; x=1709936344; darn=lists.linux.dev;
-        h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
-         :from:from:to:cc:subject:date:message-id:reply-to;
-        bh=gqht7k2Z4GlK4raYu0S+bk+KiAT1T13/Tx0jjfYu9mM=;
-        b=nRmw1Pg8HOl/k5Axd2DUPnJzDcKlB0D+h+4ygnB7gidYTrfBCRQW2QVr79kahv3XKL
-         5r1vams/8+ScgSkVOJh9MTekQB5tU0QZCr7SgSQiS3UNVTC5p3MNNXiFRJ9I3b6MJdwQ
-         Xkg3ScCnVTND82aiyLi+/Czc/JqQVesMcWMe9SKWkaXRMlSp997AA7kiUQIG4FeglkLT
-         W1bgdSx0vUt57tHCP7lkO9UGjLJiZNgMw4uxW1yXtuL1z7hbHZqWE9YX3z2ZMF7RoRry
-         jZ99eVOnKy4YdrZmop+YV/BgYktEKqNMYUX6mgpST/pdLjkwu1cKkY8ddooy/GS4RkCo
-         MU/A==
+        d=getcruise.com; s=google; t=1709331547; x=1709936347; darn=lists.linux.dev;
+        h=mime-version:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=lx3PKlAeXHCwAUfyO/YzDk/6VoMZEcxAhny/2Rz9PGI=;
+        b=lqXxF0hbJUwCALFH8q2nX5oPgyiL9ETRLjKKQgh3jtKlrwZSGP8wtN2CDlyuaU52Xs
+         OwgfJsLpA9ioEY0qSdFBXTfVKGl6POz88zoJ9ydVDzIFOjw8RhOLlosSqGOslovH4Mw6
+         lL/tp0uiFhLI2NRX7Scg65K1KL1bF/NHgk6f9ZFd2ZBStS31WwXoxuFWpVHy/9/lNrA0
+         /bx8yxXlU8G5WTi+PV5qCnmNeEbaIpPpYvAGVNI7itjyILggPRFbH/IBvJ+heWqe0MnT
+         DKGkRG7Fwq0e+Q2awt6euT86pZt3raVd8BBz+EQAGrK2rjn12sLNxCsc61oHm/MPdHSX
+         QWSg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709331544; x=1709936344;
-        h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
-         :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=gqht7k2Z4GlK4raYu0S+bk+KiAT1T13/Tx0jjfYu9mM=;
-        b=Bugf4vdLT1DtHMQZ19cMl/AMA5R87u1mfoKwDycn0JqehQ19ecN49uQVlqFUfpGAPG
-         JpAfaKjX3xfrGvzJphaw3m74ZVTTX33ibBIyGw8JgKEpUaev8NYeyBLzD08ES1J8XDdC
-         RA7UrDt5HMPVOOuSLLyHYb8nMdCs9THUvKsGpUurPQnjI0kV+EW/OxSwBy5uq5yeK4Yd
-         NYAoMKmLgWlcIVOzm4ZfHlxblYIr3cveziy1c4tVfKD9byKwWRYABqmvBNMF+801wfFR
-         Ku7K4LpmFPsO7PsTbHRug/K9aO5zPiTr2S3b1sBRbE84zh2GLSA46wGXGe9HRBDdUkAq
-         SCSg==
-X-Gm-Message-State: AOJu0YyyubQhzDvChgREpX2a0u9r1DE67zbo1nnZ2EnpDPkZekJjWsVz
-	p8F3rhSgtqoJQi6DNRmXZPzY991BHSfh1K2cFxo2SPDEOAAgSwDdk3V6AKe+eM4XH0aXleG05Xr
-	g+dnkPRLV3SwSTuRgeuISD2s8q871RBrl33UsSvlvLL7ySa25mnYgnEY9CsgC9M/0uz2uxBZNFb
-	3StKm7vdQWvwqBfjoVYBjfS4RuBt9jV9pJhvz2o0jW5lb3eWg=
-X-Received: by 2002:a05:6e02:1c43:b0:365:b93f:a33 with SMTP id d3-20020a056e021c4300b00365b93f0a33mr3717258ilg.20.1709331543909;
-        Fri, 01 Mar 2024 14:19:03 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IFhe3FrYInW80Hi99ALd8gY9UHp4ULbqSr5T1cG7c9A5A5YtCx63SbnsTpU1uqYpXzGYHuUdQ==
-X-Received: by 2002:a05:6e02:1c43:b0:365:b93f:a33 with SMTP id d3-20020a056e021c4300b00365b93f0a33mr3717236ilg.20.1709331543519;
-        Fri, 01 Mar 2024 14:19:03 -0800 (PST)
-Received: from cs-1zgl0npt-heavy-homedir-303475.corp.robot.car (122.32.128.34.bc.googleusercontent.com. [34.128.32.122])
-        by smtp.gmail.com with ESMTPSA id g13-20020a92d7cd000000b003639d3e5afdsm1127808ilq.10.2024.03.01.14.19.02
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        d=1e100.net; s=20230601; t=1709331547; x=1709936347;
+        h=mime-version:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=lx3PKlAeXHCwAUfyO/YzDk/6VoMZEcxAhny/2Rz9PGI=;
+        b=oyraSYyH3+RUKbcDrHjc/lpu12Iztiq3kytmR02yJDmmW2K/88Xjzgh3b0Qnzj8cO/
+         i2UgK0RsLDAMWHQFkuyxm7Q8xT/b8r+xfq9AOtbTlfq4T531jqT3cLcbCzwNLOyjcAni
+         mCd9/uF0zum1TSaF5WXrqU4PFe8f3A99W0mQfIF2yJOlKBFO6D5KcFuZjq9FtyQno2FB
+         9kT16ivtvY+Q4ULevLRfDvwtW83TSHTGuEGqrytH3n/8jI8LukvaNgilmtgG4e6hgzwy
+         QOQZr3eEX9ZsX6lOpuiGCP5SMPpky4jWeJqGbRAQmVJmci2aiQeYC6bWQ0BErTlqA4fc
+         wOxg==
+X-Gm-Message-State: AOJu0Yw8ggyQISbkCqlGcbbGNI6Pe3GnamUMgiXCrRJjvyqVFI5a70CT
+	oRUTE0T7eRhjM8gVFUFItLvHO4izaQnICoZ2DN2Y9ejMGwMUWr5eTN1d/xfBGaLBkdP1osEVu0a
+	NypqrSXzmAm4OE+xu/N/RfnmtonczWf7eohDGiDolpjWCSkLjSswO2l/CSyALIKWU5lVmadgTB1
+	Ee9m1+nEGGX8aEixUXZ3D5+dcw2F4extUPbYFq6rojKvB2Hc8=
+X-Received: by 2002:a05:6e02:148f:b0:365:16c8:ca7c with SMTP id n15-20020a056e02148f00b0036516c8ca7cmr3673170ilk.23.1709331542270;
         Fri, 01 Mar 2024 14:19:02 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IF7GExbn3/Chk/0ISBd24Pcf5PBf6XFUKajplLUeoPnOXWIsXgKc1A8f3V96Cx7nT+SX2GvRQ==
+X-Received: by 2002:a05:6e02:148f:b0:365:16c8:ca7c with SMTP id n15-20020a056e02148f00b0036516c8ca7cmr3673141ilk.23.1709331541740;
+        Fri, 01 Mar 2024 14:19:01 -0800 (PST)
+Received: from cs-1zgl0npt-heavy-homedir-303475.corp.robot.car (122.32.128.34.bc.googleusercontent.com. [34.128.32.122])
+        by smtp.gmail.com with ESMTPSA id g13-20020a92d7cd000000b003639d3e5afdsm1127808ilq.10.2024.03.01.14.19.01
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 01 Mar 2024 14:19:01 -0800 (PST)
 From: Steve Schrock <steve.schrock@getcruise.com>
 To: ofono@lists.linux.dev
 Cc: Steve Schrock <steve.schrock@getcruise.com>
-Subject: [PATCH v3 4/4] qmi: Enable QRTR service writes and reads
-Date: Fri,  1 Mar 2024 16:18:48 -0600
-Message-ID: <20240301221851.1445586-4-steve.schrock@getcruise.com>
+Subject: [PATCH v3 1/4] qmi: Add an abstract group id to services and requests
+Date: Fri,  1 Mar 2024 16:18:45 -0600
+Message-ID: <20240301221851.1445586-1-steve.schrock@getcruise.com>
 X-Mailer: git-send-email 2.43.2
-In-Reply-To: <20240301221851.1445586-1-steve.schrock@getcruise.com>
-References: <20240301221851.1445586-1-steve.schrock@getcruise.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -86,253 +83,156 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="US-ASCII"
-X-Proofpoint-GUID: _wlVL4deaAHnu0JenUu1n3y-WINZ96-7
-X-Proofpoint-ORIG-GUID: _wlVL4deaAHnu0JenUu1n3y-WINZ96-7
+X-Proofpoint-GUID: MJ5tVSdVPI9J-mksHPmtHnbElU5lbNn8
+X-Proofpoint-ORIG-GUID: MJ5tVSdVPI9J-mksHPmtHnbElU5lbNn8
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
  definitions=2024-03-01_22,2024-03-01_03,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0 phishscore=0
- clxscore=1015 malwarescore=0 adultscore=0 suspectscore=0 impostorscore=0
- lowpriorityscore=0 priorityscore=1501 spamscore=0 mlxlogscore=992
- mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2402120000 definitions=main-2403010184
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 adultscore=0 spamscore=0
+ clxscore=1015 priorityscore=1501 mlxscore=0 malwarescore=0 impostorscore=0
+ lowpriorityscore=0 bulkscore=0 phishscore=0 suspectscore=0 mlxlogscore=999
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2402120000
+ definitions=main-2403010184
 
-For simplicity the QRTR write method simply skips the QMUX
-header. In the future it might make sense to add another ops
-function that would allocate a larger buffer and populate
-the QMUX header in the QMUX implementation.
+This will allow services and requests to be matched without using
+the QMUX client id which does not exist in QRTR.
 ---
- drivers/qmimodem/qmi.c | 118 +++++++++++++++++++++++++++++++++--------
- 1 file changed, 97 insertions(+), 21 deletions(-)
+ drivers/qmimodem/qmi.c | 37 ++++++++++++++++++++++++-------------
+ 1 file changed, 24 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index c65860ce..8e849b75 100644
+index 23a5fee7..44d1738d 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -62,7 +62,7 @@ struct qmi_service_info {
+@@ -61,6 +61,7 @@ struct qmi_service_info {
+ 
  struct qmi_request {
  	uint16_t tid;
- 	unsigned int group_id;		/* Always 0 for control */
--	uint8_t client;
-+	uint8_t client;			/* Always 0 for control and qrtr */
- 	struct qmi_service_info info;	/* Not used for control requests */
++	unsigned int group_id;		/* Always 0 for control */
+ 	uint8_t client;
  	qmi_message_func_t callback;
  	void *user_data;
-@@ -216,7 +216,7 @@ static void __qmi_service_appeared(struct qmi_device *device,
- 				l_memdup(info, sizeof(struct qmi_service_info)));
+@@ -90,6 +91,7 @@ struct qmi_device {
+ 	struct l_queue *req_queue;
+ 	struct l_queue *service_queue;
+ 	struct l_queue *discovery_queue;
++	unsigned int next_group_id;	/* Matches requests with services */
+ 	uint16_t next_service_tid;
+ 	qmi_debug_func_t debug_func;
+ 	void *debug_data;
+@@ -119,6 +121,7 @@ struct qmi_service {
+ 	int ref_count;
+ 	struct qmi_device *device;
+ 	struct qmi_service_info info;
++	unsigned int group_id;
+ 	uint8_t client_id;
+ 	uint16_t next_notify_id;
+ 	struct l_queue *notify_list;
+@@ -692,8 +695,9 @@ static void wakeup_writer(struct qmi_device *device)
+ 	device->writer_active = true;
  }
  
--static struct qmi_request *__request_alloc(uint8_t service,
-+static struct qmi_request *__request_alloc(uint32_t service_type,
- 				uint8_t client, uint16_t message,
- 				const void *data,
- 				uint16_t length, qmi_message_func_t func,
-@@ -228,7 +228,7 @@ static struct qmi_request *__request_alloc(uint8_t service,
- 	uint16_t hdrlen = QMI_MUX_HDR_SIZE;
- 	uint16_t msglen;
- 
--	if (service == QMI_SERVICE_CONTROL)
-+	if (service_type == QMI_SERVICE_CONTROL)
- 		hdrlen += QMI_CONTROL_HDR_SIZE;
- 	else
- 		hdrlen += QMI_SERVICE_HDR_SIZE;
-@@ -244,7 +244,7 @@ static struct qmi_request *__request_alloc(uint8_t service,
- 	hdr->frame = 0x01;
- 	hdr->length = L_CPU_TO_LE16(req->len - 1);
- 	hdr->flags = 0x00;
--	hdr->service = service;
-+	hdr->service = service_type; /* qmux service types are 8 bits */
- 	hdr->client = client;
- 
- 	msg = (struct qmi_message_hdr *) &req->data[hdrlen];
-@@ -654,6 +654,26 @@ static void __qmux_debug_msg(const char dir, const void *buf, size_t len,
- 			L_LE16_TO_CPU(hdr->length), function, user_data);
- }
- 
-+static void __qrtr_debug_msg(const char dir, const void *buf, size_t len,
-+				uint16_t service_type,
-+				qmi_debug_func_t function, void *user_data)
-+{
-+	const struct qmi_service_hdr *srv;
-+	const struct qmi_message_hdr *msg;
-+	uint16_t tid;
-+
-+	if (!len)
-+		return;
-+
-+	srv = buf;
-+	msg = buf + QMI_SERVICE_HDR_SIZE;
-+
-+	tid = L_LE16_TO_CPU(srv->transaction);
-+
-+	__debug_msg(dir, msg, service_type, srv->type, tid, 0, len,
-+						function, user_data);
-+}
-+
- static void __debug_device(struct qmi_device *device,
- 					const char *format, ...)
+-static uint16_t __request_submit(struct qmi_device *device,
+-				struct qmi_request *req)
++static uint16_t __service_request_submit(struct qmi_device *device,
++						struct qmi_service *service,
++						struct qmi_request *req)
  {
-@@ -762,7 +782,7 @@ static unsigned int service_list_create_hash(uint16_t service_type,
- }
+ 	struct qmi_service_hdr *hdr =
+ 		(struct qmi_service_hdr *) &req->data[QMI_MUX_HDR_SIZE];
+@@ -703,6 +707,8 @@ static uint16_t __request_submit(struct qmi_device *device,
+ 	if (device->next_service_tid < 256)
+ 		device->next_service_tid = 256;
  
- static void handle_indication(struct qmi_device *device,
--			uint8_t service_type, uint8_t client_id,
-+			uint32_t service_type, uint8_t client_id,
- 			uint16_t message, uint16_t length, const void *data)
++	req->group_id = service->group_id;
++
+ 	hdr->type = 0x00;
+ 	hdr->transaction = L_CPU_TO_LE16(req->tid);
+ 
+@@ -1397,6 +1403,11 @@ static struct qmi_service *service_create(struct qmi_device *device,
+ 	service->client_id = client_id;
+ 	service->notify_list = l_queue_new();
+ 
++	if (device->next_group_id == 0) /* 0 is reserved for control */
++		device->next_group_id = 1;
++
++	service->group_id = device->next_group_id++;
++
+ 	memcpy(&service->info, info, sizeof(service->info));
+ 
+ 	__debug_device(device, "service created [client=%d,type=%d]",
+@@ -2667,7 +2678,7 @@ uint16_t qmi_service_send(struct qmi_service *service,
+ 	if (!service)
+ 		return 0;
+ 
+-	if (!service->client_id)
++	if (!service->group_id)
+ 		return 0;
+ 
+ 	device = service->device;
+@@ -2680,15 +2691,15 @@ uint16_t qmi_service_send(struct qmi_service *service,
+ 	data->user_data = user_data;
+ 	data->destroy = destroy;
+ 
+-	req = __request_alloc(service->info.service_type, service->client_id,
+-				message,
++	req = __request_alloc(service->info.service_type,
++				service->client_id, message,
+ 				param ? param->data : NULL,
+ 				param ? param->length : 0,
+ 				service_send_callback, data);
+ 
+ 	qmi_param_free(param);
+ 
+-	tid = __request_submit(device, req);
++	tid = __service_request_submit(device, service, req);
+ 
+ 	return tid;
+ }
+@@ -2729,9 +2740,9 @@ bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
+ static bool remove_req_if_match(void *data, void *user_data)
  {
- 	struct qmi_service *service;
-@@ -795,7 +815,7 @@ static void handle_indication(struct qmi_device *device,
+ 	struct qmi_request *req = data;
+-	uint8_t client = L_PTR_TO_UINT(user_data);
++	unsigned int group_id = L_PTR_TO_UINT(user_data);
+ 
+-	if (!req->client || req->client != client)
++	if (req->group_id != group_id)
+ 		return false;
+ 
+ 	service_send_free(req->user_data);
+@@ -2740,10 +2751,10 @@ static bool remove_req_if_match(void *data, void *user_data)
+ 	return true;
  }
  
- static void __rx_message(struct qmi_device *device,
--				uint8_t service_type, uint8_t client_id,
-+				uint32_t service_type, uint8_t client_id,
- 				const void *buf)
+-static void remove_client(struct l_queue *queue, uint8_t client)
++static void remove_client(struct l_queue *queue, unsigned int group_id)
  {
- 	const struct qmi_service_hdr *service = buf;
-@@ -1935,6 +1955,43 @@ struct qmi_device_qrtr {
- 	struct l_idle *shutdown_idle;
- };
- 
-+static int qmi_device_qrtr_write(struct qmi_device *device,
-+					struct qmi_request *req)
-+{
-+	struct sockaddr_qrtr addr;
-+	uint8_t *data;
-+	uint16_t len;
-+	ssize_t bytes_written;
-+	int fd = l_io_get_fd(device->io);
-+
-+	/* Skip the QMUX header */
-+	data = req->data + QMI_MUX_HDR_SIZE;
-+	len = req->len - QMI_MUX_HDR_SIZE;
-+
-+	memset(&addr, 0, sizeof(addr));	/* Ensures internal padding is 0 */
-+	addr.sq_family = AF_QIPCRTR;
-+	addr.sq_node = req->info.qrtr_node;
-+	addr.sq_port = req->info.qrtr_port;
-+
-+	bytes_written = sendto(fd, data, len, 0, (struct sockaddr *) &addr,
-+							sizeof(addr));
-+	if (bytes_written < 0) {
-+		DBG("Failure sending data: %s", strerror(errno));
-+		return -errno;
-+	}
-+
-+	l_util_hexdump(false, data, bytes_written,
-+			device->debug_func, device->debug_data);
-+
-+	__qrtr_debug_msg(' ', data, bytes_written,
-+			req->info.service_type, device->debug_func,
-+			device->debug_data);
-+
-+	l_queue_push_tail(device->service_queue, req);
-+
-+	return 0;
-+}
-+
- static void qrtr_debug_ctrl_request(const struct qrtr_ctrl_pkt *packet,
- 					qmi_debug_func_t function,
- 					void *user_data)
-@@ -1957,10 +2014,10 @@ static void qrtr_debug_ctrl_request(const struct qrtr_ctrl_pkt *packet,
- 	function(strbuf, user_data);
+ 	l_queue_foreach_remove(queue, remove_req_if_match,
+-				L_UINT_TO_PTR(client));
++				L_UINT_TO_PTR(group_id));
  }
  
--static void qrtr_handle_control_packet(struct qmi_device_qrtr *qrtr,
--					const struct qrtr_ctrl_pkt *packet)
-+static void qrtr_received_control_packet(struct qmi_device *device,
-+						unsigned char *buf, size_t len)
- {
--	struct qmi_device *device = &qrtr->super;
-+	struct qrtr_ctrl_pkt *packet = (struct qrtr_ctrl_pkt *) buf;
- 	uint32_t cmd;
- 	uint32_t type;
- 	uint32_t instance;
-@@ -1968,6 +2025,11 @@ static void qrtr_handle_control_packet(struct qmi_device_qrtr *qrtr,
- 	uint32_t node;
- 	uint32_t port;
+ bool qmi_service_cancel_all(struct qmi_service *service)
+@@ -2753,15 +2764,15 @@ bool qmi_service_cancel_all(struct qmi_service *service)
+ 	if (!service)
+ 		return false;
  
-+	if (len < sizeof(*packet)) {
-+		DBG("qrtr packet is too small");
-+		return;
-+	}
-+
- 	qrtr_debug_ctrl_request(packet, device->debug_func,
- 				device->debug_data);
+-	if (!service->client_id)
++	if (!service->group_id)
+ 		return false;
  
-@@ -2013,22 +2075,32 @@ static void qrtr_handle_control_packet(struct qmi_device_qrtr *qrtr,
- 	}
- }
+ 	device = service->device;
+ 	if (!device)
+ 		return false;
  
--static void qrtr_handle_packet(struct qmi_device_qrtr *qrtr, uint32_t sending_port,
--				const void *buf, ssize_t len)
-+static void qrtr_received_service_message(struct qmi_device *device,
-+			uint32_t port, const unsigned char *buf, size_t len)
- {
--	const struct qrtr_ctrl_pkt *packet = buf;
-+	const struct l_queue_entry *entry;
-+	uint32_t service_type = 0;
- 
--	if (sending_port != QRTR_PORT_CTRL) {
--		DBG("Receive of service data is not implemented");
--		return;
-+	for (entry = l_queue_get_entries(device->service_infos);
-+				entry; entry = entry->next) {
-+		struct qmi_service_info *info = entry->data;
-+
-+		if (info->qrtr_port == port) {
-+			service_type = info->service_type;
-+			break;
-+		}
- 	}
- 
--	if ((unsigned long) len < sizeof(*packet)) {
--		DBG("qrtr control packet is too small");
-+	if (!service_type) {
-+		DBG("Received packet from unknown service on port %d",
-+			port);
- 		return;
- 	}
- 
--	qrtr_handle_control_packet(qrtr, packet);
-+	__qrtr_debug_msg(' ', buf, len, service_type,
-+				device->debug_func, device->debug_data);
-+
-+	__rx_message(device, service_type, 0, buf);
- }
- 
- static bool qrtr_received_data(struct l_io *io, void *user_data)
-@@ -2042,7 +2114,7 @@ static bool qrtr_received_data(struct l_io *io, void *user_data)
- 	addr_size = sizeof(addr);
- 	bytes_read = recvfrom(l_io_get_fd(qrtr->super.io), buf, sizeof(buf), 0,
- 				(struct sockaddr *) &addr, &addr_size);
--	DBG("Received %zd bytes from Node: %d Port: 0x%x", bytes_read,
-+	DBG("Received %zd bytes from Node: %d Port: %d", bytes_read,
- 		addr.sq_node, addr.sq_port);
- 
- 	if (bytes_read < 0)
-@@ -2051,7 +2123,11 @@ static bool qrtr_received_data(struct l_io *io, void *user_data)
- 	l_util_hexdump(true, buf, bytes_read, qrtr->super.debug_func,
- 			qrtr->super.debug_data);
- 
--	qrtr_handle_packet(qrtr, addr.sq_port, buf, bytes_read);
-+	if (addr.sq_port == QRTR_PORT_CTRL)
-+		qrtr_received_control_packet(&qrtr->super, buf, bytes_read);
-+	else
-+		qrtr_received_service_message(&qrtr->super, addr.sq_port,
-+							buf, bytes_read);
+-	remove_client(device->req_queue, service->client_id);
+-	remove_client(device->service_queue, service->client_id);
++	remove_client(device->req_queue, service->group_id);
++	remove_client(device->service_queue, service->group_id);
  
  	return true;
  }
-@@ -2152,7 +2228,7 @@ static void qmi_device_qrtr_destroy(struct qmi_device *device)
- }
- 
- static const struct qmi_device_ops qrtr_ops = {
--	.write = NULL,
-+	.write = qmi_device_qrtr_write,
- 	.discover = qmi_device_qrtr_discover,
- 	.client_create = NULL,
- 	.client_release = NULL,
 -- 
 2.43.2
 
