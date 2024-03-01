@@ -1,61 +1,35 @@
-Received: from mail-oo1-f54.google.com (mail-oo1-f54.google.com [209.85.161.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D93968F65
-	for <ofono@lists.linux.dev>; Fri,  1 Mar 2024 17:28:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00DC13C47C
+	for <ofono@lists.linux.dev>; Fri,  1 Mar 2024 20:20:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709314101; cv=none; b=jw6GN32qie8dhFXL/TC49vPLtW39TLbRGZ1g4nuoSga2Ne4T0KHjIwWslenjhbGySbn/KBjTcUtkdvNm3gDaQWNiRDf6aazuGYeVuWFJnbhHXl/nUOQnGfS84Nx9XnarhFgL6ObTI5rbIiHphK3mjnouS3Oll2pSiVPfWGicZZ0=
+	t=1709324436; cv=none; b=sUDaAcSrUClb5WsPvBufvpFU+JEsXFwjS3+e5Fk9X7zSu4WyDBDwi2LAUGh22osW/V9hfByjfbg6E5FeTtOGHsZmgxyvEhLOVOzBC7TCdoVJY17YLGja1OKwhfQZxJtZV+QVZIeMbUY4io0X9zCC3gaX7GYBDUA1qH1Z6ZQ0oZg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709314101; c=relaxed/simple;
-	bh=jjbsn6dWQ8Xr8AeA29DrnipeTNYmIgZDgloHLjT7fT0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=fBKAEhjPQJLbFD0AEcfvLLGrsSozjTx0XRA6DHSXg/vTw6DzPTjdiAbwable4UOmXewyxEJBecyEA1N9xMT6RXjshVdjeGxeFdlypQ8qBTPvk2T0GxhCgPX7aNgP7Cz3D0mik51tdUQjH9cNeFw2isYMKdWI+s+KlCL2eNHSpu4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gEEBk06z; arc=none smtp.client-ip=209.85.161.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1709324436; c=relaxed/simple;
+	bh=3ZESgFUN6JGc9QKlftO7FbaetXyrJN3cKBPv/UgVeYs=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=iBqdDFcUvg7bW9TksrIdUIoHJRZ41yr2q0/zlsOKIjNjAlOkhxPKvi7L3GMBLAhPeI3pNt3dBIVSwOUim8OxtJxgUmCyoX+ZfG2lrXdDpB7e1ECjwFpnpkI4sdcbmHWT68rr+rm5W6V4ZWGczcKxA5FDRjqEUPgAL01zzxTB8sw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eCi60yNw; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gEEBk06z"
-Received: by mail-oo1-f54.google.com with SMTP id 006d021491bc7-5a109a03276so263647eaf.1
-        for <ofono@lists.linux.dev>; Fri, 01 Mar 2024 09:28:19 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1709314098; x=1709918898; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=oMhIZz/2u20eiDboMKDtd5tiktaCNH0FczveoGzeBE4=;
-        b=gEEBk06zp0+amT5wefSAt0jnNtpDy/yIvjnb7FZY9T1RLzUys4XNQlJ6XH3IYYpJmr
-         +IzzNWu7JhpciugTsoFVzJXx6h4u89PKnuGr5USUHWwhn9a8n85zJOEdNIFH70cQ/Vur
-         K6rYXzELOywkDgFZL3ku4IxnLTggZVLHOL1i0Zbj3cma42dJFQF48sByJF7uFaVMtAeW
-         LdE8DyNAC8IQ21RhJMhXanCwqkClEVj7psNLwFlfPQgMDwBJT/BWCxGXJi7zhwJA3dLD
-         H/KSt82mtIq7KJsNn69rve7QaLaZUWWpAIkK5jvf0VZ4x49BmnbISVYnhfFBeRKReOIi
-         nFZg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709314098; x=1709918898;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=oMhIZz/2u20eiDboMKDtd5tiktaCNH0FczveoGzeBE4=;
-        b=KConywk1BXQ47IQv74oQYdMQevkaSMhek6CNRM0j7nADBaPtnIxXUpVVerE+PobQ1z
-         dCvJJ7I6ksYpkysBcw8rndta4WPn8EUvKCpXEJcO0k+l4mjLMqNK8MK4zl+MECeFiiHj
-         q2Ebb5wM1rEdKqr2edKrMwMsEaOJD++zisNLzlksrc5c4Msl0VgA9LKgz9NMVFWa/gD+
-         3ZXsKU0ejfh7bywP75C6QmW60NC3o9q4whdIdt5mcSAGz4NzKuioKQ+ickeDWVKRSgSV
-         n5jHGy90N8upKt9tpKdq5yTIvuKI68slMWdH9BxmXF8pf5U1lxEMEwxt9TzZNSZwT80I
-         qg+w==
-X-Gm-Message-State: AOJu0Yz2zXZeWVdVxrzywHfHP3u0yJVqNGbKJMSSLT5FmCK5MLNGdZrG
-	UKePausx7SXLtUfp4CAIgk7dliEKlM/28BKtYOSSIXj5AzyhAaDfVnQrQ76y
-X-Google-Smtp-Source: AGHT+IFajvtWQWRlXV2UptanzMeSKzZBdImGCGAz0Q3P+hIjIfO+gToSsQGPM117ZlHMWPcc+gTICw==
-X-Received: by 2002:a4a:6201:0:b0:5a0:b781:fddd with SMTP id x1-20020a4a6201000000b005a0b781fdddmr2171425ooc.8.1709314098719;
-        Fri, 01 Mar 2024 09:28:18 -0800 (PST)
-Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id m15-20020a4a240f000000b005a0131f0315sm302999oof.2.2024.03.01.09.28.18
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 01 Mar 2024 09:28:18 -0800 (PST)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH] qmimodem: Add support for "embedded" endpoints
-Date: Fri,  1 Mar 2024 11:27:57 -0600
-Message-ID: <20240301172816.1703961-1-denkenz@gmail.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eCi60yNw"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 7CDFDC43390;
+	Fri,  1 Mar 2024 20:20:35 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1709324435;
+	bh=3ZESgFUN6JGc9QKlftO7FbaetXyrJN3cKBPv/UgVeYs=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=eCi60yNwfk/m6kvZuVLJ7cSJpqWuWAi0Pr1bSKeJ5U9BP8zkT7HGUqg0y3kBbNJ1v
+	 wK3Jtlp5K7GdTBKn3yOcASF0m46/D5HvxlhhYqTuj4oz9O2Fv3Mch3B9qVP3py/XwM
+	 uubx80i80YXdbAA+bZHIkghzxfiJQElq02mUZ0fA4dD5rGpoam6tRkbdGRGTAtnban
+	 bo8zKd8Zwp6XXsyLybr1IO4nXh0QmuDyrYrtz+ILihIh123rZep+v59y1ty/Y9Y9Ke
+	 g8FcI4oXxA87q8KMSfakCXZ0zTG3ALuqZyuj7ORmYvgQdFY8eHgnPtWUNPjmD1CATi
+	 RIL5lh9JxLVqA==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 61FC5D84BBA;
+	Fri,  1 Mar 2024 20:20:35 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -63,24 +37,33 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH] qmimodem: Add support for "embedded" endpoints
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <170932443539.27879.6300440922978030264.git-patchwork-notify@kernel.org>
+Date: Fri, 01 Mar 2024 20:20:35 +0000
+References: <20240301172816.1703961-1-denkenz@gmail.com>
+In-Reply-To: <20240301172816.1703961-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev
 
----
- drivers/qmimodem/gprs-context.c | 2 ++
- 1 file changed, 2 insertions(+)
+Hello:
 
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index 46ba46c95139..f575c5e2e1be 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -403,6 +403,8 @@ static void qmi_gprs_context_bind_mux(struct ofono_gprs_context *gc)
- 		endpoint_info.endpoint_type = QMI_DATA_ENDPOINT_TYPE_PCIE;
- 	else if (!strcmp(bus, "usb"))
- 		endpoint_info.endpoint_type = QMI_DATA_ENDPOINT_TYPE_HSUSB;
-+	else if (!strcmp(bus, "embedded"))
-+		endpoint_info.endpoint_type = QMI_DATA_ENDPOINT_TYPE_EMBEDDED;
- 	else {
- 		ofono_error("%s: Invalid 'Bus' value",
- 				ofono_modem_get_path(modem));
+This patch was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Fri,  1 Mar 2024 11:27:57 -0600 you wrote:
+> ---
+>  drivers/qmimodem/gprs-context.c | 2 ++
+>  1 file changed, 2 insertions(+)
+
+Here is the summary with links:
+  - qmimodem: Add support for "embedded" endpoints
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=342237b10b86
+
+You are awesome, thank you!
 -- 
-2.43.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
