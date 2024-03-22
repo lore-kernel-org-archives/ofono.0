@@ -1,156 +1,220 @@
-Received: from mail-oo1-f52.google.com (mail-oo1-f52.google.com [209.85.161.52])
+Received: from mail-oo1-f41.google.com (mail-oo1-f41.google.com [209.85.161.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88A5E364C4
-	for <ofono@lists.linux.dev>; Wed, 20 Mar 2024 02:49:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEEB346420
+	for <ofono@lists.linux.dev>; Fri, 22 Mar 2024 14:09:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710902958; cv=none; b=NFZKBCW3uCnSfs8M/nAryKRg1RYYm1jeJks8dHIRIRrghqwNm/n6W4Qt/b7jXGj6cjbwtrMMdWFjYjcDzzqWRs7DEhsMHMWW3BJosDRth7A27ofhFX8bZODpjYCWBYL2QiIIcq2n5kW7MTDjHl/G08HdxOi7CmVKvZgSii2TFdg=
+	t=1711116588; cv=none; b=DgjUUFxeMciTwlRLUNjDxOdRONHsUoNvFZr3kM15dmGnSxUXnxGa2AcuEvOFSqgqmtu/4s3CCHlNf9SJT2s14Ws7cez2TyPUKnswJ7LFvwMhpuhxwL5jdRL7fyZ5ddTgZ0zFU0TBkZZynWD9ZQQQlMruUis3ro74zn/VGQFKLJY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710902958; c=relaxed/simple;
-	bh=VmbJSn14HbcqKUh41wis8n3mUemA8+THagQTtJfFvBM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=aCjr9Co5gYnnAibHUGBd1/vIkT2qEkuXSK1PpHr9yeHUeho+HwXexZ0TUplRizWctnP2uQ3JjjAIWzqLCWfuIT8wQOP4aQeIO3b/88q97Xj/yRxOZdTDIRxWnFcjcOPBnT3biZFw+YHE74rfbb0SFzT2MExGjUWxVWhw08Xd6j0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Rp2ZA0FI; arc=none smtp.client-ip=209.85.161.52
+	s=arc-20240116; t=1711116588; c=relaxed/simple;
+	bh=3nQB5yM+yXF4YwHuYBuGxiw8B2qV2ccA7xTB/Zszzfk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=qV3U4x2PD9E0SEUvtZDLVkrLb9Hv56pEvqwX3amqXhLPkY+3iv+cFrgrTpJWa3/9IxBbghvQDRRhOVhm37KiqmStRf+UWpX39kMsfc7gyJOW5FCdJ0OAiZ9ktU9yxqb9mrobU2D12i3b4zlS8NFRoT6weesReig0TPwIuVIdK7I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UWX6G/5g; arc=none smtp.client-ip=209.85.161.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Rp2ZA0FI"
-Received: by mail-oo1-f52.google.com with SMTP id 006d021491bc7-5a4a2d99598so1691971eaf.2
-        for <ofono@lists.linux.dev>; Tue, 19 Mar 2024 19:49:16 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UWX6G/5g"
+Received: by mail-oo1-f41.google.com with SMTP id 006d021491bc7-5a14d7f0e66so623289eaf.1
+        for <ofono@lists.linux.dev>; Fri, 22 Mar 2024 07:09:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1710902955; x=1711507755; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=R5gfqdzQQsM0267MbbJWGv+bvRzdjkOqRCsEd69Mjfs=;
-        b=Rp2ZA0FIC9ywGeRdSOW9QC/oK2yseVgFakGRZIH3RgOM9FKoCdkKQNtoDrB7XdEc/Y
-         ALCN93Qq+xnrR39gzuhP6FQ+PVYBmTh67VstCw42wBq8LYkOF4WraFKhM8A2+CAiIDwv
-         TZ6RN82ocKW6QJziKAqkrhPIWIz8KWhFodnk8VCBL433eGi46hkojLBnuBUxNixeH8Je
-         HpczR54icrf8MclLBgHzXiJZUuFbWm3M/LkQRYnzVBans/n0lHmSGLzVO/DqQJGSmE3i
-         VUqUbh2XjnPfP7dFBKscNMD7LUOV1SzafAq5Gc9n8HI5HYZp87CSGCbw0alh2tB5O7k+
-         jTiA==
+        d=gmail.com; s=20230601; t=1711116586; x=1711721386; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=zVvZoQp+AQIDlOlnYC6APkftVteuztwRLNYdmRzkiHw=;
+        b=UWX6G/5gheoB1fsoXAP29Je/kGudHzRZD1rm9NCBVco4w95xrtBqfjMbffhBVBPi22
+         fPXrXCFkbUsNxaJv6V7SQSTBiZjyMy3QsD8v/iIoKH80PTRQO0PYOcq2QgfLZ5omx4sL
+         hazNNWYdi+43G4etBNSxur7l3CycC4YllIi6gJW6sB3OyaScjp0bc+AwxDhll+jdt9Qr
+         6INcF1qK8i37OLVwNejfyyHzUVc5DVLNqRnNgkF0faJpz741la75OcqGZImunWwr5TMJ
+         kAXYJD8+YZaJtW1rdVEDeiO1oBIUx/3d9W6dXiEuZ4fYWk82L21PtN+s64KY0p4uc6fX
+         pLog==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710902955; x=1711507755;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=R5gfqdzQQsM0267MbbJWGv+bvRzdjkOqRCsEd69Mjfs=;
-        b=MUJW43YBIhReDMa5lbhUWlvoz1/c78ZengZY2sfC+UeAQ6kn/ssOv8j7rg/rk+doOh
-         AySy3oYa2hnHN2gLs3cPlqBRwQP1aDpBpQBEeYj4DkV8KruVfsJkSH0qLNrXkJsDCTV+
-         AUv0DvjASS3AByFrwWmpb6MR1kAxu8eYgIsZ7/x08c2I0HDKYC/2/LcvKsBV9eRLLeNW
-         1f5BirdOIJdvfXnyB+Tt2nk7iGTKkYnsArJVhyEvqeuda7lamjv8W/l2wXRXP1KIFEjM
-         CYvU3wgYooRY+qyRKIQK6YTBQPFmRJP01ZnbCVT+dOEv+T631NS61yVt5rX7/kXpUVOg
-         LUpQ==
-X-Forwarded-Encrypted: i=1; AJvYcCU+W6IirWcfB1Hyzy7Gh6Cz+lYfEtl0x3Ezh/dCJoLR8ZX2bA3RdpegcoNWFaSTjtdL4+0QGQ9V5BqxcN+cNyI4pSGsljE=
-X-Gm-Message-State: AOJu0Yx2xEsjrrfqUwatvUfIo4RaFCStBA5opZ7iKDxx1E9bxRxd6LRG
-	FzqaRXiFo/2jCsECxujj2sG0vcTXE1l4mQX8rzYmzkiIp2dGR56O
-X-Google-Smtp-Source: AGHT+IE5KrF0oi1y0hxnyFeDyaEEvsxL6vusKItkbdjIhNwoAghLk57BkmZh1uzjDDsyFTDi3NkBFA==
-X-Received: by 2002:a05:6820:995:b0:5a4:b8de:2f4c with SMTP id cg21-20020a056820099500b005a4b8de2f4cmr1040908oob.7.1710902955383;
-        Tue, 19 Mar 2024 19:49:15 -0700 (PDT)
-Received: from [192.168.1.22] (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id dh8-20020a0568201e0800b005a49df78628sm1520072oob.39.2024.03.19.19.49.14
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 19 Mar 2024 19:49:15 -0700 (PDT)
-Message-ID: <c54f27a6-5f3f-488f-9970-62c0373370bf@gmail.com>
-Date: Tue, 19 Mar 2024 21:49:14 -0500
+        d=1e100.net; s=20230601; t=1711116586; x=1711721386;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=zVvZoQp+AQIDlOlnYC6APkftVteuztwRLNYdmRzkiHw=;
+        b=nlrFWo356N5v1ZWssrkJnN1qOFCm0FutVLp/LVqY11tUAOgDFtFZIWeyHx7e/sKvqf
+         gSLdnsbQ8UAQdCt6VlRIraIjVFTnWRlhbynSLroA1441EmwhkDYsABl9icVz4ZuSVsIi
+         vKR6euQ/57x2Grpu/kfhJ311X8Z+bKzIG8at9D2S5lLgjUDnCtZ++nbvgiUzKSixfP4a
+         cyl1GJylYQU069DsRdcMDMXk7ncgVpTCArfxjDVjBms+x1NrRBoDhzJWqvLCIYYCUKi5
+         fiZPKsKPXt7mvE9RHHwaLY2/E7S/ByYqRLQdpqo56ZIvnBEzYPDFQ8ax+p9jkZjco/Cg
+         MpEw==
+X-Gm-Message-State: AOJu0YyUGxxSOqs4rFgjk3ecTE476Y9qMIWiF47f1Mj/QJjzw+Rw2nLJ
+	r6ay8KdUKMksfg1vy+1lz05loD0L+F1J4HhDlCtfuR5Pq4P5L5XbP0bliyWX
+X-Google-Smtp-Source: AGHT+IHdFUPpHAUQIo2I3WSp74fUYnvgOgLXHYDlgYtJMrZHvzRdCQ/F4fgSiCjhs36RZAGAYaFNfg==
+X-Received: by 2002:a05:6820:213:b0:5a4:f5b6:4ed4 with SMTP id bw19-20020a056820021300b005a4f5b64ed4mr2768301oob.8.1711116585830;
+        Fri, 22 Mar 2024 07:09:45 -0700 (PDT)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id cs2-20020a056820258200b005a1f748f3edsm303673oob.30.2024.03.22.07.09.45
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 22 Mar 2024 07:09:45 -0700 (PDT)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 01/11] phonesim: Allow phonesim to work with Multiplexer=internal
+Date: Fri, 22 Mar 2024 09:09:02 -0500
+Message-ID: <20240322140942.2703042-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH] qmimodem voicecall support
-Content-Language: en-US
-To: Adam Pigg <piggz1@gmail.com>, ofono@lists.linux.dev
-References: <5612854.ZASKD2KPVS@adam-laptop-hp>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <5612854.ZASKD2KPVS@adam-laptop-hp>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi Adam,
+If use_mux code path was used, certain commands (like querying of the
+SIM status) were not sent, resulting in incomplete modem initialization.
+Fix that.
+---
+ plugins/phonesim.c | 102 +++++++++++++++++++++++++--------------------
+ 1 file changed, 56 insertions(+), 46 deletions(-)
 
-On 3/18/24 17:51, Adam Pigg wrote:
-> Hi
-> 
-> As previously mentioned, ive been working on updating Ofono in Sailfish.  There
-> are several patches which probably are of no interest, but this one may be.
-> It implements voicecall support for the qmimodem driver, and ive tested it on
-> a PinephonePro, and can make/receive/hangup calls.
-> 
-> I cant take credit for the original implementation, it was taken from other
-> ofono forks out there, such as https://github.com/maemo-leste-upstream-forks/
-> ofono/commit/9c8ec63c1bb41a03cd87d2733dd83ecd148d0105
-> 
-> The changes I have made include:
-> *moving voice_generated.* into voice.*
->    This is because it isnt actually generated and reduces the files in the tree
-> *removed glib and replaced with ell
-> *tweaked the notify code in call_list.c
->    Changed the disconnect type from UNKNOWN because in src/voicecall.c, if the
-> reason is UNKNOWN then it doesnt then perform the dbus notify
->    Made it call ofono_voicecall_disconnected when the state was DISCONNECTED
-> (QMI state disconnecting and end)
-> 
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 07afc14d56bb..29a983611d75 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -512,13 +512,27 @@ static void usimstate_notify(GAtResult *result, gpointer user_data)
+ 	ofono_sim_inserted_notify(data->sim, inserted);
+ }
+ 
+-static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static void emulator_battery_cb(struct ofono_atom *atom, void *data)
+ {
+-	struct ofono_modem *modem = user_data;
++	struct ofono_emulator *em = __ofono_atom_get_data(atom);
++	int val = 0;
+ 
+-	DBG("");
++	if (GPOINTER_TO_INT(data) > 0)
++		val = (GPOINTER_TO_INT(data) - 1) / 20 + 1;
+ 
+-	ofono_modem_set_powered(modem, ok);
++	ofono_emulator_set_indicator(em, OFONO_EMULATOR_IND_BATTERY, val);
++}
++
++static void emulator_hfp_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *user_data)
++{
++	struct phonesim_data *data = user_data;
++
++	if (cond != OFONO_ATOM_WATCH_CONDITION_REGISTERED)
++		return;
++
++	emulator_battery_cb(atom, GUINT_TO_POINTER(data->batt_level));
+ }
+ 
+ static gboolean phonesim_reset(void *user_data)
+@@ -545,17 +559,6 @@ static void crst_notify(GAtResult *result, gpointer user_data)
+ 	g_idle_add(phonesim_reset, user_data);
+ }
+ 
+-static void emulator_battery_cb(struct ofono_atom *atom, void *data)
+-{
+-	struct ofono_emulator *em = __ofono_atom_get_data(atom);
+-	int val = 0;
+-
+-	if (GPOINTER_TO_INT(data) > 0)
+-		val = (GPOINTER_TO_INT(data) - 1) / 20 + 1;
+-
+-	ofono_emulator_set_indicator(em, OFONO_EMULATOR_IND_BATTERY, val);
+-}
+-
+ static void cbc_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_modem *modem = user_data;
+@@ -582,6 +585,43 @@ static void cbc_notify(GAtResult *result, gpointer user_data)
+ 						GUINT_TO_POINTER(level));
+ }
+ 
++static void finish_powerup(struct ofono_modem *modem)
++{
++	struct phonesim_data *data = ofono_modem_get_data(modem);
++
++	g_at_chat_send(data->chat, "AT+CSCS=\"GSM\"", none_prefix,
++			NULL, NULL, NULL);
++
++	g_at_chat_register(data->chat, "+CRST:",
++				crst_notify, FALSE, modem, NULL);
++
++	g_at_chat_register(data->chat, "+CBC:",
++				cbc_notify, FALSE, modem, NULL);
++
++	g_at_chat_send(data->chat, "AT+CBC", none_prefix, NULL, NULL, NULL);
++
++	g_at_chat_send(data->chat, "AT+SIMSTATE?", simstate_prefix,
++					simstate_query, modem, NULL);
++	g_at_chat_register(data->chat, "+USIMSTATE:", usimstate_notify,
++						FALSE, modem, NULL);
++
++	data->hfp_watch = __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_EMULATOR_HFP,
++					emulator_hfp_watch, data, NULL);
++}
++
++static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem = user_data;
++
++	DBG("");
++
++	ofono_modem_set_powered(modem, ok);
++
++	if (ok)
++		finish_powerup(modem);
++}
++
+ static void phonesim_disconnected(gpointer user_data)
+ {
+ 	struct ofono_modem *modem = user_data;
+@@ -644,18 +684,6 @@ static void mux_setup(GAtMux *mux, gpointer user_data)
+ 					cfun_set_on_cb, modem, NULL);
+ }
+ 
+-static void emulator_hfp_watch(struct ofono_atom *atom,
+-				enum ofono_atom_watch_condition cond,
+-				void *user_data)
+-{
+-	struct phonesim_data *data = user_data;
+-
+-	if (cond != OFONO_ATOM_WATCH_CONDITION_REGISTERED)
+-		return;
+-
+-	emulator_battery_cb(atom, GUINT_TO_POINTER(data->batt_level));
+-}
+-
+ static int connect_socket(const char *address, int port)
+ {
+ 	struct sockaddr_in addr;
+@@ -755,25 +783,7 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 		return -EINPROGRESS;
+ 	}
+ 
+-	g_at_chat_send(data->chat, "AT+CSCS=\"GSM\"", none_prefix,
+-			NULL, NULL, NULL);
+-
+-	g_at_chat_register(data->chat, "+CRST:",
+-				crst_notify, FALSE, modem, NULL);
+-
+-	g_at_chat_register(data->chat, "+CBC:",
+-				cbc_notify, FALSE, modem, NULL);
+-
+-	g_at_chat_send(data->chat, "AT+CBC", none_prefix, NULL, NULL, NULL);
+-
+-	g_at_chat_send(data->chat, "AT+SIMSTATE?", simstate_prefix,
+-					simstate_query, modem, NULL);
+-	g_at_chat_register(data->chat, "+USIMSTATE:", usimstate_notify,
+-						FALSE, modem, NULL);
+-
+-	data->hfp_watch = __ofono_modem_add_atom_watch(modem,
+-					OFONO_ATOM_TYPE_EMULATOR_HFP,
+-					emulator_hfp_watch, data, NULL);
++	finish_powerup(modem);
+ 
+ 	return 0;
+ }
+-- 
+2.43.0
 
-That's an awesome start.  Some preliminary comments:
-
-- Since you've made so many changes already, even based on work by other 
-authors, it would be okay to add your copyright to the added / modified files.
-
-- Coding style and formatting.  There's quite a bit of formatting problems in 
-the file.  See oFono's doc/coding-style.txt for our coding style guidelines. 
-Also, it may be a good idea to run this patch and future submissions through 
-Linux Kernel's checkpatch.pl script to avoid going through multiple rounds of 
-reviews due to style issues.  Some minor nitpicks I can fix in place (assuming 
-the author doesn't mind) when applying the patch, but there's too many in this 
-RFC at the moment.
-
-- Also watch out for mixed tabs and space indentation, > 80 char lines, 
-redundant double empty lines, etc.
-
-- Redundant changes.  Many changes seem to be spurious / redundant, particularly 
-in voice.h file.  This makes the diff bigger for no apparent reason.  Can this 
-be fixed?
-
-- Much of voice.c seems to be not useful.  The only user of these functions 
-would be in the voicecall driver itself.  I'd rather not introduce intermediate 
-APIs for no reason.  Could you inline the operations directly in the driver 
-method implementation?  For example, static void dial() invokes 
-qmi_voice_dial_call().  Just inline the qmi_voice_dial_call() implementation 
-inside dial().
-
-- I know this is an existing driver, but any chance you could split this up a 
-bit into multiple patches?  Think of it as telling a story / writing a novel. 
-Introduce new data structures / operations as you use them.  One strategy might 
-be to break this up like this:
-	- Dial implementation
-	- Event processing / all_call_status_ind()
-	- Answer implementation
-	- Release specific implementation
-	- hangup active implementation
-	- DTMF implementation
-
-> The common/call_list.* files can potentially be used by other drivers.
-> 
-
-Can you put call_list.[ch] into the voicecall.c for now?  I understand the 
-reason for why this was invented / why this exists, but ultimately there's a 
-much better approach that we can utilize.  We'll worry about this a bit later 
-once the initial set is upstream.
-
-> Apologies for attaching the patch, git send-email is not my normal work flow!
-> :)
-
-Please use git send-email for submissions.  Patchwork does not work well with 
-attachments.  oFono CI (which is still a bit WIP) doesn't like attachments 
-either.  It is also much easier to comment on patches sent via git send-email 
-since the patch contents can be easily replied to in-line.
-
-As a side benefit, the CI runs checkpatch, checks compilation on multiple 
-platforms, etc.
-
-Regards,
--Denis
