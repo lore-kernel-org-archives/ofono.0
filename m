@@ -1,63 +1,63 @@
-Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5546170CC2
-	for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 22:19:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1579773526
+	for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 22:19:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711405161; cv=none; b=rDDVgicgpGgAs/eWGAgTFyE5AJZQG5QwjkWmR8Qd2X3mMDMnHOMyA3SFkhpkrzpgkNezMN92rBNyuC9Zc5eBpMn9ZgUIrq792x3pcMs8rUm0WpngLEM4dwV6RaAWB7cc4PE3pzEKMg5+ZBwJItbDRSFw4jDV/fYEhsGffRoE+fw=
+	t=1711405163; cv=none; b=BJh1UWCvJyNqIkeYUu6t1a3zSfxflJPQymbxWAGSPZORBSz38vD7ti9mh5R34zUFZoHPcmJe8beII3ozvidb3CnWQX9k0HcwnKybVDgDs7hS4dDYtZbqESXjjfTxNF+FkhezOV7bKj/lBIlJilhRmSBAUC0d5j7FaTVi+ESfnf0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711405161; c=relaxed/simple;
-	bh=d7AHsFiFMjKzBcBuLcwK2xd3KlO2zJzNogMcasNmlig=;
+	s=arc-20240116; t=1711405163; c=relaxed/simple;
+	bh=VMZHQMkuf46iuLDMb6sTLI4b7+E5Lcw3MSpwQ9ALWSM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=uypc58cF1ZjJcNzJMa2uJl1Lnu8p33CQWkeIyAM7P+2YpQfwazTxeH1Ud1yZSG7aK3NBGGvCA2P3yWv3BZ9HaC1KMK/IRVgNcOfWqYHR/08GrWVNKrU0LHuoo/IseKuwvjYvrlgGj+uvCpHlG1vuVSmM67gJ14nYtUaL+eri5WY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GjFDyuXX; arc=none smtp.client-ip=209.85.128.48
+	 MIME-Version; b=jB0V0dmzuVtSLihWXtjxdzlVuChboRbQwjate5KlwWBOyFVgVDg1VNlaBKOrV06h2nRFyhs+QsBbDO/1L4IdjyM6wM0ZEwfpxwZe1VMd0IRjE4+lRebnJINcDA//MoDy/YAR4/SLOhpoTXrvvqIh9x5FGYliHye5mNUYWOd9DQs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=U2l0xD/n; arc=none smtp.client-ip=209.85.221.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GjFDyuXX"
-Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-4148e14799eso632735e9.0
-        for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 15:19:19 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="U2l0xD/n"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-341cf28e013so820758f8f.3
+        for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 15:19:20 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1711405157; x=1712009957; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1711405159; x=1712009959; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=gyXYh4eaD0d23/nVbgaicoFQTexRgy+8G09cRZW8G70=;
-        b=GjFDyuXX+jwod1zgZf9atbWRtkL2EejkdYQP7634HvNa6wnUyERPqcie+J5KWMZ2Mr
-         PcpVGteYHvlH+bStzRh9ePOzBc9lD5nTtXSH2H800bqF28NqjD4KX6f62l/GkUZqoaUA
-         PHzigZy2JdBWNAtCJxhj/vpuv0bYLmhdlxpRVLZUctRDhvXMcmSY/xZfHrpSbh+lV3Pt
-         AXfjJG3SzE9E+IsZzKf3BNhU77ScAkTZQ1D4QTWqHa8nVzqyG/JHNAzlBMlyjWpkpWs+
-         gXF19ewFoJW91igjzlbnCjoVOnFVsBv22YPvdGwPGcnbi/sJXyn75W8MtYSgtAHZYnJH
-         uKXA==
+        bh=QXhbVdY2gtZolOFyzs6V0IQChpAmU4PQiCJJ4Ukbj7g=;
+        b=U2l0xD/nrKYvSj7VpNiuUrDwGWBjjKmDtLPmLOGUh3hIbN1TxKdIzXKZ8335/eJWE9
+         COWg/rDTYvNN8PjNRl3Vmn2L4GsqSOliRd3Qdqzz0AE2sujQlA3/+D36wd2DOffGPzke
+         yoROqUaU5zsA0QFR+gl3bE7d8xhdsWxQ8Pr6UjCmul+lyxY6ZTnsfHoQ6c5E6pqIiPi5
+         brJIGTnqpVdahTMcyqKdYRouThJnoczrZCLYN0kIlZrHXpGyPXdZNx7y5VMobFskFRaW
+         8okDse2dIYsLNsWlWJux70s7NUEqSPMkmtUD39SVvEPPMkNyM8JrytAE7xs3krDNoqDG
+         GpTQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711405157; x=1712009957;
+        d=1e100.net; s=20230601; t=1711405159; x=1712009959;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=gyXYh4eaD0d23/nVbgaicoFQTexRgy+8G09cRZW8G70=;
-        b=vCVLrBHcYKlQQS+XO8oALw7mh9GWNc7yaStOH+jI9v08ndxpFGWxGuMuwoefJeqYMs
-         RhxHOkEBx3owiDVmgHEoiC0/xsrjPuFr7L8Lk2Md43REEdYGGiOzbzYsGZo3foeoSz3l
-         Q4AdDq2+mXjrT5zXJ/0ywPIGsnuiD4wWceAvMt9GzweTWgWVDajleSobCy6Kss9B6CjZ
-         wS7ox1NqeqlpTbNy8K7SWpMER1HiHNhobUjUqGLwVNmKG1Vav8SX7ZIkZdznnxNsIIAX
-         5F492yToEgjAr7BFV/ZvtqC3tcUgTMHJMxjHWNT91jGAbKWcdcfmVdRhteVNp/BDu0ju
-         i7LQ==
-X-Gm-Message-State: AOJu0YyiWd6tXvcyG7o7L4WyO6VLLtsz7BhD2yoRRpJRVLkAN0Q6D5lZ
-	2JIYAOVPrGgRP0OneQFsqv+MggjDTHkx5WvCvgrbBarYgzmiQzQ0h05ieLQlpEM=
-X-Google-Smtp-Source: AGHT+IFUwGgYmZEQGrdIX6oBUQImiJRrHUtpfgMnJ5lNYErSRwt6ZRerTt/wC5GBpbeID2UUAP9BOg==
-X-Received: by 2002:a05:6000:1841:b0:341:ccea:5573 with SMTP id c1-20020a056000184100b00341ccea5573mr3900586wri.69.1711405157174;
-        Mon, 25 Mar 2024 15:19:17 -0700 (PDT)
+        bh=QXhbVdY2gtZolOFyzs6V0IQChpAmU4PQiCJJ4Ukbj7g=;
+        b=TCe8APW+inx1Vr5m8MnKyyUMD0mzaWH1yhT6qsMDFeaBQMh6wnkbzvWGI1i8GVkCBN
+         1pu5twcycYkvvAtBE12AnFw3RSHZi9PoJUCbq8yQDaJccmerVHiJq8drLNumEaE3RbxW
+         FJ0rxZvjRrETY2CkXLRrsPSRxpTQzog1NPtL0gHNC6kHGED04UYXHeU2uUOz6e/l6yv1
+         QUBOyPcyzNQuYLRqOI3XGG1tea8fhz+pUNbgubqcOZOOrH0h7nDRcxVsT9nJv2uMy3YK
+         NQThNkwnuGUxnrZFi52mWojWP+dNdaY7709aCtogLjPJo9IU6lfjiFWQ2NEx1S34V26E
+         uLAA==
+X-Gm-Message-State: AOJu0Yz16dRO4C8FVhpl++O/MtSd2SenlW7/KOg5ka/u9pgahol31yWl
+	6FlACZODFfURPCuxg9JS7L4f1iDWy5PmPovHj6W449VmOOKo91YrFWdKXzeErHs=
+X-Google-Smtp-Source: AGHT+IFO5ChY7j4HdVBBSNGp0QaeqLZKiGYn9c7i7fEajWNZVv50x4nqWixrMf+nkQ9WZNHbWbqtFQ==
+X-Received: by 2002:a05:6000:1105:b0:33e:798f:6d1e with SMTP id z5-20020a056000110500b0033e798f6d1emr6011775wrw.37.1711405159066;
+        Mon, 25 Mar 2024 15:19:19 -0700 (PDT)
 Received: from adam-laptop-hp.lan ([90.246.50.91])
-        by smtp.gmail.com with ESMTPSA id n12-20020a056000170c00b00341d1da721dsm2163805wrc.65.2024.03.25.15.19.16
+        by smtp.gmail.com with ESMTPSA id n12-20020a056000170c00b00341d1da721dsm2163805wrc.65.2024.03.25.15.19.18
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 25 Mar 2024 15:19:16 -0700 (PDT)
+        Mon, 25 Mar 2024 15:19:18 -0700 (PDT)
 Sender: Adam Pigg <piggz1@gmail.com>
 From: Adam Pigg <adam@piggz.co.uk>
 To: ofono@lists.linux.dev
 Cc: Adam Pigg <adam@piggz.co.uk>
-Subject: [PATCH 2/4] [qmimodem][voicecall] Implement call answer
-Date: Mon, 25 Mar 2024 22:17:00 +0000
-Message-ID: <20240325221742.5931-2-adam@piggz.co.uk>
+Subject: [PATCH 3/4] [qmimodem][voicecall] Implement active call hangup
+Date: Mon, 25 Mar 2024 22:17:01 +0000
+Message-ID: <20240325221742.5931-3-adam@piggz.co.uk>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240325221742.5931-1-adam@piggz.co.uk>
 References: <20240325221742.5931-1-adam@piggz.co.uk>
@@ -70,51 +70,51 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
 ---
- drivers/qmimodem/voice.h     |   9 ++++
- drivers/qmimodem/voicecall.c | 100 ++++++++++++++++++++++++++++++++++-
- 2 files changed, 108 insertions(+), 1 deletion(-)
+ drivers/qmimodem/voice.h     |   9 +++
+ drivers/qmimodem/voicecall.c | 113 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 122 insertions(+)
 
 diff --git a/drivers/qmimodem/voice.h b/drivers/qmimodem/voice.h
-index 1a584f10..9c31297b 100644
+index 9c31297b..244a6f85 100644
 --- a/drivers/qmimodem/voice.h
 +++ b/drivers/qmimodem/voice.h
 @@ -54,6 +54,7 @@ enum qmi_ussd_user_required {
  /* QMI service voice. Using an enum to prevent doublicated entries */
  enum voice_commands {
  	QMI_VOICE_DIAL_CALL =			0x20,
-+	QMI_VOICE_ANSWER_CALL =			0x22,
++	QMI_VOICE_END_CALL =			0x21,
+ 	QMI_VOICE_ANSWER_CALL =			0x22,
  	QMI_VOICE_SUPS_NOTIFICATION_IND =	0x32,
  	QMI_VOICE_SET_SUPS_SERVICE =		0x33,
- 	QMI_VOICE_GET_CALL_WAITING =		0x34,
-@@ -110,6 +111,14 @@ enum qmi_voice_call_type {
- 	QMI_VOICE_CALL_TYPE_VOICE_FORCE,
+@@ -119,6 +120,14 @@ enum qmi_voice_call_answer_return {
+ 	QMI_VOICE_ANSWER_RETURN_CALL_ID = 0x10,
  };
  
-+enum qmi_voice_call_answer_param {
-+	QMI_VOICE_ANSWER_CALL_ID = 0x01,
++enum qmi_voice_call_end_param {
++	QMI_VOICE_END_CALL_ID = 0x01,
 +};
 +
-+enum qmi_voice_call_answer_return {
-+	QMI_VOICE_ANSWER_RETURN_CALL_ID = 0x10,
++enum qmi_voice_call_end_return {
++	QMI_VOICE_END_RETURN_CALL_ID = 0x10,
 +};
 +
  enum parse_error {
  	NONE = 0,
  	MISSING_MANDATORY = 1,
 diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
-index ba5ed9e4..7c6bc113 100644
+index 7c6bc113..4ef8adc1 100644
 --- a/drivers/qmimodem/voicecall.c
 +++ b/drivers/qmimodem/voicecall.c
-@@ -97,6 +97,16 @@ struct qmi_voice_dial_call_result {
+@@ -107,6 +107,16 @@ struct qmi_voice_answer_call_result {
  	uint8_t call_id;
  };
  
-+struct qmi_voice_answer_call_arg {
++struct qmi_voice_end_call_arg {
 +	bool call_id_set;
 +	uint8_t call_id;
 +};
 +
-+struct qmi_voice_answer_call_result {
++struct qmi_voice_end_call_result {
 +	bool call_id_set;
 +	uint8_t call_id;
 +};
@@ -122,31 +122,29 @@ index ba5ed9e4..7c6bc113 100644
  int ofono_call_compare(const void *a, const void *b, void *data)
  {
  	const struct ofono_call *ca = a;
-@@ -533,6 +543,94 @@ error:
+@@ -631,6 +641,107 @@ error:
  	l_free(param);
  }
  
-+enum parse_error qmi_voice_answer_call_parse(
-+	struct qmi_result *qmi_result,
-+	struct qmi_voice_answer_call_result *result)
++enum parse_error
++qmi_voice_end_call_parse(struct qmi_result *qmi_result,
++			 struct qmi_voice_end_call_result *result)
 +{
 +	int err = NONE;
 +
 +	/* optional */
-+	if (qmi_result_get_uint8(qmi_result, QMI_VOICE_ANSWER_RETURN_CALL_ID, &result->call_id))
++	if (qmi_result_get_uint8(qmi_result, QMI_VOICE_END_RETURN_CALL_ID, &result->call_id))
 +		result->call_id_set = 1;
 +
 +	return err;
 +}
 +
-+static void answer_cb(struct qmi_result *result, void *user_data)
++static void end_call_cb(struct qmi_result *result, void *user_data)
 +{
 +	struct cb_data *cbd = user_data;
 +	ofono_voicecall_cb_t cb = cbd->cb;
 +	uint16_t error;
-+	struct qmi_voice_answer_call_result answer_result;
-+
-+	DBG("");
++	struct qmi_voice_end_call_result end_result;
 +
 +	if (qmi_result_set_error(result, &error)) {
 +		DBG("QMI Error %d", error);
@@ -154,8 +152,7 @@ index ba5ed9e4..7c6bc113 100644
 +		return;
 +	}
 +
-+	/* TODO: what happens when calling it with no active call or wrong caller id? */
-+	if (qmi_voice_answer_call_parse(result, &answer_result) != NONE) {
++	if (qmi_voice_end_call_parse(result, &end_result) != NONE) {
 +		DBG("Received invalid Result");
 +		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +		return;
@@ -164,49 +161,34 @@ index ba5ed9e4..7c6bc113 100644
 +	CALLBACK_WITH_SUCCESS(cb, cbd->data);
 +}
 +
-+static void answer(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb, void *data)
++static void release_specific(struct ofono_voicecall *vc, int id,
++		     ofono_voicecall_cb_t cb, void *data)
 +{
 +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
 +	struct cb_data *cbd = cb_data_new(cb, data);
-+	struct qmi_voice_answer_call_arg arg;
-+	struct ofono_call *call;
++	struct qmi_voice_end_call_arg arg;
 +	struct qmi_param *param = NULL;
 +
 +	DBG("");
-+
 +	cbd->user = vc;
 +
-+	call = l_queue_find(vd->call_list,
-+					ofono_call_compare_by_status,
-+					L_UINT_TO_PTR(CALL_STATUS_INCOMING));
-+
-+	if (call == NULL) {
-+		DBG("Can not find a call to answer");
-+		goto error;
-+	}
-+
 +	arg.call_id_set = true;
-+	arg.call_id = call->id;
++	arg.call_id = id;
 +
 +	param = qmi_param_new();
 +	if (!param)
 +		goto error;
 +
 +	if (arg.call_id_set) {
-+		if (!qmi_param_append_uint8(
-+			param,
-+			QMI_VOICE_ANSWER_CALL_ID,
-+			arg.call_id))
++		if (!qmi_param_append_uint8(param, QMI_VOICE_END_CALL_ID, arg.call_id)) {
 +			goto error;
++		}
 +	}
 +
-+	if (qmi_service_send(vd->voice,
-+		QMI_VOICE_ANSWER_CALL,
-+		param,
-+		answer_cb,
-+		cbd,
-+		l_free) > 0)
++	if (qmi_service_send(vd->voice, QMI_VOICE_END_CALL, param, end_call_cb, cbd, l_free) >
++	    0) {
 +		return;
++	}
 +
 +error:
 +	CALLBACK_WITH_FAILURE(cb, data);
@@ -214,22 +196,46 @@ index ba5ed9e4..7c6bc113 100644
 +	l_free(param);
 +}
 +
++static void hangup_active(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb,
++			  void *data)
++{
++	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
++	struct ofono_call *call;
++	enum call_status active[] = {
++		CALL_STATUS_ACTIVE,
++		CALL_STATUS_DIALING,
++		CALL_STATUS_ALERTING,
++		CALL_STATUS_INCOMING,
++	};
++	int i;
++
++	DBG("");
++	for (i = 0; i < L_ARRAY_SIZE(active); i++) {
++		call = l_queue_find(vd->call_list, ofono_call_compare_by_status,
++				    L_INT_TO_PTR(active[i]));
++
++		if (call)
++			break;
++	}
++
++	if (call == NULL) {
++		DBG("Can not find a call to hang up");
++		CALLBACK_WITH_FAILURE(cb, data);
++		return;
++	}
++
++	release_specific(vc, call->id, cb, data);
++}
++
  static void create_voice_cb(struct qmi_service *service, void *user_data)
  {
  	struct ofono_voicecall *vc = user_data;
-@@ -577,7 +675,6 @@ static int qmi_voicecall_probe(struct ofono_voicecall *vc,
- 					create_voice_cb, vc, NULL);
- 
- 	return 0;
--
- }
- 
- static void qmi_voicecall_remove(struct ofono_voicecall *vc)
-@@ -599,6 +696,7 @@ static const struct ofono_voicecall_driver driver = {
- 	.probe		= qmi_voicecall_probe,
+@@ -697,6 +808,8 @@ static const struct ofono_voicecall_driver driver = {
  	.remove		= qmi_voicecall_remove,
  	.dial		= dial,
-+	.answer		= answer,
+ 	.answer		= answer,
++	.hangup_active  = hangup_active,
++	.release_specific  = release_specific,
  };
  
  OFONO_ATOM_DRIVER_BUILTIN(voicecall, qmimodem, &driver)
