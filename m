@@ -1,111 +1,101 @@
-Received: from mail-oa1-f52.google.com (mail-oa1-f52.google.com [209.85.160.52])
+Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5EE3070CB3
-	for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 23:05:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 388AA82D83
+	for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 23:32:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711407926; cv=none; b=Azzkm8PCGwSs1fIuCpM3n3A8Kx2E2isDSNwL1zLfIzoQ9CLFPi0vLFThNWalVwTSVLJtQ+pKo1Qd7oXg2sVKzBrsC2jOdb9yuN1+7g3Bzn0436SaQc1U37DHk5XLWM8Hx8Pu+Iff6yUy7IB5eU7t4LWA0fqgVghHFW/brIZXUBU=
+	t=1711409555; cv=none; b=rnhgcYb6hHoJNyKR1B8oxf+d6CdCDwlvWXW1YLWa2+CKF0Txlpc9kugyjkXg/zNTZeDHlZwWrPW9P6ZzOJ3fxPeDlNNBn8GodxVio9qvQNWk523AX8iX7QwVOKl//65LZ4KnAcJVRKDF9FJ/8h3sa5cKag07GUS0yhViU5TuNSk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711407926; c=relaxed/simple;
-	bh=KqxwqdvhI5JyEnvdxCSi8UJaqukCIoC6wP7m51JanL8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=dwXGwuL15wXjWxsMUakq7c5MbXZE2WrrEfQBMrrsLDPwRB/pGDSr8lGPZRHpnaokaLZkORy8ImfIuPdI24Q1JjRpo55N8tYmTs0isbdFiKc54MRo37PvBu+5uxf0Q1RrPQQ53p26JLQ8Uk4qi8frnb6SMOp5Iq5oGHVEorIwBOI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RwgOr+Q+; arc=none smtp.client-ip=209.85.160.52
+	s=arc-20240116; t=1711409555; c=relaxed/simple;
+	bh=H7Gnrav854S2LJtEVhS9NBxUICOS2VCYeIDszZqBRc0=;
+	h=To:From:Subject:In-Reply-To:References:Content-Type:Date:
+	 Message-ID:MIME-Version; b=GE+hN7qtrs6WdOKCqdOE7J1v2AL2Y3/fCaolFq28nsjpUp8XXCNKRpaCZSmdidTSDLGZ9CYiWDjyHXtVQ0Fnr4ZF6WNXkabsER3RdUTEhEaqsL+0rT6rmwcCQqdkaJbRDP66Lkddv04czbuXLfJyinfnxq+HvSJN1pY6AZfTwU0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ErMA6Ss0; arc=none smtp.client-ip=209.85.208.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RwgOr+Q+"
-Received: by mail-oa1-f52.google.com with SMTP id 586e51a60fabf-229cbc52318so2192741fac.2
-        for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 16:05:25 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ErMA6Ss0"
+Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-2d46dd8b0b8so64308351fa.2
+        for <ofono@lists.linux.dev>; Mon, 25 Mar 2024 16:32:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1711407924; x=1712012724; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=XfoPiql/VfyGUoozKl4Md6EqWN4wOcHW7I2coQjniak=;
-        b=RwgOr+Q+ZKLY/TVr2tmHEp8AdopJY4Nyoup53LibRx05b/Vj8YJHci4ce0y5YRymIc
-         BoeXe27bDcOJjsOCHSbp4YH6lnatCIeP7RTlm3wB2plURi35AFo+0IeYdBe6evMjPIeL
-         36/kqjmxVXV/yYy0C+aPBlq7O7gCFBM4gz3jYT1qt4pJpDQCKIeiOcoHkc2k+2hqMGto
-         PSy5vDeh9JYeYi/8wq2KOP+hiIgTGAZ5x3yjdAKByx90USpBUwN/62Md+Hwud/z8ueEh
-         eIj6M7NlQEeBXzhWMB5woVH9GrB0gl/3FUweXO5MNTUf3i/fQq+6UbUGOKjbtWVYxxxD
-         TCWQ==
+        d=gmail.com; s=20230601; t=1711409552; x=1712014352; darn=lists.linux.dev;
+        h=mime-version:message-id:date:content-transfer-encoding:references
+         :in-reply-to:subject:from:to:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=H7Gnrav854S2LJtEVhS9NBxUICOS2VCYeIDszZqBRc0=;
+        b=ErMA6Ss0WH75I3WoBIM32/ACroh87mLGuLFnXxTtcN/SejfuBoA7LYUme7t4Qwcccl
+         qbXtuVJPzzqbRzXpUrwGNOmsghJjU5840WCfQBQDFriQA9XVCNhwUOxZMKiZoGQFzpIw
+         EI1zgyVdWkymbOiYSIVQOwppnQorLNHs0Ymnswsawkad7HjTZUKWr3NyI6HkFAxOdl8C
+         7lQa30rOnPwEMnf/osEDTgyariiQwfaYCUQAXZb3KlEaTuqSp/996RefA7nZF/38gsGN
+         8k46OBlbqvceOximtMZLYAN2aY1EG60ZS6Eo2SAWP1JgbIeMz+edPICxacAX5S0jOKac
+         Ow4Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711407924; x=1712012724;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=XfoPiql/VfyGUoozKl4Md6EqWN4wOcHW7I2coQjniak=;
-        b=qX2P4SpOTbC1xhBpURNa/13iDg6kBzJAUe1sRIe0vLX3hMPQqSBKzLhT+lifSphBwe
-         Da03ZZWkBnjIOiA/oAGS+WZhJ1MyGbQgCbF8DnuVK9Se+Mvzj02XZrE3GLPEWifzjPpz
-         RaJjnHLPDQx31RuRhV6OfYWt2ZKaUQsMILjb538Q5jkwusGEmD3/X3nV7zyGpGDjCfhz
-         pQ1WftDtD03jRDnkR3ua+Oruq90XDQkUjKIqvLyzUWo2+sCdB7vUU3VyRWiRT75pXjYP
-         90CTjqdwa1rwp0yQ0JoRURRX7dtl8QQxeYKE2OqMYXYBuE1dZcg4ro1Bj6gLwSSWHwP1
-         v0Jw==
-X-Forwarded-Encrypted: i=1; AJvYcCXMZqdF1M+8SAWyBa+R2I8VEDopeLM8wEzC4d8OqBasWGjxsyIMjujMNmhCcRfbeRkJpN1ugQjSQh2KDwZFjKR4TL29WnM=
-X-Gm-Message-State: AOJu0Yxxtd1SDyX+r+KZSWqD0a+Z2muMnpaberCH4XqArCobLBKIWO7/
-	0/zEPD72/4ISvey+Vln7Vy/HL5J71ygwN1Wurr4p72cLcqLEvnFx
-X-Google-Smtp-Source: AGHT+IHCzQCppKhUS/lW1OWG7JHzGd7iN7Fhlzu6mo2fb1AkYSH66nB+/OprlOeYTX8RG+tIaAaefA==
-X-Received: by 2002:a05:6870:e0c8:b0:221:968d:fc9b with SMTP id a8-20020a056870e0c800b00221968dfc9bmr9652861oab.11.1711407924377;
-        Mon, 25 Mar 2024 16:05:24 -0700 (PDT)
-Received: from [192.168.1.22] (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id l5-20020a544505000000b003c3d6e9f15fsm168601oil.24.2024.03.25.16.05.23
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 25 Mar 2024 16:05:24 -0700 (PDT)
-Message-ID: <3c148086-1baa-4a72-83b9-c3d0fe0a8b5a@gmail.com>
-Date: Mon, 25 Mar 2024 18:05:23 -0500
+        d=1e100.net; s=20230601; t=1711409552; x=1712014352;
+        h=mime-version:message-id:date:content-transfer-encoding:references
+         :in-reply-to:subject:from:to:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=H7Gnrav854S2LJtEVhS9NBxUICOS2VCYeIDszZqBRc0=;
+        b=ewTzxjL5VdAMEm3GrDtGmfqn1n5PfGjWg3snfQdWwoP0S7x64z7hIUcsAOnQgTAhE+
+         J6BeuwPq+Bm+HPOgsy+NMthEBO6cIhXkvu7/PnC0aKGw62T35vqqp9Hqi12Pmlykysoc
+         7RpQ7/WBmQKrd3+WcVj1OQd2+DEctWQa5sdDYE+SqWnKr1tj7KZKh0F1XFGpa0TdeTIM
+         yAmkPK3nJc4ptdVCIZiO2Bg+dZ78YC3/NIRiPSI1tWOAheWdj+u2e24opwSyU2zBBEZA
+         B6Els9GDJ7znEl+w5sxhpfEt1+7R9lMJauSuXnmqt5kq2Ut51u+g7Vry7JYoQi5nC7Fc
+         TD+Q==
+X-Forwarded-Encrypted: i=1; AJvYcCXyNdTij6VBW6UKGxNPnhGMSvUbwk63EtOiNj3U3eNjt9mZZiIoj9nV6Wfb6drdD//h+Ohg9TkLMW+6r7DBwVDjWFUX6+k=
+X-Gm-Message-State: AOJu0YwcwKvfVJRx+FSJhdn0zhcr3slIo0tpBL5CLaAb8Ehq6FaUHIUP
+	2luhXMuuWYCw/46UM1gxAPh/LKnyYwEhPXIIIGpcNYG9xe0o4AEa
+X-Google-Smtp-Source: AGHT+IFrPy8ZcH+4HnWBTuW095kVhC2qameK81IB2TsEogdZc4phc2/PJnjfbqj9fMEnk+F+NB449Q==
+X-Received: by 2002:a2e:a708:0:b0:2d6:b072:22c5 with SMTP id s8-20020a2ea708000000b002d6b07222c5mr675493lje.42.1711409551908;
+        Mon, 25 Mar 2024 16:32:31 -0700 (PDT)
+Received: from [100.96.214.50] (92.40.181.135.threembb.co.uk. [92.40.181.135])
+        by smtp.gmail.com with ESMTPSA id r13-20020a056402018d00b0056c18b79cd3sm1055804edv.22.2024.03.25.16.32.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 25 Mar 2024 16:32:31 -0700 (PDT)
+X-Priority: 3
+To: denkenz@gmail.com,adam@piggz.co.uk,ofono@lists.linux.dev
+From: piggz1@gmail.com
+Subject: Re: [PATCH 1/4] [qmimodem][voicecall] Implement call dialing
+In-Reply-To: <3c148086-1baa-4a72-83b9-c3d0fe0a8b5a@gmail.com>
+References: <20240325221742.5931-1-adam@piggz.co.uk>
+ <3c148086-1baa-4a72-83b9-c3d0fe0a8b5a@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+Date: Mon, 25 Mar 2024 23:32:29 +0000
+Message-ID: <64u1qk.saxg27.runf3m-qmf@smtp.gmail.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/4] [qmimodem][voicecall] Implement call dialing
-Content-Language: en-US
-To: Adam Pigg <adam@piggz.co.uk>, ofono@lists.linux.dev
-References: <20240325221742.5931-1-adam@piggz.co.uk>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20240325221742.5931-1-adam@piggz.co.uk>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 
-Hi Adam,
-
-On 3/25/24 17:16, Adam Pigg wrote:
-> Add voicecall dialling to the qmimodem driver
-> Includes required infratructure and setup of the QMI services
-> ---
->   drivers/qmimodem/voice.h     |  51 ++++
->   drivers/qmimodem/voicecall.c | 506 ++++++++++++++++++++++++++++++++++-
->   2 files changed, 555 insertions(+), 2 deletions(-)
-> 
-
-Hmm, have you rebased on top of git HEAD?
-
-CI seems unable to apply this series
-
-Run git-pw series apply 838112
-Failed to apply patch:
-Applying: Implement call dialing
-error: sha1 information is lacking or useless (drivers/qmimodem/voicecall.c).
-error: could not build fake ancestor
-hint: Use 'git am --show-current-patch=diff' to see the failed patch
-Patch failed at 0001 Implement call dialing
-When you have resolved this problem, run "git am --continue".
-If you prefer to skip this patch, run "git am --skip" instead.
-To restore the original branch and stop patching, run "git am --abort".
-
-Also, I can't do it manually on my end due to:
-
-[denkenz@archdev ofono]$ git pw series apply 838112
-Failed to apply patch:
-Applying: Implement call dialing
-.git/rebase-apply/patch:92: new blank line at EOF.
-+
-.git/rebase-apply/patch:652: new blank line at EOF.
-+
-error: 2 lines add whitespace errors.
-
-Regards,
--Denis
+QWggb2ssIHRoYW5rcywgaWxsIGNoZWNrIHRoaXMgaW4gdGhlIG1vcm5pbmcuICBJdCB3YXMgYWdh
+aW5zdCBhIGJyYW5jaCBmcm9tIDIuNSB3aGljaCBhbHNvIGNvbnRhaW5zIHRoZSBvdGhlciBjaGFu
+Z2VzIGkgbmVlZCBmb3IgdGVzdGluZyB3aXRoIHNhaWxmaXNoLiAgaWxsIHJlYmFzZSBpdCBvbiBI
+RUFEIGFuZCByZS1zdWJtaXQuDQoNCk9uIE1vbmRheSwgMjUgTWFyY2ggMjAyNCwgRGVuaXMgS2Vu
+emlvciB3cm90ZToNCj4gSGkgQWRhbSwNCj4gDQo+IE9uIDMvMjUvMjQgMTc6MTYsIEFkYW0gUGln
+ZyB3cm90ZToNCj4gPiBBZGQgdm9pY2VjYWxsIGRpYWxsaW5nIHRvIHRoZSBxbWltb2RlbSBkcml2
+ZXINCj4gPiBJbmNsdWRlcyByZXF1aXJlZCBpbmZyYXRydWN0dXJlIGFuZCBzZXR1cCBvZiB0aGUg
+UU1JIHNlcnZpY2VzDQo+ID4gLS0tDQo+ID4gICBkcml2ZXJzL3FtaW1vZGVtL3ZvaWNlLmggICAg
+IHwgIDUxICsrKysNCj4gPiAgIGRyaXZlcnMvcW1pbW9kZW0vdm9pY2VjYWxsLmMgfCA1MDYgKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0NCj4gPiAgIDIgZmlsZXMgY2hhbmdlZCwg
+NTU1IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pDQo+ID4gDQo+IA0KPiBIbW0sIGhhdmUg
+eW91IHJlYmFzZWQgb24gdG9wIG9mIGdpdCBIRUFEPw0KPiANCj4gQ0kgc2VlbXMgdW5hYmxlIHRv
+IGFwcGx5IHRoaXMgc2VyaWVzDQo+IA0KPiBSdW4gZ2l0LXB3IHNlcmllcyBhcHBseSA4MzgxMTIN
+Cj4gRmFpbGVkIHRvIGFwcGx5IHBhdGNoOg0KPiBBcHBseWluZzogSW1wbGVtZW50IGNhbGwgZGlh
+bGluZw0KPiBlcnJvcjogc2hhMSBpbmZvcm1hdGlvbiBpcyBsYWNraW5nIG9yIHVzZWxlc3MgKGRy
+aXZlcnMvcW1pbW9kZW0vdm9pY2VjYWxsLmMpLg0KPiBlcnJvcjogY291bGQgbm90IGJ1aWxkIGZh
+a2UgYW5jZXN0b3INCj4gaGludDogVXNlICdnaXQgYW0gLS1zaG93LWN1cnJlbnQtcGF0Y2g9ZGlm
+ZicgdG8gc2VlIHRoZSBmYWlsZWQgcGF0Y2gNCj4gUGF0Y2ggZmFpbGVkIGF0IDAwMDEgSW1wbGVt
+ZW50IGNhbGwgZGlhbGluZw0KPiBXaGVuIHlvdSBoYXZlIHJlc29sdmVkIHRoaXMgcHJvYmxlbSwg
+cnVuICJnaXQgYW0gLS1jb250aW51ZSIuDQo+IElmIHlvdSBwcmVmZXIgdG8gc2tpcCB0aGlzIHBh
+dGNoLCBydW4gImdpdCBhbSAtLXNraXAiIGluc3RlYWQuDQo+IFRvIHJlc3RvcmUgdGhlIG9yaWdp
+bmFsIGJyYW5jaCBhbmQgc3RvcCBwYXRjaGluZywgcnVuICJnaXQgYW0gLS1hYm9ydCIuDQo+IA0K
+PiBBbHNvLCBJIGNhbid0IGRvIGl0IG1hbnVhbGx5IG9uIG15IGVuZCBkdWUgdG86DQo+IA0KPiBb
+ZGVua2VuekBhcmNoZGV2IG9mb25vXSQgZ2l0IHB3IHNlcmllcyBhcHBseSA4MzgxMTINCj4gRmFp
+bGVkIHRvIGFwcGx5IHBhdGNoOg0KPiBBcHBseWluZzogSW1wbGVtZW50IGNhbGwgZGlhbGluZw0K
+PiAuZ2l0L3JlYmFzZS1hcHBseS9wYXRjaDo5MjogbmV3IGJsYW5rIGxpbmUgYXQgRU9GLg0KPiAr
+DQo+IC5naXQvcmViYXNlLWFwcGx5L3BhdGNoOjY1MjogbmV3IGJsYW5rIGxpbmUgYXQgRU9GLg0K
+PiArDQo+IGVycm9yOiAyIGxpbmVzIGFkZCB3aGl0ZXNwYWNlIGVycm9ycy4NCj4gDQo+IFJlZ2Fy
+ZHMsDQo+IC1EZW5pcw0KPg0KDQotLSANClNlbnQgZnJvbSBteSBTYWlsZmlzaCBkZXZpY2U=
