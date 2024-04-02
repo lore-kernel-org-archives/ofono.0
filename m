@@ -1,62 +1,62 @@
-Received: from mail-oo1-f48.google.com (mail-oo1-f48.google.com [209.85.161.48])
+Received: from mail-oo1-f51.google.com (mail-oo1-f51.google.com [209.85.161.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A76961D529
-	for <ofono@lists.linux.dev>; Tue,  2 Apr 2024 22:31:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5947413FE7
+	for <ofono@lists.linux.dev>; Tue,  2 Apr 2024 22:31:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712097063; cv=none; b=iysIrKfoAMQt2Guqcd3jsaNq7TN4V8m8vY9OD5b0mq4g54RgIbAkYfyYqR7xHNDQR+ux56Xe3dN7xxpBX11HyBP7o6Funanps8e9JvppyD2Y+dca3csmsduAt3uFQfiM6N7fZ46NhOYrIsAmGlE+lccIBDktRVF7UE5mVyFfuz8=
+	t=1712097064; cv=none; b=mo+Amg5kpkcIrmGH1ONN9eFOsn1Ty9WBsJhgu8LhHNP0Bh38btHVQQJ65M0CBzx4aptkPeKh90LKAwMkACUgAYiEvjL0cOQ+pFuocxRPnXECreiw7NLzEtta5ZMieo8qRi94JeUpZEjaj9xnq9X0bMcVbi7H4dJIARuaI7EPlK4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712097063; c=relaxed/simple;
-	bh=8A/vRDi5jAwzUJ1AgQLwUt184NvPYujph9PsMG+FPJQ=;
+	s=arc-20240116; t=1712097064; c=relaxed/simple;
+	bh=sTP3HQTlWVgoLKVHjbAHwN55h/yTrk0VgaPXBstLQQc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=q0y519UA3stAjI1al+1uLOdoEmELWUCkcblEljr2jcx4jrcrvZARfExUQbAh5czoySZ8tNX+1ZqWpbz2PgdS6w6+0lw5EUXFFKAE3M7UnoEg8qaKxBerQXtDfIiZLinJg48VmVJ+Cvyo+rWV+lDk4+L2v9JT7wCWwWvTmbsLdbE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OA6ZKQa0; arc=none smtp.client-ip=209.85.161.48
+	 MIME-Version; b=lgzIQoUaGkrg306f+ZT2JMjggwOOsAoaRwVp4tlxEONqis2kxJQr+RjDMXXyz6VWYQNZMgmwoo84gjGuKnL7Cbx1uH5n/REe5pLTTndU3+T+7S4R+0pTEDonoWvIEDX8XF6L/4nYJVB1knSGQnAU3/SMaVoEnz94wbsgVesfZas=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j3RQygws; arc=none smtp.client-ip=209.85.161.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OA6ZKQa0"
-Received: by mail-oo1-f48.google.com with SMTP id 006d021491bc7-5a470320194so3349408eaf.3
-        for <ofono@lists.linux.dev>; Tue, 02 Apr 2024 15:31:01 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j3RQygws"
+Received: by mail-oo1-f51.google.com with SMTP id 006d021491bc7-5a4f608432bso3620005eaf.2
+        for <ofono@lists.linux.dev>; Tue, 02 Apr 2024 15:31:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712097060; x=1712701860; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1712097061; x=1712701861; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=ODeDIhWwvZpl8x9SSVdYHwsb69BrXgQE4y8wCTK2JIA=;
-        b=OA6ZKQa0cxdrkgBeboliLXinO5rKFySITC+YIiu/2a+E7sryIR0kx7ctLNSoAVkUKH
-         E//iFSf0KI3xUeKF206VlBCcN1LdfzJhxdRyBIJh39jtoReoLh5pnbvL5EVlu8lQRjis
-         v2+IAgg9ypTBJBLIwy9m/InayOB6lFO+GPYOoovG3zO/U6ybr0IURliqi6VlWGF8LyZP
-         bb1GMXfRkf+YOrRh00Ic2QgDMw+ncoNe98l5BU4R8T/HQv5dk7kf9QyvcJuCod9IcQf7
-         fHTmWHMJ2rQAHf5BIVAec5I3SfT356UnFcTfGC5ULfcBKOBkWHPpf7daOskO7qq50o1I
-         c6Cw==
+        bh=OJegCb221tkm/+wPfRA3j/tohFSI41UxlLHaLAgSOr0=;
+        b=j3RQygwsodEZ3eczA4fEk4sWXSRdbiArX5OpDOwX3i9aalwKQUcNz9CcZ81fJrF185
+         f+tlMv+9R7NgYIV//sxoeMGV1e6k32tFSGziH3xahbOveRbPBe63RChouqS1doi0+/WF
+         irkD1VODATPSRxRc2ecE/udpLp+VdP4kqZ2ClgGSj7f3UT8I0+fQx8nJbMIVpbt03EUj
+         Ti19W1cklQ2td7ioOPqhQJooLekprec0ZhNB5OJRTmR+Wd6oB/HX93rSHK/y+LOnXcdE
+         S0kDiZEpOofxsCL8xxyyuzCTXyDoBkE22Ha80u3o1nWQAa2O2uOLRv3/KnnHBMXCXsrO
+         JNKw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712097060; x=1712701860;
+        d=1e100.net; s=20230601; t=1712097061; x=1712701861;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=ODeDIhWwvZpl8x9SSVdYHwsb69BrXgQE4y8wCTK2JIA=;
-        b=du36kjql+lmRtCxReftlRadMabKYN0r6RDx0uAp07taLq7mKXewbTUc4k+Ca/ITTH4
-         E0acwNd1zx2nbSP1cOMVChgA586M4aBDm9x0xxXBDJvUWY9AgVkUlcBCdOvhqsTBDK+R
-         gkBnjyaPRvu0x2sW94XIlUMphf8Z/GKkBjO9mRl0mc+5yZQUKOMVVQMkBUMqBTqUrLwb
-         d6/O3kNMAtLzry9MV1cCYQRhOEu2lfKmXXV7MNIcN+kz+HaunbfzKYy9t1d96nTqXzBB
-         6cMx7iB38mI69r3Y1U4NzhDtRwdovVWr2oAw4KcWyCWbWXkg6Ujqr842iHvc9MZ43wQ3
-         MVbg==
-X-Gm-Message-State: AOJu0YxU0tJr0yxzWtZMLMFh9Mc9OYQwyPyHk5ngn8qZT+jI2U7a4nnS
-	na4NNirXnyKDFRd03P5zKcF0XLoYNbAkE6IPzowB+S5Gf9TVcXVTigYX3mMY
-X-Google-Smtp-Source: AGHT+IGisd8cP5o+P2Vpy7y5TxO5frHhKmGfnQ2NyP2KmEE3TFAfBJg/fCcfNFRbYyFcFPmr1HoIdg==
-X-Received: by 2002:a05:6820:210d:b0:5a1:bb9d:56a7 with SMTP id cd13-20020a056820210d00b005a1bb9d56a7mr14013828oob.8.1712097060694;
-        Tue, 02 Apr 2024 15:31:00 -0700 (PDT)
+        bh=OJegCb221tkm/+wPfRA3j/tohFSI41UxlLHaLAgSOr0=;
+        b=mkfWDKaFXOKSFU7+VoT5HE5E3G0xUcjFjokM6HVhTBhND/OpbHHWBLDO/0aZVdfq26
+         w0EMC3u7YJWHi6CbC7q1OxGc7Z5M0lhWUwamsRidCCAXZlfR+pG2nblKki8SA4e/IXtZ
+         QSOa8VIGmYGs9ceR7tTDBhtXyk8mnZWikA2Y0R8pb7z25c3PdIdcGduOUGKY0gbIDbnU
+         /1VTbodW0wJlneF57aOoxUGJCJTFiu6FJW4dfHgdfFlVEiXp3zQNEqj2Dlzk4fmO9mni
+         KKfcvwUrPgXs50cqX7Xl3xTdvCvhxI3yRGg+9iZvdztJtSn9DDxf5c6bqJBD5/XKy1X9
+         7hAg==
+X-Gm-Message-State: AOJu0YwN5BvbvRYpRjKjoAjfrtucoq3w9fC1/a3mRVr3Pyb+I5lHZfCk
+	sWMCPuI8zTpngDDLI04WHIPSDcBSouZGxfTenTDVlVnHvljJ11ePJ2jh7C/E
+X-Google-Smtp-Source: AGHT+IGXC51caBexEnNaf7hhscNffkUx6jePOpLyx8We/m697OaSIaeCrqNlcqQhHdYd4gWidypb1g==
+X-Received: by 2002:a05:6820:1e03:b0:5a5:23fb:4487 with SMTP id dh3-20020a0568201e0300b005a523fb4487mr12976735oob.2.1712097061346;
+        Tue, 02 Apr 2024 15:31:01 -0700 (PDT)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id eo8-20020a0568200f0800b005a58b8e4b1csm2956204oob.7.2024.04.02.15.31.00
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 02 Apr 2024 15:31:00 -0700 (PDT)
+        Tue, 02 Apr 2024 15:31:01 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 06/13] data: Remove RESELLER settings from AT&T
-Date: Tue,  2 Apr 2024 17:30:31 -0500
-Message-ID: <20240402223054.2819526-6-denkenz@gmail.com>
+Subject: [PATCH 07/13] provisiontool: Add support for context tags
+Date: Tue,  2 Apr 2024 17:30:32 -0500
+Message-ID: <20240402223054.2819526-7-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240402223054.2819526-1-denkenz@gmail.com>
 References: <20240402223054.2819526-1-denkenz@gmail.com>
@@ -68,32 +68,51 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This seems to be yet another MVNO, remove it for now.
+Since this changes the size of the context structure, bump the version
+number generated by provisiontool.
 ---
- data/provision.json | 10 ----------
- 1 file changed, 10 deletions(-)
+ tools/provisiontool | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/data/provision.json b/data/provision.json
-index 80abd78e6507..cef6e34e1ae3 100644
---- a/data/provision.json
-+++ b/data/provision.json
-@@ -14181,16 +14181,6 @@
-         "mmsc": "http://mmsc.mobile.att.net",
-         "mmsproxy": "proxy.mobile.att.net:80"
-       },
--      {
--        "name": "RESELLER",
--        "apn": "RESELLER",
--        "type": [
--          "internet",
--          "mms"
--        ],
--        "mmsc": "http://mmsc.mobile.att.net",
--        "mmsproxy": "proxy.mobile.att.net:80"
--      },
-       {
-         "name": "AT&T M2M",
-         "apn": "m2m005246.attz",
+diff --git a/tools/provisiontool b/tools/provisiontool
+index 2067a66a9951..c08b9c4b9712 100755
+--- a/tools/provisiontool
++++ b/tools/provisiontool
+@@ -24,7 +24,8 @@ class ProviderInfo:
+                                   'mmsproxy',
+                                   'authentication',
+                                   'username',
+-                                  'password'] ) }
++                                  'password',
++                                  'tags'] ) }
+ 
+     @classmethod
+     def rawimport(cls, entry):
+@@ -228,12 +229,13 @@ class ProvisionContext(ctypes.LittleEndianStructure):
+         ('username_offset', ctypes.c_uint64),
+         ('password_offset', ctypes.c_uint64),
+         ('mmsproxy_offset', ctypes.c_uint64),
+-        ('mmsc_offset', ctypes.c_uint64)
++        ('mmsc_offset', ctypes.c_uint64),
++        ('tags_offset', ctypes.c_uint64),
+     ]
+ 
+     authentication_dict = { 'chap' : 0, 'pap' : 1, 'none' : 2 }
+     protocol_dict = { 'ipv4' : 0, 'ipv6' : 1, 'ipv4v6' : 2 }
+-    attrs = ['name', 'apn', 'username', 'password', 'mmsproxy', 'mmsc']
++    attrs = ['name', 'apn', 'username', 'password', 'mmsproxy', 'mmsc', 'tags']
+ 
+     @classmethod
+     def type_to_context_type(cls, types):
+@@ -515,7 +517,7 @@ class ProvisionDatabase(ctypes.LittleEndianStructure):
+         visitor.visit(self.tree.root)
+         self.tree.traverse(visitor)
+ 
+-        self.version = 1
++        self.version = 2
+         self.header_size = ctypes.sizeof(ProvisionDatabase)
+         self.file_size = self.header_size
+         self.node_struct_size = ctypes.sizeof(ProvisionNode)
 -- 
 2.43.0
 
