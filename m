@@ -1,320 +1,397 @@
-Received: from mail-oo1-f50.google.com (mail-oo1-f50.google.com [209.85.161.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0b-003ede02.pphosted.com (mx0b-003ede02.pphosted.com [205.220.181.153])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB7FE1D6AE
-	for <ofono@lists.linux.dev>; Tue,  2 Apr 2024 22:31:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DBD01E531
+	for <ofono@lists.linux.dev>; Tue,  2 Apr 2024 23:29:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.181.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712097068; cv=none; b=rOpHc1ZeR/DQqsNbWVJxmHamfoPPfecY+QvP/iIodecaR+p3cbSuijW38MmtGjLHInp1WDNgXPN7L6Vs3zenRjX1m+muNluNy4H+D9T1h2Z38JMiUPFLP4vES3WQSLbHX0DW72+RCDOIq31BPpebkBOYNsuxFkw++4KZq90hT3E=
+	t=1712100555; cv=none; b=aa+Uu6jCLTfYvGA11fzni0uOd1/cQdSL6yrwF7riDaDsddoxfJmBjqFndqGlEl5SDB2bHbbpQI6KXM5sKwERs0kU+RVkQ7fYNemBTxVc7L6N5BMoYnvpt+VmDgFT9Y0sxp64Fe+IBUlXCeK0Wtj39DbVFGnZii08bBVp6uMad1I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712097068; c=relaxed/simple;
-	bh=MkfkVZSWEBmQ2nREg/cLfaKsLACZ1XgFoqNqqRD6lN0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=PWA5ZhHnz5knyWwwxEEzLXVeR4SshrUymZzItAbbjUjbi5NJGFoAZT/rhr3yEbcM64bDvlfZLQRb/RxcZCcd7lVFrSgiFf2qSN5uPk9hY3gEljZYSahoteWGFZ8MwJCpD7PloTHnbQ9TjTMsv9KYBjr6cDw5PrkgCw9BMchunwQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZVTt9DZ1; arc=none smtp.client-ip=209.85.161.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1712100555; c=relaxed/simple;
+	bh=JVgClpTxb4TNGukIPAL/OLbYQoKa4/ktBYPDojEu5Fc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=lh+UoYgcfrpdwwKkYyJNxzp8wqrH0HJBLAHS3vqmYlT6TtwwaxsxgV9U1CKnVMn2xGUk+BPwRJs9Zfboog6Qi4XS7DOafwA+KaAHKnIXnbC6+k9i+LBQcwuWfXtGMpJ4+eGc4Rjq5IE6Z/uvoxhyT6k90pMZO5+K/fsDsr3ubPg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=b11WTPQR; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=fRStiZlt; arc=none smtp.client-ip=205.220.181.153
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZVTt9DZ1"
-Received: by mail-oo1-f50.google.com with SMTP id 006d021491bc7-5a492093073so178847eaf.0
-        for <ofono@lists.linux.dev>; Tue, 02 Apr 2024 15:31:06 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="b11WTPQR";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="fRStiZlt"
+Received: from pps.filterd (m0286621.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 432CU1jF010303
+	for <ofono@lists.linux.dev>; Tue, 2 Apr 2024 16:29:10 -0700
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
+	 h=from:to:cc:subject:date:message-id:mime-version:content-type;
+	 s=ppemail; bh=d/P1OCckSToTcgnm6Qq4DYJ8Pq7iDk+HgjSlRXVeSj8=; b=b
+	11WTPQRwwoc7kLcBVmTn6NhIlAJPbxoW7Zj9nWeF5Sr4X3GCty/UOo1rZbd8OMj6
+	w2OhpF/tOycErAmg4t/AxMBnBUL6ls/dUXb6WyncL0DsGBl6eIFMioVzdJ7ISYZK
+	pSire/DYB2I+YalGBPJXuEjULnuehpl0YDH76pMTPg5Vaf/QzhmTgdwZNgBCEC5F
+	ePdsGtXBdrjlLP4d+LFcMot0o6KZKX8Qpbrcqo/b/k2gguS9nj0bVo8ElhYOD9F9
+	ZRosjF/X2W111EnukXWTgMaXDQbqhfo9F8FjDr1F3pC1cWDIV0LZDR7Qn0TIB0pe
+	bGvgknE8IUJuBWJwIiRDQ==
+Received: from mail-ot1-f70.google.com (mail-ot1-f70.google.com [209.85.210.70])
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3x8e0f8sjy-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
+	for <ofono@lists.linux.dev>; Tue, 02 Apr 2024 16:29:10 -0700 (PDT)
+Received: by mail-ot1-f70.google.com with SMTP id 46e09a7af769-6e0ee5097feso7067502a34.1
+        for <ofono@lists.linux.dev>; Tue, 02 Apr 2024 16:29:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712097065; x=1712701865; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=vol3mTWKS+Qu0Kx+jxxrbOYp82878IwpfnUQzmwos6Q=;
-        b=ZVTt9DZ14wgS1ZJ7KfXY47UKBU53q81jU1gRq7eLvj1rAgdt2dnIZGA1tuqcPB1mWt
-         st8QIlP6PL9NHhozCcYGtFou8W0LFBfZv1EFAgx5p0Te9EvjZGT0XadKwmciv4rqMl4Z
-         EPTdbHnpL5vDkh8lVL3+m/G/gaWjRR0FEjrdUzt0iWSlgdFdplu+qTLjIIF1ga5IkvhR
-         GgHKLxebseoCMO+uRKh7w8CySIyWsLYm9yYhbxReHgPMe5jEFfGrV/ZIAoQKFmB9fXiG
-         yZx9mWXQ8eA3l/3p4Le6Q4DGIOZ1GuyL8y8MsNG8OInY2pyCL5gYur0b4Vw0+CD7EWl2
-         jcQQ==
+        d=getcruise.com; s=google; t=1712100539; x=1712705339; darn=lists.linux.dev;
+        h=mime-version:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=d/P1OCckSToTcgnm6Qq4DYJ8Pq7iDk+HgjSlRXVeSj8=;
+        b=fRStiZltwSX/1n7+Pt1NgzRBG8251amnoe8fEU7EtaA9hzexb0pFaP+GqQVCBENtUR
+         eff+/VtohVARa36hnLMQmTVYy4GVysWlKHKNcJhCDT2Q5s5d8r0vSIDY1kEcP1rN9jY4
+         X5d8+EARFU8p3XczTxZaUjJDvzerC5PbpbSaEjes9+w+tmE0SR05jMRAYip1K/kIsV/P
+         xACELW4DDnWljlMXFxYq4w5UgOxOoL1Oka8V2HWaQPIk0/6vk0rtbFK/DRMQVZcDZkpJ
+         sWh5ACGUgA7WRp6lg6pRnsmuizb6rzhXvLTTysaIiRhDWgR+N2cShPLoDlbcg0u2h+h7
+         89oQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712097065; x=1712701865;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=vol3mTWKS+Qu0Kx+jxxrbOYp82878IwpfnUQzmwos6Q=;
-        b=WE2U6GfNpXMhcBM1RJlBSQrwhv5L7kqyEYN05D+7uNCMEzk/++tilBM0hKlwt3Ce5V
-         hM+HUWk8DuIdu4NyTmA6iM83Intwp9ohwiNgp6Xns4GnjO9eWXkveLXnuOaTKpU7OqkX
-         Ag5/VOrW80W1tzj/ErAGoBLO91aGPo8G19jPEI6tG9GmUOisk//iJqbHl5sYmXfzXkOZ
-         lp4/BWi7OGBE28DqBQcD1A2TQHfaCMg98K8XhDX76j6V4wJpixs5QzE2YtLEwUb96eaD
-         YpGZHeNLYVuQ9JHwo9rNEW5zZYIq+kGoqZaggZ5D6nppLOMUwRG6yRnqrFrd+8BjOR6b
-         cWNQ==
-X-Gm-Message-State: AOJu0YyV76tdbjWK0UDV8K96c7fPLKV30VeaWcRt7/ypWb+RyXbrwc8K
-	0WcHVZgGvlSzgsupU9cobRkVrOiadX/aK06YVCWaYOt9JaY8JWxq7PvAXu7n
-X-Google-Smtp-Source: AGHT+IF60rQgKJ3cLxza4YQZ7RLwda8EAANoekGNt801OM1vp8BGqgJ6Q1YNwChmu3tcMVrn8JAxTQ==
-X-Received: by 2002:a05:6820:2993:b0:5a4:9b0f:3652 with SMTP id dq19-20020a056820299300b005a49b0f3652mr298749oob.3.1712097065445;
-        Tue, 02 Apr 2024 15:31:05 -0700 (PDT)
-Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id eo8-20020a0568200f0800b005a58b8e4b1csm2956204oob.7.2024.04.02.15.31.04
+        d=1e100.net; s=20230601; t=1712100539; x=1712705339;
+        h=mime-version:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=d/P1OCckSToTcgnm6Qq4DYJ8Pq7iDk+HgjSlRXVeSj8=;
+        b=T3spQAvjFypWWrajT/BpR+AS7xPVr7nZk6YP9unIXSbcgqM2QyTCinO3vJX9LmYSqG
+         nDgIVzzcZJruiE5hGtRDAgSE+ecBfYW0FmzF288PfKZqwg71hT7hi0AM4TTAyfLC8FWH
+         W9mGn6oUGbComroBL+EBce6zDA10up95e85RzpS11QtXWeOs0AJr5zouN0OgK9perKO1
+         HRE0Ta+TVs1eNjgv+YSoCbjUcrOI8S4fvgtNJE4YwSuips89vlB8UxM0IZ76TRguSyUG
+         r2tkllyM+xS3gTJbaQEvCLg2TsnPi3JWvnqmUXsyIoKxWH1m+UO/ZX4XVHA2AJlI6wf6
+         2krg==
+X-Gm-Message-State: AOJu0YxznUZV0t9jBkJlh7QgpWRELS77fqWtbadLcQdPWYEXkVAaWzEc
+	gfANEybgCjn+LCVqC7XS5Xyp0pmm3RutIZjHgbet+GF5eOFMoa0MoCypUk4loImZBUAQ0OtD1Qb
+	voo45zfPLz3yFuMDDitf8qutHZbaJe2xoA6oz6WS4o9Z+j/Gj4FBcyZxvafCu5zmbsTEhCuhtWC
+	AHjiGnCw5OiVR7SSLpHI5/OwmH2lvM177RROgGEnZRH6IKR7I=
+X-Received: by 2002:a05:6870:e607:b0:221:f921:467e with SMTP id q7-20020a056870e60700b00221f921467emr987100oag.21.1712100538938;
+        Tue, 02 Apr 2024 16:28:58 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHGlr1W9utbUGmFkYls3DwnAmJIEzYW/LkyqGfidulPrgxkHMfrnAkpWu5TChcpMJYb37VWQg==
+X-Received: by 2002:a05:6870:e607:b0:221:f921:467e with SMTP id q7-20020a056870e60700b00221f921467emr987086oag.21.1712100538324;
+        Tue, 02 Apr 2024 16:28:58 -0700 (PDT)
+Received: from cs-1zgl0npt-heavy-homedir-66101.corp.robot.car (144.199.192.35.bc.googleusercontent.com. [35.192.199.144])
+        by smtp.gmail.com with ESMTPSA id cz3-20020a0566384a0300b0047d69cc97d1sm3438203jab.40.2024.04.02.16.28.58
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 02 Apr 2024 15:31:05 -0700 (PDT)
-From: Denis Kenzior <denkenz@gmail.com>
+        Tue, 02 Apr 2024 16:28:58 -0700 (PDT)
+From: Steve Schrock <steve.schrock@getcruise.com>
 To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 13/13] examples: Fix use after free and resource leaks
-Date: Tue,  2 Apr 2024 17:30:38 -0500
-Message-ID: <20240402223054.2819526-13-denkenz@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20240402223054.2819526-1-denkenz@gmail.com>
-References: <20240402223054.2819526-1-denkenz@gmail.com>
+Cc: Steve Schrock <steve.schrock@getcruise.com>
+Subject: [PATCH v2] udevng: Detect embedded qmi qrtr modems
+Date: Tue,  2 Apr 2024 18:28:34 -0500
+Message-ID: <20240402232836.45973-1-steve.schrock@getcruise.com>
+X-Mailer: git-send-email 2.43.2
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"
+X-Proofpoint-GUID: X-MWiSkVKi6MhJBkvfqGzTZlk1rvzwUZ
+X-Proofpoint-ORIG-GUID: X-MWiSkVKi6MhJBkvfqGzTZlk1rvzwUZ
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
+ definitions=2024-04-02_14,2024-04-01_01,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 suspectscore=0 phishscore=0
+ adultscore=0 lowpriorityscore=0 spamscore=0 malwarescore=0 bulkscore=0
+ mlxlogscore=638 priorityscore=1501 clxscore=1015 impostorscore=0
+ mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2403210001 definitions=main-2404020173
 
-The emulator example plugin does not track modem powered watches, and
-thus leaks them.  Additionally, the plugin opens ports for both HFP and
-DUN emulators.  However, only a single server watch is tracked, leading
-to the other watch being leaked.
+Embedded qmi qrtr modems are identified by the existence of
+rmnet_ipaX and rmnet_dataX devices. Add a new "embedded" modem type
+so that these devices can be collected during enumeration and then
+configured for use by the gobi plugin. Modems of this type will be
+exposed as /gobiqrtr_X.
 
-Since the modem powered watches are not tracked, they are never
-unregistered.  This can lead to situations where emulator plugin is
-destroyed (and thus all data associated with it is freed) before all
-modems have been removed.  When modems are removed subsequently,
-registered powered watches will be invoked.  This will result in
-use-after-free errors being reported by valgrind.
+Retrieving the endpoint ID is the main complication. It requires
+using an interface IOCTL and extended structure that is declared
+in msm_rmnet.h. This header is available many different places on
+the internet including in Android sources, but it is not available
+in popular Linux distributions. The minimum set of declarations is
+provided here so that the IOCTL may be used.
 ---
- examples/emulator.c | 151 +++++++++++++++++++++++++++++++-------------
- 1 file changed, 108 insertions(+), 43 deletions(-)
+ plugins/gobi.c   |  19 ++++--
+ plugins/udevng.c | 167 +++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 182 insertions(+), 4 deletions(-)
 
-diff --git a/examples/emulator.c b/examples/emulator.c
-index 5c92bd6659c4..972c1acfc0e3 100644
---- a/examples/emulator.c
-+++ b/examples/emulator.c
-@@ -44,8 +44,48 @@
- #define HFP_PORT 12347
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 8d3b7ef4cdfc..d58fb8aed1a8 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -419,16 +419,27 @@ static void discover_cb(void *user_data)
+ static int gobi_enable(struct ofono_modem *modem)
+ {
+ 	struct gobi_data *data = ofono_modem_get_data(modem);
+-	const char *device;
++	const char *kernel_driver;
+ 	int r;
  
- static unsigned int modemwatch_id;
--guint server_watch;
--static GList *modems;
-+static guint dun_watch;
-+static guint hfp_watch;
-+static struct l_queue *modem_infos;
-+static unsigned int n_powered;
+ 	DBG("%p", modem);
+ 
+-	device = ofono_modem_get_string(modem, "Device");
+-	if (!device)
++	kernel_driver = ofono_modem_get_string(modem, "KernelDriver");
++	if (!kernel_driver)
+ 		return -EINVAL;
+ 
+-	data->device = qmi_device_new_qmux(device);
++	if (!strcmp(kernel_driver, "qrtr"))
++		data->device = qmi_device_new_qrtr();
++	else {
++		const char *device;
 +
-+struct modem_info {
-+       struct ofono_modem *modem;
-+       unsigned int watch_id;
-+};
++		device = ofono_modem_get_string(modem, "Device");
++		if (!device)
++			return -EINVAL;
 +
-+static bool modem_matches(const void *data, const void *user_data)
-+{
-+	const struct modem_info *info = data;
-+
-+	return info->modem == user_data;
-+}
-+
-+static void modem_info_free(struct modem_info *info)
-+{
-+	if (!info)
-+		return;
-+
-+	if (info->watch_id)
-+		__ofono_modem_remove_powered_watch(info->modem, info->watch_id);
-+
-+	l_free(info);
-+}
-+
-+static struct ofono_modem *find_first_powered(void)
-+{
-+	const struct l_queue_entry *entry;
-+
-+	for (entry = l_queue_get_entries(modem_infos); entry;
-+							entry = entry->next) {
-+		struct ofono_modem *modem = entry->data;
-+
-+		if (ofono_modem_get_powered(modem))
-+			return modem;
++		data->device = qmi_device_new_qmux(device);
 +	}
 +
-+	return NULL;
-+}
+ 	if (!data->device)
+ 		return -EIO;
  
- static gboolean on_socket_connected(GIOChannel *chan, GIOCondition cond,
- 							gpointer user)
-@@ -64,28 +104,35 @@ static gboolean on_socket_connected(GIOChannel *chan, GIOCondition cond,
- 		return FALSE;
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 8bdcf0dbbccd..81a5bb4c773d 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -33,6 +33,9 @@
  
- 	/* Pick the first powered modem */
--	modem = modems->data;
-+	modem = find_first_powered();
-+	if (!modem)
-+		goto error;
-+
- 	DBG("Picked modem %p for emulator", modem);
+ #include <glib.h>
+ #include <ell/ell.h>
++#include <linux/if.h>
++#include <sys/ioctl.h>
++#include <sys/socket.h>
  
- 	em = ofono_emulator_create(modem, GPOINTER_TO_INT(user));
--	if (em == NULL)
--		close(fd);
--	else
--		ofono_emulator_register(em, fd);
-+	if (!em)
-+		goto error;
+ #define OFONO_API_SUBJECT_TO_CHANGE
+ #include <ofono/plugin.h>
+@@ -43,6 +46,7 @@ enum modem_type {
+ 	MODEM_TYPE_USB,
+ 	MODEM_TYPE_SERIAL,
+ 	MODEM_TYPE_PCIE,
++	MODEM_TYPE_EMBEDDED,
+ };
  
-+	ofono_emulator_register(em, fd);
-+	return TRUE;
-+
-+error:
-+	close(fd);
- 	return TRUE;
+ struct modem_info {
+@@ -234,6 +238,9 @@ static int setup_qmi(struct modem_info *modem, const struct device_info *qmi,
+ 	case MODEM_TYPE_PCIE:
+ 		ofono_modem_set_string(modem->modem, "Bus", "pcie");
+ 		break;
++	case MODEM_TYPE_EMBEDDED:
++		ofono_modem_set_string(modem->modem, "Bus", "embedded");
++		break;
+ 	case MODEM_TYPE_SERIAL:
+ 		break;
+ 	}
+@@ -241,6 +248,139 @@ static int setup_qmi(struct modem_info *modem, const struct device_info *qmi,
+ 	return 0;
  }
  
--static gboolean create_tcp(short port, enum ofono_emulator_type type)
-+static guint create_tcp(short port, enum ofono_emulator_type type)
- {
- 	struct sockaddr_in addr;
- 	int sk;
- 	int reuseaddr = 1;
- 	GIOChannel *server;
-+	guint server_watch;
- 
- 	sk = socket(PF_INET, SOCK_STREAM, 0);
- 	if (sk < 0)
--		return FALSE;
-+		return 0;
- 
- 	memset(&addr, 0, sizeof(addr));
- 
-@@ -108,62 +155,77 @@ static gboolean create_tcp(short port, enum ofono_emulator_type type)
- 				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
- 				on_socket_connected, GINT_TO_POINTER(type),
- 				NULL);
--
- 	g_io_channel_unref(server);
- 
- 	DBG("Created server_watch: %u", server_watch);
--
--	return TRUE;
-+	return server_watch;
- 
- err:
- 	close(sk);
--	return FALSE;
++static gboolean setup_gobi_qrtr_premux(struct modem_info *modem,
++					const char *name, int premux_index)
++{
++	const char *rmnet_data_prefix = "rmnet_data";
++	int rmnet_data_prefix_length = strlen(rmnet_data_prefix);
++	char buf[256];
++	int r;
++	uint32_t data_id;
++	uint32_t mux_id;
++
++	r = l_safe_atou32(name + rmnet_data_prefix_length, &data_id);
++	if (r < 0)
++		return FALSE;
++
++	mux_id = data_id + 1;
++
++	DBG("Adding premux interface %s, mux id: %d", name, mux_id);
++	sprintf(buf, "PremuxInterface%d", premux_index);
++	ofono_modem_set_string(modem->modem, buf, name);
++	sprintf(buf, "PremuxInterface%dMuxId", premux_index);
++	ofono_modem_set_integer(modem->modem, buf, mux_id);
++
++	return TRUE;
++}
++
++/*
++ * The following rmnet declarations are contained in msm_rmnet.h which is not
++ * commonly provided in Linux distributions.
++ */
++
++#define RMNET_IOCTL_EXTENDED 0x000089FD
++#define RMNET_IOCTL_GET_EPID 0x0003
++
++/*
++ * This is the minimal set of fields needed to get the endpoint ID. The actual
++ * structure has many more union members.
++ */
++struct rmnet_ioctl_extended_s {
++	uint32_t   extended_ioctl;
++
++	union {
++		uint32_t data;
++
++		/* Ensure the struct is at least as large as the real one. */
++		uint8_t buffer[32];
++	};
++};
++
++static int get_rmnet_endpoint_id(const char *if_name, uint32_t *id)
++{
++	_auto_(close) int fd = -1;
++	int r;
++	struct rmnet_ioctl_extended_s ext_ioctl_arg;
++	struct ifreq ifr;
++
++	fd = socket(AF_INET, SOCK_DGRAM, 0);
++	if (fd < 0) {
++		ofono_warn("Failed to open socket. %s", strerror(errno));
++		return -errno;
++	}
++
++	memset(&ext_ioctl_arg, 0, sizeof(ext_ioctl_arg));
++	ext_ioctl_arg.extended_ioctl = RMNET_IOCTL_GET_EPID;
++
++	memset(&ifr, 0, sizeof(ifr));
++	l_strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
++	ifr.ifr_ifru.ifru_data = &ext_ioctl_arg;
++
++	r = ioctl(fd, RMNET_IOCTL_EXTENDED, &ifr);
++	if (r == -1) {
++		ofono_warn("Failed to execute RMNET_IOCTL_EXTENDED ioctl. %s",
++						strerror(errno));
++		return -errno;
++	}
++
++	*id = ext_ioctl_arg.data;
++
 +	return 0;
 +}
 +
-+static void powered_watch_destroy(void *user)
++static gboolean setup_gobi_qrtr(struct modem_info *modem)
 +{
-+	struct modem_info *info = user;
++	const struct device_info *ipa_info = NULL;
++	int premux_count = 0;
++	int r;
++	GSList *list;
 +
-+	DBG("");
++	DBG("%s", modem->syspath);
 +
-+	info->watch_id = 0;
++	for (list = modem->devices; list; list = list->next) {
++		struct device_info *info = list->data;
++		const char *name;
++
++		name = udev_device_get_sysname(info->udev_device);
++		if (l_str_has_prefix(name, "rmnet_ipa")) {
++			uint32_t endpoint_id = 0;
++
++			if (!get_rmnet_endpoint_id(name, &endpoint_id)) {
++				DBG("%s: endpoint_id: %d", name, endpoint_id);
++				info->number = g_strdup_printf("%d",
++								endpoint_id);
++			}
++
++			ipa_info = info;
++
++		} else if (l_str_has_prefix(name, "rmnet_data")) {
++			int premux_index = premux_count + 1;
++
++			if (setup_gobi_qrtr_premux(modem, name, premux_index))
++				premux_count++;
++		}
++	}
++
++	if (premux_count < 3) {
++		DBG("Not enough rmnet_data interfaces found");
++		return FALSE;
++	}
++
++	ofono_modem_set_integer(modem->modem, "NumPremuxInterfaces",
++							premux_count);
++
++	if (!ipa_info) {
++		DBG("No rmnet_ipa interface found");
++		return FALSE;
++	}
++
++	r = setup_qmi(modem, ipa_info, ipa_info);
++	if (r < 0)
++		return FALSE;
++
++	return TRUE;
++}
++
+ static gboolean setup_gobi(struct modem_info *modem)
+ {
+ 	const struct device_info *qmi = NULL;
+@@ -1594,6 +1734,7 @@ static struct {
+ 	{ "wavecom",	setup_wavecom		},
+ 	{ "tc65",	setup_tc65		},
+ 	{ "ehs6",	setup_ehs6		},
++	{ "gobiqrtr",	setup_gobi_qrtr		},
+ 	{ }
+ };
+ 
+@@ -1644,6 +1785,7 @@ static void destroy_modem(gpointer data)
+ 	switch (modem->type) {
+ 	case MODEM_TYPE_USB:
+ 	case MODEM_TYPE_PCIE:
++	case MODEM_TYPE_EMBEDDED:
+ 		for (list = modem->devices; list; list = list->next) {
+ 			struct device_info *info = list->data;
+ 
+@@ -1688,6 +1830,9 @@ static gboolean check_remove(gpointer key, gpointer value, gpointer user_data)
+ 		if (g_strcmp0(modem->serial->devpath, devpath) == 0)
+ 			return TRUE;
+ 		break;
++	case MODEM_TYPE_EMBEDDED:
++		/* Embedded modems cannot be removed. */
++		break;
+ 	}
+ 
+ 	return FALSE;
+@@ -2133,6 +2278,26 @@ static void check_pci_device(struct udev_device *device)
+ 			device, kernel_driver);
  }
  
- static void powered_watch(struct ofono_modem *modem, gboolean powered,
- 				void *user)
- {
-+	DBG("powered: %d", powered);
++static void check_net_device(struct udev_device *device)
++{
++	char path[32];
++	const char *name;
++	const char *iflink;
 +
- 	if (powered == FALSE) {
--		DBG("Removing modem %p from the list", modem);
--		modems = g_list_remove(modems, modem);
--
--		if (modems == NULL && server_watch > 0) {
--			DBG("Removing server watch: %u", server_watch);
--			g_source_remove(server_watch);
--			server_watch = 0;
--		}
--	} else {
--		DBG("Adding modem %p to the list", modem);
--		modems = g_list_append(modems, modem);
--
--		if (modems->next == NULL) {
--			create_tcp(DUN_PORT, OFONO_EMULATOR_TYPE_DUN);
--			create_tcp(HFP_PORT, OFONO_EMULATOR_TYPE_HFP);
--		}
-+		n_powered -= 1;
-+
-+		if (n_powered)
-+			return;
-+
-+		g_source_remove(dun_watch);
-+		dun_watch = 0;
-+
-+		g_source_remove(hfp_watch);
-+		hfp_watch = 0;
-+
++	name = udev_device_get_sysname(device);
++	if (!l_str_has_prefix(name, "rmnet_"))
 +		return;
- 	}
 +
-+	n_powered += 1;
++	iflink = udev_device_get_sysattr_value(device, "iflink");
++	if (!iflink)
++		return;
 +
-+	if (!dun_watch)
-+		dun_watch = create_tcp(DUN_PORT, OFONO_EMULATOR_TYPE_DUN);
++	/* Collect all rmnet devices with this iflink under a common path. */
++	sprintf(path, "/embedded/qrtr/%s", iflink);
++	add_device(path, NULL, "gobiqrtr", NULL, NULL, MODEM_TYPE_EMBEDDED,
++							device, "qrtr");
++}
 +
-+	if (!hfp_watch)
-+		hfp_watch = create_tcp(HFP_PORT, OFONO_EMULATOR_TYPE_HFP);
- }
- 
- static void modem_watch(struct ofono_modem *modem, gboolean added, void *user)
+ static void check_device(struct udev_device *device)
  {
-+	struct modem_info *info;
-+
- 	DBG("modem: %p, added: %d", modem, added);
+ 	const char *bus;
+@@ -2149,6 +2314,8 @@ static void check_device(struct udev_device *device)
+ 		check_usb_device(device);
+ 	else if (g_str_equal(bus, "pci") == TRUE)
+ 		check_pci_device(device);
++	else if (g_str_equal(bus, "net") == TRUE)
++		check_net_device(device);
+ 	else
+ 		add_serial_device(device);
  
- 	if (added == FALSE) {
--		DBG("Removing modem %p from the list", modem);
--		modems = g_list_remove(modems, modem);
-+		info = l_queue_remove_if(modem_infos, modem_matches, modem);
-+		DBG("Removing modem %p, info %p, from the list", modem, info);
-+		modem_info_free(info);
- 		return;
- 	}
- 
--	if (ofono_modem_get_powered(modem) == TRUE) {
--		DBG("Adding modem %p to the list", modem);
--		modems = g_list_append(modems, modem);
-+	info = l_new(struct modem_info, 1);
-+	info->modem = modem;
-+	info->watch_id = __ofono_modem_add_powered_watch(modem, powered_watch,
-+							info,
-+							powered_watch_destroy);
- 
--		if (modems->next == NULL) {
--			create_tcp(DUN_PORT, OFONO_EMULATOR_TYPE_DUN);
--			create_tcp(HFP_PORT, OFONO_EMULATOR_TYPE_HFP);
--		}
--	}
-+	l_queue_push_tail(modem_infos, info);
- 
--	__ofono_modem_add_powered_watch(modem, powered_watch, NULL, NULL);
-+	if (ofono_modem_get_powered(modem) == TRUE)
-+		powered_watch(modem, TRUE, NULL);
- }
- 
- static void call_modemwatch(struct ofono_modem *modem, void *user)
-@@ -175,6 +237,7 @@ static int example_emulator_init(void)
- {
- 	DBG("");
- 
-+	modem_infos = l_queue_new();
- 	modemwatch_id = __ofono_modemwatch_add(modem_watch, NULL, NULL);
- 
- 	__ofono_modem_foreach(call_modemwatch, NULL);
-@@ -187,11 +250,13 @@ static void example_emulator_exit(void)
- 	DBG("");
- 
- 	__ofono_modemwatch_remove(modemwatch_id);
-+	l_queue_destroy(modem_infos, (l_queue_destroy_func_t) modem_info_free);
- 
--	g_list_free(modems);
-+	if (dun_watch)
-+		g_source_remove(dun_watch);
- 
--	if (server_watch)
--		g_source_remove(server_watch);
-+	if (hfp_watch)
-+		g_source_remove(hfp_watch);
- }
- 
- OFONO_PLUGIN_DEFINE(example_emulator, "Example AT Modem Emulator Plugin",
 -- 
-2.43.0
+2.43.2
 
+
+-- 
+
+
+*Confidentiality Note:* We care about protecting our proprietary 
+information, confidential material, and trade secrets. This message may 
+contain some or all of those things. Cruise will suffer material harm if 
+anyone other than the intended recipient disseminates or takes any action 
+based on this message. If you have received this message (including any 
+attachments) in error, please delete it immediately and notify the sender 
+promptly.
