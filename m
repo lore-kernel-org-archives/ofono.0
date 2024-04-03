@@ -1,62 +1,62 @@
-Received: from mail-ot1-f48.google.com (mail-ot1-f48.google.com [209.85.210.48])
+Received: from mail-ot1-f43.google.com (mail-ot1-f43.google.com [209.85.210.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85C1714D29F
-	for <ofono@lists.linux.dev>; Wed,  3 Apr 2024 16:06:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF268149C48
+	for <ofono@lists.linux.dev>; Wed,  3 Apr 2024 16:06:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712160367; cv=none; b=YNUW79BG6nWX5W7Mhe9x7bk1ET3VuK5AKLQjG2C9Mlsel6YxAQbwKuPkX32CzMTX6YhS8b2GIDSFv/dUxpRQCIYGktPCaAWDejcEOmXS4RmbtGxHd14jMTam/1xPdYyTr7xTubmC/rGr1yBbGTWODxHJT/TmUcRXvFjdL6w/wQg=
+	t=1712160368; cv=none; b=ix342dNGpwGD8n8ztGVAvH9a9/Nqhw+EVLim9aG4aIaIJnCAcwSFm/Z5hHBuFvT1uAoS6Da4S8Plz7ozAjpsIA7ZfUPSbpfCJo+ZauzyfQJ7gufj21eXdE2BNTWYnOHQq692YiBoNkSueQhf2fFdWaAYNyZEy4DTRumtD99slZc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712160367; c=relaxed/simple;
-	bh=sTP3HQTlWVgoLKVHjbAHwN55h/yTrk0VgaPXBstLQQc=;
+	s=arc-20240116; t=1712160368; c=relaxed/simple;
+	bh=puDK51IZNmptQzOyxED4XtoZxV2LzQQk/y+n2KNzKKw=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Br3fyOAix4gA70mTxSkGxUrajBZpJjCDmggXCfzvunUb+BYNs7beyx/g0fHP7sdpUh00uCRy8h3qqArBdnw7qk2DnPaa0ob4BKeqEgIptFBKU5Xtod4Up4QFr+e6zmNxrDocRe2knDa3PinMhaQajE0ZpCG0Ee9aliZnmCvBq8c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eu4+7gl5; arc=none smtp.client-ip=209.85.210.48
+	 MIME-Version; b=W9VXsCGN3TPd0DlUdCnWxv5g2tILJSd20kCB5Iiy1tD0+t5FryRNWDeLO1cViEdmjMDqOs/1WlrrtuFRbENFVz42KF7i8VDB8Shky6O9p2QAKdGDX0G/k+i5Iam5jpYdZa4edpUWW1pwbRchKoq5IWubR0ZcwhgMn/KOLXjvNpM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WIbAr2q6; arc=none smtp.client-ip=209.85.210.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eu4+7gl5"
-Received: by mail-ot1-f48.google.com with SMTP id 46e09a7af769-6e89e48d2c0so4911a34.1
-        for <ofono@lists.linux.dev>; Wed, 03 Apr 2024 09:06:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WIbAr2q6"
+Received: by mail-ot1-f43.google.com with SMTP id 46e09a7af769-6e695b7391dso5003a34.1
+        for <ofono@lists.linux.dev>; Wed, 03 Apr 2024 09:06:06 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712160364; x=1712765164; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1712160365; x=1712765165; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=OJegCb221tkm/+wPfRA3j/tohFSI41UxlLHaLAgSOr0=;
-        b=eu4+7gl5vwpoEO68qZkAiWzhaquOGq9p2ZyVn1G8fmoFUNYEazDd5CAdaId+0KIoye
-         qhKDrULrS+tnXI3G9Ca9ZV9FvxO7AIrDHxbvHlqtHwkw3t9laZ1AvON5lPfjDoquoK/4
-         uzBbGE2Uz3WK5bBRD3sgOCpI/r9vR7QX6CVTpj83H5jZyd/Y2dHXaVsBLGUGcwmOx34q
-         wb/r2pWNs3xvIDxoiMTbZhK5VgB1hTTwv7oFBgi6s6AXgeuk31wV6Afbe6BEgTnaknid
-         O8/HZo91GbO1qHdv/D8jDfGdksZmlITGHaAB+ozGcmJGqN0cGoYzhzVTL9QXuTxNH0aS
-         qqbw==
+        bh=XA+Vkqwk5ZmbSNd3gdnkiwrGaLPpFx9rEooKDQQTGCM=;
+        b=WIbAr2q65TBTqbr6Ws2HDJ6ovl12saXqiclSkZ6qEDv1XfMvup5z0MmRI9HbIhw4eY
+         8gkdxSMPbkjBRklH87mIgVDmi9uK10j8F7o2w6JaXkmfo1tYhXEw6WgNiu9Iz7DF4iaa
+         yXpaS6yjAku7bdyPzIjH5htJvxdkYZ7Lmeo1TfgXelsNa4tXh0ogn4QSsUU4nZCXgh3s
+         RG8cIA00yG3qi0GsoIXDZBr6pPi9hBek63feMeHbqoWaNr+6Un9roN1SN1A2BMGqqTnB
+         tPI49xldyHweroD1nqhYgYBGbj4T0oFtUofnNNU3Obi4hQwSiveHaVH55mGYH/cVfxkA
+         8MNw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712160364; x=1712765164;
+        d=1e100.net; s=20230601; t=1712160365; x=1712765165;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=OJegCb221tkm/+wPfRA3j/tohFSI41UxlLHaLAgSOr0=;
-        b=Jg8xeZYfPwWupwyhiykt2qsfZ9FIpm+e35LaAfkGb8rsp43YC1YmCkBLLL7gABBIhF
-         BCOzgkeM2HAIWoARapSskHuSqN9shuBCYz5KYR4bUyXbclp31NZ+0ZdkYyXf8kcSgM5x
-         yfU6KNOFFeT+nV0yx6tvLTj1LKLYRCbIFPJEKEoPqT2Y1T+4zIzt4i8jSY+vAwc9FMXj
-         k8X6/O0ii372COhyIAnRxC433RGdTQaJC41+7xDsIARofgvDLycFf8xx8PMKvA1GEAsG
-         Fcy+3XE255wrk9ovkglly1Ry6bO4m/jAwrx60uCjdQlF8CuFmqHRmKiCmpfMXvkQUeYL
-         nNsA==
-X-Gm-Message-State: AOJu0YxFmIZt5vN/0k+5qbjnbdD4yah3z5k5wk5ZqxMyd6TUUcUk0gvW
-	02V7OUpUutt7does+PRS77yl0YjQONGs1D21ZC6/8xH2p4s85kbqyUO/RclR
-X-Google-Smtp-Source: AGHT+IEt7MeSU/pUs7/1MhV8nX75qt4efHpwrbrtVFFH+L7NfVbfq7nNZfsFCgpoZ+rD36MhTrUYgQ==
-X-Received: by 2002:a9d:7693:0:b0:6e6:9738:6b71 with SMTP id j19-20020a9d7693000000b006e697386b71mr15186418otl.1.1712160364358;
-        Wed, 03 Apr 2024 09:06:04 -0700 (PDT)
+        bh=XA+Vkqwk5ZmbSNd3gdnkiwrGaLPpFx9rEooKDQQTGCM=;
+        b=O5XdLoY7oaO91SomZN3ZfqDJYFf+R3YmwuY9l5ONypkjVKmzSXjOI8sPX9y/2zZdNi
+         k/COntSk4uBhYPnw/nmJKlTvi+7sqph3Fo5FdqYqx1upo9Nqe787H+ZBbzsKVE8y/x0J
+         gni9Mw+vDsj9h9EHDXzXlhEXj9RHeTOT+0njGS9dJIK5VzYC/mFcJAHcu5KPEIKbvpZL
+         ue5csWU0pUjBEuzxL+0bBC0utJpsKd3iZSw5nUdzQzFqfqwPPVFbW9vge3Css9hZkN8g
+         7iV6ekxEpOHYVeAV/vB9XG5nSsCCbkBvmYp6afyyGkMOKeljExFt4rzxV/VTzw4tRLSs
+         8Y0g==
+X-Gm-Message-State: AOJu0Yw/8hCrG2GQIBe3BJJyjFeqSGQY0HPME6QWXdgVPDoZKPdzT7JP
+	atmjBD8XA+1A0pxtwB2HxqkSwNkNSiPwTqGG6ybHOcr0Es5MTE+9lNTS/AtV
+X-Google-Smtp-Source: AGHT+IEeibc2qm+DaltVWf1Mpa5tD17jXmYkoj9+C95bH+CxkxtcM04vZAxIjBgYG9SWzKt+qjedHA==
+X-Received: by 2002:a9d:7603:0:b0:6e6:6d42:c61 with SMTP id k3-20020a9d7603000000b006e66d420c61mr3347207otl.16.1712160365561;
+        Wed, 03 Apr 2024 09:06:05 -0700 (PDT)
 Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id a15-20020a056830100f00b006e6b018a703sm2653635otp.79.2024.04.03.09.06.03
+        by smtp.gmail.com with ESMTPSA id a15-20020a056830100f00b006e6b018a703sm2653635otp.79.2024.04.03.09.06.05
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 03 Apr 2024 09:06:04 -0700 (PDT)
+        Wed, 03 Apr 2024 09:06:05 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 07/14] provisiontool: Add support for context tags
-Date: Wed,  3 Apr 2024 11:05:30 -0500
-Message-ID: <20240403160557.2828145-7-denkenz@gmail.com>
+Subject: [PATCH v2 09/14] tools: lookup-apn: add support for optional tags filter
+Date: Wed,  3 Apr 2024 11:05:32 -0500
+Message-ID: <20240403160557.2828145-9-denkenz@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240403160557.2828145-1-denkenz@gmail.com>
 References: <20240403160557.2828145-1-denkenz@gmail.com>
@@ -68,51 +68,91 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Since this changes the size of the context structure, bump the version
-number generated by provisiontool.
 ---
- tools/provisiontool | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ tools/lookup-apn.c | 25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
 
-diff --git a/tools/provisiontool b/tools/provisiontool
-index 2067a66a9951..c08b9c4b9712 100755
---- a/tools/provisiontool
-+++ b/tools/provisiontool
-@@ -24,7 +24,8 @@ class ProviderInfo:
-                                   'mmsproxy',
-                                   'authentication',
-                                   'username',
--                                  'password'] ) }
-+                                  'password',
-+                                  'tags'] ) }
+diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
+index abb95f38f470..e4fc79cd7819 100644
+--- a/tools/lookup-apn.c
++++ b/tools/lookup-apn.c
+@@ -26,7 +26,7 @@
+ static const char *option_file;
  
-     @classmethod
-     def rawimport(cls, entry):
-@@ -228,12 +229,13 @@ class ProvisionContext(ctypes.LittleEndianStructure):
-         ('username_offset', ctypes.c_uint64),
-         ('password_offset', ctypes.c_uint64),
-         ('mmsproxy_offset', ctypes.c_uint64),
--        ('mmsc_offset', ctypes.c_uint64)
-+        ('mmsc_offset', ctypes.c_uint64),
-+        ('tags_offset', ctypes.c_uint64),
-     ]
+ static int lookup_apn(const char *match_mcc, const char *match_mnc,
+-							const char *match_spn)
++			const char *match_spn, char **tags_filter)
+ {
+ 	struct provision_db *pdb;
+ 	struct provision_db_entry *contexts;
+@@ -50,7 +50,8 @@ static int lookup_apn(const char *match_mcc, const char *match_mnc,
+ 	fprintf(stdout, "Searching for info for network: %s%s, spn: %s\n",
+ 			match_mcc, match_mnc, match_spn ? match_spn : "<None>");
  
-     authentication_dict = { 'chap' : 0, 'pap' : 1, 'none' : 2 }
-     protocol_dict = { 'ipv4' : 0, 'ipv6' : 1, 'ipv4v6' : 2 }
--    attrs = ['name', 'apn', 'username', 'password', 'mmsproxy', 'mmsc']
-+    attrs = ['name', 'apn', 'username', 'password', 'mmsproxy', 'mmsc', 'tags']
+-	r = provision_db_lookup(pdb, match_mcc, match_mnc, match_spn, NULL,
++	r = provision_db_lookup(pdb, match_mcc, match_mnc,
++					match_spn, tags_filter,
+ 					&contexts, &n_contexts);
+ 	if (r < 0) {
+ 		fprintf(stderr, "Unable to lookup: %s\n", strerror(-r));
+@@ -78,6 +79,8 @@ static int lookup_apn(const char *match_mcc, const char *match_mnc,
+ 			fprintf(stdout, "Message Center: %s\n",
+ 							ap->message_center);
+ 		}
++
++		fprintf(stdout, "Tags: %s\n", ap->tags);
+ 	}
  
-     @classmethod
-     def type_to_context_type(cls, types):
-@@ -515,7 +517,7 @@ class ProvisionDatabase(ctypes.LittleEndianStructure):
-         visitor.visit(self.tree.root)
-         self.tree.traverse(visitor)
+ 	l_free(contexts);
+@@ -92,22 +95,26 @@ static void usage(void)
+ 	printf("lookup-apn\nUsage:\n");
+ 	printf("lookup-apn [options] <mcc> <mnc> [spn]\n");
+ 	printf("Options:\n"
+-			"\t-v, --version	Show version\n"
+-			"\t-f, --file		Provision DB file to use\n"
+-			"\t-h, --help		Show help options\n");
++		"\t-v, --version	Show version\n"
++		"\t-f, --file		Provision DB file to use\n"
++		"\t-t, --tags		Comma separated tag filter\n"
++		"\t-h, --help		Show help options\n");
+ }
  
--        self.version = 1
-+        self.version = 2
-         self.header_size = ctypes.sizeof(ProvisionDatabase)
-         self.file_size = self.header_size
-         self.node_struct_size = ctypes.sizeof(ProvisionNode)
+ static const struct option options[] = {
+ 	{ "version",	no_argument,		NULL, 'v' },
+ 	{ "help",	no_argument,		NULL, 'h' },
+ 	{ "file",	required_argument,	NULL, 'f' },
++	{ "tags",	required_argument,	NULL, 't' },
+ 	{ },
+ };
+ 
+ int main(int argc, char **argv)
+ {
++	_auto_(l_strv_free) char **tags_filter = NULL;
++
+ 	for (;;) {
+-		int opt = getopt_long(argc, argv, "f:vh", options, NULL);
++		int opt = getopt_long(argc, argv, "f:t:vh", options, NULL);
+ 
+ 		if (opt < 0)
+ 			break;
+@@ -116,6 +123,9 @@ int main(int argc, char **argv)
+ 		case 'f':
+ 			option_file = optarg;
+ 			break;
++		case 't':
++			tags_filter = l_strsplit(optarg, ',');
++			break;
+ 		case 'v':
+ 			printf("%s\n", VERSION);
+ 			return EXIT_SUCCESS;
+@@ -138,5 +148,6 @@ int main(int argc, char **argv)
+ 	}
+ 
+ 	return lookup_apn(argv[optind], argv[optind + 1],
+-			argc - optind == 3 ? argv[optind + 2] : NULL);
++				argc - optind == 3 ? argv[optind + 2] : NULL,
++				tags_filter);
+ }
 -- 
 2.43.0
 
