@@ -1,305 +1,315 @@
-Received: from mail-ed1-f43.google.com (mail-ed1-f43.google.com [209.85.208.43])
+Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3BD313AA4D
-	for <ofono@lists.linux.dev>; Thu,  4 Apr 2024 21:22:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43852745C2
+	for <ofono@lists.linux.dev>; Thu,  4 Apr 2024 21:33:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712265760; cv=none; b=uVPXXw80xi05UepWk1GZWIFlQ75cc+hn2ke0ThU3EYQ5I0szy2rjDKmWaT07+dTnPn4uFMloUXQASUkJ0wHf9vw/pVNAmHnVMI+wR7U0O7JPWKAf52BCTF0pKJAAiU3n2LC1Vh8g6V/U+s6LYyzXw/+otKq+rjYg5bjqRKzGrOY=
+	t=1712266385; cv=none; b=VUtojagMY+8KTkU4zjLuIXMtYHXqvsXKgUOf2nNxtEO59vs1wRK/rt1XdnmU8aNn5WTxJx5wMRPNaLRaGMMUlEiDdSwgNvl7UACsCsXk8vbXasGTUftXN3CG2W1AseanVOSyMNo4gpMdyvOPTfQTQ/Iy/VaaOzksmAKHW+JfhDs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712265760; c=relaxed/simple;
-	bh=Qx2cL9so/aYOVPWyvL4TQwK7nsYumCBWRT2IMXgkI38=;
-	h=To:From:Subject:In-Reply-To:References:Content-Type:Date:
-	 Message-ID:MIME-Version; b=h/gQONl6ywbEXKAPcMELz+gNXaj4KKeiMnUiNkZGnL84rYSXcOqNzyNIG1TA2lcOtqFOljUI6gXtKkOxAjx2wuhTKNsqxfNjZqq0qjgraYAC4jYtJVyXPp2fCRee79zXD5aWriYuGE99hgg77bmM2wNOXoG/a6VgqwZjV9TPgS0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VCwIAg6f; arc=none smtp.client-ip=209.85.208.43
+	s=arc-20240116; t=1712266385; c=relaxed/simple;
+	bh=JGqFq3PQ7ToW1EuYz6b1yvwJvBa2Hb/gC1wO/XP/5CY=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=f/dExEBol4pQKmlxe/TUqrEZJxI5cSWxSNCJi8gxtupt4U5KTEe5cHhb8mHjWJlFHs6OA9LlJwNmadHbEP6d32nABSOVKnWOqSGoYrWasW9CYNrk+0NsLPDbUvIAwy809dWIi3s04Dq7tT+X1u0m3sh9YyEZLHKTTfDoMGIQB0U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TLD3AZIL; arc=none smtp.client-ip=209.85.160.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VCwIAg6f"
-Received: by mail-ed1-f43.google.com with SMTP id 4fb4d7f45d1cf-56e030624d1so2462558a12.2
-        for <ofono@lists.linux.dev>; Thu, 04 Apr 2024 14:22:38 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TLD3AZIL"
+Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-22a96054726so1218839fac.0
+        for <ofono@lists.linux.dev>; Thu, 04 Apr 2024 14:33:04 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712265757; x=1712870557; darn=lists.linux.dev;
-        h=mime-version:message-id:date:content-transfer-encoding:references
-         :in-reply-to:subject:from:to:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=Qx2cL9so/aYOVPWyvL4TQwK7nsYumCBWRT2IMXgkI38=;
-        b=VCwIAg6feEJzLC1LeoClCuMXe9hK5gR4NYs7lZoS6mM9ZEc2XKU+dK8G7GosCvc8p3
-         u5OEjt5FMFmNJvdy/xBMU9zAROajFa37Z9oAPziNqjbBpqbIkXwdgYqarhyfZ5Qd0NIQ
-         fg87jpDjllNx+K1LXUE+oelLQ6nr7mC9aBrsRNwoT7JN73uKz1ynSs01Yjr6cz8X6FdE
-         gUTqraW1FKB3A14nF1lbHYA3NNk3Xsd9hMumWJojuoVpCCRQcvWSa75tL15uYx7VtIvy
-         STSdTM/8e99GXGfTJHaCYhyDuEzCgYb9eczEtkLyyg7H9AdJASJN3zvmTJyqNmAs3MzK
-         OxkA==
+        d=gmail.com; s=20230601; t=1712266383; x=1712871183; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=zNySVZoifHWdRI1/lVBtg0CnxxmjkbzeMdqWW+Uzl0E=;
+        b=TLD3AZILFgfrKYc0mc5AFplSJMTgWp8aNNjkUmvRsBwl/DzyYiOZYQBNVhdU9OP09g
+         2P4ufEpkvZJU94Tx/86W5EFsVkdJQPRcE76qcFnsjumvtfsndImz/Ev1A9GJYO1X8MND
+         sKE/1QgAY9/9Jv6I+gHyxywlQjPSL95E8d4rJ8tWmjnOQgQPrGRjmLjYhUtnzhg1Vhx7
+         sIwPKwwLM3m8Wq75sFbUFEb274P9aBCKiga7I3o6qIM+ugRxbbbd+nhs9XYgg6yBuuZq
+         0nhGM0BrDxEQfNqC+SIbVi5NjaQLyWJCn3oNaq9Bu4U18tRy2w2XPXgH2b3dBt3DhU/c
+         sj9Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712265757; x=1712870557;
-        h=mime-version:message-id:date:content-transfer-encoding:references
-         :in-reply-to:subject:from:to:x-gm-message-state:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=Qx2cL9so/aYOVPWyvL4TQwK7nsYumCBWRT2IMXgkI38=;
-        b=OCfxuZ5tXu9HJ2kyN1WOdeJahomVcwKoDqdQ9qJvR9PnywMQ49ahY/62g20OW9PiBm
-         DC+GwXAVWvkQUfmPtgdej2lLiT9mi2rh6tAvX6f+XO1bJJ0TOIRHUPHAGQ5WJet0dXgo
-         kZRPQF4wevPIWglod+IKTERgfo2iC5Gq5XDpWh+WsSKqsBJJdm659BSSBmEMotnD/bss
-         0qEvuJRiImnCH6TVunGyTv8oJqknbF7nk7gPL8M73tngWconyl9dWMWGRBPOfBitaxlk
-         yjiAvnjZLy9XEOiZF5imLVDDk5fbFrElKAudYCEGfZiedoky86dMniLBKPmGN3d8BM40
-         cBfw==
-X-Forwarded-Encrypted: i=1; AJvYcCXcuLwKH6cDMtR2y21E9iPfofjfOsu3BBV3prsalnt6HQthPcurEGQ4Sh7dtieum31LZnAlHvvAO22av6WgI/blkNh47u4=
-X-Gm-Message-State: AOJu0Yzq4G8rSgNbx608P1dGvlNszDJTsJ1/DlvRCtIPiOWL5SfcGuIC
-	/6h/PSuTNA/dLeaDwlgsqeVbET+X7O+7ghbmKAa4BjnhqsWAh0oHQ6FEqX8f
-X-Google-Smtp-Source: AGHT+IEaBQXX4S1FIJHHihmuUASrlhElKYSFLCI67d5PXcWDVksLoYqWliB/nepfMM5aLNciXGz5Ew==
-X-Received: by 2002:a17:906:b756:b0:a4e:14e5:5737 with SMTP id fx22-20020a170906b75600b00a4e14e55737mr682403ejb.45.1712265756679;
-        Thu, 04 Apr 2024 14:22:36 -0700 (PDT)
-Received: from turtle-stonecat.ts.net (92.40.200.197.threembb.co.uk. [92.40.200.197])
-        by smtp.gmail.com with ESMTPSA id jt2-20020a170906dfc200b00a4e1aa345f6sm31625ejc.115.2024.04.04.14.22.35
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Apr 2024 14:22:36 -0700 (PDT)
-X-Priority: 3
-To: denkenz@gmail.com,adam@piggz.co.uk,ofono@lists.linux.dev
-From: piggz1@gmail.com
-Subject: Re: [PATCH v3 1/4] qmimodem: voicecall: Implement call dialing
-In-Reply-To: <d79f7d16-9c77-4359-833f-0d6b3c1f1b36@gmail.com>
-References: <20240402212625.5348-1-adam@piggz.co.uk>
- <d79f7d16-9c77-4359-833f-0d6b3c1f1b36@gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: base64
-Date: Thu, 4 Apr 2024 21:22:33 +0000
-Message-ID: <a28170.sbfspn.2v2btf-qmf@smtp.gmail.com>
+        d=1e100.net; s=20230601; t=1712266383; x=1712871183;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=zNySVZoifHWdRI1/lVBtg0CnxxmjkbzeMdqWW+Uzl0E=;
+        b=u1Argij4PGPhv0oX/adGb4mLQYaNtz3+0LoyonrivoGRUuOOQpUK/ePKB+dluvpnVF
+         ww7Ow9+cl2p03hGdkg6Prj907USBpkUtxb9HcFjC+ocwkEaDeAPoe8/Y/H7DNYomflDK
+         pEQHJf56/HKCLYeGLoIgbB4XA9v+VAPmNXiZH0nucoTyzBg9Oxssgk0u2ia/3iGYJJ8i
+         BIr/5Qkl1b0Tf4+1M6lct9/KZUzABxnSFzh0GaYo0N9sD8yJo3GbymMxakRnz6KTbPKj
+         2Nic741DoOb/9wDVbAKPXdxZN07zPxhZf0BEwD4wuLcp+1Ti8/K84o/2hVyicGrPjYlc
+         wIsw==
+X-Forwarded-Encrypted: i=1; AJvYcCUHElXoCtb0zkDTBYXY2pHEhFpUgeR8iPp6EjUOJJnzXAlbo2kOCrv3kwjulBUxPvS1tfWHtdRdaH73V3jJsxaYkMj9Alk=
+X-Gm-Message-State: AOJu0YyKZXFoK+hKDhA9+BQLu/1BmEPQ695tu3n0wosvMjWqI8izAtr6
+	qU/PDXc5sg35fPy9DiJIeL38oEdu3F7xmb7Pyt+llB+PEz61PllV0ap6hWmJ
+X-Google-Smtp-Source: AGHT+IH6tZoBD2uH9dn+nSOUUQN/CF4fRf8N9xBiNS/CNrdFmgkGywgv/vYlUSJaeppcxmW7PI8uwg==
+X-Received: by 2002:a05:6870:f80b:b0:22e:c860:9a6a with SMTP id fr11-20020a056870f80b00b0022ec8609a6amr1713543oab.49.1712266383238;
+        Thu, 04 Apr 2024 14:33:03 -0700 (PDT)
+Received: from [192.168.1.22] (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id vp1-20020a056871a00100b0022a4444451dsm36416oab.13.2024.04.04.14.33.02
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 04 Apr 2024 14:33:03 -0700 (PDT)
+Message-ID: <fd97a5bd-b76b-4eaf-949a-e28ffb486868@gmail.com>
+Date: Thu, 4 Apr 2024 16:33:02 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 4/4] qmimodem: voicecall: Implement DTMF tones
+Content-Language: en-US
+To: Adam Pigg <adam@piggz.co.uk>, ofono@lists.linux.dev
+References: <20240402212625.5348-1-adam@piggz.co.uk>
+ <20240402212625.5348-4-adam@piggz.co.uk>
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20240402212625.5348-4-adam@piggz.co.uk>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-DQoNCk9uIFRodXJzZGF5LCA0IEFwcmlsIDIwMjQsIERlbmlzIEtlbnppb3Igd3JvdGU6DQo+IEhp
-IEFkYW0sDQo+IA0KPiBPbiA0LzIvMjQgMTY6MjUsIEFkYW0gUGlnZyB3cm90ZToNCj4gPiBBZGQg
-dm9pY2VjYWxsIGRpYWxsaW5nIHRvIHRoZSBxbWltb2RlbSBkcml2ZXINCj4gPiBJbmNsdWRlcyBy
-ZXF1aXJlZCBpbmZyYXRydWN0dXJlIGFuZCBzZXR1cCBvZiB0aGUgUU1JIHNlcnZpY2VzDQo+ID4g
-DQo+ID4gQ2FsbCBTdGF0ZSBIYW5kbGluZw0KPiA+ID09PT09PT09PT09PT09PT09PT0NCj4gPiBP
-biBpbml0aWFsaXNhdGlvbiwgcmVnaXN0ZXIgdGhlIGFsbF9jYWxsX3N0YXR1c19pbmQgY2FsbGJh
-Y2sgdG8gYmUNCj4gPiBjYWxsZWQgZm9yIFFNSV9WT0lDRV9JTkRfQUxMX1NUQVRVUy4gIFRoaXMg
-d2lsbCBoYW5kbGUgbm90aWZpY2F0aW9mIG9mDQo+ID4gY2FsbCBzdGF0dXMgdG8gdGhlIHJlc3Qg
-b2YgdGhlIHN5c3RlbQ0KPiA+IA0KPiA+IERpYWwgSGFuZGxpbmcNCj4gPiA9PT09PT09PT09PT09
-DQo+ID4gVGhlIGRpYWwgZnVuY3Rpb24gc2V0cyB1cCB0aGUgcGFyYW1ldGVycyBmb3IgdGhlIFFN
-SV9WT0lDRV9ESUFMX0NBTEwNCj4gPiBzZXJ2aWNlLiAgVGhlIHBhcmFtZXRlcnMgYXJlIHRoZSBu
-dW1iZXIgdG8gYmUgY2FsbGVkIGFuZCB0aGUgY2FsbCB0eXBlLA0KPiA+IHdoaWNoIGlzIGN1cnJl
-bnRseSBoYXJkIGNvZGVkIHRvIGJlIFFNSV9WT0lDRV9DQUxMX1RZUEVfVk9JQ0UuICBUaGUNCj4g
-PiBkaWFsX2NiIGNhbGxiYWNrIHdpIHRoZW4gYmUgY2FsbGVkIGFuZCB3aWxsIHJlY2VpdmUgdGhl
-IGNhbGwtaWQuDQo+ID4gLS0tDQo+ID4gICBkcml2ZXJzL3FtaW1vZGVtL3ZvaWNlLmggICAgIHwg
-IDE3ICsrDQo+ID4gICBkcml2ZXJzL3FtaW1vZGVtL3ZvaWNlY2FsbC5jIHwgNDc5ICsrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKystDQo+ID4gICAyIGZpbGVzIGNoYW5nZWQsIDQ5NSBp
-bnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pDQo+ID4gDQo+IA0KPiA8c25pcD4NCj4gDQo+IENv
-dXBsZSBvZiBnZW5lcmFsIGNvbW1lbnRzOg0KPiANCj4gLSBUaGVyZSdzIHN0aWxsIGFuIGVtcHR5
-IGxpbmUgQCBFT0YgaW4gdGhpcyBjb21taXQsIHBsZWFzZSBmaXggdGhhdC4NCj4gLSBBZnRlciBh
-cHBseWluZyBqdXN0IHRoaXMgcGF0Y2gsIGNvbXBpbGF0aW9uIGZhaWxzOg0KPiANCj4gW2Rlbmtl
-bnpAYXJjaGRldiBvZm9ub10kIG1ha2UNCj4gbWFrZSAtLW5vLXByaW50LWRpcmVjdG9yeSBhbGwt
-YW0NCj4gICAgQ0MgICAgICAgZHJpdmVycy9xbWltb2RlbS92b2ljZWNhbGwubw0KPiBkcml2ZXJz
-L3FtaW1vZGVtL3ZvaWNlY2FsbC5jOiBJbiBmdW5jdGlvbiDigJhhbGxfY2FsbF9zdGF0dXNfaW5k
-4oCZOg0KPiBkcml2ZXJzL3FtaW1vZGVtL3ZvaWNlY2FsbC5jOjM1NTozMjogZXJyb3I6IHVudXNl
-ZCB2YXJpYWJsZSDigJh2ZOKAmSANCj4gWy1XZXJyb3I9dW51c2VkLXZhcmlhYmxlXQ0KPiAgICAz
-NTUgfCAgICAgICAgIHN0cnVjdCB2b2ljZWNhbGxfZGF0YSAqdmQgPSBvZm9ub192b2ljZWNhbGxf
-Z2V0X2RhdGEodmMpOw0KPiAgICAgICAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-Xn4NCj4gZHJpdmVycy9xbWltb2RlbS92b2ljZWNhbGwuYzogQXQgdG9wIGxldmVsOg0KPiBkcml2
-ZXJzL3FtaW1vZGVtL3ZvaWNlY2FsbC5jOjI2MjoxNjogZXJyb3I6IOKAmG9mb25vX3RvX3FtaV9k
-aXJlY3Rpb27igJkgZGVmaW5lZCBidXQgDQo+IG5vdCB1c2VkIFstV2Vycm9yPXVudXNlZC1mdW5j
-dGlvbl0NCj4gICAgMjYyIHwgc3RhdGljIHVpbnQ4X3Qgb2Zvbm9fdG9fcW1pX2RpcmVjdGlvbihl
-bnVtIGNhbGxfZGlyZWN0aW9uIG9mb25vX2RpcmVjdGlvbikNCj4gICAgICAgIHwgICAgICAgICAg
-ICAgICAgXn5+fn5+fn5+fn5+fn5+fn5+fn5+fg0KPiBkcml2ZXJzL3FtaW1vZGVtL3ZvaWNlY2Fs
-bC5jOjk3OjEzOiBlcnJvcjog4oCYb2Zvbm9fY2FsbF9jb21wYXJlX2J5X3N0YXR1c+KAmSANCj4g
-ZGVmaW5lZCBidXQgbm90IHVzZWQgWy1XZXJyb3I9dW51c2VkLWZ1bmN0aW9uXQ0KPiAgICAgOTcg
-fCBzdGF0aWMgYm9vbCBvZm9ub19jYWxsX2NvbXBhcmVfYnlfc3RhdHVzKGNvbnN0IHZvaWQgKmEs
-IGNvbnN0IHZvaWQgKmIpDQo+ICAgICAgICB8ICAgICAgICAgICAgIF5+fn5+fn5+fn5+fn5+fn5+
-fn5+fn5+fn5+fn4NCj4gY2MxOiBhbGwgd2FybmluZ3MgYmVpbmcgdHJlYXRlZCBhcyBlcnJvcnMN
-Cj4gbWFrZVsxXTogKioqIFtNYWtlZmlsZTo0MDk0OiBkcml2ZXJzL3FtaW1vZGVtL3ZvaWNlY2Fs
-bC5vXSBFcnJvciAxDQo+IG1ha2U6ICoqKiBbTWFrZWZpbGU6MjQwMjogYWxsXSBFcnJvciAyDQo+
-IA0KPiBJZGVhbGx5LCBlYWNoIHBhdGNoIHNob3VsZCBjb21waWxlIGFuZCBydW4gY2xlYW5seSB0
-byBoZWxwIHdpdGggJ2dpdCBiaXNlY3QnLg0KPiANCj4gPHNuaXA+DQoNClRoYW5rcyBmb3IgdGhp
-cywgaSB0aGluayB0aGUgaXNzdWUgbWlnaHQgYmUgY29tcGlsZXIgZGlmZmVyZW5jZXMuIEl0IGFs
-bCBidWlsZHMgb2sgZm9yIG1lLCBidXQgc2FpbGZpc2ggaXMgdXNpbmcgZ2NjIDggYXRtLCBzbyBp
-IGd1ZXNzIGRlZmF1bHRzIGhhdmUgY2hhbmdlZC4NCg0KDQo+IA0KPiA+ICsNCj4gPiArc3RhdGlj
-IGJvb2wgb2Zvbm9fY2FsbF9jb21wYXJlX2J5X3N0YXR1cyhjb25zdCB2b2lkICphLCBjb25zdCB2
-b2lkICpiKQ0KPiA+ICt7DQo+ID4gKwljb25zdCBzdHJ1Y3Qgb2Zvbm9fY2FsbCAqY2FsbCA9IGE7
-DQo+ID4gKwlpbnQgc3RhdHVzID0gTF9QVFJfVE9fSU5UKGIpOw0KPiA+ICsNCj4gPiArCXJldHVy
-biBzdGF0dXMgPT0gY2FsbC0+c3RhdHVzOw0KPiA+ICt9DQo+ID4gKw0KPiANCj4gVGhpcyBmdW5j
-dGlvbiBiZWxvbmdzIGluIHBhdGNoIDIuICBJdCBpc24ndCB1c2VkIGluIHRoaXMgY29tbWl0IGFu
-ZCBpcyBjYXVzaW5nIGEgDQo+IGNvbXBpbGVyIHdhcm5pbmcgLyBlcnJvci4NCj4gDQo+IDxzbmlw
-Pg0KPiANCj4gPiArc3RhdGljIHVpbnQ4X3Qgb2Zvbm9fdG9fcW1pX2RpcmVjdGlvbihlbnVtIGNh
-bGxfZGlyZWN0aW9uIG9mb25vX2RpcmVjdGlvbikNCj4gPiArew0KPiA+ICsJcmV0dXJuIG9mb25v
-X2RpcmVjdGlvbiArIDE7DQo+ID4gK30NCj4gDQo+IFRoaXMgZnVuY3Rpb24gaXNuJ3QgdXNlZCwg
-Z2V0IHJpZCBvZiBpdA0KPiANCj4gPHNuaXA+DQo+IA0KPiA+ICtzdGF0aWMgaW50IHFtaV92b2lj
-ZV9jYWxsX3N0YXR1cyhzdHJ1Y3QgcW1pX3Jlc3VsdCAqcW1pX3Jlc3VsdCwNCj4gPiArCQkJCQlz
-dHJ1Y3QgcW1pX3ZvaWNlX2FsbF9jYWxsX3N0YXR1c19pbmQgKnJlc3VsdCkNCj4gDQo+IFJpZ2h0
-IG5vdyB5b3UgaGF2ZSB0aGlzIGZ1bmN0aW9uIHByb2R1Y2luZyBhbiBpbnRlcm1lZGlhdGUgc3Ry
-dWN0dXJlIHdoaWNoIA0KPiBwb2ludHMgdG8gbWVtb3J5IG93bmVkIGJ5IHN0cnVjdCBxbWlfcmVz
-dWx0IGFuZCBpcyBvbmx5IHZhbGlkIGFzIGxvbmcgYXMgDQo+IHFtaV9yZXN1bHQgaXMgdmFsaWQu
-ICBhbGxfY2FsbF9zdGF0dXNfaW5kKCkgdGhlbiBjb252ZXJ0cyB0aGlzIGludGVybWVkaWF0ZSAN
-Cj4gc3RydWN0dXJlIGludG8gYW4gbF9xdWV1ZSB3aXRoIG9mb25vX2NhbGwgb2JqZWN0cy4gIFRo
-ZSBpbnRlcm1lZGlhdGUgc3RydWN0dXJlIA0KPiBpcyBuZXZlciBuZWVkZWQgYWZ0ZXIgb3IgdXNl
-ZCBlbHNld2hlcmUuICBObyBvdGhlciBjYWxsZXIgdXNlcyB0aGlzIGludGVybWVkaWF0ZSANCj4g
-c3RydWN0dXJlLg0KPiANCj4gSGF2ZSB5b3UgdGhvdWdodCBhYm91dCBoYXZpbmcgdGhpcyBmdW5j
-dGlvbiByZXR1cm4gYW4gYWxsb2NhdGVkIGxfcXVldWUgd2l0aCANCj4gb2Zvbm9fY2FsbCBvYmpl
-Y3RzIGFzIGNvbnRlbnRzIGluc3RlYWQgYW5kIGdldHRpbmcgcmlkIG9mIHN0cnVjdCANCj4gcW1p
-X3ZvaWNlX2FsbF9jYWxsX3N0YXR1c19pbmQgY29tcGxldGVseT8NCj4gDQo+ID4gK3sNCj4gPiAr
-CWludCBvZmZzZXQ7DQo+ID4gKwl1aW50MTZfdCBsZW47DQo+ID4gKwlib29sIHN0YXR1cyA9IHRy
-dWU7DQo+ID4gKwljb25zdCBzdHJ1Y3QgcW1pX3ZvaWNlX3JlbW90ZV9wYXJ0eV9udW1iZXIgKnJl
-bW90ZV9wYXJ0eV9udW1iZXI7DQo+ID4gKwljb25zdCBzdHJ1Y3QgcW1pX3ZvaWNlX2NhbGxfaW5m
-b3JtYXRpb24gKmNhbGxfaW5mb3JtYXRpb247DQo+ID4gKw0KPiA+ICsJc3RhdGljIGNvbnN0IHVp
-bnQ4X3QgUU1JX1ZPSUNFX0FMTF9DQUxMX1NUQVRVU19DQUxMX0lORk9STUFUSU9OID0gMHgwMTsN
-Cj4gPiArCXN0YXRpYyBjb25zdCB1aW50OF90IFFNSV9WT0lDRV9BTExfQ0FMTF9TVEFUVVNfUkVN
-T1RFX05VTUJFUiA9IDB4MTA7DQo+ID4gKwlzdGF0aWMgY29uc3QgdWludDhfdCBRTUlfVk9JQ0Vf
-QUxMX0NBTExfSU5GT19DQUxMX0lORk9STUFUSU9OID0gMHgxMDsNCj4gPiArCXN0YXRpYyBjb25z
-dCB1aW50OF90IFFNSV9WT0lDRV9BTExfQ0FMTF9JTkZPX1JFTU9URV9OVU1CRVIgPSAweDExOw0K
-PiA+ICsNCj4gPiArCS8qIG1hbmRhdG9yeSAqLw0KPiA+ICsJY2FsbF9pbmZvcm1hdGlvbiA9IHFt
-aV9yZXN1bHRfZ2V0KA0KPiA+ICsJCXFtaV9yZXN1bHQsIFFNSV9WT0lDRV9BTExfQ0FMTF9TVEFU
-VVNfQ0FMTF9JTkZPUk1BVElPTiwgJmxlbik7DQo+ID4gKw0KPiA+ICsJaWYgKCFjYWxsX2luZm9y
-bWF0aW9uKSB7DQo+ID4gKwkJY2FsbF9pbmZvcm1hdGlvbiA9IHFtaV9yZXN1bHRfZ2V0KA0KPiA+
-ICsJCQlxbWlfcmVzdWx0LCBRTUlfVk9JQ0VfQUxMX0NBTExfSU5GT19DQUxMX0lORk9STUFUSU9O
-LA0KPiA+ICsJCQkmbGVuKTsNCj4gPiArCQlzdGF0dXMgPSBmYWxzZTsNCj4gPiArCX0NCj4gPiAr
-DQo+ID4gKwlpZiAoY2FsbF9pbmZvcm1hdGlvbikgew0KPiA+ICsJCS8qIHZlcmlmeSB0aGUgbGVu
-Z3RoICovDQo+ID4gKwkJaWYgKGxlbiA8IHNpemVvZihjYWxsX2luZm9ybWF0aW9uLT5zaXplKSkN
-Cj4gPiArCQkJcmV0dXJuIC1FTVNHU0laRTsNCj4gPiArDQo+ID4gKwkJaWYgKGxlbiAhPQ0KPiA+
-ICsJCQljYWxsX2luZm9ybWF0aW9uLT5zaXplICoNCj4gPiArCQkJc2l6ZW9mKHN0cnVjdCBxbWlf
-dm9pY2VfY2FsbF9pbmZvcm1hdGlvbl9pbnN0YW5jZSkgKw0KPiA+ICsJCQlzaXplb2YoY2FsbF9p
-bmZvcm1hdGlvbi0+c2l6ZSkpDQo+ID4gKwkJCXJldHVybiAtRU1TR1NJWkU7DQo+IA0KPiBkb2Mv
-Y29kaW5nLXN0eWxlLnR4dCBpdGVtIE00DQo+IA0KPiA+ICsNCj4gPiArCQlyZXN1bHQtPmNhbGxf
-aW5mb3JtYXRpb25fc2V0ID0gMTsNCj4gPiArCQlyZXN1bHQtPmNhbGxfaW5mb3JtYXRpb24gPSBj
-YWxsX2luZm9ybWF0aW9uOw0KPiA+ICsJfSBlbHNlDQo+ID4gKwkJcmV0dXJuIC1FQkFETVNHOw0K
-PiANCj4gRWFzaWVyIHRvIGJhaWwgZWFybHkgYW5kIG5vdCBuZXN0IG9yIG5lZWQgdGhlIGlmIGNv
-bmRpdGlvbjoNCj4gDQo+IGlmICghY2FsbF9pbmZvcm1hdGlvbikNCj4gCXJldHVybiAtRUJBRE1T
-RzsNCj4gDQo+IGlmIChsZW4gPCBzaXplb2YoY2FsbF9pbmZvcm1hdGlvbi0+c2l6ZSkpDQo+IAly
-ZXR1cm4gLUVNU0dTSVpFOw0KPiANCj4gLi4uDQo+IA0KPiA+ICsNCj4gPiArCS8qIG1hbmRhdG9y
-eSAqLw0KPiA+ICsJcmVtb3RlX3BhcnR5X251bWJlciA9IHFtaV9yZXN1bHRfZ2V0KA0KPiA+ICsJ
-CXFtaV9yZXN1bHQsDQo+ID4gKwkJc3RhdHVzID8gUU1JX1ZPSUNFX0FMTF9DQUxMX1NUQVRVU19S
-RU1PVEVfTlVNQkVSIDoNCj4gPiArCQkJIFFNSV9WT0lDRV9BTExfQ0FMTF9JTkZPX1JFTU9URV9O
-VU1CRVIsDQo+ID4gKwkJJmxlbik7DQo+ID4gKw0KPiA+ICsJaWYgKHJlbW90ZV9wYXJ0eV9udW1i
-ZXIpIHsNCj4gPiArCQljb25zdCBzdHJ1Y3QgcW1pX3ZvaWNlX3JlbW90ZV9wYXJ0eV9udW1iZXJf
-aW5zdGFuY2UgKmluc3RhbmNlOw0KPiA+ICsJCWludCBpbnN0YW5jZV9zaXplID0NCj4gPiArCQkJ
-c2l6ZW9mKHN0cnVjdCBxbWlfdm9pY2VfcmVtb3RlX3BhcnR5X251bWJlcl9pbnN0YW5jZSk7DQo+
-ID4gKwkJaW50IGk7DQo+ID4gKw0KPiA+ICsJCS8qIHZlcmlmeSB0aGUgbGVuZ3RoICovDQo+ID4g
-KwkJaWYgKGxlbiA8IHNpemVvZihyZW1vdGVfcGFydHlfbnVtYmVyLT5zaXplKSkNCj4gPiArCQkJ
-cmV0dXJuIC1FTVNHU0laRTsNCj4gPiArDQo+ID4gKwkJZm9yIChpID0gMCwgb2Zmc2V0ID0gc2l6
-ZW9mKHJlbW90ZV9wYXJ0eV9udW1iZXItPnNpemUpOw0KPiA+ICsJCQlvZmZzZXQgPD0gbGVuICYm
-IGkgPCAxNiAmJiBpIDwgcmVtb3RlX3BhcnR5X251bWJlci0+c2l6ZTsNCj4gPiArCQkJaSsrKSB7
-DQo+ID4gKwkJCWlmIChvZmZzZXQgPT0gbGVuKQ0KPiA+ICsJCQkJYnJlYWs7DQo+ID4gKwkJCWVs
-c2UgaWYgKG9mZnNldCArIGluc3RhbmNlX3NpemUgPiBsZW4pDQo+ID4gKwkJCQlyZXR1cm4gLUVN
-U0dTSVpFOw0KPiA+ICsNCj4gPiArCQkJaW5zdGFuY2UgPSAodm9pZCAqKXJlbW90ZV9wYXJ0eV9u
-dW1iZXIgKyBvZmZzZXQ7DQo+ID4gKwkJCXJlc3VsdC0+cmVtb3RlX3BhcnR5X251bWJlcltpXSA9
-IGluc3RhbmNlOw0KPiA+ICsJCQlvZmZzZXQgKz0NCj4gPiArCQkJCXNpemVvZihzdHJ1Y3QgcW1p
-X3ZvaWNlX3JlbW90ZV9wYXJ0eV9udW1iZXJfaW5zdGFuY2UpICsNCj4gPiArCQkJCWluc3RhbmNl
-LT5udW1iZXJfc2l6ZTsNCj4gPiArCQl9DQo+ID4gKwkJcmVzdWx0LT5yZW1vdGVfcGFydHlfbnVt
-YmVyX3NldCA9IDE7DQo+ID4gKwkJcmVzdWx0LT5yZW1vdGVfcGFydHlfbnVtYmVyX3NpemUgPSBy
-ZW1vdGVfcGFydHlfbnVtYmVyLT5zaXplOw0KPiA+ICsJfSBlbHNlDQo+ID4gKwkJcmV0dXJuIC1F
-QkFETVNHOw0KPiANCj4gU2FtZSBoZXJlOg0KPiANCj4gaWYgKCFyZW1vdGVfcGFydHlfbnVtYmVy
-KQ0KPiAJcmV0dXJuIC1FQkFETVNHOw0KPiANCj4gaWYgKGxlbiA8IC4uLikNCj4gDQo+IGZvciAo
-Li4uKQ0KPiANCj4gU2VlIGRvYy9jb2Rpbmctc3R5bGUudHh0IGl0ZW0gTzINCj4gDQo+ID4gKw0K
-PiA+ICsJcmV0dXJuIDA7DQo+ID4gK30NCj4gPiArDQo+ID4gK3N0YXRpYyB2b2lkIGFsbF9jYWxs
-X3N0YXR1c19pbmQoc3RydWN0IHFtaV9yZXN1bHQgKnJlc3VsdCwgdm9pZCAqdXNlcl9kYXRhKQ0K
-PiA+ICt7DQo+ID4gKwlzdHJ1Y3Qgb2Zvbm9fdm9pY2VjYWxsICp2YyA9IHVzZXJfZGF0YTsNCj4g
-PiArCXN0cnVjdCB2b2ljZWNhbGxfZGF0YSAqdmQgPSBvZm9ub192b2ljZWNhbGxfZ2V0X2RhdGEo
-dmMpOw0KPiA+ICsJc3RydWN0IGxfcXVldWUgKmNhbGxzID0gbF9xdWV1ZV9uZXcoKTsNCj4gPiAr
-CWludCBpOw0KPiA+ICsJaW50IHNpemUgPSAwOw0KPiA+ICsJc3RydWN0IHFtaV92b2ljZV9hbGxf
-Y2FsbF9zdGF0dXNfaW5kIHN0YXR1c19pbmQ7DQo+ID4gKw0KPiA+ICsJREJHKCIiKTsNCj4gDQo+
-IGRvYy9jb2Rpbmctc3R5bGUudHh0IEl0ZW0gTTENCj4gDQo+ID4gKwlpZiAocW1pX3ZvaWNlX2Nh
-bGxfc3RhdHVzKHJlc3VsdCwgJnN0YXR1c19pbmQpICE9IDApIHsNCj4gDQo+IG5pdDogUHJlZmVy
-IDwgMCBjaGVjayBmb3IgZnVuY3Rpb25zIHRoYXQgcmV0dXJuIC1lcnJuby4NCj4gDQo+ID4gKwkJ
-REJHKCJQYXJzaW5nIG9mIGFsbCBjYWxsIHN0YXR1cyBpbmRpY2F0aW9uIGZhaWxlZCIpOw0KPiA+
-ICsJCWdvdG8gZXJyb3I7DQo+ID4gKwl9DQo+ID4gKw0KPiA+ICsJaWYgKCFzdGF0dXNfaW5kLnJl
-bW90ZV9wYXJ0eV9udW1iZXJfc2V0IHx8DQo+ID4gKwkgICAgIXN0YXR1c19pbmQuY2FsbF9pbmZv
-cm1hdGlvbl9zZXQpIHsNCj4gDQo+IEluY29ycmVjdCBpbmRlbnRhdGlvbg0KPiANCj4gPiArCQlE
-QkcoIlNvbWUgcmVxdWlyZWQgZmllbGRzIGFyZSBub3Qgc2V0Iik7DQo+ID4gKwkJZ290byBlcnJv
-cjsNCj4gPiArCX0NCj4gPiArDQo+ID4gKwlzaXplID0gc3RhdHVzX2luZC5jYWxsX2luZm9ybWF0
-aW9uLT5zaXplOw0KPiA+ICsJaWYgKCFzaXplKSB7DQo+ID4gKwkJREJHKCJObyBjYWxsIGluZm9y
-bWF0aW9ucyByZWNlaXZlZCEiKTsNCj4gPiArCQlnb3RvIGVycm9yOw0KPiA+ICsJfQ0KPiA+ICsN
-Cj4gPiArCS8qIGV4cGVjdCB3ZSBoYXZlIHZhbGlkIGZpZWxkcyBmb3IgZXZlcnkgY2FsbCAqLw0K
-PiA+ICsJaWYgKHNpemUgIT0gc3RhdHVzX2luZC5yZW1vdGVfcGFydHlfbnVtYmVyX3NpemUpIHsN
-Cj4gPiArCQlEQkcoIk5vdCBhbGwgZmllbGRzIGhhdmUgdGhlIHNhbWUgc2l6ZSIpOw0KPiA+ICsJ
-CWdvdG8gZXJyb3I7DQo+ID4gKwl9DQo+ID4gKw0KPiA+ICsJZm9yIChpID0gMDsgaSA8IHNpemU7
-IGkrKykgew0KPiA+ICsJCXN0cnVjdCBxbWlfdm9pY2VfY2FsbF9pbmZvcm1hdGlvbl9pbnN0YW5j
-ZSBjYWxsX2luZm87DQo+ID4gKwkJc3RydWN0IG9mb25vX2NhbGwgKmNhbGw7DQo+ID4gKwkJY29u
-c3Qgc3RydWN0IHFtaV92b2ljZV9yZW1vdGVfcGFydHlfbnVtYmVyX2luc3RhbmNlDQo+ID4gKwkJ
-CSpyZW1vdGVfcGFydHkgPSBzdGF0dXNfaW5kLnJlbW90ZV9wYXJ0eV9udW1iZXJbaV07DQo+ID4g
-KwkJaW50IG51bWJlcl9zaXplOw0KPiA+ICsNCj4gPiArCQljYWxsX2luZm8gPSBzdGF0dXNfaW5k
-LmNhbGxfaW5mb3JtYXRpb24tPmluc3RhbmNlW2ldOw0KPiA+ICsJCWNhbGwgPSBsX25ldyhzdHJ1
-Y3Qgb2Zvbm9fY2FsbCwgMSk7DQo+ID4gKwkJY2FsbC0+aWQgPSBjYWxsX2luZm8uaWQ7DQo+ID4g
-KwkJY2FsbC0+ZGlyZWN0aW9uID0gcW1pX3RvX29mb25vX2RpcmVjdGlvbihjYWxsX2luZm8uZGly
-ZWN0aW9uKTsNCj4gPiArDQo+ID4gKwkJaWYgKHFtaV90b19vZm9ub19zdGF0dXMoY2FsbF9pbmZv
-LnN0YXRlLCAmY2FsbC0+c3RhdHVzKSkgew0KPiA+ICsJCQlEQkcoIklnbm9yZSBjYWxsIGlkICVk
-LCBiZWNhdXNlIGNhbiBub3QgY29udmVydCBRTUkgc3RhdGUgMHgleCB0byBvZm9uby4iLA0KPiA+
-ICsJCQkJY2FsbF9pbmZvLmlkLCBjYWxsX2luZm8uc3RhdGUpOw0KPiA+ICsJCQlsX2ZyZWUoY2Fs
-bCk7DQo+ID4gKwkJCWNvbnRpbnVlOw0KPiA+ICsJCX0NCj4gPiArCQlEQkcoIkNhbGwgJWQgaW4g
-c3RhdGUgJXMoJWQpIiwgY2FsbF9pbmZvLmlkLA0KPiA+ICsJCQlxbWlfdm9pY2VfY2FsbF9zdGF0
-ZV9uYW1lKGNhbGxfaW5mby5zdGF0ZSksDQo+ID4gKwkJCWNhbGxfaW5mby5zdGF0ZSk7DQo+ID4g
-Kw0KPiA+ICsJCWNhbGwtPnR5cGUgPSAwOyAvKiBhbHdheXMgdm9pY2UgKi8NCj4gPiArCQludW1i
-ZXJfc2l6ZSA9IHJlbW90ZV9wYXJ0eS0+bnVtYmVyX3NpemUgKyAxOw0KPiA+ICsJCWlmIChudW1i
-ZXJfc2l6ZSA+IE9GT05PX01BWF9QSE9ORV9OVU1CRVJfTEVOR1RIKQ0KPiA+ICsJCQludW1iZXJf
-c2l6ZSA9IE9GT05PX01BWF9QSE9ORV9OVU1CRVJfTEVOR1RIOw0KPiA+ICsJCWxfc3RybGNweShj
-YWxsLT5waG9uZV9udW1iZXIubnVtYmVyLCByZW1vdGVfcGFydHktPm51bWJlciwNCj4gPiArCQkJ
-CW51bWJlcl9zaXplKTsNCj4gPiArDQo+ID4gKwkJaWYgKHN0cmxlbihjYWxsLT5waG9uZV9udW1i
-ZXIubnVtYmVyKSA+IDApDQo+ID4gKwkJCWNhbGwtPmNsaXBfdmFsaWRpdHkgPSAwOw0KPiA+ICsJ
-CWVsc2UNCj4gPiArCQkJY2FsbC0+Y2xpcF92YWxpZGl0eSA9IDI7DQo+ID4gKw0KPiA+ICsJCWxf
-cXVldWVfcHVzaF90YWlsKGNhbGxzLCBjYWxsKTsNCj4gPiArCQlEQkcoIiVkIiwgbF9xdWV1ZV9s
-ZW5ndGgoY2FsbHMpKTsNCj4gPiArCX0NCj4gPiArDQo+ID4gKwlvZm9ub19jYWxsX2xpc3Rfbm90
-aWZ5KHZjLCBjYWxscyk7DQo+ID4gKw0KPiA+ICsJcmV0dXJuOw0KPiA+ICtlcnJvcjoNCj4gPiAr
-CWxfcXVldWVfZGVzdHJveShjYWxscywgbF9mcmVlKTsNCj4gPiArfQ0KPiA+ICsNCj4gPiArc3Rh
-dGljIHZvaWQgZGlhbF9jYihzdHJ1Y3QgcW1pX3Jlc3VsdCAqcmVzdWx0LCB2b2lkICp1c2VyX2Rh
-dGEpDQo+ID4gK3sNCj4gPiArCXN0cnVjdCBjYl9kYXRhICpjYmQgPSB1c2VyX2RhdGE7DQo+ID4g
-KwlzdHJ1Y3Qgb2Zvbm9fdm9pY2VjYWxsICp2YyA9IGNiZC0+dXNlcjsNCj4gPiArCW9mb25vX3Zv
-aWNlY2FsbF9jYl90IGNiID0gY2JkLT5jYjsNCj4gPiArCXVpbnQxNl90IGVycm9yOw0KPiA+ICsJ
-dWludDhfdCBjYWxsX2lkOw0KPiA+ICsJYm9vbCBjYWxsX2lkX3NldCA9IGZhbHNlOw0KPiA+ICsN
-Cj4gPiArCXN0YXRpYyBjb25zdCB1aW50OF90IFFNSV9WT0lDRV9ESUFMX1JFU1VMVF9DQUxMX0lE
-ID0gMHgxMDsNCj4gPiArDQo+ID4gKwlEQkcoIiIpOw0KPiA+ICsNCj4gPiArCWlmIChxbWlfcmVz
-dWx0X3NldF9lcnJvcihyZXN1bHQsICZlcnJvcikpIHsNCj4gPiArCQlEQkcoIlFNSSBFcnJvciAl
-ZCIsIGVycm9yKTsNCj4gPiArCQlDQUxMQkFDS19XSVRIX0ZBSUxVUkUoY2IsIGNiZC0+ZGF0YSk7
-DQo+ID4gKwkJcmV0dXJuOw0KPiA+ICsJfQ0KPiA+ICsNCj4gPiArCWlmIChxbWlfcmVzdWx0X2dl
-dF91aW50OChyZXN1bHQsIFFNSV9WT0lDRV9ESUFMX1JFU1VMVF9DQUxMX0lELA0KPiA+ICsJCQkJ
-CSZjYWxsX2lkKSkNCj4gPiArCQljYWxsX2lkX3NldCA9IHRydWU7DQo+ID4gKwllbHNlIHsNCj4g
-PiArCQlEQkcoIlJlY2VpdmVkIGludmFsaWQgUmVzdWx0Iik7DQo+ID4gKwkJQ0FMTEJBQ0tfV0lU
-SF9GQUlMVVJFKGNiLCBjYmQtPmRhdGEpOw0KPiA+ICsJCXJldHVybjsNCj4gPiArCX0NCj4gPiAr
-DQo+ID4gKwlpZiAoIWNhbGxfaWRfc2V0KSB7DQo+ID4gKwkJREJHKCJEaWRuJ3QgcmVjZWl2ZSBh
-IGNhbGwgaWQiKTsNCj4gPiArCQlDQUxMQkFDS19XSVRIX0ZBSUxVUkUoY2IsIGNiZC0+ZGF0YSk7
-DQo+ID4gKwkJcmV0dXJuOw0KPiA+ICsJfQ0KPiANCj4gVGhpcyBpZiBsb29rcyBsaWtlIGEgZGVh
-ZCBicmFuY2guICBUaGUgb25seSB3YXkgY2FsbF9pZF9zZXQgaXMgZmFsc2UgaGVyZSBpcyBpZiAN
-Cj4gcW1pX3Jlc3VsdF9nZXRfdWludDggZWFybGllciBmYWlsZWQuICBJbiBmYWN0LCB0aGUgYWJv
-dmUgc2VjdGlvbiBjYW4gYmUgDQo+IHJld3JpdHRlbiBhczoNCj4gDQo+IGlmICghcW1pX3Jlc3Vs
-dF9nZXRfdWludDgoLi4uKSkgew0KPiAJb2Zvbm9fZXJyb3IoIk5vIGNhbGwgaWQgaW4gZGlhbCBy
-ZXN1bHQiKTsNCj4gCUNBTExCQUNLX1dJVEhfRkFJTFVSRSguLi4pOw0KPiAJcmV0dXJuOw0KPiB9
-DQo+IA0KPiBObyBuZWVkIGZvciBjYWxsX2lkX3NldCB2YXJpYWJsZSBlaXRoZXIuDQo+IA0KPiA+
-ICsNCj4gPiArCURCRygiTmV3IGNhbGwgUU1JIGlkICVkIiwgY2FsbF9pZCk7DQo+ID4gKwlvZm9u
-b19jYWxsX2xpc3RfZGlhbF9jYWxsYmFjayh2YywgY2FsbF9pZCk7DQo+ID4gKw0KPiA+ICsJQ0FM
-TEJBQ0tfV0lUSF9TVUNDRVNTKGNiLCBjYmQtPmRhdGEpOw0KPiA+ICt9DQo+ID4gKw0KPiANCj4g
-PHNuaXA+DQo+IA0KPiA+ICtzdGF0aWMgdm9pZCBkaWFsKHN0cnVjdCBvZm9ub192b2ljZWNhbGwg
-KnZjLA0KPiA+ICsJCQljb25zdCBzdHJ1Y3Qgb2Zvbm9fcGhvbmVfbnVtYmVyICpwaCwNCj4gPiAr
-CQkJZW51bSBvZm9ub19jbGlyX29wdGlvbiBjbGlyLCBvZm9ub192b2ljZWNhbGxfY2JfdCBjYiwN
-Cj4gPiArCQkJdm9pZCAqZGF0YSkNCj4gPiArew0KPiA+ICsJc3RydWN0IHZvaWNlY2FsbF9kYXRh
-ICp2ZCA9IG9mb25vX3ZvaWNlY2FsbF9nZXRfZGF0YSh2Yyk7DQo+ID4gKwlzdHJ1Y3QgY2JfZGF0
-YSAqY2JkID0gY2JfZGF0YV9uZXcoY2IsIGRhdGEpOw0KPiA+ICsJc3RydWN0IHFtaV9wYXJhbSAq
-cGFyYW07DQo+ID4gKwljb25zdCBjaGFyICpjYWxsaW5nX251bWJlciA9IHBob25lX251bWJlcl90
-b19zdHJpbmcocGgpOw0KPiA+ICsNCj4gPiArCXN0YXRpYyBjb25zdCB1aW50OF90IFFNSV9WT0lD
-RV9ESUFMX0NBTExfTlVNQkVSID0gMHgwMTsNCj4gPiArCXN0YXRpYyBjb25zdCB1aW50OF90IFFN
-SV9WT0lDRV9ESUFMX0NBTExfVFlQRSA9IDB4MTA7DQo+ID4gKwlzdGF0aWMgY29uc3QgdWludDhf
-dCBRTUlfVk9JQ0VfQ0FMTF9UWVBFX1ZPSUNFID0gMHgwMDsNCj4gPiArDQo+ID4gKwlEQkcoIiIp
-Ow0KPiA+ICsNCj4gPiArCWNiZC0+dXNlciA9IHZjOw0KPiA+ICsJbWVtY3B5KCZ2ZC0+ZGlhbGVk
-LCBwaCwgc2l6ZW9mKCpwaCkpOw0KPiA+ICsNCj4gPiArCXBhcmFtID0gcW1pX3BhcmFtX25ldygp
-Ow0KPiA+ICsJaWYgKCFwYXJhbSkNCj4gPiArCQlnb3RvIGVycm9yOw0KPiA+ICsNCj4gPiArCWlm
-ICghcW1pX3BhcmFtX2FwcGVuZChwYXJhbSwgUU1JX1ZPSUNFX0RJQUxfQ0FMTF9OVU1CRVIsDQo+
-ID4gKwkJCQlzdHJsZW4oY2FsbGluZ19udW1iZXIpLCBjYWxsaW5nX251bWJlcikpIHsNCj4gPiAr
-CQlnb3RvIGVycm9yOw0KPiA+ICsJfQ0KPiANCj4gTm8gbmVlZCBmb3Ige30NCj4gDQo+ID4gKw0K
-PiA+ICsJcW1pX3BhcmFtX2FwcGVuZF91aW50OChwYXJhbSwgUU1JX1ZPSUNFX0RJQUxfQ0FMTF9U
-WVBFLA0KPiA+ICsJCQkJUU1JX1ZPSUNFX0NBTExfVFlQRV9WT0lDRSk7DQo+ID4gKw0KPiA+ICsJ
-aWYgKHFtaV9zZXJ2aWNlX3NlbmQodmQtPnZvaWNlLCBRTUlfVk9JQ0VfRElBTF9DQUxMLCBwYXJh
-bSwgZGlhbF9jYiwNCj4gPiArCQkJCWNiZCwgbF9mcmVlKSA+IDApDQo+ID4gKwkJcmV0dXJuOw0K
-PiA+ICsNCj4gPiArZXJyb3I6DQo+ID4gKwlDQUxMQkFDS19XSVRIX0ZBSUxVUkUoY2IsIGRhdGEp
-Ow0KPiA+ICsJbF9mcmVlKGNiZCk7DQo+ID4gKwlsX2ZyZWUocGFyYW0pOw0KPiA+ICt9DQo+ID4g
-Kw0KPiA+ICAgc3RhdGljIHZvaWQgY3JlYXRlX3ZvaWNlX2NiKHN0cnVjdCBxbWlfc2VydmljZSAq
-c2VydmljZSwgdm9pZCAqdXNlcl9kYXRhKQ0KPiA+ICAgew0KPiA+ICAgCXN0cnVjdCBvZm9ub192
-b2ljZWNhbGwgKnZjID0gdXNlcl9kYXRhOw0KPiANCj4gPHNuaXA+DQo+IA0KPiA+IEBAIC05Miwx
-MyArNTY2LDE2IEBAIHN0YXRpYyB2b2lkIHFtaV92b2ljZWNhbGxfcmVtb3ZlKHN0cnVjdCBvZm9u
-b192b2ljZWNhbGwgKnZjKQ0KPiA+ICAgDQo+ID4gICAJcW1pX3NlcnZpY2VfdW5yZWYoZGF0YS0+
-dm9pY2UpOw0KPiA+ICAgDQo+ID4gKwlsX3F1ZXVlX2Rlc3Ryb3koZGF0YS0+Y2FsbF9saXN0LCBs
-X2ZyZWUpOw0KPiA+ICAgCWxfZnJlZShkYXRhKTsNCj4gPiAgIH0NCj4gPiAgIA0KPiA+ICAgc3Rh
-dGljIGNvbnN0IHN0cnVjdCBvZm9ub192b2ljZWNhbGxfZHJpdmVyIGRyaXZlciA9IHsNCj4gPiAg
-IAkucHJvYmUJCT0gcW1pX3ZvaWNlY2FsbF9wcm9iZSwNCj4gPiAgIAkucmVtb3ZlCQk9IHFtaV92
-b2ljZWNhbGxfcmVtb3ZlLA0KPiA+ICsJLmRpYWwJCT0gZGlhbCwNCj4gPiAgIH07DQo+ID4gICAN
-Cj4gPiAgIE9GT05PX0FUT01fRFJJVkVSX0JVSUxUSU4odm9pY2VjYWxsLCBxbWltb2RlbSwgJmRy
-aXZlcikNCj4gPiAgIA0KPiA+ICsNCj4gDQo+IEVtcHR5IGxpbmUgYXQgRU9GIEkgbWVudGlvbmVk
-IGVhcmxpZXIgaXMgaGVyZQ0KPiANCj4gUmVnYXJkcywNCj4gLURlbmlzDQo+DQoNCi0tIA0KU2Vu
-dCBmcm9tIG15IFNhaWxmaXNoIGRldmljZQ==
+Hi Adam,
+
+On 4/2/24 16:25, Adam Pigg wrote:
+> The send_dtmf function sets up a call to send_one_dtmf, which will call
+> the QMI_VOICE_START_CONTINUOUS_DTMF service function.  The paramters to
+
+typo 'paramters'
+
+> this call are a hard coded call-id and the DTMF character to send.
+> start_cont_dtmf_cb will then be called which will set up a call to
+> QMI_VOICE_STOP_CONTINUOUS_DTMF to stop the tone.  Finally,
+> stop_cont_dtmf_cb will check the final status.
+> ---
+>   drivers/qmimodem/voice.h     |  12 ++++
+>   drivers/qmimodem/voicecall.c | 131 +++++++++++++++++++++++++++++++++++
+>   2 files changed, 143 insertions(+)
+> 
+
+<snip>
+
+> +
+> +enum parse_error {
+> +	NONE = 0,
+> +	MISSING_MANDATORY = 1,
+> +	INVALID_LENGTH = 2,
+> +};
+> +
+
+This enum isn't used?
+
+>   struct qmi_ussd_data {
+>   	uint8_t dcs;
+>   	uint8_t length; > diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
+> index 627719a8..4bdb64b7 100644
+> --- a/drivers/qmimodem/voicecall.c
+> +++ b/drivers/qmimodem/voicecall.c
+> @@ -42,6 +42,8 @@ struct voicecall_data {
+>   	uint16_t minor;
+>   	struct l_queue *call_list;
+>   	struct ofono_phone_number dialed;
+> +	char *full_dtmf;
+> +	char *next_dtmf;
+
+next_dtmf can probably be a const char *.
+
+>   };
+>   
+>   struct qmi_voice_all_call_status_ind {
+> @@ -652,6 +654,134 @@ static void hangup_active(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb,
+>   	release_specific(vc, call->id, cb, data);
+>   }
+>   
+> +static void stop_cont_dtmf_cb(struct qmi_result *result, void *user_data)
+> +{
+> +	struct cb_data *cbd = user_data;
+> +	ofono_voicecall_cb_t cb = cbd->cb;
+> +
+> +	uint16_t error;
+> +
+> +	DBG("");
+> +
+> +	if (qmi_result_set_error(result, &error)) {
+> +		DBG("QMI Error %d", error);
+> +		CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +		return;
+> +	}
+> +
+> +	CALLBACK_WITH_SUCCESS(cb, cbd->data);
+> +	l_free(cbd);
+
+Why is cbd freed only on the success path?  It looks like you're trying to reuse 
+the cbd object between START and STOP commands.  Something like this, right?
+
+cbd = l_new(..);
+START_DTMF(cbd, start_callback);
+start_callback: STOP_DTMF(cbd, stop_callback)
+stop_callback: l_free(cbd)
+
+The problem is that start_callback or stop_callback might never be invoked due 
+to modem being un-plugged for example.  This is what the destroy callback is 
+for, it makes sure to free the user data even if the callback is never called. 
+Destroy callback is also invoked after invocation of the actual callback.
+
+So you have two ways of carrying cbd between multiple qmi_send() instances:
+
+1. cb_data_ref/cb_data_unref
+2. Storing the 'send_dtmf' callback and callback data in struct voicecall_data
+
+For 1, see drivers/qmimodem/sim.c query_passwd_state_retry()
+
+For 2, you'd store the send_dtmf 'cb' and userdata inside struct voicecall_data 
+and use 'vc' as userdata to qmi_send instead of cbd.
+
+> +}
+> +
+> +static void start_cont_dtmf_cb(struct qmi_result *result, void *user_data)
+> +{
+> +	struct cb_data *cbd = user_data;
+> +	ofono_voicecall_cb_t cb = cbd->cb;
+> +	struct ofono_voicecall *vc = cbd->user;
+> +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
+> +	uint16_t error;
+> +	struct qmi_param *param = NULL;
+
+Do not initialize unnecessarily.  The compiler is pretty good about warnings 
+when an uninitialized variable is being used.
+
+> +
+> +	DBG("");
+> +
+> +	if (qmi_result_set_error(result, &error)) {
+> +		DBG("QMI Error %d", error);
+> +		CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +		return;
+> +	}
+> +
+> +	param = qmi_param_new();
+> +	if (!param)
+> +		goto error;
+> +
+> +	if (!qmi_param_append_uint8(param, QMI_VOICE_DTMF_DATA, 0xff))
+> +		goto error;
+> +
+> +	if (qmi_service_send(vd->voice, QMI_VOICE_STOP_CONTINUOUS_DTMF, param,
+> +			     stop_cont_dtmf_cb, cbd, NULL) > 0)
+
+See above about the use of cbd and destroy function
+
+> +		return;
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +	l_free(cbd);
+> +	l_free(param);
+> +}
+> +
+> +static void send_one_dtmf(struct ofono_voicecall *vc, const char dtmf,
+> +				ofono_voicecall_cb_t cb, void *data)
+> +{
+> +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
+> +	struct qmi_param *param = NULL;
+> +	uint8_t param_body[2];
+> +	struct cb_data *cbd = cb_data_new(cb, data);
+> +
+> +	DBG("");
+> +
+> +	cbd->user = vc;
+> +
+> +	param = qmi_param_new();
+> +	if (!param)
+> +		goto error;
+
+No need for this check
+
+> +
+> +	param_body[0] = 0xff;
+> +	param_body[1] = (uint8_t)dtmf;
+> +
+> +	if (!qmi_param_append(param, QMI_VOICE_DTMF_DATA, sizeof(param_body),
+> +			      param_body)) {
+> +		goto error;
+> +	}
+
+No need for {}
+
+> +
+> +	if (qmi_service_send(vd->voice, QMI_VOICE_START_CONTINUOUS_DTMF, param,
+> +			     start_cont_dtmf_cb, cbd, NULL) > 0) {
+
+See above for discussion of cbd and destroy functions
+
+> +		return;
+> +	}
+
+No need for {}
+
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +	l_free(cbd);
+> +	l_free(param);
+> +}
+> +
+> +static void send_one_dtmf_cb(const struct ofono_error *error, void *data)
+> +{
+> +	struct cb_data *cbd = data;
+> +	struct voicecall_data *vd = ofono_voicecall_get_data(cbd->user);
+> +	ofono_voicecall_cb_t cb = cbd->cb;
+> +
+> +	DBG("");
+> +
+> +	if (error->type != OFONO_ERROR_TYPE_NO_ERROR ||
+> +	    *vd->next_dtmf == 0) {
+> +		if (error->type == OFONO_ERROR_TYPE_NO_ERROR)
+> +			CALLBACK_WITH_SUCCESS(cb, cbd->data);
+> +		else
+> +			CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +
+> +		l_free(vd->full_dtmf);
+
+vd->full_dtmf = NULL;
+
+> +		l_free(cbd);
+> +	} else {
+> +		send_one_dtmf(cbd->user,
+> +				*(vd->next_dtmf++),
+> +				send_one_dtmf_cb, data);
+> +	}
+> +}
+> +
+> +static void send_dtmf(struct ofono_voicecall *vc, const char *dtmf,
+> +		      ofono_voicecall_cb_t cb, void *data)
+> +{
+> +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
+> +	struct cb_data *cbd = cb_data_new(cb, data);
+> +
+> +	DBG("");
+> +
+> +	vd->full_dtmf = l_strdup(dtmf);
+
+Should you be freeing full_dtmf first?  Just in case the previous dtmf request 
+failed mid-way?
+
+Make sure to free full_dtmf in .remove(), just in case the modem is pulled when 
+the DTMF chars are being processed.
+
+> +	vd->next_dtmf = &vd->full_dtmf[1];
+> +
+> +	cbd->user = vc;
+> +
+> +	send_one_dtmf(vc, *dtmf, send_one_dtmf_cb, cbd);
+> +}
+> +
+>   static void create_voice_cb(struct qmi_service *service, void *user_data)
+>   {
+>   	struct ofono_voicecall *vc = user_data;
+
+<snip>
+
+Regards,
+-Denis
+
