@@ -1,84 +1,84 @@
 Received: from mx0b-003ede02.pphosted.com (mx0b-003ede02.pphosted.com [205.220.181.153])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FDAF16FF38
-	for <ofono@lists.linux.dev>; Fri,  5 Apr 2024 16:08:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E79C716D328
+	for <ofono@lists.linux.dev>; Fri,  5 Apr 2024 19:08:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.181.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712333341; cv=none; b=F692im7vtmf00NG06GIQHysPcewz8BZx6IlFPQ/Z8S5/l8V5S2fuBHAJoqwi0M/Bc1bbidjzudHMxxjLl1ra72m/s0USazoIMz/WlEKFM6BWtNC1MHcz0fEvJ1uzhR2IbB90ZyiJDHeHbCd9zPbbAWKuR74C7rLGngjOtcPBQms=
+	t=1712344094; cv=none; b=W4MNR7fgmI4eKRdqv+hHiW0ExdAhS/zUvAYQ7I1IKU+kujP6ncQCBV/zrRW32p/3au2H4Xmj+xxzhfyAGv2qlYWYvqhRVr59TV/Np6m9BFLqmxKlrBHqztk5mdvcg3nell9xG55VcawhkLHxQ+dE/tec09sDoWfC13IOgW4E/kg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712333341; c=relaxed/simple;
-	bh=zvUb+v9JWfavJ0NdacHte84Tqx/KzD1OWJR2xSAWE/Y=;
+	s=arc-20240116; t=1712344094; c=relaxed/simple;
+	bh=cDEjxl6Fpew3NViSn81/J/zZudxaCjghYFYxCokvnLc=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=LSXf8IdrOovQYdHPaACb7Q0nWQjXyMbhmifqN5Rg9eiDwM4/tp9VMGuIZRzxSOR5Nnr1b1FfSmLhyf+0mB4GD98TN5ehWHNcPjKznghIJTKd+ifPAHY3YieguRRFW4LjahbHEYneodqJBfBppa6eUWJYzWKDXh3iu4msM9xnz70=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=YUYhUngP; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=mNDvKWC2; arc=none smtp.client-ip=205.220.181.153
+	 MIME-Version:Content-Type; b=PYgbXrwSSFhfVoLhtgo7GwUiGUJPxXa7V5QM54G5cggwLTsnBB/93bN5hv1PVdQiDj1O4MN8D7AQIWdR2YPPQfor5v9tQxa6z9/Yp5rsVLrjM9qi6+bYFC4zZFnHaWbPepfLLEzlnpj8Ad/x9wOJZsrdWNzdNWR0qp9uE0tP0bA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=Wcs6dGbN; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=fdc1MHTC; arc=none smtp.client-ip=205.220.181.153
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="YUYhUngP";
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="mNDvKWC2"
-Received: from pps.filterd (m0286619.ppops.net [127.0.0.1])
-	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 435ETdXh027238
-	for <ofono@lists.linux.dev>; Fri, 5 Apr 2024 09:08:52 -0700
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="Wcs6dGbN";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="fdc1MHTC"
+Received: from pps.filterd (m0286621.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 435Dw81b006033
+	for <ofono@lists.linux.dev>; Fri, 5 Apr 2024 12:08:09 -0700
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
 	 h=from:to:cc:subject:date:message-id:in-reply-to:references
-	:mime-version:content-type; s=ppemail; bh=SZMFx09LxUdSJSqtEJBXwP
-	xkGLkyTqgQPR1qWITNHRs=; b=YUYhUngPLSNFWXc01xNL1lLpfO0f/UD8TtFFGm
-	jvfQSvdE2b3ThE9OXaK1rQWC3w+IVdraXhGAEIHVkM4NHWyGYLiwhRgKpPoLT/uD
-	q1rvIqv2hh0t/SRlQt5YGzvaJ/hmSDog8Ao0gAnm0mcqjuInJ4JPmEUhZEhMWjNQ
-	sDoH+9LtJQBdHuaXwnH8o4GO6tu5iQoFwSSQhVc+5dzfDWWXM5d3xu8ktmxx1sK9
-	/9UWq7zbve7ggCTGLF48ajD6upjaYQoVsN/wLuhXuUOfQtKbHdm0UMNNmBAd2reT
-	9YJvPS/QgrYG1ESo9I4UucLtRUHOxgkLKhZpB33jr8SXEJyQ==
+	:mime-version:content-type; s=ppemail; bh=XV58LAVi8reNHvUrE/X5dp
+	exUYFcJu0ioZL7iQigth4=; b=Wcs6dGbNPSHrZtHqkL382X91ZskBY4SaVpcLDJ
+	wiV6lt4pVLyGlMZn5Q2mu1KqQw0izvYUpbQO5wzuPl0MSO4WBnvXNgeqrQqCHPH9
+	xFhyRCS75irI5DVF5lz+3DEIyfkcQOAlc5cTM8NtgPa+VjX7mFUTOYoz1PsQQdjC
+	rOhrugQ8KUIyT331rr9VqI0dZvYevX4DFfiyLLfjwhFeY5I9C9leY3jEXbzBOmZM
+	T41K8N/qxNHNPCidSZQzmP7lBLfEHBkeeXl4FI7YEqjeDf/NVIAIkocBZHPHUbct
+	Bz99aU1jZpYvxdw5GISyJJXMzRZpPNR3bKnHL9nLimjXwMCw==
 Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com [209.85.160.197])
-	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3x9tqg9ayv-1
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3x9emut4a5-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <ofono@lists.linux.dev>; Fri, 05 Apr 2024 09:08:52 -0700 (PDT)
-Received: by mail-qt1-f197.google.com with SMTP id d75a77b69052e-430baecb018so23311701cf.2
-        for <ofono@lists.linux.dev>; Fri, 05 Apr 2024 09:08:51 -0700 (PDT)
+	for <ofono@lists.linux.dev>; Fri, 05 Apr 2024 12:08:09 -0700 (PDT)
+Received: by mail-qt1-f197.google.com with SMTP id d75a77b69052e-42f3069a45dso62849071cf.1
+        for <ofono@lists.linux.dev>; Fri, 05 Apr 2024 12:08:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=getcruise.com; s=google; t=1712333331; x=1712938131; darn=lists.linux.dev;
+        d=getcruise.com; s=google; t=1712344088; x=1712948888; darn=lists.linux.dev;
         h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
          :from:from:to:cc:subject:date:message-id:reply-to;
-        bh=SZMFx09LxUdSJSqtEJBXwPxkGLkyTqgQPR1qWITNHRs=;
-        b=mNDvKWC2RmnINgyhuH1LerT4VT+pV4G/eK0J2wfa8cFx9OTF27Hi+YUZuh0/O2Cgmv
-         qZulRdIpe4rcF6TtHsaCNMk8+e+bMSvGNf8CbEQeXpzaLizO5xM307jibS87jPj8UjnF
-         FUYWd+Jo1IXbjut0AiymUyIL+b7aRxEvIT++IUMind1ykn4hgU4mFW9o+RSyQUcmaD3I
-         PCDB4EciPKJsIyFKh6XYlQenUZ6uBP9EAekhfQ3P5txl2hX0NnoqTqmKqFuvFbVzdi0w
-         pPqqaW8ALWxg4KW4kGSl7tqraDmNx2S2H6H+nRAJ5AUdhj0mzy6G6HOXSEtWOeGkLAUb
-         u6Ag==
+        bh=XV58LAVi8reNHvUrE/X5dpexUYFcJu0ioZL7iQigth4=;
+        b=fdc1MHTCxGy+Y4cMxvvXKNJO1Dvji837c7upp4f7ITMazwzZ28tlfebwPID9Nl0Dpq
+         xmItwJpeV9HM+aA/ushyRiYMFp0R2j7vL2rKCIiHxLmlAUqyBoIlbIdWBsfR3+pCOHR7
+         Yxedft6513vwzpGVejv8slZTN1oLYZeE6AkSBv6mr6BZLJ2yxv/JZKeg6p8fcORfHxZw
+         XOEZ4Jw08FGc5rqrGBHHlfYhjJh1RwyHgbRPjgrlcEovYJ3tD3p5s7Y34aKvJ75/iVzv
+         ux/mjODn/mV28EgkrY7ot1823A5pfuH+Uj8ZNJJxAWqcA/oqc2A15lujMWYVxRDcFWB0
+         Ox0Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712333331; x=1712938131;
+        d=1e100.net; s=20230601; t=1712344088; x=1712948888;
         h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
          :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=SZMFx09LxUdSJSqtEJBXwPxkGLkyTqgQPR1qWITNHRs=;
-        b=Kx3Ce8mJzCjrXMDHuV9tjecirHE69clu7Bd55tK1lNZoHYvK2ysljlWu9S74KzPrFy
-         yVbfv+f76s5xG0Lmyp9H33+Ml80QTugkVpNbKJtWkLQccjUNxxSeY/mGgEMRt+HbPx62
-         vqAcEpIXDSeuSKKKssrCJm8yPF0F2HhQAIt8WhoWVvPALPj9e06vqI8pSfLHiVpu7Pan
-         fKpQrWPSSuov0u5+tBQWjkoy6ACSSncMvCJwuR5AHSQOj88+KWkNcRJj03MzJYwt0HUO
-         5RbrxAPQjvm3e2vKo58xIcchNyXgWU7mKCm36y8LyLO5+ICV/GG5dU5xDRCIiYNzzwr7
-         AkvQ==
-X-Gm-Message-State: AOJu0Yxb+ej4ySsWKUq3SuBYI5gGk59VzDRnn8eSfnkMpFHYT+pSw8K/
-	+ng6mTgKiyfiMExAjNtRkVwoc5QOF2I727BNOupXP4nwjIUH971RsLOSYIfaoqpi9+3vYZRlYzc
-	TmLAcQ/p68JcQw0OajiI5UKXULNhTgPSVwmAio+l5iKwqhmTulXmlvbau/yJqRvcDEkcWNAowqT
-	AtZYLU8+U/4/iirCiiR1a6ru/82Dy7F2uFOF8OqpkG58Bv3RE=
-X-Received: by 2002:a05:6214:c43:b0:691:e21:736c with SMTP id r3-20020a0562140c4300b006910e21736cmr1626698qvj.30.1712333331005;
-        Fri, 05 Apr 2024 09:08:51 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGpizPcYzlNRpMk5s8EOy0+jQv+b017XsYDrxE47j+KOL4/ttCWRtnL8AXEe/eatTJVHrnqOQ==
-X-Received: by 2002:a05:6214:c43:b0:691:e21:736c with SMTP id r3-20020a0562140c4300b006910e21736cmr1626639qvj.30.1712333329940;
-        Fri, 05 Apr 2024 09:08:49 -0700 (PDT)
+        bh=XV58LAVi8reNHvUrE/X5dpexUYFcJu0ioZL7iQigth4=;
+        b=WPWpM9xM/hmtmKanzdFOjMwp6+3gT8520ktGSWd7XMgy1Cz1IjMSYc0e8PM6Lt1xol
+         5RncQZCrynwqQfEMXAlErKYyw5pE1JvOFqCk7ow7fevzOEIlOri0+vICHgvEhs+CyRnu
+         LBYmg2+ucCYMYlJJ6nLXz5m6V3KpwegY/JNJzKR24/7LRjztlWzTjM+ijt0C5cw5mSJe
+         XJVaxyqeuL/qP6x5x2ua1zRTsgPweGlCjTfPVYl09eEYSkuy3BMpB2yAgtkDckG/4zZh
+         /J4b+j8DgMuaNmCM4XPyj/qmN96Nri22bEq3AE0ewTOn+W/6bllnbGlYWEXQ+VbLW2Nt
+         MVqw==
+X-Gm-Message-State: AOJu0YzgmiX50sc8CNb7GRqpKvC+PaSv9oaMkAXgclqbs/Z8nHepYdVO
+	uq+MWdksvWISvIK1evxz167UbxEWtg9EE3+4BAitsDGhqKlwIvrC/umjVowRv7H2UGzUXyBg2Ti
+	ybCVsb+HuYGxuYN+HgzflFgHoN21xtv05oUXFfAHSFfEvvyGULRwBZOBg4CfclmSmOUo1w/UJpo
+	nY8iqoFDQqIYbafVDjzKIdzQhd4KmLkorUj6hbaYXZxsFsxVc=
+X-Received: by 2002:a05:622a:14c7:b0:434:5894:768f with SMTP id u7-20020a05622a14c700b004345894768fmr5880923qtx.31.1712344087737;
+        Fri, 05 Apr 2024 12:08:07 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IH+mRrAFAICRP8T+RI0ghF2mfiReMlOSLft8PXx+nFbPDW3J3ANERw80ZDSYZ6VQESEJLyNdg==
+X-Received: by 2002:a05:622a:14c7:b0:434:5894:768f with SMTP id u7-20020a05622a14c700b004345894768fmr5880897qtx.31.1712344087309;
+        Fri, 05 Apr 2024 12:08:07 -0700 (PDT)
 Received: from localhost.localdomain ([140.141.139.15])
-        by smtp.gmail.com with ESMTPSA id t16-20020a0cde10000000b006991de7276asm728850qvk.94.2024.04.05.09.08.49
+        by smtp.gmail.com with ESMTPSA id hd20-20020a05622a299400b0043146d55f0csm1005414qtb.60.2024.04.05.12.08.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 05 Apr 2024 09:08:49 -0700 (PDT)
+        Fri, 05 Apr 2024 12:08:07 -0700 (PDT)
 From: Steve Schrock <steve.schrock@getcruise.com>
 To: ofono@lists.linux.dev
 Cc: Steve Schrock <steve.schrock@getcruise.com>
-Subject: [PATCH 2/2] qmi: Add unit test for QRTR qmi_service_send
-Date: Fri,  5 Apr 2024 16:07:02 +0000
-Message-Id: <20240405160702.29261-2-steve.schrock@getcruise.com>
+Subject: [PATCH v2 2/2] qmi: Add unit test for QRTR qmi_service_send
+Date: Fri,  5 Apr 2024 19:06:21 +0000
+Message-Id: <20240405190621.38200-2-steve.schrock@getcruise.com>
 X-Mailer: git-send-email 2.40.1
-In-Reply-To: <20240405160702.29261-1-steve.schrock@getcruise.com>
-References: <20240405160702.29261-1-steve.schrock@getcruise.com>
+In-Reply-To: <20240405190621.38200-1-steve.schrock@getcruise.com>
+References: <20240405190621.38200-1-steve.schrock@getcruise.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -86,25 +86,25 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="US-ASCII"
-X-Proofpoint-GUID: B5F6GMKG7XlU8KX6cqjiKwlMF08N2UI4
-X-Proofpoint-ORIG-GUID: B5F6GMKG7XlU8KX6cqjiKwlMF08N2UI4
+X-Proofpoint-ORIG-GUID: xUOIruU_PamL8RRfxffVyZFu6AMEX6Hh
+X-Proofpoint-GUID: xUOIruU_PamL8RRfxffVyZFu6AMEX6Hh
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
- definitions=2024-04-05_17,2024-04-05_01,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 phishscore=0 clxscore=1015
- suspectscore=0 adultscore=0 spamscore=0 lowpriorityscore=0 malwarescore=0
- bulkscore=0 mlxscore=0 mlxlogscore=999 priorityscore=1501 impostorscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2404010003
- definitions=main-2404050114
+ definitions=2024-04-05_21,2024-04-05_02,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 lowpriorityscore=0
+ bulkscore=0 clxscore=1015 priorityscore=1501 spamscore=0 mlxscore=0
+ suspectscore=0 mlxlogscore=999 adultscore=0 malwarescore=0 phishscore=0
+ impostorscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2404010003 definitions=main-2404050135
 
 The unit test causes a qmi request to be sent to the test QRTR service
 and echos the data back in its response.
 ---
- unit/test-qmimodem-qmi.c | 165 ++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 164 insertions(+), 1 deletion(-)
+ unit/test-qmimodem-qmi.c | 166 ++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 165 insertions(+), 1 deletion(-)
 
 diff --git a/unit/test-qmimodem-qmi.c b/unit/test-qmimodem-qmi.c
-index 619e813f78d6..2d15332637f6 100644
+index 0bc2946a1a82..79a9a1437aba 100644
 --- a/unit/test-qmimodem-qmi.c
 +++ b/unit/test-qmimodem-qmi.c
 @@ -28,7 +28,14 @@ struct test_info {
@@ -123,7 +123,15 @@ index 619e813f78d6..2d15332637f6 100644
  };
  
  static uint32_t unique_service_type(uint32_t index)
-@@ -248,6 +255,161 @@ static void test_create_services(const void *data)
+@@ -147,6 +154,7 @@ static void test_cleanup(struct test_info *info)
+ {
+ 	int i;
+ 
++	l_free(info->received);
+ 	l_timeout_remove(info->timeout);
+ 	l_queue_destroy(info->services,
+ 				(l_queue_destroy_func_t) qmi_service_unref);
+@@ -250,6 +258,161 @@ static void test_create_services(const void *data)
  	test_cleanup(info);
  }
  
@@ -282,17 +290,17 @@ index 619e813f78d6..2d15332637f6 100644
 +	test_cleanup(info);
 +}
 +
- int main(int argc, char **argv)
+ static void exit_if_qrtr_not_supported()
  {
- 	int result;
-@@ -259,6 +421,7 @@ int main(int argc, char **argv)
+ 	int fd;
+@@ -278,6 +441,7 @@ int main(int argc, char **argv)
  	l_test_add("QRTR device creation", test_create_qrtr_device, NULL);
  	l_test_add("QRTR discovery", test_discovery, NULL);
  	l_test_add("QRTR services may be created", test_create_services, NULL);
 +	l_test_add("QRTR service sends/responses", test_send_data, NULL);
  	result = l_test_run();
  
- 	return result;
+ 	__ofono_log_cleanup();
 -- 
 2.40.1
 
