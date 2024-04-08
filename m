@@ -1,91 +1,139 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mx0a-003ede02.pphosted.com (mx0a-003ede02.pphosted.com [205.220.169.153])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DCAC41EA6E
-	for <ofono@lists.linux.dev>; Sat,  6 Apr 2024 20:30:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92FC11DDD6
+	for <ofono@lists.linux.dev>; Mon,  8 Apr 2024 19:47:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.169.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712435425; cv=none; b=W2iRznH8gSHQ0Hu+GxYZpx8TwNNSo1A909954jizUSjb5sJ4QnPyberKSVd0IBIhk8scn059rY9EXtSFcrsB964Jd5jvSWRkXiF7IwHLQ5Zmo0B3D5y2nqZ0A1XSJ12yNiH/QNR62D1oTlXK8zte7HhNy4dUCBHh2/JjXLFkegY=
+	t=1712605649; cv=none; b=l65ei7NrDxme9ugmix4T2FVga4BL3U3sDD0fbRIc79v5rvv4/5c8A6vjOHjCJTse741GzPq85TE6h1AQpMRAWG94DpP4uGHIuCM1T4RXCOCBXIZvcMYDtny4ejilAjPf5UHRROWUUMghNCGR3ngAPh7cj9iUQgRDeXhGA5Zvt7E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712435425; c=relaxed/simple;
-	bh=SEF2CgEF2OcN3GL5eb4K0plQT2iJLdAdl/a2fc86cBE=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=oKgZ79VmH/pnK+EmMXdrdEe9n6yTexrWrr75z0OkmMtG2BujbpXOpPDq+FteNu5douvUjEG4dbIIOjDV2gb1TJV6wWqXEVnTEEsXdN9nxggTKs0kZWdc6+Osd+MNQShEGHSghtCIFtNyKKWOnWPxl9EJFEdRiW3v8zoZAL0TLLg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=evb45hfX; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1712605649; c=relaxed/simple;
+	bh=wU0BYimMaCIHzBeZ9GWygFrEOsIcPkG6oRapIo202J0=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version:Content-Type; b=tJNXFFkup175hlDU1d7ns45eLDBEHkMYTU3GSeeVYfpxIuXPpNjE6Z0oV5EqhnuC2k3hntxiurDhgFQ9z/k5V4jyf5TwJkqsZRo7q3PnjcgrGjjqlbsQMIWw5wiO4/C5eC5znzbiu1HYk6XXuFGNDQ5yRNraNTlb7MlzPFaHnpc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=DHCIp2mF; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=oPJOgIPD; arc=none smtp.client-ip=205.220.169.153
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="evb45hfX"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 7C132C433F1;
-	Sat,  6 Apr 2024 20:30:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1712435425;
-	bh=SEF2CgEF2OcN3GL5eb4K0plQT2iJLdAdl/a2fc86cBE=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=evb45hfXvVI3vUIMhf+aS+P99dPiKbC5Qk6b2q8OjGm7WMCk+UzWPQ+VaZYPlx6/B
-	 e57E6nFHxE7fAAroBRN5XAkVGB6HNiq5gEStmRBd1ESJ26TzHFLk3sAjZq32kW5QIB
-	 auJOxDM15Mpx8y+mb5yKN98M1GB1f1jnk5nceIt5i/ss43zo/o6uxBvQbP6/n0zBmj
-	 EK6p9v24NW5X3FBCcPxy25b1TmvGwR0qceBKu25UySCUiLTr/oBUWe2+lG/TyITHMd
-	 Ptugu1RkOTblMFsSjy1OgGhKO549rVarWX/WQsSjFrUc29VuNdVir2FiQykigiD8JA
-	 tqp9tXrkYhCaA==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 6D070D8A103;
-	Sat,  6 Apr 2024 20:30:25 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="DHCIp2mF";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="oPJOgIPD"
+Received: from pps.filterd (m0286615.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 438ChsC9012402
+	for <ofono@lists.linux.dev>; Mon, 8 Apr 2024 12:47:21 -0700
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
+	 h=from:to:cc:subject:date:message-id:mime-version:content-type;
+	 s=ppemail; bh=BO3y4Ivvb5Qdk+zY6KTnt0Dv3By0JnXfbnjg3/fsOdM=; b=D
+	HCIp2mFbsxJSFK7eVFbY2kyOIyNCaQqCMrTdda7ce9ypgfsQ0H6NDrRoiks7mU3Q
+	6qPk/q8sKeMhWMEaxkfKULdwyl1fQwIrCEbsGNCTu/oZ9/zOTSFsskq9gmStYj2n
+	mBqutLvdGjb79YrBzUqdQjOCODzxe4sB3eUsnfEuj6oqXC4rto/irdzUfSoRZPsw
+	AJvIWVdnj0qBtbjjn0xcZzi1QsZKtFH80PwUiFabG0DYfPY8Zo9eu/ISzmO3AnvB
+	77WfivVNeMdRvqJjvF0cWA55WnNt/Ej0JOj2PQ3g6NT8kY/Eb3SuMRMkeaZJ1AEV
+	ZQHY+w+yyelHVt2DBJX8w==
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com [209.85.222.198])
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3xb2khse8h-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
+	for <ofono@lists.linux.dev>; Mon, 08 Apr 2024 12:47:21 -0700 (PDT)
+Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-78d6005b2d0so249507685a.3
+        for <ofono@lists.linux.dev>; Mon, 08 Apr 2024 12:47:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=getcruise.com; s=google; t=1712605639; x=1713210439; darn=lists.linux.dev;
+        h=mime-version:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=BO3y4Ivvb5Qdk+zY6KTnt0Dv3By0JnXfbnjg3/fsOdM=;
+        b=oPJOgIPDNuO65qgHBMXNY23C793Tr0FvoG/KRIuNouSFvSOQhMEwRr+SiYUdJyqBhr
+         Ft7M8wgPsYVGhmiWuAHR/4tA6O63CjiT8WqTqA9QTyANdZxuXETqmV788T1Of6DcjhcR
+         B6V1TJ4yJJx9kTv1hv1lhIxAhZ5vpnnRiz81OwjiRDyvb99o+x4s3XepAsldXJcYq9Q3
+         sXOppD4ynv/voR6sUgs7HRMuijwg6UktDBeiMHYCGOFz4r8MZwA1JNisCGxkz+Xq57Hw
+         fr3wpavbJIM0yid0LoXkumHXXVxHII9IZVNEfNQq1nYXQkBTPpjJRhn1Fy3yRc7+F5mM
+         sgKw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1712605639; x=1713210439;
+        h=mime-version:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=BO3y4Ivvb5Qdk+zY6KTnt0Dv3By0JnXfbnjg3/fsOdM=;
+        b=xQBH4hqxHdlYaHUw5BaVZVFj497xegBOXj0MYYkaGPE6PP29b+IXm+eHdPU8inMbTJ
+         xmgX8X9H/Q2te5f871Zyz4c5+oRDK/1GCPRJ51diq0qm98Vb86vHTDDfNjVgFRHI4iX6
+         IWr8W6J3kDqfoZIqV12VPHxniskGtz/KYqPLqiWXqDCiTD2ih4ckpsgMY1rCpYGdpOGn
+         3gyHggKEP0kL/0Sl47Ptfjg1yvrVkXabOV8K3wP8MXPtp7eagHYWKj8b7kZSwlrnJ7R4
+         cXoiLITd52vwxqLnNQ7C8uXkBqfotxwqzEIfi7RFuIfzgoXLzy3xEWbO0OmeEkmL9Iuw
+         myxQ==
+X-Gm-Message-State: AOJu0YxpOoFBPPAur0tEJPdITTlOHEdOO28bZqgChknTjeJltnoOw6U4
+	gMY3P3fRdb1gNJbwD+IvAp0XDFOg55UTp7ZnNlX7YwQJ3ig2/s6Fic0SxGXGUb5IcHtVUme2yvp
+	XAlyK0sjL+3w/a9Y0YhZNjVxyXlWjXFBQobPr3yRa6BSvNIyUaTlII6+ucBaUhBS9WAvYyred7d
+	fTnhleDzyy5Ms3HFZGaH582ooO9CFDV4TOx9xzt0LuFf6RZl8=
+X-Received: by 2002:a05:620a:5d91:b0:78d:5d87:348e with SMTP id xx17-20020a05620a5d9100b0078d5d87348emr6787697qkn.21.1712605639197;
+        Mon, 08 Apr 2024 12:47:19 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFwVRrjBMt/gFNJgKcQk9IFtQak+X8xDuo9Se7D4Y7ZAwNWIxp3xL51njm6CXF9ieXGQBdkYA==
+X-Received: by 2002:a05:620a:5d91:b0:78d:5d87:348e with SMTP id xx17-20020a05620a5d9100b0078d5d87348emr6787682qkn.21.1712605638813;
+        Mon, 08 Apr 2024 12:47:18 -0700 (PDT)
+Received: from localhost.localdomain ([140.141.155.47])
+        by smtp.gmail.com with ESMTPSA id x14-20020a05620a14ae00b0078d63e01fa5sm1513928qkj.54.2024.04.08.12.47.18
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 08 Apr 2024 12:47:18 -0700 (PDT)
+From: Steve Schrock <steve.schrock@getcruise.com>
+To: ofono@lists.linux.dev
+Cc: Steve Schrock <steve.schrock@getcruise.com>
+Subject: [PATCH] qmi unit: Ignore QRTR control packets
+Date: Mon,  8 Apr 2024 19:46:05 +0000
+Message-Id: <20240408194605.11666-1-steve.schrock@getcruise.com>
+X-Mailer: git-send-email 2.40.1
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH] bluez4: Remove support
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <171243542544.22154.6383468636929866789.git-patchwork-notify@kernel.org>
-Date: Sat, 06 Apr 2024 20:30:25 +0000
-References: <20240406195550.2950800-1-denkenz@gmail.com>
-In-Reply-To: <20240406195550.2950800-1-denkenz@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>
-Cc: ofono@lists.linux.dev
+Content-Type: text/plain; charset="US-ASCII"
+X-Proofpoint-GUID: SNNX2CiqhSHGweWaAmxkekwpf91n3W9x
+X-Proofpoint-ORIG-GUID: SNNX2CiqhSHGweWaAmxkekwpf91n3W9x
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
+ definitions=2024-04-08_17,2024-04-05_02,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 clxscore=1015 phishscore=0
+ lowpriorityscore=0 priorityscore=1501 impostorscore=0 adultscore=0
+ malwarescore=0 suspectscore=0 mlxlogscore=999 mlxscore=0 spamscore=0
+ bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2404010003 definitions=main-2404080152
 
-Hello:
+Sometimes the test server will receive a QRTR_TYPE_DEL_CLIENT control
+packet which is broadcast when the prior test client is destroyed. It
+is entirely schdeduler-dependent as to whether this broadcast will
+occur before or after the subsequent test's servers are created. If
+the test server receives a control packet, then test_send_data will
+fail. There is no need for the tests to be aware of any control
+packets at this time so it should simply ignore them.
 
-This patch was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
+Fixes: 728db12daa68 ("qmi: Add unit test for QRTR qmi_service_send")
+---
+ unit/test-qmimodem-qmi.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-On Sat,  6 Apr 2024 14:55:35 -0500 you wrote:
-> BlueZ 5 is now up to release 5.73, with the 5.0 release date being in
-> late 2012.  There's very little chance that anyone is using BlueZ 4
-> anymore.  Remove it.
-> ---
->  Makefile.am             |   32 +-
->  btio/btio.c             | 1447 ---------------------------------------
->  btio/btio.h             |  110 ---
->  configure.ac            |    1 -
->  dundee/bluez4.c         |  296 --------
->  plugins/bluez4.c        |  988 --------------------------
->  plugins/bluez4.h        |   84 ---
->  plugins/dun_gw_bluez4.c |  172 -----
->  plugins/hfp_ag_bluez4.c |  218 ------
->  plugins/hfp_hf_bluez4.c |  554 ---------------
->  plugins/sap.c           |  363 ----------
->  11 files changed, 1 insertion(+), 4264 deletions(-)
->  delete mode 100644 btio/btio.c
->  delete mode 100644 btio/btio.h
->  delete mode 100644 dundee/bluez4.c
->  delete mode 100644 plugins/bluez4.c
->  delete mode 100644 plugins/bluez4.h
->  delete mode 100644 plugins/dun_gw_bluez4.c
->  delete mode 100644 plugins/hfp_ag_bluez4.c
->  delete mode 100644 plugins/hfp_hf_bluez4.c
->  delete mode 100644 plugins/sap.c
-
-Here is the summary with links:
-  - bluez4: Remove support
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=6bd9bd2c9efa
-
-You are awesome, thank you!
+diff --git a/unit/test-qmimodem-qmi.c b/unit/test-qmimodem-qmi.c
+index 3c5418be2e60..d04f50041c51 100644
+--- a/unit/test-qmimodem-qmi.c
++++ b/unit/test-qmimodem-qmi.c
+@@ -269,6 +269,11 @@ static bool received_data(struct l_io *io, void *user_data)
+ 	addr_size = sizeof(addr);
+ 	bytes_read = recvfrom(l_io_get_fd(io), buf, sizeof(buf), 0,
+ 				(struct sockaddr *) &addr, &addr_size);
++
++	/* Ignore control messages */
++	if (addr.sq_port == QRTR_PORT_CTRL)
++		return true;
++
+ 	memcpy(&info->sender, &addr, sizeof(addr));
+ 
+ 	assert(!info->received); /* Only expect one message */
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
+2.40.1
 
 
+-- 
+
+
+*Confidentiality Note:* We care about protecting our proprietary 
+information, confidential material, and trade secrets. This message may 
+contain some or all of those things. Cruise will suffer material harm if 
+anyone other than the intended recipient disseminates or takes any action 
+based on this message. If you have received this message (including any 
+attachments) in error, please delete it immediately and notify the sender 
+promptly.
