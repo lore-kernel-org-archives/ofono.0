@@ -1,139 +1,114 @@
-Received: from mx0a-003ede02.pphosted.com (mx0a-003ede02.pphosted.com [205.220.169.153])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f47.google.com (mail-oa1-f47.google.com [209.85.160.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92FC11DDD6
-	for <ofono@lists.linux.dev>; Mon,  8 Apr 2024 19:47:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.169.153
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A7D014659D
+	for <ofono@lists.linux.dev>; Mon,  8 Apr 2024 20:09:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712605649; cv=none; b=l65ei7NrDxme9ugmix4T2FVga4BL3U3sDD0fbRIc79v5rvv4/5c8A6vjOHjCJTse741GzPq85TE6h1AQpMRAWG94DpP4uGHIuCM1T4RXCOCBXIZvcMYDtny4ejilAjPf5UHRROWUUMghNCGR3ngAPh7cj9iUQgRDeXhGA5Zvt7E=
+	t=1712606951; cv=none; b=hSr9ibCJwYLwIw/6AGCEIcOoHo+VaRk3NcoDDWIOd342UyddV4ajW84V6GPwqv9dB+PzHN3obBTG5RHdXxqE0D8bY5Hx0YSE2VD7AsNBm66Q6aWWyJ//0/Q7UVbTy/0QSfq9RYC24w/WyMILH8Apg7g6CdxiI6GY/ffuZIQDg4Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712605649; c=relaxed/simple;
-	bh=wU0BYimMaCIHzBeZ9GWygFrEOsIcPkG6oRapIo202J0=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version:Content-Type; b=tJNXFFkup175hlDU1d7ns45eLDBEHkMYTU3GSeeVYfpxIuXPpNjE6Z0oV5EqhnuC2k3hntxiurDhgFQ9z/k5V4jyf5TwJkqsZRo7q3PnjcgrGjjqlbsQMIWw5wiO4/C5eC5znzbiu1HYk6XXuFGNDQ5yRNraNTlb7MlzPFaHnpc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=DHCIp2mF; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=oPJOgIPD; arc=none smtp.client-ip=205.220.169.153
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
+	s=arc-20240116; t=1712606951; c=relaxed/simple;
+	bh=yHiDLBHtvMpZ/R2e80y0ydxYr4avIdzFXNUzPfPA34k=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=NV0iQdlKyqeznjL6svxe4JCQLMB7nLwKZJIrLKWnrPgjBiB6wAc0Knnlq12EmFdGepxaMK9DEfj9kqMrXEpPhXQqaubxrVXQKm3HhNMwdy56lO8udQkULa8/tEbvBdkmEXBv1IVpYeilm1ui1wFvFAT1QaUxuuTsIzYd6CWRL0o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=V0C+HLa9; arc=none smtp.client-ip=209.85.160.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="DHCIp2mF";
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="oPJOgIPD"
-Received: from pps.filterd (m0286615.ppops.net [127.0.0.1])
-	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 438ChsC9012402
-	for <ofono@lists.linux.dev>; Mon, 8 Apr 2024 12:47:21 -0700
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
-	 h=from:to:cc:subject:date:message-id:mime-version:content-type;
-	 s=ppemail; bh=BO3y4Ivvb5Qdk+zY6KTnt0Dv3By0JnXfbnjg3/fsOdM=; b=D
-	HCIp2mFbsxJSFK7eVFbY2kyOIyNCaQqCMrTdda7ce9ypgfsQ0H6NDrRoiks7mU3Q
-	6qPk/q8sKeMhWMEaxkfKULdwyl1fQwIrCEbsGNCTu/oZ9/zOTSFsskq9gmStYj2n
-	mBqutLvdGjb79YrBzUqdQjOCODzxe4sB3eUsnfEuj6oqXC4rto/irdzUfSoRZPsw
-	AJvIWVdnj0qBtbjjn0xcZzi1QsZKtFH80PwUiFabG0DYfPY8Zo9eu/ISzmO3AnvB
-	77WfivVNeMdRvqJjvF0cWA55WnNt/Ej0JOj2PQ3g6NT8kY/Eb3SuMRMkeaZJ1AEV
-	ZQHY+w+yyelHVt2DBJX8w==
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com [209.85.222.198])
-	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3xb2khse8h-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <ofono@lists.linux.dev>; Mon, 08 Apr 2024 12:47:21 -0700 (PDT)
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-78d6005b2d0so249507685a.3
-        for <ofono@lists.linux.dev>; Mon, 08 Apr 2024 12:47:20 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="V0C+HLa9"
+Received: by mail-oa1-f47.google.com with SMTP id 586e51a60fabf-22edec341c2so1815885fac.0
+        for <ofono@lists.linux.dev>; Mon, 08 Apr 2024 13:09:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=getcruise.com; s=google; t=1712605639; x=1713210439; darn=lists.linux.dev;
-        h=mime-version:message-id:date:subject:cc:to:from:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=BO3y4Ivvb5Qdk+zY6KTnt0Dv3By0JnXfbnjg3/fsOdM=;
-        b=oPJOgIPDNuO65qgHBMXNY23C793Tr0FvoG/KRIuNouSFvSOQhMEwRr+SiYUdJyqBhr
-         Ft7M8wgPsYVGhmiWuAHR/4tA6O63CjiT8WqTqA9QTyANdZxuXETqmV788T1Of6DcjhcR
-         B6V1TJ4yJJx9kTv1hv1lhIxAhZ5vpnnRiz81OwjiRDyvb99o+x4s3XepAsldXJcYq9Q3
-         sXOppD4ynv/voR6sUgs7HRMuijwg6UktDBeiMHYCGOFz4r8MZwA1JNisCGxkz+Xq57Hw
-         fr3wpavbJIM0yid0LoXkumHXXVxHII9IZVNEfNQq1nYXQkBTPpjJRhn1Fy3yRc7+F5mM
-         sgKw==
+        d=gmail.com; s=20230601; t=1712606949; x=1713211749; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=7Wskq8zQ6gSjG2zSE3fWILIIBF8rjMFQguuhur1w7YA=;
+        b=V0C+HLa9iRo6ZkKtilGD1dmIK8E7xASqTvkxjIGVFjTUMgrWPNGyRYe1gYSE1baFtu
+         4XprstmE8BoKZXl6ZzWsd/Kx3xZV/wARfVSiPi1iR2uAFLs7ebRqwiG54edlviAb71qt
+         hqAw+Ww+LFmiH1CG9KdSgMg/PDDOlmg0pyBEyKNAruvTgWiQbVJb7K5nRduJVxvcXcQh
+         SYdWS2H9FGoUnR2YnnJsbtWSz+Zyub9zNt3yI8Vbd/XMzShhcOFuSk/918hFxsV6eyRW
+         Arp2p40Jtcb+W4fneVZefn1l27tRnU3SSGA6SSHZCBpals0nxZ/+X1cQMqoVQZAQjR0w
+         3heg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712605639; x=1713210439;
-        h=mime-version:message-id:date:subject:cc:to:from:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=BO3y4Ivvb5Qdk+zY6KTnt0Dv3By0JnXfbnjg3/fsOdM=;
-        b=xQBH4hqxHdlYaHUw5BaVZVFj497xegBOXj0MYYkaGPE6PP29b+IXm+eHdPU8inMbTJ
-         xmgX8X9H/Q2te5f871Zyz4c5+oRDK/1GCPRJ51diq0qm98Vb86vHTDDfNjVgFRHI4iX6
-         IWr8W6J3kDqfoZIqV12VPHxniskGtz/KYqPLqiWXqDCiTD2ih4ckpsgMY1rCpYGdpOGn
-         3gyHggKEP0kL/0Sl47Ptfjg1yvrVkXabOV8K3wP8MXPtp7eagHYWKj8b7kZSwlrnJ7R4
-         cXoiLITd52vwxqLnNQ7C8uXkBqfotxwqzEIfi7RFuIfzgoXLzy3xEWbO0OmeEkmL9Iuw
-         myxQ==
-X-Gm-Message-State: AOJu0YxpOoFBPPAur0tEJPdITTlOHEdOO28bZqgChknTjeJltnoOw6U4
-	gMY3P3fRdb1gNJbwD+IvAp0XDFOg55UTp7ZnNlX7YwQJ3ig2/s6Fic0SxGXGUb5IcHtVUme2yvp
-	XAlyK0sjL+3w/a9Y0YhZNjVxyXlWjXFBQobPr3yRa6BSvNIyUaTlII6+ucBaUhBS9WAvYyred7d
-	fTnhleDzyy5Ms3HFZGaH582ooO9CFDV4TOx9xzt0LuFf6RZl8=
-X-Received: by 2002:a05:620a:5d91:b0:78d:5d87:348e with SMTP id xx17-20020a05620a5d9100b0078d5d87348emr6787697qkn.21.1712605639197;
-        Mon, 08 Apr 2024 12:47:19 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFwVRrjBMt/gFNJgKcQk9IFtQak+X8xDuo9Se7D4Y7ZAwNWIxp3xL51njm6CXF9ieXGQBdkYA==
-X-Received: by 2002:a05:620a:5d91:b0:78d:5d87:348e with SMTP id xx17-20020a05620a5d9100b0078d5d87348emr6787682qkn.21.1712605638813;
-        Mon, 08 Apr 2024 12:47:18 -0700 (PDT)
-Received: from localhost.localdomain ([140.141.155.47])
-        by smtp.gmail.com with ESMTPSA id x14-20020a05620a14ae00b0078d63e01fa5sm1513928qkj.54.2024.04.08.12.47.18
+        d=1e100.net; s=20230601; t=1712606949; x=1713211749;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=7Wskq8zQ6gSjG2zSE3fWILIIBF8rjMFQguuhur1w7YA=;
+        b=gYNRuZk1vr/Hon9ZM3Scw5lghc3KtZLr+mcFRCq5kwc9HkL6CJtCB+U0fofL+xGrIV
+         bH/n7QeBT52r9Efimy8HSHNeIvskKDxL/mPaCL0xiw0PLlDiqIPlA5KPL+zGetzBNK+M
+         LUsANN15aFZ+xwhljz3qYULmX4uuX08VQPCmcrdeLSr72PzrdAVPzSRxYUejCNvpSGm9
+         wUCtnX/r/6RB6N86hmynrcimuvjog7kt2dNr99z3rh9exTb5IKOZTDppKyGCr8nbroto
+         tSRaRG8hIJhcIrQaJiaYZL0AAYPBoojcM9egd2S3u6t5srKmwCCRWMpdrc33JS04S4Kj
+         HtgA==
+X-Gm-Message-State: AOJu0YyXEyVXbQFvM0MRD4SN1vxRJ4x7pmS/7rqdYO3IxujetvW1uD/J
+	CSOrY3L3F9OLjFO8nnn9rRAfpGk3iqsGFyXcXktOYlKrm6L0bAdXVTFgrNdO
+X-Google-Smtp-Source: AGHT+IGvWmOCgFFFB7cHG1tW/behL+NL2Mh9UaqFZir/hwzANtyn9FuJBNOt9IhPo1tDW17tqJiCmg==
+X-Received: by 2002:a05:6870:2109:b0:22a:4f07:13cc with SMTP id f9-20020a056870210900b0022a4f0713ccmr11023975oae.33.1712606949094;
+        Mon, 08 Apr 2024 13:09:09 -0700 (PDT)
+Received: from localhost.localdomain (070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id na17-20020a0568706c1100b0022e1856d6dasm2286461oab.0.2024.04.08.13.09.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 08 Apr 2024 12:47:18 -0700 (PDT)
-From: Steve Schrock <steve.schrock@getcruise.com>
+        Mon, 08 Apr 2024 13:09:08 -0700 (PDT)
+From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
-Cc: Steve Schrock <steve.schrock@getcruise.com>
-Subject: [PATCH] qmi unit: Ignore QRTR control packets
-Date: Mon,  8 Apr 2024 19:46:05 +0000
-Message-Id: <20240408194605.11666-1-steve.schrock@getcruise.com>
-X-Mailer: git-send-email 2.40.1
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 1/2] modem: remove atom entry prior to invoking the watch callback
+Date: Mon,  8 Apr 2024 15:09:03 -0500
+Message-ID: <20240408200905.2983892-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-X-Proofpoint-GUID: SNNX2CiqhSHGweWaAmxkekwpf91n3W9x
-X-Proofpoint-ORIG-GUID: SNNX2CiqhSHGweWaAmxkekwpf91n3W9x
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
- definitions=2024-04-08_17,2024-04-05_02,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 clxscore=1015 phishscore=0
- lowpriorityscore=0 priorityscore=1501 impostorscore=0 adultscore=0
- malwarescore=0 suspectscore=0 mlxlogscore=999 mlxscore=0 spamscore=0
- bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2404010003 definitions=main-2404080152
+Content-Transfer-Encoding: 8bit
 
-Sometimes the test server will receive a QRTR_TYPE_DEL_CLIENT control
-packet which is broadcast when the prior test client is destroyed. It
-is entirely schdeduler-dependent as to whether this broadcast will
-occur before or after the subsequent test's servers are created. If
-the test server receives a control packet, then test_send_data will
-fail. There is no need for the tests to be aware of any control
-packets at this time so it should simply ignore them.
+In __ofono_atom_free, the atom is removed from the list prior to
+invoking __ofono_atom_unregister.  This ensures that any invocation of
+__ofono_atom_find or __ofono_modem_find_atom() will fail to find the
+just-removed object when invoked from the atom watch.
 
-Fixes: 728db12daa68 ("qmi: Add unit test for QRTR qmi_service_send")
+The above does not hold in flush_atoms() implementation, which can lead
+to surprising results.  Make sure that the atom is removed from the
+modem's atom list prior to invoking __ofono_atom_unregister in all
+cases.
 ---
- unit/test-qmimodem-qmi.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ src/modem.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/unit/test-qmimodem-qmi.c b/unit/test-qmimodem-qmi.c
-index 3c5418be2e60..d04f50041c51 100644
---- a/unit/test-qmimodem-qmi.c
-+++ b/unit/test-qmimodem-qmi.c
-@@ -269,6 +269,11 @@ static bool received_data(struct l_io *io, void *user_data)
- 	addr_size = sizeof(addr);
- 	bytes_read = recvfrom(l_io_get_fd(io), buf, sizeof(buf), 0,
- 				(struct sockaddr *) &addr, &addr_size);
-+
-+	/* Ignore control messages */
-+	if (addr.sq_port == QRTR_PORT_CTRL)
-+		return true;
-+
- 	memcpy(&info->sender, &addr, sizeof(addr));
+diff --git a/src/modem.c b/src/modem.c
+index bfd5d7a81c45..7d93c3234e83 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -480,13 +480,6 @@ static void flush_atoms(struct ofono_modem *modem, enum modem_state new_state)
+ 			continue;
+ 		}
  
- 	assert(!info->received); /* Only expect one message */
+-		__ofono_atom_unregister(atom);
+-
+-		if (atom->destruct)
+-			atom->destruct(atom);
+-
+-		g_free(atom);
+-
+ 		if (prev)
+ 			prev->next = cur->next;
+ 		else
+@@ -495,6 +488,13 @@ static void flush_atoms(struct ofono_modem *modem, enum modem_state new_state)
+ 		tmp = cur;
+ 		cur = cur->next;
+ 		g_slist_free_1(tmp);
++
++		__ofono_atom_unregister(atom);
++
++		if (atom->destruct)
++			atom->destruct(atom);
++
++		g_free(atom);
+ 	}
+ }
+ 
 -- 
-2.40.1
+2.43.0
 
-
--- 
-
-
-*Confidentiality Note:* We care about protecting our proprietary 
-information, confidential material, and trade secrets. This message may 
-contain some or all of those things. Cruise will suffer material harm if 
-anyone other than the intended recipient disseminates or takes any action 
-based on this message. If you have received this message (including any 
-attachments) in error, please delete it immediately and notify the sender 
-promptly.
