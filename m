@@ -1,280 +1,82 @@
-Received: from mail-ot1-f49.google.com (mail-ot1-f49.google.com [209.85.210.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E259310A14
-	for <ofono@lists.linux.dev>; Tue, 16 Apr 2024 18:57:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1594E1E4BE
+	for <ofono@lists.linux.dev>; Tue, 16 Apr 2024 21:50:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713293822; cv=none; b=b2+fojWFoJweYpJxInPjGRUTiJ/XS9vLTqaeTW17KrtExB3pYfzNe/5DO2Bqb7bH6ExUCVA0vQyt9TKJg5S4f9PvpLiKmAhwAvBc9DYzkmyq4/0al7EbmH0y19Q7m05L7KP9Q62mI1mdBWIqLkx8EweJmQ560epXDJP33q+IBZY=
+	t=1713304229; cv=none; b=C5qoVPhsNVJmOVBEDrqWHjCl+PxZVPCu9QqEX5SpZZSuAoquq7o9v6jsNckK79LO7Yy6QDsYajIReQ3TfXHdkt1ZB8krM8cFUX1xFeGm2EfcZG+6orbbsqoD239vvspisfOic6iJxcmRgAi5B+muyHEBPQWRTxa13Z6ECeHidP4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713293822; c=relaxed/simple;
-	bh=iHsdH57bFe8pCuZ7wSYxBVN8dBn19cKAVGZtlZdZXEo=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=UQO7QQ7F2wicwje6qumbBNoSDDPCdbbx7xoj4PAixEUC8YzBZce4hScVzccUD3a8D9kyY2OiT+baOxmWQx4y17SFpDii445jinKkY9G4DJ/PTglgsOUrl3z0Z3pNZUaOrb8dJmihpjYb4o4YUK2MgRRvQptr6uP27ByHMODB86w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XNJ4/u/1; arc=none smtp.client-ip=209.85.210.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1713304229; c=relaxed/simple;
+	bh=YdiA6OorIOfqty5LDja7nYumJNd2sAQr6sqPtlGoJZ8=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=q0vFQQtB4a6dWFbbtOumG06RWVUxi2IFpejxI1U0oOp9kiPXTITOqbZPFPg1c60Gq386BvJZWZWBhaphHYk58OsK0V2yjdJ39pjNe5DoOJw9Ty1SsObTqRg4AF7I3JPctGwPso29dmmg7qjK8KqbMW4ZImMgre6a8ZO9sZ/9qIY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Uch3E5N8; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XNJ4/u/1"
-Received: by mail-ot1-f49.google.com with SMTP id 46e09a7af769-6eb55942409so2890902a34.1
-        for <ofono@lists.linux.dev>; Tue, 16 Apr 2024 11:57:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713293820; x=1713898620; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=drPjX3JFjqzwS7xUeEpsKcadjX9if3mrzPAsTV6L5jY=;
-        b=XNJ4/u/1TU95DAYo/o5YoY/T0M9fvpGfj1cCcNnwPccutVb20RPTM2j1hAWJoqf5Or
-         h7QuXhaU2X9sYIKJytgQttrVc/QabTnDT6NGmeurcm8wrCarWolVHrRMTPu0LnY/Tqec
-         AYL9xMVxpmCaDxD0bdq9EqAUT/Is41uLqcv96I3+2xV27PeHoczsxj3SZoN/l9zJg32o
-         nK0afTuUeujKyKJZG0NbDxm6zqitNrL2zAiHCH7woiXQP1BjBQ76+uAoHoX73v1Bt7W2
-         ORMZkYqNcHoMDhE2N3NmczwRvyIrjrYrMAQRogkUaiEzaBTC7kWjyiqsWTArzT+xLJu2
-         1ExA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713293820; x=1713898620;
-        h=content-transfer-encoding:in-reply-to:from:references:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=drPjX3JFjqzwS7xUeEpsKcadjX9if3mrzPAsTV6L5jY=;
-        b=Xb6EtKWoGf2mVcCgLDishSsdRC1uY77Eu6vO6xyvjw1BCqdQZyAysEbMJ6PMj7YCkk
-         U/njyj+4cnpXbZGCI+WeS7Ins1CV58C90Cy/gd5nXt96RrDQ4hnv0CiWa/VYdL70sMyn
-         WkTZhFHXd8QUgvYSgRw8tKDRrz+O16FfIrThU3qozwYPNcLvHqX7ruSEis3vNUHNXgtw
-         CHeRIVVQgJZD2eFcD1/rvCZzKolGgS5SGgmM1X5aT9qiFNKrNhkyru2wnDqnDZ2ctCO9
-         GURaqjWZp1HuePAiSCqRmi03Li9JykQG7xCHhqWMizLHf+Sr0gx6F7HJ8a/lmPhaq5Q7
-         xXsg==
-X-Forwarded-Encrypted: i=1; AJvYcCX7F/8vOoc9K4T02mfq/JZ0Y2a8sUKFytmEARo3qeO0U0Gtoc/IZBvy5+2HvrEFMIBnwv3+WgplCz8Re0DV2ty2NnN46+g=
-X-Gm-Message-State: AOJu0YyFovvAu6ApjuJwqK5SeltZVSSUKTFy9Ab5m6uCgww3xKU6pua/
-	PIPXbDr4MEzJGG7A/ZIHB+G+NYMFri4PdmpaC47//ZNLtTfFzUbw
-X-Google-Smtp-Source: AGHT+IE5P1irmAVRsTe/xc6tF/CVzIlDmskjinNfB3SJKVuni4uTr8709shsnjKa7V/Q4HcvwJfSGw==
-X-Received: by 2002:a05:6808:1a:b0:3c5:ed36:ff96 with SMTP id u26-20020a056808001a00b003c5ed36ff96mr12766169oic.56.1713293819942;
-        Tue, 16 Apr 2024 11:56:59 -0700 (PDT)
-Received: from [192.168.1.22] ([70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id a4-20020aca1a04000000b003c7119f4512sm872587oia.54.2024.04.16.11.56.59
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 16 Apr 2024 11:56:59 -0700 (PDT)
-Message-ID: <67c20c6e-2879-4e83-a371-6a1127d431dc@gmail.com>
-Date: Tue, 16 Apr 2024 13:56:58 -0500
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Uch3E5N8"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 86975C32781;
+	Tue, 16 Apr 2024 21:50:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1713304228;
+	bh=YdiA6OorIOfqty5LDja7nYumJNd2sAQr6sqPtlGoJZ8=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=Uch3E5N8ygIOHtLuQPTuOC/rWOAd0TS9tuPYzE63Ht1BH6JThXesxgiuAQHztVAAV
+	 m5xkrUbTSIdfaj7KH0vmTGzzmzi+EpQyrfSBjxOHqIGiEuoSJwG+u0z/g79EngAQtt
+	 mq9VFt7IP3rKhs7qXr6shcx+L36i/vZkeFJTkZWUGv8fHTJkgpqi8VT9ThanEGDnPe
+	 mavLkR4QT+4cpO9bpxOzPre26hQv/mlJl5JX4uZmieYUtOMeweB/5x4ZBVVgLu+lXk
+	 +MIWE/1EOUiBxZwq2hMPIJUYD9YBT2yh/8cCIsGaEwy5kKBywnCsdnyKO8KQb1Yg0Z
+	 JEEUmwYCghnmw==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 74445D4F15E;
+	Tue, 16 Apr 2024 21:50:28 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 4/4] qmimodem: voicecall: Implement DTMF tones
-Content-Language: en-US
-To: Adam Pigg <adam@piggz.co.uk>, ofono@lists.linux.dev
-References: <20240413215318.12236-1-adam@piggz.co.uk>
- <20240413215318.12236-4-adam@piggz.co.uk>
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20240413215318.12236-4-adam@piggz.co.uk>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH 1/7] qmimodem: wds: Introduce qmi_wds_ip_family enum
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <171330422847.13946.15215936110448578564.git-patchwork-notify@kernel.org>
+Date: Tue, 16 Apr 2024 21:50:28 +0000
+References: <20240416151448.3359644-1-denkenz@gmail.com>
+In-Reply-To: <20240416151448.3359644-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev
 
-Hi Adam,
+Hello:
 
-On 4/13/24 16:53, Adam Pigg wrote:
-> The send_dtmf function sets up a call to send_one_dtmf, which will call
-> the QMI_VOICE_START_CONTINUOUS_DTMF service function.  The parameters to
-> this call are a hard coded call-id and the DTMF character to send.
-> start_cont_dtmf_cb will then be called which will set up a call to
-> QMI_VOICE_STOP_CONTINUOUS_DTMF to stop the tone.  Finally,
-> stop_cont_dtmf_cb will check the final status.
-> 
+This series was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Tue, 16 Apr 2024 10:14:28 -0500 you wrote:
 > ---
-> Changes in V4
-> -Removed unused enum
-> -Minor formatting fixes
-> -Ensure data->full_dtmf is free'd
-> -Use cb_data_ref/unref between chains of dtmf calls
-> ---
-> ---
->   drivers/qmimodem/voice.h     |   6 ++
->   drivers/qmimodem/voicecall.c | 131 +++++++++++++++++++++++++++++++++++
->   2 files changed, 137 insertions(+)
-> 
+>  drivers/qmimodem/gprs-context.c | 4 ++--
+>  drivers/qmimodem/wds.h          | 7 +++++++
+>  2 files changed, 9 insertions(+), 2 deletions(-)
 
-<snip>
+Here is the summary with links:
+  - [1/7] qmimodem: wds: Introduce qmi_wds_ip_family enum
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=417517a5849e
+  - [2/7] qmi: gprs-context: Do not free/alloc unnecessarily
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=844b488b2919
+  - [3/7] qmi: gprs-context: Move singleton defines to call site
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=72d9244b091d
+  - [4/7] qmi: gprs-context: Convert QMI_WDS_AUTHENTICATION to an enum
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=acb8d77ba97b
+  - [5/7] qmi: wds: Convert defines to enums
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ecd6933d5f32
+  - [6/7] qmi: gprs-context: Remove single-use structure definition
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=93395363f1cb
+  - [7/7] qmi: gprs-context: Request certain TLVs to be included
+    (no matching commit)
 
-> @@ -614,6 +616,133 @@ static void hangup_active(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb,
->   	release_specific(vc, call->id, cb, data);
->   }
->   
-> +static void stop_cont_dtmf_cb(struct qmi_result *result, void *user_data)
-> +{
-> +	struct cb_data *cbd = user_data;
-> +	ofono_voicecall_cb_t cb = cbd->cb;
-> +
-> +	uint16_t error;
-> +
-> +	DBG("");
-> +
-> +	if (qmi_result_set_error(result, &error)) {
-> +		DBG("QMI Error %d", error);
-> +		CALLBACK_WITH_FAILURE(cb, cbd->data);
-> +		return;
-> +	}
-> +
-> +	CALLBACK_WITH_SUCCESS(cb, cbd->data);
-> +	l_free(cbd);
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
 
-This looks wrong.  When invoking QMI_VOICE_STOP_CONTINUOUS_DTMF, you use 
-cb_data_unref as the destroy function.  The destroy invocation should take care 
-of cbd.
 
-> +}
-> +
-> +static void start_cont_dtmf_cb(struct qmi_result *result, void *user_data)
-> +{
-> +	struct cb_data *cbd = user_data;
-> +	ofono_voicecall_cb_t cb = cbd->cb;
-> +	struct ofono_voicecall *vc = cbd->user;
-> +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
-> +	uint16_t error;
-> +	struct qmi_param *param;
-> +
-> +	DBG("");
-> +
-> +	if (qmi_result_set_error(result, &error)) {
-> +		DBG("QMI Error %d", error);
-> +		CALLBACK_WITH_FAILURE(cb, cbd->data);
-> +		return;
-
-This is called with cbd, and hopefully in all cases cbd->ref == 1 at this point 
-with the destroy callback being cb_data_unref.  Once this function returns, 
-destroy is called and cbd is freed correctly.  This looks good.
-
-> +	}
-> +
-> +	param = qmi_param_new();
-> +
-> +	if (!qmi_param_append_uint8(param, QMI_VOICE_DTMF_DATA, 0xff))
-> +		goto error;
-> +
-> +	if (qmi_service_send(vd->voice, QMI_VOICE_STOP_CONTINUOUS_DTMF, param,
-> +			stop_cont_dtmf_cb, cbd, cb_data_unref) > 0) {
-> +		cb_data_ref(cbd);
-> +		return;
-
-On the success path, we take another ref to cbd (so cbd->ref == 2).  Once we 
-return, destroy is called and cbd->ref is back down to 1.
-
-> +	}
-> +
-> +error:
-> +	CALLBACK_WITH_FAILURE(cb, cbd->data); > +	l_free(cbd);
-
-On the error path, this isn't necessary at all.  cbd->ref should be 1, and once 
-this function returns, cb_data_unref should free cbd.
-
-> +	l_free(param);
-> +}
-> +
-> +static void send_one_dtmf(struct ofono_voicecall *vc, const char dtmf,
-> +				ofono_voicecall_cb_t cb, void *data)
-> +{
-> +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
-> +	struct qmi_param *param = NULL;
-> +	uint8_t param_body[2];
-> +	struct cb_data *cbd = cb_data_new(cb, data);
-> +
-> +	DBG("");
-> +
-> +	cbd->user = vc;
-> +	cb_data_ref(cbd);
-
-No need to take a ref here, cb_data_new creates cbd with ref==1.
-
-> +
-> +	param = qmi_param_new();
-> +
-> +	param_body[0] = 0xff;
-> +	param_body[1] = (uint8_t)dtmf;
-> +
-> +	if (!qmi_param_append(param, QMI_VOICE_DTMF_DATA, sizeof(param_body),
-> +			param_body))
-> +		goto error;
-> +
-> +	if (qmi_service_send(vd->voice, QMI_VOICE_START_CONTINUOUS_DTMF, param,
-> +			start_cont_dtmf_cb, cbd, cb_data_unref) > 0)
-> +		return;
-> +
-> +error:
-> +	CALLBACK_WITH_FAILURE(cb, data);
-> +	l_free(cbd);
-> +	l_free(param);
-> +}
-> +
-
-So you have two types of cb_data objects:
-1. The one you create in send_dtmf() that contains the callback to ofono core
-2. The one you create here that contains the callback to send_one_dtmf_cb and 
-pointer to 1.
-
-The 2nd cbd goes through the following callbacks:
-
-send_one_dtmf -> ref: 1
-start_cont_dtmf_cb -> take ref to 2 on success, in all cases unref is called 
-when this function returns
-stop_cont_dtmf -> ref: 1, unref is called when this function returns
-
-Note that you still might leak the object in 1 if the DTMF is interrupted 
-mid-execution.  For example upon voicecall atom removal.
-
-> +static void send_one_dtmf_cb(const struct ofono_error *error, void *data)
-> +{
-> +	struct cb_data *cbd = data;
-> +	struct voicecall_data *vd = ofono_voicecall_get_data(cbd->user);
-> +	ofono_voicecall_cb_t cb = cbd->cb;
-> +
-> +	DBG("");
-> +
-> +	if (error->type != OFONO_ERROR_TYPE_NO_ERROR ||
-> +			*vd->next_dtmf == 0) {
-> +		if (error->type == OFONO_ERROR_TYPE_NO_ERROR)
-> +			CALLBACK_WITH_SUCCESS(cb, cbd->data);
-> +		else
-> +			CALLBACK_WITH_FAILURE(cb, cbd->data);
-> +
-> +		l_free(vd->full_dtmf);
-> +		vd->full_dtmf = NULL;
-> +		l_free(cbd);
-> +	} else {
-> +		send_one_dtmf(cbd->user,
-> +				*(vd->next_dtmf++),
-> +				send_one_dtmf_cb, data);
-> +	}
-> +}
-> +
-> +static void send_dtmf(struct ofono_voicecall *vc, const char *dtmf,
-> +			ofono_voicecall_cb_t cb, void *data)
-> +{
-> +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
-> +	struct cb_data *cbd = cb_data_new(cb, data);
-
-Hmm, you alloc cb_data_new here which creates cbd with 1 ref
-
-> +
-> +	DBG("");
-> +
-> +	l_free(vd->full_dtmf);
-> +	vd->full_dtmf = l_strdup(dtmf);
-> +	vd->next_dtmf = &vd->full_dtmf[1];
-> +
-> +	cbd->user = vc;
-> +
-> +	send_one_dtmf(vc, *dtmf, send_one_dtmf_cb, cbd);
-
-Then here, cbd is refed again.  There's likely a leak?
-
-You're much safer storing 'cb' and 'data' inside struct voicecall_data (as 
-send_dtmf_cb and send_dtmf_data).
-
-> +}
-> +
->   static void create_voice_cb(struct qmi_service *service, void *user_data)
->   {
->   	struct ofono_voicecall *vc = user_data;
-
-Regards,
--Denis
