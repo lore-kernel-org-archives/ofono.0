@@ -1,62 +1,62 @@
-Received: from mail-oi1-f176.google.com (mail-oi1-f176.google.com [209.85.167.176])
+Received: from mail-oi1-f180.google.com (mail-oi1-f180.google.com [209.85.167.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 754EC130A4A
-	for <ofono@lists.linux.dev>; Tue, 16 Apr 2024 15:14:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8915C1304B1
+	for <ofono@lists.linux.dev>; Tue, 16 Apr 2024 15:14:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713280495; cv=none; b=AVsh95xutZ51gI2gAS68Ix4Xs9W9VUxe9IP3qFGMPEeVOglt+Y8VC64aMx0MXwSwZK/D018moZrzSrVJBYJOvcxtk42pjy1BRTmdITRLajo7qN3ahGXMBmyP8/AZU0i2MV0f0rtVZvzlu/LDAFPnSCl4HbgHv5fyTxHLW0RRD7U=
+	t=1713280496; cv=none; b=tmqwZ+4BLDnOjvlIBuBeE1EFp+Pa6BA7hVRpRC2MUDwirTV60kM2D6jWtOFtlolP5m88YxilB2WXOI+cb2qVKSlLZgOwW/94dJ9KD+v/4kChN2ZPCzU6wBQDC3HAZgWVNXLsPLzmpba8dr1eTsMm/Y11sSSK6EucIJKPF/7ymKw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713280495; c=relaxed/simple;
-	bh=djyks+F3mGJvqLrXUlttGEmX8qYUItZB94KTWfCSLPE=;
+	s=arc-20240116; t=1713280496; c=relaxed/simple;
+	bh=9flTpwrrmBlVJXK1xudSUA3Uhl1V6dC+PUekkMrZgaY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=FRZvZ8Pc3PJ3tk3Ii7QbNV0+GFiAQJQIRyQIkNfsQH/vjgb8Zcw/lIKD5bR756FuJsM2STHcszlm55WjjN2kV51u2eHDcNlbMwQrRlqZrUVXTC1MnLeyuFdDFFGbbrXOSUsx2jjnxwnoD9e6Pne6FoQeiOaOTtnHysuBqERYhV4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cxSOhyMt; arc=none smtp.client-ip=209.85.167.176
+	 MIME-Version; b=e3fRfE08/V2GbEHFJj7C1HN92Udp5731hzGbF9KeGfiE/mY1cd60sNNOwmDoQD+JIX8Ysak3794FdzlHHT9u5P6fkptvJJMvMV54v5/lSbBM8SXEzIxlIwsGJrx48tMgKZQ9w8UnEffWKTjTvECO5MrXDFzMVR5ug+8Ds72Sivk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=EZo5eXUo; arc=none smtp.client-ip=209.85.167.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cxSOhyMt"
-Received: by mail-oi1-f176.google.com with SMTP id 5614622812f47-3c7150cff81so480200b6e.2
-        for <ofono@lists.linux.dev>; Tue, 16 Apr 2024 08:14:54 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EZo5eXUo"
+Received: by mail-oi1-f180.google.com with SMTP id 5614622812f47-3c70ef25e19so1140920b6e.3
+        for <ofono@lists.linux.dev>; Tue, 16 Apr 2024 08:14:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713280493; x=1713885293; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1713280494; x=1713885294; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=6HxtktstjwcHtnRqcqYSUiT5ls1N6T033KZ+COMPkW0=;
-        b=cxSOhyMtKdoSXG3CpIijyz9XbI/whv5BiRwXOGj0EYLNC/Load59wQxz83i8W9MKcD
-         UrEw5P/1AZVFxUgTv0mvcTQB/Kr2emTiXz5+6xVXP7d8+UAxI7HKQKxQys371lTZtxG6
-         5qrrW9plf+CzdIe7ZvCWppqvKN7ekAxwS7Nl5h+cYmpyTLxs/jW2XXYj6Ab6eD8lfnjj
-         diwfVn7afijdT91DHIoH8JWxjjM0aHyx3kwSXaCJz78SJuw0ztfgdl4W5/q4Mh2bsryV
-         3E5BZgywXUzlE6WtVxCgxvl0Q7YWmfu/4pI1zT8jYHFuXVwgav3HHZO57L6OnRSYDxyn
-         ZIiw==
+        bh=2cvAQegEJEx498SvEhyvDBsfy9IimfKb65ZBzIj8dKU=;
+        b=EZo5eXUo/g5gRMV9C7gDQzWNyQFo7dY4bBzPJoRRHokzSuD47kD0floo4wpoam7EOh
+         HZcuTCyZ4zxentC4VooreZzE0D57FWRk1pVWM6utsTws4BbJI4ayozNmvn0VI0q58BcN
+         n569Cv3pa89ZYRL52MytXmT3YpNJcvFF8Ad6hOo+3gfIOb8JOhouIAWFybu+kTgU6luT
+         Kn0StuPs0oZgyPbIAB5Uz+ZATVvPVFQZqwJaq2JYIz6AlHteAG5CVWP57ciLAj98r/No
+         ZSTZm7papy/q1M+Izfe8LknqaUw6esBmGNuH1QnoAgJvtPSds64ofhAA+gfKiHCAQkS3
+         XqLQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713280493; x=1713885293;
+        d=1e100.net; s=20230601; t=1713280494; x=1713885294;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=6HxtktstjwcHtnRqcqYSUiT5ls1N6T033KZ+COMPkW0=;
-        b=gEPHQQB6WmACUtcAg7B7goWfWcFsTV4Ia0oPskFiYxRzD7Bvz8YHuVF23KzxzW0PUC
-         ZiVC3OQlbD01Bd4UFE9U07yD8DFVzTycQTmL1wy35T/GMLK4GmdmuSc3BcKxj50uVXXW
-         c5QMz7bopotEOmPLBTYaXfC4KkDus5M1Aeejd8dC7k4SUPz1fjixAD4YGMQU2VRoanL1
-         W6k6UlAxOgKb4YoxTX2YK8NgS688JUkTCtla7tcWLhCg4Mc+c77QdJFC9EieA7QjgFgY
-         QJNHWYsK+jAMIq3COnW59E45Oce7lz9Td7Kj1UoDnwGD59wCL8g2j9+sTdBew8Ysc3wx
-         8Q4Q==
-X-Gm-Message-State: AOJu0YzJrZr++x6WjXOHivR4Hw5/zWYyyutRxgG6zf7hSO2tbOLaO2l0
-	NkqMUNn9IzDFfr+4MM8MvLtl4Yx+/aTFA81GCTYeJpVAQdQL5ocAaaF+LA==
-X-Google-Smtp-Source: AGHT+IFBaXi5YsOj0F3SSaBY5UhTQJkigC9FOgWfnLycNzRxfrUKZiLIYZ5eVQ8NyQGqqyDIBTayYA==
-X-Received: by 2002:a05:6808:2219:b0:3c6:124:9bd6 with SMTP id bd25-20020a056808221900b003c601249bd6mr15665636oib.25.1713280493394;
-        Tue, 16 Apr 2024 08:14:53 -0700 (PDT)
+        bh=2cvAQegEJEx498SvEhyvDBsfy9IimfKb65ZBzIj8dKU=;
+        b=rrtN+8JS+aT/i4IKsK81/MLn7IROA451RY9eTaBvvRzHtWZpu8EoPulBDW07wKZFGw
+         Ir+GGSKEVUN5Bcn9lCRiRRGe1JoYWWZDcdgVYKR3UArNbESpwsWUiJAAw9pExsUI33vu
+         C7jA2RSzN0rlll1GMD0ybb/IVZOS5hh8jLV+MPS27OzD8qiNRAeErqMRx4Ol05klrsRZ
+         9iEjhzbvYkRyDkW7fOJ8ByDJyQPvnFIlE/+cYFeBhlB/xwwqjISdSrQsjE7TASs3kT9T
+         IwXX/8mkqIWZ7f9Lm/sA1j2H/rkE3mXUqlvlKiqECU6bBKlx7F3DyBakJmq5TikV9FXN
+         ub5g==
+X-Gm-Message-State: AOJu0YwGGVwK23oPxfLD0CEDhLY6wrofCFz/SVClSznEoS+ohhnCP6NE
+	LbgcuzQtrbuNSHgAXAb3pjuP2X8i27X+en8FsICq40GaSq4ZtU8NeN+92g==
+X-Google-Smtp-Source: AGHT+IHz+yXtc2U4zWE8VEeo16KJb1cxrtCUElgPu8WsdN10EK50pYfi1DIr+kgxi/LXoivlmnwThw==
+X-Received: by 2002:a05:6808:274a:b0:3c7:960:b9e7 with SMTP id eh10-20020a056808274a00b003c70960b9e7mr8164179oib.19.1713280494476;
+        Tue, 16 Apr 2024 08:14:54 -0700 (PDT)
 Received: from localhost.localdomain ([70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id b17-20020aca2211000000b003c708fc7267sm1085797oic.27.2024.04.16.08.14.52
+        by smtp.gmail.com with ESMTPSA id b17-20020aca2211000000b003c708fc7267sm1085797oic.27.2024.04.16.08.14.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Apr 2024 08:14:53 -0700 (PDT)
+        Tue, 16 Apr 2024 08:14:54 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 5/7] qmi: wds: Convert defines to enums
-Date: Tue, 16 Apr 2024 10:14:32 -0500
-Message-ID: <20240416151448.3359644-5-denkenz@gmail.com>
+Subject: [PATCH 6/7] qmi: gprs-context: Remove single-use structure definition
+Date: Tue, 16 Apr 2024 10:14:33 -0500
+Message-ID: <20240416151448.3359644-6-denkenz@gmail.com>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240416151448.3359644-1-denkenz@gmail.com>
 References: <20240416151448.3359644-1-denkenz@gmail.com>
@@ -68,56 +68,48 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+This structure is defined in wds.h but only used once inside
+packet_status_notify().  It is unlikely to be used elsewhere since this
+TLV is specific to the connection status indication.  Define/declare
+this structure directly in the handler instead.
 ---
- drivers/qmimodem/gprs-context.c |  2 +-
- drivers/qmimodem/wds.h          | 20 ++++++++++++--------
- 2 files changed, 13 insertions(+), 9 deletions(-)
+ drivers/qmimodem/gprs-context.c | 5 ++++-
+ drivers/qmimodem/wds.h          | 6 ------
+ 2 files changed, 4 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index e726382a223a..14da16046f2a 100644
+index 14da16046f2a..b1fdfc74cc34 100644
 --- a/drivers/qmimodem/gprs-context.c
 +++ b/drivers/qmimodem/gprs-context.c
-@@ -64,7 +64,7 @@ static void pkt_status_notify(struct qmi_result *result, void *user_data)
- 		DBG("ip family %d", ip_family);
+@@ -48,7 +48,10 @@ static void pkt_status_notify(struct qmi_result *result, void *user_data)
+ 	static const uint8_t RESULT_IP_FAMILY = 0x12;
+ 	struct ofono_gprs_context *gc = user_data;
+ 	struct gprs_context_data *data = ofono_gprs_context_get_data(gc);
+-	const struct qmi_wds_notify_conn_status *status;
++	const struct {
++		uint8_t status;
++		uint8_t reconf;
++	} __attribute__((__packed__)) *status;
+ 	uint16_t len;
+ 	uint8_t ip_family;
  
- 	switch (status->status) {
--	case QMI_WDS_CONN_STATUS_DISCONNECTED:
-+	case QMI_WDS_CONNECTION_STATUS_DISCONNECTED:
- 		if (data->pkt_handle) {
- 			/* The context has been disconnected by the network */
- 			ofono_gprs_context_deactivated(gc, data->active_context);
 diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
-index 0e30a0cca8c7..0cfbd9802531 100644
+index 0cfbd9802531..3c9b534c1f82 100644
 --- a/drivers/qmimodem/wds.h
 +++ b/drivers/qmimodem/wds.h
-@@ -38,15 +38,19 @@ struct qmi_wds_notify_conn_status {
- 	uint8_t reconf;
- } __attribute__((__packed__));
+@@ -32,12 +32,6 @@ enum qmi_wds_authentication {
+ 	QMI_WDS_AUTHENTICATION_CHAP	= 0x2,
+ };
  
--#define QMI_WDS_CONN_STATUS_DISCONNECTED	0x01
--#define QMI_WDS_CONN_STATUS_CONNECTED		0x02
--#define QMI_WDS_CONN_STATUS_SUSPENDED		0x03
--#define QMI_WDS_CONN_STATUS_AUTHENTICATING	0x04
-+enum qmi_wds_connection_status {
-+	QMI_WDS_CONNECTION_STATUS_DISCONNECTED =	0x01,
-+	QMI_WDS_CONNECTION_STATUS_CONNECTED =		0x02,
-+	QMI_WDS_CONNECTION_STATUS_SUSPENDED =		0x03,
-+	QMI_WDS_CONNECTION_STATUS_AUTHENTICATING =	0x04,
-+};
- 
--#define QMI_WDS_PDP_TYPE_IPV4			0x00
--#define QMI_WDS_PDP_TYPE_PPP			0x01
--#define QMI_WDS_PDP_TYPE_IPV6			0x02
--#define QMI_WDS_PDP_TYPE_IPV4V6			0x03
-+enum qmi_wds_pdp_type {
-+	QMI_WDS_PDP_TYPE_IPV4		= 0x00,
-+	QMI_WDS_PDP_TYPE_PPP		= 0x01,
-+	QMI_WDS_PDP_TYPE_IPV6		= 0x02,
-+	QMI_WDS_PDP_TYPE_IPV4V6		= 0x03,
-+};
- 
- enum qmi_wds_ip_family {
- 	QMI_WDS_IP_FAMILY_UNKNOWN = 0,
+-/* Packet data connection status indication */
+-struct qmi_wds_notify_conn_status {
+-	uint8_t status;
+-	uint8_t reconf;
+-} __attribute__((__packed__));
+-
+ enum qmi_wds_connection_status {
+ 	QMI_WDS_CONNECTION_STATUS_DISCONNECTED =	0x01,
+ 	QMI_WDS_CONNECTION_STATUS_CONNECTED =		0x02,
 -- 
 2.44.0
 
