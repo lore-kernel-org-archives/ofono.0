@@ -1,81 +1,81 @@
 Received: from mx0b-003ede02.pphosted.com (mx0b-003ede02.pphosted.com [205.220.181.153])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B259135A53
-	for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 16:46:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B0A321350EC
+	for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 16:46:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.181.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713545179; cv=none; b=SdFc3YWECAWPItJzoAP4k5Kqn5bcqFF0eX8APj02j38KCQqiZaKjKKNyZBeHPW1oybfi7SCaEPBSYqWBwXb04c9gmSmX1nKuY8BNQR26+c/Jv6RA4FkqLM+T98iF4RzLlpyxdSeEukI44bpp9NPl/LOkJhYCSzJ4xtWwIKP66x8=
+	t=1713545181; cv=none; b=pttYGo45kc1fTzY3OnNVP+572FV33vFqqSA0RS0vw0dzZk2dD6LPMwOu9Qem86XtK57MEP1esEhpwAtl/PV9tyyYoOnjWCkddjuKS0VxY9mJsb75t880OePQdFZxMwx+UTRRpS9rwfBcibg33Tpq6xZgCqzb5tsGhzHTtokvlKk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713545179; c=relaxed/simple;
-	bh=Tgxj/4Usc6H0avH62H2FqIWVk3jK2SC/brrbG2BFAr0=;
+	s=arc-20240116; t=1713545181; c=relaxed/simple;
+	bh=WTJz1WTzOJbuxskxqKmHdjjOHQd7HJQHAFA4KY1j02M=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=JfRjnxitE91iLdWYXyS596ufQyxuebvf+Z2wrcaudZExMEuie0jZOgBGSg87MZJ7ZpezeUjCb7bFXO84bjrVMg4gSBHVYIEmQa9p4P7fhFmHCee7p6y19tXZcwHqb2L40ogp+zTC/CaQhaOa8LwSfANJfoTtNDwtPofv10r4QsU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=INKh3WXT; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=GD8rAacE; arc=none smtp.client-ip=205.220.181.153
+	 MIME-Version:Content-Type; b=YYOAO1rvr7m7mgX6JQm+OjIO0/WUaJaLCtBjhLGjP4XJ58GO7TeFbNtyaXJxs27FeNgKOfWwM8lgRqiTJOZ1RXwsafm5nshSjukxwE+VTie2kU3X9y1HNqk+Q/R6xhdkQr6UWVeAWPmQCY5N51tMs2PdUsyCBei6H9nH4x3RpgQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=eGDVFdi3; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=lAmV/MCx; arc=none smtp.client-ip=205.220.181.153
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="INKh3WXT";
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="GD8rAacE"
-Received: from pps.filterd (m0286620.ppops.net [127.0.0.1])
-	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 43JDTFiJ025477
-	for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 09:46:17 -0700
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="eGDVFdi3";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="lAmV/MCx"
+Received: from pps.filterd (m0286618.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 43JFCepp029692
+	for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 09:46:18 -0700
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
 	 h=from:to:cc:subject:date:message-id:in-reply-to:references
-	:mime-version:content-type; s=ppemail; bh=Z5BTw2gx8qU4K88HwRtl8k
-	13pVkmO2Y7LDnQzhHOS8s=; b=INKh3WXT8q3TK+82/6dPq69oHb41w3BrpNZWmi
-	eArYET6N0xJRp5sx/+s6A5XYgvfzDbqbVBadaFIQl8A2s/vR1lNASsCIhzvXejuF
-	DcWvdclh6o8UvLPJNRRxy+FFruF3v/9O25oLXb38S9wC3xouFRIne+vcKuVCq5Tw
-	c8xjDurKSjzXpSQ1QR9cyTab36R5Wx6gXCukGyT7T/vl+VJijZF/iO3fV5xdZO0b
-	8K5T1IPhSi5XK6oj9AhIpwFstwJYbfgDlhGZ7Z21/SScfPogZdND3AYElK35UxWk
-	bCPvAX3STxQiLQ+9BIvxZyQ1hWjXnhtTFW8jmVF6AWJsiBQw==
-Received: from mail-oo1-f70.google.com (mail-oo1-f70.google.com [209.85.161.70])
-	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3xhyq9twn3-1
+	:mime-version:content-type; s=ppemail; bh=hVlhSepVLn4/Vdgim3iwMr
+	W2j3tsdB8sU+KBpR2barA=; b=eGDVFdi3xVctxOIxzOHFNa29Dbjt8miOmOTfLP
+	OrtaejWl8RWBKRDAUIVEuVM1Wd6jCPVeeI46E6WyKJiii1B66J2q529HV/+l0RV0
+	VazszgWjr/yq1NBsfhjYLnuwj/V1jf3RxNXijrJMYJC1/4j0O/bZJBFmgP9UtcJt
+	pu7cJbtzvz64EkN2ULbDDudLpxoE1w3KlWBZ6aG7idb6UGmsvfP+K8U+QMPSpB2+
+	z4T/I+tExtNDWAXaj2r2+bj6Sx75B1MXoBzBEzlpp4IkQTNcAr1xhV44Jj6crh2M
+	Ya6xsKgcxdoVl0CzRTukHl2iDgoK6CZRpnb3fla8htHMJK+A==
+Received: from mail-oi1-f199.google.com (mail-oi1-f199.google.com [209.85.167.199])
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3xk8m70wk3-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 09:46:17 -0700 (PDT)
-Received: by mail-oo1-f70.google.com with SMTP id 006d021491bc7-5acd9a8a58fso3126142eaf.2
-        for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 09:46:16 -0700 (PDT)
+	for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 09:46:18 -0700 (PDT)
+Received: by mail-oi1-f199.google.com with SMTP id 5614622812f47-3c5ffab3db3so2835337b6e.3
+        for <ofono@lists.linux.dev>; Fri, 19 Apr 2024 09:46:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=getcruise.com; s=google; t=1713545176; x=1714149976; darn=lists.linux.dev;
+        d=getcruise.com; s=google; t=1713545177; x=1714149977; darn=lists.linux.dev;
         h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
          :from:from:to:cc:subject:date:message-id:reply-to;
-        bh=Z5BTw2gx8qU4K88HwRtl8k13pVkmO2Y7LDnQzhHOS8s=;
-        b=GD8rAacEstJQ2ETrw//bAkBp3wISoAzYoOf+VANckIq8iZ2vYnlSh3hm/Bv2rE4l2C
-         xjePrzMl/9zTnjrEi9aM8Kbo6Kp9gaxkKpQkpfqLuz9PTj+ONpv7tKSIOZI4+ajs9fnE
-         ltH0PWK1P6NOwKB4PnYMxFXZ9hCrOcIdUc9faEjWoRTuRxTL/0XfMX3GYvySXduwi4AZ
-         3LaDgXOuWTrAtoSott+ZXCCt1sdKsIqNuVjo4wQ7qfD9u0r/vr56Hnap0Vi5H5GSC3sJ
-         MDn1Wp1yljSFRutcqB5AdLIt/Qiui8o5jMUYQBpK3+H2DS7DMHdQr52hnO3BHUbwHnt8
-         5M+g==
+        bh=hVlhSepVLn4/Vdgim3iwMrW2j3tsdB8sU+KBpR2barA=;
+        b=lAmV/MCxvA8K3UX5xBfwljuCF77v7aBb/uqLAciXH4gxsc43B4ef9xH85/jgmaJBJX
+         E0d38QN7utgXMOSI8+iZwtm6a3O3GETUuHaClNIurkeiy5kNWFtEIyyRLZmTE6hPSywn
+         s5Nh7KhC0GwT0mmcGG+XQuVPC3kBJOy0cNl1LN2gqTzfPhcpjesSzJslqgkV8eeejt1k
+         o1KUYZTJvV2ckoGa5lcFTPFJp1f5GANOxUJYn9MYto6kgnr6LHF5YGUk0LalZmxg1H+a
+         jJZ34lFyQ1JB10L3RrqJaURhuU+tMVvb4jHBEgbtaAw7flpc7JHM68uVFKHY/D8kiRJU
+         9kXA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713545176; x=1714149976;
+        d=1e100.net; s=20230601; t=1713545177; x=1714149977;
         h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
          :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Z5BTw2gx8qU4K88HwRtl8k13pVkmO2Y7LDnQzhHOS8s=;
-        b=B4CKmWiXmTUG71tWzLJEX7iqN678//0ZWl1yzLikJSsnzPjKYs82k6Ep25yveP+5dV
-         Vvn8mHVlz04QYrUR4moPuPI0Zmn1bBZdOvp/3McR9Q+en7vrwRfJ7Vw7soCbFKqNqcaa
-         1DsVuTGgT3UOSiRGzzDT8lpZDfFHipmf5Yru7pmVFTOU332l8gqXwYM5E5oep4yfEkzT
-         K/uHM2FwWsGjyPDhgAQoAvPefp6tFm5lVm127ay5hHKLnvMmDqSxU33zwa/kinTsNICF
-         g+6toWL0O5l01cLy+4bKBgpkjHKengQl2ZyzUC7R46q9eqzTfZdQpImRH1Q45ElAsWb3
-         QkzA==
-X-Gm-Message-State: AOJu0YyPsrAJAYDsiOMSbyWbBI5/P0px8ZOUhm8SpSgKapyICM3iNg8x
-	xrAqqt3U3Zal8/fXr6zuwB+stVU8VX0GMrT40wTW78Kc2D8RCt44XX0Ph0Y0qnpFHIsmZx7foCX
-	N0GMHJH/PFgryCbZp3gnwy4vD6jWh6AihCohgJajqF7X1KRtSv2AFe4pe5w0jBP8AoRrpvAnw14
-	i0TIkteDmOrOdS6+g+bLULbwTmli26ty0oH6ov/tKzckzA4+w=
-X-Received: by 2002:a4a:5892:0:b0:5a4:aea7:8066 with SMTP id f140-20020a4a5892000000b005a4aea78066mr3262993oob.5.1713545175962;
-        Fri, 19 Apr 2024 09:46:15 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGb+/yW+L6mMyHKe6SpcpwNIBqxi0zdoWnX8BzTMmi1vi+t2yjhqvxn5wtGzNBI21X+v8DLrw==
-X-Received: by 2002:a4a:5892:0:b0:5a4:aea7:8066 with SMTP id f140-20020a4a5892000000b005a4aea78066mr3262968oob.5.1713545175564;
-        Fri, 19 Apr 2024 09:46:15 -0700 (PDT)
+        bh=hVlhSepVLn4/Vdgim3iwMrW2j3tsdB8sU+KBpR2barA=;
+        b=jcmZ1tuoN87I/x+MieXLaIXgUqQQ1uRMJEFVnX1wIhZreR83YpG2/8opVEKf81Jrnb
+         MB7W5iLUSYOuLQNIT+VLmZ8mCkXwl4vA0QhICrGFiOU6+8fl4p5+zhBIrAxfSrjStCjj
+         CK5vp8a9TeJ9qIX+p1G4GrWVMsgRQANlw0zu8fC6lNeDDodah4UNivNYTM0IIFrMw89B
+         RpDjqWdkrz4JAzhAhkHG6F0MBdzgEH7AKfybHRNaahr/R2UZf/MJG6WgKbyE9T4ThHDR
+         NT6+rpEewaS0Zs82Jo48O0THWQijLlbgBhUVILAfXv3P8WJ8wq9r3r1F3jXa04zbuz0U
+         oEqA==
+X-Gm-Message-State: AOJu0YxS9u0QTjGNmypNgtoiEQyIJ47YkK+96JlxWD9M4uwkaF2v31bW
+	0BIHMdKQgRc539K1YW9vlUsKFJwdx9x53vvuKXGiSPScPWXKmXZZY4cXlxupvUoLGRjBtTm2jXr
+	oNXXz6C2wfHXRBvX00XP1RUMQNfXaLyFcBFG0b9U8Xg5yt9lZ8Hs/WC7MvsJL8iR1sTg738lPrF
+	khOiv98RUSqmJD4KS4s4CuqYa5y9gDKarI0MDx0C2MMNsig4c=
+X-Received: by 2002:a05:6808:ab8:b0:3c7:39f5:d3b5 with SMTP id r24-20020a0568080ab800b003c739f5d3b5mr2892510oij.58.1713545177218;
+        Fri, 19 Apr 2024 09:46:17 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IE09Y59vS3T3/VyniTzWx6K/b/ZBV2a2JWxTxZ0AheM0Bv8bjJsVLvKoikwe57PkfOOyzV1xg==
+X-Received: by 2002:a05:6808:ab8:b0:3c7:39f5:d3b5 with SMTP id r24-20020a0568080ab800b003c739f5d3b5mr2892477oij.58.1713545176773;
+        Fri, 19 Apr 2024 09:46:16 -0700 (PDT)
 Received: from localhost.localdomain ([140.141.181.78])
-        by smtp.gmail.com with ESMTPSA id n9-20020a05622a11c900b00437a0c8e662sm1577295qtk.20.2024.04.19.09.46.14
+        by smtp.gmail.com with ESMTPSA id n9-20020a05622a11c900b00437a0c8e662sm1577295qtk.20.2024.04.19.09.46.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 19 Apr 2024 09:46:14 -0700 (PDT)
+        Fri, 19 Apr 2024 09:46:16 -0700 (PDT)
 From: Steve Schrock <steve.schrock@getcruise.com>
 To: ofono@lists.linux.dev
 Cc: Steve Schrock <steve.schrock@getcruise.com>
-Subject: [PATCH 2/8] qmi: Eliminate atomic ref counting
-Date: Fri, 19 Apr 2024 16:44:52 +0000
-Message-Id: <20240419164458.36078-2-steve.schrock@getcruise.com>
+Subject: [PATCH 4/8] qmi: Eliminate unnecessary casting to unsigned int
+Date: Fri, 19 Apr 2024 16:44:54 +0000
+Message-Id: <20240419164458.36078-4-steve.schrock@getcruise.com>
 X-Mailer: git-send-email 2.40.1
 In-Reply-To: <20240419164458.36078-1-steve.schrock@getcruise.com>
 References: <20240419164458.36078-1-steve.schrock@getcruise.com>
@@ -86,49 +86,98 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="US-ASCII"
-X-Proofpoint-GUID: UCWmw8wPOs1fnB6XFnLi7DZKgrsNP5mE
-X-Proofpoint-ORIG-GUID: UCWmw8wPOs1fnB6XFnLi7DZKgrsNP5mE
+X-Proofpoint-ORIG-GUID: RskWDl3c96MeSMWUtD3Q_cxPIle2bR1g
+X-Proofpoint-GUID: RskWDl3c96MeSMWUtD3Q_cxPIle2bR1g
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
  definitions=2024-04-19_11,2024-04-19_01,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 phishscore=0 bulkscore=0
- clxscore=1015 lowpriorityscore=0 spamscore=0 impostorscore=0
- malwarescore=0 mlxscore=0 suspectscore=0 priorityscore=1501
- mlxlogscore=833 adultscore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.19.0-2404010003 definitions=main-2404190127
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 lowpriorityscore=0
+ bulkscore=0 clxscore=1015 impostorscore=0 mlxlogscore=999 phishscore=0
+ spamscore=0 adultscore=0 priorityscore=1501 mlxscore=0 malwarescore=0
+ suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2404010003 definitions=main-2404190127
 
-This code is single-threaded so there is no need to use atomics.
-While here simplify qmi_service_ref.
+uint16_t values were copied into unsigned ints before being passed to
+L_UINT_TO_PTR. Perhaps this was necessary when the glib macro
+GUINT_TO_POINTER was used, but it is not necessary now with the ell macro.
 ---
- drivers/qmimodem/qmi.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ drivers/qmimodem/qmi.c | 14 +++++---------
+ 1 file changed, 5 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 7f91b57d15be..0811eaf2faec 100644
+index e1091b872f23..f406d01a8df6 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -2660,10 +2660,8 @@ bool qmi_service_create(struct qmi_device *device,
+@@ -1330,7 +1330,6 @@ static void __rx_ctl_message(struct qmi_device_qmux *qmux,
+ 	struct qmi_request *req;
+ 	uint16_t message;
+ 	uint16_t length;
+-	unsigned int tid;
  
- struct qmi_service *qmi_service_ref(struct qmi_service *service)
+ 	/* Ignore control messages with client identifier */
+ 	if (client_id != 0x00)
+@@ -1338,7 +1337,6 @@ static void __rx_ctl_message(struct qmi_device_qmux *qmux,
+ 
+ 	message = L_LE16_TO_CPU(msg->message);
+ 	length = L_LE16_TO_CPU(msg->length);
+-	tid = control->transaction;
+ 
+ 	if (control->type == 0x02 && control->transaction == 0x00) {
+ 		handle_indication(&qmux->super, service_type, client_id,
+@@ -1347,7 +1345,7 @@ static void __rx_ctl_message(struct qmi_device_qmux *qmux,
+ 	}
+ 
+ 	req = l_queue_remove_if(qmux->control_queue, __request_compare,
+-						L_UINT_TO_PTR(tid));
++					L_UINT_TO_PTR(control->transaction));
+ 	if (!req)
+ 		return;
+ 
+@@ -2860,12 +2858,11 @@ uint16_t qmi_service_send(struct qmi_service *service,
+ 
+ bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
  {
--	if (!service)
--		return NULL;
--
--	__sync_fetch_and_add(&service->ref_count, 1);
-+	if (service)
-+		service->ref_count++;
+-	unsigned int tid = id;
+ 	struct qmi_device *device;
+ 	struct qmi_request *req;
+ 	struct service_family *family;
  
- 	return service;
- }
-@@ -2676,7 +2674,7 @@ void qmi_service_unref(struct qmi_service *service)
- 	if (!service)
- 		return;
+-	if (!service || !tid)
++	if (!service || !id)
+ 		return false;
  
--	if (__sync_sub_and_fetch(&service->ref_count, 1))
-+	if (--service->ref_count)
- 		return;
+ 	family = service->family;
+@@ -2878,11 +2875,11 @@ bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
+ 		return false;
  
- 	device = service->device;
+ 	req = l_queue_remove_if(device->req_queue, __request_compare,
+-					L_UINT_TO_PTR(tid));
++					L_UINT_TO_PTR(id));
+ 	if (!req) {
+ 		req = l_queue_remove_if(device->service_queue,
+ 						__request_compare,
+-						L_UINT_TO_PTR(tid));
++						L_UINT_TO_PTR(id));
+ 		if (!req)
+ 			return false;
+ 	}
+@@ -2965,7 +2962,6 @@ uint16_t qmi_service_register(struct qmi_service *service,
+ 
+ bool qmi_service_unregister(struct qmi_service *service, uint16_t id)
+ {
+-	unsigned int nid = id;
+ 	struct service_family *family;
+ 	struct qmi_notify *notify;
+ 
+@@ -2975,7 +2971,7 @@ bool qmi_service_unregister(struct qmi_service *service, uint16_t id)
+ 	family = service->family;
+ 
+ 	notify = l_queue_remove_if(family->notify_list, __notify_compare,
+-					L_UINT_TO_PTR(nid));
++					L_UINT_TO_PTR(id));
+ 
+ 	if (!notify)
+ 		return false;
 -- 
 2.40.1
 
