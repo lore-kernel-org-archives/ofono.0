@@ -1,62 +1,62 @@
-Received: from mail-oa1-f52.google.com (mail-oa1-f52.google.com [209.85.160.52])
+Received: from mail-oa1-f47.google.com (mail-oa1-f47.google.com [209.85.160.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E6A81CAB7
-	for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 21:41:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 985F61CAB8
+	for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 21:41:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713822064; cv=none; b=fZCbeI23z9xP1FhtMVOJBby7CKRK6rKuDROmFx6ykbARrPpnrQPDw3gx0lqf/3ueDVZWExDPu5GeVxjixNNIwRBvxN9B7aKhBx4q+HBS1MKodnRqhY8C6jtx9Zf28LBIExLQw3eFHWf+zs+4KX985C6hkdQEHDjb4hjbF4koLo4=
+	t=1713822064; cv=none; b=H9+PntO54xmpOTcakwYnP+EoWb0qIJFu6GJiJhPUmlMBMqwn46Djyc0B/Fg1aCen24oB+nE4LLTHDy7dccn0DJrSRnSJwHfa5b+AwX5/wqnoFgnDdGmIvjZ0zsV+4CDgd1cWGLtPxcbMTsqvLQkgvcPJG7Zh4L7EuDcJKZNhZeg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1713822064; c=relaxed/simple;
-	bh=BRovDsNwS+DbhyDfsxN1TbvjlC1r1FNB9UNWNktVG0Y=;
+	bh=N27Spih5X2XBxzrcM75p/shgYtqN1/O6KBFRcTClQxY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ahdpKMIWo1EToT7Im71wccWM4aFL1o74pTmkDxkIjEBSXr5V7evHH85yKUf+JZhMcYORTltwkuic3ly3Uw6tA15WBBkU4JI3tgH/Hp8zoQyyAE/EPXOqvjXgQV9OmKie7OaKSPkFPypNuiITj8VM8wvnqSJvRQGXNCvmn9JzV9g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mKIBdn9a; arc=none smtp.client-ip=209.85.160.52
+	 MIME-Version; b=ai0BYGObEfzZrkWiboCOGGjNzWrmPSbwip/jTFqsPFcliVRyZpSQc4oDR7/WiDKZYPRUmiJUD8IOAjspIapUEcmUxhWzMMb4ino/9HVtBqjPGFS8B2yRHpkF1nmc+H4hHM/CGxrKi6gZsljmD+uz50Ulp5iM2AgmkqvG8I5NW1E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Vy0WAiuf; arc=none smtp.client-ip=209.85.160.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mKIBdn9a"
-Received: by mail-oa1-f52.google.com with SMTP id 586e51a60fabf-22edcfcd187so2166374fac.2
-        for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 14:41:02 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Vy0WAiuf"
+Received: by mail-oa1-f47.google.com with SMTP id 586e51a60fabf-22edbef3b4eso1247806fac.3
+        for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 14:41:03 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1713822062; x=1714426862; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=WroYfUW4gOb8twfDMkhWhpPLg5tVJyRCgzrQXtoqtSA=;
-        b=mKIBdn9aiSTDdW/MmIzlxSkup5RQ3b4bK6jh/WmlAu9gXXQ3vkp/4VVfUFA5BPfHjp
-         mB+puJgdlMwQoK8U5BmK5/myce6QCZXiYn3CR720bqBE0pLuLfc5xoxGXXm9YFq63eXP
-         MSi8pkthA51jWaK6U2Fq0Ta/rPz+/rxWM9VxRXnS2+d5Rsql8W8M4h3eU8rGvLc1SG0z
-         EYpdXV4WB1q2VsUIiJyhGmEKbEZ63qFso1w3/daPpUPaTokeM7EbR+7RpF/hnfgaLsnl
-         wZ+F+St0/1K+nJnlvjsjqPhnOK+UzjROtzaLsmOuAgZg5LY1Nd9Lu6hvRNSUhgjxq05y
-         WEcw==
+        bh=LkswOI9JJc/iahK7O6/if/G5cA+J7LeM1RZdMLxnadU=;
+        b=Vy0WAiuf1iU/roZaYNVfls4ifj3xaL/2hkSQ32NiSCj3DCq3d9AiesJWjFUfgo9Cgc
+         8mc6UMLJaTMRUpbBxusmh7+pOnXc6y+mKVycL0dcyPBXgzB9USpjpTt7UhbEbhSrXmLt
+         WAE3NJnYdFcFPNebwj6vOhYlo4SILeFw1gIbBa1jMQzpq+NaVqVwwrSdCkG14VucUuy4
+         VIcDQri+uR0XAYDfZBYdNta494NDr66ba2tCQAjoLnF3wS1cJgKysEzH+so9eGRijKte
+         wUSyynIBPmbnIm2DpiYmdaUIBlFofXjPGeQk4uHy2cJ3WVnQS6e2GQM37vQH3GwHcn3G
+         kWdQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1713822062; x=1714426862;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=WroYfUW4gOb8twfDMkhWhpPLg5tVJyRCgzrQXtoqtSA=;
-        b=NgV4BLNcOhFxudvqNiNqQAiNJehfMEXyIW7CMRgAPR11kMj4ssSpAgdVRRPayz/fWs
-         EegS/1hGyAKP/zGA1qRWKPDn/sOFfSxkZIT+SVNUSzs66Xdd+RkUmxIgLgZN8/51Pcle
-         xkyLmhk8xc4YRXwPbQyMvHDIfeFH3ux3Cwp6pl4leOQlnv7dtRGPaf5LEv1BUc3IkFZt
-         OLb+QOXgDF7bSOkGUecRlanBxeUw90+fb7jZfUpxl2mcWx1svhwYzlr62lazLZH7i9Po
-         bNivUAJi9kwLNJ1FNQ5u3FUmE2V7R/LCzPT2dJXf94PBaqvMCxhfFMDjtMqTg8Vkwi8n
-         dfKQ==
-X-Gm-Message-State: AOJu0Yyewx5kdWWnacacng+qPt2vmD1KnNx2fXW4hymF7pvpBi/RLos9
-	NdaDHUfVgBKzdeQXo30UpSYgk6aA7AIhe3YsxN2GsjENrKSTWPHNfwYGlg==
-X-Google-Smtp-Source: AGHT+IFtPY8CJ3Eu22npykQJdgVdqi9+e1Gq1eGrF9xBxiRtYXvvUV0XzKvYeza7Ouu7IMT8QRPblA==
-X-Received: by 2002:a05:6870:cb91:b0:22a:9ea4:c18 with SMTP id ov17-20020a056870cb9100b0022a9ea40c18mr15920833oab.15.1713822061994;
-        Mon, 22 Apr 2024 14:41:01 -0700 (PDT)
+        bh=LkswOI9JJc/iahK7O6/if/G5cA+J7LeM1RZdMLxnadU=;
+        b=LWhnCpZPjJuSS7k5GA2YLz3MX1da+vp2P4JmdwmMm1oL+8Yip7iQIXaYy9+lT9eb+1
+         4gOcFplPY+kIdjs2RnuDamqTgbicAT50NkYukNEIv2e5vkFmzvzYgykH1p0rdo87u9Ct
+         QBmW5m/QzJ9H+sIaZYG/aWnivEq7/+jmkB7ZRlV64718yMwZcypRrBVQr1k1ioIexNIF
+         8buVfEpaUUvrO4aD56tkODWYv7o1Z0llQRr9yK4hndH4P3a1O60slT4ppKyG7pGphX8r
+         VSChhHQAy3C3ZtNMhSAg0KE8+sCyDCTOT3CIn6DtmAucCkBN9zPkmdMo+U8uqb+K+Qkf
+         Od2g==
+X-Gm-Message-State: AOJu0Yz/YCdxC4QZDO2nbncvF1uBVAIfKjM4X7JRRDx48DKzNFVeNJjH
+	4LiQ34sTmjhc0um2+jP5T1mZu2Qtj1DG73RlW+ODE1MNfGq5ajCnpodAqw==
+X-Google-Smtp-Source: AGHT+IHnvva85k9Wrnocbejza7brbC/fRKdhaXyWo3TNFxUDtIES6iX16iaoPIYSfmFk9ws1YO39mg==
+X-Received: by 2002:a05:6870:1591:b0:22a:6ce3:d57 with SMTP id j17-20020a056870159100b0022a6ce30d57mr14527440oab.25.1713822062549;
+        Mon, 22 Apr 2024 14:41:02 -0700 (PDT)
 Received: from localhost.localdomain ([70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id xm8-20020a0568709f8800b00239b3c03b8fsm1076122oab.42.2024.04.22.14.41.01
+        by smtp.gmail.com with ESMTPSA id xm8-20020a0568709f8800b00239b3c03b8fsm1076122oab.42.2024.04.22.14.41.02
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 22 Apr 2024 14:41:01 -0700 (PDT)
+        Mon, 22 Apr 2024 14:41:02 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 2/4] qmi: voicecall: Fix up code style violations
-Date: Mon, 22 Apr 2024 16:40:44 -0500
-Message-ID: <20240422214058.3411417-2-denkenz@gmail.com>
+Subject: [PATCH 3/4] qmi: voicecall: Remove ternary conditional use
+Date: Mon, 22 Apr 2024 16:40:45 -0500
+Message-ID: <20240422214058.3411417-3-denkenz@gmail.com>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240422214058.3411417-1-denkenz@gmail.com>
 References: <20240422214058.3411417-1-denkenz@gmail.com>
@@ -68,66 +68,57 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Fix up some style violations:
- - > 80 character lines
- - Redundant parenthesis
-
-Also, while here, fix up a typo: "informations" -> "information"
+Simplify the code a bit by removing the use of ternary conditional
+operation and replace it with a 'remote_number_tlv' variable.  This also
+removed a slight coding violation where a mix of spaces and tabs was
+used for indentation.
 ---
- drivers/qmimodem/voicecall.c | 14 ++++++++------
- 1 file changed, 8 insertions(+), 6 deletions(-)
+ drivers/qmimodem/voicecall.c | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
-index 24c4f3f175c3..5afa3a057a71 100644
+index 5afa3a057a71..dcb91c642c0c 100644
 --- a/drivers/qmimodem/voicecall.c
 +++ b/drivers/qmimodem/voicecall.c
-@@ -90,7 +90,7 @@ static bool ofono_call_match_by_id(const void *a, const void *b)
- 	const struct ofono_call *call = a;
- 	unsigned int id = L_PTR_TO_UINT(b);
+@@ -263,7 +263,6 @@ static void all_call_status_ind(struct qmi_result *result, void *user_data)
+ 	int i;
+ 	int offset;
+ 	uint16_t len;
+-	bool status = true;
+ 	int instance_size;
+ 	const struct qmi_voice_call_information *call_information;
+ 	const struct qmi_voice_remote_party_number *remote_party_number;
+@@ -275,6 +274,8 @@ static void all_call_status_ind(struct qmi_result *result, void *user_data)
+ 	static const uint8_t RESULT_CALL_INFO_CALL_INFORMATION = 0x10;
+ 	static const uint8_t RESULT_CALL_INFO_REMOTE_NUMBER = 0x11;
  
--	return (call->id == id);
-+	return call->id == id;
- }
++	uint8_t remote_number_tlv = RESULT_CALL_STATUS_REMOTE_NUMBER;
++
+ 	DBG("");
  
- static bool ofono_call_match_by_status(const void *a, const void *b)
-@@ -294,7 +294,7 @@ static void all_call_status_ind(struct qmi_result *result, void *user_data)
+ 	/* mandatory */
+@@ -285,7 +286,7 @@ static void all_call_status_ind(struct qmi_result *result, void *user_data)
+ 		call_information = qmi_result_get(
+ 			result, RESULT_CALL_INFO_CALL_INFORMATION,
+ 			&len);
+-		status = false;
++		remote_number_tlv = RESULT_CALL_INFO_REMOTE_NUMBER;
  	}
  
- 	if (!call_information->size) {
--		DBG("No call informations received!");
-+		DBG("No call information received!");
- 		return;
+ 	if (!call_information || len < sizeof(call_information->size)) {
+@@ -306,11 +307,7 @@ static void all_call_status_ind(struct qmi_result *result, void *user_data)
  	}
  
-@@ -370,9 +370,11 @@ static void all_call_status_ind(struct qmi_result *result, void *user_data)
- 		call->direction = qmi_to_ofono_direction(call_info.direction);
- 		call->type = 0; /* always voice */
+ 	/* mandatory */
+-	remote_party_number = qmi_result_get(
+-		result,
+-		status ? RESULT_CALL_STATUS_REMOTE_NUMBER :
+-			 RESULT_CALL_INFO_REMOTE_NUMBER,
+-		&len);
++	remote_party_number = qmi_result_get(result, remote_number_tlv, &len);
  
--		number_size = MIN(remote_party->number_size, OFONO_MAX_PHONE_NUMBER_LENGTH);
-+		number_size = MIN(remote_party->number_size,
-+						OFONO_MAX_PHONE_NUMBER_LENGTH);
- 		tmp = l_strndup(remote_party->number, number_size);
--		l_strlcpy(call->phone_number.number, tmp, sizeof(call->phone_number.number));
-+		l_strlcpy(call->phone_number.number, tmp,
-+				sizeof(call->phone_number.number));
- 		l_free(tmp);
- 
- 		if (strlen(call->phone_number.number) > 0)
-@@ -489,7 +491,8 @@ static void answer_cb(struct qmi_result *result, void *user_data)
- 	CALLBACK_WITH_SUCCESS(cb, cbd->data);
- }
- 
--static void answer(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb, void *data)
-+static void answer(struct ofono_voicecall *vc,
-+					ofono_voicecall_cb_t cb, void *data)
- {
- 	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
- 	struct cb_data *cbd;
-@@ -679,4 +682,3 @@ static const struct ofono_voicecall_driver driver = {
- };
- 
- OFONO_ATOM_DRIVER_BUILTIN(voicecall, qmimodem, &driver)
--
+ 	if (!remote_party_number) {
+ 		DBG("Unable to retrieve remote numbers");
 -- 
 2.44.0
 
