@@ -1,88 +1,194 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oo1-f48.google.com (mail-oo1-f48.google.com [209.85.161.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB2931DDE9
-	for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 16:32:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B093F1BC2F
+	for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 21:00:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713803524; cv=none; b=WK0PzareSl95I2Au2jazvOCmi9iVF0QQtLXTPF0dfvrD1MWxRy8PdtMihxp6EHCzwAjRp+VYUocEZ2EoMKxZ31+azcpYYtWXFC9wBtUVrv++gQzIynYYI21Q22r/NewmU1D1wDIlDvwayIccB1D3sLICF3OUQkmWSIoCJUihVQc=
+	t=1713819645; cv=none; b=cho/1kcw6LniR1qggUcaA+K8dt6kM2gB27Ny9y8m0mr83iTOXDVnK5PxmlnNbHhegqnB/D9WkNXjBkh5IL1qpR8t0n/WNIjjb2x9ajXg6TsJ+oNgBNTlYKrOMPUqbywu8E4aZhiEd9hlyRQKYUcnIMwoxiXAWsz+nhWZROW5DSE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713803524; c=relaxed/simple;
-	bh=LVJ+vJG6j+bwOYC2JrEWeR58Yt7px1vjkJNOId7H4JA=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=cVrinSdIL6uXL7EJZJmGN/xS1z1GfjS6yasZq1OWzQuT3OfPkfTqfTA0jb3ZWQfKPxO8u8rCjp0Qe24MmGklsTEwHuxyq+wyXT22/ZljWVMNC4z272nI7oX9sq33028tdex7SdHMcNU7FZLy8/HZOWZQOBLwrFJpY6D8Tzk8660=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=C3RktJEH; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1713819645; c=relaxed/simple;
+	bh=04AU3FD3agklLPYEyrkzQKjX6t7TYCmjPYgckyGAPPA=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=jDT6D4etrgEank/KwGjl+vTA2iE/6zaMTIDiRl/ig/A2qTaDcardVP0RjMG18e3iD8uHLAbTMj2zt6kEoStXxaEwwi5Eoj/GN41t7FtH1rI/zHQ7411J2s6JOnr1E9Vl8xoaXL5K9Oio/jdS6VaAhwrNRlBpVXCCv8EyqgcH024=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ljVw61by; arc=none smtp.client-ip=209.85.161.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="C3RktJEH"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 7D180C32781;
-	Mon, 22 Apr 2024 16:32:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1713803523;
-	bh=LVJ+vJG6j+bwOYC2JrEWeR58Yt7px1vjkJNOId7H4JA=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=C3RktJEH837EACYPz7V+QiV2ZTvodRXuzhRS7ULUyMOj/dsAjFoo0emHAp227NtVU
-	 9Sv2GUfahiK6iVj0jVwgLq4zwIv/gz5jPFq3vmkODTbM2LgxzRTBQOM6Hp9RhZLZPl
-	 T7rPxrYeckEIr3aDD1L6XyCneZQJv2KOvCyUjydvc4idfLn7gvuVxo+XrX+yaEwBeP
-	 97mSR+S5ba+/5sTnHwJkEN5G3S1r7ZRNYplJOxmLiD1CYDIY4r2I1xaDMPJ9SFkY1F
-	 qPU/en9udZ1P5BYsmWZd7K3kM1OqjjIhgGwOU1A9j9SkfYeZ9+GFnbAjyIoML0X43X
-	 ngYo2ATiCxFZw==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 73D32C433A2;
-	Mon, 22 Apr 2024 16:32:03 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ljVw61by"
+Received: by mail-oo1-f48.google.com with SMTP id 006d021491bc7-5aa2a74c238so3137972eaf.3
+        for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 14:00:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1713819643; x=1714424443; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=upqKs4Dh0xvgk1coEn2l1ZEcofW56TbUqGb7hiBMDSg=;
+        b=ljVw61byuBabOHxgLezaVZYsvI/47BFMS+TUeWzq9TqgruqOVLNpHQl5RwlkjFyeOK
+         CzLbCT8H2+bvd3ilqcCWJK8Z2hiRrMfP4vZ5RgVKDOEnaV3T5tpS3jk3IFmzJn/R1fpR
+         fdaCGcz3M4OKWPLP9igd2kpDK32gOeZ72kQdQcSVvlchFoy10AqhGgWo0HEdNDlNDsTf
+         nZnbiu3KXl5oCDCaExvFyati7QSf2xWzGfCh5bY5k+pNXl3ghraDCe1eum4DjiScc1bn
+         WBcIGr0pGSpCvpy/QYQIrj3XpCb3Dts7E5+jdNmpqsCB+q3OVu+29OCIeOOCZ9dcj4Xh
+         lywA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713819643; x=1714424443;
+        h=content-transfer-encoding:in-reply-to:from:references:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=upqKs4Dh0xvgk1coEn2l1ZEcofW56TbUqGb7hiBMDSg=;
+        b=kdyuVT2DYQM4rY6vesCLVtJC+Xa/ltllgocCBcbmajJ2Y9F3lQM+mmujb3kAjNrpOB
+         vmdnK133RIv+0Lky0/hxaj4T7ZXYMQVd62h47o/f9uZSLPKEDlbrZxSGM7+bIJBjzvtl
+         wEEn8wtAuPwjMnNBv28VMb3OZsgGJHbH5rmmS6xJYFCBrCgtInLi5EthJZKevvj/tO9D
+         xod39qiPbqltyehRlaiKOm/kXsgJouJ6VmRuC4K1EG442QjCeKlN04XnIPhmskYpZRxo
+         yTM1I6G/TeDooxwF54PKwydevHtL4Jke9DhO2DEj5Q1GjSFoklUHh2JqIzKrnaqkLXOz
+         Nxew==
+X-Forwarded-Encrypted: i=1; AJvYcCX25rce74S5PNFbffFm3oDQC2Sf+S+0FcdnvmJjnNVY9CRJHGb9qRCca1vMRVCSjuA//1EgsFiQMa7VvUApxTqmdwz0bKw=
+X-Gm-Message-State: AOJu0YzbZG0HNl1F1kehXAzTElGQgiUWhV0/OkHDnfGwfvHZKEOk/cvi
+	KkYZ923Ndd9dvVhaZ6n1bW8mAdz/k3QHI7Ui38bIQrLNXdOkoP1SREeucQ==
+X-Google-Smtp-Source: AGHT+IGc0f/PdSSAS7OxZr5ucClhvdI0WwDmkwCAzoMOrGTyikf3JMvDwGIOQzTAPUBvO5iMWGNnuA==
+X-Received: by 2002:a4a:57c1:0:b0:5aa:4a0c:d99e with SMTP id u184-20020a4a57c1000000b005aa4a0cd99emr11778274ooa.8.1713819642808;
+        Mon, 22 Apr 2024 14:00:42 -0700 (PDT)
+Received: from [192.168.1.22] ([70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id 185-20020a4a06c2000000b005a49df78628sm2201095ooj.39.2024.04.22.14.00.42
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 22 Apr 2024 14:00:42 -0700 (PDT)
+Message-ID: <159a23ff-bd7d-44bc-b723-6dbb08aef6d9@gmail.com>
+Date: Mon, 22 Apr 2024 16:00:41 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH 1/8] qmi unit: Link to dl
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <171380352347.32107.12758779421356187360.git-patchwork-notify@kernel.org>
-Date: Mon, 22 Apr 2024 16:32:03 +0000
-References: <20240419164458.36078-1-steve.schrock@getcruise.com>
-In-Reply-To: <20240419164458.36078-1-steve.schrock@getcruise.com>
-To: Steve Schrock <steve.schrock@getcruise.com>
-Cc: ofono@lists.linux.dev
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 4/4] qmimodem: voicecall: Implement DTMF tones
+Content-Language: en-US
+To: Adam Pigg <adam@piggz.co.uk>, ofono@lists.linux.dev
+References: <20240421194926.13149-1-adam@piggz.co.uk>
+ <20240421194926.13149-4-adam@piggz.co.uk>
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20240421194926.13149-4-adam@piggz.co.uk>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello:
+Hi Adam,
 
-This series was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Fri, 19 Apr 2024 16:44:51 +0000 you wrote:
-> One of my VMs was getting a linker error when building
-> test-qmimodem-qmi in maintainer mode:
-> undefined reference to `dladdr'
+On 4/21/24 14:49, Adam Pigg wrote:
+> The send_dtmf function sets up a call to send_one_dtmf, which will call
+> the QMI_VOICE_START_CONTINUOUS_DTMF service function.  The parameters to
+> this call are a hard coded call-id and the DTMF character to send.
+> start_cont_dtmf_cb will then be called which will set up a call to
+> QMI_VOICE_STOP_CONTINUOUS_DTMF to stop the tone.  Finally,
+> stop_cont_dtmf_cb will check the final status.
 > 
-> Add -ldl to fix this.
 > ---
->  Makefile.am | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> Changes in V4
+> -Removed unused enum
+> -Minor formatting fixes
+> -Ensure data->full_dtmf is free'd
+> -Use cb_data_ref/unref between chains of dtmf calls
+> 
+> Changes in V5
+> -Store the cb and cbd obejects in the voicall_data  struct
+> ---
+> ---
+>   drivers/qmimodem/voice.h     |   6 ++
+>   drivers/qmimodem/voicecall.c | 114 +++++++++++++++++++++++++++++++++++
+>   2 files changed, 120 insertions(+)
+> 
 
-Here is the summary with links:
-  - [1/8] qmi unit: Link to dl
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=279b04c15127
-  - [2/8] qmi: Eliminate atomic ref counting
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=39b7437a0044
-  - [3/8] qmi: Create a better client service abstraction
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=6131bfc81468
-  - [4/8] qmi: Eliminate unnecessary casting to unsigned int
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=28d60206ba2d
-  - [5/8] qmi: Prevent clients from unregistering for others
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=e13fb8f498cc
-  - [6/8] qmi unit: Validate creation of services of the same type
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=af2718346a28
-  - [7/8] qmi unit: Validate destroyed services do not notify
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=2d4e571d1598
-  - [8/8] qmi unit: Validate notifications are independent
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=1c999cd5a0a8
+<snip>
 
-You are awesome, thank you!
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
+> @@ -605,6 +609,114 @@ static void hangup_active(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb,
+>   	release_specific(vc, call->id, cb, data);
+>   }
+>   
+> +static void stop_cont_dtmf_cb(struct qmi_result *result, void *user_data)
+> +{
+> +	struct voicecall_data *vd = user_data;
+> +	uint16_t error;
+> +
+> +	DBG("");
+> +
+> +	if (qmi_result_set_error(result, &error)) {
+> +		DBG("QMI Error %d", error);
+> +		CALLBACK_WITH_FAILURE(vd->send_dtmf_cb, vd->send_dtmf_data);
+> +		return;
+> +	}
+> +
+> +	CALLBACK_WITH_SUCCESS(vd->send_dtmf_cb, vd->send_dtmf_data);
 
+This calls back into oFono core unconditionally.  Doesn't this imply that you're 
+handling only a single DTMF character?
+
+> +}
+> +
+
+<snip>
+
+> +static void send_one_dtmf(struct ofono_voicecall *vc, const char dtmf,
+> +				ofono_voicecall_cb_t cb, void *data)
+
+Both cb and data are not saved anywhere and are only used on the error path. 
+The initial invocation in send_dtmf() also passes in NULL for data...
+
+So again, I think this implies only a request which uses a single DTMF tone 
+character would work?
+
+> +{
+> +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
+> +	struct qmi_param *param = NULL;
+> +	uint8_t param_body[2];
+> +
+> +	DBG("");
+> +
+> +	param = qmi_param_new();
+> +
+> +	param_body[0] = 0xff;
+> +	param_body[1] = (uint8_t)dtmf;
+> +
+> +	if (!qmi_param_append(param, QMI_VOICE_DTMF_DATA, sizeof(param_body),
+> +			param_body))
+> +		goto error;
+> +
+> +	if (qmi_service_send(vd->voice, QMI_VOICE_START_CONTINUOUS_DTMF, param,
+> +			start_cont_dtmf_cb, vd, NULL) > 0)
+> +		return;
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +	l_free(param);
+> +}
+> +
+> +static void send_one_dtmf_cb(const struct ofono_error *error, void *data)
+> +{
+> +	struct cb_data *cbd = data;
+> +	struct voicecall_data *vd = ofono_voicecall_get_data(cbd->user);
+> +	ofono_voicecall_cb_t cb = vd->send_dtmf_cb;
+> +
+> +	DBG("");
+> +
+> +	if (error->type != OFONO_ERROR_TYPE_NO_ERROR ||
+> +			*vd->next_dtmf == 0) {
+> +		if (error->type == OFONO_ERROR_TYPE_NO_ERROR)
+> +			CALLBACK_WITH_SUCCESS(cb, cbd->data);
+> +		else
+> +			CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +
+> +		l_free(vd->full_dtmf);
+> +		vd->full_dtmf = NULL;
+> +	} else
+> +		send_one_dtmf(cbd->user,
+> +				*(vd->next_dtmf++),
+> +				send_one_dtmf_cb, vd->send_dtmf_data);
+
+This function doesn't seem to be invoked?
+
+> +}
+> +
+
+<snip>
+
+Regards,
+-Denis
 
