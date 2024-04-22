@@ -1,35 +1,61 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f45.google.com (mail-oa1-f45.google.com [209.85.160.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D51051C286
-	for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 21:10:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7FAC41BC44
+	for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 21:41:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713820229; cv=none; b=Rg12ypECz5sYM1uaty72ANIWLuQBNcnwjK8kvB7ft8Iee9v/hfaj7kTA8RxYcQqgn9oBQnea20aXM/kc4+tcmUT1GEKW1vAqogprsJF0gLHIR9+dw155oWUEwYv7nko3CXm6tcMnH6L7Vb3KZPc9pqHB+zYb+T2DnqWJmBEP8PY=
+	t=1713822063; cv=none; b=cZMKAB2B1uSQW+3TxyPAvoigXI54/n0sKwXe2HJURJykYKk22nPRBstBb8eygH3bL1zef4PFu5TkKLCJUVuL52l+lf9SdseNJt0iBR+JvXTcLFIl4PDtTXzTW+kMN2P8sfGnOsu1b7C9J/oynv/dKFP9EGpz2qPDeweXYQIBIjc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713820229; c=relaxed/simple;
-	bh=cikAwPo46P0ID4czl9SjpRXqK3dFxrnuNLzipkaQyFg=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=cQvPbMMHNAOyO+v22ZsD/Wy4RWGwIzaYvzWZxQAxi96W1kz/0A8quBEAIg/5a88vCx6SZwcA3ylntNzimrdcuSNIH6ppNpMO6/gx/NyhntEp3LTg7vLiFaoGepeJGZYYbrcCe3ti7BYFgJ5O2qrdAw4BjpS3WlgeqgjwAhuSyqU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=kTLHtPdJ; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1713822063; c=relaxed/simple;
+	bh=VjYRIbziQEjwjIVZUs/yJUpmg2SpJ4Xw5suodgxD9kM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=KtaXs86u37asJOeV65+Hl2nr/SNSA8pW088dV5TAd987BAXJJG+YRaMHUTuLmTUocKhKbXaUQ+EeEfSUm7gV9a0xxTHGnvUAQ4sPqLrk0G27xBZQpP1JaFCWkhJCbc/8zJdq+fY77iusX/PjFgqUjfTraW7H96Tz+n+AzmJG4bI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TnXdTDHp; arc=none smtp.client-ip=209.85.160.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="kTLHtPdJ"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 5FF46C3277B;
-	Mon, 22 Apr 2024 21:10:29 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1713820229;
-	bh=cikAwPo46P0ID4czl9SjpRXqK3dFxrnuNLzipkaQyFg=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=kTLHtPdJeplL+zvAJlhL9ariiVrPV3yF8PHhotZ2lE/ATfcjBjB5ilt+FXTwRXQQe
-	 rOtklmd8M/2A9p3nt0l2gfS+/AhmdBBpuNiwG99yi4BHybI3GId6PrZthUywZYjiP+
-	 ML5+PJASxZDHNMTbo+Ilp7I8j/ObUa3wpT/o6UVTOjycDlFD3NGc4fvcOkmkFcRDi2
-	 TE221JcCErSGQw6We2EAYy7hLGvO1j0QvUkJASRhFu7pm5xUDn4ONaIxoOWPzLCM1v
-	 s2ShmnJ3KQFn/Lo5Y2llrqzo+czNkOtZZjutNdrl0WSbhEwaWoFwOMuy8SxOnKwYqd
-	 LXmsx3fG2NIhg==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 4DE64C43440;
-	Mon, 22 Apr 2024 21:10:29 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TnXdTDHp"
+Received: by mail-oa1-f45.google.com with SMTP id 586e51a60fabf-23a9d3c9153so91749fac.1
+        for <ofono@lists.linux.dev>; Mon, 22 Apr 2024 14:41:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1713822061; x=1714426861; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=f0qomm9vVU2FkHei0a999+J0rKsASxApuZf/MDEtUZE=;
+        b=TnXdTDHphHVOINY9tSDfjzzNFJ5iJ47ojJI5vW6GK2PAapCpBZcTPzJuCX7CjVzH4i
+         DfLd9bFY/QctlA2vCtBq4aLPZUGGl3pP38yNuv+ybsTzCUKv8ZShC1XTQl+8TO35sUui
+         itzFHP+J0vVmn20mTHPYijxEOYJATACgT+5hszDdGk7TUSG9lZmPjJ51wmhPhlKOsTKA
+         wmMFCCK6vawmOfeSNSBlbJK0sfwPxbPBE7Qcd0bdnFnmO1X1c6komLxj4qAqXA+6H0qm
+         UbsQvJyLOMrLRDTA1dzn3DjsQ8/fefs+Q2aYcQz07QqqEp/buV1cQqPjzhc4IX8OAg+0
+         sVqA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713822061; x=1714426861;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=f0qomm9vVU2FkHei0a999+J0rKsASxApuZf/MDEtUZE=;
+        b=GK8Sgkyfk+vTgQdYuFKmn+MYkcGbZl7j2aHBQ7EpdKE/u4UJHtQdhkGDx3Stpe6q1h
+         9+wIwWUAEtCm2N/4LxO0vvlN1J+pO5bSqgpFxhyKndC58sFSjvI5fAoD2Fdk8l9q9NLp
+         gP0dfNlumvG/H1bM5bYoFTRMxZ9MR1d/GPl04dlpCSC2a3DzpfQQKOGVaDCseZbvT1q8
+         ENFWuVPzb1vliScP2GHXUzwoIWi00JdLFNM5LYw0mFaP4JlVNNeygm5SgVXye33BD+0l
+         xijkVaN+j0bDFGWZlLEnUdm/1pOez1MSNoW0ca6zdg6rUzAmEsPEvh7gq+LBceIpDSB7
+         FrVg==
+X-Gm-Message-State: AOJu0YyIoFwbCPu9FCHu7ZyuTNeJz5tSC/MKcp7yRIVTk0WNVhgUzBi0
+	Kn44le2VwjZ/EZwSi/7SemvGunW35n0FgvRh0wYd5QyMlvS3EN+dkHHEVg==
+X-Google-Smtp-Source: AGHT+IHDiNzvptJjQG+n8RkdVLO0i8ttBfy/w5Nh2d3MFYPGik62Zqe6+s1xkDDLRqA7xEdWXdBH2w==
+X-Received: by 2002:a05:6870:c0a:b0:22e:13ee:b45a with SMTP id le10-20020a0568700c0a00b0022e13eeb45amr16422547oab.13.1713822061370;
+        Mon, 22 Apr 2024 14:41:01 -0700 (PDT)
+Received: from localhost.localdomain ([70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id xm8-20020a0568709f8800b00239b3c03b8fsm1076122oab.42.2024.04.22.14.41.00
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 22 Apr 2024 14:41:00 -0700 (PDT)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 1/4] qmi: Remove redundant NULL check in qmi_param_new
+Date: Mon, 22 Apr 2024 16:40:43 -0500
+Message-ID: <20240422214058.3411417-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,46 +63,32 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH 1/4] qmimodem: voicecall: Implement call dialing
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <171382022931.22847.16965805203423437620.git-patchwork-notify@kernel.org>
-Date: Mon, 22 Apr 2024 21:10:29 +0000
-References: <20240421194926.13149-1-adam@piggz.co.uk>
-In-Reply-To: <20240421194926.13149-1-adam@piggz.co.uk>
-To: Adam Pigg <adam@piggz.co.uk>
-Cc: ofono@lists.linux.dev
 
-Hello:
+l_new cannot fail, and thus cannot return NULL.  Remove the check and
+simplify the code.
+---
+ drivers/qmimodem/qmi.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
 
-This series was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Sun, 21 Apr 2024 20:49:03 +0100 you wrote:
-> Add voicecall dialling to the qmimodem driver
-> Includes required infrastructure and setup of the QMI services
-> 
-> Call State Handling
-> ===================
-> On initialisation, register the all_call_status_ind callback to be
-> called for QMI_VOICE_IND_ALL_STATUS.  This will handle notification of
-> call status to the rest of the system
-> 
-> [...]
-
-Here is the summary with links:
-  - [1/4] qmimodem: voicecall: Implement call dialing
-    (no matching commit)
-  - [2/4] qmimodem: voicecall: Implement call answer
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=3680df684593
-  - [3/4] qmimodem: voicecall: Implement active call hangup
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=752d286a5ce3
-  - [4/4] qmimodem: voicecall: Implement DTMF tones
-    (no matching commit)
-
-You are awesome, thank you!
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 5032233ec1ec..dfd41317651c 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -2345,13 +2345,7 @@ struct qmi_device *qmi_device_new_qrtr(void)
+ 
+ struct qmi_param *qmi_param_new(void)
+ {
+-	struct qmi_param *param;
+-
+-	param = l_new(struct qmi_param, 1);
+-	if (!param)
+-		return NULL;
+-
+-	return param;
++	return l_new(struct qmi_param, 1);
+ }
+ 
+ void qmi_param_free(struct qmi_param *param)
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.44.0
 
