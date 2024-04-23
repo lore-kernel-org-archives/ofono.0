@@ -1,81 +1,84 @@
 Received: from mx0a-003ede02.pphosted.com (mx0a-003ede02.pphosted.com [205.220.169.153])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A2DC13BACF
-	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 15:01:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57E4A13B5B7
+	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 15:01:36 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.169.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713884494; cv=none; b=aP7w1Zv63OKGZqExqkoFrhCf6aqHOIQMQybrclVcviSn6/R3qe3sFXngEKaJH62H0ZH2BAcDSZjVKkELoFc4xBwsYayiO0u2YWj+8xf41oFV8glyO4DfUilXcEchgbrEL7qMJs7wEc2l1dZsPXb6M4wHlEA5jAwfV1s3l0jUWTg=
+	t=1713884498; cv=none; b=twJ6nyCnPlPriGQ07FUo5Eiqv+GuoCAGV+aq1LN1HBU1WbTMCyH3oqWz25HZ/EH5JagSgvc2DtLHmFy71NADg62F72k1o7WIpr1/Ai+z6uXGc6RzLDPdYWNtHXkrRW7meBF0e4YLib52ZZbhVakMBOMxGoGmdqtvEOfHxbKsT/c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713884494; c=relaxed/simple;
-	bh=7jmQug9g/u/vIwfDVeBt8dg+vZmZY2p/ZCvbn4X5tRs=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version:Content-Type; b=FscnlQ1a2W7Yr2s6qIpIjYA1cW7GMJ7hsitgm3mJHguucfwHQA4taXo8ZxdfsJI5Xwv1QmK8ky4A7/3SPqlcCSBvSdxqDSpOQC6bVKyRpKHOA5v3gBjpDcvs09u0jG3tg9u9uhWnOSFNEiSI3M/UfSBTfAe9JBpgm+k8howt5Uk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=mFEbNvDo; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=nGFzuwHV; arc=none smtp.client-ip=205.220.169.153
+	s=arc-20240116; t=1713884498; c=relaxed/simple;
+	bh=cy63BOfiNJcasMHebPiOWkqlN9KCusuCrocquY0DE7M=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=SzZJ5PyrCuYuxQp1PpgDaxNLBdNkzRJPg5k25ipf2hq3GW63taYHNp7hjh5XEd8HPRpG1OUcOWCEUfahOUGPrz32KhU4PuzbTOIqxrhzGglHywPurKj/VCR7/AqNJf5Ea5oPioF2bmS5CbJyHDAasyEzml/v4eXk0RhnsFGIyKw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=Ephg8LV+; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=FFBHicg4; arc=none smtp.client-ip=205.220.169.153
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="mFEbNvDo";
-	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="nGFzuwHV"
-Received: from pps.filterd (m0286616.ppops.net [127.0.0.1])
-	by mx0b-003ede02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 43NDO5Pj003082
-	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 08:01:25 -0700
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="Ephg8LV+";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="FFBHicg4"
+Received: from pps.filterd (m0286615.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 43NCqcni013140
+	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 08:01:29 -0700
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
-	 h=from:to:cc:subject:date:message-id:mime-version:content-type;
-	 s=ppemail; bh=tkuvmAuM69A/UbT0E0U4GWTdPOQSxjMoOclAzEbaUtg=; b=m
-	FEbNvDori5xZ31rePh0HPwrJn1b9YV6MPBJR8gWZ/WOJ81OcG4Vneat637o6yzba
-	wth7thhkKKvfOTcstHlg8+Ch0qjsUX4/1s9IrDNyhPuEKjsKvtSM9kRDtmWYwl2L
-	OiH3vBDUM1wWGkfivhiJiDxElmZTUKPUQu8n3p1bLvNa0nqKaPGR/f2RqkrUqw/I
-	cg96POS+HNENn++akKVZSwUyGlTWYlfdppood1wJLZjB5VNFC3Q6X/OmEf1meXiU
-	Lt0NBVtI9gaviLLp2aEXP39W85PkpqH8hQmmEgON67zH41NsnSZcOOp5GjksXmvn
-	ndOh7c5CrvPupYc3vC2Sg==
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com [209.85.219.72])
-	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3xmb94a36r-1
+	 h=from:to:cc:subject:date:message-id:in-reply-to:references
+	:mime-version:content-type; s=ppemail; bh=a2uIHmQg0nLBh+OOS1zkwT
+	BPJMeP/U2l/91PtRZJNo0=; b=Ephg8LV+QR3ujlHyov7zs3XpkkDcvhmSt6482y
+	vnsnBmMdcv9RzcXQRSjQ27ehuxji46xjj+VHg78P8fSNVts9cC68wPEoQ3yTPa4V
+	mFYMNFIr4d6sJVj67g7OyOkkUqlxejl7VkNHOG8QLK8PVKt9XkTr5xyCQi9lCo+V
+	VpG0rUuHyyeWY1ndxZsk6bw19a/VqieruNqqyuB67bndOs3tGrsmN44Cm/Z3KU0o
+	hHvpOIJ5Z4MrlBGSY2XnO8dTUOQUIzeZ4OCi3MgbZ53eBqoVNuLL/lGTQ7NL0+lK
+	kj9QdOeB3ZWTLCDVTKX7j4q85Lgj+n4kyBGW2Hl/W6gOiApg==
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com [209.85.219.69])
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3xm9wha42t-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 08:01:24 -0700 (PDT)
-Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-69942c6d975so71898176d6.1
-        for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 08:01:24 -0700 (PDT)
+	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 08:01:25 -0700 (PDT)
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-6a087bba1c9so17890826d6.3
+        for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 08:01:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=getcruise.com; s=google; t=1713884483; x=1714489283; darn=lists.linux.dev;
-        h=mime-version:message-id:date:subject:cc:to:from:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=tkuvmAuM69A/UbT0E0U4GWTdPOQSxjMoOclAzEbaUtg=;
-        b=nGFzuwHVUooLKUzQkr+m4M/6cUNZNRviE72jQr6sh07bC7UngAfg80FLQJuANia4oB
-         HYSTo21PiKgk2YJazhTbZd7FP0dDhN9Q591EpS4RcUMP/uU51uxnYFjfTUrl8u0TBvmH
-         nwuGwbGEBhjLQZEopNoKNlq55qNhql2Qnn8oHy9cmRH6znpAT7anLdvN8bE7yyZLQeti
-         QM48SMzmHCGeuAdkLccTUfGqcLQm8STWxTSCen9ZHrXHOyLxmzNlL0JCTWO3LrsSiWjg
-         FmCl92MADG2t2vGf1byyoAmULwTfKk5kF7u+9RrSWQ+tZ6K8QV/v29Lyr0BYex9GHqMC
-         JH9w==
+        d=getcruise.com; s=google; t=1713884484; x=1714489284; darn=lists.linux.dev;
+        h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
+         :from:from:to:cc:subject:date:message-id:reply-to;
+        bh=a2uIHmQg0nLBh+OOS1zkwTBPJMeP/U2l/91PtRZJNo0=;
+        b=FFBHicg4AhjcJXwpLcxthlNzyJqwfaunj9oEk6c7wmfqkHCYhhNrDPr0BoRE02bjDj
+         0VhcUzpC6D7qT2Ci3nj8yQ9Lu8hHmk9B0SMzqIDL1HZehPh1iOZQs0vv3IdYOP2KlKMp
+         kTlrB4d/YbbnRc/pRv1+9hnMIq9U4fdfjDfmMLeZMSDc6RtlBKVzJHpibDznYr870LKs
+         LnjtD/QTKXWJVhpzMl6EKjnxgnyTXQOjGuCx3JmwK2J6OBZBN3mUsOWeoOuQQpP8ex5a
+         N4PTn09GAdmNdBMv17lTJpJPiY2nywFo1O9V6LW12BYbNReVJFkHSabuTJ8Vf0EGNBos
+         OX6Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713884483; x=1714489283;
-        h=mime-version:message-id:date:subject:cc:to:from:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=tkuvmAuM69A/UbT0E0U4GWTdPOQSxjMoOclAzEbaUtg=;
-        b=OJY4H4tAT8Kl8yPdl0mlmO51BPQw8V7Go6CIVDNjPjjmXQsQ1vw3s1lpd1FVs8vbTe
-         9yG1dtD+mUbz8n1PY2UZuasMknqPR54oABVFgnqEe6O6P2mqfXYWj9Nb9akxk1JTE0N6
-         S9y2Vj6qoOAe5O2zIZGo1fID5pEoOqBMhElyqLiayZEwr8OzYcz31PssmEg6MxA8JYnz
-         s//09MyJtFPyEsmAwmXpsrqedLsaz3BLpH0uSPNdgqsfsR9KVRvuItzTFtxx9YkFYifJ
-         Hmze3eU7S32IXvr/vV8L+tevQ+3+a1Rz/JiI/mCFD2oibAVt3F//EAGVj+ITZ8HaeomF
-         2vdA==
-X-Gm-Message-State: AOJu0YwLCkGiMJTf/LYW3oZQUvQp2z+hzSP/KmMxuc7hcnyNgq56wEXD
-	FqW1yvXOlc3NSBuz42cPHoO2rwMSkpdKz/44pIfjwPhDlNwQG4qeMkYGLM3GmSA0P/WnHIbePPd
-	C7IbkqkQzHfD+q6j++qPsB6m8wOl6oDj2YBgm7KMsEA2a+HvCtl3bmbvVTcsV6gNolbJEOb1IAM
-	TcjVZ1037Jpf41Z5OaNDeBfNV4SmU3BU6dCXpYrUmqnGtSLag=
-X-Received: by 2002:ad4:4b73:0:b0:6a0:424c:6eab with SMTP id m19-20020ad44b73000000b006a0424c6eabmr14033055qvx.47.1713884483009;
+        d=1e100.net; s=20230601; t=1713884484; x=1714489284;
+        h=mime-version:references:in-reply-to:message-id:date:subject:cc:to
+         :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=a2uIHmQg0nLBh+OOS1zkwTBPJMeP/U2l/91PtRZJNo0=;
+        b=Ziu1FzW4ULmMZhxD9wUAnXYdFOU/trwq29q0dDSAhYc7UUpBVGwofTSLerdL/Llme4
+         2M9upuVWJ5y+Xii6WrZLg2wNHZxlTFRup3D5GAccoJCb5Zm2YDbID0DxD+wVs2UQ0NPx
+         BY2g/rjYYbmG5mhERCPRmnvib7Addd9VBk/efnTV5d/kzPxRPmdTjPtLGd3WY73QxNvn
+         Elbmk/vqUIZ9iCVI+kA4TlXq9oiik7NkyCEZIMzQx9DOwo+6RDmELwGZRlyU1rBldVUy
+         VoyPe6xH1FdwPiIdzh7UfmhnsEbFTdNeeocHbm1NHLRwtSbKWfjqkzyjSMBK+JhDbXeU
+         6aBA==
+X-Gm-Message-State: AOJu0Ywkzm8xW+9KO+RPAW8yKBBNavViNy5VYN8zVM4vWeKeoKjM4AHt
+	COmmWOHMoUIyKLDId1h6Anpk18xpsVBZnTvVGgTMGX+qE8jv9WCfrPgCOdr34Y2xbbZ4Eo8cgi0
+	xj8qZlJg4BXLZ8XchgH+nZMi5UiZ2a6XlE6sAwyt/PehmN/4sNstu2x9+1QdBNSjBXY6xPKgUuS
+	O1tXYkyHRhU1+jjMqlRtja2UcSIuDPR2xa1NSRGa3soPQqnw8=
+X-Received: by 2002:a0c:cc90:0:b0:69b:7c92:d880 with SMTP id f16-20020a0ccc90000000b0069b7c92d880mr13418660qvl.52.1713884484069;
+        Tue, 23 Apr 2024 08:01:24 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHqB5TKLfW5pCFsCZBNmvhr7MwkHSyaRdKRMb6DiwymH8AlLmbffFc1aeBG3i2/eWkrP1eWbA==
+X-Received: by 2002:a0c:cc90:0:b0:69b:7c92:d880 with SMTP id f16-20020a0ccc90000000b0069b7c92d880mr13418626qvl.52.1713884483637;
         Tue, 23 Apr 2024 08:01:23 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IF2VBY+WqFGmJ4dPjhqrK3hcBCj51VQl08JZqMeBILgcYbymWmz58NPj2IN/2kfS8DWsVCZhw==
-X-Received: by 2002:ad4:4b73:0:b0:6a0:424c:6eab with SMTP id m19-20020ad44b73000000b006a0424c6eabmr14033017qvx.47.1713884482571;
-        Tue, 23 Apr 2024 08:01:22 -0700 (PDT)
 Received: from localhost.localdomain ([140.141.152.103])
-        by smtp.gmail.com with ESMTPSA id b10-20020a0cf04a000000b006986c3f3d21sm5183393qvl.116.2024.04.23.08.01.21
+        by smtp.gmail.com with ESMTPSA id b10-20020a0cf04a000000b006986c3f3d21sm5183393qvl.116.2024.04.23.08.01.23
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Apr 2024 08:01:22 -0700 (PDT)
+        Tue, 23 Apr 2024 08:01:23 -0700 (PDT)
 From: Steve Schrock <steve.schrock@getcruise.com>
 To: ofono@lists.linux.dev
 Cc: Steve Schrock <steve.schrock@getcruise.com>
-Subject: [PATCH v2 1/3] qmimodem: Remove redundant unregister all calls
-Date: Tue, 23 Apr 2024 14:59:34 +0000
-Message-Id: <20240423145936.276945-1-steve.schrock@getcruise.com>
+Subject: [PATCH v2 3/3] qmimodem: Remove unregister/cancel_all functions
+Date: Tue, 23 Apr 2024 14:59:36 +0000
+Message-Id: <20240423145936.276945-3-steve.schrock@getcruise.com>
 X-Mailer: git-send-email 2.40.1
+In-Reply-To: <20240423145936.276945-1-steve.schrock@getcruise.com>
+References: <20240423145936.276945-1-steve.schrock@getcruise.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -83,82 +86,119 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="US-ASCII"
-X-Proofpoint-GUID: 4HIVaeRKhHb3MWFt7LWb6Jtdb5ayfhqA
-X-Proofpoint-ORIG-GUID: 4HIVaeRKhHb3MWFt7LWb6Jtdb5ayfhqA
+X-Proofpoint-ORIG-GUID: mMk5Z8NeYhp-69OO1GJKIct7ULap0ecg
+X-Proofpoint-GUID: mMk5Z8NeYhp-69OO1GJKIct7ULap0ecg
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1011,Hydra:6.0.650,FMLib:17.11.176.26
  definitions=2024-04-23_12,2024-04-23_02,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 suspectscore=0
- mlxlogscore=937 lowpriorityscore=0 impostorscore=0 adultscore=0
- spamscore=0 clxscore=1011 priorityscore=1501 bulkscore=0 malwarescore=0
- mlxscore=0 phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
+ malwarescore=0 adultscore=0 mlxscore=0 bulkscore=0 impostorscore=0
+ phishscore=0 mlxlogscore=999 spamscore=0 clxscore=1015 lowpriorityscore=0
+ suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
  engine=8.19.0-2404010003 definitions=main-2404230036
 
-Some of the qmimodem drivers were calling qmi_service_unregister_all
-before decrementing the reference count to 0. This is unnecessary
-because the service will unregister all as it is being destroyed.
----
- drivers/qmimodem/gprs-context.c       | 4 +---
- drivers/qmimodem/location-reporting.c | 2 --
- drivers/qmimodem/sms.c                | 2 --
- drivers/qmimodem/voicecall.c          | 2 --
- 4 files changed, 1 insertion(+), 9 deletions(-)
+gobi was the final user of these functions in its disable function. It
+would perform this cleanup before sending a final message. This is not
+necessary because gobi does not register for any notifications and the
+only sends that might be in progress should only occur during
+initialization. If a client actually needs this functionality it should
+free the service and create a new one.
 
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index 6104cc82e76a..d248761f92d6 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -503,10 +503,8 @@ static void qmi_gprs_context_remove(struct ofono_gprs_context *gc)
- 
- 	ofono_gprs_context_set_data(gc, NULL);
- 
--	if (data->wds) {
--		qmi_service_unregister_all(data->wds);
-+	if (data->wds)
- 		qmi_service_unref(data->wds);
--	}
- 
- 	l_free(data);
+These functions are still used internally in qmi.
+---
+ drivers/qmimodem/qmi.c | 30 +++++++++++++++---------------
+ drivers/qmimodem/qmi.h |  2 --
+ plugins/gobi.c         |  3 ---
+ 3 files changed, 15 insertions(+), 20 deletions(-)
+
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 74fcf3c8927e..69a0e535f689 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -2720,19 +2720,6 @@ bool qmi_service_create(struct qmi_device *device,
+ 						user_data, destroy);
  }
-diff --git a/drivers/qmimodem/location-reporting.c b/drivers/qmimodem/location-reporting.c
-index a32d18245c4f..549bd5740613 100644
---- a/drivers/qmimodem/location-reporting.c
-+++ b/drivers/qmimodem/location-reporting.c
-@@ -257,8 +257,6 @@ static void qmi_location_reporting_remove(struct ofono_location_reporting *lr)
  
- 	ofono_location_reporting_set_data(lr, NULL);
- 
--	qmi_service_unregister_all(data->pds);
+-void qmi_service_free(struct qmi_service *service)
+-{
+-	if (!service)
+-		return;
 -
- 	qmi_service_unref(data->pds);
- 
- 	l_free(data);
-diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c
-index b9fe963520d6..12f5d6726d48 100644
---- a/drivers/qmimodem/sms.c
-+++ b/drivers/qmimodem/sms.c
-@@ -801,8 +801,6 @@ static void qmi_sms_remove(struct ofono_sms *sms)
- 
- 	ofono_sms_set_data(sms, NULL);
- 
--	qmi_service_unregister_all(data->wms);
+-	qmi_service_cancel_all(service);
+-	qmi_service_unregister_all(service);
 -
- 	qmi_service_unref(data->wms);
- 
- 	if (data->msg_list)
-diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
-index b66f1ae7d56d..02376c3df447 100644
---- a/drivers/qmimodem/voicecall.c
-+++ b/drivers/qmimodem/voicecall.c
-@@ -653,8 +653,6 @@ static void qmi_voicecall_remove(struct ofono_voicecall *vc)
- 
- 	ofono_voicecall_set_data(vc, NULL);
- 
--	qmi_service_unregister_all(data->voice);
+-	service_family_unref(service->family);
 -
- 	qmi_service_unref(data->voice);
+-	l_free(service);
+-}
+-
+ const char *qmi_service_get_identifier(struct qmi_service *service)
+ {
+ 	if (!service)
+@@ -2896,7 +2883,7 @@ static void remove_client(struct l_queue *queue, unsigned int service_handle)
+ 				L_UINT_TO_PTR(service_handle));
+ }
  
- 	l_queue_destroy(data->call_list, l_free);
+-bool qmi_service_cancel_all(struct qmi_service *service)
++static bool qmi_service_cancel_all(struct qmi_service *service)
+ {
+ 	struct qmi_device *device;
+ 
+@@ -2980,7 +2967,7 @@ static bool remove_notify_if_handle_match(void *data, void *user_data)
+ 	return true;
+ }
+ 
+-bool qmi_service_unregister_all(struct qmi_service *service)
++static bool qmi_service_unregister_all(struct qmi_service *service)
+ {
+ 	if (!service)
+ 		return false;
+@@ -2991,3 +2978,16 @@ bool qmi_service_unregister_all(struct qmi_service *service)
+ 
+ 	return true;
+ }
++
++void qmi_service_free(struct qmi_service *service)
++{
++	if (!service)
++		return;
++
++	qmi_service_cancel_all(service);
++	qmi_service_unregister_all(service);
++
++	service_family_unref(service->family);
++
++	l_free(service);
++}
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index 921136f384db..0075f73803cc 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -167,10 +167,8 @@ uint16_t qmi_service_send(struct qmi_service *service,
+ 				qmi_result_func_t func,
+ 				void *user_data, qmi_destroy_func_t destroy);
+ bool qmi_service_cancel(struct qmi_service *service, uint16_t id);
+-bool qmi_service_cancel_all(struct qmi_service *service);
+ 
+ uint16_t qmi_service_register(struct qmi_service *service,
+ 				uint16_t message, qmi_result_func_t func,
+ 				void *user_data, qmi_destroy_func_t destroy);
+ bool qmi_service_unregister(struct qmi_service *service, uint16_t id);
+-bool qmi_service_unregister_all(struct qmi_service *service);
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 76507cd7f299..550ce78733f5 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -471,9 +471,6 @@ static int gobi_disable(struct ofono_modem *modem)
+ 
+ 	DBG("%p", modem);
+ 
+-	qmi_service_cancel_all(data->dms);
+-	qmi_service_unregister_all(data->dms);
+-
+ 	/*
+ 	 * Telit QMI modem must remain online. If powered down, it also
+ 	 * powers down the sim card, and QMI interface has no way to bring
 -- 
 2.40.1
 
