@@ -1,221 +1,175 @@
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0b-003ede02.pphosted.com (mx0b-003ede02.pphosted.com [205.220.181.153])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 606ED57870
-	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 10:10:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3652F13699C
+	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 13:58:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.181.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713867029; cv=none; b=USlE0ZqTquccR45L7N6WGI3GM+fimklu2am04WjJjDGjouHDdUB7DUZVky7THI9Mt4Ubhwi8RELdFCr7qz19vSMdjHazmQrTzW+UqB5a72pHExiezQqPeeRiCDP1pRGjgcHcMfbbfubaIaDjev/c5SOhCjzZ93mqq2GT99Fsypo=
+	t=1713880716; cv=none; b=aDkK6OI5aA7W7T/VyuB2ckl8Zs8zAYJ9PZhJBdKHvA/X+4VyMEiDyoQByLIqN9+/BK+GU0U4g0PB3dGwPM2uQ327O/xDxa1MusYCtgpulOHbylckLgi3WeV/BnMHVejQEbyUbXVdswmpDSrgAbAFAl3UBLATYog/oUta1RF5EoY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713867029; c=relaxed/simple;
-	bh=LVx65k2ij8RBiFEQsK64BYE3iAd/1VhGqr+4acD7lVA=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=n0bV3SRTRVgw0REBWEHhlMH7yJmOy4i89BRO6wjWBSYlwnuAr9bhJYg4/wKNRz/IjP1v5+0jpWVxY3Gk+Y0IHZfJkZulFYQ/VoEEKuoaM4uq1nOtfz/IdWZNbjqbfQ7iU5qdAiJKdB/KGuNHrKuSsBL8tdKfikxhKTrZl/2d28w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RGsTLr54; arc=none smtp.client-ip=209.85.221.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1713880716; c=relaxed/simple;
+	bh=7jmQug9g/u/vIwfDVeBt8dg+vZmZY2p/ZCvbn4X5tRs=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version:Content-Type; b=nIuN87HOwduY6Yr6pYvocVdXbyCdf8Y+FMg38QKuvgF9dXEYAeNlrpixrpQQr08b/ubgkHIZlU0NI9SHD2TSQ2LIFM41vNxINrdc6hdElNLQ5DE36gtrrUPHL1DI3gQDAIltZSo7EfXABFQxr/0HZZYmQih/rcf9FEdCpKsG8eQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com; spf=pass smtp.mailfrom=getcruise.com; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=IU7C2NHV; dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b=UDwYlo09; arc=none smtp.client-ip=205.220.181.153
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=getcruise.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=getcruise.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RGsTLr54"
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-349545c3eb8so3970698f8f.2
-        for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 03:10:27 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="IU7C2NHV";
+	dkim=pass (2048-bit key) header.d=getcruise.com header.i=@getcruise.com header.b="UDwYlo09"
+Received: from pps.filterd (m0286621.ppops.net [127.0.0.1])
+	by mx0b-003ede02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 43NDO4ft027288
+	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 06:58:28 -0700
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=getcruise.com;
+	 h=from:to:cc:subject:date:message-id:mime-version:content-type;
+	 s=ppemail; bh=tkuvmAuM69A/UbT0E0U4GWTdPOQSxjMoOclAzEbaUtg=; b=I
+	U7C2NHVdsIucBN8bgSkt98B2UARm2oIRI3qROW208pWTZUvrAHM7N6B7MuwfM/OH
+	pWQyKbP5HXK+wA0zLC2il/BlfqPVauDOBRNHA2w6JgSOgpgDUxcm39+c4LB0FGie
+	W/peBYBa/6QHVgyn5E2SD5JHV7VsBozdrAxoZetXPUcldIhV7HcqHZOwJAxvYIZz
+	1kSSbTXLXGWIp6ZsYVOWvxmt4Ku0VcaTrggc68IntYirkpEINjJUilxrvTvqLyQm
+	rqY1sbq6xxjXueUMjI6y4N38RhC0GVu73M7fNCSzyPSYdhTkE+N3BJsVJ93Nrdxd
+	Sxg71Wccdz/Q+OPRMEYnA==
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com [209.85.222.197])
+	by mx0b-003ede02.pphosted.com (PPS) with ESMTPS id 3xmcsd1y6u-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
+	for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 06:58:28 -0700 (PDT)
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-78edb34cf1fso744272285a.3
+        for <ofono@lists.linux.dev>; Tue, 23 Apr 2024 06:58:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713867025; x=1714471825; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=E1hfB0mXleParRfswPi2L4aouHdm120CKOJNKi7qdEU=;
-        b=RGsTLr54oDNoYodXv/sstEuDoP2Gb8jquijW0l7ha2cRhzgfQfF1ACKF7PWdL7VbXZ
-         jUvUjvECgB4zCcWh/tkO1PiBhcrzQakGOtOcaK9Uo6Ev07/rrAfr8ejpqoJCFnBMen9V
-         7X+dBXuaUPQquBHTLizJheJVxL+PcyCL8UR+egjWcvf6erI2CUvzJVNV4MHVi9aj0PJ8
-         5N0enGqaHqwvbRSNh8DycOOr4ksH8UXCeIJLng8V6X+fYspCO67IcMKIYpcIWNtq6P0D
-         nGoQiYKimUJWKEVGhY9+tglQfl4hcYIEcFZk+WAgybUYrcCq1i6vaNliQseBO1mLcDqu
-         u9yw==
+        d=getcruise.com; s=google; t=1713880707; x=1714485507; darn=lists.linux.dev;
+        h=mime-version:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=tkuvmAuM69A/UbT0E0U4GWTdPOQSxjMoOclAzEbaUtg=;
+        b=UDwYlo09g1zl+dAvAwTiYN/TEF32OQy1Si9Yc/mp49i8YXyO6GDFJokUbsmyFOfYeE
+         0jy/HIk/KtUbiVJNldDOM74L3d+Wha/pS+6HQ8Bf8qSw/hwfWq+T/pwrXJWr1czLFsaj
+         4SxGBJUY1DRzDJzJhaJS0ea9hP3O6IQxZO9Hz8t2IqF7Ne1H2xyW4X9KDsdDsTF64fMv
+         xCO/PvnOsOuPT3lLDgyGAkjVHTZMOyH8MCP4KerB+jzmzPuoCgLlFkPliv/TDPqyC3da
+         2/o9oSbuxmEX0NObVvmIZ0RMjisGg0Jcjb3fGN7c+BEhXAjhmqRkxLxwzspn6on7JWqw
+         +nfA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713867025; x=1714471825;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=E1hfB0mXleParRfswPi2L4aouHdm120CKOJNKi7qdEU=;
-        b=Ue/AMo/S3YDyd+KsRW63MyDU8iK0WGVeZzRbe329GslQNtht1nTiGkF5iD7dGDqsOE
-         yC5cxfExpA6+ouINzYuiOkRnsZpLsxBAUDaXSM8aRSKgQjCBbxAVogo/SmpDoL6vKZIX
-         AsWvPCK+4M44WzrDv3im9uSUqccsN4L5HEx9/PTasSQvdTFUQuuLI5sCPLZ9a8d10rrd
-         4kJTBm99gLvfqtvUt1yL2kyLulcuc0oR+2XBbUjcKYGAD9YoyJbtocmNXbkJdsjS/jVq
-         L5Xtt7NmN8eW62Dj3H1s31+0vV73wMT8JcmvklCSLhd3sRmLuV3xWr9tvtZ7hTPKdq8c
-         Smbw==
-X-Gm-Message-State: AOJu0YzB8TTb1pHi/e/aZ+KTNPOVB1kBhc6mauBDvorxKxI8qGYh4Lrp
-	JDx+ItEXvyKrRPLnpjbyHbI3rDFKa/IXmMje2UTpkcLGlreg+TxAB/zB7w==
-X-Google-Smtp-Source: AGHT+IE+cdVGuE40t6FSYNer98M5Rb1FLS4YChHxI3WoxYaKZxCY9Qaf7rqL5/A4l+e7EXR5chRPWA==
-X-Received: by 2002:adf:e48c:0:b0:34b:14ae:8355 with SMTP id i12-20020adfe48c000000b0034b14ae8355mr3317523wrm.58.1713867025199;
-        Tue, 23 Apr 2024 03:10:25 -0700 (PDT)
-Received: from adam-laptop-hp.localnet ([84.69.230.138])
-        by smtp.gmail.com with ESMTPSA id a12-20020a056000050c00b00349ac818326sm14223245wrf.43.2024.04.23.03.10.24
+        d=1e100.net; s=20230601; t=1713880707; x=1714485507;
+        h=mime-version:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=tkuvmAuM69A/UbT0E0U4GWTdPOQSxjMoOclAzEbaUtg=;
+        b=m8S3PeDzYVMhtU+S5EpDNo1ijik8ZvsKynfRfNGx74d30dnQ82ca+NM9tV4YbuahFn
+         cu+pl2TwTHAvpAsF1DJDzrsTDjxKIysm89evdZ+AzHRjROnBhUevpa/ejIaSpuv4CpUN
+         zdO9PwOKi2kVfMCo+QyIrq9iARirRX2jGkN59oWiZtT0KQ5Ro0rKfwtE4Qq8YH8sRtYC
+         FPYmIFUDyAA7nVp4JbhOtwaFsDV4EMRU5SsIG/YcQkQMSUl+1a1UV698tWvnsZv9/mVW
+         RpOsjrSWnnkkygtIPjHWu0l5Kdvk9lW5ExloByw4QmP7mlDNlnKiShznRiosyaspowgF
+         CV2A==
+X-Gm-Message-State: AOJu0Yy5dJxxBCLjcjZmKMMtIYOMQZC9LzGdbLAvOi8B6IF3lcCEHfFi
+	cjGQerf1HmNmxuVBTtuTIL9GfKE0ke4/ZKR39ih5jV7gePXdiykVMA5eqcuS7nCogMGvOYsJ33T
+	lcDeS76sjRvOI37ytr9kSuzeKxNn8vQ4qWN0uIy2sWp0HA2UL2qUcNolXIvAWlWK4sudwCySc5N
+	Nw2+0ut6+TVOWMS/MYvfuYsjKxvACJ45sErOonq2GBt25qkGQ=
+X-Received: by 2002:a05:620a:5e52:b0:78e:df32:52b0 with SMTP id ya18-20020a05620a5e5200b0078edf3252b0mr15650119qkn.5.1713880707489;
+        Tue, 23 Apr 2024 06:58:27 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGZh49CE5tkGgPnt4AjZWdlHYhhAhP2/1j2CniXvR/embcNqLdyT+Pr+2Sv3E84AV9AHhbdww==
+X-Received: by 2002:a05:620a:5e52:b0:78e:df32:52b0 with SMTP id ya18-20020a05620a5e5200b0078edf3252b0mr15650091qkn.5.1713880707040;
+        Tue, 23 Apr 2024 06:58:27 -0700 (PDT)
+Received: from localhost.localdomain ([140.141.152.103])
+        by smtp.gmail.com with ESMTPSA id u10-20020a05620a084a00b0078a04882ac2sm5220454qku.53.2024.04.23.06.58.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Apr 2024 03:10:24 -0700 (PDT)
-From: Adam Pigg <piggz1@gmail.com>
-To: ofono@lists.linux.dev, Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] qmimodem: voicecall: Implement DTMF tones
-Date: Tue, 23 Apr 2024 11:10:21 +0100
-Message-ID: <1934099.7Z3S40VBb9@adam-laptop-hp>
-In-Reply-To: <159a23ff-bd7d-44bc-b723-6dbb08aef6d9@gmail.com>
-References:
- <20240421194926.13149-1-adam@piggz.co.uk>
- <20240421194926.13149-4-adam@piggz.co.uk>
- <159a23ff-bd7d-44bc-b723-6dbb08aef6d9@gmail.com>
+        Tue, 23 Apr 2024 06:58:26 -0700 (PDT)
+From: Steve Schrock <steve.schrock@getcruise.com>
+To: ofono@lists.linux.dev
+Cc: Steve Schrock <steve.schrock@getcruise.com>
+Subject: [PATCH 1/2] qmimodem: Remove redundant unregister all calls
+Date: Tue, 23 Apr 2024 13:57:10 +0000
+Message-Id: <20240423135711.272881-1-steve.schrock@getcruise.com>
+X-Mailer: git-send-email 2.40.1
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="US-ASCII"
+X-Proofpoint-GUID: yvb4uI2NDO_1KkjBeyih4qq4zo35NI-0
+X-Proofpoint-ORIG-GUID: yvb4uI2NDO_1KkjBeyih4qq4zo35NI-0
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
+ definitions=2024-04-23_12,2024-04-23_01,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxlogscore=999 clxscore=1015
+ malwarescore=0 bulkscore=0 spamscore=0 priorityscore=1501
+ lowpriorityscore=0 phishscore=0 mlxscore=0 adultscore=0 impostorscore=0
+ suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2404010003 definitions=main-2404230035
 
-Hi Dennis
+Some of the qmimodem drivers were calling qmi_service_unregister_all
+before decrementing the reference count to 0. This is unnecessary
+because the service will unregister all as it is being destroyed.
+---
+ drivers/qmimodem/gprs-context.c       | 4 +---
+ drivers/qmimodem/location-reporting.c | 2 --
+ drivers/qmimodem/sms.c                | 2 --
+ drivers/qmimodem/voicecall.c          | 2 --
+ 4 files changed, 1 insertion(+), 9 deletions(-)
 
-Thanks for the thorough review and merging the others....
-
-On Monday 22 April 2024 22:00:41 BST Denis Kenzior wrote:
-> Hi Adam,
-> 
-> On 4/21/24 14:49, Adam Pigg wrote:
-> > The send_dtmf function sets up a call to send_one_dtmf, which will call
-> > the QMI_VOICE_START_CONTINUOUS_DTMF service function.  The parameters to
-> > this call are a hard coded call-id and the DTMF character to send.
-> > start_cont_dtmf_cb will then be called which will set up a call to
-> > QMI_VOICE_STOP_CONTINUOUS_DTMF to stop the tone.  Finally,
-> > stop_cont_dtmf_cb will check the final status.
-> > 
-> > ---
-> > Changes in V4
-> > -Removed unused enum
-> > -Minor formatting fixes
-> > -Ensure data->full_dtmf is free'd
-> > -Use cb_data_ref/unref between chains of dtmf calls
-> > 
-> > Changes in V5
-> > -Store the cb and cbd obejects in the voicall_data  struct
-> > ---
-> > ---
-> > 
-> >   drivers/qmimodem/voice.h     |   6 ++
-> >   drivers/qmimodem/voicecall.c | 114 +++++++++++++++++++++++++++++++++++
-> >   2 files changed, 120 insertions(+)
-> 
-> <snip>
-> 
-> > @@ -605,6 +609,114 @@ static void hangup_active(struct ofono_voicecall
-> > *vc, ofono_voicecall_cb_t cb,> 
-> >   	release_specific(vc, call->id, cb, data);
-> >   
-> >   }
-> > 
-> > +static void stop_cont_dtmf_cb(struct qmi_result *result, void *user_data)
-> > +{
-> > +	struct voicecall_data *vd = user_data;
-> > +	uint16_t error;
-> > +
-> > +	DBG("");
-> > +
-> > +	if (qmi_result_set_error(result, &error)) {
-> > +		DBG("QMI Error %d", error);
-> > +		CALLBACK_WITH_FAILURE(vd->send_dtmf_cb, vd-
->send_dtmf_data);
-> > +		return;
-> > +	}
-> > +
-> > +	CALLBACK_WITH_SUCCESS(vd->send_dtmf_cb, vd->send_dtmf_data);
-> 
-> This calls back into oFono core unconditionally.  Doesn't this imply that
-> you're handling only a single DTMF character?
-> 
-Currently, ive only been able to test using single character invocations, 
-using the num-pad on the phone app.  Do you have any suggestions on how to 
-trigger multiple characters?
-
-
-> > +}
-> > +
-> 
-> <snip>
-> 
-> > +static void send_one_dtmf(struct ofono_voicecall *vc, const char dtmf,
-> > +				ofono_voicecall_cb_t cb, void 
-*data)
-> 
-> Both cb and data are not saved anywhere and are only used on the error path.
-> The initial invocation in send_dtmf() also passes in NULL for data...
-> 
-> So again, I think this implies only a request which uses a single DTMF tone
-> character would work?
-
-Im saving the cb and data params in the initial call, and used them as vd-
->,,,, where needed (i think!)
-All the user_data params are being set to the vd object so I can get a handle 
-on the params in there.
-> 
-> > +{
-> > +	struct voicecall_data *vd = ofono_voicecall_get_data(vc);
-> > +	struct qmi_param *param = NULL;
-> > +	uint8_t param_body[2];
-> > +
-> > +	DBG("");
-> > +
-> > +	param = qmi_param_new();
-> > +
-> > +	param_body[0] = 0xff;
-> > +	param_body[1] = (uint8_t)dtmf;
-> > +
-> > +	if (!qmi_param_append(param, QMI_VOICE_DTMF_DATA, 
-sizeof(param_body),
-> > +			param_body))
-> > +		goto error;
-> > +
-> > +	if (qmi_service_send(vd->voice, QMI_VOICE_START_CONTINUOUS_DTMF, 
-param,
-> > +			start_cont_dtmf_cb, vd, NULL) > 0)
-> > +		return;
-> > +
-> > +error:
-> > +	CALLBACK_WITH_FAILURE(cb, data);
-> > +	l_free(param);
-> > +}
-> > +
-> > +static void send_one_dtmf_cb(const struct ofono_error *error, void *data)
-> > +{
-> > +	struct cb_data *cbd = data;
-> > +	struct voicecall_data *vd = ofono_voicecall_get_data(cbd->user);
-> > +	ofono_voicecall_cb_t cb = vd->send_dtmf_cb;
-> > +
-> > +	DBG("");
-> > +
-> > +	if (error->type != OFONO_ERROR_TYPE_NO_ERROR ||
-> > +			*vd->next_dtmf == 0) {
-> > +		if (error->type == OFONO_ERROR_TYPE_NO_ERROR)
-> > +			CALLBACK_WITH_SUCCESS(cb, cbd->data);
-> > +		else
-> > +			CALLBACK_WITH_FAILURE(cb, cbd->data);
-> > +
-> > +		l_free(vd->full_dtmf);
-> > +		vd->full_dtmf = NULL;
-> > +	} else
-> > +		send_one_dtmf(cbd->user,
-> > +				*(vd->next_dtmf++),
-> > +				send_one_dtmf_cb, vd-
->send_dtmf_data);
-> 
-> This function doesn't seem to be invoked?
-This function is passed into send_one_dtmf but yes, potentially goes unused, 
-unless it gets invoked in the macro call?  Ill double-check the original 
-implementation to see if i messed anything up, but open to suggestions :)
-> 
-> > +}
-> > +
-> 
-> <snip>
-> 
-> Regards,
-> -Denis
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
+index 6104cc82e76a..d248761f92d6 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -503,10 +503,8 @@ static void qmi_gprs_context_remove(struct ofono_gprs_context *gc)
+ 
+ 	ofono_gprs_context_set_data(gc, NULL);
+ 
+-	if (data->wds) {
+-		qmi_service_unregister_all(data->wds);
++	if (data->wds)
+ 		qmi_service_unref(data->wds);
+-	}
+ 
+ 	l_free(data);
+ }
+diff --git a/drivers/qmimodem/location-reporting.c b/drivers/qmimodem/location-reporting.c
+index a32d18245c4f..549bd5740613 100644
+--- a/drivers/qmimodem/location-reporting.c
++++ b/drivers/qmimodem/location-reporting.c
+@@ -257,8 +257,6 @@ static void qmi_location_reporting_remove(struct ofono_location_reporting *lr)
+ 
+ 	ofono_location_reporting_set_data(lr, NULL);
+ 
+-	qmi_service_unregister_all(data->pds);
+-
+ 	qmi_service_unref(data->pds);
+ 
+ 	l_free(data);
+diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c
+index b9fe963520d6..12f5d6726d48 100644
+--- a/drivers/qmimodem/sms.c
++++ b/drivers/qmimodem/sms.c
+@@ -801,8 +801,6 @@ static void qmi_sms_remove(struct ofono_sms *sms)
+ 
+ 	ofono_sms_set_data(sms, NULL);
+ 
+-	qmi_service_unregister_all(data->wms);
+-
+ 	qmi_service_unref(data->wms);
+ 
+ 	if (data->msg_list)
+diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
+index b66f1ae7d56d..02376c3df447 100644
+--- a/drivers/qmimodem/voicecall.c
++++ b/drivers/qmimodem/voicecall.c
+@@ -653,8 +653,6 @@ static void qmi_voicecall_remove(struct ofono_voicecall *vc)
+ 
+ 	ofono_voicecall_set_data(vc, NULL);
+ 
+-	qmi_service_unregister_all(data->voice);
+-
+ 	qmi_service_unref(data->voice);
+ 
+ 	l_queue_destroy(data->call_list, l_free);
+-- 
+2.40.1
 
 
+-- 
 
 
+*Confidentiality Note:* We care about protecting our proprietary 
+information, confidential material, and trade secrets. This message may 
+contain some or all of those things. Cruise will suffer material harm if 
+anyone other than the intended recipient disseminates or takes any action 
+based on this message. If you have received this message (including any 
+attachments) in error, please delete it immediately and notify the sender 
+promptly.
