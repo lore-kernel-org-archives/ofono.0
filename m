@@ -1,61 +1,35 @@
-Received: from mail-oo1-f42.google.com (mail-oo1-f42.google.com [209.85.161.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB6141509AE
-	for <ofono@lists.linux.dev>; Thu, 25 Apr 2024 20:11:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8868B1E871
+	for <ofono@lists.linux.dev>; Thu, 25 Apr 2024 20:20:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714075894; cv=none; b=CmDUrqu3BdgfxeeSgva9yBZBd4o1iqIBRbgLzF8h6BCqSOlLJTHH1XeWbL6+HZAX0ZMlnlSZwau7BH0QFEJFjw+qs7XBMi3A1I7iCX5AXYpjTlZAbasrmpEvfpA6O2NFxDekHjt8M/j4qq4KLJKr+GD+XoWcnYpD/kAPs7qZ6Y4=
+	t=1714076429; cv=none; b=GztXE00GCFecO5ncslf3iyK9lvdXY6zzI+nwEfzsFzyDZlI58VLI7JkvHHf5wyf4daK6gmTtuHTqb9NSbOc+57FkbUdvo/TW1/mHa563PKxDXXOQppYfkfq1CucBjtm1qbPv4kXy/ad9FB7tUT451BYxRvdnv6316jSDUMvsh/A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714075894; c=relaxed/simple;
-	bh=Wf8/tx/IvvRnYFmGZdzdbSJCCh/NjGeGJMBU835sMnY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=AnIdaR7tXERVVlts5qnRU9HGdAXLQe0OpA4EgibKguoP8FHIBK1xU3FqujzGqr2mjI6+xDCnuV+2Xlgeympkgp7AkPm/wSQmmU7TTk7zZexZGTK2n+BWIrLG1eZq9NWDW+r3AGLo2zKRs/kyK2knAslq1R11df2rE/AlAVmaqHg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=co3vsi/Z; arc=none smtp.client-ip=209.85.161.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1714076429; c=relaxed/simple;
+	bh=rCatLuHsVmqmMyoaOr+fB3X/R97RnbNLEnkbubt8tEQ=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=EYHuTDrrqbRb5fXlneJT5Mu7nuF11mQEk+HNGfPOU8E3Je+AUFuVwjpGYfP8QIjbivTQMXQjkJFFO5o78tW8wwe1T3RL48HkQFznQcpx4rgarShXhjS6m+wunI05w9JlFxlOA9unbD3ZzQwRNWPDeXL/EenaxFGTPnhAZ9SA2DQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=W2vxelVp; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="co3vsi/Z"
-Received: by mail-oo1-f42.google.com with SMTP id 006d021491bc7-5aa362cc2ccso877631eaf.3
-        for <ofono@lists.linux.dev>; Thu, 25 Apr 2024 13:11:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714075892; x=1714680692; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=6ZfgMmQDnfQj0u3MTMNut7a4YFzEI8BfyYI7/TCJUno=;
-        b=co3vsi/ZVSuELM+t3HtTOdzU/U9lIEwxhbV3hLHOgGSppSwvcfZ8d9fiz2hfDb3XzO
-         L9u1gTvjjAuXW8vGPds0+PVw0nT4HQzJ99AUltT1UjUpXKPe862XcMLDIHnr2tYUxtud
-         3XiImZ6H2qKp0k6QlKpQuUfS/FIIJig1AILlW7JMeWd8NBJPh/wePKMThAg9IK8vzZvm
-         6uxk9d+Klv5rkVVHj+lGC7+CeoPZ98DQLBrQD3oEDXP+KTDP/uxR3ZMyS42yZvLaYcid
-         AXAeAGo69gD7jQWociYeFNrNNF6+ntYI8lOqafxytfh/oVPcxhQUmfo7a9FA6ZHARDj7
-         T9AQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714075892; x=1714680692;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=6ZfgMmQDnfQj0u3MTMNut7a4YFzEI8BfyYI7/TCJUno=;
-        b=b6agJRa3rXcAehTjjGXxxL5VLrqmbN/G+gq01wseT5uMZi55X3Qhq86cP9EX0OyghE
-         0lGk3BztJFzivmPktrBUMbdLjEiSygqjte/FTxm8u6v6jecjyG0PyqRnfeoUbzuUXq8o
-         pda3ONeJCbbGp/1Y/GjfZWVtnr7I735kZGN17xZYa7/toTHh0ZWbfr1UvZ+29S1Y9UC4
-         k50AzPnJe4Plu+r9GKdPV+NPlWdGXzli9hdJm1KKY0hfIIjdkoHbpB2UkkyjCtzjPm8K
-         Cx3vn0QJEjLOMYFKNxmNq4C14NhOcbZNH66duTec2sAMxwGjqn0d564LiDl3pnK6/jWN
-         qu6w==
-X-Gm-Message-State: AOJu0YxPsm/ENwi4ZumNm9p+S+H58s4kiFU/e4NnPFVCPTYgFE1uL7Wa
-	L4nHgvwNBMw6jGGDbCv159gX8Z2wQ7A21UjM2zv6UDjz/TCMl3nPd9520Q==
-X-Google-Smtp-Source: AGHT+IGW3vzsOQ9ahc5npQdNAEKBvF0FPJOFn2Q0+uHPqdTPe1/XmAlW/jQkPsxDKnxvOuO6o+jSww==
-X-Received: by 2002:a05:6820:70c:b0:5ac:9eff:440b with SMTP id q12-20020a056820070c00b005ac9eff440bmr1039553oow.1.1714075891909;
-        Thu, 25 Apr 2024 13:11:31 -0700 (PDT)
-Received: from localhost.localdomain ([70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id w5-20020a4aa985000000b005a4bc907f0asm3432068oom.15.2024.04.25.13.11.31
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 25 Apr 2024 13:11:31 -0700 (PDT)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH] qmi: gprs-context: Actually send param to qmi_service_send
-Date: Thu, 25 Apr 2024 15:11:14 -0500
-Message-ID: <20240425201129.538276-1-denkenz@gmail.com>
-X-Mailer: git-send-email 2.44.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="W2vxelVp"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 207D2C2BBFC;
+	Thu, 25 Apr 2024 20:20:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1714076429;
+	bh=rCatLuHsVmqmMyoaOr+fB3X/R97RnbNLEnkbubt8tEQ=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=W2vxelVpkNou70Cn/Yf1IYtJ7zikBLtQU+0xaVp+0bkYnCF1AGeQWKcUe4C00jrrI
+	 0iQayo4MofYXlPEL1TFWr5DH+CgkNCdnrX1klaytjn8tdERFYH23XGoFb654oVdnCr
+	 oV8i3bN21azSWCPa3nubcA2NpsR+AsxWRA1yiVJD5eHi34/sVMZg75fwlzAzzFx5s6
+	 8fUkjG6xNlNFksASEufozQOwr9sMVlEwOg3f2ivLJEyBV4eE+RBXLQoSZdi/SuEvNf
+	 5B0hLrnQPz4Epcg+H7/rLlVAgCXFb/c8R0BtIvH2MdTwvLn+uxHQP18AzplLxdGC7S
+	 IjVvAgXVUXtFA==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 102B2C595C5;
+	Thu, 25 Apr 2024 20:20:29 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -63,28 +37,41 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH] atmodem: fix detection of ATD*99 for non-muxed serial ports
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <171407642905.12759.7904250069278840586.git-patchwork-notify@kernel.org>
+Date: Thu, 25 Apr 2024 20:20:29 +0000
+References: <20240425115744.274891-1-martin@geanix.com>
+In-Reply-To: <20240425115744.274891-1-martin@geanix.com>
+To: =?utf-8?q?Martin_Hundeb=C3=B8ll_=3Cmartin=40geanix=2Ecom=3E?=@ci.codeaurora.org
+Cc: ofono@lists.linux.dev
 
-The parameter structure was built, but not included into the
-qmi_service_send call resulting in a memory leak.
+Hello:
 
-Fixes: b6ced6c5c4c9 ("qmi: gprs-context: Request certain TLVs to be included")
----
- drivers/qmimodem/gprs-context.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+This patch was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
 
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index 055378dc102f..4004876bab87 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -194,7 +194,7 @@ static void start_net_cb(struct qmi_result *result, void *user_data)
- 	param = qmi_param_new_uint32(PARAM_REQUESTED_SETTINGS,
- 						requested_settings);
- 
--	if (qmi_service_send(data->wds, QMI_WDS_GET_CURRENT_SETTINGS, NULL,
-+	if (qmi_service_send(data->wds, QMI_WDS_GET_CURRENT_SETTINGS, param,
- 				get_settings_cb, cbd, cb_data_unref) > 0) {
- 		cb_data_ref(cbd);
- 		return;
+On Thu, 25 Apr 2024 13:57:43 +0200 you wrote:
+> The gprs context probe function has logic to detect whether CGDATA is
+> supported by the modem, or if ATD*99 should be used instead. However, it
+> seems like this logic was wrongly placed after registering for CGEV
+> notification, which did an early return in case the passed chat did not
+> have a slave.
+> 
+> Thus the ATD*99 detection was skipped for USB modems using separate
+> "virtual" serial ports for command and data channels (i.e. ttyUSB0 for
+> AT and ttyUSB1 for PPP).
+> 
+> [...]
+
+Here is the summary with links:
+  - atmodem: fix detection of ATD*99 for non-muxed serial ports
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=d42aad3e9553
+
+You are awesome, thank you!
 -- 
-2.44.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
