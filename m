@@ -1,62 +1,62 @@
-Received: from mail-ot1-f54.google.com (mail-ot1-f54.google.com [209.85.210.54])
+Received: from mail-oi1-f179.google.com (mail-oi1-f179.google.com [209.85.167.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A3F482D7C
-	for <ofono@lists.linux.dev>; Mon, 29 Apr 2024 15:57:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 814E58288A
+	for <ofono@lists.linux.dev>; Mon, 29 Apr 2024 15:57:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714406252; cv=none; b=FNYdVBGiPiUnLP3dudZrD5PrXAuJhOQl17CO4pI4A1u0sB1BzRm3BdDyfW/ynI0R6F3e9Z29HWM3+r3y9f2HWXv5ulGZ0TeYpUJnq6XtdTgZUdINrz0+0QlY9wm3r+mJKnj0d01STDspJALfUilfY4jWckkB1r0+MeEH36/tMtY=
+	t=1714406253; cv=none; b=KXgNIQi2zhMn2tGJAQYd9XY4PWOGqHRih+YTMcNEZk6Q6nzFAoOPoLaBXYoIqIAVB//6cdNor8cCeTs7uLZStofNGBg4V3myV3sEffHJvsozfwysJJVKH3PSGu8p2aCaSXOugTxAGJOGUqcZIsuHsPy8x8C/vqiC7irsVlMjozI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714406252; c=relaxed/simple;
-	bh=XBvVcaHcaKnSZ9Aj1nxMtPV6/0Cv0B6uOGrYS0Qj/us=;
+	s=arc-20240116; t=1714406253; c=relaxed/simple;
+	bh=4vYB4VjYrMWtB1o2PAUL++oj805s5KvpSpUqEDdGydo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Nn4nqbEHmyOTuSIeYgSycdHnOXiCgs3my1l/RRNqFMqSvHW8wQf76shMXe5KVuzjRVg1mhC4BiwcelSpgy3Sr8fHNQxXancontTSpeYgo7JiWOW35MApwRPCY6lNjScvamCXilvWifYmzoz/d2Tl8svgc1XN/M+R0aKWR6jsJxY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=IZgjoTlx; arc=none smtp.client-ip=209.85.210.54
+	 MIME-Version; b=LmWR4GlzSeKBSsVVjaf02au9SngwihokrkIuzHc7gj032lI53ntBqNfBTIKDJZqLhW3W9EgAD6aV4635TuzgYXIhixnV/w3j/opgIhggRBbIF+fuFy5zM+zd/BMVRK/PguoITPMKKR4J76khy89d0oEwTxbvRR0vkaPvHdZ+wwQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OMKAt96q; arc=none smtp.client-ip=209.85.167.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IZgjoTlx"
-Received: by mail-ot1-f54.google.com with SMTP id 46e09a7af769-6ee266e2999so773091a34.2
-        for <ofono@lists.linux.dev>; Mon, 29 Apr 2024 08:57:30 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OMKAt96q"
+Received: by mail-oi1-f179.google.com with SMTP id 5614622812f47-3c5ed7fdbb1so2751975b6e.0
+        for <ofono@lists.linux.dev>; Mon, 29 Apr 2024 08:57:31 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714406249; x=1715011049; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1714406250; x=1715011050; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=IWVpySXbFdAnt6Ba2qRjeMx8UM7/1DCO5OCEFMBZL/w=;
-        b=IZgjoTlxe5n1kOhDba0X371ginjvPtt9svUruNca5jiMfHbvWefqzpCHHIOdIgjNQ+
-         N8ar2JJpWk47hSoIj9KNSiTaBnfQdWOP9U9iavrJjPkxNQUelqs/x16VfkxdWfbsP4VZ
-         2EBUTSYN4rkkhJaQAsducEnLwHFpjWFH2N5i1ldsXe2Sk9ViZmy2gC6i5hfaOB0HMwzr
-         jVNMsDaXD/Ya2BXeaNka202ofyPaCBU0yZ+EgH7iuoxuLCkgv2hfDsbD1lIavWwnWhv4
-         uYevYWk4imrXW+c83ZsWbbRoEeS4lURH9vBKZk1eu6P4ftM5eA2I8Qk4OlX3Bw6V8Iwj
-         FR6g==
+        bh=ckPB0cVcXgeh3i2Xby9h8HcVJoPWvsuXrLEm7SCkQPE=;
+        b=OMKAt96qwzEXqAVzlb/W+CytYdd8rvbJnHGYmitWD531Jx9WBsK5QC0BTnxZQWDekH
+         0r4Zo30SmW5AGd/5QmpQCsDmeCMlRSncw5D8BLKCOgUDV2oPlt5aRccTbUwtViDkWuQF
+         fgzP8wokoHkqjG8mpjc7MmKtUMI+JPgY5P+dmHZXG84WUH65dcx2ZE5Own7EZtnP17uj
+         WgqMyrOeX8CIvMIdMqTj4WilJUsHBI17VCr7RTw8oHjQ0kGksaz/TM8ZxixPi0Q9C86I
+         U9uSDoDM4N1crZp0jUvN1P9ODGQR9VmFtZH5E49uuFmAKDAq82iP00vjjSjj6/33bRcH
+         lB1A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714406249; x=1715011049;
+        d=1e100.net; s=20230601; t=1714406250; x=1715011050;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=IWVpySXbFdAnt6Ba2qRjeMx8UM7/1DCO5OCEFMBZL/w=;
-        b=mfY97sAVYnIrp3mkCJU0LfszQJ/2gk0BQh0yEh8+hUkb8nyr9Dd0pvt2hWW00Igdyv
-         QZ4bliIbLytKfMPyDDjo/vmOmZOu0xuxDk2brLHt1ax9flEY4K3op6bVJAHtMYsnzyEh
-         NPgYDA/G4YsYWzdAR4tsYLfSb+gD28pbnFc4zSBVtFHuy/fNUZlsnXd0PJ8muapGyBfe
-         RaRN+6wBAGLb2SYrDLsNuoSD3ap1f343gcMIivy7ocFYnv3vdbhmP6si2hA3Up52KLxY
-         OztOLh829rwQdcSwg6OzYelQl3j0MQVPps9QzY79EwlJvwqppKZG5LItm9YbUrIQjDqG
-         zVDg==
-X-Gm-Message-State: AOJu0YwbEXu5C0vQ0pbefP2XFi0oMUDxNLIr3enOGiDOmxnKFO6CxCJj
-	F2++d8ITkIPK3awQNinvMkvL77AVaUa+yfRBIbdTsm4drZDluoP1HuOm+w==
-X-Google-Smtp-Source: AGHT+IGI9o5epM8b1LLxUrhR2/plVe+BdzauT/J+wmvQaxjt3QScfIrjJxutwjwGqlGwcayXacDksA==
-X-Received: by 2002:a05:6808:2a8a:b0:3c8:2c20:718c with SMTP id fc10-20020a0568082a8a00b003c82c20718cmr10333896oib.2.1714406249662;
-        Mon, 29 Apr 2024 08:57:29 -0700 (PDT)
+        bh=ckPB0cVcXgeh3i2Xby9h8HcVJoPWvsuXrLEm7SCkQPE=;
+        b=QqMnKzBnghXBICNfdYMY8MKOJF2CuMaV3nPVJ/jml14Toy4bMXnNa7VZh5IiHVgL2F
+         LQ2EUZ1ZAJWeowVrzhKe2n0Jr6+7xjWOHPjVxKxScLJrbmsMFeqbaBtVFs5uv//jnl0g
+         TWfQyilFdH0PGpdx7wgbngd8fdsQRoRC1H1bZD87QPnXVWY0Y+C4e3bIGOoksakTKh1u
+         pjk7AtOjkRmM2kQ2nZMY8hJ8MBU9dylVo3gP8LYcQ7rZrLAG37crb31cdLqJc+bWjJP2
+         3SpmuKvMf+4QzJ/6vDbPzZF7ss5v8q7gLkYgLLZKQHG7h1tyOUbh4LC8rkdyM05a53a1
+         fIMw==
+X-Gm-Message-State: AOJu0YzA18JOjg4PYgDKG8IGWVcnawH7Jd8acPbqhw43cFxkav5p/MQy
+	i94rryliX7kJKkErQU58hNdJaU2TgZ2Wi1LNdh38nqFXnG09k+/YTRXzvA==
+X-Google-Smtp-Source: AGHT+IFMbyBZkpVToQAmlNxvSUTXNI05pfRKKRiZ8IYJHKlIbkb5dkYt1zBuePTAsOsiTJXib72r4g==
+X-Received: by 2002:a05:6808:2194:b0:3c6:ef2e:98f4 with SMTP id be20-20020a056808219400b003c6ef2e98f4mr31423oib.15.1714406250408;
+        Mon, 29 Apr 2024 08:57:30 -0700 (PDT)
 Received: from localhost.localdomain ([70.114.247.242])
         by smtp.gmail.com with ESMTPSA id bf29-20020a056808191d00b003c7443c0efasm3117820oib.1.2024.04.29.08.57.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 29 Apr 2024 08:57:29 -0700 (PDT)
+        Mon, 29 Apr 2024 08:57:30 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 2/6] qmi: wds: Move enum conversion into wds.c
-Date: Mon, 29 Apr 2024 10:56:54 -0500
-Message-ID: <20240429155726.51479-2-denkenz@gmail.com>
+Subject: [PATCH 3/6] qmi: lte: Support additional attributes
+Date: Mon, 29 Apr 2024 10:56:55 -0500
+Message-ID: <20240429155726.51479-3-denkenz@gmail.com>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240429155726.51479-1-denkenz@gmail.com>
 References: <20240429155726.51479-1-denkenz@gmail.com>
@@ -68,105 +68,93 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Introduce a new wds.c file which will house various utilities, such as
-enumeration conversion, that could be shared between multiple QMI based
-atom drivers.  Move ofono_gprs_auth_method conversion here.
+Add support for setting APN Type (IPV4, IPV6 or Dual), Username and
+Password attributes of the profile used for the default bearer.
 ---
- Makefile.am                     |  1 +
- drivers/qmimodem/gprs-context.c | 17 +----------------
- drivers/qmimodem/wds.c          | 25 +++++++++++++++++++++++++
- drivers/qmimodem/wds.h          |  2 ++
- 4 files changed, 29 insertions(+), 16 deletions(-)
- create mode 100644 drivers/qmimodem/wds.c
+ drivers/qmimodem/lte.c | 21 +++++++++++++++++----
+ drivers/qmimodem/wds.c | 14 ++++++++++++++
+ drivers/qmimodem/wds.h |  1 +
+ 3 files changed, 32 insertions(+), 4 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index b5a32fac1c89..815d96904943 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -362,6 +362,7 @@ qmi_sources = drivers/qmimodem/qmi.h drivers/qmimodem/qmi.c \
- 					drivers/qmimodem/pds.h \
- 					drivers/qmimodem/common.h \
- 					drivers/qmimodem/wda.h \
-+					drivers/qmimodem/wds.c \
- 					drivers/qmimodem/voice.h
+diff --git a/drivers/qmimodem/lte.c b/drivers/qmimodem/lte.c
+index 7633572b39ef..70efaf04c8f5 100644
+--- a/drivers/qmimodem/lte.c
++++ b/drivers/qmimodem/lte.c
+@@ -66,6 +66,10 @@ static void qmimodem_lte_set_default_attach_info(const struct ofono_lte *lte,
+ 			const struct ofono_lte_default_attach_info *info,
+ 			ofono_lte_cb_t cb, void *data)
+ {
++	static const uint8_t PARAM_PDP_TYPE = 0x11;
++	static const uint8_t PARAM_USERNAME = 0x1B;
++	static const uint8_t PARAM_PASSWORD = 0x1C;
++	static const uint8_t PARAM_AUTHENTICATION_PREFERENCE = 0x1D;
+ 	struct lte_data *ldd = ofono_lte_get_data(lte);
+ 	struct cb_data *cbd = cb_data_new(cb, data);
+ 	struct qmi_param* param;
+@@ -76,19 +80,28 @@ static void qmimodem_lte_set_default_attach_info(const struct ofono_lte *lte,
+ 		.type = QMI_WDS_PROFILE_TYPE_3GPP,
+ 		.index = ldd->default_profile,
+ 	};
++	uint8_t auth = qmi_wds_auth_from_ofono(info->auth_method);
  
- builtin_sources += $(qmi_sources) \
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index 4004876bab87..9ac57c893725 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -239,21 +239,6 @@ static void qmi_gprs_read_settings(struct ofono_gprs_context* gc,
- 	l_free(cbd);
- }
+ 	DBG("");
  
--static uint8_t auth_method_to_qmi_auth(enum ofono_gprs_auth_method method)
--{
--	/* QMI uses a bitmap */
--	switch (method) {
--	case OFONO_GPRS_AUTH_METHOD_CHAP:
--		return QMI_WDS_AUTHENTICATION_CHAP;
--	case OFONO_GPRS_AUTH_METHOD_PAP:
--		return QMI_WDS_AUTHENTICATION_PAP;
--	case OFONO_GPRS_AUTH_METHOD_NONE:
--		return 0;
--	}
+ 	param = qmi_param_new();
+ 
+-	/* Profile selector */
+ 	qmi_param_append(param, QMI_WDS_PARAM_PROFILE_TYPE, sizeof(p), &p);
 -
--	return 0;
--}
--
- static void qmi_activate_primary(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
- 				ofono_gprs_context_cb_t cb, void *user_data)
-@@ -288,7 +273,7 @@ static void qmi_activate_primary(struct ofono_gprs_context *gc,
+-	/* WDS APN Name */
++	qmi_param_append_uint8(param, PARAM_PDP_TYPE,
++				qmi_wds_pdp_type_from_ofono(info->proto));
+ 	qmi_param_append(param, QMI_WDS_PARAM_APN,
+ 				strlen(info->apn), info->apn);
  
- 	qmi_param_append_uint8(param, QMI_WDS_PARAM_IP_FAMILY, ip_family);
- 
--	auth = auth_method_to_qmi_auth(ctx->auth_method);
-+	auth = qmi_wds_auth_from_ofono(ctx->auth_method);
- 
- 	qmi_param_append_uint8(param, QMI_WDS_PARAM_AUTHENTICATION_PREFERENCE,
- 					auth);
+-	/* Modify profile */
++	qmi_param_append_uint8(param, PARAM_AUTHENTICATION_PREFERENCE, auth);
++
++	if (auth && info->username[0])
++		qmi_param_append(param, PARAM_USERNAME,
++					strlen(info->username), info->username);
++
++	if (auth && info->password[0])
++		qmi_param_append(param, PARAM_PASSWORD,
++					strlen(info->password), info->password);
++
+ 	if (qmi_service_send(ldd->wds, QMI_WDS_MODIFY_PROFILE, param,
+ 					modify_profile_cb, cbd, l_free) > 0)
+ 		return;
 diff --git a/drivers/qmimodem/wds.c b/drivers/qmimodem/wds.c
-new file mode 100644
-index 000000000000..748ad867c2cc
---- /dev/null
+index 748ad867c2cc..d126f4712921 100644
+--- a/drivers/qmimodem/wds.c
 +++ b/drivers/qmimodem/wds.c
-@@ -0,0 +1,25 @@
-+/*
-+ * oFono - Open Source Telephony
-+ * Copyright (C) 2024  Cruise, LLC
-+ *
-+ * SPDX-License-Identifier: LGPL-2.1-or-later
-+ */
+@@ -23,3 +23,17 @@ int qmi_wds_auth_from_ofono(enum ofono_gprs_auth_method method)
+ 
+ 	return -ENOENT;
+ }
 +
-+#include "src/common.h"
-+
-+#include "wds.h"
-+
-+int qmi_wds_auth_from_ofono(enum ofono_gprs_auth_method method)
++int qmi_wds_pdp_type_from_ofono(enum ofono_gprs_proto proto)
 +{
-+	/* QMI uses a bitmap */
-+	switch (method) {
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		return QMI_WDS_AUTHENTICATION_CHAP;
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		return QMI_WDS_AUTHENTICATION_PAP;
-+	case OFONO_GPRS_AUTH_METHOD_NONE:
-+		return 0;
++	switch (proto) {
++	case OFONO_GPRS_PROTO_IP:
++		return QMI_WDS_PDP_TYPE_IPV4;
++	case OFONO_GPRS_PROTO_IPV6:
++		return QMI_WDS_PDP_TYPE_IPV6;
++	case OFONO_GPRS_PROTO_IPV4V6:
++		return QMI_WDS_PDP_TYPE_IPV4V6;
 +	}
 +
 +	return -ENOENT;
 +}
 diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
-index 6d7071fe244f..c8aeefe430bb 100644
+index c8aeefe430bb..d896fd8cc535 100644
 --- a/drivers/qmimodem/wds.h
 +++ b/drivers/qmimodem/wds.h
-@@ -108,3 +108,5 @@ enum qmi_wds_command {
- 	QMI_WDS_CONFIGURE_PROFILE_EVENT_LIST		= 0xA7,
- 	QMI_WDS_PROFILE_CHANGED				= 0xA8,
+@@ -110,3 +110,4 @@ enum qmi_wds_command {
  };
-+
-+int qmi_wds_auth_from_ofono(enum ofono_gprs_auth_method method);
+ 
+ int qmi_wds_auth_from_ofono(enum ofono_gprs_auth_method method);
++int qmi_wds_pdp_type_from_ofono(enum ofono_gprs_proto proto);
 -- 
 2.44.0
 
