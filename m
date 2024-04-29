@@ -1,62 +1,66 @@
-Received: from mail-oi1-f177.google.com (mail-oi1-f177.google.com [209.85.167.177])
+Received: from mail-oi1-f174.google.com (mail-oi1-f174.google.com [209.85.167.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91403184106
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 39A861836DC
 	for <ofono@lists.linux.dev>; Mon, 29 Apr 2024 21:26:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.177
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714426006; cv=none; b=s149sSoiQI294sZVF0Cpz8YOCO+UnFQa2tCbI4pJ59b/ThDD3wOng9xowQvC8ksHYGoGpR8UvMPzdd55k3nypIDdTN4IbSKn8MTYlHm17LRtK0pJooM9E+GGVPYI3hBOMEb2H5oyn/ETMX886/WifE+QqZ/0pQKm3U9yMAwQlt4=
+	t=1714426006; cv=none; b=UhUIO3g8RKvdu4Imx5pxT53lglaHFUYcrfO4CPurRSDWrxHImr0wmMZVE7ItOKrNtRI9+h0JsoXW3kPl0GK6C9O2UJmArCjz0dWCF+QCKDcGQigrGMd+1Ul8QQlqtruBB+/6aMNTtVyCnUPT6sMnOLrDe5XM6EY2t8mPRBSjMwk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1714426006; c=relaxed/simple;
-	bh=Erikr3nz8GxGrS3NQMz6P6CP8AFwKrKJyIwYc2h6B58=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=bQbNYb7yWU1tHY7Oj2q1Ho3xD3o+WTmoRvQEZ365uhl2A4vjjDgO/ZZMMHgMqew8S/JiTneV7SJ2yWAgL1bOBL23Th1Car97WT3UU/ircgA5A47hB7WTxO6zYuEXl/uCiyfSV9Vlh8aTg6iwCr5telVUxrUFR1cNsrw5EVLNMrA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YmClZhGj; arc=none smtp.client-ip=209.85.167.177
+	bh=pe+QEzz8OK/9Wg0KPjxC6gyXwi+poJD6bjPYioMCEtg=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=NK/iGzA4KB2a0scpMxHkvky2wOU5x48xDsKvIIduLPRLmrAq8TWzY5mBXI+IraxznOq7PZHlAFHAb5rb4iEAY9VX/me+1LsCVV/44y2Hiu34GctMsIzlFm+GpwpsUwv50BRIx9fwv8Bo4dxA53WRVSO9JvSVb1UHEafHcbuSoZI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=acel6pob; arc=none smtp.client-ip=209.85.167.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YmClZhGj"
-Received: by mail-oi1-f177.google.com with SMTP id 5614622812f47-3c61486d3fcso2991634b6e.2
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="acel6pob"
+Received: by mail-oi1-f174.google.com with SMTP id 5614622812f47-3c862c613fcso1456927b6e.3
         for <ofono@lists.linux.dev>; Mon, 29 Apr 2024 14:26:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714426003; x=1715030803; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=+4/bWe1d17BckVLq7Q1kVVsjJofupXGVNIsLwQzN6d8=;
-        b=YmClZhGjmCrQF8/dDCzij49hquFIN2hkTjknVKknK4rb7n2+Y7iFAY44Di4oWaREsj
-         Iy4QCkL2ftrkbkD+zHD/6Njs3Af4nt92ZbduOOrPJgkpquy2IbvnxUwbMS4I3KklKGtA
-         pAqwv4QCRsP54RMaylGBd4jD+1xxvi56GgpNPyHF4WbmkAEInev5StrXb1UIJyvhArjq
-         fa4PxCGqTq65rleTwcj3JU3ylPYaFdLKht/crQCaYvoumcXdAl+6D3ttgi87Zwxe9T96
-         P8ze2Nv/GJo5De/tdWc+ZN69X5PRKKEUpFlhGNskPECSPunCDjbaU35UWVPjG/70n5tW
-         nSpg==
+        d=gmail.com; s=20230601; t=1714426004; x=1715030804; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=ALRYObSApKqoZoRkZmkAor85fwDFhQieUsF5HwIfAqQ=;
+        b=acel6pobJJBNnlqPtbRvT7P1wiB7Ovn6W7mx55dbjcXdB5lW8Zs1EUf47rfNY+dlm4
+         ZsRUpFgl15IHlAq/Yn+nJ4ykw86rpIJaod7lkmJXNqyysuA+gi6ULTa58v7l+yHf3f3q
+         WnVJMdRBTzhpTnwYnUzXN4CQ8mqZj2XaPcS8kOSpvPv5IIpFEUv25zYhD5kBQii3kP68
+         0YfK2GXKMuvhmyerCoA42We3lpesqFBpqtN2z6go4b4T2jd3nii85kbAb96BvM+JljcF
+         9s5UzD9kE4UQhcqd5UMjmIxnSyb3tkW/5EnABQQmA7Djr6ZQiMNjIM+jh92nBPcsnzSK
+         4zYw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714426003; x=1715030803;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=+4/bWe1d17BckVLq7Q1kVVsjJofupXGVNIsLwQzN6d8=;
-        b=LgaMO92+9umEG/pjeOGDw6KFrShwS0kpfhmZdmLX7+iHe/JY5hTsknqq3aTU40OLnr
-         lLpQui1d5daCpQTDdyhoVZ5MVlsnReECLpS+YUzV/QK04aBJhVy9r7AP1WNTbceO+eT1
-         wzmCBmAW3QB70z/Y5ZdtcuBawQT0Of8pnncZ8IN0ZZ03u258MQsnvF1QmfXYkCIpPy9F
-         g5JEzW6VOTkUK3zrJGvEfLqydKGUb0qlvryRXkJO5vzTl6ZolbhnePsg5EU53LpYBGHb
-         MCwiPNv8df+xXElfrQqth2F5KArEenPcf/I6G+MDN2U6LlZtHo9TBllXK/KsBe6zdTV8
-         NbgQ==
-X-Gm-Message-State: AOJu0Yx8y0XYfOzmUOWtZt2ASOOZvUtMy5Wu/FGUPmJCPRE1IZp32boU
-	Xx/wzNIWrEen3jRGUHV2YpkT8VWPUjBUyKmrlvevmdkgl23zSwkRwjQmMw==
-X-Google-Smtp-Source: AGHT+IEV0KtSLKK04NpNWKM28bg43cT3lmPTDadt9P98L5Th0w+q4bX1kdayiiRZPBkH7v8jPjhySw==
-X-Received: by 2002:a05:6808:140d:b0:3c8:2af3:6e58 with SMTP id w13-20020a056808140d00b003c82af36e58mr13514548oiv.58.1714426003379;
-        Mon, 29 Apr 2024 14:26:43 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1714426004; x=1715030804;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=ALRYObSApKqoZoRkZmkAor85fwDFhQieUsF5HwIfAqQ=;
+        b=uJ2ReXl6LHui/HF/1/l0jWzIu5LR/zhkqICooO1WyFZqbXjESVQvTWnQZzIkeaIQfD
+         Pq+/1RYFEwLi6fPpP1aF4h55yNUeYrIOkNfZmlvPRFB8dg6w6DlOenalM3nOOYG+6HzG
+         WsF1YOEz57vVLqcE4xFuyWiCEJs7axfk4X//ctBG3qqGitVtFvaCzmy6LGWVKrBh3sSU
+         2g6zwywhW8xXiAu4mLtq+kwGR3TIYCnuxTdg4Sfwfhk45id0mv9+ywXUlRLd0jck6i8S
+         bQ1fBs6+Af2DX3VLC3e7CFLritLuujP9AarycPhok6C1fJEXe82VORmOzDJa7gW4GNWn
+         9ZxQ==
+X-Gm-Message-State: AOJu0YzOGwChHoHm/yeHoWt8Ccy+ec7N+4Drlsgsae4O8WMzzEMFvFdd
+	Uvn4rfAb3rn0utxLnxFnWt9Ya9/PJ9rWaL7pcWzlTB47WsanseK92GCHZQ==
+X-Google-Smtp-Source: AGHT+IGtlk/de405W0FzsBRf7ilW+yEntw/sUoA6USTgKsciq4sffUnA+TWuzGN6JUSwcZ4tFv2/pA==
+X-Received: by 2002:a05:6808:1924:b0:3c5:ec0a:caef with SMTP id bf36-20020a056808192400b003c5ec0acaefmr16120031oib.21.1714426004157;
+        Mon, 29 Apr 2024 14:26:44 -0700 (PDT)
 Received: from localhost.localdomain ([70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id e19-20020a056808111300b003c6f5b8a5dasm3466183oih.6.2024.04.29.14.26.42
+        by smtp.gmail.com with ESMTPSA id e19-20020a056808111300b003c6f5b8a5dasm3466183oih.6.2024.04.29.14.26.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Mon, 29 Apr 2024 14:26:43 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev,
 	adam@piggz.co.uk
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 1/2] qmi: voicecall: Reflow the logic to avoid nesting
-Date: Mon, 29 Apr 2024 16:26:15 -0500
-Message-ID: <20240429212640.11474-1-denkenz@gmail.com>
+Subject: [PATCH 2/2] qmi: voicecall: Add free on the error path
+Date: Mon, 29 Apr 2024 16:26:16 -0500
+Message-ID: <20240429212640.11474-2-denkenz@gmail.com>
 X-Mailer: git-send-email 2.44.0
+In-Reply-To: <20240429212640.11474-1-denkenz@gmail.com>
+References: <20240429212640.11474-1-denkenz@gmail.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -65,46 +69,24 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+send_one_dtmf() allocates cb_data, but does not properly clean it up on
+the (rather unlikely) error path.
 ---
- drivers/qmimodem/voicecall.c | 24 +++++++++++-------------
- 1 file changed, 11 insertions(+), 13 deletions(-)
+ drivers/qmimodem/voicecall.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
-index 0df65226307d..bb4c4c2ce204 100644
+index bb4c4c2ce204..c6383a563b6e 100644
 --- a/drivers/qmimodem/voicecall.c
 +++ b/drivers/qmimodem/voicecall.c
-@@ -692,20 +692,18 @@ static void send_one_dtmf_cb(const struct ofono_error *error, void *data)
- 
- 	DBG("");
- 
--	if (error->type != OFONO_ERROR_TYPE_NO_ERROR ||
--			*vd->next_dtmf == 0) {
--		if (error->type == OFONO_ERROR_TYPE_NO_ERROR)
--			CALLBACK_WITH_SUCCESS(vd->send_dtmf_cb, vd->send_dtmf_data);
--		else
--			CALLBACK_WITH_FAILURE(vd->send_dtmf_cb, vd->send_dtmf_data);
--
--		l_free(vd->full_dtmf);
--		vd->full_dtmf = NULL;
--	} else {
--		send_one_dtmf(vc,
--				*(vd->next_dtmf++),
--				send_one_dtmf_cb, vd);
-+	if (error->type == OFONO_ERROR_TYPE_NO_ERROR && *vd->next_dtmf) {
-+		send_one_dtmf(vc, *(vd->next_dtmf++), send_one_dtmf_cb, vd);
-+		return;
- 	}
-+
-+	if (error->type == OFONO_ERROR_TYPE_NO_ERROR)
-+		CALLBACK_WITH_SUCCESS(vd->send_dtmf_cb, vd->send_dtmf_data);
-+	else
-+		CALLBACK_WITH_FAILURE(vd->send_dtmf_cb, vd->send_dtmf_data);
-+
-+	l_free(vd->full_dtmf);
-+	vd->full_dtmf = NULL;
+@@ -682,6 +682,7 @@ static void send_one_dtmf(struct ofono_voicecall *vc, const char dtmf,
+ error:
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ 	l_free(param);
++	cb_data_unref(cbd);
  }
  
- static void send_dtmf(struct ofono_voicecall *vc, const char *dtmf,
+ static void send_one_dtmf_cb(const struct ofono_error *error, void *data)
 -- 
 2.44.0
 
