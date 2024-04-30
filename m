@@ -1,50 +1,50 @@
 Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0597213CFB5
-	for <ofono@lists.linux.dev>; Tue, 30 Apr 2024 11:53:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FC1913D246
+	for <ofono@lists.linux.dev>; Tue, 30 Apr 2024 11:53:02 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714477984; cv=none; b=V4fzVkzKYuGofGlkti9zhuagKb6G+eM31dO2RaI3CwdAg0jp7vz+C6JobDtvoas5Y4f6+BygysZO7jwsWLaegqBrT+UJTwiO2H2MRxQkGkWD/4i6NpoXrCkOOba9zJZfH/cklz4qk5+tS66AyW6BCxAKFL/q+WPO2qiPODwmvc4=
+	t=1714477985; cv=none; b=hceZ1ueLRngQM9IOtVAK7sxxmVjip/k1a8lTmtxgLrvsxHJXfiSclu2ExGVjAcYEye1hOz8MVbXklN3hUtdZv4H8uszZj+cutY0c40T7mOUOLFmOAoChSsbMx1XNE1uG6eBl6VEorm3ZLCjWv8zCJ3MZnQNps3X7rBtZbbXAGBc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714477984; c=relaxed/simple;
-	bh=mT2GjgqPrEO98g0eJh1qPIS5koA61Bi7HprH0rcCS9Q=;
+	s=arc-20240116; t=1714477985; c=relaxed/simple;
+	bh=3c+n6xwMM520zFicEMVLZPd+kQxh/Wqj5HipL4u6N+U=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Z905/j4kwhb6nNYmLM879xKUHlezP8ndbjJRJePPqrEYb8mcVOf37vVq8BPW/w9K3J3y7J2gA27mfhOJVxsArWn6/LAk6/kwwLWYXXzdfo4nlyT+pLNvVSIR/G3TZ0A6T6NTeeVgmv5PISuFMLU0oJKhBPiZHPESiCjc5X/Rops=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=QmSg3zqI; arc=none smtp.client-ip=188.40.30.78
+	 MIME-Version; b=nGGG90DV3d8gSQLOw0xidg2QOjdkCB4tZCDS385t3hlIVwH4CWgLrHEB0HdXgSsul8rn5hIIS9VimXvTyyou3DUkNuykawvV9Kv7XKK9cHLwDYtgl2gZz6XE5yt2gEKZiY3WTbBA+arDIY0tr0TDHcmy+RD3BqX2tW9WjWNq5s4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=0cwAoAhM; arc=none smtp.client-ip=188.40.30.78
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="QmSg3zqI"
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="0cwAoAhM"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
 	s=default2211; h=Content-Transfer-Encoding:MIME-Version:References:
 	In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
 	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
 	Resent-To:Resent-Cc:Resent-Message-ID;
-	bh=3zqAqdxtf1Gf0qkEKGTEiznEE2gKLuoc+1h9mGxqtgY=; b=QmSg3zqIX4XQwGjxzW3HPpRaLg
-	jg+zxaA8F+WaOJzODQZA2sVaQFkwKI/IwWQaMQbZAJafNn6rLtEv9mxVqXPVxJk5jo6tZpqqfAMmW
-	3w0vcX3OwAWWoyt2+gj/1P0cUM6oom1jNRl+cMMtPGutAbfr3gahx+seRmz//uITb6LOcVdZfkMzZ
-	QhNRVjYaY7xRm4gAm+FYU4wQuCj7462gZDWuPQx72ADr+ISzA08uwnOaMZyuSM5zDgDXcgghOCE75
-	+orRkaRNP77rZ0VCjNbaqUcUMPH9wNEI40CHITDEyf3gQPJwNFNMMgBGBjfWBYZ9Q4Cwnw3Xwg51W
-	ibv9v7jg==;
+	bh=rOkubSj53sIU+NZu0Sk++2KdxSNEz+Rh6p5AoeBEYNA=; b=0cwAoAhManQuNEhJpmam4WLIXO
+	BwDE7OAXIcAyQl8cyamXRptlKdoAvqYBeO09t5DQWzdO92se1dEvrkV4E8fJMuK0jetQU5ShLtwyl
+	Qyad6i058bw9rspQDvruIk/DQLWou0T5uB+IdOo86NKGGBuY3lHamxcmBXFUAJACo7zd6vxEgjCAY
+	SL5irNPqVQkwO7i2M5jFgU2QcyK5dkF36V8TZlPi4yNdtyQtnzH3Jin/PH6XD5i8AoL9YF/IdQZgF
+	o/qedJc+uWcBKdXeIDI+vsxM7UcMxbwxhmiCrTBS2aIlOCaXvCCxHl2fyYrr0zM7u6TI5j2pBbttk
+	Wb7hYDWw==;
 Received: from sslproxy06.your-server.de ([78.46.172.3])
 	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
 	(Exim 4.94.2)
 	(envelope-from <martin@geanix.com>)
-	id 1s1m2Y-000GUG-7D; Tue, 30 Apr 2024 13:52:54 +0200
+	id 1s1m2Y-000GUv-Ov; Tue, 30 Apr 2024 13:52:54 +0200
 Received: from [185.17.218.86] (helo=martin.geanix.com)
 	by sslproxy06.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <martin@geanix.com>)
-	id 1s1m2X-000LNp-2s;
-	Tue, 30 Apr 2024 13:52:53 +0200
+	id 1s1m2Y-000LNp-1c;
+	Tue, 30 Apr 2024 13:52:54 +0200
 From: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>
 To: ofono@lists.linux.dev
 Cc: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>,
 	MaxLyubimov <m.lyubimov@aqsi.ru>
-Subject: [PATCH 05/10] sim7100: fix going offline for A76XX modems
-Date: Tue, 30 Apr 2024 13:52:28 +0200
-Message-ID: <20240430115234.180185-5-martin@geanix.com>
+Subject: [PATCH 09/10] Makefile: enable build of simcommodem radiosettings
+Date: Tue, 30 Apr 2024 13:52:32 +0200
+Message-ID: <20240430115234.180185-9-martin@geanix.com>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240430115234.180185-1-martin@geanix.com>
 References: <20240430115234.180185-1-martin@geanix.com>
@@ -58,36 +58,27 @@ Content-Transfer-Encoding: 8bit
 X-Authenticated-Sender: martin@geanix.com
 X-Virus-Scanned: Clear (ClamAV 0.103.10/27261/Tue Apr 30 10:23:42 2024)
 
-When tearing down the PPP context, the SIMCom A7672 modem issues a NO
-CARRIER event on the control channel, which is detected as an error when
-processing the AT+CFUN=4 respones.
-
-Make the set_online(false) call succed by ignoring the NO CARRIER event.
+This change was missing from commit c3da88e1
+("drivers: adding support for the SIMCom A7605E-H"). Add it now to allow
+radio-settings support for SIMCom A76XX modems.
 ---
- plugins/sim7100.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ Makefile.am | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/plugins/sim7100.c b/plugins/sim7100.c
-index f4979ffe..2e9d0eb3 100644
---- a/plugins/sim7100.c
-+++ b/plugins/sim7100.c
-@@ -151,6 +151,16 @@ static void cgmm_cb(gboolean ok, GAtResult *result, gpointer user_data)
- 		break;
- 	}
+diff --git a/Makefile.am b/Makefile.am
+index 36319d98..44fb7b1b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -532,6 +532,9 @@ builtin_sources += drivers/atmodem/atutil.h \
+ builtin_sources += drivers/atmodem/atutil.h \
+ 			drivers/quectelmodem/radio-settings.c
  
-+	switch (data->model) {
-+	case SIMCOM_A76XX:
-+		/* ignore NO CARRIER on the AT channel when disconnecting PPP */
-+		g_at_chat_blacklist_terminator(data->at,
-+					G_AT_CHAT_TERMINATOR_NO_CARRIER);
-+		break;
-+	default:
-+		break;
-+	}
++builtin_sources += drivers/atmodem/atutil.h \
++			drivers/simcommodem/radio-settings.c
 +
- 	/* power up modem */
- 	g_at_chat_send(data->at, "AT+CFUN=4", NULL, cfun_set_on_cb, modem,
- 									NULL);
+ if PHONESIM
+ builtin_modules += phonesim
+ builtin_sources += plugins/phonesim.c
 -- 
 2.44.0
 
