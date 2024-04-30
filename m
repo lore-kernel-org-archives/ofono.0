@@ -1,50 +1,50 @@
 Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D2EF13D249
-	for <ofono@lists.linux.dev>; Tue, 30 Apr 2024 11:53:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 058F5134412
+	for <ofono@lists.linux.dev>; Tue, 30 Apr 2024 11:53:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714477985; cv=none; b=ufe1Mm1dB5uYj2XyQkdB0fuU4VjlTZqKeTOFde/CaY3+ZrvO3BHqL6hDL+zEmEjDQBMNsntWLscJFbCDpXGN6PUA6H2kJleM2qZm0Sqfhw+5YgRbSbjoHCpYsCuLWvJNKUUug7g+pjl/uRMNVQiJFJx4goICETvZGclnKd2XLrg=
+	t=1714477985; cv=none; b=UXIBULWxBiZyEfO6t9Wl/qUcccFBUCdTLAlqf3t23DBeJBNMjZ5wD0WCw/PeYy+m8+OgfEIgkE/4h7pfJti+ptS+/Z4t+5CrOFa9HVIrlmiRmplon2REmN7w7Kx8Cn4eH8KfOF3nYweHo5F3t1ZIgzuv/J+lcRoEnJ4YU6vKSbs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1714477985; c=relaxed/simple;
-	bh=2Mfi14ZT0soB+FBhUQQPCcVRGzEUi8qS3iBcXrpYoz4=;
+	bh=hurTair7Hlv5kROI/p+kSfPv+cn4cEuVf3IIrY4NZOc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=V/WxVnlGJfhyXVr0B2BDCBq4uO9Z2B9LLkWwmAgVzgo3t4ERNtRdwZuHZzrkx7/y76CAxWymIReucLoypfpmSdQaATIy6OK1UJgnMIhJuMIjUkf95/JSLaqR/s/BuIkmpu0nJZ2KSGBqt2fgCDA6XDQnKn74+duLtQTrSgC+BVc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=kjuVeo1g; arc=none smtp.client-ip=188.40.30.78
+	 MIME-Version; b=Fu93iPf/xEZjpt13K2/g5/gSY7cihlX6Nb9pay5OsGZzs+WWeZO6MXXe7VV0O9PVDDj/FGlwQCPVvEItc2Mld7Pmo5CwpmhBF9Q+iwYrCIfn9Tu5/1dr/q8FZlTq/AFbWIFtW5L+BjTS1z2A+9I9/8qfkytfVyztnjar2p3iX+Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=Ndien5In; arc=none smtp.client-ip=188.40.30.78
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="kjuVeo1g"
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="Ndien5In"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
 	s=default2211; h=Content-Transfer-Encoding:MIME-Version:References:
 	In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
 	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
 	Resent-To:Resent-Cc:Resent-Message-ID;
-	bh=k8K+HkcFSMtud5QKRQ83m6T26fUswEdemsDU4TQGf4E=; b=kjuVeo1g4kbp5aVUv2X9Z32C+W
-	LF9jrkfcqI5BUaI8p+9XHb5Ryl3N9o404JzcYa9flFVxRgWX6P0aKKb6TA9ulXZBUplniA1kLg1QW
-	fx6tmqyPKzpTloPlnIVNXS0NXZxs0zsFQK2FDHzPvrk7IaXaZGXmZnZSg5kKWS01SBO+p82i7cbFc
-	KRWSrEdt/FBYn04uqlP7otS56FNZMAD33lIXBQdaiVS6tIn6YlWNx/10BMC30Ajmpn08mXVE+UjpY
-	Cz1aq7nqln02xca0tgV3a462YnPF/uXnO6JQ7tr3VDArrFJs1dFLb6SItvS4ki3OYHUqF6+m55UV5
-	OqRC4ukQ==;
+	bh=Gk4hQeU3TVPpll7cZ5Kd1YZyGdIGZtoYHxlbCTsTwvA=; b=Ndien5InSKv3Qv5I1Akr+Vf+hl
+	zh53KiTgvqilxmdP+6WjxC+/QsV7gUa+cCEMV/HZg7CcYquMgbvxjh5eeruCjtGo33cH37ANVvAKd
+	jykTftmUdiOPjmlzgHMfmp1wum9qbL7piVJ9kz7lSUkIpB42pKWU5FbypviisJasOuc/a6VXEstCJ
+	h3mDTFbhmW7n55Wzvxm0ww2BBILU1SvOZfg0KBZS1Y9EHRT1+o4UBlaX9QJcAMviiy48miCIM4tal
+	Z/EKHfKLqXcZZrmJgDINq5YopjdlPkXNdsPpZnl4nQL3zn4P4uldeYxumq3N1YdsPQUXVQhewvanL
+	ageYMnYQ==;
 Received: from sslproxy06.your-server.de ([78.46.172.3])
 	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
 	(Exim 4.94.2)
 	(envelope-from <martin@geanix.com>)
-	id 1s1m2Y-000GUh-M1; Tue, 30 Apr 2024 13:52:54 +0200
+	id 1s1m2X-000GTw-U2; Tue, 30 Apr 2024 13:52:53 +0200
 Received: from [185.17.218.86] (helo=martin.geanix.com)
 	by sslproxy06.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <martin@geanix.com>)
-	id 1s1m2Y-000LNp-17;
-	Tue, 30 Apr 2024 13:52:54 +0200
+	id 1s1m2X-000LNp-1t;
+	Tue, 30 Apr 2024 13:52:53 +0200
 From: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>
 To: ofono@lists.linux.dev
 Cc: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>,
 	MaxLyubimov <m.lyubimov@aqsi.ru>
-Subject: [PATCH 08/10] udevng: register support for SIMCom A76XX USB serial modem
-Date: Tue, 30 Apr 2024 13:52:31 +0200
-Message-ID: <20240430115234.180185-8-martin@geanix.com>
+Subject: [PATCH 03/10] sim7100: query device model during enable
+Date: Tue, 30 Apr 2024 13:52:26 +0200
+Message-ID: <20240430115234.180185-3-martin@geanix.com>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240430115234.180185-1-martin@geanix.com>
 References: <20240430115234.180185-1-martin@geanix.com>
@@ -58,92 +58,87 @@ Content-Transfer-Encoding: 8bit
 X-Authenticated-Sender: martin@geanix.com
 X-Virus-Scanned: Clear (ClamAV 0.103.10/27261/Tue Apr 30 10:23:42 2024)
 
-Register the 1e0e:9011 usb id as a specialization of the sim7100 driver.
-Use a new setup() function to handle the different order (and amount) of
-USB endpoint numbers without introducing too much complexity to the
-existing setup() function.
----
- plugins/udevng.c | 53 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 53 insertions(+)
+Adding support for more simcom modems in the sim7100 driver requires
+certain variants handlings based on the present modem model.
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index b9d115f1..4267c892 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1630,6 +1630,57 @@ static gboolean setup_sim7x00(struct modem_info *modem)
- 	return TRUE;
+Default to an "unknown" variant to keep the existing behaviour, and
+introduce the A76XX model to use when later adding support for the A7672
+vartiant.
+---
+ plugins/sim7100.c | 43 ++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 40 insertions(+), 3 deletions(-)
+
+diff --git a/plugins/sim7100.c b/plugins/sim7100.c
+index b5e65891..1c80f4ba 100644
+--- a/plugins/sim7100.c
++++ b/plugins/sim7100.c
+@@ -59,9 +59,15 @@
+ #include <drivers/atmodem/vendor.h>
+ #include <drivers/atmodem/atutil.h>
+ 
++enum sim7x00_model {
++	SIMCOM_UNKNOWN = 0,
++	SIMCOM_A76XX,
++};
++
+ struct sim7100_data {
+ 	GAtChat *at;
+ 	GAtChat *ppp;
++	enum sim7x00_model model;
+ };
+ 
+ static void sim7100_debug(const char *str, void *user_data)
+@@ -116,6 +122,38 @@ static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ 		ofono_modem_set_powered(modem, TRUE);
  }
  
-+static gboolean setup_sim76xx(struct modem_info *modem)
++static void cgmm_cb(gboolean ok, GAtResult *result, gpointer user_data)
 +{
-+	const char *diag = NULL;
-+	const char *mdm = NULL;
-+	const char *ppp = NULL;
-+	const char *gps = NULL;
-+	GSList *list;
++	struct ofono_modem *modem = user_data;
++	struct sim7100_data *data = ofono_modem_get_data(modem);
++	GAtResultIter iter;
++	const char *model;
 +
-+	DBG("%s", modem->syspath);
-+
-+	for (list = modem->devices; list; list = list->next) {
-+		const struct device_info *info = list->data;
-+		const char *subsystem;
-+
-+		subsystem = udev_device_get_subsystem(info->udev_device);
-+		if (!g_str_equal(subsystem, "tty"))
-+			continue;
-+
-+		DBG("%s %s %s", info->devnode, info->interface, info->number);
-+
-+		/*
-+		 * SIM76xx USB numbering:
-+		 * 0: RNDIS (ep_87)
-+		 * 1: RNDIS (ep_0c and ep_83)
-+		 * 2: QCDM/DIAG (ttyUSB0)
-+		 * 3: NMEA (ttyUSB3)
-+		 * 4: AT (ttyUSB1)
-+		 * 5: AT/PPP (ttyUSB2)
-+		 */
-+		if (g_str_equal(info->number, "02"))
-+			diag = info->devnode;
-+		else if (g_str_equal(info->number, "03"))
-+			gps = info->devnode;
-+		else if (g_str_equal(info->number, "04"))
-+			mdm = info->devnode;
-+		else if (g_str_equal(info->number, "05"))
-+			ppp = info->devnode;
++	if (!ok) {
++		ofono_error("%s: failed to query model", ofono_modem_get_path(modem));
++		ofono_modem_set_powered(modem, FALSE);
++		return;
 +	}
 +
-+	if (mdm == NULL)
-+		return FALSE;
++	g_at_result_iter_init(&iter, result);
 +
-+	DBG("at=%s ppp=%s gps=%s diag=%s", mdm, ppp, gps, diag);
++	while (g_at_result_iter_next(&iter, NULL)) {
++		if (!g_at_result_iter_next_unquoted_string(&iter, &model))
++			continue;
 +
-+	ofono_modem_set_driver(modem->modem, "sim7100");
-+	ofono_modem_set_string(modem->modem, "AT", mdm);
-+	ofono_modem_set_string(modem->modem, "PPP", ppp);
++		DBG("modem model: %s", model);
 +
-+	return TRUE;
++		if (g_str_has_prefix(model, "A7672"))
++			data->model = SIMCOM_A76XX;
++
++		break;
++	}
++
++	/* power up modem */
++	g_at_chat_send(data->at, "AT+CFUN=1", NULL, cfun_set_on_cb, modem,
++									NULL);
 +}
 +
- static struct {
- 	const char *name;
- 	gboolean (*setup)(struct modem_info *modem);
-@@ -1650,6 +1701,7 @@ static struct {
- 	{ "telitqmi",	setup_telitqmi	},
- 	{ "simcom",	setup_simcom	},
- 	{ "sim7x00",	setup_sim7x00	},
-+	{ "sim76xx",	setup_sim76xx	},
- 	{ "zte",	setup_zte	},
- 	{ "icera",	setup_icera	},
- 	{ "samsung",	setup_samsung	},
-@@ -2033,6 +2085,7 @@ static struct {
- 	{ "simcom",	"option",	"05c6", "9000"	},
- 	{ "sim7x00",	"option",	"1e0e", "9001"	},
- 	{ "sim7x00",	"qmi_wwan",	"1e0e",	"9001"	},
-+	{ "sim76xx",	"option",	"1e0e", "9011"	},
- 	{ "telit",	"usbserial",	"1bc7"		},
- 	{ "telit",	"option",	"1bc7"		},
- 	{ "telit",	"cdc_acm",	"1bc7", "0021"	},
+ static int open_device(struct ofono_modem *modem, char *devkey, GAtChat **chat)
+ {
+ 	DBG("devkey=%s", devkey);
+@@ -145,9 +183,8 @@ static int sim7100_enable(struct ofono_modem *modem)
+ 	/* ensure modem is in a known state; verbose on, echo/quiet off */
+ 	g_at_chat_send(data->at, "ATE0Q0V1", NULL, NULL, NULL, NULL);
+ 
+-	/* power up modem */
+-	g_at_chat_send(data->at, "AT+CFUN=1", NULL, cfun_set_on_cb,
+-								modem, NULL);
++	/* query modem model string */
++	g_at_chat_send(data->at, "AT+CGMM", NULL, cgmm_cb, modem, NULL);
+ 
+ 	return -EINPROGRESS;
+ }
 -- 
 2.44.0
 
