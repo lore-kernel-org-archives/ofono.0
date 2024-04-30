@@ -1,53 +1,35 @@
-Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3243E13D244
-	for <ofono@lists.linux.dev>; Tue, 30 Apr 2024 11:53:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A90F1F5FA
+	for <ofono@lists.linux.dev>; Tue, 30 Apr 2024 16:20:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714477985; cv=none; b=cXuoz9DairPG2pSWyi0JvLR5ozgtcSSJlQ1G6raPgxTnshmuDE3Is12EmKv8+EX4vSKjfMLc3X7AkPAMHv35rPSBT0fQbQ5ZyD4xKyW2UkqVdjRNe3KzixtyVQZk419Xa/5L0MOe6TdgdTlU0+oWSW2e5tED6YhhrXveGK75aJM=
+	t=1714494033; cv=none; b=PRozDCyqVoofFWNd4a1CtMeFV5MHfmLUnhgKUPJDvOK/T8GW4mW+gIbwALbMpNYe/jbjP9tNuOKb0qkVJ+QHbPLdQ5gVLpost4+CkE2D/0AIFu68eooNdDoTTqBwReFEEQejNtBHIcOqGymSJvkCdDhoB0Rpr6GHJGwLglyGms0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714477985; c=relaxed/simple;
-	bh=SaUbt63thWBnA3Oba5KoK8PppU8qE5nUWPDPJXNT8cg=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rUouzt7Vz3lN7z+tRfFQNi8qa/U+qYm2ZXF+BwnPPi8bmzixiBeW8Q3bnuI7UzMEnSiEDXLfILNqPWtAVe14j3b+Wc8wzMJoQIp/MP/73M9zw6Q0GMbBzkq3AtoH/obhHr9s2hJLnyXiWWHrGLa9V5N8+4cnrVW+B2dXP3T3eT0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=FPJ0mMON; arc=none smtp.client-ip=188.40.30.78
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
+	s=arc-20240116; t=1714494033; c=relaxed/simple;
+	bh=ztOI5QolSeFg3H16C4IepB4Ca3dc7Sej7ImTBaPv/Sw=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=aVJIOEYSIyn9EVy8yDZzOjNBIqIAiIxVSte1MGhpNOO0QZk2QN+RzXA3G4Qd/Bp/NnnLpYOL9oUprrD5DzQ22Y5q0zXEBEsg0ULwmUDvyE+bzTZA01uv9+6WWS0d/8ft3AsWL81AK2rGcNiBDFfJcj/2gPkmP8TD2sXFha0jl3Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gn3gHGu8; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="FPJ0mMON"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
-	s=default2211; h=Content-Transfer-Encoding:MIME-Version:References:
-	In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
-	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
-	Resent-To:Resent-Cc:Resent-Message-ID;
-	bh=+QWHZqqYHx8GsZDXPfX/n/xrJowx9aa63O4q4DAeefQ=; b=FPJ0mMONN1de5lQj1Bq+GbGUCG
-	c+shIU6qgOCPzY4QRYI9f8ICkP11Lolrg/oI/ujuRYIDFbrn82bTyCQjw7FDgdhPUqeEVraS32iJC
-	JUDaeKGb4cpD3VAGwCkmYeHFZ9MI5UHJmrJOw0oLVapWXS+sIQzviJXeptY52zsZWsuW0nQV8owvh
-	i0iVML1KKYWoizPu9TzgT/q0Ojh9kvWu/cXBGiWIdx+gTFrx/8twd24bi6hTdcAVw0WdU7CIY4rX8
-	FFLFowToBqtM8lw5SGFxLF2ItSyaQzGFBEiPqhIDK3mCNfs3JZYcJUqSl4e91FWsLjkfbG7rt0RI7
-	+ZLoJM0Q==;
-Received: from sslproxy06.your-server.de ([78.46.172.3])
-	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.94.2)
-	(envelope-from <martin@geanix.com>)
-	id 1s1m2e-000GV0-2F; Tue, 30 Apr 2024 13:53:00 +0200
-Received: from [185.17.218.86] (helo=martin.geanix.com)
-	by sslproxy06.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.96)
-	(envelope-from <martin@geanix.com>)
-	id 1s1m2Y-000LNp-28;
-	Tue, 30 Apr 2024 13:52:54 +0200
-From: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>
-To: ofono@lists.linux.dev
-Cc: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>,
-	MaxLyubimov <m.lyubimov@aqsi.ru>
-Subject: [PATCH 10/10] sim7100: create radio-settings atom for A76XX modems
-Date: Tue, 30 Apr 2024 13:52:33 +0200
-Message-ID: <20240430115234.180185-10-martin@geanix.com>
-X-Mailer: git-send-email 2.44.0
-In-Reply-To: <20240430115234.180185-1-martin@geanix.com>
-References: <20240430115234.180185-1-martin@geanix.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gn3gHGu8"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id D34BCC4AF18;
+	Tue, 30 Apr 2024 16:20:32 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1714494032;
+	bh=ztOI5QolSeFg3H16C4IepB4Ca3dc7Sej7ImTBaPv/Sw=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=gn3gHGu8HpiS5DAr9CN7XBbFxXv8P4GVFUkgw4OtJeQzLAxynojin1vIZdL38Zf9r
+	 5nOUWRI2icE8kWz6BFYYVATvKzPhRxBotFBsMVZrjAS3z6yTeWRfIEEZzrrTmScNhy
+	 87qlWTh6wCs1cNX+fcm4nSHh7xJTSeDDcRdjD7NLX6RQK9N+kfrZlWK9/AG+OwgKsA
+	 uwGCFbdnQx6QzNRysUHdFe+89HJnOi07OMOQ75iH2n323M6qItswP6D00v9ACDkUiG
+	 Proz9wSDnc80TmgnrZJICPzxpklB8BFDzt0znZlE+4/zDN570WPIz1pe03aZF0Z6BA
+	 DiiZA27EZB3+A==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id C06FAC43616;
+	Tue, 30 Apr 2024 16:20:32 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -55,33 +37,35 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Authenticated-Sender: martin@geanix.com
-X-Virus-Scanned: Clear (ClamAV 0.103.10/27261/Tue Apr 30 10:23:42 2024)
+Subject: Re: [PATCH 1/2] qmi: voicecall: Reflow the logic to avoid nesting
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <171449403277.567.5586601630790943853.git-patchwork-notify@kernel.org>
+Date: Tue, 30 Apr 2024 16:20:32 +0000
+References: <20240429212640.11474-1-denkenz@gmail.com>
+In-Reply-To: <20240429212640.11474-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev, adam@piggz.co.uk
 
----
- plugins/sim7100.c | 2 ++
- 1 file changed, 2 insertions(+)
+Hello:
 
-diff --git a/plugins/sim7100.c b/plugins/sim7100.c
-index 192559d6..90f97742 100644
---- a/plugins/sim7100.c
-+++ b/plugins/sim7100.c
-@@ -49,6 +49,7 @@
- #include <ofono/message-waiting.h>
- #include <ofono/netreg.h>
- #include <ofono/phonebook.h>
-+#include <ofono/radio-settings.h>
- #include <ofono/sim.h>
- #include <ofono/sms.h>
- #include <ofono/ussd.h>
-@@ -281,6 +282,7 @@ static void sim7100_post_sim(struct ofono_modem *modem)
- 							"atmodem", data->at);
- 		ofono_sms_create(modem, OFONO_VENDOR_SIMCOM_A76XX,
- 							"atmodem", data->at);
-+		ofono_radio_settings_create(modem, 0, "simcommodem", data->at);
- 		gprs = ofono_gprs_create(modem, OFONO_VENDOR_SIMCOM_A76XX,
- 							"atmodem", data->at);
- 		break;
+This series was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Mon, 29 Apr 2024 16:26:15 -0500 you wrote:
+> ---
+>  drivers/qmimodem/voicecall.c | 24 +++++++++++-------------
+>  1 file changed, 11 insertions(+), 13 deletions(-)
+
+Here is the summary with links:
+  - [1/2] qmi: voicecall: Reflow the logic to avoid nesting
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=c5afab6e824c
+  - [2/2] qmi: voicecall: Add free on the error path
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=3365880efc45
+
+You are awesome, thank you!
 -- 
-2.44.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
