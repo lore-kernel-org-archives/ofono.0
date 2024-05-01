@@ -1,62 +1,62 @@
-Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com [209.85.210.44])
+Received: from mail-ot1-f45.google.com (mail-ot1-f45.google.com [209.85.210.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62794168AE2
-	for <ofono@lists.linux.dev>; Wed,  1 May 2024 23:21:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8BC01168AF8
+	for <ofono@lists.linux.dev>; Wed,  1 May 2024 23:21:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714605710; cv=none; b=Uq7LZB6MNx0zV3ntQKQjsAbb8p4wn6jxnTI9jGV+j1Y11pDDo7y83Ox9qSi/aD225YCU4kIXLdKQ1tqpnV9NYBphHNQbLhJaM/AIjRH89hHYFCBkKLg7Fq/Ar7FeV6YZ5kvrejpLSf3455Tw9snX5+mZy5QmJBOwXri+uHeQ+Us=
+	t=1714605711; cv=none; b=ft0ouXr97aBAPfqm83hx32ICEfkXOhCpbuHVdrmthQAwPnyIsIzxQBrg1M4XbNytU4sg4HfcbMpksJsnPJ6TWR/1bTPRu2nT/wo/zhj6eaAzBO7E+KhobWPESOqxaY6tUqYithBlVziAJLprN/zAOaWUMA5AOKRGF3R+Dp/qgWA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714605710; c=relaxed/simple;
-	bh=hsKznquxEBOZm/whxYN0T/K8hU+CPqi7HNkk6/IeSDY=;
+	s=arc-20240116; t=1714605711; c=relaxed/simple;
+	bh=Gunr/qjMIkclvQedyJBGfjBytEGAYK6OuLgGc6JmGsM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rDGuD/F8eRBl+ljeOYHie+K9XcUtWdVKkaYiw3hW9SbLzHeY2Pne4Qrpdt7f0qCoOoFZebQlhQWrD2RugX7byNfip75kuxzRN/bmH44+TGgYyUSaUh6HnHj5cpMm58BfbeRLtFSBSUPs7zsM5HRGeuG6oUDloUlp+J67xG64Zxw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VpeoQ5KH; arc=none smtp.client-ip=209.85.210.44
+	 MIME-Version; b=OCozxsr9t+2MWv+hjRxvzjoPlGSKThzu3mVo5LXe+snH9n78P5q06vV31MMLKpNqXuhcFu8WZeILlHQ2VINJLwRMRR79NmF2A7EIfBaq8RG91IDJhzvNrl31jppQTPQ8TYs9uAB+IULx5cZx7Qso6RG4v46vDW4omc2Puj/MKmY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TNnfiXLo; arc=none smtp.client-ip=209.85.210.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VpeoQ5KH"
-Received: by mail-ot1-f44.google.com with SMTP id 46e09a7af769-6eb8ea5ac95so4300384a34.2
-        for <ofono@lists.linux.dev>; Wed, 01 May 2024 16:21:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TNnfiXLo"
+Received: by mail-ot1-f45.google.com with SMTP id 46e09a7af769-6ee135f6a21so2030902a34.2
+        for <ofono@lists.linux.dev>; Wed, 01 May 2024 16:21:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714605708; x=1715210508; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1714605709; x=1715210509; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=g9YGcAocKbWGCaQsxwjkN96uQtedAjjKUnGKbgpD9ys=;
-        b=VpeoQ5KHPcP7pvOtt5z1y+sCHU9oJvZe0fUwjrobNq4QqNnhSyuzjOF9yJF2VzTxNA
-         kcqhKRvLaigmfk5/VAZjqXK4rO1blDjoZx5LZ3sSMKMhzIKe1LSGiAaEUxGl1BdEIKiW
-         h6m/xqR504srHgQ3s6B4iYsKQt/Q0JjHERgSnAbOvfcMvrwJvdNTkVWShwex6Er0fA6G
-         S5fRy8X+gnZ8vIuDSzPF9U+EJAGFYRTwlF3L9X7Zt7NttV7qoX87Aa+uGCTM4DFTrH3k
-         JECj4qsyrUfcfwBBeWwkj2Uw1dZ4AHz04+SROhJDl15gOnUJ2TRqQBAzd5kg/LvXCigg
-         himQ==
+        bh=4r3pNIa4+6LSENenGG6k/WQKcRgRsvSXIdXsDs5j2ec=;
+        b=TNnfiXLo222uYQafzds9FmIA0JbPV9XnIpQHPJUaIiOdcMiG9ckPOWQmdwBN/61mL4
+         6zaecL4dcBOoBBzuctN4QMoYd81QR9OCZ3pxq9NhLK7McSSMFlUpHlb81YGou6IQ1be/
+         lmZt7jDhd0SHbJ5KwKpbNygAImpXMYBKbio1m5tabNWUHJM+xF9SQRvO/vpwfObnE5RD
+         20cTPDmoHDjz/9RsV9dVZlKWnHnUwXMTg+lRxPLKU3hG2C6Rv4PK545vYl9mC69BQriT
+         dUDiRz2+FQ3LEgKbjTLhEwVLXzm+GPqFqQcuXN5gpAAR0nZ2vKsEDOS2JvFcQKWr6ZeQ
+         BszQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714605708; x=1715210508;
+        d=1e100.net; s=20230601; t=1714605709; x=1715210509;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=g9YGcAocKbWGCaQsxwjkN96uQtedAjjKUnGKbgpD9ys=;
-        b=usEbhvzOz4iorAUAdd8mudSHLfTqTVw/Ghh4lg5CpEaOt0ToqVIKJqf75bf7+M/ZAn
-         p4Hq6M2wd7uyiBazCcyG/BadPv04swQLORFC9Rnn2UvXgG1c976zYNCXheopkx+fXJAR
-         vosVmsDW7RzSXiTDKrR2nhoXdUFOlOiA6s/aIGwDtR4LsTh2S5a1XtAfso7ccktU86Wr
-         ZsRRgtODp7c9emlqoeI3QNJ8BP3XGwtx0gBAJ4ANEtqeP5siVbXe6nYDifbG4Tnq1itf
-         hOQhrb4SdD3bD6UopRLFcE95WeRLE5yGvzWNxjS/NQ+YbmOTuz8Oz46rKPi2VCGYoUJy
-         vr1w==
-X-Gm-Message-State: AOJu0YwkGAy1c1CJpMS1qzWhEoNQu9HCyiqpyLyHk1WmDxsUE1w34mrI
-	jcnKVzxa/9VM5hVY5oyJEXBSrk02IOkgtNWPD21fFyEIrlOjUGs7NvG4+A==
-X-Google-Smtp-Source: AGHT+IEAeCe3lcc4mzgWi+nMFsQsO24K+74nEMJGWMBYkz2Na5VFoIHN4kGYCqMoCp2K9MLOZ01KeQ==
-X-Received: by 2002:a9d:65c8:0:b0:6ee:32ab:8124 with SMTP id z8-20020a9d65c8000000b006ee32ab8124mr4792047oth.25.1714605708581;
-        Wed, 01 May 2024 16:21:48 -0700 (PDT)
+        bh=4r3pNIa4+6LSENenGG6k/WQKcRgRsvSXIdXsDs5j2ec=;
+        b=Mk6gVGjkAkZb4NFaZ8QVYTOdWFEjeCSg3GoYBIA29k0RpsDFEYhs/eagBjQFE2zs5N
+         ECWKigizlgzL3Y0PVlE1yFK3cMLIBLOxlsjoyVBDxKys5J35RvSCLsGeMvgAayCuScg+
+         Bw4b6hQurr/cw8vfu6FJ7/qjI63OyqI1tfT0oJULcxv74a+2GYJZ5Ih6liYyOgQh74TV
+         LtfVJdqBWzBC9+cPEJT1eN9btxg+D2InwROMGxeKFjiXfRHf34Buy6NziXOHBfWm7HKN
+         WrKQq6TRefjiWdoFb7R1PiS48nfZA+rJ7UVluAiOsU71zHfeSnjMxlL4j/4HH3LLI9gF
+         eV8w==
+X-Gm-Message-State: AOJu0YwlJbUPz2V3lI5wXQhxbPbZVW+wkByhSN93TFr87FbV/2y7Pi1p
+	MNn0oLGPgnmktVchboUp4czWif06BaAmwwiEcjaw347iczOhmBtEKjUpqA==
+X-Google-Smtp-Source: AGHT+IE1kw52QZ5RQqKAC/Xc3AeSZ+WYr4XUjSl7iHpi1M4a7+lOR0JYXyU6zVa6xpSutUv4orIPFQ==
+X-Received: by 2002:a9d:66c8:0:b0:6eb:c398:4d2b with SMTP id t8-20020a9d66c8000000b006ebc3984d2bmr4456143otm.30.1714605709384;
+        Wed, 01 May 2024 16:21:49 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id x11-20020a056830278b00b006ee4e216d02sm1128040otu.14.2024.05.01.16.21.48
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 01 May 2024 16:21:48 -0700 (PDT)
+        Wed, 01 May 2024 16:21:49 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 4/6] qmi: gprs: Register for other notifications
-Date: Wed,  1 May 2024 18:21:31 -0500
-Message-ID: <20240501232144.14025-4-denkenz@gmail.com>
+Subject: [PATCH v2 5/6] qmi: wds: add utility to parse Data System Status tlv
+Date: Wed,  1 May 2024 18:21:32 -0500
+Message-ID: <20240501232144.14025-5-denkenz@gmail.com>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240501232144.14025-1-denkenz@gmail.com>
 References: <20240501232144.14025-1-denkenz@gmail.com>
@@ -68,98 +68,96 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Register for additional notifications via Indication Register command.
 ---
- drivers/qmimodem/gprs.c | 48 +++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 46 insertions(+), 2 deletions(-)
+ drivers/qmimodem/wds.c | 38 ++++++++++++++++++++++++++++++++++++++
+ drivers/qmimodem/wds.h | 17 +++++++++++++++++
+ 2 files changed, 55 insertions(+)
 
-diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
-index ebbef4475120..6bb5879199e6 100644
---- a/drivers/qmimodem/gprs.c
-+++ b/drivers/qmimodem/gprs.c
-@@ -191,6 +191,13 @@ static void event_report_notify(struct qmi_result *result, void *user_data)
- 	qmi_result_print_tlvs(result);
+diff --git a/drivers/qmimodem/wds.c b/drivers/qmimodem/wds.c
+index d126f4712921..77e22f443db0 100644
+--- a/drivers/qmimodem/wds.c
++++ b/drivers/qmimodem/wds.c
+@@ -5,6 +5,11 @@
+  * SPDX-License-Identifier: LGPL-2.1-or-later
+  */
+ 
++#include <stdint.h>
++#include <stddef.h>
++
++#include <ell/ell.h>
++
+ #include "src/common.h"
+ 
+ #include "wds.h"
+@@ -37,3 +42,36 @@ int qmi_wds_pdp_type_from_ofono(enum ofono_gprs_proto proto)
+ 
+ 	return -ENOENT;
  }
- 
-+static void profile_changed_notify(struct qmi_result *result, void *user_data)
++
++int qmi_wds_parse_data_system_status(const void *dss, uint16_t len)
 +{
-+	DBG("");
++	const size_t network_info_size = sizeof(uint8_t) + 2 * sizeof(uint32_t);
++	uint8_t num_networks;
++	uint8_t network;
++	uint32_t rat_mask;
 +
-+	qmi_result_print_tlvs(result);
-+}
++	if (len < 2 * sizeof(uint8_t))
++		return -EBADMSG;
 +
- static void attach_detach_cb(struct qmi_result *result, void *user_data)
- {
- 	struct cb_data *cbd = user_data;
-@@ -282,7 +289,7 @@ static void qmi_attached_status(struct ofono_gprs *gprs,
- 	l_free(cbd);
- }
- 
--static void set_event_report_cb(struct qmi_result *result, void *user_data)
-+static void indication_register_cb(struct qmi_result *result, void *user_data)
- {
- 	struct ofono_gprs *gprs = user_data;
- 	struct gprs_data *data = ofono_gprs_get_data(gprs);
-@@ -291,7 +298,7 @@ static void set_event_report_cb(struct qmi_result *result, void *user_data)
- 	DBG("");
- 
- 	if (qmi_result_set_error(result, &error)) {
--		ofono_error("set_event_report_cb: %hd", error);
-+		ofono_error("indication_register_cb: %hd", error);
- 		goto error;
- 	}
- 
-@@ -308,6 +315,41 @@ error:
- 	ofono_gprs_remove(gprs);
- }
- 
-+static int indication_register_request(struct ofono_gprs *gprs)
-+{
-+	static const uint8_t PARAM_PROFILE_CHANGES = 0x19;
++	/* uint8_t preferred network type followed by number of network infos */
++	num_networks = l_get_u8(dss + 1);
 +
-+	struct gprs_data *data = ofono_gprs_get_data(gprs);
-+	struct qmi_param *param = qmi_param_new();
++	len -= 2 * sizeof(uint8_t);
++	dss += 2 * sizeof(uint8_t);
 +
-+	qmi_param_append_uint8(param, PARAM_PROFILE_CHANGES, 1);
++	if (len != num_networks * network_info_size)
++		return -EBADMSG;
 +
-+	if (qmi_service_send(data->wds, QMI_WDS_INDICATION_REGISTER,
-+				param, indication_register_cb, gprs, NULL) > 0)
-+		return 0;
++	while (len >= network_info_size) {
++		network = l_get_u8(dss);
++		rat_mask = l_get_le32(dss + 1);
 +
-+	qmi_param_free(param);
-+	return -EIO;
-+}
++		if (network == QMI_WDS_PROFILE_TYPE_3GPP)
++			return rat_mask;
 +
-+static void set_event_report_cb(struct qmi_result *result, void *user_data)
-+{
-+	struct ofono_gprs *gprs = user_data;
-+	uint16_t error;
-+
-+	DBG("");
-+
-+	if (qmi_result_set_error(result, &error)) {
-+		ofono_error("set_event_report_cb: %hd", error);
-+		goto error;
++		len -= network_info_size;
++		dss += network_info_size;
 +	}
 +
-+	if (indication_register_request(gprs) >= 0)
-+		return;
-+error:
-+	ofono_gprs_remove(gprs);
++	return -ENOENT;
 +}
-+
- static int set_event_report_request(struct ofono_gprs *gprs)
- {
- 	static const uint8_t PARAM_CHANNEL_RATE = 0x10;
-@@ -423,6 +465,8 @@ static void create_wds_cb(struct qmi_service *service, void *user_data)
- 	data->wds = service;
- 	qmi_service_register(data->wds, QMI_WDS_EVENT_REPORT,
- 				event_report_notify, gprs, NULL);
-+	qmi_service_register(data->wds, QMI_WDS_PROFILE_CHANGED,
-+				profile_changed_notify, gprs, NULL);
+diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
+index d896fd8cc535..94f1c028bd81 100644
+--- a/drivers/qmimodem/wds.h
++++ b/drivers/qmimodem/wds.h
+@@ -68,6 +68,21 @@ enum qmi_wds_profile_family {
+ 	QMI_WDS_PROFILE_FAMILY_TETHERED =	0x01,
+ };
  
- 	if (get_default_profile_number_request(gprs) >= 0)
- 		return;
++enum qmi_wds_3gpp_rat {
++	QMI_WDS_3GPP_RAT_WCDMA			= 0x01,
++	QMI_WDS_RAT_3GPP_GPRS			= 0x02,
++	QMI_WDS_RAT_3GPP_HSDPA			= 0x04,
++	QMI_WDS_RAT_3GPP_HSUPA			= 0x08,
++	QMI_WDS_RAT_3GPP_EDGE			= 0x10,
++	QMI_WDS_RAT_3GPP_LTE			= 0x20,
++	QMI_WDS_RAT_3GPP_HSDPAPLUS		= 0x40,
++	QMI_WDS_RAT_3GPP_DCHSDPAPLUS		= 0x80,
++	QMI_WDS_RAT_3GPP_64QAM			= 0x100,
++	QMI_WDS_RAT_3GPP_TDSCDMA		= 0x200,
++	QMI_WDS_RAT_3GPP_5GNR			= 0x400,
++	QMI_WDS_RAT_3GPP_NULL_BEARER		= 0x8000,
++};
++
+ enum qmi_wds_command {
+ 	QMI_WDS_RESET					= 0x00,
+ 	QMI_WDS_EVENT_REPORT				= 0x01,
+@@ -111,3 +126,5 @@ enum qmi_wds_command {
+ 
+ int qmi_wds_auth_from_ofono(enum ofono_gprs_auth_method method);
+ int qmi_wds_pdp_type_from_ofono(enum ofono_gprs_proto proto);
++
++int qmi_wds_parse_data_system_status(const void *dss, uint16_t len);
 -- 
 2.44.0
 
