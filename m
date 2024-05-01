@@ -1,77 +1,101 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oi1-f175.google.com (mail-oi1-f175.google.com [209.85.167.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27C38165FA5
-	for <ofono@lists.linux.dev>; Wed,  1 May 2024 21:00:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 23BDF165FA5
+	for <ofono@lists.linux.dev>; Wed,  1 May 2024 21:01:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714597232; cv=none; b=XwZlwrDXIFvKPS2zNZJnOCC84U5FA0vRJYCWoLDoLui/sT1KxpGkK1LhT5wFixZzTZhW6RFhgsSQsby7BZGeuLiro58r8yADZwVvghoP7pczLtkpohiPaaHHmsKwnnQ7ZwX3sehJcoG4+orTSNLc+YbS5Kk2o8ishbY1BKR2g/w=
+	t=1714597288; cv=none; b=XCmfiIw9lVwYktxU7A8DIrvUFFOFfC3qbFtVfOm4cxHY2FNBMGliBKNMtf2swjblRaLm294w+ThuxAsHAI9lLTSTm50zNyi6/7IFc1SV/6jd2qWnSMzvn5ThCMVTU4jy0EJ22eyTbde/CiUFP5Wxliln2xFGlBKLCXB9GRSkYVU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714597232; c=relaxed/simple;
-	bh=gmRAfAG+tvLji/EWWu9NI7l/huRFc8QBZsoxEBvod1E=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=EtuXV0tTvCWZJXPW6ddfmXkMsFMpYcNwqx23u1eQUQWxgX7PxCwgjxtGi3DNVHE4u4LfJ2qoRi0nRj3tU+Y7mfYGdPHcrHv5J+EwLWNICK/kYjHVECvvqOGRjgVUjOCjbBNv8jvbpoBvsSmS3VTyoCoh2RiOwZBWCbg/r9mRZ0I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=A2D6b7Xy; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1714597288; c=relaxed/simple;
+	bh=H2WszG0L8DEUYIyoP2cYxLqDwW/KCaKfVU9p/ctiPNc=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=K5K4iPcsvOsAZ5n/EjkGbll9dpkvqaIqieH1/RIvEfqJWjz/hFUGdGEJLThBBkTjNEQ+HbZaAO9XHEngCD1waMSIloLgVedh6xgcBfwNR8fjdf4ZNcBf/TUcPKsrNEmPsGz6WEM2dQOd0D03oFp+zrp+A3FJwQf+CQf8Nb1IzGM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RdA4PqyW; arc=none smtp.client-ip=209.85.167.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="A2D6b7Xy"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 98216C4AF19;
-	Wed,  1 May 2024 21:00:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714597230;
-	bh=gmRAfAG+tvLji/EWWu9NI7l/huRFc8QBZsoxEBvod1E=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=A2D6b7XyhIwqZJjYdQavbmO6sFD1u0T5WhHXjbRAFpL6OvFKWsvxYKHlzWikjsWcJ
-	 SF0HGvGxScLhHEcPTuDXfYp/Fcbp7oUJ3i4CQixpVSDFEJCCEaKDxZOWOrDZM61Amx
-	 ZtcXaaSH6ZIBuL9WdX6liBQn6USjd3XFkJc/ANPwiD1vXZ1AhH7AZnSsht2b8CjwSz
-	 k1CMDOBUoHxWHnzZrIHjdL6dnoCKwcwcarvq9xnGzUOfapL8+FRiScytJDcmyzfze8
-	 8s4WJgHdc7Kfq9b33I6J6lmVr8IuaAADuaKxhAk41LftLyusrrfhELH9WyYlomOQVE
-	 VuQwQPrpZPA8g==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 879D7C43440;
-	Wed,  1 May 2024 21:00:30 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RdA4PqyW"
+Received: by mail-oi1-f175.google.com with SMTP id 5614622812f47-3c74b27179dso4177010b6e.1
+        for <ofono@lists.linux.dev>; Wed, 01 May 2024 14:01:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1714597286; x=1715202086; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=WNiR3JzG5U72+fuyXNEm8dfz7ipbm4xvVw7m77QvEyE=;
+        b=RdA4PqyWyxDW2AcTyjKd1fKEM1Zk+T+mTtBJ5vH95HLBL9qxEF9sj/CU5W8JjRNuwU
+         BkLLeM/nOYI3NWxwqrtfKKVD0nbxcLh+W2XnwkkfOlaq2xwrBS60rWLHgRLh1fT/Qkyo
+         NcEV2QRiMxBri9BEx2k6AjRyhW4dYJkZCfmG7xMe6T3cu0tdk66XGYKGc+lOiDfSGb2/
+         /vq9BjBvv1YpwO5iUU+qQPz1Cv1ZerNal5rOjUfJhXZpy01vIEnopHRkM5Lxjoh4K15h
+         Ubs5XJF/TrOHLvbjmVmRWQHUOaXVTMEHqSF0qE/acLUfrKMYlwIvJhX3Uyd4KmJsGI7t
+         3h/A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714597286; x=1715202086;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=WNiR3JzG5U72+fuyXNEm8dfz7ipbm4xvVw7m77QvEyE=;
+        b=NkVru0iG7j7XqHMygx6WCzyhNHOzL6P8JCngpzTUDzQx1jMNMFBVa7aK5+vskzfHsT
+         9PvadMqX40HaYqDfQNzR0/7gSJmt5C/DmLj6Hid4sRLGO0Khj6jVWLLnxxRBjS1jYrcV
+         TUouU3bh6bvredeGB+iVEYq2Uuuivno5TKpcxVdugovgOFXVdzedJoFFlbybphfOhz16
+         SPEwMmJve5C4nHm9rT3u9OkLgfF3fL2tssLmeau+xuTg3yxtJL/l3vLnWBcpJ5EiZd1i
+         shVnCHSD1v5tKGkuPcyiMnZ1EfnxogIz8luyHBMkGxqgfN3eRExbZwR0IRHj2rNoEHSc
+         tqKg==
+X-Forwarded-Encrypted: i=1; AJvYcCUcXsamBrcBCCQIMatZu6+IME321+W8TMa1UUKkLYUCu1/MScs0pL/MEPWdc1h7kq8V7PiGtuGYW5dj7CM3SONmStmIXQQ=
+X-Gm-Message-State: AOJu0YzBC3Q2D0X8M1+tk3Qss3bq7wTdIgvjavXQsisUZNFubjlmL1BW
+	zqrQLANLlOjHiavSxjgs/ZL2qzE0WgMpYDZClrM2lMHO0GeT5b3o
+X-Google-Smtp-Source: AGHT+IGZw1XSATgDx0z4IOz5rLvtvcGPaPAWcp/pM9aDQpAI45OxnXYS7NcI3TsSgxaBg2jXoqLt1Q==
+X-Received: by 2002:a05:6808:2129:b0:3c8:646a:fbb4 with SMTP id r41-20020a056808212900b003c8646afbb4mr4908888oiw.42.1714597286300;
+        Wed, 01 May 2024 14:01:26 -0700 (PDT)
+Received: from [192.168.1.20] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id es11-20020a056808278b00b003c748842829sm3621336oib.4.2024.05.01.14.01.25
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 01 May 2024 14:01:26 -0700 (PDT)
+Message-ID: <42fea483-2770-45bc-9744-7063174b9ca7@gmail.com>
+Date: Wed, 1 May 2024 16:01:24 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH 1/2] gobi: Use LOW_POWER instead of PERSIST_LOW_POWER
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <171459723055.6893.639227779055771107.git-patchwork-notify@kernel.org>
-Date: Wed, 01 May 2024 21:00:30 +0000
-References: <20240430173817.3044-1-denkenz@gmail.com>
-In-Reply-To: <20240430173817.3044-1-denkenz@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>
-Cc: ofono@lists.linux.dev
+User-Agent: Mozilla Thunderbird
+Subject: Re: RFC - Add AT interface to qmi device
+To: Adam Pigg <piggz1@gmail.com>, ofono@lists.linux.dev
+References: <2269874.vFx2qVVIhK@adam-laptop-hp>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <2269874.vFx2qVVIhK@adam-laptop-hp>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello:
+Hi Adam,
 
-This series was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Tue, 30 Apr 2024 12:37:34 -0500 you wrote:
-> PERSIST_LOW_POWER setting is supposed to tell the device that it should
-> not enter online state at the next bootup.  Unfortunately, no USB
-> devices tested seem to honor this setting.
+On 4/30/24 4:49 PM, Adam Pigg wrote:
+> Hi
 > 
-> Telit devices in particular will turn off the SIM and become unusable
-> until set back into online mode.  Use low-power instead of persistent
-> low power state instead.  AlwaysOnline support is now no longer needed.
+> I would appreciate views on this patch I need for the Pinephone modem.  This
+> adds code to the gobi plugin and qmi_device to get a handle to the GAtChat Aux
+> interface.  The voicecall and sms drivers can then use this interface to
+> trigger call/sms notification.
+
+ From an architectural perspective this is unfortunate.  QMI atom drivers 
+(drivers/qmimodem/*) should not know anything about AT command drivers 
+(drivers/atmodem/*) or GAtChat and vice versa.  Doing so keeps dependencies to a 
+minimum and allows oFono to be compiled without AT/ISI/RIL/MBIM support for example.
+
+For modem drivers, I can see the need / usecase of driving both QMI and AT / 
+whatever ports together simultaneously.  Such modem drivers would then depend on 
+both QMI / AT / whatever support being available.
+
 > 
-> [...]
+> This is done in addition to the QMI interface, because it seems that
+> _sometimes_ the modem does not always send the QMI notification, or it is
+> missed due to the phone being in a deep sleep state.  The AT interface is
+> always triggered.
 
-Here is the summary with links:
-  - [1/2] gobi: Use LOW_POWER instead of PERSIST_LOW_POWER
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=75ba0c33e3e3
-  - [2/2] udevng: Add support for Telit FN990
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=e41785fbd397
+Have you considered simply using AT commands for calls and SMS?
 
-You are awesome, thank you!
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
-
+Regards,
+-Denis
