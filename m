@@ -1,101 +1,124 @@
-Received: from mail-oi1-f175.google.com (mail-oi1-f175.google.com [209.85.167.175])
+Received: from mail-ot1-f47.google.com (mail-ot1-f47.google.com [209.85.210.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 23BDF165FA5
-	for <ofono@lists.linux.dev>; Wed,  1 May 2024 21:01:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5401168AE2
+	for <ofono@lists.linux.dev>; Wed,  1 May 2024 23:21:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714597288; cv=none; b=XCmfiIw9lVwYktxU7A8DIrvUFFOFfC3qbFtVfOm4cxHY2FNBMGliBKNMtf2swjblRaLm294w+ThuxAsHAI9lLTSTm50zNyi6/7IFc1SV/6jd2qWnSMzvn5ThCMVTU4jy0EJ22eyTbde/CiUFP5Wxliln2xFGlBKLCXB9GRSkYVU=
+	t=1714605709; cv=none; b=Z2zi4IkOYKiMHbvl/oRIqF/VIfoIPKQpoRmV9s+au57zmQSuiG0WLBnfxnu1v/U4kqUBq+yEzhGuzeitMpXggvJmsO9nWu3+P1KpOY3bgvo42Bo5DFIKIg0JJUuMzAtzomsI0T/U5NS0AEJAexVx10ZqZ6iH0I0vbMZEoouS2l4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714597288; c=relaxed/simple;
-	bh=H2WszG0L8DEUYIyoP2cYxLqDwW/KCaKfVU9p/ctiPNc=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=K5K4iPcsvOsAZ5n/EjkGbll9dpkvqaIqieH1/RIvEfqJWjz/hFUGdGEJLThBBkTjNEQ+HbZaAO9XHEngCD1waMSIloLgVedh6xgcBfwNR8fjdf4ZNcBf/TUcPKsrNEmPsGz6WEM2dQOd0D03oFp+zrp+A3FJwQf+CQf8Nb1IzGM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RdA4PqyW; arc=none smtp.client-ip=209.85.167.175
+	s=arc-20240116; t=1714605709; c=relaxed/simple;
+	bh=3s7eg/2w/9QwkI7eZ4wLM+/CycYV6qWhRpz/taZIxbg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=MFP+3AGv+4mOLx/etF1GQnk7aOL2T1JMcs3gyFU7/k1x5FCc3VMFFSuaVwQIpkAJDUuYHPLjHsYXPtBC6rTvHKfebILQCuumMTvYpuBF0D9nA7MmaFAQUMgRpPZy+Unv7CryadCYcS0kwnQFnSubtngIdjUi93RKTF+OzzX2hi4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=R0kCbKZA; arc=none smtp.client-ip=209.85.210.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RdA4PqyW"
-Received: by mail-oi1-f175.google.com with SMTP id 5614622812f47-3c74b27179dso4177010b6e.1
-        for <ofono@lists.linux.dev>; Wed, 01 May 2024 14:01:26 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="R0kCbKZA"
+Received: by mail-ot1-f47.google.com with SMTP id 46e09a7af769-6ee35146ac5so1991118a34.0
+        for <ofono@lists.linux.dev>; Wed, 01 May 2024 16:21:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714597286; x=1715202086; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=WNiR3JzG5U72+fuyXNEm8dfz7ipbm4xvVw7m77QvEyE=;
-        b=RdA4PqyWyxDW2AcTyjKd1fKEM1Zk+T+mTtBJ5vH95HLBL9qxEF9sj/CU5W8JjRNuwU
-         BkLLeM/nOYI3NWxwqrtfKKVD0nbxcLh+W2XnwkkfOlaq2xwrBS60rWLHgRLh1fT/Qkyo
-         NcEV2QRiMxBri9BEx2k6AjRyhW4dYJkZCfmG7xMe6T3cu0tdk66XGYKGc+lOiDfSGb2/
-         /vq9BjBvv1YpwO5iUU+qQPz1Cv1ZerNal5rOjUfJhXZpy01vIEnopHRkM5Lxjoh4K15h
-         Ubs5XJF/TrOHLvbjmVmRWQHUOaXVTMEHqSF0qE/acLUfrKMYlwIvJhX3Uyd4KmJsGI7t
-         3h/A==
+        d=gmail.com; s=20230601; t=1714605707; x=1715210507; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=LhSTyREFXvRkGlEPxmtGbcAOQ39xmpQcQUpoaHOFwEg=;
+        b=R0kCbKZA4faXxaujFi7/cTReTmUEbIzh+L0u1uogJnTINuA0tF2jyt4c+HYETJx5+7
+         Q2vYphWnLKK/3ZAyCLPX2E951ApwvqNQuFOnAbSv0l3AVsoIZsz2y8t4iIIsIi2XOPNq
+         Ry4mpXHFl3r8tAwjVHoiy5g8DqWgEW07391lEVdh8jCfvotSfR2tedKBCk1lsek0H71F
+         x+gEPGPZlwN938dLZGSryb3KwwgwLS1o4iVe5JKy2eKP/BfZvhnIcDrTKj0/47nMQ2Rs
+         hNil2x8DkRe1p8NntqhS0FHMI33to4mdyml0DF0xTA4phcZBbVaMf/nfB+23oWv9DRvd
+         Zxyw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714597286; x=1715202086;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=WNiR3JzG5U72+fuyXNEm8dfz7ipbm4xvVw7m77QvEyE=;
-        b=NkVru0iG7j7XqHMygx6WCzyhNHOzL6P8JCngpzTUDzQx1jMNMFBVa7aK5+vskzfHsT
-         9PvadMqX40HaYqDfQNzR0/7gSJmt5C/DmLj6Hid4sRLGO0Khj6jVWLLnxxRBjS1jYrcV
-         TUouU3bh6bvredeGB+iVEYq2Uuuivno5TKpcxVdugovgOFXVdzedJoFFlbybphfOhz16
-         SPEwMmJve5C4nHm9rT3u9OkLgfF3fL2tssLmeau+xuTg3yxtJL/l3vLnWBcpJ5EiZd1i
-         shVnCHSD1v5tKGkuPcyiMnZ1EfnxogIz8luyHBMkGxqgfN3eRExbZwR0IRHj2rNoEHSc
-         tqKg==
-X-Forwarded-Encrypted: i=1; AJvYcCUcXsamBrcBCCQIMatZu6+IME321+W8TMa1UUKkLYUCu1/MScs0pL/MEPWdc1h7kq8V7PiGtuGYW5dj7CM3SONmStmIXQQ=
-X-Gm-Message-State: AOJu0YzBC3Q2D0X8M1+tk3Qss3bq7wTdIgvjavXQsisUZNFubjlmL1BW
-	zqrQLANLlOjHiavSxjgs/ZL2qzE0WgMpYDZClrM2lMHO0GeT5b3o
-X-Google-Smtp-Source: AGHT+IGZw1XSATgDx0z4IOz5rLvtvcGPaPAWcp/pM9aDQpAI45OxnXYS7NcI3TsSgxaBg2jXoqLt1Q==
-X-Received: by 2002:a05:6808:2129:b0:3c8:646a:fbb4 with SMTP id r41-20020a056808212900b003c8646afbb4mr4908888oiw.42.1714597286300;
-        Wed, 01 May 2024 14:01:26 -0700 (PDT)
-Received: from [192.168.1.20] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id es11-20020a056808278b00b003c748842829sm3621336oib.4.2024.05.01.14.01.25
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 01 May 2024 14:01:26 -0700 (PDT)
-Message-ID: <42fea483-2770-45bc-9744-7063174b9ca7@gmail.com>
-Date: Wed, 1 May 2024 16:01:24 -0500
+        d=1e100.net; s=20230601; t=1714605707; x=1715210507;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=LhSTyREFXvRkGlEPxmtGbcAOQ39xmpQcQUpoaHOFwEg=;
+        b=wtECvqiNQQ0139alt4FnX7sjVE17Ky1qWoW0KLpVnlek2CNsepme7/yPAwlffBhBRw
+         AVHxCdnzz2XWPM9Ev6+8n+k47aWii/5Rk41S4bPbWvvUZo2CeYCPTf2usG9YHcPM3Stt
+         KTqyZKtb3LoEL/cYoPCK7uo1OXoHfGn3cdYa9AZ5hOp/3h/hgW/pc6mw0D+/RKfFBA72
+         7OOGr+vgVtdJqFl7y42MQEdtbN1X8z1MGjK152DX8gI+VuB1yDmOgB+8NsdsyrMJFWp7
+         8Fl6tUo/4iSFCaSuY3iLGo/YYa2Bfv9awyWuGejnXrT6lYLAVYeCx4Hdsvgk64GhjveV
+         7IKw==
+X-Gm-Message-State: AOJu0Yybt05jKqFvtXQFfQrNyfOXohBhY1fg2W1K7KWTg9yzmB19yn+d
+	qZ1bW7ZRfLdce05if7WsyJrvyZt4iWpiExrQYhADgJz9Nf5hb9Ny/PLPfA==
+X-Google-Smtp-Source: AGHT+IHUO67EXcBIP5lAcqk4/TS48MtfZhiCiDV2RrY3PPVdn+IZuir1DvozXrY5gpEOWc9l8Insaw==
+X-Received: by 2002:a05:6830:1bc9:b0:6ed:e67b:8699 with SMTP id v9-20020a0568301bc900b006ede67b8699mr414105ota.18.1714605706714;
+        Wed, 01 May 2024 16:21:46 -0700 (PDT)
+Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id x11-20020a056830278b00b006ee4e216d02sm1128040otu.14.2024.05.01.16.21.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 01 May 2024 16:21:46 -0700 (PDT)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH v2 1/6] qmi: gprs: register to NAS indications earlier
+Date: Wed,  1 May 2024 18:21:28 -0500
+Message-ID: <20240501232144.14025-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: RFC - Add AT interface to qmi device
-To: Adam Pigg <piggz1@gmail.com>, ofono@lists.linux.dev
-References: <2269874.vFx2qVVIhK@adam-laptop-hp>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <2269874.vFx2qVVIhK@adam-laptop-hp>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi Adam,
+We can register to NAS indications much earlier, as soon as the NAS
+service handle is created.  Since the handle is now a 'lightweight'
+handle, all service registrations are automatically unregistered when
+the handle is destroyed.  There's no need to track the registered
+indication id and to remove it separately.
+---
+ drivers/qmimodem/gprs.c | 14 ++------------
+ 1 file changed, 2 insertions(+), 12 deletions(-)
 
-On 4/30/24 4:49 PM, Adam Pigg wrote:
-> Hi
-> 
-> I would appreciate views on this patch I need for the Pinephone modem.  This
-> adds code to the gobi plugin and qmi_device to get a handle to the GAtChat Aux
-> interface.  The voicecall and sms drivers can then use this interface to
-> trigger call/sms notification.
+diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+index 738271905848..bca1897ea02f 100644
+--- a/drivers/qmimodem/gprs.c
++++ b/drivers/qmimodem/gprs.c
+@@ -39,7 +39,6 @@ struct gprs_data {
+ 	struct qmi_service *nas;
+ 	struct qmi_service *wds;
+ 	unsigned int default_profile;
+-	uint16_t serving_system_indication_id;
+ };
+ 
+ static bool extract_ss_info(struct qmi_result *result, int *status, int *tech)
+@@ -306,10 +305,6 @@ static void get_default_profile_cb(struct qmi_result *result, void *user_data)
+ 	 */
+ 	qmi_service_send(data->nas, QMI_NAS_GET_SERVING_SYSTEM, NULL,
+ 					ss_info_notify, gprs, NULL);
+-	data->serving_system_indication_id =
+-		qmi_service_register(data->nas,
+-					QMI_NAS_SERVING_SYSTEM_INDICATION,
+-					ss_info_notify, gprs, NULL);
+ 
+ 	ofono_gprs_register(gprs);
+ 	return;
+@@ -369,6 +364,8 @@ static void create_nas_cb(struct qmi_service *service, void *user_data)
+ 	}
+ 
+ 	data->nas = service;
++	qmi_service_register(data->nas, QMI_NAS_SERVING_SYSTEM_INDICATION,
++					ss_info_notify, gprs, NULL);
+ 
+ 	qmi_service_create_shared(data->dev, QMI_SERVICE_WDS,
+ 						create_wds_cb, gprs, NULL);
+@@ -403,13 +400,6 @@ static void qmi_gprs_remove(struct ofono_gprs *gprs)
+ 	ofono_gprs_set_data(gprs, NULL);
+ 
+ 	qmi_service_free(data->wds);
+-
+-	if (data->serving_system_indication_id) {
+-		qmi_service_unregister(data->nas,
+-					data->serving_system_indication_id);
+-		data->serving_system_indication_id = 0;
+-	}
+-
+ 	qmi_service_free(data->nas);
+ 
+ 	l_free(data);
+-- 
+2.44.0
 
- From an architectural perspective this is unfortunate.  QMI atom drivers 
-(drivers/qmimodem/*) should not know anything about AT command drivers 
-(drivers/atmodem/*) or GAtChat and vice versa.  Doing so keeps dependencies to a 
-minimum and allows oFono to be compiled without AT/ISI/RIL/MBIM support for example.
-
-For modem drivers, I can see the need / usecase of driving both QMI and AT / 
-whatever ports together simultaneously.  Such modem drivers would then depend on 
-both QMI / AT / whatever support being available.
-
-> 
-> This is done in addition to the QMI interface, because it seems that
-> _sometimes_ the modem does not always send the QMI notification, or it is
-> missed due to the phone being in a deep sleep state.  The AT interface is
-> always triggered.
-
-Have you considered simply using AT commands for calls and SMS?
-
-Regards,
--Denis
