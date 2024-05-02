@@ -1,34 +1,34 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21D73137C4E
-	for <ofono@lists.linux.dev>; Thu,  2 May 2024 13:50:33 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FAB9C8F3
+	for <ofono@lists.linux.dev>; Thu,  2 May 2024 14:00:33 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714657834; cv=none; b=NvBSBq3vORMqrRQooI9La2siOsJYNrdN/9B9ZcLXn5JhYIWKp3zA6xXJsVbWcsTmLz3fWXdYIhP2U4MOMTy/0wDfhrTKv3ikRLKtiHh32OAIC9fMP077/WgqrWn/8b9gzXFAGQhgeCiUPf4+cx0MQzC2oxC5dOSd2R/34M34ZEk=
+	t=1714658434; cv=none; b=DaEhL6EwhbLEgcH4laqAErP0me5hn+rmkCzxZxuhoHIwmpHCtuXxULAbmRx0/cZH9iLYzmqSyxdqnfdypRyJlXKjHpv7zznB/xb6wzGq3P+r696oT0KBCnL55UQsW5p3Ro5WyIFQ/HrteDcwt90u66kaCjMIZ14T+sMZFo08HR4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714657834; c=relaxed/simple;
-	bh=eKsBLlOnFMb8vF1C9wVRo4TVKXUf5RVPokuMWSmBBlM=;
+	s=arc-20240116; t=1714658434; c=relaxed/simple;
+	bh=mrcK9CqP+IuJeS1RSxSwhBpyUKZqSs8jcpljk1g2UiM=;
 	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=OyfXQhGtuZy0NCdanwiaWbWK0Kgd6qL0xiLx1go0Lq7a6xGnl8fpxqOS/rf67ic+7KiGYUx/2OzIGkgjwtz++052clSf5jFTT7x6s5LFp8M47HcCT+xfB0hAWVroqg3xnrtAlRX4DmmpfsxsaMOKVEgkNSYQvfm9Nb8pyI72nT0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LvX8XQ6S; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:To:Cc; b=iOj/DIZPXot0OuIfqe7Uzkk7pbn1ri7XM5PEUex2WFaJA3XWfy7Jwlsus6sBT9Hwhc+BEOknGM3wFcebGvBtcmVItRcpww/V3HeRbI5BQMuFgUxmcFqjxUzpF5r5UUV/MlMUks7hKPui0il5NDA8whZCGmhQnGlAQodj88y4Z7A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=r4NjJM7x; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LvX8XQ6S"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 90309C4AF14;
-	Thu,  2 May 2024 13:50:33 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="r4NjJM7x"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id BBA91C32789;
+	Thu,  2 May 2024 14:00:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714657833;
-	bh=eKsBLlOnFMb8vF1C9wVRo4TVKXUf5RVPokuMWSmBBlM=;
+	s=k20201202; t=1714658433;
+	bh=mrcK9CqP+IuJeS1RSxSwhBpyUKZqSs8jcpljk1g2UiM=;
 	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=LvX8XQ6Sq0a8fa+l45uB1KTKZKNYx+pIvPGBv9J5qOfzrYeMQjSMH+3Y3m5JpWiAK
-	 Cd1PW+RAvkoCso5mOvn4xVoBp2rCBAnW6fZAgiYJMqfBl/7RmNF9SyQRKgUqe6ibzy
-	 atQSHna/g9mIiO/FZ5g2jgLl6h80w4NIvzrdD2QVb4GceJRxtMQQedFanmFn5vjVfi
-	 M823KKK53MGyJnfxbELtbxq1JjIHMH1eB9I4QpFe3entzHt5rF1vOPbB85PDOa5l2/
-	 kzotAGqCAs783A5URaT2Js3gqs9TZNnMmlaB+95mXzjjN5Kw71HyEu+Kgkuov6ksKd
-	 U1M00xA2Hjoew==
+	b=r4NjJM7xPlZ7XkhTUcrcAj2YrFk3LL4xyStUVLW13imDq7UjNwNsCaoZUMqq1CjUr
+	 lEwehsxA4PUedSSsQ8xmac8nPAq5CxpWBHJoQpbeD6XDFHDZv+y23GBftBMLlA4tXS
+	 ZWB+8T5XbPRLK0+Og8PqjYkDDmgVvWIlGk9Yb1cAgluflqPsrW3vdGwP6KbWmbg++K
+	 MHhsj18hjN6S1fNgyeqdto3sjRZYt/g/ZlS1T3YmDiRjxA+4nWAft1eoIsuXFZUffA
+	 Ae08YAKYL9gwvr025iYG0zopOwFE8qZ2RaGOLzXkTc/+6OHPKYwV+wiRguOLAI8DfT
+	 YEA8h9Z5AfoNw==
 Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 7C823C4333C;
-	Thu,  2 May 2024 13:50:33 +0000 (UTC)
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id AFA29C4333C;
+	Thu,  2 May 2024 14:00:33 +0000 (UTC)
 Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
@@ -37,44 +37,49 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH v2 1/6] qmi: gprs: register to NAS indications earlier
+Subject: Re: [PATCH 01/10] sim7100: simplify serial device opening
 From: patchwork-bot+ofono@kernel.org
 Message-Id: 
- <171465783350.10698.11672890778916453878.git-patchwork-notify@kernel.org>
-Date: Thu, 02 May 2024 13:50:33 +0000
-References: <20240501232144.14025-1-denkenz@gmail.com>
-In-Reply-To: <20240501232144.14025-1-denkenz@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>
-Cc: ofono@lists.linux.dev
+ <171465843371.15983.12515867581917021658.git-patchwork-notify@kernel.org>
+Date: Thu, 02 May 2024 14:00:33 +0000
+References: <20240430115234.180185-1-martin@geanix.com>
+In-Reply-To: <20240430115234.180185-1-martin@geanix.com>
+To: =?utf-8?q?Martin_Hundeb=C3=B8ll_=3Cmartin=40geanix=2Ecom=3E?=@ci.codeaurora.org
+Cc: ofono@lists.linux.dev, m.lyubimov@aqsi.ru
 
 Hello:
 
 This series was applied to ofono.git (master)
 by Denis Kenzior <denkenz@gmail.com>:
 
-On Wed,  1 May 2024 18:21:28 -0500 you wrote:
-> We can register to NAS indications much earlier, as soon as the NAS
-> service handle is created.  Since the handle is now a 'lightweight'
-> handle, all service registrations are automatically unregistered when
-> the handle is destroyed.  There's no need to track the registered
-> indication id and to remove it separately.
+On Tue, 30 Apr 2024 13:52:24 +0200 you wrote:
+> Replace the g_at_{tty,syntax,chat} dance with a single call to
+> g_at_util_open_device().
 > ---
->  drivers/qmimodem/gprs.c | 14 ++------------
->  1 file changed, 2 insertions(+), 12 deletions(-)
+>  plugins/sim7100.c | 31 +++++--------------------------
+>  1 file changed, 5 insertions(+), 26 deletions(-)
 
 Here is the summary with links:
-  - [v2,1/6] qmi: gprs: register to NAS indications earlier
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=d61fe2752b1f
-  - [v2,2/6] qmi: gprs: Split out GET_DEFAULT_PROFILE_NUMBER request
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=5c6fc832ce25
-  - [v2,3/6] qmi: gprs: register and listen to event reports
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=9a0deedcdefb
-  - [v2,4/6] qmi: gprs: Register for other notifications
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=92a122de4a05
-  - [v2,5/6] qmi: wds: add utility to parse Data System Status tlv
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=e075175baff2
-  - [v2,6/6] qmi: gprs: Obtain LTE attach parameters after indication
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=c12a6251b1fb
+  - [01/10] sim7100: simplify serial device opening
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4e161031a92b
+  - [02/10] sim7100: wait for modem to start while enabling
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4b98bea96881
+  - [03/10] sim7100: query device model during enable
+    (no matching commit)
+  - [04/10] sim7100: implement set_online()
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=960aefa86ca1
+  - [05/10] sim7100: fix going offline for A76XX modems
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=cbafc2eaf6de
+  - [06/10] atmodem: introduce SIMCom A76XX vendor quirks
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4ef41eecf675
+  - [07/10] sim7100: enable A76XX simcom vendor quirks for relevant atoms
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=734689fde230
+  - [08/10] udevng: register support for SIMCom A76XX USB serial modem
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=9631b1208561
+  - [09/10] Makefile: enable build of simcommodem radiosettings
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=1957fab23f4b
+  - [10/10] sim7100: create radio-settings atom for A76XX modems
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=2f94a6c1dc42
 
 You are awesome, thank you!
 -- 
