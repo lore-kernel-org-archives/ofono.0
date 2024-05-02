@@ -1,89 +1,103 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f49.google.com (mail-ot1-f49.google.com [209.85.210.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FAB9C8F3
-	for <ofono@lists.linux.dev>; Thu,  2 May 2024 14:00:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C74B13C684
+	for <ofono@lists.linux.dev>; Thu,  2 May 2024 14:04:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714658434; cv=none; b=DaEhL6EwhbLEgcH4laqAErP0me5hn+rmkCzxZxuhoHIwmpHCtuXxULAbmRx0/cZH9iLYzmqSyxdqnfdypRyJlXKjHpv7zznB/xb6wzGq3P+r696oT0KBCnL55UQsW5p3Ro5WyIFQ/HrteDcwt90u66kaCjMIZ14T+sMZFo08HR4=
+	t=1714658654; cv=none; b=UdCgLa5rjIi5z2WTtT2ncWF82+VVzXaM2X4XLAXaaZu0PwtAj7X4wyFx3VagcMjHxeTsEWUuUej3ER8qBW9edcFjwgr5127QDXLZU4hH26CpeIm8HfZB5dpW2UgEJ7ID/tSlPpXEclYDdD+yr5239ZL/jW0AUX0IJVoZhv8Dwd4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714658434; c=relaxed/simple;
-	bh=mrcK9CqP+IuJeS1RSxSwhBpyUKZqSs8jcpljk1g2UiM=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=iOj/DIZPXot0OuIfqe7Uzkk7pbn1ri7XM5PEUex2WFaJA3XWfy7Jwlsus6sBT9Hwhc+BEOknGM3wFcebGvBtcmVItRcpww/V3HeRbI5BQMuFgUxmcFqjxUzpF5r5UUV/MlMUks7hKPui0il5NDA8whZCGmhQnGlAQodj88y4Z7A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=r4NjJM7x; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1714658654; c=relaxed/simple;
+	bh=RHFHQlvAwIgAM4qeVCysOZOyyAwiZ0k046U1JqopR/U=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=J259CBdZifUQFsiV60oPX/1lTeYVxRZHQnBo4J5+I4QL/KjW6a4/SXHOO567JYRgYjzNyKKd884vKoozXowzFM4qFcDn//1Eyk9rdnTl8Qj861Zf0VZiYotY+E/qxk/F9s6ciXaiF4a7S/pDFYQqGAzrasY1Gc6/OzTyTI9ZMgA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=BZO3mzf+; arc=none smtp.client-ip=209.85.210.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="r4NjJM7x"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id BBA91C32789;
-	Thu,  2 May 2024 14:00:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714658433;
-	bh=mrcK9CqP+IuJeS1RSxSwhBpyUKZqSs8jcpljk1g2UiM=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=r4NjJM7xPlZ7XkhTUcrcAj2YrFk3LL4xyStUVLW13imDq7UjNwNsCaoZUMqq1CjUr
-	 lEwehsxA4PUedSSsQ8xmac8nPAq5CxpWBHJoQpbeD6XDFHDZv+y23GBftBMLlA4tXS
-	 ZWB+8T5XbPRLK0+Og8PqjYkDDmgVvWIlGk9Yb1cAgluflqPsrW3vdGwP6KbWmbg++K
-	 MHhsj18hjN6S1fNgyeqdto3sjRZYt/g/ZlS1T3YmDiRjxA+4nWAft1eoIsuXFZUffA
-	 Ae08YAKYL9gwvr025iYG0zopOwFE8qZ2RaGOLzXkTc/+6OHPKYwV+wiRguOLAI8DfT
-	 YEA8h9Z5AfoNw==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id AFA29C4333C;
-	Thu,  2 May 2024 14:00:33 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BZO3mzf+"
+Received: by mail-ot1-f49.google.com with SMTP id 46e09a7af769-6ee3231d95eso980791a34.0
+        for <ofono@lists.linux.dev>; Thu, 02 May 2024 07:04:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1714658652; x=1715263452; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=EVfVN7Ums45n2UwvX7Pgn0CYnceXp5afryOAAERkWlo=;
+        b=BZO3mzf+qpOLPgrlGQf+v297P2EZZ5+QMl1z6Gt55n53y4UqrBzOz+wBYoyvsze/VB
+         EX81gXmtwQEKfqVCjuru5fseqR7NmcWbh8s1oP2sD9XbtTKRWqHqL9Ag7hKC4lPv15o6
+         jfFv4YAtf0/KAzpTm/F0l/UpqjUQD8EP4Q4f+Zm8HiVo87AFq4H12Uk7hWmZ7JWz3e+T
+         Xh5lnP3Fx3zVTmNWrhzYdO3DOpwmyfHvwYeq+l6hZhUrHJ2bbA06jvjw1SS6xQOEJGbH
+         NQbRu4bDFI3bPNIDpadxMdPQYT4UY2tL82t2ozSmt9+rKr+bears8zNRmQlvQbE53bJY
+         7iVg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714658652; x=1715263452;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=EVfVN7Ums45n2UwvX7Pgn0CYnceXp5afryOAAERkWlo=;
+        b=ZWpHZI6d9qkXwjFA7dj41Hzp0wciPPAv+4ecIcgIqto+ALT7e2JHR6WoZkRzl8rTJe
+         SKo1cOA3CaIFeu92PZPfSo28aIB6QwSnIiccy7FR1IcrYVNaAEhusL0Ua9tFceUY0MoR
+         4pQYPM80Uyqci6n17xBxJBwfrP99tqs6B4IlOf9kNSZbOIOY8tjCF6pj72Lpnm2/THR+
+         Azq1tyv+vNRP8HL2UZ7dvehyfDmA7G9t4a6zsPRoJMe6uo1N2lOyVsb0dA8mudmjsfB6
+         El2FAtAj5ewSsojcN5S8TdpmhXfKRNZIicX4u1wMbrOb4OFfnF2gEAsxaBinrPqBKUMe
+         DQhQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXHE9kIRgqscY3jvKkYlEtDx6AqQnAFr3VCtO7gbuKKAQjgTCjytaIcLDnVOb+Id1ts5cjL+0HVD53aWXtaivwcIjdM5QI=
+X-Gm-Message-State: AOJu0YyMGk6+EgG8S1N4VcASFCrWUd/y1+TSyR92UHzJ1PjQ6Vzr352I
+	x7pB5cIWIhKnpm4vbAn3vUdDGgTWcLMHZQ0+3gRwg/DWnj2rg9enCvMF2A==
+X-Google-Smtp-Source: AGHT+IFIfEc0MBPMTiOHiO0yoRxoajEYCf261qcCmjZaWc6uajMa90GbFC2fH1yEQQ39Mc9syni7VA==
+X-Received: by 2002:a9d:674c:0:b0:6ef:881b:82e5 with SMTP id w12-20020a9d674c000000b006ef881b82e5mr1093819otm.15.1714658651879;
+        Thu, 02 May 2024 07:04:11 -0700 (PDT)
+Received: from [192.168.1.20] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id cs11-20020a056830678b00b006ef8c06a8d9sm198861otb.34.2024.05.02.07.04.11
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 02 May 2024 07:04:11 -0700 (PDT)
+Message-ID: <1dff212d-a996-4782-841f-9811a75b7a00@gmail.com>
+Date: Thu, 2 May 2024 09:04:10 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH 01/10] sim7100: simplify serial device opening
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <171465843371.15983.12515867581917021658.git-patchwork-notify@kernel.org>
-Date: Thu, 02 May 2024 14:00:33 +0000
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 03/10] sim7100: query device model during enable
+To: =?UTF-8?Q?Martin_Hundeb=C3=B8ll?= <martin@geanix.com>,
+ ofono@lists.linux.dev
+Cc: MaxLyubimov <m.lyubimov@aqsi.ru>
 References: <20240430115234.180185-1-martin@geanix.com>
-In-Reply-To: <20240430115234.180185-1-martin@geanix.com>
-To: =?utf-8?q?Martin_Hundeb=C3=B8ll_=3Cmartin=40geanix=2Ecom=3E?=@ci.codeaurora.org
-Cc: ofono@lists.linux.dev, m.lyubimov@aqsi.ru
+ <20240430115234.180185-3-martin@geanix.com>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20240430115234.180185-3-martin@geanix.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-Hello:
+Hi Martin,
 
-This series was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Tue, 30 Apr 2024 13:52:24 +0200 you wrote:
-> Replace the g_at_{tty,syntax,chat} dance with a single call to
-> g_at_util_open_device().
+On 4/30/24 6:52 AM, Martin Hundebøll wrote:
+> Adding support for more simcom modems in the sim7100 driver requires
+> certain variants handlings based on the present modem model.
+> 
+> Default to an "unknown" variant to keep the existing behaviour, and
+> introduce the A76XX model to use when later adding support for the A7672
+> vartiant.
 > ---
->  plugins/sim7100.c | 31 +++++--------------------------
->  1 file changed, 5 insertions(+), 26 deletions(-)
+>   plugins/sim7100.c | 43 ++++++++++++++++++++++++++++++++++++++++---
+>   1 file changed, 40 insertions(+), 3 deletions(-)
+> 
 
-Here is the summary with links:
-  - [01/10] sim7100: simplify serial device opening
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4e161031a92b
-  - [02/10] sim7100: wait for modem to start while enabling
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4b98bea96881
-  - [03/10] sim7100: query device model during enable
-    (no matching commit)
-  - [04/10] sim7100: implement set_online()
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=960aefa86ca1
-  - [05/10] sim7100: fix going offline for A76XX modems
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=cbafc2eaf6de
-  - [06/10] atmodem: introduce SIMCom A76XX vendor quirks
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4ef41eecf675
-  - [07/10] sim7100: enable A76XX simcom vendor quirks for relevant atoms
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=734689fde230
-  - [08/10] udevng: register support for SIMCom A76XX USB serial modem
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=9631b1208561
-  - [09/10] Makefile: enable build of simcommodem radiosettings
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=1957fab23f4b
-  - [10/10] sim7100: create radio-settings atom for A76XX modems
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=2f94a6c1dc42
+Nice series!  Thanks you.  This patch was applied as well:
 
-You are awesome, thank you!
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
+> +
+> +	if (!ok) {
+> +		ofono_error("%s: failed to query model", ofono_modem_get_path(modem));
 
+I amended here to avoid > 80 char line.
 
+> +		ofono_modem_set_powered(modem, FALSE);
+> +		return;
+> +	}
+
+Regards,
+-Denis
