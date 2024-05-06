@@ -1,62 +1,62 @@
-Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
+Received: from mail-ot1-f54.google.com (mail-ot1-f54.google.com [209.85.210.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C66315B54F
-	for <ofono@lists.linux.dev>; Mon,  6 May 2024 20:40:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F86515B545
+	for <ofono@lists.linux.dev>; Mon,  6 May 2024 20:40:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715028001; cv=none; b=mWQhsb9nsiJOVAoVjoXDcoNm/9qSl7Cy6w+NwxDJfoU3ovATGsiQ5naiqxxT6fbR1tfqydnmGqx3B3yQrLBtC6qsCoPOhRM2NgQAyoagA+GnqHZz4plbcTYf/5K0IWFhhBo76IEXZiNRiJhnG3vf/xZtaFhJmnAqaOwSE7VjiDY=
+	t=1715028002; cv=none; b=ID0m5ouJBnpBEs1ym+EMYgLRtLogiwec6ryj6LU8++PmJgYQx6zN6lAH6rhSoC9SJgDU3LUxSbyelKpgEq3muD1lP1BYArzN+KOLz1VqLgAm5zZIv4qLU552ueUwf+UcBoMU8RA3GOq9fU/0kUN17qiV54+h2XPX9aMQ7DGdstE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715028001; c=relaxed/simple;
-	bh=Tt1aSqDTUv5Y2PSAfgtLpOu+g3b/5j+as2ygg+5YTek=;
+	s=arc-20240116; t=1715028002; c=relaxed/simple;
+	bh=eorzlpp88bYIN8lNEORiwkTjtn+qAQ/4gWi26O2huaI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XqMOGW0O7JiXq5G6wxV1ZKcWzgbMwSU+HVeFxpfFdRKr8zz5c6LlQIJ1QMtL+fkegaIr10L9PjB1p74djns9tqDQ8Dm3N97GZgqHCH2hI6CKFBOy86NTk/F3xvAm6TxIT1Yn//VXxJ9lPgICRpdDK4eQUZXICBQFB6qutNs25qI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UiyJFfgN; arc=none smtp.client-ip=209.85.160.43
+	 MIME-Version; b=n6PTM02Y11zCMIwsNeH9KdIdgruUZBve2zNqhh9GewzYHxZfCUX9Y9Yguxl8sdLudHzSF4RRd7BWDeQh2Yvf/89wUmwTWK9DILbRff7aVUc/4oYZReGDd4VuJoZMbaeKXnk4GRwm/WpVJgeMmXF7EgvOQhozxdXpG0esDxxyVzs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DHJYOzhq; arc=none smtp.client-ip=209.85.210.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UiyJFfgN"
-Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-23eff8c9a1dso1380571fac.0
-        for <ofono@lists.linux.dev>; Mon, 06 May 2024 13:40:00 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DHJYOzhq"
+Received: by mail-ot1-f54.google.com with SMTP id 46e09a7af769-6f0378cd80bso1330193a34.3
+        for <ofono@lists.linux.dev>; Mon, 06 May 2024 13:40:01 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1715027999; x=1715632799; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1715028000; x=1715632800; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=W4hi2yMVCMFpCThc6x9WbhJtpmYDPcwRS5/mvQxE2ds=;
-        b=UiyJFfgNNisYWIAMKKeJoiwr+il4M91KJSS6fQ7dm/G+alGT3ttT5gvkUp5IHoJMz2
-         3ZequonZtVohe1dmBFLdXgo8OzLVUnSARlTfCQRMLQA+a7aCa4lJQlAX03VCRXd0Ip6V
-         pHxDHL4tcGA8Zh1+2d6/54otzt9V7mVRKW9gjjzw7SN3yzNK88gYILrcyS5EDeldyFhy
-         AV4+o0gAwlVTX4UNYns6biQgdSrk7HHaDZy9rTavj4pK8I7Aj7ykyLRme8zG7xvrKR6k
-         Hw+4KIQnVtRxrXwhIMIQefkyERepoMz8JlHwhi7e2GnIIcUS7r2DPjEWnIsS7PIfSyKm
-         wsxA==
+        bh=TrdHPzhES3q+09uw4lDBYE0WuGrSt8P5mtr9rFvlwJ8=;
+        b=DHJYOzhqKylYWoaAX++DlYUVMTJQgzdNQZzQRIT+09EdhPhsvlwbG2Umq5kza0spRg
+         xJe3L1yDiuCgP74MOlSR1O2dxsOpb7taEfPvQJ2Q20bWINKkeN2uVTDziWLGKdgVTnZ/
+         vmRKB1I3EGzqCBP33dot4jkQG1qbRtewNN6p8zqciv+eJhWSUQVL5+1C0F1X6fYurrnA
+         8OlO6O1TInIusLBY+jbCFlHOWFuWSULCWxu8bak/ayoT1YzfS5pj6ieYlyQ/4NwtMjwX
+         YnzsrJR+WGMM9UMs38z/mYhTBQojvnvH8abRebml0vjqMf0fcbT7+WRQQCwn603mPA72
+         h0Mw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715027999; x=1715632799;
+        d=1e100.net; s=20230601; t=1715028000; x=1715632800;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=W4hi2yMVCMFpCThc6x9WbhJtpmYDPcwRS5/mvQxE2ds=;
-        b=LEBBpNd5t/ZF1zC5iEwEBDdrd7Q8IPhuwcRBXwI1JejTN+ShkuN/vgHXsyEBD1/s/8
-         DtPhTkyRz70BxyrXSnQEIxEWeE1lsN5ZCe15fL3nmUKPSZ/ZxhZUzw6vlDfCzQ68gqXf
-         PgoUIJB4s5WkgDQ2uFOci2rhneBj6d71Wn4pm3Lbzj2iPCyVRBpwhWub848KFOxVif0d
-         WZipTAEv13iBx/4GYJvEGDiGiuwz8chf9+PQgJVsnGxEt3S1KATTCAQDjdUJ8CsD+/kc
-         YCT4kOWPNBcWx403BnM8fatjbda9UaNp5pd0LToHhqoJDyvQsiSVV0crI/ZN/4LedX5z
-         AWtA==
-X-Gm-Message-State: AOJu0YyXsKX9ijo+GcByk0VqmE3umUHoy+JzeGLsEfNVegk7OOHpl8Mn
-	PCqmUZ6GaBxXNJowB6XrfO6/emaN+XuzJ935HRZa+bbHScL1Huvy2s7xtw==
-X-Google-Smtp-Source: AGHT+IFqtQXzBbOaU+7R5KrYPY1qFDRw5tbGuIhaa94MKzLrIrbmejQ2T2a/ef1q0a2tygwQyK8yJQ==
-X-Received: by 2002:a05:6870:8326:b0:23d:417c:675 with SMTP id p38-20020a056870832600b0023d417c0675mr15210719oae.41.1715027999405;
-        Mon, 06 May 2024 13:39:59 -0700 (PDT)
+        bh=TrdHPzhES3q+09uw4lDBYE0WuGrSt8P5mtr9rFvlwJ8=;
+        b=jmzxmk2EBuwQd1NkkIVpwoSvA4LQ5/E06HbzvSwSCXVlR6A7CHSTtzKi8yupF1K76U
+         WIoNkzMaUVs6QdKHXrrjoHTicOEXLkQMmWllgpyxJ+gRDAojjwpTK+9H0F1Ow3Z8dndJ
+         ezmoiBgGOmmiqUEzmGNAkVxl02OHF+9HImbzOpuR6UjzMu7STjN3PW4AB9XpM4QKjhfO
+         0lKAubQ5QlNvm6rkdyTzSNAlXTPgW4NYrUOUIN5VV2jyE0AQ2Y1XFALvPQQD24nqNGX7
+         vGUPIkOtbqXD4oZoBal+z89osrPOfo1AVp6ge5b3zxJ2McxjNKhekjV+o7CiHvTmViy9
+         h4Pw==
+X-Gm-Message-State: AOJu0YzncPFukV/Kr6yV636CVU19ToyjjF936V+s32/lOgIqJZTDAq4u
+	szXmgK0KoXK688WSjogRsDOOqPElO9tK4DqwZyLyOh4B3jesXILibjfzHw==
+X-Google-Smtp-Source: AGHT+IGgupCU3VL/2I6iAi6I83VrfaZtNX4BLya+u4T2z9Sx4zQamsN/VeWF8gs71zzSIKcf09ThFg==
+X-Received: by 2002:a05:6870:818b:b0:23f:eea9:ae35 with SMTP id k11-20020a056870818b00b0023feea9ae35mr2200516oae.41.1715028000068;
+        Mon, 06 May 2024 13:40:00 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id gk12-20020a0568703c0c00b0023bcaacf426sm2107715oab.9.2024.05.06.13.39.58
+        by smtp.gmail.com with ESMTPSA id gk12-20020a0568703c0c00b0023bcaacf426sm2107715oab.9.2024.05.06.13.39.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Mon, 06 May 2024 13:39:59 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 7/8] qmi: gprs-context: Parse IPv6 context settings
-Date: Mon,  6 May 2024 15:39:29 -0500
-Message-ID: <20240506203952.55806-7-denkenz@gmail.com>
+Subject: [PATCH 8/8] qmi: gprs-context: Obtain initial bearer IP support
+Date: Mon,  6 May 2024 15:39:30 -0500
+Message-ID: <20240506203952.55806-8-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240506203952.55806-1-denkenz@gmail.com>
 References: <20240506203952.55806-1-denkenz@gmail.com>
@@ -68,89 +68,127 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Similarly to get_settings_ipv4, add get_settings_ipv6 function which
-will parse the relevant TLVs present when GET_SETTINGS response
-indicates IPv6 family is in use.
+.read_settings is used by the core to setup the network interface for
+the initial bearer.  This initial bearer is typically an internet
+context, but can be something else, depending on the carrier.  The
+initial bearer might also be configured by the network itself, and can
+be IPv4, IPv6 or dual stack.  Have the gprs-context driver query the
+initial attach parameters to obtain this information, and only then
+invoke the WDS Start Network command.
+
+Supporting Dual Stack contexts requires multiple WDS handles to be
+allocated, with each handle issuing a Start Network request with a
+different IP family preference.  This is currently not supported by the
+underlying QMUX/QRTR transport.  For now, choose invoke Start Network
+with IPv4 family preference for IPV4 and Dual Stack contexts, and IPv6
+famiily preference for IPv6 contexts.
 ---
- drivers/qmimodem/gprs-context.c | 58 +++++++++++++++++++++++++++++++++
- 1 file changed, 58 insertions(+)
+ drivers/qmimodem/gprs-context.c | 64 ++++++++++++++++++++++++++++-----
+ drivers/qmimodem/wds.h          |  6 ++++
+ 2 files changed, 61 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index 99d42e7b5e1f..8a40f91d7871 100644
+index 8a40f91d7871..f133eb8682c2 100644
 --- a/drivers/qmimodem/gprs-context.c
 +++ b/drivers/qmimodem/gprs-context.c
-@@ -78,6 +78,63 @@ static void pkt_status_notify(struct qmi_result *result, void *user_data)
- 	}
+@@ -282,6 +282,55 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, cbd->data);
  }
  
-+static void get_settings_ipv6(struct ofono_gprs_context *gc,
-+					struct qmi_result *result)
++static void get_lte_attach_param_cb(struct qmi_result *result, void *user_data)
 +{
-+	static const uint8_t RESULT_IP_ADDRESS = 0x25;
-+	static const uint8_t RESULT_GATEWAY = 0x26;
-+	static const uint8_t RESULT_PRIMARY_DNS = 0x27;
-+	static const uint8_t RESULT_SECONDARY_DNS = 0x28;
-+	static const uint8_t RESULT_MTU = 0x29;
-+	const char *dns[3] = { NULL, NULL, NULL };
-+	char dns1str[INET6_ADDRSTRLEN];
-+	char dns2str[INET6_ADDRSTRLEN];
-+	char ipv6str[INET6_ADDRSTRLEN];
-+	const void *tlv;
-+	uint16_t len;
-+	uint32_t mtu;
++	static const uint8_t RESULT_IP_SUPPORT_TYPE = 0x11;
++	struct cb_data *cbd = user_data;
++	ofono_gprs_context_cb_t cb = cbd->cb;
++	struct ofono_gprs_context *gc = cbd->user;
++	struct gprs_context_data *data = ofono_gprs_context_get_data(gc);
++	uint16_t error;
++	uint8_t iptype;
++	struct qmi_param *param;
++	uint8_t ip_family;
 +
-+	tlv = qmi_result_get(result, RESULT_IP_ADDRESS, &len);
-+	if (tlv && len == sizeof(struct in6_addr) + 1) {
-+		const struct in6_addr *ip = tlv;
-+		uint8_t prefix_len = l_get_u8(ip + 1);
++	DBG("");
 +
-+		inet_ntop(AF_INET6, ip, ipv6str, sizeof(ipv6str));
-+		ofono_gprs_context_set_ipv6_address(gc, ipv6str);
-+		ofono_gprs_context_set_ipv6_prefix_length(gc, prefix_len);
++	if (qmi_result_set_error(result, &error))
++		goto error;
++
++	if (!qmi_result_get_uint8(result, RESULT_IP_SUPPORT_TYPE, &iptype))
++		goto error;
++
++	switch (iptype) {
++	case QMI_WDS_IP_SUPPORT_IPV4:
++		ip_family = QMI_WDS_IP_FAMILY_IPV4;
++		break;
++	case QMI_WDS_IP_SUPPORT_IPV6:
++		ip_family = QMI_WDS_IP_FAMILY_IPV6;
++		break;
++	case QMI_WDS_IP_SUPPORT_IPV4V6:
++		ip_family = QMI_WDS_IP_FAMILY_IPV4;
++		break;
++	default:
++		goto error;
 +	}
 +
-+	tlv = qmi_result_get(result, RESULT_GATEWAY, &len);
-+	if (tlv && len == sizeof(struct in6_addr) + 1) {
-+		const struct in6_addr *gw = tlv;
++	param = qmi_param_new_uint8(QMI_WDS_PARAM_IP_FAMILY, ip_family);
 +
-+		inet_ntop(AF_INET6, gw, ipv6str, sizeof(ipv6str));
-+		ofono_gprs_context_set_ipv6_gateway(gc, ipv6str);
++	if (qmi_service_send(data->wds, QMI_WDS_START_NETWORK, param,
++					start_net_cb, cbd, cb_data_unref) > 0) {
++		cb_data_ref(cbd);
++		return;
 +	}
 +
-+	tlv = qmi_result_get(result, RESULT_PRIMARY_DNS, &len);
-+	if (tlv && len == sizeof(struct in6_addr) + 1) {
-+		const struct in6_addr *dns1 = tlv;
++	qmi_param_free(param);
 +
-+		inet_ntop(AF_INET6, dns1, dns1str, sizeof(dns1str));
-+		dns[0] = dns1str;
-+	}
-+
-+	tlv = qmi_result_get(result, RESULT_SECONDARY_DNS, &len);
-+	if (tlv && len == sizeof(struct in6_addr) + 1) {
-+		const struct in6_addr *dns2 = tlv;
-+
-+		inet_ntop(AF_INET6, dns2, dns2str, sizeof(dns2str));
-+		dns[0] = dns2str;
-+	}
-+
-+	if (dns[0])
-+		ofono_gprs_context_set_ipv6_dns_servers(gc, dns);
-+
-+	if (qmi_result_get_uint32(result, RESULT_MTU, &mtu))
-+		DBG("MTU: %u", mtu);
++error:
++	data->active_context = 0;
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
 +}
 +
- static void get_settings_ipv4(struct ofono_gprs_context *gc,
- 					struct qmi_result *result)
- {
-@@ -164,6 +221,7 @@ static void get_settings_cb(struct qmi_result *result, void *user_data)
- 		get_settings_ipv4(gc, result);
- 		break;
- 	case QMI_WDS_IP_FAMILY_IPV6:
-+		get_settings_ipv6(gc, result);
- 		break;
- 	default:
- 		break;
+ /*
+  * This function gets called for "automatic" contexts, those which are
+  * not activated via activate_primary.  For these, we will still need
+@@ -299,18 +348,15 @@ static void qmi_gprs_read_settings(struct ofono_gprs_context* gc,
+ 
+ 	DBG("cid %u", cid);
+ 
+-	data->active_context = cid;
+-
+-	cbd->user = gc;
+-
+-	if (qmi_service_send(data->wds, QMI_WDS_START_NETWORK, NULL,
+-					start_net_cb, cbd, cb_data_unref) > 0)
++	if (qmi_service_send(data->wds, QMI_WDS_GET_LTE_ATTACH_PARAMETERS,
++				NULL, get_lte_attach_param_cb, cbd,
++				cb_data_unref) > 0) {
++		data->active_context = cid;
++		cbd->user = gc;
+ 		return;
+-
+-	data->active_context = 0;
++	}
+ 
+ 	CALLBACK_WITH_FAILURE(cb, cbd->data);
+-
+ 	l_free(cbd);
+ }
+ 
+diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
+index 026402e7a3f6..a308767177a3 100644
+--- a/drivers/qmimodem/wds.h
++++ b/drivers/qmimodem/wds.h
+@@ -46,6 +46,12 @@ enum qmi_wds_pdp_type {
+ 	QMI_WDS_PDP_TYPE_IPV4V6		= 0x03,
+ };
+ 
++enum qmi_wds_ip_support {
++	QMI_WDS_IP_SUPPORT_IPV4		= 0x00,
++	QMI_WDS_IP_SUPPORT_IPV6		= 0x01,
++	QMI_WDS_IP_SUPPORT_IPV4V6	= 0x02,
++};
++
+ enum qmi_wds_ip_family {
+ 	QMI_WDS_IP_FAMILY_UNKNOWN = 0,
+ 	QMI_WDS_IP_FAMILY_IPV4 = 4,
 -- 
 2.45.0
 
