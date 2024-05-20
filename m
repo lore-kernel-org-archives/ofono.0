@@ -1,62 +1,62 @@
-Received: from mail-oo1-f49.google.com (mail-oo1-f49.google.com [209.85.161.49])
+Received: from mail-oo1-f48.google.com (mail-oo1-f48.google.com [209.85.161.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0663379EF
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14F901E50B
 	for <ofono@lists.linux.dev>; Mon, 20 May 2024 19:17:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.49
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716232648; cv=none; b=VKlUqm/wTdjZ3e2PvkeKbZzawzgCeZmdj+p/nOPNI8HTUJBqMnfD2jkApyKbvcTHL2i3OuXY9Vp9gwo3IX6tkqIvI6GN1TjaeL3cyCQZo0vJlgnMEMMBxkcO/BK9j6HjUGA2wNyJOvphZkMoJJ1BXPShhTGz1u5pPA8hiWUWqr4=
+	t=1716232648; cv=none; b=llxjyN8878A3sjYnUt5NO00B4haLE0wf8fFoV7N1qBkp3pL/igCxD7WgxCLA8y8RjzYddR6GoG/BFmSI1h+IlwEQIN6RxYbdAOPcFQkidM8FslkjT/gYYdiQDZSdzAMILGFOjkRBE+p3DxFpurF86TSDznRhMkrZnk8qAb5/u2Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1716232648; c=relaxed/simple;
-	bh=nLI/3ne0HcQ0M0BVvOTtmEUYyrUtzRR7TFWrOW7HqiU=;
+	bh=Ni6GPyNMc4m96IJar6T6tiDgXMyaq9IfZM4JRv2nAhA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=fhQ7b5wV5Q/ZmCJ5JggXnmRtfKHcHo1fucbT6qrScs29v7+R1/uOMy6bUypviMkr6YwWhgbtD5Ztvxc7ESR8/IxTmxl5FSsMcO2OlzQu1FCQZ+QkHKKcuDQdhafsY95GIXyZ3O45L5RR+QusdZQ7u5NlGvqTxFueANuh2AH+nto=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QQ/P+X/z; arc=none smtp.client-ip=209.85.161.49
+	 MIME-Version; b=Rq2fVGLFHPcwAwuy1SdUbWz6xfuTC8R3paGlVMdB7JUJfGok5K/5WeAK7j7qLqCjWWy3h+tZfFsokxNTOyVq9LM5oN8/QWaufbeDqePcnmX+rMgmC7PHfALgqtTF6IL+Gb4Rj3mFUW1s7mE7DKmNDwhbtwZuDsc/hm3S2GIrLag=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Y/5befwU; arc=none smtp.client-ip=209.85.161.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QQ/P+X/z"
-Received: by mail-oo1-f49.google.com with SMTP id 006d021491bc7-5b27d9fe710so1337351eaf.3
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Y/5befwU"
+Received: by mail-oo1-f48.google.com with SMTP id 006d021491bc7-5aa1bf6cb40so3429911eaf.1
         for <ofono@lists.linux.dev>; Mon, 20 May 2024 12:17:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716232645; x=1716837445; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1716232646; x=1716837446; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=lA/q1f76VnCMyqUSqAslTbWfXLOcxzYPPzsEj3FbJJU=;
-        b=QQ/P+X/zxUacujyHjezEkmUEG2q22im0xRcHYrrtgRl7tslTKlP54Jj9QuDVb2gsEM
-         LIph4oyUjB4GXJk00/k5nUuhcYjWCtIVnBZY5ZaYw6P2Bdg9oa6GWNFj6WQYEFyUrsU4
-         f4yx7LHHDopSMEiB7m0f018QXd25g0JUA+X8aHpe1WrwGMob0gX/xfk9OcQOy0EEV6FW
-         HaDVpILrN8y+5l8l/C7VZURMe+DUHYM84lbPEobsP+0Ey07IiFtQXFq+cHVV73SjbsDm
-         Rw1+c35n7mi57m9nbgTlx8taA9uozPCIGBZoiWgU3DcZsLHUEix49xJEYl6brsIYxN3l
-         kmRg==
+        bh=IiSbTm8aXaamR9RlNUw666aijxdt1fEiRyX+ox5bVt0=;
+        b=Y/5befwU6KsiSiPKQhe6DXTmHKwTtaL5tQhlaKYo6kp3Mqh++7NvIdkP453NA6oQde
+         VhNLksZCT0bUvMp2aqazmlBJAb1ATOwBXRM1+jGmA5NGdpRM0Ma+mlN3OsdqbUT77q7V
+         L4d3dRoqd/VWLMFZurvITdomPS545LJ4zjcUkRC2a3VWTf+j54qGouf3j8ElS04t7E0/
+         r2dMcNCWEVzo107nfeLZqe9sIKKKNjQjd61ctDbI5692YAqFwccy5g0aZgs7v/ByJx54
+         IJX17AF9tKDb59PL67al8nhn2MjBjTsx39RxwxIW8hcl3j8wRwHWVaZLdjsvkoYKQXvh
+         8Ngw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716232645; x=1716837445;
+        d=1e100.net; s=20230601; t=1716232646; x=1716837446;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=lA/q1f76VnCMyqUSqAslTbWfXLOcxzYPPzsEj3FbJJU=;
-        b=AB/g9h9LoxDyvhhzXOuF9E6vzR+QwohMUOfIMMJmOIeOOi/MswXI0Q1jJIgH/5GP1T
-         VVYA0CNiYZvS2CRo4tZfheRN+PNCaeqA6ohx9n63tJ6JSONdwMFsxjWW0L25Rc+qtEOw
-         WXdaJnEOTRiKdjHqYwBXT770ODBCExudKtFX/6OShW3shhgvWHQEwy43Y6TW/+yiz6hx
-         /ZFKmllaPBAwbtdcmUX2CiIcjcv7La3wLNyNGrR8oglX7l21gRh+FQZBY4wzRyrnIVIY
-         sZlRiGp7+/uwupwFj5oUsm9Awe8jBvtUlJeBCe/q6hsV+IQiuFjqxBW4X1TuyB70fq/K
-         Xxtw==
-X-Gm-Message-State: AOJu0YzqeTRSWb+YfOveWVn/LrRJyGX+eaHmTzdCSauEgwNCy3xKmdCM
-	2yhrT/Y+EJz3VyXPiRWwbNdnB5lyq08bQNHMK1IL3QNOt98so+g3htpNJw==
-X-Google-Smtp-Source: AGHT+IEua2DoF4NeX7YE6yfpXapdW+QZV5r57YxnqZXnZnZ4R35tC83Vov3DOclwqcHoFTx6mnKHEw==
-X-Received: by 2002:a4a:55d2:0:b0:5b1:bf59:7ac0 with SMTP id 006d021491bc7-5b281a50b4amr31874099eaf.9.1716232645461;
-        Mon, 20 May 2024 12:17:25 -0700 (PDT)
+        bh=IiSbTm8aXaamR9RlNUw666aijxdt1fEiRyX+ox5bVt0=;
+        b=Qu+7WbmgB/0re8ziPsiR0LyAxtbuthA9vxdDlEbcQqx2t5K/KFtFRyoZZFB/T/LhOl
+         EcGEwyBiDfP3pjgrTNGmm1A41EIGz98AfcsrtJYmF3eUEzd+9p3If//pQCdo37+PCcIZ
+         0QEfcfSvQ+6+LesJtp9UC0YopNDp09GveyIahLZ1LKupmFNDrjtaId8I8fZS8Ck/C9QO
+         qgZVZCfXme5ZC1U4hD7e1MJwg1fl8Vnuv16r2KBMtRnxszWVlzv0ApMZynCMFAyZMY72
+         cVgUJM1ow6JZohXZJIGtEeD5H3ecTCcwT4qja0XaO4W0VT4oTYFj+cjtE7JUhhslsuHx
+         7nZg==
+X-Gm-Message-State: AOJu0Ywjt1Dp2ngxTyF/vqsQF3FKmMD5sDam5paD54DHmC/XcNhJt7Nf
+	XpXerVX1r8aAXiidcPjPS8bgoab0Yrrer8VkZ7JiuTRmWIsqSd/2Wy0IJg==
+X-Google-Smtp-Source: AGHT+IGZeJuF9mwS57t9mVOXvvDjY8lGtN83L2XjzHKfX3RwhN8kNnK0ajnbHQy8hBSNNpD7mFTUuA==
+X-Received: by 2002:a4a:8553:0:b0:5b2:f1cb:1a3f with SMTP id 006d021491bc7-5b2f1cb1b21mr16274564eaf.7.1716232646099;
+        Mon, 20 May 2024 12:17:26 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5b5390b9c54sm236387eaf.0.2024.05.20.12.17.24
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5b5390b9c54sm236387eaf.0.2024.05.20.12.17.25
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 20 May 2024 12:17:24 -0700 (PDT)
+        Mon, 20 May 2024 12:17:25 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 2/6] gobi: Rename KernelDriver to NetworkInterfaceDriver
-Date: Mon, 20 May 2024 14:17:03 -0500
-Message-ID: <20240520191722.184977-2-denkenz@gmail.com>
+Subject: [PATCH 3/6] gobi: ensure required properties are provided
+Date: Mon, 20 May 2024 14:17:04 -0500
+Message-ID: <20240520191722.184977-3-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240520191722.184977-1-denkenz@gmail.com>
 References: <20240520191722.184977-1-denkenz@gmail.com>
@@ -68,59 +68,80 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The naming should now more accurately reflect what the driver string
-represents.
+Ensure that a minimum set of properties required to drive the modem are
+provided by the detection framework.  Also, while here, document these
+properties.
 ---
- plugins/gobi.c   | 10 ++++++----
- plugins/udevng.c |  2 +-
- 2 files changed, 7 insertions(+), 5 deletions(-)
+ plugins/gobi.c | 36 +++++++++++++++++++++++++++++++++---
+ 1 file changed, 33 insertions(+), 3 deletions(-)
 
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index d8b78ad6f5b0..5bb0b5ace0ca 100644
+index 5bb0b5ace0ca..bb4560c43a06 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -103,9 +103,9 @@ static void gobi_debug(const char *str, void *user_data)
+@@ -100,12 +100,37 @@ static void gobi_debug(const char *str, void *user_data)
+ 	ofono_info("%s%s", prefix, str);
+ }
+ 
++/*
++ * Probe the modem.  The following modem properties are expected to be set
++ * in order to initialize the driver properly:
++ *
++ * DeviceProtocol
++ *   Can be "qrtr" or "qmux", tells the driver which QMI encapsulation protocol
++ *   is being used.
++ *
++ * NetworkInterface
++ *   The string that contains the 'main' network device.  This can be
++ *   "rmnet_ipa" on SoC systems, or "wwan0" for upstream linux systems.
++ *
++ * NetworkInterfaceIndex
++ *   The index of the main interface given by NetworkInterface
++ *
++ * NetworkInterfaceDriver
++ *   The kernel driver that is being used by the main network device.  Certain
++ *   drivers such as 'qmi_wwan' or 'qmi_wwan_q' are treated specifically.
++ *
++ * Bus
++ *   The bus of the modem.  Values can be "usb", "embedded", or "pci"
++ */
  static int gobi_probe(struct ofono_modem *modem)
  {
  	struct gobi_data *data;
--	const char *kernel_driver;
  	const char *value;
  	enum qmi_protocol protocol;
-+	const char *if_driver;
+ 	const char *if_driver;
++	const char *ifname;
++	int ifindex;
++	const char *bus;
  
  	DBG("%p", modem);
  
-@@ -118,12 +118,14 @@ static int gobi_probe(struct ofono_modem *modem)
- 	else
- 		return -EPROTO;
+@@ -120,7 +145,14 @@ static int gobi_probe(struct ofono_modem *modem)
  
-+	if_driver = ofono_modem_get_string(modem,
-+						"NetworkInterfaceKernelDriver");
-+	DBG("netdev driver: %s", if_driver);
+ 	if_driver = ofono_modem_get_string(modem,
+ 						"NetworkInterfaceKernelDriver");
+-	DBG("netdev driver: %s", if_driver);
++	ifname = ofono_modem_get_string(modem, "NetworkInterface");
++	ifindex = ofono_modem_get_integer(modem, "NetworkInterfaceIndex");
++	bus = ofono_modem_get_string(modem, "Bus");
 +
++	DBG("net: %s[%s](%d) %s", ifname, if_driver, ifindex, bus);
++
++	if (!if_driver || !ifname || !ifindex || !bus)
++		return -EPROTO;
+ 
  	data = l_new(struct gobi_data, 1);
  	data->protocol = protocol;
--	kernel_driver = ofono_modem_get_string(modem, "KernelDriver");
--	DBG("kernel_driver: %s", kernel_driver);
+@@ -133,8 +165,6 @@ static int gobi_probe(struct ofono_modem *modem)
+ 	l_strlcpy(data->main_net_name,
+ 			ofono_modem_get_string(modem, "NetworkInterface"),
+ 			sizeof(data->main_net_name));
+-	DBG("net: %s (%d)", data->main_net_name, data->main_net_ifindex);
+-
+ 	ofono_modem_set_data(modem, data);
+ 	ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
  
--	if (!strcmp(kernel_driver, "qmi_wwan_q"))
-+	if (!strcmp(if_driver, "qmi_wwan_q"))
- 		data->using_qmi_wwan_q = true;
- 
- 	data->main_net_ifindex =
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index aa2a216d4247..c7db66238681 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -216,7 +216,7 @@ static int setup_qmi_netdev(struct modem_info *modem,
- 	if (r < 0)
- 		return r;
- 
--	ofono_modem_set_string(modem->modem, "KernelDriver",
-+	ofono_modem_set_string(modem->modem, "NetworkInterfaceKernelDriver",
- 							net->kernel_driver);
- 	ofono_modem_set_string(modem->modem, "NetworkInterface", net->devnode);
- 	ofono_modem_set_integer(modem->modem, "NetworkInterfaceIndex",
 -- 
 2.45.0
 
