@@ -1,118 +1,330 @@
-Received: from mail-oa1-f41.google.com (mail-oa1-f41.google.com [209.85.160.41])
+Received: from mail-oo1-f43.google.com (mail-oo1-f43.google.com [209.85.161.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E9D3137C42
-	for <ofono@lists.linux.dev>; Mon, 20 May 2024 18:58:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B87BE1E86E
+	for <ofono@lists.linux.dev>; Mon, 20 May 2024 19:17:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716231512; cv=none; b=DaonusiYA3G8GLvDuopRuA1V4clmvmIJrpp4+uAIrEnUPpwMt++SwF4KJR3x/381P2vE0ItoRTfAoFWh2iGkZsDxKeQxLCiF5tsKcIYTbDdLDXEs4AKgTRh4dcb3k6Q6O7hnsHzNoxUPlGepQ45Si2Au7afcbL96+nmS8gJjyII=
+	t=1716232647; cv=none; b=Douz+Mos3LHoQtcvJC7KPaF4cugIe4X5NFIyUes4wtSudfeqx5UFniGCsUQwuzlhU4KMVjmHRPfw4biWWcHfcQq6VcpzxuQulCgANmYZ6z7LwvgH0UnPY1slrBKToEMhy5KMLUVlZkdAXbq4jNGr+lHoAupfmTfBpYPAncVs7b0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716231512; c=relaxed/simple;
-	bh=aK7NGRowlcrGS36jXsdmIpyrJ8HANZw4rrCv4Xj31xA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=VzjvSfMU+9hxuxRc6ExlrQgQjPbszBQEGlKKKdzjUzntusR9tsaDP4lJAgYbrYCLmeOu+OLzrUI7ugAThHckv9LgSGNpHLk1BMXlum6A11PUTOcgDFc8cezTAiy06a0vO2hx1814uJlc1/jhd0USXwOVJ7g9iUaj0ZK45t51j4Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=i7esHQ/G; arc=none smtp.client-ip=209.85.160.41
+	s=arc-20240116; t=1716232647; c=relaxed/simple;
+	bh=jSWy8CwGRiYv0cq3IziHCITid6IFbar7bE5oZO2b2lE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=OlMUoSTbUVVmcU6O0G0e/YdhyAwpu9CsWUj99L3D19+aKvSsppxy/eyk2B7fkn1WUG+Gc7PMKXekBAOYP7KYx8wftIo67NQoTvcLCQFciU4qdKzFywB/7fxnf++FnYhJrO04JYThydsOHuP3E0v3/g3RhHuFDOZ/UY25UlN0N3Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bsP2+jyu; arc=none smtp.client-ip=209.85.161.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="i7esHQ/G"
-Received: by mail-oa1-f41.google.com with SMTP id 586e51a60fabf-24c1234beb3so594913fac.0
-        for <ofono@lists.linux.dev>; Mon, 20 May 2024 11:58:30 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bsP2+jyu"
+Received: by mail-oo1-f43.google.com with SMTP id 006d021491bc7-5b273b9f1deso1935437eaf.3
+        for <ofono@lists.linux.dev>; Mon, 20 May 2024 12:17:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716231510; x=1716836310; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=YE/50fVZUygll5/E+J0lzqNDHyTiqwcXxiLuvz283u0=;
-        b=i7esHQ/G4F5GVG/BYrggYBEW6TsLlcnu2a0QelWEbcvwq18iTT4A+1mZXq0EHOqgUz
-         OPQIfKUQpAg7JrKRd4XLqQ/LCBp+qcXDNQgcvwj9dwsiKeCfubAEWKvp1cz5JcC5cI0s
-         1IN8o5ok0omvBgZ1PRibyqzhVW0Di/xOH0eh91gBfcA5aJRnQP0oyvYf8DqJsS4fqh/0
-         5gx83g3U50FpnqN8klAAU2skq/ttpSx1gECgLvFlrKppZM4kh1kOUT7MjucS/S1yHDDb
-         BoeKUd4aWu6VAKmK6emyU4ic03j6e7RkBpK00emIYMX3kHnu2w5dL0OexVMRbcc5CSMs
-         Au4w==
+        d=gmail.com; s=20230601; t=1716232645; x=1716837445; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=b8DChPbPrdhNPVlh3RSEx/qrZqFQLllrdztRLTZg6U8=;
+        b=bsP2+jyu71Sz/h9+f00wPjOpYadXmBpZhPv1m5uavzIcqEwKqjzTnhL9pVviRFzgoX
+         h5rh0SyqT/rRaCFxZ8ekqaTuPRAbMHNQZo+MKl+G9MxREoI4h71NWFN8wtLoCUcwdDtd
+         z6wPoWYPqJrfvAeplaQYp8dcn7u1lSdg19BGeEYFRfCzunSCv48401WgAy8S+EdieAY3
+         nPxtCGR9o1mUxouZy46jubBdvolRca6XblU7EDjo98HrW6q1/rT8XpbqX1vJBYuJkfG0
+         GWL8QffxCcTShiJN8Sdo48NTyZ1HUACRCp4PycmvVW8RGu86DtI/QQRBNljynpf8DObu
+         l7GA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716231510; x=1716836310;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=YE/50fVZUygll5/E+J0lzqNDHyTiqwcXxiLuvz283u0=;
-        b=NF9get2unxLE4el03UCoNSAWaLY/8McNocBRrxXbEI8vyNWlJC0o+ATjLQSzFZGr/g
-         oYPEoQFyfNgHouoXuS7xTzNHvin84oxkiCVeys869UVkhGG3D7WQ/4Kfhz4QjUmtLckx
-         XdYaOk8mt31bq1PTK4C/wNkO3kE6U2D0z2FwaWx3n5SeY7XXZFsDEIk+dEVZjPVXWyJM
-         RojdS+D4m5FFC/yf8NrFPGs1OwxOYsygR9usdSgluPqjC6mW0s7lgoGk5FnEcLmBSjQU
-         0L7/0EM9+PoCkXd2t2+6d3Zxd0HNTxjhYCE+nLgNuyrV6xRHOlEpNcmK2S4bq4VAgRJI
-         H2FQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUXH+FATEv1KAdI2oKriu+g0AU8dDhrlN2bBECDZkn5Z/1cPnDs3i+5K8CVQPoCysXdcbdquTrQGHbDa6B58MCi0C8chlM=
-X-Gm-Message-State: AOJu0YxDngH7kUFt8F7txJhz6KOgFfYpcNp9LzaMzAHXWKLlVsmeoTk1
-	CleSfqsJ8zWAbFpHpoYBEJvFwO6eRc53PtftDv6o5SV45HbO+j6A
-X-Google-Smtp-Source: AGHT+IE/CpVViNwADtAparpOZtZZqrMdJyZtb/9Wa3eFG9KM/+tY/rEM4D9bUBmgnl3ILvBboNDWsg==
-X-Received: by 2002:a05:6870:160e:b0:23c:a5b7:5709 with SMTP id 586e51a60fabf-248e4e690bcmr3178914fac.1.1716231510030;
-        Mon, 20 May 2024 11:58:30 -0700 (PDT)
-Received: from [192.168.1.21] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-2412a68aa62sm5512163fac.29.2024.05.20.11.58.29
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 20 May 2024 11:58:29 -0700 (PDT)
-Message-ID: <d4d09174-1f12-420d-8ba2-96e2f3f9aa7d@gmail.com>
-Date: Mon, 20 May 2024 13:58:28 -0500
+        d=1e100.net; s=20230601; t=1716232645; x=1716837445;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=b8DChPbPrdhNPVlh3RSEx/qrZqFQLllrdztRLTZg6U8=;
+        b=DBcO6ocV+gUKNOPIZMdRfmkuX9sc5XnUuL9sUHyAnO1U/RdQ28nwS8OCkFD2tVQY07
+         A3o9Tr5L4KKVrXiiFYWT2Pe+o7GrY5WOkdLaIdiVe20Xs4gPoIRYCQEzgVDtNBNTdgxn
+         xilH1tz1lR4Ji9s5xugi2xcn5nmJYHC3SNsttEMgtr13SrvAK572RHwraDCHf3Qhvjr9
+         1k42tMQIakJ7Onzd9CUzEEkuMW98VZjZ7vj5zhu5+09tyJfW6Z/H4z9/30vtM/q2r7M9
+         1vgPImOuk0JPhmLVQxlDmHgboL0ggDk/jpBzGoffNuBkw7WVBUOnt3nwDwTH4aVey1bt
+         8fig==
+X-Gm-Message-State: AOJu0YxVLKDqT8pqu9+ZEvqBmDIvnX2jc6zAa2pS5/nVPt2IEA7qg4XV
+	hs0vSMY5PP00rYqu0TRDZ/8TA/Iy3+4HmKvQ6SSMaTFhq2HprJoWSQNSow==
+X-Google-Smtp-Source: AGHT+IGGhcXSSmXbsG2CvBKrqrLWXiY52AQcz9zQ6KSXz2vfpQh1+4fX1c3GLk2fKhi7VztxNUM1sA==
+X-Received: by 2002:a05:6820:620:b0:5b5:3d56:5172 with SMTP id 006d021491bc7-5b53d566381mr1301154eaf.1.1716232644566;
+        Mon, 20 May 2024 12:17:24 -0700 (PDT)
+Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5b5390b9c54sm236387eaf.0.2024.05.20.12.17.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 20 May 2024 12:17:24 -0700 (PDT)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 1/6] gobi: add / use DeviceProtocol property
+Date: Mon, 20 May 2024 14:17:02 -0500
+Message-ID: <20240520191722.184977-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.45.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: RFC - Add AT interface to qmi device
-To: Tony Lindgren <tony@atomide.com>
-Cc: Adam Pigg <piggz1@gmail.com>, ofono@lists.linux.dev,
- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>,
- Merlijn Wajer <merlijn@wizzup.org>, Carl Philipp Klemm <philipp@uvos.xyz>
-References: <2269874.vFx2qVVIhK@adam-laptop-hp>
- <42fea483-2770-45bc-9744-7063174b9ca7@gmail.com>
- <20240519182635.GF5156@atomide.com>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20240519182635.GF5156@atomide.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi Tony,
+Instead of using the kernel driver as a hint for whether qrtr or qmi is
+being used, introduce an explicit DeviceProtocol property that should be
+set by the detection logic to tell the driver whether to use qrtr or
+qmux.
 
->>
->> Have you considered simply using AT commands for calls and SMS?
-> 
-> At least on Droid4 the ttyUSB AT interface is bit buggy.. But there may be
-> a generic way to trigger lost QMI events based on the USB AT interface
-> notifications.
+Split up QMI modem driver detection and setup logic inside udevng into
+setup_qmi_qrtr(), setup_qmi_qmux() and setup_qmi_netdev().
+setup_qmi_netdev() takes care of setting up of common networking device
+properties, while setup_qmi_qrtr() and setup_qmi_qmux() setup QRTR and
+QMUX devices, respectively.
 
-Hmm, okay.
+While here, ensure that modem types are handled appropriately.  QRTR is
+only available on embedded devices, while QMUX requires USB.
+---
+ plugins/gobi.c   | 34 ++++++++++++++-------
+ plugins/udevng.c | 78 +++++++++++++++++++++++++++++++-----------------
+ 2 files changed, 75 insertions(+), 37 deletions(-)
 
-> 
-> What we accidentally discovered with the Maemo Droid4 modem patches was
-> that triggering a dummy QMI call on serial (muxed TS 27.010) notifications
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 8bd2c4060446..d8b78ad6f5b0 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -72,6 +72,11 @@
+ #define GOBI_VOICE	(1 << 9)
+ #define GOBI_WDA	(1 << 10)
+ 
++enum qmi_protocol {
++	QMI_PROTOCOL_QMUX,
++	QMI_PROTOCOL_QRTR,
++};
++
+ struct gobi_data {
+ 	struct qmi_device *device;
+ 	struct qmi_service *dms;
+@@ -85,6 +90,7 @@ struct gobi_data {
+ 	char main_net_name[IFNAMSIZ];
+ 	uint32_t max_aggregation_size;
+ 	uint32_t set_powered_id;
++	enum qmi_protocol protocol;
+ };
+ 
+ static void gobi_debug(const char *str, void *user_data)
+@@ -98,11 +104,22 @@ static int gobi_probe(struct ofono_modem *modem)
+ {
+ 	struct gobi_data *data;
+ 	const char *kernel_driver;
++	const char *value;
++	enum qmi_protocol protocol;
+ 
+ 	DBG("%p", modem);
+ 
+-	data = l_new(struct gobi_data, 1);
++	value = ofono_modem_get_string(modem, "DeviceProtocol");
+ 
++	if (l_streq0(value, "qrtr"))
++		protocol = QMI_PROTOCOL_QRTR;
++	else if (l_streq0(value, "qmux"))
++		protocol = QMI_PROTOCOL_QMUX;
++	else
++		return -EPROTO;
++
++	data = l_new(struct gobi_data, 1);
++	data->protocol = protocol;
+ 	kernel_driver = ofono_modem_get_string(modem, "KernelDriver");
+ 	DBG("kernel_driver: %s", kernel_driver);
+ 
+@@ -421,25 +438,22 @@ static void discover_cb(void *user_data)
+ static int gobi_enable(struct ofono_modem *modem)
+ {
+ 	struct gobi_data *data = ofono_modem_get_data(modem);
+-	const char *kernel_driver;
++	const char *device;
+ 	int r;
+ 
+ 	DBG("%p", modem);
+ 
+-	kernel_driver = ofono_modem_get_string(modem, "KernelDriver");
+-	if (!kernel_driver)
+-		return -EINVAL;
+-
+-	if (!strcmp(kernel_driver, "qrtr"))
++	switch (data->protocol) {
++	case QMI_PROTOCOL_QRTR:
+ 		data->device = qmi_device_new_qrtr();
+-	else {
+-		const char *device;
+-
++		break;
++	case QMI_PROTOCOL_QMUX:
+ 		device = ofono_modem_get_string(modem, "Device");
+ 		if (!device)
+ 			return -EINVAL;
+ 
+ 		data->device = qmi_device_new_qmux(device);
++		break;
+ 	}
+ 
+ 	if (!data->device)
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index fb694858aa6c..aa2a216d4247 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -197,20 +197,14 @@ static gboolean setup_hso(struct modem_info *modem)
+ 	return TRUE;
+ }
+ 
+-static int setup_qmi(struct modem_info *modem, const struct device_info *qmi,
+-			const struct device_info *net)
++static int setup_qmi_netdev(struct modem_info *modem,
++					const struct device_info *net)
+ {
+ 	const char *attr_value;
+ 	uint32_t ifindex;
+ 	int r;
+ 
+-	DBG("qmi: %s net: %s kernel_driver: %s interface_number: %s",
+-		qmi->devnode, net->devnode, net->kernel_driver, net->number);
+-
+-	if (!qmi->kernel_driver)
+-		return -EINVAL;
+-
+-	if (!net->number && modem->type != MODEM_TYPE_EMBEDDED)
++	if (!net->kernel_driver)
+ 		return -EINVAL;
+ 
+ 	attr_value = udev_device_get_sysattr_value(net->udev_device,
+@@ -222,30 +216,60 @@ static int setup_qmi(struct modem_info *modem, const struct device_info *qmi,
+ 	if (r < 0)
+ 		return r;
+ 
+-	ofono_modem_set_driver(modem->modem, "gobi");
+-	ofono_modem_set_string(modem->modem, "Device", qmi->devnode);
+ 	ofono_modem_set_string(modem->modem, "KernelDriver",
+ 							net->kernel_driver);
+ 	ofono_modem_set_string(modem->modem, "NetworkInterface", net->devnode);
+-	ofono_modem_set_string(modem->modem, "InterfaceNumber", net->number);
+ 	ofono_modem_set_integer(modem->modem, "NetworkInterfaceIndex",
+ 							ifindex);
+ 
++	return 0;
++}
++
++static int setup_qmi_qmux(struct modem_info *modem,
++				const struct device_info *qmi,
++				const struct device_info *net)
++{
++	DBG("qmi: %s net: %s kernel_driver: %s interface_number: %s",
++		qmi->devnode, net->devnode, net->kernel_driver, net->number);
++
++	if (modem->type != MODEM_TYPE_USB)
++		return -ENOTSUP;
++
++	if (!net->number)
++		return -EINVAL;
++
++	if (!qmi->kernel_driver)
++		return -EINVAL;
++
++	ofono_modem_set_driver(modem->modem, "gobi");
++	ofono_modem_set_string(modem->modem, "Device", qmi->devnode);
++	ofono_modem_set_string(modem->modem, "DeviceProtocol", "qmux");
++	ofono_modem_set_string(modem->modem, "InterfaceNumber", net->number);
++
++	ofono_modem_set_string(modem->modem, "Bus", "usb");
++
++	return setup_qmi_netdev(modem, net);
++}
++
++static int setup_qmi_qrtr(struct modem_info *modem,
++				const struct device_info *net)
++{
++	DBG("net: %s kernel_driver: %s", net->devnode, net->kernel_driver);
++
+ 	switch (modem->type) {
+-	case MODEM_TYPE_USB:
+-		ofono_modem_set_string(modem->modem, "Bus", "usb");
+-		break;
+-	case MODEM_TYPE_PCIE:
+-		ofono_modem_set_string(modem->modem, "Bus", "pcie");
+-		break;
+ 	case MODEM_TYPE_EMBEDDED:
+ 		ofono_modem_set_string(modem->modem, "Bus", "embedded");
+ 		break;
++	case MODEM_TYPE_USB:
+ 	case MODEM_TYPE_SERIAL:
+-		break;
++	case MODEM_TYPE_PCIE:
++		return -ENOTSUP;
+ 	}
+ 
+-	return 0;
++	ofono_modem_set_driver(modem->modem, "gobi");
++	ofono_modem_set_string(modem->modem, "DeviceProtocol", "qrtr");
++
++	return setup_qmi_netdev(modem, net);
+ }
+ 
+ static gboolean setup_gobi_qrtr_premux(struct modem_info *modem,
+@@ -310,7 +334,7 @@ static gboolean setup_gobi_qrtr(struct modem_info *modem)
+ 		return FALSE;
+ 	}
+ 
+-	r = setup_qmi(modem, ipa_info, ipa_info);
++	r = setup_qmi_qrtr(modem, ipa_info);
+ 	if (r < 0)
+ 		return FALSE;
+ 
+@@ -367,7 +391,7 @@ static gboolean setup_gobi(struct modem_info *modem)
+ 	DBG("qmi=%s net=%s mdm=%s gps=%s diag=%s",
+ 			qmi->devnode, net->devnode, mdm, gps, diag);
+ 
+-	if (setup_qmi(modem, qmi, net) < 0)
++	if (setup_qmi_qmux(modem, qmi, net) < 0)
+ 		return FALSE;
+ 
+ 	ofono_modem_set_string(modem->modem, "Modem", mdm);
+@@ -432,7 +456,7 @@ static gboolean setup_sierra(struct modem_info *modem)
+ 	}
+ 
+ 	if (qmi != NULL && net != NULL) {
+-		if (setup_qmi(modem, qmi, net) < 0)
++		if (setup_qmi_qmux(modem, qmi, net) < 0)
+ 			return FALSE;
+ 
+ 		goto done;
+@@ -510,7 +534,7 @@ static gboolean setup_huawei(struct modem_info *modem)
+ 	}
+ 
+ 	if (qmi != NULL && net != NULL) {
+-		if (setup_qmi(modem, qmi, net) < 0)
++		if (setup_qmi_qmux(modem, qmi, net) < 0)
+ 			return FALSE;
+ 
+ 		goto done;
+@@ -847,7 +871,7 @@ static gboolean setup_telitqmi(struct modem_info *modem)
+ 	if (qmi == NULL || net == NULL)
+ 		return FALSE;
+ 
+-	if (setup_qmi(modem, qmi, net) < 0)
++	if (setup_qmi_qmux(modem, qmi, net) < 0)
+ 		return FALSE;
+ 
+ 	if (g_strcmp0(modem->model, "1070"))
+@@ -1161,7 +1185,7 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
+ 
+ 	DBG("gps=%s aux=%s", gps, aux);
+ 
+-	if (setup_qmi(modem, qmi, net) < 0)
++	if (setup_qmi_qmux(modem, qmi, net) < 0)
+ 		return FALSE;
+ 
+ 	qmap_size = udev_device_get_sysattr_value(net->udev_device,
+@@ -1611,7 +1635,7 @@ static gboolean setup_sim7x00(struct modem_info *modem)
+ 	if (qmi != NULL && net != NULL) {
+ 		DBG("mdm=%s gps=%s diag=%s", mdm, gps, diag);
+ 
+-		if (setup_qmi(modem, qmi, net) < 0)
++		if (setup_qmi_qmux(modem, qmi, net) < 0)
+ 			return FALSE;
+ 
+ 		ofono_modem_set_string(modem->modem, "Modem", mdm);
+-- 
+2.45.0
 
-Can you clarify? QMI call on the QMI character device or on the AT port itself?
-
-> would trigger the lost QMI notifications :)
-> 
-> So we have the call below in the out of tree patches to kick the USB QMI
-> modem based on the AT interface notifications:
-> 
-> int mot_qmi_trigger_events(struct ofono_modem *modem)
-> {
-> 	struct motmdm_data *data = ofono_modem_get_data(modem);
-> 
-> 	if (data->wms == NULL)
-> 		return -ENODEV;
-> 
-> 	return qmi_service_send(data->wms, QMI_WMS_GET_SMSC_ADDR, NULL,
-> 						NULL, NULL, g_free);
-> };
-> 
-
-I'm fine with this approach if the handling of this quirk is done by the modem 
-driver.  The modem driver can manage both QMI and AT ports.  What I want to 
-avoid is coupling between technologies in the atom drivers themselves.  In other 
-words, QMI SMS driver should not depend on anything related to AT commands.
-
-Regards,
--Denis
