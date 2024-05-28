@@ -1,116 +1,139 @@
-Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
+Received: from mail-ot1-f43.google.com (mail-ot1-f43.google.com [209.85.210.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DA5D13DBB1
-	for <ofono@lists.linux.dev>; Tue, 28 May 2024 22:06:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5728013DB92
+	for <ofono@lists.linux.dev>; Tue, 28 May 2024 22:13:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716934012; cv=none; b=OARfhTjMYMV4XbkAfuQJtOLRiLf+IYwEZt9EF9eYwXt7q/zPxmZFYRLpZyVAwLvW3BxEQ83TC+zUBUNgiX2la50tYCEyxa3t3MG043GM+GK8hd9V203kIuPjmnwKtYFIZDDNApWiXNnTRzdtVUMEOCJXtR/d1KMVPqoO2oLgZyg=
+	t=1716934415; cv=none; b=d1ji5Hu/8z5hRRo14xtPp9Qwkr8iKCXmT5cNqHBhztORLIHGF9cQHiyiaLF82c91DZlnhDMYJ3XhP6sounDtZFdoRZmM+lswBruDGO17Lq+1x2Xxp2qWB4jancxTFuNGarsiYpZmVmPqkGQe3FBNwgmSl9JCJpO+aP1Daws5wHA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716934012; c=relaxed/simple;
-	bh=VNhR98Q4q8+2t0k+Z0nI9QKA0/qj53dCPKZ4HYx5x/Y=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=vDFf10a/OkEUQf0PZ+dQniY5RQOrNqWv9KAq1zBTIq9vJmnK37gdRG4Nlcq5Hk6b/ED7AAJd/VnIN6ayed7X+w31Otp8F6LmmET0cgnjyqgExf/0W6jdR2EWZfrVp0VvFuBRIIdh0Xsrf8nQ/AxxGofg62EQeOXedLhZFrSbsEw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lYT5tCmu; arc=none smtp.client-ip=209.85.210.51
+	s=arc-20240116; t=1716934415; c=relaxed/simple;
+	bh=jrjFnTsJxzuSesgK2eDzrYDlsoVC4pwgRFzarOwa3a8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=XHMfaww+y23qD99/n2utUJSfobTlU8HCa+898FlYlstwjugJN3PNFCtCKK/75DO/eE62KjQ4NoM+IlGf+RsG/FQgCgxktcvjh+hPFfYyTcidgX3PyleIeLhEe/QGtpbBgmGPW6lTh78STL+3CXKgJDf161tEDfVJ3X2Z3kUVhis=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=i7G7/749; arc=none smtp.client-ip=209.85.210.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lYT5tCmu"
-Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-6f8d2ec8652so792631a34.3
-        for <ofono@lists.linux.dev>; Tue, 28 May 2024 15:06:50 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="i7G7/749"
+Received: by mail-ot1-f43.google.com with SMTP id 46e09a7af769-6f12171523eso649174a34.1
+        for <ofono@lists.linux.dev>; Tue, 28 May 2024 15:13:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716934009; x=1717538809; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=cMWY/C1su4b09AePBJC0PUdPoBdRSJrP1VKaE7rIByY=;
-        b=lYT5tCmuobwRF6AxUF8E6mBvOPbCoRP73tW75muBLC7zKUMo3sLQHn/KrdoKgMDssO
-         pLYhlF5jEMSec0eZoaB+PMtFHywRzs52QOPxSLrnAt75J1kLmJpKFjNRk5W6qi7oGTf2
-         CLVAxj3rBpptt5Eq4Wf2V5Xh8eM2/iiCGDzY7PcwYmpD3X9dd1hKjeaJXIfGQlfrkyva
-         8dFwFYjzPBwcGGhYvF6g4wdcHPQTCzDIF1DlXPERb/iQGP4Nf4wffLIXybC5nN+AhGxR
-         9rlbrn9MX4bg0FTciPq0W5EfTKUZN4KbloBIXX5Fw5mgkOD39XR3O9uUfs5jPYYEVOUd
-         B0rw==
+        d=gmail.com; s=20230601; t=1716934413; x=1717539213; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=xzFjJqXDuOhbA5a5tG6cX/xpFAiRW8q7FMn9HH1txrM=;
+        b=i7G7/749bU1Ie67nzKa0fC7Pde3rghLb8fOQp9aPrIbKTE412Ls/jaftm9NxUiYARu
+         WM9Unso0UzzKnNmArP/JKAxELp7AIF+czZN3LxtPXwT2bzb+dU+g2Ab4C/xTHuKS6Ggs
+         9icjxgxipIxhFBTk4TwYYADwSfn0KdVBH0q3oVriC+7wk6qUMa5o/C5TYIIng+PPT6Sf
+         Fnu+CvLfZ+w/ChK7+BwNousuhC1diwux9qGhZvMT71vR9BxNYxBO4VL+XrPOrjtjsycb
+         SH5C+65Ekj2W4TDJ3dNtKF129+SxDN220T7mB6GEca6w/NnIO/tIbO+v6lE7iNu9FLxU
+         AZ5A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716934009; x=1717538809;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=cMWY/C1su4b09AePBJC0PUdPoBdRSJrP1VKaE7rIByY=;
-        b=CDTSQrO61EZN+R/62UtIIuQQVHsfGVabHDrgu41A+ZGzKkEyW7w83P6+O6iw6u+hMB
-         Cl3DaIW2JRfnGkSz6UI5G4p2YBGkmUQvq1jNjR8zqnVfWkVupcxr5Cwj4hOlHEf16jeg
-         lw7h5bQLqcNdozzbUjnioy1ajg9SJeRbPD5UCr3Py3aIi2DrZ2+KZpBKEj+Fl+L65alr
-         JAs5HYoYLrDqkgcCkamQTpbZnRWo23FDtf6wm0pooteGhJxz2bjdHRb26gq7NLMIFlIG
-         JDq8T15b/xYyTCkopb96oZ3fP1T8ZseomXDgyMyZtQXet8yvxPdWFNe1pfA91zSbg62+
-         O0mg==
-X-Gm-Message-State: AOJu0YwOwevdTAtxJR2g7xuut0lLefZ76rNlVQc2NvX2wA2M8Gxy/Qxz
-	86RynDhODzTWFITIW/oJUusf+bXsKoOSlvWmLXHr0TS/7ggtrQ7fziKOCw==
-X-Google-Smtp-Source: AGHT+IFenszKs215OsCMb7GeqVG+dOBku8SL2wwXhpyOlh9pQiG3JdLKav7fPvupBBhBvvAlvCy4/w==
-X-Received: by 2002:a05:6830:1c1:b0:6f1:2f2e:216f with SMTP id 46e09a7af769-6f8d0b23325mr15347936a34.24.1716934009468;
-        Tue, 28 May 2024 15:06:49 -0700 (PDT)
-Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-6f8d0e79f84sm2054474a34.69.2024.05.28.15.06.48
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 May 2024 15:06:49 -0700 (PDT)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH] voicecall: Fix use after free
-Date: Tue, 28 May 2024 17:06:29 -0500
-Message-ID: <20240528220642.251435-1-denkenz@gmail.com>
-X-Mailer: git-send-email 2.45.0
+        d=1e100.net; s=20230601; t=1716934413; x=1717539213;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=xzFjJqXDuOhbA5a5tG6cX/xpFAiRW8q7FMn9HH1txrM=;
+        b=e30sxOUp0pYOVq7rjl55qs15ZV4HJVzUbQimlkWqwC86MHOE9YnXD2T6TLot53hhCX
+         9hBL7HnihPybqyRozd3RFhlQusA/TZg4k7uhRGe/cyo6V4dqrDX7QxGuDr1kzMp425io
+         uSXn5ypbY9FYvvuUnAoOUYukLGKFCDrKEX97WZvTiOKPlZKcsZ49mNYzZPFRILef03SZ
+         d7YtPJkAsVfw7lHGc5l3D1L82GivYCBBFpL6hDuCZb1kWEfyJxB/gl7jXYYZx/Tgt6dQ
+         XGFeX/5+jduHeINqRXmKGd5riwIAR8JQl+YQYPqkcx4Ca4BgYGeAbDWE3teJI38mqmaq
+         wI7w==
+X-Forwarded-Encrypted: i=1; AJvYcCWgV8/IOIzIvA1f+7UXA0lewEk/qPFAyJVlcuQ08acqoKgmTZ0vkze+wqv4m5HCYw4vA9aKsilb8L8/EnoOKoPrO2RnBwk=
+X-Gm-Message-State: AOJu0YyZqf+fBZYlG3Cj0p84aZCOlJzAQOzvfaqskd13yKnKDeY1ZvY4
+	9il/5q9yYTXXRbzkxDONAthax3rkLkdhxXCKDwTUl58ffBJdH1nkyz0MZQ==
+X-Google-Smtp-Source: AGHT+IGC7pRY6c1pxrPYftNNHieT/QAs9v467PplM0sEH1LNN7RUSCHm/P8Hi4RtbgD/3+ZoX5mdWQ==
+X-Received: by 2002:a05:6830:2b2a:b0:6f1:18da:603 with SMTP id 46e09a7af769-6f8d0a7e430mr16661437a34.4.1716934413158;
+        Tue, 28 May 2024 15:13:33 -0700 (PDT)
+Received: from [192.168.1.21] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id 46e09a7af769-6f8d0e6136asm2084586a34.53.2024.05.28.15.13.32
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 28 May 2024 15:13:32 -0700 (PDT)
+Message-ID: <79f5b88a-d625-4c5c-addd-13727f8516c3@gmail.com>
+Date: Tue, 28 May 2024 17:13:32 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] quectel: fix use after free
+To: =?UTF-8?Q?Martin_Hundeb=C3=B8ll?= <martin@geanix.com>,
+ ofono@lists.linux.dev
+References: <20240528082648.2010586-1-martin@geanix.com>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20240528082648.2010586-1-martin@geanix.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-On shutdown, if the sim atom is removed before the voicecall atom, the
-sim context is removed automatically.  However, voicecall atom does set
-sim_context to NULL in that case, resulting in the following valgrind
-report:
+Hi Martin,
 
-==251105== Invalid read of size 8
-==251105==    at 0x59B4F3: sim_fs_file_watch_remove (src/simfs.c:243)
-==251105==    by 0x560E2A: ofono_sim_remove_file_watch (src/sim.c:2621)
-==251105==    by 0x5412E3: unwatch_sim_ecc_numbers (src/voicecall.c:2820)
-==251105==    by 0x53B8C8: voicecall_unregister (src/voicecall.c:2849)
-==251105==    by 0x52B16B: __ofono_atom_unregister (src/modem.c:336)
-==251105==    by 0x52E6E4: flush_atoms (src/modem.c:492)
-==251105==    by 0x52C1BE: modem_change_state (src/modem.c:586)
-==251105==    by 0x52E155: set_powered (src/modem.c:974)
-==251105==    by 0x52E307: __ofono_modem_shutdown (src/modem.c:2279)
-==251105==    by 0x5296B6: signal_handler (src/main.c:85)
-==251105==    by 0x48FF198: ??? (in /usr/lib/libglib-2.0.so.0.8000.0)
-==251105==    by 0x495E3BE: ??? (in /usr/lib/libglib-2.0.so.0.8000.0)
-==251105==  Address 0x5baa6f8 is 8 bytes inside a block of size 16 free'd
-==251105==    at 0x48458CF: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==251105==    by 0x59B2A1: sim_fs_context_free (src/simfs.c:213)
-==251105==    by 0x59B133: sim_fs_free (src/simfs.c:123)
-==251105==    by 0x5620EF: sim_remove (src/sim.c:3239)
-==251105==    by 0x52E701: flush_atoms (src/modem.c:495)
-==251105==    by 0x52C1BE: modem_change_state (src/modem.c:586)
-==251105==    by 0x52E155: set_powered (src/modem.c:974)
-==251105==    by 0x52E307: __ofono_modem_shutdown (src/modem.c:2279)
-==251105==    by 0x5296B6: signal_handler (src/main.c:85)
-==251105==    by 0x48FF198: ??? (in /usr/lib/libglib-2.0.so.0.8000.0)
-==251105==    by 0x495E3BE: ??? (in /usr/lib/libglib-2.0.so.0.8000.0)
-==251105==    by 0x48FFDC6: g_main_loop_run (in /usr/lib/libglib-2.0.so.0.8000.0)
----
- src/voicecall.c | 1 +
- 1 file changed, 1 insertion(+)
+On 5/28/24 3:26 AM, Martin Hundebøll wrote:
+> Exitting ofono before going online with a quectel modem procudes the
+> following use-after-free error:
+> 
+> ^Cofonod[776]: Terminating
+> =================================================================
+> ==776==ERROR: AddressSanitizer: heap-use-after-free on address 0xb4150734 at pc 0x005ad063 bp 0xbefa26c0 sp 0xbefa26c4
+> READ of size 4 at 0xb4150734 thread T0
+>      #0 0x5ad060 in ofono_sim_remove_file_watch ../git/src/sim.c:2621
+>      #1 0x5ad060 in unwatch_sim_ecc_numbers ../git/src/voicecall.c:2820
+>      #2 0x5ad060 in voicecall_unregister ../git/src/voicecall.c:2849
+>      #3 0x57f910 in __ofono_atom_unregister ../git/src/modem.c:336
+>      #4 0x57f910 in __ofono_atom_unregister ../git/src/modem.c:329
+>      #5 0x57f910 in flush_atoms ../git/src/modem.c:492
+>      #6 0x57f910 in modem_change_state ../git/src/modem.c:586
+>      #7 0x58013e in set_powered ../git/src/modem.c:974
+>      #8 0x58054a in __ofono_modem_shutdown ../git/src/modem.c:2279
+>      #9 0x58054a in signal_handler ../git/src/main.c:85
+> 
+> 0xb4150734 is located 4 bytes inside of 8-byte region [0xb4150730,0xb4150738)
+> freed by thread T0 here:
+>      #0 0xb6a88110  (/lib/libasan.so.8+0x97110) (BuildId: 1374acedfadbe21a32d37a0a1f15e27d16516851)
+>      #1 0x641216 in sim_fs_free ../git/src/simfs.c:123
+>      #2 0x641216 in sim_fs_free ../git/src/simfs.c:103
+>      #3 0x5de12c in sim_remove ../git/src/sim.c:3239
+>      #4 0x57f95a in flush_atoms ../git/src/modem.c:495
+>      #5 0x57f95a in modem_change_state ../git/src/modem.c:586
+>      #6 0x58013e in set_powered ../git/src/modem.c:974
+>      #7 0x58054a in __ofono_modem_shutdown ../git/src/modem.c:2279
+>      #8 0x58054a in signal_handler ../git/src/main.c:85
+> 
+> previously allocated by thread T0 here:
+>      #0 0xb6a8891c in __interceptor_calloc (/lib/libasan.so.8+0x9791c) (BuildId: 1374acedfadbe21a32d37a0a1f15e27d16516851)
+>      #1 0x597b3e in sim_fs_context_new ../git/src/simfs.c:155
+>      #2 0x597b3e in ofono_sim_context_create ../git/src/sim.c:2549
+>      #3 0x597b3e in watch_sim_ecc_numbers ../git/src/voicecall.c:2925
+>      #4 0x57f506 in call_watches ../git/src/modem.c:314
+>      #5 0x4977be in at_clck_query_cb ../git/drivers/atmodem/sim.c:1612
+>      #6 0x556cf4 in at_chat_finish_command ../git/gatchat/gatchat.c:465
+>      #7 0x5583ae in at_chat_handle_command_response ../git/gatchat/gatchat.c:527
+>      #8 0x5583ae in have_line ../git/gatchat/gatchat.c:606
+>      #9 0x5583ae in new_bytes ../git/gatchat/gatchat.c:765
+>      #10 0x559ef6 in received_data ../git/gatchat/gatio.c:122
+>      #11 0x563400 in dispatch_sources ../git/gatchat/gatmux.c:184
+>      #12 0x56402c in received_data ../git/gatchat/gatmux.c:272
+> 
+> The reason is the voicecall atom holding a reference to the sim atom,
+> which is read in the voicecall_unregister() path. Avoid the error by
+> simply instantiating the sim atom before the voicecall atom, which makes
+> the latter being unregistered first.
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index d9f3dd82f0e6..398a576a3cc2 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2966,6 +2966,7 @@ static void sim_watch(struct ofono_atom *atom,
- 
- 	if (cond == OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
- 		voicecall_close_settings(vc);
-+		vc->sim_context = NULL;
- 		vc->sim_state_watch = 0;
- 		vc->sim = NULL;
- 		return;
--- 
-2.45.0
+Thanks for the reported.  This should really be fixed in the core.  Can you try 
+the following patch:
+
+https://patchwork.kernel.org/project/ofono/patch/20240528220642.251435-1-denkenz@gmail.com/
+
+> ---
+>   plugins/quectel.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+
+Regards,
+-Denis
 
