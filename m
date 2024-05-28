@@ -1,62 +1,62 @@
-Received: from mail-oo1-f50.google.com (mail-oo1-f50.google.com [209.85.161.50])
+Received: from mail-oo1-f49.google.com (mail-oo1-f49.google.com [209.85.161.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78AD2446A2
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2BD525024E
 	for <ofono@lists.linux.dev>; Tue, 28 May 2024 19:32:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.50
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716924755; cv=none; b=JZ+r9wGTBpjFXPqLNVL8tDD9GZkc6JpAYpOKfHJ2v/IZDtLJ8+FgUczDjMItsFIEKUzMxMMcBjUOkeJ7Un+o8Al64+bOTpf32Ly4wvMYeqccewV1qunVvF1NoIE2tNazLLNv7ipO92xmCpYOa9qCwUVf5yvXwPiknJ0DXspojsY=
+	t=1716924756; cv=none; b=QKvBJuSBwgPKi0uL5UhCCv1Ka+WqwSXg7gInoD9BA/jlSbFCjlNHu6d8mjDWs0VxGB7/ZIGLgKeeHM+JFltEQg5WGys8g8K9jXCUZK1wGs4z5bUgXPal1/bwdcgzMEWYU5LAELi6m4caLXkK2rRRu56jCWu6etvjhZ6+sT94G48=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716924755; c=relaxed/simple;
-	bh=p8euwUjQHn5I/P71ymsg8AYSca4ABkhXAqeuNgOep9w=;
+	s=arc-20240116; t=1716924756; c=relaxed/simple;
+	bh=0D0p/8Kp3OoQExtgqDmAynXZDXvJ8SgQyeN0nhHAs0Y=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=I9B7ZWXg7Fgmzz5jVNpywphKljtvhWg4YUXCFRk9t28pAgsHzkMjGg+sYk4gY+34gsWpCfHAstsehkWsympsWqniD5ETC2WNhlMq8Q/JL3mSs5kQE8mLg/gGLQb/I94Dim1AQHuYH8BzLkNfIB6mIHaOUYdYA2pinHclSgZ688U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UY1z5XIs; arc=none smtp.client-ip=209.85.161.50
+	 MIME-Version; b=J4HSu+v316hiTw2WFekArfBK1zyhMrlh8cfESVaenit8V1/ZPPVcCTUT6UNdsOJc6YT1UqVZTFXFWW+sNulPDyfcoas3IXR4WNVxXHT87aTOfYGQcum5kEOJXDF24lwOVqHD2CsdJGtHzb/7gTBXgEKjJUHZRRWtKzBkoSFDJuY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=P4LKHDL/; arc=none smtp.client-ip=209.85.161.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UY1z5XIs"
-Received: by mail-oo1-f50.google.com with SMTP id 006d021491bc7-5b9a5be6668so688582eaf.1
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="P4LKHDL/"
+Received: by mail-oo1-f49.google.com with SMTP id 006d021491bc7-5b9c7ae2c98so487761eaf.3
         for <ofono@lists.linux.dev>; Tue, 28 May 2024 12:32:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716924753; x=1717529553; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1716924754; x=1717529554; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=y9UIYlPrYhmQms74vgQcbaaF5tDKCbhmeuZBRpPdmKQ=;
-        b=UY1z5XIskr8L6qLXvfwbHs/aNUumGH8+Liw+LxHLNhu5+c7v/30JmLpGLI3iA7YsDe
-         dLwhZ073Wsnd9f5co0FozBCsyfGwpBgvcuigYTVLQiOQtH1KMicuYgutNBT7dCl1NVQA
-         26t3yQArWjj/E0M2HZg7NPPDzC/vQy/Fp4ewznZLjdTePVygvhh+XrA1euegxpKTQ3xt
-         a+YLlBVH5hPDkUT56+8bNBoah1QELa6e1yQewhbQIVeixaghpQ5ML5YF6UU2eXlHBBTw
-         6jgwZT4uTlL7N9X/XmXl+1I543/i1oS2Z9C5r35YzUtAzNDslPHlVxbq6GD2/WBZ/Z5M
-         ixmg==
+        bh=f3CVvgFIfWCnZzpiTjvVe9pN2eG5j6cHqk5YDi7p2iQ=;
+        b=P4LKHDL/VEqvadZfCTuX3KvF07YaVbUzUqgzKFCS4HYFkggjnyRXZresqM1cfW5DVK
+         y2bsU+TQ8+oC1XcqIFeQVawZSgDovquD1afcSTHOsgYB4wNMZb+DN64m7PjZDi29ZeYR
+         tiSsyZdLPGvmmKHeySujHMN1tF/rZWTzPc1Wdb0n8wk/b6crRg15+mmocAYmGj9A0TM/
+         blbo54TL+Rpamwnh395y1Yd369bitZ4ia4raJ9GZ4VW0irgQwK6V1HLVjebb6kouvimQ
+         xDCqdu5QUJwTCAA1UKH5+DX3cDQqC74WDMNKTY4eQfJLUNZ9UI1rSQRNvcj7BF8LhgCX
+         +m8w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716924753; x=1717529553;
+        d=1e100.net; s=20230601; t=1716924754; x=1717529554;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=y9UIYlPrYhmQms74vgQcbaaF5tDKCbhmeuZBRpPdmKQ=;
-        b=FZH1EoVRpsY4b//Ag08UUClCmm2h6nvH3+wxCtXMAS5F05uSRsI9wW7aUp4D2O6uGt
-         csR2k7cbaPYgSqYWre8i5z43Shd7Qvx6PslUrRJMyaqs8AR2vI4OVTgMsYBmrj0JrUi2
-         /yIbj9vsIdqKvbOtX31k/K8K2DSKFAF8TxyiONObA36c3hEkfjK6bBIZW35nacf0xSiG
-         EcjAAxxAmCzbmB7mv6kNwzVQXaqaE5zzK6/sqNva5RmoMQF1b1A6pjcnDUaGRW4jfHxd
-         KT5spTTnsV79fSyjrTj+tLNDBO7gYMc5JzBADECt7yIEOgOT057i7hpUF+c+zS3a4Tr/
-         fRkw==
-X-Gm-Message-State: AOJu0YyIWrx1+o5HBa4ELv2PlMPRxkPbvOa6Va6eklA3xw+W1+8YwB6/
-	BNb5frwiX32UgTFRSVJSEHe31YibCD1TFKvltWTK7+CrxeuKWyokSFgGwA==
-X-Google-Smtp-Source: AGHT+IFe1Hg28zM9nGsL+nU273RF2tXOvIt65P1RNpVG6zz4PwIe/Xuq24bVV8URNN0juxGU6GndRA==
-X-Received: by 2002:a05:6820:1606:b0:5b2:72e5:c12d with SMTP id 006d021491bc7-5b961b5dda1mr15786491eaf.5.1716924753319;
-        Tue, 28 May 2024 12:32:33 -0700 (PDT)
+        bh=f3CVvgFIfWCnZzpiTjvVe9pN2eG5j6cHqk5YDi7p2iQ=;
+        b=Z7CLUixRrTpuwfmzzuTsaJH7SdKBGdUTgVDnTVKutS2VOqhCYFBsi8Y/LBxXoHHcz2
+         CUtQz1Kink+VKzxo95BS2WZDFYnoVa8rpDqrGgk02CGmCZ/egbm0MlhMKbBenvpoHGf7
+         BRVPxty6bzyuCnyfvjKVlipDV3C/EsT9HK/tr1WDL7QiCbB5nszv2+Eqf5BHyGGL8S2P
+         GPcG9B45BFICdnNX4EO8rgdQAx3e5hJcPT5CH/fPn203UWnCfQvyVWVymyoqbYSfg5AE
+         zV20PGfXgXWEQnX46lGyA7wg+TbiyfXc+7tq6BVujDKXSvpXK0Uxz0bxQOXK7vJH70Nm
+         a1Fw==
+X-Gm-Message-State: AOJu0YzyuymRJ+IrtFO93wtTnAnxbHdJYGj5PDvTfu/S7PLK2mbOlgXj
+	6lkNbGHnjKNVJVc8czonecitth1NF7VloNUfRLVo2CIh2s8CK1kZzRqblg==
+X-Google-Smtp-Source: AGHT+IFqC03HWi0dgLGc5DqvphyRGPKFjJ8PEmcFZGg/BgjbR6rDshVP1az3W7gvzSYVQftBz/66rA==
+X-Received: by 2002:a4a:ca0c:0:b0:5b9:d198:e4c2 with SMTP id 006d021491bc7-5b9d198e860mr544442eaf.1.1716924754032;
+        Tue, 28 May 2024 12:32:34 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5b96c699953sm2278337eaf.31.2024.05.28.12.32.32
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5b96c699953sm2278337eaf.31.2024.05.28.12.32.33
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 28 May 2024 12:32:33 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 2/3] log: Use l_basename instead of basename
-Date: Tue, 28 May 2024 14:32:20 -0500
-Message-ID: <20240528193229.225499-2-denkenz@gmail.com>
+Subject: [PATCH v2 3/3] qmi: Use l_basename instead of basename
+Date: Tue, 28 May 2024 14:32:21 -0500
+Message-ID: <20240528193229.225499-3-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240528193229.225499-1-denkenz@gmail.com>
 References: <20240528193229.225499-1-denkenz@gmail.com>
@@ -69,38 +69,29 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
 ---
- src/log.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ drivers/qmimodem/qmi.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/log.c b/src/log.c
-index fdfad362cfd1..4348f1be6191 100644
---- a/src/log.c
-+++ b/src/log.c
-@@ -28,13 +28,14 @@
- #include <unistd.h>
- #include <stdarg.h>
- #include <stdlib.h>
--#include <string.h>
- #include <syslog.h>
- #ifdef HAVE_BACKTRACE
- #include <execinfo.h>
- #endif
- #include <dlfcn.h>
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index ce42e23c57f2..5b016f2d1227 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -1154,13 +1154,13 @@ static char *get_device_interface(struct qmi_device *device)
+ 	char * const driver_names[] = { "usbmisc", "usb" };
+ 	unsigned int i;
+ 	char file_path[PATH_MAX];
+-	char *file_name;
++	const char *file_name;
+ 	char *interface = NULL;
  
-+#include <ell/ell.h>
-+
- #include "ofono.h"
+ 	if (!get_device_file_name(device, file_path, sizeof(file_path)))
+ 		return NULL;
  
- static const char *program_exec;
-@@ -309,7 +310,7 @@ int __ofono_log_init(const char *program, const char *debug,
- 	signal_setup(signal_handler);
- #endif
+-	file_name = basename(file_path);
++	file_name = l_basename(file_path);
  
--	openlog(basename(program), option, LOG_DAEMON);
-+	openlog(l_basename(program), option, LOG_DAEMON);
- 
- 	syslog(LOG_INFO, "oFono version %s", VERSION);
- 
+ 	for (i = 0; i < L_ARRAY_SIZE(driver_names) && !interface; i++) {
+ 		char *sysfs_path;
 -- 
 2.45.0
 
