@@ -1,61 +1,65 @@
-Received: from mail-oa1-f46.google.com (mail-oa1-f46.google.com [209.85.160.46])
+Received: from mail-oa1-f51.google.com (mail-oa1-f51.google.com [209.85.160.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98B3D39FFB
-	for <ofono@lists.linux.dev>; Tue, 28 May 2024 18:53:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CAB439FFB
+	for <ofono@lists.linux.dev>; Tue, 28 May 2024 18:53:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716922438; cv=none; b=XFTdsrrkR8IvtDBPXsxYOMoICH0vngAzrQgUWpAcD2NGb2AHO7bczwaGKNj5JvO2iu4wf8FN3yH/x8NkHqvr/1king5ZMfBzNfKxuwJKh8I4AxOM5pzOd7QFDWwOHBaXhiNrK+VcUCFQ4ZxqSct5pOExw7479y8qWKrHvMtHvxE=
+	t=1716922440; cv=none; b=OWsZLw7+dyVKvVhZwGDB6/9suJD74rMMSpd3oBTF4/dmEzlq4F8PvAqKb+7eJklPUeWvNflFuul+t3PGs9qJbq0VBY3eUt+MPcf0MzaKELXQUKCv7P+5diNPX1siM7gi3nPIuTE4x/0WA4aUdtyUB4TBFCLlMcmX6PgAqFy7fjc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716922438; c=relaxed/simple;
-	bh=uFUNaE/7jKQ0MEhKGWB3w3xNjYX8m4m8QbzvQu4tuQ4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ugHwJ25bD+MjWUciRseAXfZkzVhM5J+0LMI6JXGbJGKrc+4wz4ye8JY35x7mEI/aphKa8yJWTd4h4P7WiPg6+inUo/wmAirDB2F/GftHyDs+286nNEAIzPNVNNLate+iANBU1wtJMcKAApZ3IJ2w6ctz2vfzHRTX+IbLiL1LmN0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RkaElT3i; arc=none smtp.client-ip=209.85.160.46
+	s=arc-20240116; t=1716922440; c=relaxed/simple;
+	bh=p8euwUjQHn5I/P71ymsg8AYSca4ABkhXAqeuNgOep9w=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=IcTZ7uM/bj+tq220ZAALrbjYr6xDE22sGRuG3d3jGYrFRObfV5smzOsuuO/3TRLUrZAkaO5DHmGrd/gSxHEs9DfiONAjKQUKs88gV2imVJTK87dL9SIzoboA01uSv206X7rSFShtfmvIOAb9R3P+tJa8UrNe1QAwBHlqaLTfwUA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kMfz3eSC; arc=none smtp.client-ip=209.85.160.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RkaElT3i"
-Received: by mail-oa1-f46.google.com with SMTP id 586e51a60fabf-24cb75c126aso569836fac.3
-        for <ofono@lists.linux.dev>; Tue, 28 May 2024 11:53:57 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kMfz3eSC"
+Received: by mail-oa1-f51.google.com with SMTP id 586e51a60fabf-24ca079af98so675137fac.3
+        for <ofono@lists.linux.dev>; Tue, 28 May 2024 11:53:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716922436; x=1717527236; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=qPaldu6RYcFbFSFsAGtZhs7LqeMETBGiP3boYTS5b3Q=;
-        b=RkaElT3ine+MWQAjmfpUb59msrvRM+aZT2yxxwXfj3ShHy8l7B8ju9iRtq1/pYDwHg
-         YXkgW4ilYOU5WvzZPRtiP0gvD9sQ9n9Puq/+84noVO5rhIuSBBMAhEA3oEEpnmcDFlCz
-         lpVOBcLkOZV8LrWAyeY42VAAs4P0CqTn/4nabNLdp3t00ogdOydT975MBFGnwXXHD0Re
-         26i+r/NHIC8BZ5TlsImsckw+suq6GpahaHq5qh1pLVCqNW1uKY3ECG8bdwh/t9njqAnz
-         IhwK51tiWFgkbsuboxMUz5odWSpdSL7j8zbZOuW9dgmrOKeYPiT5aIC6SXn/Esb/pTKk
-         0J/g==
+        d=gmail.com; s=20230601; t=1716922438; x=1717527238; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=y9UIYlPrYhmQms74vgQcbaaF5tDKCbhmeuZBRpPdmKQ=;
+        b=kMfz3eSCk8V2b2DxU3ZzgOrCsj05DdbQs4eevA5f/6jdMBxald5xK2HA1f2Z7beava
+         uv49tECz58u5UbKFgFgr5BdP6lpAuo0PGl9N0EJyjlMxKCm4hnhV8+1uMqBENjYlUVg9
+         MnCToAvBEtYr2YuOBv4WzzI5jW+5UBYCyQoiQOel7vVRLmDHfI3AsL4pyp8Zp1v2F20f
+         DVRgHVE70Jf+xiy/+wNFIwM/QXDmVPllDl+zoLEO49atPo+uW9OMqGQfHkmT/fbWXuze
+         mDDsxllc0KEhemxsM0JqYv8sQjIhK/3ky77wfh2mcT2mu2v1LtN6NwcWQswsp+l78tOx
+         oQ2g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716922436; x=1717527236;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=qPaldu6RYcFbFSFsAGtZhs7LqeMETBGiP3boYTS5b3Q=;
-        b=AEiHwwpMJOy04Tr6reOzHNbxDdCMpKqRSJh84+Ewcc1ropPr9qURom4MwZdHkmfuBK
-         kMLQEaCZIkMW7uikWmzyYtijiGKh9nGd8Sh9OSfSa9dHxtQx3WQskXVYKlfSFf/WhspN
-         8SVmZ43PZoqi7GtNNwK90cJMn/WSiC4MgzMGSTqqh/FDQjdrj2j8arPwadkiA8pmtEBi
-         vm2NiCpGn8EFfFYd3Xb54z/Gj8epnzoQqNAgeGD/GtcDMK4WNg+pyF2Pf1ywLr3PFb/O
-         HSTVCkWmwVKgOB6fj7iONCMHrJNJ7PyGJQhR4up6OV1OXKijI04vrp5eFx3KYnGeJfeI
-         LTdA==
-X-Gm-Message-State: AOJu0Yw4I8jbDfryzagPuA1dA5AwXD5qbP5b8fBjIGzuugyf6W1/aX6H
-	dmA9ZlND6ICqmFjkwvBPztHQCLtkaKS8/W2Q3WmPHkzQZ+r9XJvQa8LGTA==
-X-Google-Smtp-Source: AGHT+IHKDhCtgiHalq4SYLdgSUtTHMnZMX4d6Dus4ZYRQvzccvHfE9Bputpu0b0brFglNuPzwsSJ1g==
-X-Received: by 2002:a05:6870:c697:b0:24c:535d:9b2d with SMTP id 586e51a60fabf-24ca11ad4dcmr17817714fac.32.1716922436506;
-        Tue, 28 May 2024 11:53:56 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1716922438; x=1717527238;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=y9UIYlPrYhmQms74vgQcbaaF5tDKCbhmeuZBRpPdmKQ=;
+        b=uQbUuq7PlNCFvDn3Ta8e9oknESpwa4mglr/tAbWiV23dBcxO2NpfbEi4cSI+FWw7wX
+         iUqPzIXtA+deJPTFpB0P79kGIsaCdNDYEd9VqaFf5aX3+smlllwUJqjpGnBdkXybfOzY
+         LpcswyaXpsZS0TcVK5qC0qx+FC2baVZB0CmRJ9/ZVe+AEzSrPkSstIAbtK2B0GtV09B0
+         NU0sqbRcYHzhLihxjHVsYbR7qdM9KOSf+GnXAaVd0MDSrd1cDrxWGLK6h8UDQPhJgLa1
+         +NhsRDaWJ0CsAJdSwzpv8NV4ye8ZEJz0RovgGvJDU0Ls0YFSfj7B0bi5W5ZBVW0BRRkd
+         IWxw==
+X-Gm-Message-State: AOJu0YwbQriQcjL8IjVDPPwoAxkWsQi7lg9KQm3YZj8d/Qufj9WLyMy5
+	Mn0wTt5w7xmu9BM8SB8vrSxDqyCKT0zjTtYE4zbqMOKjYjFEkMaL1fqMvA==
+X-Google-Smtp-Source: AGHT+IFHSfpcsBOpvaeSAmCUgWv0/91x8B+hngTq0/DxcX6Wzi6AGhBjJxypecaP/qb7ZCZb2dNIiw==
+X-Received: by 2002:a05:6870:4207:b0:24f:d9de:3bf9 with SMTP id 586e51a60fabf-24fd9de3d3emr10099617fac.47.1716922438331;
+        Tue, 28 May 2024 11:53:58 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-24fd7c50c37sm1933625fac.18.2024.05.28.11.53.55
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-24fd7c50c37sm1933625fac.18.2024.05.28.11.53.56
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 28 May 2024 11:53:56 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 1/2] build: link dundee with ell
-Date: Tue, 28 May 2024 13:53:35 -0500
-Message-ID: <20240528185354.224680-1-denkenz@gmail.com>
+Subject: [PATCH 2/2] log: Use l_basename instead of basename
+Date: Tue, 28 May 2024 13:53:36 -0500
+Message-ID: <20240528185354.224680-2-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
+In-Reply-To: <20240528185354.224680-1-denkenz@gmail.com>
+References: <20240528185354.224680-1-denkenz@gmail.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -65,22 +69,38 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
 ---
- Makefile.am | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ src/log.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 44fb7b1baef0..e60f4f2d2bee 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -991,7 +991,7 @@ dundee_common_sources = $(gatchat_sources) \
- 			dundee/dbus.c dundee/manager.c dundee/device.c
+diff --git a/src/log.c b/src/log.c
+index fdfad362cfd1..4348f1be6191 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -28,13 +28,14 @@
+ #include <unistd.h>
+ #include <stdarg.h>
+ #include <stdlib.h>
+-#include <string.h>
+ #include <syslog.h>
+ #ifdef HAVE_BACKTRACE
+ #include <execinfo.h>
+ #endif
+ #include <dlfcn.h>
  
- dundee_dundee_LDADD = $(builtin_libadd) gdbus/libgdbus-internal.la \
--			@GLIB_LIBS@ @DBUS_LIBS@ -ldl
-+			$(ell_ldadd) @GLIB_LIBS@ @DBUS_LIBS@ -ldl
++#include <ell/ell.h>
++
+ #include "ofono.h"
  
- if DATAFILES
- dist_dbusconf_DATA += dundee/dundee.conf
+ static const char *program_exec;
+@@ -309,7 +310,7 @@ int __ofono_log_init(const char *program, const char *debug,
+ 	signal_setup(signal_handler);
+ #endif
+ 
+-	openlog(basename(program), option, LOG_DAEMON);
++	openlog(l_basename(program), option, LOG_DAEMON);
+ 
+ 	syslog(LOG_INFO, "oFono version %s", VERSION);
+ 
 -- 
 2.45.0
 
