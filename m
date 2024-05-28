@@ -1,49 +1,48 @@
 Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 75A7A13C835
-	for <ofono@lists.linux.dev>; Mon, 27 May 2024 10:59:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CFFF313B5B9
+	for <ofono@lists.linux.dev>; Tue, 28 May 2024 08:27:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716807578; cv=none; b=EJZCaKkbr0SOliWAFlxdIfYYUdvlymHw8Iuyh1lYyqZiM7qvFxauf3dTPTd3h1pIV/eJOL8dNYp2/WHm8hmtI9gHegbnC/tPMH82tly15DnA9odQv8JXWqn5H/FAjtMGWzc3AoTuyv2bsZXEJnM9IglxGLq11Tajcohpvj3uxBc=
+	t=1716884832; cv=none; b=DDZwKnQxGSgh+QEzEyzssrVwVPrxsPJqUk2FtOS6tecwPH5bKj70xoHCVRkBnc042BcpdAqOSMrnQUCzOJ8jbzkCsVapt51QIvUinpd+h/3ZyQssrgLs+051mDjwdXMjEJhZKlWwqgx9VcLFn5j9rTZ0gnElNTyisVKFyjRvSJo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716807578; c=relaxed/simple;
-	bh=80HrD0Y4LDczL5PvrSNdvRsamUpyoCtTCS/nLJRgkkk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=oXqTkOTyYyLgT3ys9Ic79fMiRvQUJtBRJZ1qZzqky+pG/ly8tdtJz5zewSEIPdVHcDDcCvya/5Tv0Gp3Z4iePOxD65UoK0d7HWN4gcdgRvWVMyziOUtLBGu9Hzbog4hsYLTClV8W26na855mrsWcwoWIKYakQQNoumD8NVmYohQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=iRf7q3XF; arc=none smtp.client-ip=188.40.30.78
+	s=arc-20240116; t=1716884832; c=relaxed/simple;
+	bh=2VCQCZWAL7Hrk8o0hKl7ESz8l8wlB9FCI6E01BV9evw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=SLQ/WBxxEbjsVkFTR8e0nh99W6nz1WFz9k0ouBWxWBnnnFl3rDv8IaUJIESPazv9ec8W8vihhSDIykRWCK9oYhsKfj0cF6kcjCHZUuabFHO28xLFTTrtr4ozVreWo2v/tIBGsFe/PdtdRrgT7sy7pzEzwnt2PLzPlv+/PgjflK0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=wAjLZoVU; arc=none smtp.client-ip=188.40.30.78
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="iRf7q3XF"
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="wAjLZoVU"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
 	s=default2211; h=Content-Transfer-Encoding:MIME-Version:Message-ID:Date:
 	Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
 	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
 	:Resent-Message-ID:In-Reply-To:References;
-	bh=8pfgSbmTNAUei0SAGQrYJpEcQk26VKiOB1DwgAbYNBQ=; b=iRf7q3XFH2b71fS+Rceer04X39
-	EfWc1o09BPpAGiuGYx6p6vqCdfEhcySZdJoSJiEieARM0g8QSzpLTPuPfzqqAeixNLZ3z3I6dLcFf
-	HGoufwhLGcSN/y3o+WCrYe3Tn0evlhVDEJLDF7uh39paQ6NOrzcvvXh0KkDRqpS9GYR/B+A0FCTH8
-	OAndluRTDOivPx8ixPcTsnO6XK7+hrOKEKEZTXnzSHSMiJl0ci5yeQJsa4B9touGsMxVn6+RTQeXR
-	nrjrW1ZYo52H304uADktCOPxsW7XOc/3d92aNFqBVK78x8kUUtV18JLppz/vh29NxuBnWnhG4H1Oe
-	TwYlLGYQ==;
-Received: from sslproxy05.your-server.de ([78.46.172.2])
+	bh=sesTDXCtkUhrwepGkTATrPMmpieT/o32gobqzEJlzDQ=; b=wAjLZoVUiyWW/J5PqAZoHlOgRr
+	enZhS1IaCOvWtv8FbqwsVo0tzgG7hGSKtlBONn3OBtmHImtSx9+/Fa0WpSkA0Q7BEBFXNi2/I90TS
+	XdXfNlpZ5g4wGDQIUZa2eqzOVcM78euga8PcHedu3IKJaDKIfMXg1jO1nPEL27V3DPiYKWIoNGM5y
+	llI01CrbJs4+X/nbqrs6DjjQi76wHjTdMYNR3dF4/d+nZIi3k6ZdJvIQiDY9mnun1A7pyZ08unQMb
+	mY/xSkJYC/eOxIwPk/sxpLGNrm3XrqLImkfeyT1QH7YwBtwMNOox/azR0jbpEGKJnFKGmIp3TMXC4
+	wfykg6Ow==;
+Received: from sslproxy06.your-server.de ([78.46.172.3])
 	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
 	(Exim 4.94.2)
 	(envelope-from <martin@geanix.com>)
-	id 1sBY4i-000IUc-15; Mon, 27 May 2024 12:59:32 +0200
+	id 1sBsAe-000My3-Eu; Tue, 28 May 2024 10:27:00 +0200
 Received: from [185.17.218.86] (helo=zen..)
-	by sslproxy05.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	by sslproxy06.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <martin@geanix.com>)
-	id 1sBY4i-000Ecz-0e;
-	Mon, 27 May 2024 12:59:31 +0200
+	id 1sBsAd-000E3e-2j;
+	Tue, 28 May 2024 10:27:00 +0200
 From: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>
 To: ofono@lists.linux.dev
-Cc: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>,
-	Sergei Golubtsov <s.e.golubtsov@gmail.com>
-Subject: [PATCH] atmodem: gprs-context: use default PPP ACCM for Quectel serial modems
-Date: Mon, 27 May 2024 12:59:07 +0200
-Message-ID: <20240527105915.637532-1-martin@geanix.com>
+Cc: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@geanix.com>
+Subject: [PATCH] quectel: fix use after free
+Date: Tue, 28 May 2024 10:26:47 +0200
+Message-ID: <20240528082648.2010586-1-martin@geanix.com>
 X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
@@ -55,37 +54,73 @@ Content-Transfer-Encoding: 8bit
 X-Authenticated-Sender: martin@geanix.com
 X-Virus-Scanned: Clear (ClamAV 0.103.10/27288/Mon May 27 10:29:01 2024)
 
-Since commit c8ed7162 ("ppp: using RX ACCM = 0 by default"), the Quectel
-M95 modem has failed to establish a PPP context. Instead, it
-continuously logs this:
-    PPP: event: 9 (RCN), action: 1028, new_state: 8 (ACKSENT)
-    PPP: lcp: pppcp_initialize_restart_count: current state 8:ACKSENT
-    PPP: lcp: pppcp_send_configure_request: current state 8:ACKSENT
-    PPP: lcp: pppcp_process_configure_nak: current state 8:ACKSENT
-    PPP: lcp: pppcp_generate_event: current state 8:ACKSENT
+Exitting ofono before going online with a quectel modem procudes the
+following use-after-free error:
 
-Restore PPP functionality by configuring the (protocol) default ACCM
-value of 0x000a0000.
+^Cofonod[776]: Terminating
+=================================================================
+==776==ERROR: AddressSanitizer: heap-use-after-free on address 0xb4150734 at pc 0x005ad063 bp 0xbefa26c0 sp 0xbefa26c4
+READ of size 4 at 0xb4150734 thread T0
+    #0 0x5ad060 in ofono_sim_remove_file_watch ../git/src/sim.c:2621
+    #1 0x5ad060 in unwatch_sim_ecc_numbers ../git/src/voicecall.c:2820
+    #2 0x5ad060 in voicecall_unregister ../git/src/voicecall.c:2849
+    #3 0x57f910 in __ofono_atom_unregister ../git/src/modem.c:336
+    #4 0x57f910 in __ofono_atom_unregister ../git/src/modem.c:329
+    #5 0x57f910 in flush_atoms ../git/src/modem.c:492
+    #6 0x57f910 in modem_change_state ../git/src/modem.c:586
+    #7 0x58013e in set_powered ../git/src/modem.c:974
+    #8 0x58054a in __ofono_modem_shutdown ../git/src/modem.c:2279
+    #9 0x58054a in signal_handler ../git/src/main.c:85
+
+0xb4150734 is located 4 bytes inside of 8-byte region [0xb4150730,0xb4150738)
+freed by thread T0 here:
+    #0 0xb6a88110  (/lib/libasan.so.8+0x97110) (BuildId: 1374acedfadbe21a32d37a0a1f15e27d16516851)
+    #1 0x641216 in sim_fs_free ../git/src/simfs.c:123
+    #2 0x641216 in sim_fs_free ../git/src/simfs.c:103
+    #3 0x5de12c in sim_remove ../git/src/sim.c:3239
+    #4 0x57f95a in flush_atoms ../git/src/modem.c:495
+    #5 0x57f95a in modem_change_state ../git/src/modem.c:586
+    #6 0x58013e in set_powered ../git/src/modem.c:974
+    #7 0x58054a in __ofono_modem_shutdown ../git/src/modem.c:2279
+    #8 0x58054a in signal_handler ../git/src/main.c:85
+
+previously allocated by thread T0 here:
+    #0 0xb6a8891c in __interceptor_calloc (/lib/libasan.so.8+0x9791c) (BuildId: 1374acedfadbe21a32d37a0a1f15e27d16516851)
+    #1 0x597b3e in sim_fs_context_new ../git/src/simfs.c:155
+    #2 0x597b3e in ofono_sim_context_create ../git/src/sim.c:2549
+    #3 0x597b3e in watch_sim_ecc_numbers ../git/src/voicecall.c:2925
+    #4 0x57f506 in call_watches ../git/src/modem.c:314
+    #5 0x4977be in at_clck_query_cb ../git/drivers/atmodem/sim.c:1612
+    #6 0x556cf4 in at_chat_finish_command ../git/gatchat/gatchat.c:465
+    #7 0x5583ae in at_chat_handle_command_response ../git/gatchat/gatchat.c:527
+    #8 0x5583ae in have_line ../git/gatchat/gatchat.c:606
+    #9 0x5583ae in new_bytes ../git/gatchat/gatchat.c:765
+    #10 0x559ef6 in received_data ../git/gatchat/gatio.c:122
+    #11 0x563400 in dispatch_sources ../git/gatchat/gatmux.c:184
+    #12 0x56402c in received_data ../git/gatchat/gatmux.c:272
+
+The reason is the voicecall atom holding a reference to the sim atom,
+which is read in the voicecall_unregister() path. Avoid the error by
+simply instantiating the sim atom before the voicecall atom, which makes
+the latter being unregistered first.
 ---
- drivers/atmodem/gprs-context.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ plugins/quectel.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index bfe6ae56..0baea4a1 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -163,6 +163,11 @@ static gboolean setup_ppp(struct ofono_gprs_context *gc)
- 		g_at_ppp_set_credentials(gcd->ppp, gcd->username,
- 								gcd->password);
+diff --git a/plugins/quectel.c b/plugins/quectel.c
+index 18cc3312..3586864f 100644
+--- a/plugins/quectel.c
++++ b/plugins/quectel.c
+@@ -1343,8 +1343,8 @@ static void quectel_pre_sim(struct ofono_modem *modem)
  
-+	/* Quectel M95 fails to configure RCN when using ACCM = 0, so set it to
-+	 * the protocol default of 0x000a0000. */
-+	if (gcd->vendor == OFONO_VENDOR_QUECTEL_SERIAL)
-+		g_at_ppp_set_accm(gcd->ppp, 0x000a0000);
-+
- 	/* set connect and disconnect callbacks */
- 	g_at_ppp_set_connect_function(gcd->ppp, ppp_connect, gc);
- 	g_at_ppp_set_disconnect_function(gcd->ppp, ppp_disconnect, gc);
+ 	ofono_devinfo_create(modem, data->vendor, "atmodem", data->aux);
+ 
+-	ofono_voicecall_create(modem, data->vendor, "atmodem", data->aux);
+ 	sim = ofono_sim_create(modem, data->vendor, "atmodem", data->aux);
++	ofono_voicecall_create(modem, data->vendor, "atmodem", data->aux);
+ 
+ 	if (data->sim_locked || data->sim_ready)
+ 		ofono_sim_inserted_notify(sim, true);
 -- 
 2.44.0
 
