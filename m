@@ -1,85 +1,170 @@
-Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com [209.85.218.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FE6314290
-	for <ofono@lists.linux.dev>; Thu, 30 May 2024 07:35:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26026176185
+	for <ofono@lists.linux.dev>; Thu, 30 May 2024 08:39:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717054506; cv=none; b=o5Xb7ESf5jWtmgZaB0F9oNYggqHvknv0M53WzMajEPVefUGz+3epiIDYYOGjlHCJPkUcWlvluBzydnR225Sg3dvcrOGvg2WdgzK6g5kXy2X9xgGhIBVow4k298B7MVARgEQZw354elfwn7/X60OmkDimFBi/+9suNU3ZRxDIqKE=
+	t=1717058348; cv=none; b=tA2ZXCKOl7h3uhHTc0fPm9HTCHUET3v9H8nc4a2IaNHRt+7ZYdD7Tnu87JxQ77s6jD9rs81vnC74l6/hMjc5JXe7KnXpIpCZWeYEH6PjTlJ/UYVuf/KEY9mu22/++yb8Va8M9mznlUocmL0K+RZEMCkqD3/He8gaSXOttmlmOVc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717054506; c=relaxed/simple;
-	bh=2284rGfhub7VXV9Fnyl6Tvia/sSkC3bsRhSWEQciCBk=;
-	h=From:To:Cc:Subject:Date:Message-Id; b=rfwB8L9gdtTPFbIAohdj44IptROZiA7OLubmdEaDtZ//GN8jymYo3mKTxEH6JxEFJWzRDw94mxS53Hemu+5MFja42mmsUzZUOLIQtRCyvBcg8qEY3RvtneKGDe4J5Y2apg3gYCBUuAuQ2ek0As9UBPhtsOzI9XKD6WDE2pn63zM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=C0eLtSvv; arc=none smtp.client-ip=209.85.218.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1717058348; c=relaxed/simple;
+	bh=3CDSiZZ8QIfEmwSRYG1+pzxj9lFJZvO2ZFLwLY13mI4=;
+	h=Message-ID:Subject:From:To:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=rFg5K6ErSuqTGbmnILJSzwisPtlxieBrHneXJkjLYlLvp4Tjvvls1XiecTjFZ3Ut9xHE64zfBMeFQc0BMYI2hp28yMiqoHUa8jwOALuezxRY2S1yNrn4SmyIAsr7eAcV+LPm6npWAJG4a6yE3E/kFnO+d5aHCqFznM8R/p4awrY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=COOnbZLc; arc=none smtp.client-ip=188.40.30.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="C0eLtSvv"
-Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-a62614b9ae1so50328766b.0
-        for <ofono@lists.linux.dev>; Thu, 30 May 2024 00:35:05 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1717054503; x=1717659303; darn=lists.linux.dev;
-        h=message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=uZcFjeiQu2jif0XN7GFhUAeVWi5in2dcurYyQoLG4dI=;
-        b=C0eLtSvva2st+qqZJAUHdt5g6IrhesJokkOwo17jbKaFauUHkX5vSuhof4eFSD4rrH
-         HYDafcxNwcOH9htFnFsWEi7o7qC1+to834AcQP+RJAZ/oLMy93C4Btlwc59gzSvBf3wT
-         vfuf6Jv3Rc2yyRstV2dWb0ySwI9FrX6Ja9Z7cC93Bj8vPYTZ4QP3gvPNHCkRiE4wFnLe
-         hX3wAsjmfqaNyzTS57IThG6CxZK6rJc0hTQ37Fb6we0v6E4VwQu2aur1iqVxiEECYxlq
-         g6Jse0eAVF+eKOlkx9sj54PRPKu6pYN8PA5dCIsvCdoYw7BNBjCO5oOMa4ATMEqKLmjB
-         cRRQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717054503; x=1717659303;
-        h=message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=uZcFjeiQu2jif0XN7GFhUAeVWi5in2dcurYyQoLG4dI=;
-        b=EqnxEoZrCpL+EowFUL7m9Pe3ZMi8T1CIhURlOxzOfWaNzBGMtvTG3WkbdTO5AUvHB3
-         ehw8NOv7wVbLaUn0Dfum5RjKWk7VlTr/oHvXurqrXdqTi2rD4ROUQvImCqQM1kjjsohR
-         ziTwJmhLyPBqtJAi1kB2ckfKudhha5J1ahfpr2Jzj25/OvbnSDtZwViK8LYN3VuxQ0rI
-         ACKeQR//bbkhdXhXhyQLu6Kd4HP8ZOQf6fUqVtt71zyvfSonl5W2V6SMNGG6Sns15M47
-         dTDU9boXYLFYb3GGlUm4QPBaEGRp1SECct76BQ0Pe/KgcVHnR8+vEa3falEpF4HxXo9H
-         I0ug==
-X-Gm-Message-State: AOJu0YxSU0pQKYLj2PX5xhWYZmlzeehQ6c4y0Fan+UFVkdO6cQB354XK
-	dtOwnNhARoxt8PV+ci2jbLLm4dkxZHrT1Cc8/Ju7C9SMNKgBg91dBYpozQ==
-X-Google-Smtp-Source: AGHT+IEEenCFysIt7mEJZT1lvpASLaCxABiUb15MpZn9T01jwnCvd0cgWlzKmqFNc9yscx9IqKUuqw==
-X-Received: by 2002:a17:906:2dc3:b0:a61:c462:c612 with SMTP id a640c23a62f3a-a65e924f986mr76610466b.53.1717054503493;
-        Thu, 30 May 2024 00:35:03 -0700 (PDT)
-Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a626cda8bbesm792815566b.221.2024.05.30.00.35.02
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Thu, 30 May 2024 00:35:03 -0700 (PDT)
-From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-To: ofono@lists.linux.dev
-Cc: denkenz@gmail.com,
-	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH v2] udevng: fix tty subsystem device on usb bus detection
-Date: Thu, 30 May 2024 10:34:11 +0300
-Message-Id: <1717054451-3185-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
-X-Mailer: git-send-email 1.9.1
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="COOnbZLc"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
+	s=default2211; h=MIME-Version:Content-Transfer-Encoding:Content-Type:
+	References:In-Reply-To:Date:To:From:Subject:Message-ID:Sender:Reply-To:Cc:
+	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+	Resent-To:Resent-Cc:Resent-Message-ID;
+	bh=3CDSiZZ8QIfEmwSRYG1+pzxj9lFJZvO2ZFLwLY13mI4=; b=COOnbZLcIlwZ8c5M95bwPV7xKX
+	R+8xge+JMhinfksCR8uG3xaUn1NXcCTgIuQ+KRNUzQ+j8eOgsp6Xwfk+JD3NorlXjg7e+uwAyTb9+
+	Pw6bMeTgLOBR+XKlvcVIN4eLkV/Ke4Bq9QpNmTMPZQJntPwreo2VizcTMFfxQV0nBz+BxvhuJitcE
+	VDFJttqYFU6wLTmnfi5AQhzk7MMwdIjhBEL/xH4DXyIn6yfC9IS7pVT21y0r/NuTSjfhMXtJgNyDH
+	6BajcURepH5ZVnHM1FoUdAbSkr6i0/oZFpcf2t+o/ha8qhO2MnG3bb3zPBZTwy9hwAGGNpgYJi17C
+	+SNL0TBg==;
+Received: from sslproxy01.your-server.de ([78.46.139.224])
+	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.94.2)
+	(envelope-from <martin@geanix.com>)
+	id 1sCbJJ-000P7m-6m; Thu, 30 May 2024 10:38:57 +0200
+Received: from [185.17.218.86] (helo=[192.168.64.76])
+	by sslproxy01.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <martin@geanix.com>)
+	id 1sCbJJ-000BKx-19;
+	Thu, 30 May 2024 10:38:57 +0200
+Message-ID: <037fc1e0e1dfbb816dcde6f66bccae95520fbb70.camel@geanix.com>
+Subject: Re: [PATCH] quectel: fix use after free
+From: Martin =?ISO-8859-1?Q?Hundeb=F8ll?= <martin@geanix.com>
+To: Denis Kenzior <denkenz@gmail.com>, ofono@lists.linux.dev
+Date: Thu, 30 May 2024 10:38:56 +0200
+In-Reply-To: <79f5b88a-d625-4c5c-addd-13727f8516c3@gmail.com>
+References: <20240528082648.2010586-1-martin@geanix.com>
+	 <79f5b88a-d625-4c5c-addd-13727f8516c3@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.1 
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+X-Authenticated-Sender: martin@geanix.com
+X-Virus-Scanned: Clear (ClamAV 0.103.10/27290/Wed May 29 10:30:54 2024)
 
-Fixes: cdd58360140a ("udevng: Add mhi subsystem detection")
----
- plugins/udevng.c | 2 ++
- 1 file changed, 2 insertions(+)
+Hi Deniz,
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index d3ce3d5..708ad80 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -2527,6 +2527,8 @@ static void check_device(struct udev_device *device)
- 		check_wwan_device(device);
- 	else if (l_streq0(subsystem, "mhi"))
- 		check_mhi_device(device);
-+	else if (l_streq0(bus, "usb"))
-+		check_usb_device(device);
- 	else
- 		add_serial_device(device);
- }
--- 
-1.9.1
+On Tue, 2024-05-28 at 17:13 -0500, Denis Kenzior wrote:
+> On 5/28/24 3:26 AM, Martin Hundeb=C3=B8ll wrote:
+> > Exitting ofono before going online with a quectel modem procudes
+> > the
+> > following use-after-free error:
+> >=20
+> > ^Cofonod[776]: Terminating
+> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> > =3D=3D776=3D=3DERROR: AddressSanitizer: heap-use-after-free on address
+> > 0xb4150734 at pc 0x005ad063 bp 0xbefa26c0 sp 0xbefa26c4
+> > READ of size 4 at 0xb4150734 thread T0
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #0 0x5ad060 in ofono_sim_remove_file_watch
+> > ../git/src/sim.c:2621
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #1 0x5ad060 in unwatch_sim_ecc_numbers
+> > ../git/src/voicecall.c:2820
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #2 0x5ad060 in voicecall_unregister
+> > ../git/src/voicecall.c:2849
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #3 0x57f910 in __ofono_atom_unregister ../git/=
+src/modem.c:336
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #4 0x57f910 in __ofono_atom_unregister ../git/=
+src/modem.c:329
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #5 0x57f910 in flush_atoms ../git/src/modem.c:=
+492
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #6 0x57f910 in modem_change_state ../git/src/m=
+odem.c:586
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #7 0x58013e in set_powered ../git/src/modem.c:=
+974
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #8 0x58054a in __ofono_modem_shutdown ../git/s=
+rc/modem.c:2279
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #9 0x58054a in signal_handler ../git/src/main.=
+c:85
+> >=20
+> > 0xb4150734 is located 4 bytes inside of 8-byte region
+> > [0xb4150730,0xb4150738)
+> > freed by thread T0 here:
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #0 0xb6a88110=C2=A0 (/lib/libasan.so.8+0x97110=
+) (BuildId:
+> > 1374acedfadbe21a32d37a0a1f15e27d16516851)
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #1 0x641216 in sim_fs_free ../git/src/simfs.c:=
+123
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #2 0x641216 in sim_fs_free ../git/src/simfs.c:=
+103
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #3 0x5de12c in sim_remove ../git/src/sim.c:323=
+9
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #4 0x57f95a in flush_atoms ../git/src/modem.c:=
+495
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #5 0x57f95a in modem_change_state ../git/src/m=
+odem.c:586
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #6 0x58013e in set_powered ../git/src/modem.c:=
+974
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #7 0x58054a in __ofono_modem_shutdown ../git/s=
+rc/modem.c:2279
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #8 0x58054a in signal_handler ../git/src/main.=
+c:85
+> >=20
+> > previously allocated by thread T0 here:
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #0 0xb6a8891c in __interceptor_calloc
+> > (/lib/libasan.so.8+0x9791c) (BuildId:
+> > 1374acedfadbe21a32d37a0a1f15e27d16516851)
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #1 0x597b3e in sim_fs_context_new ../git/src/s=
+imfs.c:155
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #2 0x597b3e in ofono_sim_context_create ../git=
+/src/sim.c:2549
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #3 0x597b3e in watch_sim_ecc_numbers
+> > ../git/src/voicecall.c:2925
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #4 0x57f506 in call_watches ../git/src/modem.c=
+:314
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #5 0x4977be in at_clck_query_cb
+> > ../git/drivers/atmodem/sim.c:1612
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #6 0x556cf4 in at_chat_finish_command
+> > ../git/gatchat/gatchat.c:465
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #7 0x5583ae in at_chat_handle_command_response
+> > ../git/gatchat/gatchat.c:527
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #8 0x5583ae in have_line ../git/gatchat/gatcha=
+t.c:606
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #9 0x5583ae in new_bytes ../git/gatchat/gatcha=
+t.c:765
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #10 0x559ef6 in received_data ../git/gatchat/g=
+atio.c:122
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #11 0x563400 in dispatch_sources ../git/gatcha=
+t/gatmux.c:184
+> > =C2=A0=C2=A0=C2=A0=C2=A0 #12 0x56402c in received_data ../git/gatchat/g=
+atmux.c:272
+> >=20
+> > The reason is the voicecall atom holding a reference to the sim
+> > atom,
+> > which is read in the voicecall_unregister() path. Avoid the error
+> > by
+> > simply instantiating the sim atom before the voicecall atom, which
+> > makes
+> > the latter being unregistered first.
+>=20
+> Thanks for the reported.=C2=A0 This should really be fixed in the core.=
+=C2=A0
+> Can you try=20
+> the following patch:
+>=20
+> https://patchwork.kernel.org/project/ofono/patch/20240528220642.251435-1-=
+denkenz@gmail.com/
+>=20
+>=20
 
+I've tested the patch, and it fixes the issue.
+
+Thanks,
+Martin
