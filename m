@@ -1,112 +1,87 @@
-Received: from mail-oi1-f179.google.com (mail-oi1-f179.google.com [209.85.167.179])
+Received: from mail-ot1-f41.google.com (mail-ot1-f41.google.com [209.85.210.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7223C1EA84
-	for <ofono@lists.linux.dev>; Thu, 30 May 2024 15:25:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B58CB182D2D
+	for <ofono@lists.linux.dev>; Thu, 30 May 2024 15:39:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717082719; cv=none; b=KmhvD0senU1TTarfgnONy5UI3Q5hQBjFkMNDnOOy83cOw4u3wytqbpBXHgypRbtoPUvxmwUtnp4JdskLF/xmwBMeRgspFwyvLSvE7xe3jCWBfEUv8J19vFKzrViRzf2+v9yWBTG6P+qpE47E4du76bJh97BLXAnnInJNX0JyJGg=
+	t=1717083543; cv=none; b=ZDovQK431HkprX1T1pYc3sqljopcKZToaicu6m40Mk4CNWjzHOeVJmVWtteKdRIrWvKhS95tQ+EWrqFNGonzsRDZeZVOL8uCxICxriRC90imtKTuPpIB8xLomLPaacV7FyysdPYJ6s5TQaYgyL5bz+djOB7BssmbziTzrSiTw2s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717082719; c=relaxed/simple;
-	bh=HkEZgaqAD97w5ZCrZHZrRaa8u8UJmQyYN5Bof3loaKI=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=S018QrEuqJxL7X+nbTPeWiFg/Vv08zP1n8kGEagu+1zMHTLuYCIAZ/jq7FBadbJX9t+3gQtGiS6VjYHAzDc+YG+Zot9RXNz7VHa1brmnD7i5I/A1pmei2nN47GrMl3tfeRvL3ss/4t4pjPpe1vfuzvGFaE6K+uWcrpAm7tZSHPo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=U3cJwfoN; arc=none smtp.client-ip=209.85.167.179
+	s=arc-20240116; t=1717083543; c=relaxed/simple;
+	bh=MZGhq6YY/+xANBzjIn0Eriq799yxKT/dVs2YyS/u3rM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=NGGsno+1gOrerA8ZT+F0hB+ySfd6lY/rY37MdQQp3KQadYskWuMX1Szis95OA9mcB41DXr/VxyJMOFf16KSF0paRQJE3yTjudCnV2FdKVGzWVDJPk0p1A3i0PEBYJIZj8AgsxTpYJXad5juS8xtDsDbx6bv8W3RKFeIwRPaVzKg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=O8oynSj1; arc=none smtp.client-ip=209.85.210.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="U3cJwfoN"
-Received: by mail-oi1-f179.google.com with SMTP id 5614622812f47-3d1b33e9ac6so515182b6e.1
-        for <ofono@lists.linux.dev>; Thu, 30 May 2024 08:25:18 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="O8oynSj1"
+Received: by mail-ot1-f41.google.com with SMTP id 46e09a7af769-6f8e5115cfbso653517a34.0
+        for <ofono@lists.linux.dev>; Thu, 30 May 2024 08:39:01 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1717082717; x=1717687517; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=SAlq4X7UE2lFWDJuJQqAUZuWhAg2MFQ0l9yYqeRjFd8=;
-        b=U3cJwfoN2IYaok9mOfehfRX20BWyiVG2fDxpTjzB2Yy8J58VxuWiwg9ds0xhbJgN+L
-         kWKt7zeMpNmBx7kwqe6q07qw6c5Bjud80NToprTF9+4UzHeLSqLWGbOAOrK9HiJBwAZL
-         kGzhV682Q5uIfICawD+q8lPzrhPgZ9Lcxt2VAfoVxOEuIrTLt4xYPwyuc9NsT9Z/9dQz
-         8mYPRKVfuO2uGc3631kvrQm+hYOncSW5JNpfMC04EYdxCii6bpigREtT1RxmtNCnFJ3r
-         Sv/tFTet4VyFsV1VPeAYlPfj91r66M/EDR+zj6kAtkAYrowg3MY1mHNP0vAkI9jo9Hxi
-         tOCg==
+        d=gmail.com; s=20230601; t=1717083541; x=1717688341; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=r7M8a4SLTR18HeMuBJ/x+ZIcT0Wq1j0Fv2/LMyLaJVw=;
+        b=O8oynSj1E7M1VHRv5L3epvDLTyDo3j4IpTxi8fOqlZ1u0tMhJkJ8KKvVCDJlW70x/u
+         PUCk5NlaIWzXv9CBptv3vCgN0teiutbcCPL6CkLv1vhL6KZ+Mej2uFvC6f+goH6wn7uG
+         sw97RBG8MUreCP0xCEnRbAsBSEIf0MTjTe43xDOf1DEYHTqAotnJNWOrsvbUJnvtYZgQ
+         H3Jj5Qj6XYvXS9xwUsamgWC0H1AQzdp8r/A4M08yuG+nXsvKjJeqXeyK451zH17nhPJb
+         ykwQ2+WaLYff5BdDqX8tSUaxeNr2qgDCi2nWVZXUWUDg6evMhEbAvrSzmidEhrZPKpge
+         DWJg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717082717; x=1717687517;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=SAlq4X7UE2lFWDJuJQqAUZuWhAg2MFQ0l9yYqeRjFd8=;
-        b=feZoX/9fG2N8Jj8mSH9QQWG97Px3Wt57Ytx+CxJvauhi+B07qhiWNisWzd30PRPcHe
-         CKOwl1YsyLndLv4RWh+tTzL3w2g3fcVCtWATAWPrpue0cXm+P84+2xcHEFfQUK/mSI/X
-         OpgTmslPUIHlEgOaICsTAHLotx77SxZkpVTC/lLIldK+Hu11mL2IyOfk20Bikvh3w/dB
-         JpQpcbVSYPNTW6qFUob1a1YHpWMwYWnVIW6mmhnow5PjpSwuncmdWQWVz28JqmcFBUBB
-         uQ1zpoB3qYgXgHQca4H9gY9c/QaqvIQ7L8+HMB+owHM1E5oS32fnE+KSYyXYOVr/ch3f
-         utHg==
-X-Gm-Message-State: AOJu0YxcU0MhdHRsh7Zf1cQ1UNeKdzQHPJ/aS+OwwBp2D9RuhCI9MhqK
-	do8GhonWJ6eKEXayDvCdZuVuN/g2rH7bk28lchMcZnpJqYGE1eO7q7uJAQ==
-X-Google-Smtp-Source: AGHT+IG/Nhr/DCEz3R/e0R9b9bP/VfO+7I9CJQsbwahfTqJfaWQCy4uLrECjbcPHtMLAzRt+vrtXuQ==
-X-Received: by 2002:a05:6808:1288:b0:3c8:4dc7:3963 with SMTP id 5614622812f47-3d1dd2be12dmr1104522b6e.13.1717082717276;
-        Thu, 30 May 2024 08:25:17 -0700 (PDT)
-Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 5614622812f47-3d1b36c1eeesm2017889b6e.23.2024.05.30.08.25.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 30 May 2024 08:25:16 -0700 (PDT)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>,
-	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH 2/2] udevng: Fix detection of USB attached tty devices
-Date: Thu, 30 May 2024 10:25:03 -0500
-Message-ID: <20240530152513.279243-2-denkenz@gmail.com>
-X-Mailer: git-send-email 2.45.0
-In-Reply-To: <20240530152513.279243-1-denkenz@gmail.com>
-References: <20240530152513.279243-1-denkenz@gmail.com>
+        d=1e100.net; s=20230601; t=1717083541; x=1717688341;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=r7M8a4SLTR18HeMuBJ/x+ZIcT0Wq1j0Fv2/LMyLaJVw=;
+        b=rmeOyZbfwiN4RwL8jc8EZMB8h0g7sDA9Nv4/OOSAPekBxGvT+X5GlxdE0IBrT3Tu+o
+         40Lik+9ZmboJY/RwPWyrR4y2ZzbbjJYZ+7f3PYbFvrghV9D53SKp02vAQD9xp+6AeFNZ
+         LlMnRzsFwCCubyBaviOpCLQhCkibZcfEoNdAYn88PfdbNXixtsc2R585coR57aRNYgT3
+         AN4/+Tvz4RMzFKXJIp1ngO/q06YkTIEL+GA7VF9fZMLdqhQ//PVh9LcAb65a/bxjc2Tz
+         Xr9YJu5qlLJFHaLnZLXT9VB2sXFZ6joSEDPCD6yNMyIycwrNm+Zwgox65iC9cxn5IXx+
+         5ouA==
+X-Forwarded-Encrypted: i=1; AJvYcCWPve2yhbgBBoRV7yiDHnO+9F6f2pGlyS34sSPtwg4c8ykMj3WqznK37YKGTxwL7diwvqSBF1E5oTQt1xyLz9/HoR/SSxQ=
+X-Gm-Message-State: AOJu0YxDqvPZURL4uVDTj2K1vSsV5Ft8W59YTvlqKDMQOAdtqgHz8NnP
+	wakVOMs+oCTq2jy41rrF+Uq15EosuaRRHaWpMYFyqg8UpPX2TzmIsO4KRQ==
+X-Google-Smtp-Source: AGHT+IHT1du2/D3ZlfsT3OPsh6ru8D+hNfjrDs0445RtB6UsI+5KLEpfxd+Lb9GQDR7XUuuN9xAbbw==
+X-Received: by 2002:a05:6830:18f8:b0:6ee:1642:e26e with SMTP id 46e09a7af769-6f90af10216mr2773993a34.26.1717083540742;
+        Thu, 30 May 2024 08:39:00 -0700 (PDT)
+Received: from [192.168.1.21] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id 46e09a7af769-6f91054f672sm137a34.46.2024.05.30.08.39.00
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 30 May 2024 08:39:00 -0700 (PDT)
+Message-ID: <e67f4a99-2b4a-4915-bbb2-6d2253b3bebd@gmail.com>
+Date: Thu, 30 May 2024 10:38:59 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2] udevng: fix tty subsystem device on usb bus detection
+To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, ofono@lists.linux.dev
+References: <1717054451-3185-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <1717054451-3185-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-devices on the USB bus, that are part of the tty subsystem were not
-forwarded to check_usb_device.
+Hi Ivaylo,
 
-Fixes: cdd58360140a ("udevng: Add mhi subsystem detection")
-Reported-By: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
----
- plugins/udevng.c | 15 +++++++--------
- 1 file changed, 7 insertions(+), 8 deletions(-)
+On 5/30/24 2:34 AM, Ivaylo Dimitrov wrote:
+> Fixes: cdd58360140a ("udevng: Add mhi subsystem detection")
+> ---
+>   plugins/udevng.c | 2 ++
+>   1 file changed, 2 insertions(+)
+> 
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 07c87eb8aa08..87969461ac5b 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -2510,17 +2510,16 @@ static void check_device(struct udev_device *device)
- 	const char *subsystem = udev_device_get_subsystem(device);
- 	const char *bus = udev_device_get_property_value(device, "ID_BUS");
- 
--	if (l_streq0(subsystem, "net")) {
--		/* Handle USB-connected network devices in check_usb_device */
--		if (l_streq0(bus, "usb"))
--			check_usb_device(device);
--		else
--			check_net_device(device);
--
-+	/* Handle USB-connected devices in check_usb_device */
-+	if (l_streq0(bus, "usb")) {
-+		check_usb_device(device);
- 		return;
- 	}
- 
--	if (l_streq0(subsystem, "usb") || l_streq0(subsystem, "usbmisc"))
-+	/* Check the rest based on the subsystem */
-+	if (l_streq0(subsystem, "net"))
-+		check_net_device(device);
-+	else if (l_streq0(subsystem, "usbmisc"))
- 		check_usb_device(device);
- 	else if (l_streq0(subsystem, "pci"))
- 		check_pci_device(device);
--- 
-2.45.0
+Would this be better? 
+https://patchwork.kernel.org/project/ofono/patch/20240530152513.279243-2-denkenz@gmail.com/
+
+Regards,
+-Denis
 
