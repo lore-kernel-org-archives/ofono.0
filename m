@@ -1,62 +1,62 @@
-Received: from mail-oo1-f52.google.com (mail-oo1-f52.google.com [209.85.161.52])
+Received: from mail-oi1-f181.google.com (mail-oi1-f181.google.com [209.85.167.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF78D15572D
-	for <ofono@lists.linux.dev>; Fri,  7 Jun 2024 22:48:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84C221553AB
+	for <ofono@lists.linux.dev>; Fri,  7 Jun 2024 22:48:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717800487; cv=none; b=SBaLz487T/pjiEZ1BNsUuu+lUH+GZqiGbSkHkzzYtzYEK3SwRqn8x7a7aUHGmsQT+YBd9paEsNwKlagBwaEyK1QBdoZNYD+8wFZeH/CK43M3RnO8l1QVTlnXsg6ibaIfQQfDlZElD/odAZc22vMmSGmDP0yOV2ZVmVEbOGybj8U=
+	t=1717800487; cv=none; b=gsIvCHm5A6AbzY3kFxTtLbFn0fj+jBT1c4rT6wKFJd7c+u0EjnH+iky4GdsKGnoQHj/ARLJaOJKloTGDd+VLklAUdJ8M5b/HBwBIDc7rUPWQVF994KraR7RGmynqI3+HJGB78pPi1rtbFt1ZmBptcq1RbCk9uf6pghlLXW2J/Pk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1717800487; c=relaxed/simple;
-	bh=nA89mQj4IHqzTJQ87D5Kx49Se4PEMStDaDdDdUhhv7I=;
+	bh=SsV6uVMuTz2IXP5lAaBBxI/8XFl5PvYBgbXRboSJFTQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Nwae3i+anv04kGOWs3bcoG3nqto1crE7Xo0+gY5hwcGvRCC57pWMFeCYkXF0cLtURxqZ6HZ2FcaBMjPyO4cZx5GzNgueCsDqc2fMqc4ATwfx+NhsvqU/W06a8W7GH2LE5CCiCp3phMmV1VqKwHrOLK5JggXN51GTjnUS/08xz4o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AWyHD8bL; arc=none smtp.client-ip=209.85.161.52
+	 MIME-Version; b=nwdWsaIBB3RXstzVVYuk37n26UGdqyBaIaqKgRUDen+NPawRWjiBcLCjWX1I7BS7zU4KMTvjoqxaGY6s8yyjV7CncYkHWKkkBzdSJ37zonAvthH9+v5tr494pJ7akPh424xD0LF9t6buSl0QIJZcQ8y3HBHCTaY7OGIPJNwvHNg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=C0AnZN0M; arc=none smtp.client-ip=209.85.167.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AWyHD8bL"
-Received: by mail-oo1-f52.google.com with SMTP id 006d021491bc7-5ba70a0ed75so1458689eaf.1
-        for <ofono@lists.linux.dev>; Fri, 07 Jun 2024 15:48:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="C0AnZN0M"
+Received: by mail-oi1-f181.google.com with SMTP id 5614622812f47-3d1b33e9ac6so1523519b6e.1
+        for <ofono@lists.linux.dev>; Fri, 07 Jun 2024 15:48:06 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1717800485; x=1718405285; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=BZvEoY+n75WD/XlJn9EJtDiTKiZa2BG0t/Ag91b9Sbk=;
-        b=AWyHD8bLtPtnzgtD7zgo6DT6Q1mnN9s7VjJ9upapH7jDjedEa2U6TEf9ssOKrBwEJ1
-         upBtFq/eXj+gnxSY9ruo8BZ1j1KhWPAqvEUJDDnhJSNMQBasVP9X7vcveFbYMfV+vxtX
-         asEB9KEmRizQHHHxVoz+MZqVTUt5YfSrO/gEFfyDean2z9gZFuZVbf8BtGzJQa2AFfZt
-         68jYph0Uy/BhmLohx/CQ3b+wB3xPFn1w9YaJLH1o0VBXV5i+0gf1xJZzxltfKhlQ7BQ4
-         dkOWSymfAxNKBIhJm0e054ZlquxE0v9uJl2It2oNtlsC7fHNTjrRyQ37nGmJqZ1APIMr
-         JRRA==
+        bh=FVaa0Z0numLrxY/KxHgDBhD/KP5A9wqDJVkmZCuDa2s=;
+        b=C0AnZN0MPnQui97sdq1uEVlHewURytJoOBTAJnYrc+LIkcYdwT73wVfmuTvil2zHhJ
+         qkRFjzahGrgBHjn+iF84jTDW7gMc0Bxn7NzzN1Y1in023DbAu52/1XF6ztk9IOlcWxYm
+         0QKwrToK6ZKkssLchYhri9I2r2RuVJl8m5itz6zpobsjn7tm8inStLsTYhcQCZ+9S4Y5
+         8to7ER5c47EhcoR0dYoU7nvKrtvtlHBvuoPgyhbiLKPg9R97Iw1J/HhckDmvNrE/3ilV
+         8+kvfrdLoxVdDxK2fz1BzIkU7IJ9z3uvX+eVZ25D+hqkIDUYWtyi4M2SFcNG5A6fRne+
+         GrBw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1717800485; x=1718405285;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=BZvEoY+n75WD/XlJn9EJtDiTKiZa2BG0t/Ag91b9Sbk=;
-        b=YRKbSDJEMP8YI+PEWTcQC36eXo4Nvc0MR2HJDIUAW2tOoda/M42xeGZpOE2FB5W6E3
-         ds4htz7iihesxDHy6sRBRZ/rHEdO2UFeB1SSuADkc8NS+lgldWGcQNIyRCRe3+2T+Q9N
-         ib/TNPRXkw/ySouK1Vs+oQ+e/4sEDsNbxmWU1RV/2MAskpYWc/SRJVlRrr51v3cBRhRb
-         bOKLxOe9Z4jTsnX/ikx+EI69vJjRZRdaSH5T9GDDO6CPr9Q7ZbaIouFH3jlB8UGvE8iO
-         KW5ec1fS8I9GpftjoO7VBX668EZQMPXFLdqA801ej3eOX65L7CvgVdOJ6R2ecmzG5/x4
-         vnhw==
-X-Gm-Message-State: AOJu0YzqqxFQw+XKR1l242B/vufAFhVqYxMy3DhpY8mujE4LsJnFI1Xa
-	6Up6Icrb4gorilV4aTQOtGulLOcFET9KpeH+bAlfYPl9X0Id+Saeo1JzmA==
-X-Google-Smtp-Source: AGHT+IHkApbhOW9QoSolpweObX711tJdPPcwwDYDfGE7kYTGjq8pwI8mIY5XJK8qGmTUKZTfQQaq0g==
-X-Received: by 2002:a05:6820:1609:b0:5b2:f2e5:a8c8 with SMTP id 006d021491bc7-5baae8c3542mr5040349eaf.8.1717800484793;
-        Fri, 07 Jun 2024 15:48:04 -0700 (PDT)
+        bh=FVaa0Z0numLrxY/KxHgDBhD/KP5A9wqDJVkmZCuDa2s=;
+        b=RBT8LC6PmLsnpyF9q8qOVjC7oi/NQt2/Pjc/1bsVGIhNhpgLjRKJHuNMp6WmGH2mUT
+         LVKB0IJiGG89Gyw36dl8fZBWtoParCKghzR/+TZWefKVngZbos0bndrC0LKH6w5WWBLp
+         /WPeq7vpwb+zwwsn+zW2dCIs9RjLhZhPHYRI4HRyetiak7VDNoMfv/wxLDtk3Wm7HI9s
+         ArI/5njCdUOfK+YvrmwwqqHt3qs1xAa3BXLRPNYdGgfsH+iMnZQssWTReylnrpZB0hPb
+         sGAr8HIAuqZlvPPQ8GNrxwSJ1tP+ztX4XaaioNHWOlI2OJRUXOc7BZuA64A6Gheap68P
+         fVKA==
+X-Gm-Message-State: AOJu0YySGtv0WJ89uVu8b63q6+SSm6ljEsqZSdRhV9YEeg4IoT1axRiA
+	eklxuVBzfCyTpOC2d7aBhYyzXDKkXuLvCwuOeMI/I2SjkqdrfbtoZw8Ppg==
+X-Google-Smtp-Source: AGHT+IFW5jNBAJoN4dgbsBSsMTZrKC+nQRZtB3rInFM2nD/X7s7LChW84U/RMq9avZcB1PD4eADP3A==
+X-Received: by 2002:a05:6808:6190:b0:3d2:1b2e:8c5b with SMTP id 5614622812f47-3d21b2e8efdmr419426b6e.3.1717800485425;
+        Fri, 07 Jun 2024 15:48:05 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id 006d021491bc7-5ba976b43c4sm838773eaf.14.2024.06.07.15.48.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Jun 2024 15:48:04 -0700 (PDT)
+        Fri, 07 Jun 2024 15:48:05 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 20/23] qmi: gprs-context: Drop use of qmi_service_create_shared
-Date: Fri,  7 Jun 2024 17:47:20 -0500
-Message-ID: <20240607224746.903769-20-denkenz@gmail.com>
+Subject: [PATCH 21/23] qmi: sim: Drop use of qmi_service_create_shared
+Date: Fri,  7 Jun 2024 17:47:21 -0500
+Message-ID: <20240607224746.903769-21-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240607224746.903769-1-denkenz@gmail.com>
 References: <20240607224746.903769-1-denkenz@gmail.com>
@@ -68,177 +68,156 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+Use qmi_device_get_service and qmi_device_add_service_watch
 ---
- drivers/qmimodem/gprs-context.c | 70 +++++++++++++--------------------
- plugins/gobi.c                  |  4 +-
- 2 files changed, 29 insertions(+), 45 deletions(-)
+ drivers/qmimodem/sim.c | 90 +++++++++---------------------------------
+ plugins/gobi.c         |  4 +-
+ 2 files changed, 21 insertions(+), 73 deletions(-)
 
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index 625fd0b8f193..aae058f35a9b 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -22,7 +22,6 @@
+diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
+index 67925239f2b5..29f4eff7bc40 100644
+--- a/drivers/qmimodem/sim.c
++++ b/drivers/qmimodem/sim.c
+@@ -44,7 +44,6 @@ struct sim_status {
+ };
  
- struct gprs_context_data {
- 	struct qmi_service *wds;
--	struct qmi_device *dev;
- 	unsigned int active_context;
- 	uint32_t pkt_handle;
- 	uint8_t mux_id;
-@@ -480,9 +479,10 @@ static void bind_mux_data_port_cb(struct qmi_result *result, void *user_data)
- 	}
+ struct sim_data {
+-	struct qmi_device *qmi_dev;
+ 	struct qmi_service *dms;
+ 	struct qmi_service *uim;
+ 	uint32_t event_mask;
+@@ -841,68 +840,31 @@ error:
+ 	ofono_sim_remove(sim);
  }
  
--static void qmi_gprs_context_bind_mux(struct ofono_gprs_context *gc)
-+static int qmi_gprs_context_bind_mux(struct ofono_gprs_context *gc,
-+					struct qmi_service *wds,
-+					uint8_t mux_id)
+-static void create_uim_cb(struct qmi_service *service, void *user_data)
++static int qmi_sim_probev(struct ofono_sim *sim,
++				unsigned int vendor, va_list args)
  {
--	struct gprs_context_data *data = ofono_gprs_context_get_data(gc);
- 	struct ofono_modem *modem = ofono_gprs_context_get_modem(gc);
- 	struct qmi_param *param;
- 	const char *interface_number;
-@@ -496,7 +496,7 @@ static void qmi_gprs_context_bind_mux(struct ofono_gprs_context *gc)
- 	bus = ofono_modem_get_string(modem, "Bus");
- 	if (!bus) {
- 		ofono_error("%s: Missing 'Bus'", ofono_modem_get_path(modem));
+-	struct ofono_sim *sim = user_data;
+-	struct sim_data *data = ofono_sim_get_data(sim);
+-	struct qmi_param *param;
+-	uint32_t mask = 0x0003;
+-
+-	DBG("");
+-
+-	if (!service) {
+-		ofono_error("Failed to request UIM service");
 -		goto error;
-+		return -EINVAL;
- 	}
- 
- 	if (!strcmp(bus, "pcie"))
-@@ -508,7 +508,7 @@ static void qmi_gprs_context_bind_mux(struct ofono_gprs_context *gc)
- 	else {
- 		ofono_error("%s: Invalid 'Bus' value",
- 				ofono_modem_get_path(modem));
--		goto error;
-+		return -ENOTSUP;
- 	}
- 
- 	switch (endpoint_info.endpoint_type) {
-@@ -528,68 +528,54 @@ static void qmi_gprs_context_bind_mux(struct ofono_gprs_context *gc)
- 
- 		ofono_error("%s: Missing or invalid 'InterfaceNumber'",
- 					ofono_modem_get_path(modem));
--		/* Fall through */
-+		return -EINVAL;
- 	default:
--		goto error;
-+		return -ENOTSUP;
- 	}
- 
- 	DBG("interface_number: %d", endpoint_info.interface_number);
--	DBG("mux_id: %hhx", data->mux_id);
-+	DBG("mux_id: %hhx", mux_id);
- 
- 	param = qmi_param_new();
- 
- 	qmi_param_append(param, 0x10, sizeof(endpoint_info), &endpoint_info);
--	qmi_param_append_uint8(param, 0x11, data->mux_id);
-+	qmi_param_append_uint8(param, 0x11, mux_id);
- 	qmi_param_append_uint32(param, 0x13, QMI_WDS_CLIENT_TYPE_TETHERED);
- 
--	if (qmi_service_send(data->wds, QMI_WDS_BIND_MUX_DATA_PORT, param,
-+	if (qmi_service_send(wds, QMI_WDS_BIND_MUX_DATA_PORT, param,
- 				bind_mux_data_port_cb, gc, NULL) > 0)
+-	}
+-
+-	data->uim = service;
+-
+-	param = qmi_param_new_uint32(QMI_UIM_PARAM_EVENT_MASK, mask);
+-
+-	if (qmi_service_send(data->uim, QMI_UIM_EVENT_REGISTRATION, param,
+-					event_registration_cb, sim, NULL) > 0)
 -		return;
-+		return 0;
- 
- 	qmi_param_free(param);
+-
 -error:
--	ofono_error("Failed to BIND_MUX_DATA_PORT");
--	ofono_gprs_context_remove(gc);
-+	return -EIO;
- }
- 
--static void create_wds_cb(struct qmi_service *service, void *user_data)
-+static int qmi_gprs_context_probe(struct ofono_gprs_context *gc,
-+					unsigned int vendor, void *user_data)
- {
--	struct ofono_gprs_context *gc = user_data;
--	struct gprs_context_data *data = ofono_gprs_context_get_data(gc);
-+	struct qmi_service *wds = user_data;
-+	struct gprs_context_data *data;
+-	ofono_sim_remove(sim);
+-}
+-
+-static void create_dms_cb(struct qmi_service *service, void *user_data)
+-{
+-	struct ofono_sim *sim = user_data;
+-	struct sim_data *data = ofono_sim_get_data(sim);
++	struct qmi_service *dms = va_arg(args, struct qmi_service *);
++	struct qmi_service *uim = va_arg(args, struct qmi_service *);
++	static const uint32_t mask = 0x0003;
++	struct qmi_param *param =
++		qmi_param_new_uint32(QMI_UIM_PARAM_EVENT_MASK, mask);
++	struct sim_data *data;
  
  	DBG("");
  
 -	if (!service) {
--		ofono_error("Failed to request WDS service");
--		ofono_gprs_context_remove(gc);
+-		ofono_error("Failed to request DMS service");
+-		ofono_sim_remove(sim);
 -		return;
-+	if (vendor) {
-+		int r = qmi_gprs_context_bind_mux(gc, wds, vendor);
-+
-+		if (r < 0) {
-+			qmi_service_free(wds);
-+			return r;
-+		}
++	if (!qmi_service_send(uim, QMI_UIM_EVENT_REGISTRATION, param,
++					event_registration_cb, sim, NULL)) {
++		qmi_service_free(dms);
++		qmi_service_free(uim);
++		return -EIO;
  	}
  
--	data->wds = service;
-+	data = l_new(struct gprs_context_data, 1);
-+	data->wds = wds;
-+	data->mux_id = vendor;
- 
- 	qmi_service_register(data->wds, QMI_WDS_PACKET_SERVICE_STATUS,
- 					pkt_status_notify, gc, NULL);
- 
--	if (data->mux_id)
--		qmi_gprs_context_bind_mux(gc);
+-	data->dms = service;
+-
+-	qmi_service_create_shared(data->qmi_dev, QMI_SERVICE_UIM, create_uim_cb,
+-					sim, NULL);
 -}
 -
--static int qmi_gprs_context_probe(struct ofono_gprs_context *gc,
--					unsigned int vendor, void *user_data)
+-static int qmi_sim_probe(struct ofono_sim *sim,
+-				unsigned int vendor, void *user_data)
 -{
 -	struct qmi_device *device = user_data;
--	struct gprs_context_data *data;
+-	struct sim_data *data;
 -
 -	DBG("");
 -
--	data = l_new(struct gprs_context_data, 1);
+ 	data = l_new(struct sim_data, 1);
 -
- 	ofono_gprs_context_set_data(gc, data);
--	data->dev = device;
--	data->mux_id = vendor;
+-	data->qmi_dev = device;
++	data->uim = uim;
++	data->dms = dms;
  
--	qmi_service_create_shared(data->dev, QMI_SERVICE_WDS, create_wds_cb, gc,
--									NULL);
+ 	ofono_sim_set_data(sim, data);
+ 
+-	qmi_service_create_shared(device, QMI_SERVICE_DMS,
+-						create_dms_cb, sim, NULL);
+-
  	return 0;
  }
  
-@@ -601,9 +587,7 @@ static void qmi_gprs_context_remove(struct ofono_gprs_context *gc)
+@@ -915,29 +877,13 @@ static void qmi_sim_remove(struct ofono_sim *sim)
+ 	ofono_sim_set_data(sim, NULL);
  
- 	ofono_gprs_context_set_data(gc, NULL);
- 
--	if (data->wds)
--		qmi_service_free(data->wds);
+ 	l_timeout_remove(data->retry_timer);
+-	data->retry_timer = NULL;
 -
-+	qmi_service_free(data->wds);
+-	if (data->uim) {
+-		if (data->card_status_indication_id) {
+-			qmi_service_unregister(data->uim,
+-					data->card_status_indication_id);
+-			data->card_status_indication_id = 0;
+-		}
+-
+-		qmi_service_free(data->uim);
+-		data->uim = NULL;
+-	}
+-
+-	if (data->dms) {
+-		qmi_service_free(data->dms);
+-		data->dms = NULL;
+-	}
+-
++	qmi_service_free(data->uim);
++	qmi_service_free(data->dms);
  	l_free(data);
  }
  
+ static const struct ofono_sim_driver driver = {
+-	.probe			= qmi_sim_probe,
++	.probev			= qmi_sim_probev,
+ 	.remove			= qmi_sim_remove,
+ 	.read_file_info		= qmi_read_attributes,
+ 	.read_file_transparent	= qmi_read_transparent,
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 0e5e6badabd6..8d537b85d8d9 100644
+index 8d537b85d8d9..d32fb9d75585 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -763,7 +763,7 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 		interface = ofono_modem_get_string(modem, "NetworkInterface");
+@@ -728,7 +728,9 @@ static void gobi_pre_sim(struct ofono_modem *modem)
+ 	ofono_devinfo_create(modem, 0, "qmimodem", qmi_service_clone(data->dms));
  
- 		gc = ofono_gprs_context_create(modem, 0, "qmimodem",
--							data->device);
-+						qmi_service_clone(data->wds));
- 		if (!gc) {
- 			ofono_warn("Unable to create gprs-context for: %s",
- 					ofono_modem_get_path(modem));
-@@ -789,7 +789,7 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 		mux_id = ofono_modem_get_integer(modem, buf);
- 
- 		gc = ofono_gprs_context_create(modem, mux_id, "qmimodem",
--							data->device);
-+						qmi_service_clone(data->wds));
- 
- 		if (!gc) {
- 			ofono_warn("gprs-context creation failed for [%d] %s",
+ 	if ((data->features & GOBI_UIM) && !legacy)
+-		ofono_sim_create(modem, 0, "qmimodem", data->device);
++		ofono_sim_create(modem, 0, "qmimodem",
++						qmi_service_clone(data->dms),
++						qmi_service_clone(data->uim));
+ 	else /* DMS always availalable */
+ 		ofono_sim_create(modem, 0, "qmimodem_legacy",
+ 						qmi_service_clone(data->dms));
 -- 
 2.45.0
 
