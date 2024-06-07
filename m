@@ -1,62 +1,62 @@
-Received: from mail-oo1-f47.google.com (mail-oo1-f47.google.com [209.85.161.47])
+Received: from mail-oo1-f43.google.com (mail-oo1-f43.google.com [209.85.161.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 012CF155728
-	for <ofono@lists.linux.dev>; Fri,  7 Jun 2024 22:47:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB8CF155390
+	for <ofono@lists.linux.dev>; Fri,  7 Jun 2024 22:47:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717800477; cv=none; b=BfxYieswtQ7J2rUJanp77sUgD5NT0n32EjcrtskeVY191d3Nam6wZ03IkiQtCp0K1ELWjrrbOuXg8Xcezj8/Wx1BXkfyFBIa1CzmQOPM026mXtZgBPtM5ZvqEG0m2dLireBXTG/1K0cLJUZ2DpXdRzeWVjdhaoqyIhd53nB/jZ0=
+	t=1717800478; cv=none; b=PtB+PEnChbMrc6kPRVHwm6cKSl/+rahfJej0B6lDEx+VRErR8FzbNmLlYXiRDiGNFcH0AkE54fnJVvG7IP53wHiPKOPoGMNsAdvubqwj+v5Mf1TvlKznsZQKLq0Gb4GaJemebylymc4tqzV9AJOq2jZx50z1YzYzVPkYsi7+W5o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717800477; c=relaxed/simple;
-	bh=LkEYvIxUBeEOfdy3LB8JcaPHvOWbC1NDSEXrtCwdm20=;
+	s=arc-20240116; t=1717800478; c=relaxed/simple;
+	bh=Q4v42DWk3zs6/1Xp/vW5eCm/gKCMlhiw9BrSh9PtKeo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=c25EHj1TxOag8JwJwqHgdw9FMQMPWLcOOnJWUdZc6EdJvCMIQ0wtcg9tCkzo2SiASw4ciDZ1dj+P8xTkeQ9sqOw+YSR2UvtReJlPTbFan2IC3NjokRKKt3IcafzflXkw9AmY1KQsd6SIwMRtotU0Q+VZo+S4fk0vnfiKA30YXW4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ELo+T6xa; arc=none smtp.client-ip=209.85.161.47
+	 MIME-Version; b=VyUNoN6kggH/HfWPuH7ZUszHhGeO+EmKogRJhd8PfwJgPHcUazUSE1Oq9Q2QX6NDnav3YIJkiBMGDqbky//V+nou39ndnM9rl8z257KHYK/0PLXtlRA0dvIxAKAR3z7GQGuDMIeCQHuY0aSFJmneKfYAQei2iky4Y+Ytzh6qEOo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QR30BBMs; arc=none smtp.client-ip=209.85.161.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ELo+T6xa"
-Received: by mail-oo1-f47.google.com with SMTP id 006d021491bc7-5b97a071c92so1366661eaf.1
-        for <ofono@lists.linux.dev>; Fri, 07 Jun 2024 15:47:55 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QR30BBMs"
+Received: by mail-oo1-f43.google.com with SMTP id 006d021491bc7-5b2ed25b337so1455839eaf.0
+        for <ofono@lists.linux.dev>; Fri, 07 Jun 2024 15:47:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1717800475; x=1718405275; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1717800476; x=1718405276; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=eAu7nA5L3aL3vM9wjwUJEqCl+QRPuPlG8/beHgKZnGo=;
-        b=ELo+T6xaS1ZRLfVxPXjk3kD3pah9ltaoIylUT1TwTLaDj6c+Kr3H6YeGF5jvunu86p
-         C16DmMA52SwD79vbxh23flNPNZyHyWgEp+eUvqdST3aK36QkY3/Ita3YGKUekNlzPeXL
-         LXW+fBPueMaqgifl0vulQn/xSrPCfjvr/wLl98ksXvygiJHJddMoWOnVTWyoalOWs0bS
-         +TmmTi4+RAq4Ur7x94sV/PzOn1hPaxUxL7a5CRvccxJ4gEbVhUzTiePiHAOHbIuT0Qxu
-         iE4vGtHOFqNhQ2njkJekZuUEzdyYqU6UIYqIZe1kvzPY5y0HPH3CMNi/4MxpGnpzQUEc
-         leow==
+        bh=r/MNp1wb5bxCxXz+a6Gdiuhxij2mnQflLXQ9Ai4DDBw=;
+        b=QR30BBMs7lw9AFae72v9SzCTDCUEixiA49zdMg/ncOInkwgpbp8tD6i28gbLmBI48r
+         ApOptMGKN9P6qkWQwqvUBnL20jOopO0qgAEdogrARnk/1gvxnPQHrxNWaA2E+DZdeUAU
+         lvNAIPKkWc8R8ZQV/XG481LPW7YzLUxZlufXhnJizL3D3x1Bl0XOrUdGb1hHbAHEIDRQ
+         Ltzza7ugi3pTrpFXLwgxKv6NJUFXpJXuxzEHcnrYR3uIrYCm/IUKzuSgOJuZe+vl20bD
+         ZpgYt8MNygabslp4R+sOsdSyvoREj13s8i3fGsdbaSDMzIgK+nsdP5rtdjXo6AKZajOF
+         TW+Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717800475; x=1718405275;
+        d=1e100.net; s=20230601; t=1717800476; x=1718405276;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=eAu7nA5L3aL3vM9wjwUJEqCl+QRPuPlG8/beHgKZnGo=;
-        b=b/M5eZfzXk+4FQ5KB+gsALaGa0lX9El08nxKAZ7XwF+hyjjUnXIIJCHe0f6lrJf1BR
-         L8YuF5TMYXICmOPzlnaZrS775OCRz3+xn+YB7qqwgp6ssvSfzCV64KFQbC+i+PLnEOKu
-         IKWI2+QP+hlaFnvPJ1yRC8tBbprecQN9CPgxDZZbC+pW5nyp5IzJSXsDZ63vPaiKlTWm
-         A5nark6p5KzKwk1WEcTZ1rTGUvn2N8PSoxM7rXjou4QBrLoZr7ev1obRAOTKU08+327c
-         LVc3g3tuKUKvMVZo+pRegjh7/s8f/EIyPC0I2UsgnOsnmKncq0S3D4NuweeOBF3XWS4t
-         EY1w==
-X-Gm-Message-State: AOJu0YwdFQ3c+ka/2LmC+Fc8uJSuDn9HrznqP8bArTCnrOl319e44PJG
-	3JEOBozm44pc2KKskC1Zl3XpY5rBm2Lkdf796E9zWgb80mup86kbQiiNBQ==
-X-Google-Smtp-Source: AGHT+IEc2aLX4PsqVqSSd8RvJPqC8rUwDqyb4GBFXZVH3UF5X7ZEMEgo/0Khnb4yTvUDkKwNe3Er0g==
-X-Received: by 2002:a05:6820:823:b0:5b9:f440:169d with SMTP id 006d021491bc7-5baae5457c2mr4438938eaf.3.1717800475116;
+        bh=r/MNp1wb5bxCxXz+a6Gdiuhxij2mnQflLXQ9Ai4DDBw=;
+        b=jbTbA30g+/mJvIHwHD+QVJ6LMO0DElr09Bk+fvluBnW0HvS0zERV4cIc34IkXAtoWr
+         loYjMOWMou0iTJtQjxnAgNXTFCC82feuAdzzPJZY8SF5zvq1l7VtzRJScZtEDa/KEGMx
+         +uGmtbYLkQKUZHLSgvsxiwXVdBCDv/43Le1NoZNVR8qeNyb7LtyOkD0I0/faKnJGxezd
+         ZHe6gdSDYf553B2wOMtKBRyPDn96+md5DY0bpRogqVgRmRbT6Vj+h9iyMCF4pT8FfmGy
+         /XP30hoO9Z3edBOAQ14Id1GVoIAuGFSeFIm8Jv15bUQloEO43TGMjtznE9CERDPZ1kf5
+         zuVA==
+X-Gm-Message-State: AOJu0YybJa55kpKOeUoDMwTNcI+xer0IUbST2jB5CeRnvk5IvmkaoZiO
+	wBUfdZ5na7NdJFirczttaFLv4TouwLeO108cY1id/PJeUSlbs8bWGylYOg==
+X-Google-Smtp-Source: AGHT+IFAC56YYxtVEcWgR0BhEhSp25Yeq+TAAtPPHUZ6gn5PJTry1WDRdfRkchLH/wTEVCMJIv0eew==
+X-Received: by 2002:a05:6820:2296:b0:5b9:d8ab:2e35 with SMTP id 006d021491bc7-5baae7572b1mr3584285eaf.5.1717800475791;
         Fri, 07 Jun 2024 15:47:55 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5ba976b43c4sm838773eaf.14.2024.06.07.15.47.54
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5ba976b43c4sm838773eaf.14.2024.06.07.15.47.55
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Jun 2024 15:47:54 -0700 (PDT)
+        Fri, 07 Jun 2024 15:47:55 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 09/23] qmi: sim-legacy: Drop use of qmi_service_create_shared
-Date: Fri,  7 Jun 2024 17:47:09 -0500
-Message-ID: <20240607224746.903769-9-denkenz@gmail.com>
+Subject: [PATCH 10/23] qmi: voicecall: Drop use of qmi_service_create_shared
+Date: Fri,  7 Jun 2024 17:47:10 -0500
+Message-ID: <20240607224746.903769-10-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240607224746.903769-1-denkenz@gmail.com>
 References: <20240607224746.903769-1-denkenz@gmail.com>
@@ -68,147 +68,100 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-While here, also drop tracking of indication registration.  This is not
-needed as qmi_service_free will automatically unregister from all
-indications for the cloned handle.
 ---
- drivers/qmimodem/sim-legacy.c | 57 +++++++++--------------------------
- plugins/gobi.c                | 17 ++++-------
- 2 files changed, 20 insertions(+), 54 deletions(-)
+ drivers/qmimodem/voicecall.c | 40 ++++++++----------------------------
+ plugins/gobi.c               |  3 ++-
+ 2 files changed, 10 insertions(+), 33 deletions(-)
 
-diff --git a/drivers/qmimodem/sim-legacy.c b/drivers/qmimodem/sim-legacy.c
-index aeea5fae22f3..1feaf86976c6 100644
---- a/drivers/qmimodem/sim-legacy.c
-+++ b/drivers/qmimodem/sim-legacy.c
-@@ -27,7 +27,6 @@
- struct sim_data {
- 	struct qmi_service *dms;
- 	int retries[OFONO_SIM_PASSWORD_INVALID];
--	uint16_t event_indication_id;
- };
- 
- static void qmi_read_file_info(struct ofono_sim *sim, int fileid,
-@@ -295,59 +294,37 @@ done:
- 	ofono_sim_register(sim);
+diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
+index 6af85caa840a..c7a5230f9680 100644
+--- a/drivers/qmimodem/voicecall.c
++++ b/drivers/qmimodem/voicecall.c
+@@ -709,48 +709,24 @@ static void send_dtmf(struct ofono_voicecall *vc, const char *dtmf,
+ 	send_one_dtmf(vc, *dtmf, send_one_dtmf_cb, vd);
  }
  
--static void create_dms_cb(struct qmi_service *service, void *user_data)
-+static int qmi_sim_probe(struct ofono_sim *sim,
-+				unsigned int vendor, void *user_data)
+-static void create_voice_cb(struct qmi_service *service, void *user_data)
+-{
+-	struct ofono_voicecall *vc = user_data;
+-	struct voicecall_data *data = ofono_voicecall_get_data(vc);
+-
+-	DBG("");
+-
+-	if (!service) {
+-		ofono_error("Failed to request Voice service");
+-		ofono_voicecall_remove(vc);
+-		return;
+-	}
+-
+-	if (!qmi_service_get_version(service, &data->major, &data->minor)) {
+-		ofono_error("Failed to get Voice service version");
+-		ofono_voicecall_remove(vc);
+-		return;
+-	}
+-
+-	data->voice = service;
+-
+-	qmi_service_register(data->voice, QMI_VOICE_ALL_CALL_STATUS_IND,
+-				all_call_status_ind, vc, NULL);
+-
+-	ofono_voicecall_register(vc);
+-}
+-
+ static int qmi_voicecall_probe(struct ofono_voicecall *vc,
+ 					unsigned int vendor, void *user_data)
  {
--	struct ofono_sim *sim = user_data;
--	struct sim_data *data = ofono_sim_get_data(sim);
-+	struct qmi_service *dms = user_data;
- 	struct qmi_param *param;
-+	struct sim_data *data;
-+	int i;
+-	struct qmi_device *device = user_data;
++	struct qmi_service *voice = user_data;
+ 	struct voicecall_data *data;
  
  	DBG("");
  
--	if (!service) {
--		ofono_error("Failed to request DMS service");
--		ofono_sim_remove(sim);
--		return;
--	}
--
--	data->dms = service;
--
--	data->event_indication_id =
--		qmi_service_register(data->dms, QMI_DMS_EVENT,
--					event_notify, sim, NULL);
--
- 	param = qmi_param_new();
--
- 	qmi_param_append_uint8(param, QMI_DMS_PARAM_REPORT_PIN_STATUS, 0x01);
- 	qmi_param_append_uint8(param, QMI_DMS_PARAM_REPORT_OPER_MODE, 0x01);
- 	qmi_param_append_uint8(param, QMI_DMS_PARAM_REPORT_UIM_STATE, 0x01);
+ 	data = l_new(struct voicecall_data, 1);
++	data->voice = voice;
+ 	data->call_list = l_queue_new();
  
--	if (qmi_service_send(data->dms, QMI_DMS_SET_EVENT, param,
--					set_event_cb, sim, NULL) > 0)
--		return;
--
--	qmi_param_free(param);
--
--	ofono_sim_register(sim);
--}
--
--static int qmi_sim_probe(struct ofono_sim *sim,
--				unsigned int vendor, void *user_data)
--{
--	struct qmi_device *device = user_data;
--	struct sim_data *data;
--	int i;
--
--	DBG("");
-+	if (!qmi_service_send(dms, QMI_DMS_SET_EVENT, param,
-+					set_event_cb, sim, NULL)) {
-+		qmi_param_free(param);
-+		qmi_service_free(dms);
-+		return -EIO;
-+	}
+-	ofono_voicecall_set_data(vc, data);
++	qmi_service_get_version(data->voice, &data->major, &data->minor);
++
++	qmi_service_register(data->voice, QMI_VOICE_ALL_CALL_STATUS_IND,
++				all_call_status_ind, vc, NULL);
  
- 	data = l_new(struct sim_data, 1);
-+	data->dms = dms;
- 
- 	for (i = 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
- 		data->retries[i] = -1;
- 
--	ofono_sim_set_data(sim, data);
-+	qmi_service_register(dms, QMI_DMS_EVENT, event_notify, sim, NULL);
- 
--	qmi_service_create_shared(device, QMI_SERVICE_DMS,
--						create_dms_cb, sim, NULL);
-+	ofono_sim_set_data(sim, data);
+-	qmi_service_create_shared(device, QMI_SERVICE_VOICE,
+-					create_voice_cb, vc, NULL);
++	ofono_voicecall_set_data(vc, data);
  
  	return 0;
  }
-@@ -360,13 +337,7 @@ static void qmi_sim_remove(struct ofono_sim *sim)
+@@ -764,13 +740,13 @@ static void qmi_voicecall_remove(struct ofono_voicecall *vc)
+ 	ofono_voicecall_set_data(vc, NULL);
  
- 	ofono_sim_set_data(sim, NULL);
- 
--	if (data->event_indication_id) {
--		qmi_service_unregister(data->dms, data->event_indication_id);
--		data->event_indication_id = 0;
--	}
+ 	qmi_service_free(data->voice);
 -
- 	qmi_service_free(data->dms);
--
+ 	l_queue_destroy(data->call_list, l_free);
+ 	l_free(data->full_dtmf);
  	l_free(data);
  }
  
+ static const struct ofono_voicecall_driver driver = {
++	.flags		= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe		= qmi_voicecall_probe,
+ 	.remove		= qmi_voicecall_remove,
+ 	.dial		= dial,
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 1a31e7a2b17d..b0f5896808fa 100644
+index b0f5896808fa..f81fb8243bf8 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -721,22 +721,17 @@ static void gobi_set_online(struct ofono_modem *modem, ofono_bool_t online,
- static void gobi_pre_sim(struct ofono_modem *modem)
- {
- 	struct gobi_data *data = ofono_modem_get_data(modem);
--	const char *sim_driver = NULL;
-+	bool legacy = ofono_modem_get_boolean(modem, "ForceSimLegacy");
- 
- 	DBG("%p", modem);
- 
- 	ofono_devinfo_create(modem, 0, "qmimodem", qmi_service_clone(data->dms));
- 
--	if (data->features & GOBI_UIM)
--		sim_driver = "qmimodem";
--	else if (data->features & GOBI_DMS)
--		sim_driver = "qmimodem_legacy";
--
--	if (ofono_modem_get_boolean(modem, "ForceSimLegacy"))
--		sim_driver = "qmimodem_legacy";
--
--	if (sim_driver)
--		ofono_sim_create(modem, 0, sim_driver, data->device);
-+	if ((data->features & GOBI_UIM) && !legacy)
-+		ofono_sim_create(modem, 0, "qmimodem", data->device);
-+	else /* DMS always availalable */
-+		ofono_sim_create(modem, 0, "qmimodem_legacy",
-+						qmi_service_clone(data->dms));
+@@ -734,7 +734,8 @@ static void gobi_pre_sim(struct ofono_modem *modem)
+ 						qmi_service_clone(data->dms));
  
  	if (data->features & GOBI_VOICE)
- 		ofono_voicecall_create(modem, 0, "qmimodem", data->device);
+-		ofono_voicecall_create(modem, 0, "qmimodem", data->device);
++		ofono_voicecall_create(modem, 0, "qmimodem",
++					qmi_service_clone(data->voice));
+ 
+ 	if (data->features & GOBI_PDS)
+ 		ofono_location_reporting_create(modem, 0, "qmimodem",
 -- 
 2.45.0
 
