@@ -1,62 +1,62 @@
-Received: from mail-oa1-f46.google.com (mail-oa1-f46.google.com [209.85.160.46])
+Received: from mail-ot1-f48.google.com (mail-ot1-f48.google.com [209.85.210.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 881B913E03B
-	for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 21:41:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DB401494BC
+	for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 21:41:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718314910; cv=none; b=pAJP0iqbun+WVhhXy3XyDTsk0ApOTd2ts+acidpB3Te150FrbunHjqELD+Ca609vVEWhujNFZifHRfcwZgAgJItTBco8dN0cEcPaYwmHNO8y5DBaHzvbjsn9cPs2rZm4MKsvIxfYiN/zNGPrXS2a8Q1lEGqCjZUdniRhWzwMp3Y=
+	t=1718314910; cv=none; b=RazhmlGYSQmtSb7FpGPEDQ6qmdvFOB1TTIipttD3vJ/t83e61TF1wLSR3PPlX0usefv4pfk1p4hjY8kPHPmO7c+h5WIr46iXqQ5w96TlPcD2qPyiiUxe13vBPZFSHnyP8fiTLX9CpCDDpfGEEr9Uv3H6ykJu9ysdRc29T/zPpAs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1718314910; c=relaxed/simple;
-	bh=6ry95od5dvfdTZ05opWvIQFEO0jJGxLHS/XDfWkpd84=;
+	bh=c27u9gd96zTJsRU93FRYvSz0q/ey+JRPWh2N89SS8g8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=oLHFaZRDeTjotDTjNVXCWr2DHBhyMBN/txgtLu/FnU83XJi35BBFQvibbyHNMFHoDc/mj2nvRAocpDLsNOaQpRjnZdsmHrI5PwGjQFrlb+x2P/pT38j+UokJj+ZHck3RQHvZ4wrIr0K6J+ER2xv//kkAo8CXMfsnBWVKHneBlfg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aIvJvtgY; arc=none smtp.client-ip=209.85.160.46
+	 MIME-Version; b=u9NzFrpfyJTRY8kh+EUWArmDFjQuCX+Ax4ZwpYuAiHDyekA6NGMfWJJgq3YVhOo7tygQHfqpZoKQYP8cTHmIo91zNnzvyKvGLXjHFK8EhzfpsazRl/D+HchC/d5fo2hswvYVNTpzT8+msbd6Kw1eDBU7Q7F+7RwF9kDSIRxejmU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DzGJssGx; arc=none smtp.client-ip=209.85.210.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aIvJvtgY"
-Received: by mail-oa1-f46.google.com with SMTP id 586e51a60fabf-2506fc3a6cfso706929fac.2
-        for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 14:41:48 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DzGJssGx"
+Received: by mail-ot1-f48.google.com with SMTP id 46e09a7af769-6f8edde24b3so879302a34.2
+        for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 14:41:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718314907; x=1718919707; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718314908; x=1718919708; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=QyVENghjreLJDIhPqQXX6lCWh/kuD0T4H2XDx7rysrQ=;
-        b=aIvJvtgYik60cjJBvoN/OLGSMBLI71oToAF2DJ4eVdZFK3zfZJV90LNgia0Wklc2tQ
-         gE9OdTLFgMFaLQoBmh2um90YUhTiZDcokJtQpj3rOuy5oNtUukbUWWEr/nWqVRTbVvYg
-         KHdX3i9UDoILgo3pw1X5SLDNMFNPM0fX8JrxYgO6GJSb8BDVWBcX4oQ1HtmbfqZmGLn9
-         8mI3a6xaPgTCI78na7D4UBujk4SOHiEy5lBfrMfHWEDgxZUAUm2KKEWlBcrfO5ztJhA4
-         3a09uIn/o5fbwdI6CE2/mRN2pxnM2cz2cJKRFzXuIYky/vYtPvajcGQ47Ww9/0JZS3Sn
-         j4+A==
+        bh=o6UH8GaMDRcfJBcwdkJWRkoS3tpfxDmSHlfCgha2m4A=;
+        b=DzGJssGx+ZOg3lZ4ymgPtJmmL10wmJWOMh1AahpJseSUp5CP+C0zOR00gsdCCopvvz
+         ESPRBgoM2e6ZOfGTyPxmr7B/pWtEI58tuv0Y9natesYVgKYxh36iv/w1UOlaPO2X9xTB
+         HVnoNCm1UEyeov2D96r5C62GaQxX6DA0wBMijllK8BXjxWHOeQotn3tR+SHDQf/4lIYb
+         nt/TSKItK+NmDdtNIXtJR5SgGF7u05wHCcV14X2OoJhVXw4FSbVgNlfjnNhqHrlIVDxP
+         fXrA7y2rEk9by1l3Ig0JIuSsTWgkNlYFqVZeAHidvivXF8QGrQ5ykqypDNi97TXRwiMG
+         TSeQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718314907; x=1718919707;
+        d=1e100.net; s=20230601; t=1718314908; x=1718919708;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=QyVENghjreLJDIhPqQXX6lCWh/kuD0T4H2XDx7rysrQ=;
-        b=gglaUe6jE/2uBsUmOMFlquF35nI6I8MLk6MSCnXL5zIUIVMQLNrJGAmXUKv5XzMLI6
-         EsnlNA2/7crJy9zI2uLvRDtS9CE7vdOX7xPRR2xaRMgXcNNYqC9ruuWnwZVoVefEfhND
-         21NIpAeqqRJslm96vY9CbJNeeyTekybZtvewMppBIqp82MYLi5PXVylof6CgM9cSuZ75
-         dHSO/oXvz43F23D44KCAHqhLEgwQfe8x7OmysJin4ZJaGts4kqVRfqnNYrFbj4wg9E1n
-         xUXd+/4AS/GlEtWcfiU6ssqs2h0auj80Sv5+3ouh7Yga7+nkPUq/0U/iJq5bFeoA/Sj3
-         HiIA==
-X-Gm-Message-State: AOJu0YzbbF0yDk6WZldA+9WHfuuO1GDMoQdyO+lE1oxqrJsnHudKmU5z
-	W6KkMCLxh3hVbDly1ebjJYh5kQtYRCy1iKkmiZbzPYiSwNK5tJG89CjjkA==
-X-Google-Smtp-Source: AGHT+IFy2AOpEo7bv/0BKrS5hlvJYNvbnK+k7Xjn97ssy6C68MWMByRc74KHX75sS7Wg/aRwC7D+bQ==
-X-Received: by 2002:a05:6870:b14a:b0:254:a8d3:6fbb with SMTP id 586e51a60fabf-2584297b247mr961510fac.24.1718314907481;
-        Thu, 13 Jun 2024 14:41:47 -0700 (PDT)
+        bh=o6UH8GaMDRcfJBcwdkJWRkoS3tpfxDmSHlfCgha2m4A=;
+        b=ujC8FFRAvqGTb9NfDKA+KyZa5eRcLj0UWxr2jsrSY2Kyrwxjw1Fn3b3gnnOGdrV/kw
+         2QuNvsB2qHCHLcRM1NOgm28uBo1lp9STfK2hw6yqP/OJhLKrM1ZSWRDy9BHY7IuuE3AT
+         Oi2PS7WCAOAWKvmxZL2+zNA4HGOZ10juxzJjTh0hiBN8XbuGSVbmIiFHEhULwN4CzasY
+         iGMwjAqps90kcSNhUrdVNJBVoX7rYovEe333VNHQSK92Uk2AqzY7SRpN8BLmhTP98S2k
+         CCkRUiTc1kLIx/w0TRZuwu9JGnJ/4NOY2NTzoJY7p0ANNEKX/nbBW/H+n0TDl9nzxDPq
+         v1aA==
+X-Gm-Message-State: AOJu0Yx8ak//mNzb2/zuNSm1+o8bE+pBU2G6DAR6NzpSHKdQXTVzoTCb
+	hQrbinDIjFVRdT/j2s8j6WxLZKPCW3qM1Uvd7aJqZk03UPLuKpufLZQsWw==
+X-Google-Smtp-Source: AGHT+IGHhzjIxIPbCIc1eLC/QdPN8BqfoBtf5+Ne5Um8hh9akSe1SoLVsjoWUtto0tkxXFRaSODLgQ==
+X-Received: by 2002:a05:6870:3282:b0:256:d14c:6858 with SMTP id 586e51a60fabf-2584289476dmr889597fac.10.1718314908177;
+        Thu, 13 Jun 2024 14:41:48 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569930f768sm601589fac.41.2024.06.13.14.41.46
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569930f768sm601589fac.41.2024.06.13.14.41.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Thu, 13 Jun 2024 14:41:47 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 16/23] qmi: sms: Drop use of qmi_service_create_shared
-Date: Thu, 13 Jun 2024 16:41:25 -0500
-Message-ID: <20240613214134.1056517-16-denkenz@gmail.com>
+Subject: [PATCH v2 17/23] qmi: netreg: Drop use of qmi_service_create_shared
+Date: Thu, 13 Jun 2024 16:41:26 -0500
+Message-ID: <20240613214134.1056517-17-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240613214134.1056517-1-denkenz@gmail.com>
 References: <20240613214134.1056517-1-denkenz@gmail.com>
@@ -68,115 +68,183 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+While here, drop all indication registration id members.  Explicitly
+unregistering from an indication is not required.  All indication
+registrations will be automatically dropped when the service handle
+is freed using qmi_service_free()
 ---
- drivers/qmimodem/sms.c | 56 +++++++++++-------------------------------
- plugins/gobi.c         |  3 ++-
- 2 files changed, 17 insertions(+), 42 deletions(-)
+ drivers/qmimodem/network-registration.c | 86 +++++--------------------
+ plugins/gobi.c                          |  3 +-
+ 2 files changed, 17 insertions(+), 72 deletions(-)
 
-diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c
-index 65909c6a71f6..4238665a5e8d 100644
---- a/drivers/qmimodem/sms.c
-+++ b/drivers/qmimodem/sms.c
-@@ -725,58 +725,33 @@ static void set_event_cb(struct qmi_result *result, void *user_data)
- 	ofono_sms_register(sms);
+diff --git a/drivers/qmimodem/network-registration.c b/drivers/qmimodem/network-registration.c
+index 78957a677d2d..c0c9338d1c23 100644
+--- a/drivers/qmimodem/network-registration.c
++++ b/drivers/qmimodem/network-registration.c
+@@ -31,10 +31,6 @@ struct netreg_data {
+ 	int lac;
+ 	int cellid;
+ 	bool is_roaming;
+-	uint16_t event_indication_id;
+-	uint16_t signal_info_indication_id;
+-	uint16_t system_info_indication_id;
+-	uint16_t serving_system_indication_id;
+ };
+ 
+ enum roaming_status {
+@@ -587,23 +583,16 @@ static void register_indications_cb(struct qmi_result *result,
+ 
+ 	ofono_netreg_register(netreg);
+ 
+-	data->event_indication_id =
+-		qmi_service_register(data->nas, QMI_NAS_EVENT_REPORT,
++	qmi_service_register(data->nas, QMI_NAS_EVENT_REPORT,
+ 					event_notify, netreg, NULL);
+ 
+-	data->serving_system_indication_id =
+-		qmi_service_register(data->nas,
+-					QMI_NAS_SERVING_SYSTEM_INDICATION,
++	qmi_service_register(data->nas, QMI_NAS_SERVING_SYSTEM_INDICATION,
+ 					ss_info_notify, netreg, NULL);
+ 
+-	data->system_info_indication_id =
+-		qmi_service_register(data->nas,
+-					QMI_NAS_SYSTEM_INFO_INDICATION,
++	qmi_service_register(data->nas, QMI_NAS_SYSTEM_INFO_INDICATION,
+ 					system_info_notify, netreg, NULL);
+ 
+-	data->signal_info_indication_id =
+-		qmi_service_register(data->nas,
+-					QMI_NAS_SIGNAL_INFO_INDICATION,
++	qmi_service_register(data->nas, QMI_NAS_SIGNAL_INFO_INDICATION,
+ 					signal_info_notify, netreg, NULL);
  }
  
--static void create_wms_cb(struct qmi_service *service, void *user_data)
-+static int qmi_sms_probe(struct ofono_sms *sms,
+@@ -636,10 +625,10 @@ error:
+ 	ofono_netreg_remove(netreg);
+ }
+ 
+-static void create_nas_cb(struct qmi_service *service, void *user_data)
++static int qmi_netreg_probe(struct ofono_netreg *netreg,
 +				unsigned int vendor, void *user_data)
  {
--	struct ofono_sms *sms = user_data;
--	struct sms_data *data = ofono_sms_get_data(sms);
-+	struct qmi_service *wms = user_data;
+-	struct ofono_netreg *netreg = user_data;
+-	struct netreg_data *data = ofono_netreg_get_data(netreg);
++	struct qmi_service *nas = user_data;
  	struct qmi_param *param;
-+	struct sms_data *data;
+ 	static const uint8_t PARAM_REPORT_SIGNAL_STRENGTH = 0x10;
+ 	static const uint8_t PARAM_REPORT_RF_INFO = 0x11;
+@@ -650,46 +639,28 @@ static void create_nas_cb(struct qmi_service *service, void *user_data)
+ 	} __attribute__((__packed__)) ss = { .report = 0x01,
+ 			.count = 5, .dbm[0] = -55, .dbm[1] = -65,
+ 			.dbm[2] = -75, .dbm[3] = -85, .dbm[4] = -95 };
++	struct netreg_data *data;
  
  	DBG("");
  
 -	if (!service) {
--		ofono_error("Failed to request WMS service");
--		ofono_sms_remove(sms);
--		return;
+-		ofono_error("Failed to request NAS service");
+-		goto error;
 -	}
-+	param = qmi_param_new_uint8(QMI_WMS_PARAM_NEW_MSG_REPORT, 0x01);
+-
+-	data->nas = service;
+-
+ 	param = qmi_param_new();
+-
+ 	qmi_param_append(param, PARAM_REPORT_SIGNAL_STRENGTH, sizeof(ss), &ss);
+ 	qmi_param_append_uint8(param, PARAM_REPORT_RF_INFO, 0x01);
  
--	if (!qmi_service_get_version(service, &data->major, &data->minor)) {
--		ofono_error("Failed to get WMS service version");
--		ofono_sms_remove(sms);
--		return;
-+	if (!qmi_service_send(wms, QMI_WMS_SET_EVENT, param,
-+					set_event_cb, sms, NULL)) {
-+		qmi_param_free(param);
-+		qmi_service_free(wms);
-+		return -EIO;
- 	}
- 
--	data->wms = service;
--
-+	data = l_new(struct sms_data, 1);
-+	data->wms = wms;
- 	memset(&data->rd_msg_id, 0, sizeof(data->rd_msg_id));
- 	data->msg_mode = QMI_WMS_MESSAGE_MODE_GSMWCDMA;
--
--	qmi_service_register(data->wms, QMI_WMS_EVENT,
--					event_notify, sms, NULL);
--
--	param = qmi_param_new_uint8(QMI_WMS_PARAM_NEW_MSG_REPORT, 0x01);
--
--	if (qmi_service_send(data->wms, QMI_WMS_SET_EVENT, param,
--					set_event_cb, sms, NULL) > 0)
+-	if (qmi_service_send(data->nas, QMI_NAS_SET_EVENT_REPORT, param,
+-					set_event_report_cb, netreg, NULL) > 0)
 -		return;
 -
--	ofono_sms_register(sms);
+-	qmi_param_free(param);
+-error:
+-	ofono_netreg_remove(netreg);
 -}
 -
--static int qmi_sms_probe(struct ofono_sms *sms,
+-static int qmi_netreg_probe(struct ofono_netreg *netreg,
 -				unsigned int vendor, void *user_data)
 -{
 -	struct qmi_device *device = user_data;
--	struct sms_data *data;
+-	struct netreg_data *data;
 -
 -	DBG("");
++	if (!qmi_service_send(nas, QMI_NAS_SET_EVENT_REPORT, param,
++					set_event_report_cb, netreg, NULL)) {
++		qmi_param_free(param);
++		qmi_service_free(nas);
++		return -EIO;
++	}
+ 
+ 	data = l_new(struct netreg_data, 1);
 -
--	data = l_new(struct sms_data, 1);
-+	qmi_service_get_version(data->wms, &data->major, &data->minor);
-+	qmi_service_register(data->wms, QMI_WMS_EVENT, event_notify, sms, NULL);
++	data->nas = nas;
+ 	data->operator.name[0] = '\0';
+ 	data->operator.mcc[0] = '\0';
+ 	data->operator.mnc[0] = '\0';
+ 	data->operator.status = -1;
+ 	data->operator.tech = -1;
+-
+ 	data->current_rat = QMI_NAS_NETWORK_RAT_NO_CHANGE;
+ 	data->is_roaming = false;
+ 	data->lac = -1;
+@@ -697,9 +668,6 @@ static int qmi_netreg_probe(struct ofono_netreg *netreg,
  
- 	ofono_sms_set_data(sms, data);
+ 	ofono_netreg_set_data(netreg, data);
  
--	qmi_service_create_shared(device, QMI_SERVICE_WMS, create_wms_cb, sms,
--					NULL);
+-	qmi_service_create_shared(device, QMI_SERVICE_NAS,
+-					create_nas_cb, netreg, NULL);
 -
  	return 0;
  }
  
-@@ -788,11 +763,10 @@ static void qmi_sms_remove(struct ofono_sms *sms)
+@@ -711,31 +679,7 @@ static void qmi_netreg_remove(struct ofono_netreg *netreg)
  
- 	ofono_sms_set_data(sms, NULL);
+ 	ofono_netreg_set_data(netreg, NULL);
  
--	qmi_service_free(data->wms);
+-	if (data->event_indication_id) {
+-		qmi_service_unregister(data->nas, data->event_indication_id);
+-		data->event_indication_id = 0;
+-	}
 -
- 	if (data->msg_list)
- 		l_free(data->msg_list);
- 
-+	qmi_service_free(data->wms);
+-	if (data->serving_system_indication_id) {
+-		qmi_service_unregister(data->nas,
+-					data->serving_system_indication_id);
+-		data->serving_system_indication_id = 0;
+-	}
+-
+-	if (data->system_info_indication_id) {
+-		qmi_service_unregister(data->nas,
+-					data->system_info_indication_id);
+-		data->system_info_indication_id = 0;
+-	}
+-
+-	if (data->signal_info_indication_id) {
+-		qmi_service_unregister(data->nas,
+-					data->signal_info_indication_id);
+-		data->signal_info_indication_id = 0;
+-	}
+-
+ 	qmi_service_free(data->nas);
+-
  	l_free(data);
  }
  
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index a0f2fac3dede..da27930c1e94 100644
+index da27930c1e94..34aa363cf82e 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -806,7 +806,8 @@ static void gobi_post_sim(struct ofono_modem *modem)
- 		ofono_radio_settings_create(modem, 0, "qmimodem", data->device);
+@@ -829,7 +829,8 @@ static void gobi_post_online(struct ofono_modem *modem)
+ 	DBG("%p", modem);
  
- 	if (data->features & GOBI_WMS)
--		ofono_sms_create(modem, 0, "qmimodem", data->device);
-+		ofono_sms_create(modem, 0, "qmimodem",
-+					qmi_service_clone(data->wms));
+ 	if (data->features & GOBI_NAS) {
+-		ofono_netreg_create(modem, 0, "qmimodem", data->device);
++		ofono_netreg_create(modem, 0, "qmimodem",
++						qmi_service_clone(data->nas));
+ 		ofono_netmon_create(modem, 0, "qmimodem", data->device);
+ 	}
  
- 	if ((data->features & GOBI_WMS) && (data->features & GOBI_UIM) &&
- 			!ofono_modem_get_boolean(modem, "ForceSimLegacy")) {
 -- 
 2.45.0
 
