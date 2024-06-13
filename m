@@ -1,65 +1,61 @@
-Received: from mail-oo1-f44.google.com (mail-oo1-f44.google.com [209.85.161.44])
+Received: from mail-oo1-f46.google.com (mail-oo1-f46.google.com [209.85.161.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E780155739
-	for <ofono@lists.linux.dev>; Fri,  7 Jun 2024 22:48:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2316C71747
+	for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 21:41:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717800489; cv=none; b=YUdn8JfHei4v00r4/QDk4LfaK8RmIO7gcxcRDsWwWUqayqSQY/WQrQbbknxQib3uPFr/XKXcwidhYMiCny1TeA+wOv9vnhz60nGNuAV4IE5S7bTYppDpRKP2euyqw1fsIOhOoICZCyjTfwyZZ3V+X00yMp/l7cmDqYtE4/aqhLc=
+	t=1718314899; cv=none; b=PpRxFZumlf4+FdmVRmRi6mSNGkJuDq7g7BTdfyvOAkVqftFJVK0xrIBU+mtKTN+n5QQ4IkGj9ut/8HmPDFYcQZHU3gtaz5N4CTLvYqAQ40PAnc5YBkXDfPGit2k45Q+nvusrW6VZjeZxoxbS35i1KD97DK+CnlXjnx/cfzX4K4g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717800489; c=relaxed/simple;
-	bh=Pp8P/c6/5sdHVv8oFpdDhrCl3LhH8d/dNx8eVANIDhU=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=dB6cAVtyp7YbkT6R4KctOsj+3Y1jzdQmeEJRAcMvUuKxKl59gl7GxiSXWYaQ9IFH09oi/GILduNH+8BYLylD8eX6O4lcA+zCtmvVno8nNZeWrCz0JZZqJAgck702F1ZzZjiGAkaoLpEhR8FIY9p36pcVs/MlPpqZrpxiDUnMwIY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kY8Jrrnu; arc=none smtp.client-ip=209.85.161.44
+	s=arc-20240116; t=1718314899; c=relaxed/simple;
+	bh=jiraYGs/O4eweLj36mjlG97UPK2OwCGH5AINnydTkrg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=jgARmk+uodX+ZfhKF/tcFHXwTTttBSeXgk80sGv78sT8hpe5o+3+Or14BEnUSRc+/sGjuzfa8Ea+WrKvckcowmQrf/NUwJiodBgepxsl0etpmpN3G6yRK7ZXxCqZG+NKJsbkg9yQBEN9nL2gc+JDTg9RMbfooKryH13/OAuu+pk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lKYKsRjd; arc=none smtp.client-ip=209.85.161.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kY8Jrrnu"
-Received: by mail-oo1-f44.google.com with SMTP id 006d021491bc7-5b97a9a9b4bso1192882eaf.0
-        for <ofono@lists.linux.dev>; Fri, 07 Jun 2024 15:48:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lKYKsRjd"
+Received: by mail-oo1-f46.google.com with SMTP id 006d021491bc7-5b9706c84e5so826333eaf.1
+        for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 14:41:37 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1717800487; x=1718405287; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=rF/6GddWOqxS7yf6OLz866Lt+WuomuZF4pEEHEJcuAQ=;
-        b=kY8JrrnuQQobb1/XNNciuWBlMlMykMcdtcA76s8wE5eScHHZr77CYIfpDYHVTKjXR0
-         Vrg4eXBpo2ggF/eXAwe7ip/6UiqoEhLAkbO/v++Nn06SpwtZMYZbX24LrdLzbD9XnGeX
-         r2KcADgZ2qDHHf58pbYEnw1DJBAddQ5tSzRXJ85Z3srPMRWxmady4GWQK1YOZv9aY6L4
-         Z6GpWBqJKL6hSGPznypFkGeUm6nkl+1mSlDf1Ma9M0B8X1TPGHhcUpmiPwahYdx1uzcN
-         4l3wkJNHfBZfJQ0vOnWMCuyN8199UTt6NsaaT3NIajLQGWK60CiDB5N/gHbcJhYcOOdN
-         h48g==
+        d=gmail.com; s=20230601; t=1718314897; x=1718919697; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=RXQOMqQZbkJLvo7lZ7g+/7mpUBAVXIRh6PGMOvNqgHU=;
+        b=lKYKsRjdoGsXnwD34qY/NVnsLn58Sn565bQNbrEz/jIi38P5XhR8VAkBba5DlpP7N6
+         goKvyWpUc1NgMKsQXlqtnHsS8tI0RJuy9MMNzAV4HQ8i3j7aL/uSBE2I7Gdv7g8nKD+Q
+         e7FpDt9RO5gtZA4Nzj21rkjqWAHZ7hEvstyHXhZDc1MhQP/gekqHWCohTVaCKON2xdlA
+         XSu52nimpOCNnreifTFjybqYiZrvZOwzhg+fz0s1hLg3HulyoO5Ncq2wafN9bY3ervSp
+         y43oBF12lqiLSYQgGOnlYMPUQuNk/FTViHKxgk5U0RDRICH8tAeW5pQzjJVLsLMFE+zq
+         S6ow==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717800487; x=1718405287;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=rF/6GddWOqxS7yf6OLz866Lt+WuomuZF4pEEHEJcuAQ=;
-        b=ogfUhP8tt4foq80Qn4GSlR6LZhhe9LlxKKmmHrA9CdaDvJMBddtGYmr3oZC7P2i9RB
-         8MoMwwJsIjRUs3SeIl7fsurR7D7lymg86BqqlDp1XSAt+ouQh8ZM57Mvn5t/kEe0qZnM
-         AieobgEV0iH2+qKhOPi4OWFRdSFDPiIpTY1+ZqU8J54Gsg3VlzF9Vg7Zv/eiM3//js3Z
-         KVYkn49riupH4Nq9zv9acgdmaIMMmnTAWQiNbzjQ9BDpV1urMEFuOC0D+yYcCDzg7mNH
-         3G/I/drnSUtwI0F2Effiq8x5kt6ijFKpkCEZ7bqtmDwfY+rR4bfOj3NTOaXuuKyZ2xHC
-         lKHA==
-X-Gm-Message-State: AOJu0Yyi/1vbnVDHdRntr5R2+HrHv3mJKteFUg5I1zSy4LjdQrzLinO0
-	J2L5CovJ7+DPFRyojHe9IGelX2y42Qax30H6xJu72JoEC9jyRC75DxzEuQ==
-X-Google-Smtp-Source: AGHT+IH9Nsac5xdqhd27euD3idIiF8S72hbEz5NlU4FHsnM3Gm/YGEbx0rMWKQNbeP5ZuDua48NKkg==
-X-Received: by 2002:a05:6820:1609:b0:5b5:3d56:287b with SMTP id 006d021491bc7-5baae7520bemr4528705eaf.4.1717800487013;
-        Fri, 07 Jun 2024 15:48:07 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1718314897; x=1718919697;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=RXQOMqQZbkJLvo7lZ7g+/7mpUBAVXIRh6PGMOvNqgHU=;
+        b=eXsTjSiDitNOeeIFzNvS249WeyNOhsgezkvjtl1gj6bmKqySzNMZ9ENYeQc1aFWYHA
+         E9Sgn6KDvo/E2QJF6BNXscS4ZxFpq7nGyv8dOhq+or2W8OUBPk7x+a1mA1jh+RtAv9be
+         IDLGPAtEMQRXG9IDQhDXfX9JFmZJnsNSLom+Nt2SEeCIe2DkyYXnHJ3IHOvdg2NLrOdK
+         g16qFCcp8jgE7u5mshpfGQu9xybrSU1R+7Rc/slkQ6EHE3MBgwsnXiAiKMngeyDjfmfw
+         p2jJLHI5W3nBtkUuFKiS/DSV8wfm1rGaApUCCxvQ1V8UnQMQgEyC99pTUXpgKPLhQ3yS
+         kbnQ==
+X-Gm-Message-State: AOJu0YzKz42XOzqJlsivlBgyYJHepunRW7G7VpawBk2gRHBg1BSDS69r
+	tUsOFhbnIU4SDUAg7CsE7iedMugqRjt3xwsEsBSxOHPmAk3kw1oQgx2/nQ==
+X-Google-Smtp-Source: AGHT+IENB7uIyVBWvX+sOzwVwjNpU8GTx8qKvGvr+jVppMXoFlwWDXZtpqte9aKu3zmD4p2fgHcjpg==
+X-Received: by 2002:a05:6870:c6a9:b0:254:cdac:99a2 with SMTP id 586e51a60fabf-25842b804bdmr889740fac.55.1718314896712;
+        Thu, 13 Jun 2024 14:41:36 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5ba976b43c4sm838773eaf.14.2024.06.07.15.48.06
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569930f768sm601589fac.41.2024.06.13.14.41.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Jun 2024 15:48:06 -0700 (PDT)
+        Thu, 13 Jun 2024 14:41:36 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 23/23] qmi: radio-settings: Drop use of qmi_service_create_shared
-Date: Fri,  7 Jun 2024 17:47:23 -0500
-Message-ID: <20240607224746.903769-23-denkenz@gmail.com>
+Subject: [PATCH v2 01/23] gobi: Remove phonebook and stk atom creation
+Date: Thu, 13 Jun 2024 16:41:10 -0500
+Message-ID: <20240613214134.1056517-1-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
-In-Reply-To: <20240607224746.903769-1-denkenz@gmail.com>
-References: <20240607224746.903769-1-denkenz@gmail.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -68,108 +64,72 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+These atoms do not exist in the current qmimodem driver.  Remove them
+until they're added back in.
 ---
- drivers/qmimodem/radio-settings.c | 56 ++++++-------------------------
- plugins/gobi.c                    |  4 ++-
- 2 files changed, 13 insertions(+), 47 deletions(-)
+ plugins/gobi.c | 26 +++-----------------------
+ 1 file changed, 3 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/qmimodem/radio-settings.c b/drivers/qmimodem/radio-settings.c
-index 2e428b9d0c2e..8463c84bf1ed 100644
---- a/drivers/qmimodem/radio-settings.c
-+++ b/drivers/qmimodem/radio-settings.c
-@@ -198,59 +198,22 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, -1, data);
- }
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 7c105eef992a..10ce2acc0cca 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -51,12 +51,9 @@
+ #define GOBI_WMS	(1 << 2)
+ #define GOBI_WDS	(1 << 3)
+ #define GOBI_PDS	(1 << 4)
+-#define GOBI_PBM	(1 << 5)
+-#define GOBI_UIM	(1 << 6)
+-#define GOBI_CAT	(1 << 7)
+-#define GOBI_CAT_OLD	(1 << 8)
+-#define GOBI_VOICE	(1 << 9)
+-#define GOBI_WDA	(1 << 10)
++#define GOBI_UIM	(1 << 5)
++#define GOBI_VOICE	(1 << 6)
++#define GOBI_WDA	(1 << 7)
  
--static void create_dms_cb(struct qmi_service *service, void *user_data)
-+static int qmi_radio_settings_probev(struct ofono_radio_settings *rs,
-+					unsigned int vendor, va_list args)
+ enum qmi_protocol {
+ 	QMI_PROTOCOL_QMUX,
+@@ -411,7 +408,6 @@ static void discover_cb(void *user_data)
  {
--	struct ofono_radio_settings *rs = user_data;
--	struct settings_data *data = ofono_radio_settings_get_data(rs);
--
--	DBG("");
--
--	if (!service)
--		return;
--
--	data->dms = service;
--}
--
--static void create_nas_cb(struct qmi_service *service, void *user_data)
--{
--	struct ofono_radio_settings *rs = user_data;
--	struct settings_data *data = ofono_radio_settings_get_data(rs);
--
--	DBG("");
--
--	if (!service) {
--		ofono_error("Failed to request NAS service");
--		ofono_radio_settings_remove(rs);
--		return;
--	}
--
--	if (!qmi_service_get_version(service, &data->major, &data->minor)) {
--		ofono_error("Failed to get NAS service version");
--		ofono_radio_settings_remove(rs);
--		return;
--	}
--
--	data->nas = service;
--
--	ofono_radio_settings_register(rs);
--}
--
--static int qmi_radio_settings_probe(struct ofono_radio_settings *rs,
--					unsigned int vendor, void *user_data)
--{
--	struct qmi_device *device = user_data;
-+	struct qmi_service *dms = va_arg(args, struct qmi_service *);
-+	struct qmi_service *nas = va_arg(args, struct qmi_service *);
- 	struct settings_data *data;
+ 	struct ofono_modem *modem = user_data;
+ 	struct gobi_data *data = ofono_modem_get_data(modem);
+-	uint16_t major, minor;
  
  	DBG("");
  
- 	data = l_new(struct settings_data, 1);
-+	data->dms = dms;
-+	data->nas = nas;
+@@ -427,16 +423,8 @@ static void discover_cb(void *user_data)
+ 		data->features |= GOBI_WDA;
+ 	if (qmi_device_has_service(data->device, QMI_SERVICE_PDS))
+ 		data->features |= GOBI_PDS;
+-	if (qmi_device_has_service(data->device, QMI_SERVICE_PBM))
+-		data->features |= GOBI_PBM;
+ 	if (qmi_device_has_service(data->device, QMI_SERVICE_UIM))
+ 		data->features |= GOBI_UIM;
+-	if (qmi_device_has_service(data->device, QMI_SERVICE_CAT))
+-		data->features |= GOBI_CAT;
+-	if (qmi_device_get_service_version(data->device,
+-				QMI_SERVICE_CAT_OLD, &major, &minor))
+-		if (major > 0)
+-			data->features |= GOBI_CAT_OLD;
+ 	if (qmi_device_has_service(data->device, QMI_SERVICE_VOICE))
+ 			data->features |= GOBI_VOICE;
  
--	ofono_radio_settings_set_data(rs, data);
-+	qmi_service_get_version(data->nas, &data->major, &data->minor);
+@@ -748,14 +736,6 @@ static void gobi_post_sim(struct ofono_modem *modem)
  
--	qmi_service_create_shared(device, QMI_SERVICE_DMS,
--						create_dms_cb, rs, NULL);
--	qmi_service_create_shared(device, QMI_SERVICE_NAS,
--						create_nas_cb, rs, NULL);
-+	ofono_radio_settings_set_data(rs, data);
+ 	ofono_lte_create(modem, 0, "qmimodem", data->device);
  
- 	return 0;
- }
-@@ -270,7 +233,8 @@ static void qmi_radio_settings_remove(struct ofono_radio_settings *rs)
- }
- 
- static const struct ofono_radio_settings_driver driver = {
--	.probe		= qmi_radio_settings_probe,
-+	.flags		= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
-+	.probev		= qmi_radio_settings_probev,
- 	.remove		= qmi_radio_settings_remove,
- 	.set_rat_mode	= qmi_set_rat_mode,
- 	.query_rat_mode = qmi_query_rat_mode,
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index b7a8240edd3c..549ccc6c9d7b 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -820,7 +820,9 @@ static void gobi_post_sim(struct ofono_modem *modem)
- 					qmi_service_clone(data->wds));
- 
+-	if (data->features & GOBI_CAT)
+-		ofono_stk_create(modem, 0, "qmimodem", data->device);
+-	else if (data->features & GOBI_CAT_OLD)
+-		ofono_stk_create(modem, 1, "qmimodem", data->device);
+-
+-	if (data->features & GOBI_PBM)
+-		ofono_phonebook_create(modem, 0, "qmimodem", data->device);
+-
  	if (data->features & GOBI_NAS)
--		ofono_radio_settings_create(modem, 0, "qmimodem", data->device);
-+		ofono_radio_settings_create(modem, 0, "qmimodem",
-+					qmi_service_clone(data->dms),
-+					qmi_service_clone(data->nas));
+ 		ofono_radio_settings_create(modem, 0, "qmimodem", data->device);
  
- 	if (data->features & GOBI_WMS)
- 		ofono_sms_create(modem, 0, "qmimodem",
 -- 
 2.45.0
 
