@@ -1,62 +1,62 @@
-Received: from mail-oi1-f181.google.com (mail-oi1-f181.google.com [209.85.167.181])
+Received: from mail-oa1-f52.google.com (mail-oa1-f52.google.com [209.85.160.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73EE4143743
-	for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 21:41:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96F0013FD66
+	for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 21:41:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718314901; cv=none; b=PwtGmqADj68/9SfK6Oac079Qm3tRGOOGrq4TfMRacPsFRyZoxgiYO1b08PKCD59yjWIuSOyHILt69fBXkBwgzWrSOnFR0g5ae9TQ9lZQCCZEe1mxRHCNKamRmr+J+ThYjyJDOMmgw81tSAJbSojqiXIqgIdzVIinUZnxxW+9WsI=
+	t=1718314902; cv=none; b=WMVLgbGpVwX+cuyeoKU3G67sPJufzKjRRwBDHGEfKVPiOEnU+NyupMzWqgM61nT0iYlXJx7YA1AW3yQnwAhMNfvgpaJaiFA7YWgh5ztQUmS3yNINee3vfJZcGtj8r5PRxOI+pjJun2TEt1Vbu9COD05kaCvIjt9PAu4Gya0i4Dk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718314901; c=relaxed/simple;
-	bh=v3NYrCIbc8O3gNo5zAII2decMYYYS0rNP05Ofuq3Hrk=;
+	s=arc-20240116; t=1718314902; c=relaxed/simple;
+	bh=q0KuagSasHgfO/XncaDRh/6BzWr6ELAnEle7dOCmhfg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=VTS48a9ZAWhM6iqTMU0U/+1XGc5Ce4LwIu+NhFN7qKhSpNv4vxXTMqS80z40DDycbOtwnRuR7FChGZdu3HCe/VS2wPUkVsjQXYbSVpA2RGy8ILRurNL8dWmpp9XUh8JsEm2TRKHc+DdtgfKhC/84dUXsgKMa/fmLZrpgw7BsmTE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=b/ejRpkN; arc=none smtp.client-ip=209.85.167.181
+	 MIME-Version; b=jfqQxm5ZJ6RpBSwnzpIKuiIIGi6qFOvHcAyWK7WPOKnJZbbs3bCZhnI9OGu/d8p5lF84BE1QhlotVZgmXNNlERBrqlx8FtLQPivcDYYkxAWudz+SafE7xTYd1wHZd3WxCd4rkznZbSG4AePVhAGP4up6cQ/qhazzSHyKYx41HqA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HgR+7J5T; arc=none smtp.client-ip=209.85.160.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="b/ejRpkN"
-Received: by mail-oi1-f181.google.com with SMTP id 5614622812f47-3d1d08c7c8aso828231b6e.2
-        for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 14:41:39 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HgR+7J5T"
+Received: by mail-oa1-f52.google.com with SMTP id 586e51a60fabf-24c9f73ccaaso843517fac.1
+        for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 14:41:40 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718314898; x=1718919698; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718314899; x=1718919699; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Wz3oV2SPzU8qCiEWnTf29QXcGiJ7UaZ8jkvFO5aa0QU=;
-        b=b/ejRpkNEqAzDPX55HW908xVeoR8Au+T7aItEKmQMBYKUBAaBDhaHNGU+UmpksPzx1
-         y6educqgaIMoRZgyRT5cesf5bEOhk3Ob4Y86gIxYqXtoKs9LPOJr8uHmaOOb58E+TfCb
-         wKBqebrni37EyfeV4NfCR3m2mgfV94NnKkulz6ZhAycahICxDhAIo0mKHi2IBqBV0lKm
-         wWpX+P4MRs5oCpL4Xx31FnWBeNGNQ0cBf3Q+k3rW+VcscQxtwuzoLCnFuZU77/lkCMaZ
-         3RieuNlQLRkfkag14hmZFz8yu87sVzdAeznW4QP6eSPdaJK6+8i7nKnCf4RKNFbPbBEt
-         laBw==
+        bh=MOOBg6Gsufpva0ieml7234FnSDXP7734brFuiYW5AHw=;
+        b=HgR+7J5THeG2kFYjhN9YVpVNn437yvQjSQMh5fJwbfARVbMmrZV8VvrRWzqXX992NF
+         cA+8cD2C4x+Aiq+QDcwq+ubMhrQxySsyyqt/BWIkAgmxI+USfhbQ+MJXBMEHuQkyqj2g
+         ZF5sYTtybGnvGeLREqkowpuQSLp/5XDOD5DRXJLifDM4i/2pNQQdJyRwsc/l/ZUXL9RJ
+         D59kN8BrWwcxsmlEcBubSb3hcky9/HPG2uIm01VzXEdTO4cD5gy7Y9WLXVgO++NI+gtr
+         1x++cbsvYbiMkoEuCbDXu++d74xwgTDVpdf8hHct13ifmpjGWk2/ATLEDkMXvuJbgTiQ
+         tcXQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718314898; x=1718919698;
+        d=1e100.net; s=20230601; t=1718314899; x=1718919699;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=Wz3oV2SPzU8qCiEWnTf29QXcGiJ7UaZ8jkvFO5aa0QU=;
-        b=q+aBP6dlVuRE5awFciZ+6FlyKWRWy93J828KS3qqgQ6pZiM3ruIMkD/9LzD6FzW62J
-         yGYwAyWIiX/VXf6gjdNZfM0FcZ3PLRrRXJPGS0Q7mH8AdfB+XCxpusZJ0LZRmIxRQEnX
-         wTocYoLJll+JZAfwRhhT1Jc7eAxQHf6VVluNSN4xBuFxlc+etJbRuqV9IeIs9TC8uJME
-         QXykrD60Y+a03tGbpuSuL4mkPF6wGz3+Dp5EOUONFZuQ4FaIaVyjd+da9RqwiE5Rd9km
-         Lteunc+8tD2KsCRmScssSW0abu8TCz5QuCiyKDlqMzoO5kfqiZm87of8JCWPSV164Mig
-         DiPg==
-X-Gm-Message-State: AOJu0YyMV3XlY8RI1Icj7Ll4PNOvStaSIN4adsVP+7yb4H/g3M1ExHEr
-	1dcdyPdguz4V/2g3BiHNp1but7FUw2sNMDq9e7ZT7dVTP9rgDGwn9NRM3Q==
-X-Google-Smtp-Source: AGHT+IHowmFy1ilDitpSAONm+LnPIMRUCFvtj8QDe+1db9a21U3MfKt1KnPLZMlFGdOmJp2O4E3UoA==
-X-Received: by 2002:a05:6870:d183:b0:254:e89e:fc1d with SMTP id 586e51a60fabf-25842b836bbmr893792fac.51.1718314897978;
-        Thu, 13 Jun 2024 14:41:37 -0700 (PDT)
+        bh=MOOBg6Gsufpva0ieml7234FnSDXP7734brFuiYW5AHw=;
+        b=lm97qZP9IcUMC41IwStNXtMw1tpehP84CJPM+E2UuwBO+Ki5avGx45JR5FyTpFdax9
+         Gpk31UznmLvAmE5HftGtPhZx7bZcsmBMuFBu0KYLo8Q1ZH1wGvT6lZgDcjdCf1z8apFN
+         Nc546gQVNCgm7Ol4miXcqrm+N0MN34JAjPpBu0wbZqEqPUZGqaJd11eRuiDdGr3OpaXt
+         SqFY1i3QsvrAV1SJfud+4VCIXk3xOAUe1e1TJPorkbCuKAyX0oRErzLNsDa8WcXLMdnF
+         SAEua01N10xiYNu2vilBPD38rfZDUe4rIShHY4wUlNTq60ulvnPJrAvx2LSnaoTVAE+V
+         /7HA==
+X-Gm-Message-State: AOJu0Ywpl4PyZ9Z1H+4X2rLJ7aG4kt7qTDlsoiT2IQk0eASAB2fp5m9D
+	stx0XB97K+YN/b6t6+FnpPIuxjMJzHOzltxh0SsJETLN+QavfcmsfEbpQQ==
+X-Google-Smtp-Source: AGHT+IEIeLGZp3O9mw2AZrKIDdOg61fLHb+Lj3YwOilJICgAO3M5drUYEGgvP1u/zGectETtxGiZsQ==
+X-Received: by 2002:a05:6870:6391:b0:254:c8ad:7355 with SMTP id 586e51a60fabf-25842911546mr875292fac.22.1718314899357;
+        Thu, 13 Jun 2024 14:41:39 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569930f768sm601589fac.41.2024.06.13.14.41.37
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569930f768sm601589fac.41.2024.06.13.14.41.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 13 Jun 2024 14:41:37 -0700 (PDT)
+        Thu, 13 Jun 2024 14:41:39 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 03/23] core: allow multiple args in atom constructors
-Date: Thu, 13 Jun 2024 16:41:12 -0500
-Message-ID: <20240613214134.1056517-3-denkenz@gmail.com>
+Subject: [PATCH v2 05/23] core: Support register on probe flag
+Date: Thu, 13 Jun 2024 16:41:14 -0500
+Message-ID: <20240613214134.1056517-5-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240613214134.1056517-1-denkenz@gmail.com>
 References: <20240613214134.1056517-1-denkenz@gmail.com>
@@ -68,889 +68,586 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-It would be useful to send multiple arguments to atom probe() functions
-without having to define / create an intermediate structure.  To that
-end, add the ability to send multiple arguments to all atom
-constructors.  To keep backwards compatibility, the probe() method is
-invoked with a single void * argument.
----
- include/audio-settings.h     |  6 +++++-
- include/call-barring.h       |  6 +++++-
- include/call-forwarding.h    |  6 +++++-
- include/call-meter.h         |  6 +++++-
- include/call-settings.h      |  6 +++++-
- include/call-volume.h        |  6 +++++-
- include/cbs.h                |  5 ++++-
- include/ctm.h                |  5 ++++-
- include/devinfo.h            |  6 +++++-
- include/gnss.h               |  6 +++++-
- include/gprs-context.h       |  6 +++++-
- include/gprs.h               |  6 +++++-
- include/handsfree.h          |  6 +++++-
- include/ims.h                |  5 ++++-
- include/location-reporting.h |  6 +++++-
- include/lte.h                |  5 ++++-
- include/netmon.h             |  6 +++++-
- include/netreg.h             |  7 +++++--
- include/phonebook.h          |  6 +++++-
- include/radio-settings.h     |  6 +++++-
- include/sim.h                |  5 ++++-
- include/siri.h               |  6 +++++-
- include/sms.h                |  5 ++++-
- include/stk.h                |  5 ++++-
- include/ussd.h               |  6 +++++-
- include/voicecall.h          |  6 +++++-
- src/ofono.h                  | 16 +++++++++++++---
- 27 files changed, 136 insertions(+), 30 deletions(-)
+Some atom drivers have no meaningful initialization to perform after
+probe but prior to calling ofono_foo_atom_register().  Such atom drivers
+are forced to use l_idle or g_timeout_add in order to invoke
+ofono_foo_atom_register() outside of the probe() method.  Make this
+easier by introducing a flag that will tell the core to call
+ofono_foo_atom_register() automatically.
 
+One exception is ofono_gprs_context drivers which have not had a
+ofono_gprs_context_register() API.  Introduce such an API as a no-op for
+now.
+---
+ drivers/atmodem/gprs-context.c      | 1 +
+ drivers/gemaltomodem/gprs-context.c | 1 +
+ drivers/hsomodem/gprs-context.c     | 1 +
+ drivers/huaweimodem/gprs-context.c  | 1 +
+ drivers/iceramodem/gprs-context.c   | 1 +
+ drivers/ifxmodem/gprs-context.c     | 1 +
+ drivers/isimodem/gprs-context.c     | 1 +
+ drivers/mbimmodem/gprs-context.c    | 1 +
+ drivers/mbmmodem/gprs-context.c     | 1 +
+ drivers/qmimodem/gprs-context.c     | 1 +
+ drivers/rilmodem/gprs-context.c     | 1 +
+ drivers/stemodem/gprs-context.c     | 1 +
+ drivers/swmodem/gprs-context.c      | 1 +
+ drivers/ubloxmodem/gprs-context.c   | 1 +
+ include/audio-settings.h            | 1 +
+ include/call-barring.h              | 1 +
+ include/call-forwarding.h           | 1 +
+ include/call-meter.h                | 1 +
+ include/call-settings.h             | 1 +
+ include/call-volume.h               | 1 +
+ include/cbs.h                       | 1 +
+ include/ctm.h                       | 1 +
+ include/devinfo.h                   | 1 +
+ include/gnss.h                      | 1 +
+ include/gprs-context.h              | 1 +
+ include/gprs.h                      | 1 +
+ include/handsfree.h                 | 1 +
+ include/ims.h                       | 1 +
+ include/location-reporting.h        | 1 +
+ include/lte.h                       | 1 +
+ include/modem.h                     | 2 ++
+ include/netmon.h                    | 1 +
+ include/netreg.h                    | 1 +
+ include/phonebook.h                 | 1 +
+ include/radio-settings.h            | 1 +
+ include/sim.h                       | 1 +
+ include/siri.h                      | 1 +
+ include/sms.h                       | 1 +
+ include/stk.h                       | 1 +
+ include/ussd.h                      | 1 +
+ include/voicecall.h                 | 1 +
+ src/gprs.c                          | 4 ++++
+ src/ofono.h                         | 5 +++++
+ 43 files changed, 51 insertions(+)
+
+diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
+index 5cca26f57ccb..da63fa1c72f3 100644
+--- a/drivers/atmodem/gprs-context.c
++++ b/drivers/atmodem/gprs-context.c
+@@ -495,6 +495,7 @@ static void at_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= at_gprs_context_probe,
+ 	.remove			= at_gprs_context_remove,
+ 	.activate_primary	= at_gprs_activate_primary,
+diff --git a/drivers/gemaltomodem/gprs-context.c b/drivers/gemaltomodem/gprs-context.c
+index 34c044207274..f60fd4282a31 100644
+--- a/drivers/gemaltomodem/gprs-context.c
++++ b/drivers/gemaltomodem/gprs-context.c
+@@ -327,6 +327,7 @@ static void gemalto_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= gemalto_gprs_context_probe,
+ 	.remove			= gemalto_gprs_context_remove,
+ 	.activate_primary	= gemalto_gprs_activate_primary,
+diff --git a/drivers/hsomodem/gprs-context.c b/drivers/hsomodem/gprs-context.c
+index 85f16404cb76..3b3346b0309b 100644
+--- a/drivers/hsomodem/gprs-context.c
++++ b/drivers/hsomodem/gprs-context.c
+@@ -363,6 +363,7 @@ static void hso_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= hso_gprs_context_probe,
+ 	.remove			= hso_gprs_context_remove,
+ 	.activate_primary	= hso_gprs_activate_primary,
+diff --git a/drivers/huaweimodem/gprs-context.c b/drivers/huaweimodem/gprs-context.c
+index 81eecbeded11..9108d490e0c5 100644
+--- a/drivers/huaweimodem/gprs-context.c
++++ b/drivers/huaweimodem/gprs-context.c
+@@ -322,6 +322,7 @@ static void huawei_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= huawei_gprs_context_probe,
+ 	.remove			= huawei_gprs_context_remove,
+ 	.activate_primary	= huawei_gprs_activate_primary,
+diff --git a/drivers/iceramodem/gprs-context.c b/drivers/iceramodem/gprs-context.c
+index 1bfaf703905c..070017c1d529 100644
+--- a/drivers/iceramodem/gprs-context.c
++++ b/drivers/iceramodem/gprs-context.c
+@@ -389,6 +389,7 @@ static void icera_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= icera_gprs_context_probe,
+ 	.remove			= icera_gprs_context_remove,
+ 	.activate_primary	= icera_gprs_activate_primary,
+diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-context.c
+index f39c874a299b..da4632b5ce42 100644
+--- a/drivers/ifxmodem/gprs-context.c
++++ b/drivers/ifxmodem/gprs-context.c
+@@ -724,6 +724,7 @@ static void ifx_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= ifx_gprs_context_probe,
+ 	.remove			= ifx_gprs_context_remove,
+ 	.activate_primary	= ifx_gprs_activate_primary,
+diff --git a/drivers/isimodem/gprs-context.c b/drivers/isimodem/gprs-context.c
+index ec4e9c15a69e..7d6fda2baf85 100644
+--- a/drivers/isimodem/gprs-context.c
++++ b/drivers/isimodem/gprs-context.c
+@@ -645,6 +645,7 @@ static void isi_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= isi_gprs_context_probe,
+ 	.remove			= isi_gprs_context_remove,
+ 	.activate_primary	= isi_gprs_activate_primary,
+diff --git a/drivers/mbimmodem/gprs-context.c b/drivers/mbimmodem/gprs-context.c
+index 0c2042d92919..c420e300aa57 100644
+--- a/drivers/mbimmodem/gprs-context.c
++++ b/drivers/mbimmodem/gprs-context.c
+@@ -440,6 +440,7 @@ static void mbim_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= mbim_gprs_context_probe,
+ 	.remove			= mbim_gprs_context_remove,
+ 	.activate_primary	= mbim_gprs_activate_primary,
+diff --git a/drivers/mbmmodem/gprs-context.c b/drivers/mbmmodem/gprs-context.c
+index 65668c36ef91..d9ea204da049 100644
+--- a/drivers/mbmmodem/gprs-context.c
++++ b/drivers/mbmmodem/gprs-context.c
+@@ -494,6 +494,7 @@ static void mbm_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= mbm_gprs_context_probe,
+ 	.remove			= mbm_gprs_context_remove,
+ 	.activate_primary	= mbm_gprs_activate_primary,
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
+index 4b36d621630b..625fd0b8f193 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -608,6 +608,7 @@ static void qmi_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= qmi_gprs_context_probe,
+ 	.remove			= qmi_gprs_context_remove,
+ 	.activate_primary	= qmi_activate_primary,
+diff --git a/drivers/rilmodem/gprs-context.c b/drivers/rilmodem/gprs-context.c
+index be47731b295c..42d12b0f3e94 100644
+--- a/drivers/rilmodem/gprs-context.c
++++ b/drivers/rilmodem/gprs-context.c
+@@ -842,6 +842,7 @@ static void ril_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= ril_gprs_context_probe,
+ 	.remove			= ril_gprs_context_remove,
+ 	.activate_primary       = ril_gprs_context_activate_primary,
+diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-context.c
+index e793c96cd4e3..a23c6f837ff4 100644
+--- a/drivers/stemodem/gprs-context.c
++++ b/drivers/stemodem/gprs-context.c
+@@ -412,6 +412,7 @@ out:
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= ste_gprs_context_probe,
+ 	.remove			= ste_gprs_context_remove,
+ 	.activate_primary	= ste_gprs_activate_primary,
+diff --git a/drivers/swmodem/gprs-context.c b/drivers/swmodem/gprs-context.c
+index 7de61871760e..32f8cef64c07 100644
+--- a/drivers/swmodem/gprs-context.c
++++ b/drivers/swmodem/gprs-context.c
+@@ -231,6 +231,7 @@ static void sw_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= sw_gprs_context_probe,
+ 	.remove			= sw_gprs_context_remove,
+ 	.activate_primary	= sw_gprs_activate_primary,
+diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-context.c
+index bba36ddd6c20..fab0207430b4 100644
+--- a/drivers/ubloxmodem/gprs-context.c
++++ b/drivers/ubloxmodem/gprs-context.c
+@@ -569,6 +569,7 @@ static void ublox_gprs_context_remove(struct ofono_gprs_context *gc)
+ }
+ 
+ static const struct ofono_gprs_context_driver driver = {
++	.flags			= OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE,
+ 	.probe			= ublox_gprs_context_probe,
+ 	.remove			= ublox_gprs_context_remove,
+ 	.activate_primary	= ublox_gprs_activate_primary,
 diff --git a/include/audio-settings.h b/include/audio-settings.h
-index 797f6e3780ec..452d7e73632d 100644
+index 452d7e73632d..6b7eb0db1a7e 100644
 --- a/include/audio-settings.h
 +++ b/include/audio-settings.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
+@@ -19,6 +19,7 @@ extern "C" {
  struct ofono_audio_settings;
-@@ -19,6 +21,8 @@ struct ofono_audio_settings;
+ 
  struct ofono_audio_settings_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_audio_settings *as,
  				unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_audio_settings *as,
-+				unsigned int vendor, va_list args);
- 	void (*remove)(struct ofono_audio_settings *as);
- };
- 
-@@ -30,7 +34,7 @@ void ofono_audio_settings_mode_notify(struct ofono_audio_settings *as,
- struct ofono_audio_settings *ofono_audio_settings_create(
- 						struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver, void *data);
-+						const char *driver, ...);
- 
- void ofono_audio_settings_register(struct ofono_audio_settings *as);
- void ofono_audio_settings_remove(struct ofono_audio_settings *as);
+ 	int (*probev)(struct ofono_audio_settings *as,
 diff --git a/include/call-barring.h b/include/call-barring.h
-index 05df4270543b..99e2764e64da 100644
+index 99e2764e64da..7ce787249a9e 100644
 --- a/include/call-barring.h
 +++ b/include/call-barring.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -24,6 +24,7 @@ typedef void (*ofono_call_barring_query_cb_t)(const struct ofono_error *error,
+ 					int status, void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_call_barring;
-@@ -24,6 +26,8 @@ typedef void (*ofono_call_barring_query_cb_t)(const struct ofono_error *error,
  struct ofono_call_barring_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_call_barring *cb, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_call_barring *cb, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_call_barring *cb);
- 	void (*set)(struct ofono_call_barring *barr, const char *lock,
- 			int enable, const char *passwd, int cls,
-@@ -38,7 +42,7 @@ struct ofono_call_barring_driver {
- struct ofono_call_barring *ofono_call_barring_create(struct ofono_modem *modem,
- 							unsigned int vendor,
- 							const char *driver,
--							void *data);
-+							...);
- 
- void ofono_call_barring_register(struct ofono_call_barring *cb);
- void ofono_call_barring_remove(struct ofono_call_barring *cb);
+ 	int (*probev)(struct ofono_call_barring *cb, unsigned int vendor,
 diff --git a/include/call-forwarding.h b/include/call-forwarding.h
-index b4ad0a206788..2eb2f1817b8d 100644
+index 2eb2f1817b8d..3e58bb40e48f 100644
 --- a/include/call-forwarding.h
 +++ b/include/call-forwarding.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -34,6 +34,7 @@ typedef void (*ofono_call_forwarding_query_cb_t)(
+ 			void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_call_forwarding;
-@@ -34,6 +36,8 @@ typedef void (*ofono_call_forwarding_query_cb_t)(
  struct ofono_call_forwarding_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_call_forwarding *cf, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_call_forwarding *cf, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_call_forwarding *cf);
- 	void (*activation)(struct ofono_call_forwarding *cf,
- 				int type, int cls,
-@@ -56,7 +60,7 @@ struct ofono_call_forwarding_driver {
- struct ofono_call_forwarding *ofono_call_forwarding_create(
- 						struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver, void *data);
-+						const char *driver, ...);
- 
- void ofono_call_forwarding_register(struct ofono_call_forwarding *cf);
- void ofono_call_forwarding_remove(struct ofono_call_forwarding *cf);
+ 	int (*probev)(struct ofono_call_forwarding *cf, unsigned int vendor,
 diff --git a/include/call-meter.h b/include/call-meter.h
-index feaef17ed5f1..9a00104a2ede 100644
+index 9a00104a2ede..455f1645ba0d 100644
 --- a/include/call-meter.h
 +++ b/include/call-meter.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -30,6 +30,7 @@ typedef void(*ofono_call_meter_set_cb_t)(const struct ofono_error *error,
+ 						void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_call_meter;
-@@ -30,6 +32,8 @@ typedef void(*ofono_call_meter_set_cb_t)(const struct ofono_error *error,
  struct ofono_call_meter_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_call_meter *cm, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_call_meter *cm, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_call_meter *cm);
- 	void (*call_meter_query)(struct ofono_call_meter *cm,
- 				ofono_call_meter_query_cb_t cb, void *data);
-@@ -52,7 +56,7 @@ struct ofono_call_meter_driver {
- struct ofono_call_meter *ofono_call_meter_create(struct ofono_modem *modem,
- 							unsigned int vendor,
- 							const char *driver,
--							void *data);
-+							...);
- 
- void ofono_call_meter_register(struct ofono_call_meter *cm);
- void ofono_call_meter_remove(struct ofono_call_meter *cm);
+ 	int (*probev)(struct ofono_call_meter *cm, unsigned int vendor,
 diff --git a/include/call-settings.h b/include/call-settings.h
-index 854cc96afa97..ced1047fd3d2 100644
+index ced1047fd3d2..72c69df6ed20 100644
 --- a/include/call-settings.h
 +++ b/include/call-settings.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -28,6 +28,7 @@ typedef void (*ofono_call_settings_clir_cb_t)(const struct ofono_error *error,
+ 					int override, int network, void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_call_settings;
-@@ -28,6 +30,8 @@ typedef void (*ofono_call_settings_clir_cb_t)(const struct ofono_error *error,
  struct ofono_call_settings_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_call_settings *cs, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_call_settings *cs, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_call_settings *cs);
- 	void (*clip_query)(struct ofono_call_settings *cs,
- 				ofono_call_settings_status_cb_t cb, void *data);
-@@ -52,7 +56,7 @@ struct ofono_call_settings_driver {
- struct ofono_call_settings *ofono_call_settings_create(
- 						struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver, void *data);
-+						const char *driver, ...);
- 
- void ofono_call_settings_register(struct ofono_call_settings *cs);
- void ofono_call_settings_remove(struct ofono_call_settings *cs);
+ 	int (*probev)(struct ofono_call_settings *cs, unsigned int vendor,
 diff --git a/include/call-volume.h b/include/call-volume.h
-index bf3606353cff..90629b25cc1f 100644
+index 90629b25cc1f..5b95d1814d86 100644
 --- a/include/call-volume.h
 +++ b/include/call-volume.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -23,6 +23,7 @@ typedef void (*ofono_call_volume_cb_t)(const struct ofono_error *error,
+ 					void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- #include <ofono/dbus.h>
- 
-@@ -23,6 +25,8 @@ typedef void (*ofono_call_volume_cb_t)(const struct ofono_error *error,
  struct ofono_call_volume_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_call_volume *cv, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_call_volume *cv, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_call_volume *cv);
- 	void (*speaker_volume)(struct ofono_call_volume *cv,
- 				unsigned char percent,
-@@ -41,7 +45,7 @@ void ofono_call_volume_set_microphone_volume(struct ofono_call_volume *cv,
- void ofono_call_volume_set_muted(struct ofono_call_volume *cv, int muted);
- 
- struct ofono_call_volume *ofono_call_volume_create(struct ofono_modem *modem,
--			unsigned int vendor, const char *driver, void *data);
-+			unsigned int vendor, const char *driver, ...);
- 
- void ofono_call_volume_register(struct ofono_call_volume *cv);
- void ofono_call_volume_remove(struct ofono_call_volume *cv);
+ 	int (*probev)(struct ofono_call_volume *cv, unsigned int vendor,
 diff --git a/include/cbs.h b/include/cbs.h
-index 7ec4b60afeda..9d3367b7b24f 100644
+index 9d3367b7b24f..07e08836db6e 100644
 --- a/include/cbs.h
 +++ b/include/cbs.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_cbs;
-@@ -21,6 +23,7 @@ typedef void (*ofono_cbs_set_cb_t)(const struct ofono_error *error,
+@@ -22,6 +22,7 @@ typedef void (*ofono_cbs_set_cb_t)(const struct ofono_error *error,
+ 					void *data);
  
  struct ofono_cbs_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_cbs *cbs, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_cbs *cbs, unsigned int vendor, va_list args);
+ 	int (*probev)(struct ofono_cbs *cbs, unsigned int vendor, va_list args);
  	void (*remove)(struct ofono_cbs *cbs);
- 	void (*set_topics)(struct ofono_cbs *cbs, const char *topics,
- 				ofono_cbs_set_cb_t cb, void *data);
-@@ -32,7 +35,7 @@ void ofono_cbs_notify(struct ofono_cbs *cbs, const unsigned char *pdu, int len);
- 
- struct ofono_cbs *ofono_cbs_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_cbs_register(struct ofono_cbs *cbs);
- void ofono_cbs_remove(struct ofono_cbs *cbs);
 diff --git a/include/ctm.h b/include/ctm.h
-index 5d600a500f9e..315fa5d562f3 100644
+index 315fa5d562f3..19a7332dcc2b 100644
 --- a/include/ctm.h
 +++ b/include/ctm.h
-@@ -13,6 +13,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_ctm;
-@@ -24,6 +26,7 @@ typedef void (*ofono_ctm_query_cb_t)(const struct ofono_error *error,
+@@ -25,6 +25,7 @@ typedef void (*ofono_ctm_query_cb_t)(const struct ofono_error *error,
+ 					ofono_bool_t enable, void *data);
  
  struct ofono_ctm_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_ctm *ctm, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_ctm *ctm, unsigned int vendor, va_list args);
+ 	int (*probev)(struct ofono_ctm *ctm, unsigned int vendor, va_list args);
  	void (*remove)(struct ofono_ctm *ctm);
- 	void (*query_tty)(struct ofono_ctm *ctm,
- 				ofono_ctm_query_cb_t cb, void *data);
-@@ -33,7 +36,7 @@ struct ofono_ctm_driver {
- 
- struct ofono_ctm *ofono_ctm_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_ctm_register(struct ofono_ctm *ctm);
- void ofono_ctm_remove(struct ofono_ctm *ctm);
 diff --git a/include/devinfo.h b/include/devinfo.h
-index 59a1bd21ecdb..ac553e959443 100644
+index ac553e959443..70190b8fcc62 100644
 --- a/include/devinfo.h
 +++ b/include/devinfo.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -22,6 +22,7 @@ typedef void (*ofono_devinfo_query_cb_t)(const struct ofono_error *error,
+ 					const char *attribute, void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_devinfo;
-@@ -22,6 +24,8 @@ typedef void (*ofono_devinfo_query_cb_t)(const struct ofono_error *error,
  struct ofono_devinfo_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_devinfo *info, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_devinfo *info, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_devinfo *info);
- 	void (*query_manufacturer)(struct ofono_devinfo *info,
- 			ofono_devinfo_query_cb_t cb, void *data);
-@@ -38,7 +42,7 @@ struct ofono_devinfo_driver {
- struct ofono_devinfo *ofono_devinfo_create(struct ofono_modem *modem,
- 							unsigned int vendor,
- 							const char *driver,
--							void *data);
-+							...);
- void ofono_devinfo_register(struct ofono_devinfo *info);
- void ofono_devinfo_remove(struct ofono_devinfo *info);
- 
+ 	int (*probev)(struct ofono_devinfo *info, unsigned int vendor,
 diff --git a/include/gnss.h b/include/gnss.h
-index 700fc2737a6d..dd1b79246f72 100644
+index dd1b79246f72..5df31791ef80 100644
 --- a/include/gnss.h
 +++ b/include/gnss.h
-@@ -13,6 +13,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_gnss;
-@@ -21,6 +23,8 @@ typedef void (*ofono_gnss_cb_t)(const struct ofono_error *error, void *data);
+@@ -22,6 +22,7 @@ struct ofono_gnss;
+ typedef void (*ofono_gnss_cb_t)(const struct ofono_error *error, void *data);
  
  struct ofono_gnss_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_gnss *gnss, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_gnss *gnss, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_gnss *gnss);
- 	void (*send_element)(struct ofono_gnss *gnss,
- 				const char *xml,
-@@ -36,7 +40,7 @@ void ofono_gnss_notify_posr_reset(struct ofono_gnss *gnss);
- 
- struct ofono_gnss *ofono_gnss_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_gnss_register(struct ofono_gnss *gnss);
- void ofono_gnss_remove(struct ofono_gnss *gnss);
+ 	int (*probev)(struct ofono_gnss *gnss, unsigned int vendor,
+ 			va_list args);
 diff --git a/include/gprs-context.h b/include/gprs-context.h
-index dab00191d3f6..2bc9dd166787 100644
+index 2bc9dd166787..0002724acbd3 100644
 --- a/include/gprs-context.h
 +++ b/include/gprs-context.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -42,6 +42,7 @@ typedef void (*ofono_gprs_context_cb_t)(const struct ofono_error *error,
+ 					void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_gprs_context;
-@@ -42,6 +44,8 @@ typedef void (*ofono_gprs_context_cb_t)(const struct ofono_error *error,
  struct ofono_gprs_context_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_gprs_context *gc, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_gprs_context *gc, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_gprs_context *gc);
- 	void (*activate_primary)(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
-@@ -61,7 +65,7 @@ void ofono_gprs_context_deactivated(struct ofono_gprs_context *gc,
- 
- struct ofono_gprs_context *ofono_gprs_context_create(struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver, void *data);
-+						const char *driver, ...);
- void ofono_gprs_context_remove(struct ofono_gprs_context *gc);
- 
- void ofono_gprs_context_set_data(struct ofono_gprs_context *gc, void *data);
+ 	int (*probev)(struct ofono_gprs_context *gc, unsigned int vendor,
 diff --git a/include/gprs.h b/include/gprs.h
-index f4706c5cdbd7..62bf05baf30b 100644
+index 62bf05baf30b..df288a125de4 100644
 --- a/include/gprs.h
 +++ b/include/gprs.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -25,6 +25,7 @@ typedef void (*ofono_gprs_status_cb_t)(const struct ofono_error *error,
+ typedef void (*ofono_gprs_cb_t)(const struct ofono_error *error, void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_gprs;
-@@ -25,6 +27,8 @@ typedef void (*ofono_gprs_cb_t)(const struct ofono_error *error, void *data);
  struct ofono_gprs_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_gprs *gprs, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_gprs *gprs, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_gprs *gprs);
- 	void (*set_attached)(struct ofono_gprs *gprs, int attached,
- 				ofono_gprs_cb_t cb, void *data);
-@@ -52,7 +56,7 @@ struct ofono_modem *ofono_gprs_get_modem(struct ofono_gprs *gprs);
- 
- struct ofono_gprs *ofono_gprs_create(struct ofono_modem *modem,
- 					unsigned int vendor, const char *driver,
--					void *data);
-+					...);
- void ofono_gprs_register(struct ofono_gprs *gprs);
- void ofono_gprs_remove(struct ofono_gprs *gprs);
- 
+ 	int (*probev)(struct ofono_gprs *gprs, unsigned int vendor,
 diff --git a/include/handsfree.h b/include/handsfree.h
-index 326d79c33c9e..43fe572693f6 100644
+index 43fe572693f6..19eeb52bd802 100644
 --- a/include/handsfree.h
 +++ b/include/handsfree.h
-@@ -13,6 +13,8 @@
- extern "C" {
- #endif
+@@ -30,6 +30,7 @@ typedef void (*ofono_handsfree_cnum_query_cb_t)(const struct ofono_error *error,
+ 				void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_handsfree;
-@@ -30,6 +32,8 @@ typedef void (*ofono_handsfree_cnum_query_cb_t)(const struct ofono_error *error,
  struct ofono_handsfree_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_handsfree *hf, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_handsfree *hf, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_handsfree *hf);
- 	void (*cnum_query)(struct ofono_handsfree *hf,
- 				ofono_handsfree_cnum_query_cb_t cb, void *data);
-@@ -66,7 +70,7 @@ void ofono_handsfree_battchg_notify(struct ofono_handsfree *hf,
- 					unsigned char level);
- 
- struct ofono_handsfree *ofono_handsfree_create(struct ofono_modem *modem,
--			unsigned int vendor, const char *driver, void *data);
-+			unsigned int vendor, const char *driver, ...);
- 
- void ofono_handsfree_register(struct ofono_handsfree *hf);
- void ofono_handsfree_remove(struct ofono_handsfree *hf);
+ 	int (*probev)(struct ofono_handsfree *hf, unsigned int vendor,
 diff --git a/include/ims.h b/include/ims.h
-index 737532b17500..c394d5160c26 100644
+index c394d5160c26..cee3ff804b37 100644
 --- a/include/ims.h
 +++ b/include/ims.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_ims;
-@@ -24,6 +26,7 @@ typedef void (*ofono_ims_status_cb_t)(const struct ofono_error *error,
+@@ -25,6 +25,7 @@ typedef void (*ofono_ims_status_cb_t)(const struct ofono_error *error,
+ 						void *data);
  
  struct ofono_ims_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_ims *ims, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_ims *ims, unsigned int vendor, va_list args);
+ 	int (*probev)(struct ofono_ims *ims, unsigned int vendor, va_list args);
  	void (*remove)(struct ofono_ims *ims);
- 	void (*ims_register)(struct ofono_ims *ims,
- 				ofono_ims_register_cb_t cb, void *data);
-@@ -38,7 +41,7 @@ void ofono_ims_status_notify(struct ofono_ims *ims, int reg_info,
- 
- struct ofono_ims *ofono_ims_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_ims_register(struct ofono_ims *ims);
- void ofono_ims_remove(struct ofono_ims *ims);
 diff --git a/include/location-reporting.h b/include/location-reporting.h
-index 38003a950005..7faf0ba3c485 100644
+index 7faf0ba3c485..75900eb5738c 100644
 --- a/include/location-reporting.h
 +++ b/include/location-reporting.h
-@@ -13,6 +13,8 @@
- extern "C" {
- #endif
+@@ -31,6 +31,7 @@ typedef void (*ofono_location_reporting_disable_cb_t)(
+ 						void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_location_reporting;
-@@ -32,6 +34,8 @@ struct ofono_location_reporting_driver {
+ struct ofono_location_reporting_driver {
++	unsigned int flags;
  	enum ofono_location_reporting_type type;
  	int (*probe)(struct ofono_location_reporting *lr, unsigned int vendor,
  								void *data);
-+	int (*probev)(struct ofono_location_reporting *lr, unsigned int vendor,
-+								va_list args);
- 	void (*remove)(struct ofono_location_reporting *lr);
- 	void (*enable)(struct ofono_location_reporting *lr,
- 			ofono_location_reporting_enable_cb_t cb, void *data);
-@@ -42,7 +46,7 @@ struct ofono_location_reporting_driver {
- struct ofono_location_reporting *ofono_location_reporting_create(
- 						struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver, void *data);
-+						const char *driver, ...);
- 
- void ofono_location_reporting_register(struct ofono_location_reporting *lr);
- void ofono_location_reporting_remove(struct ofono_location_reporting *lr);
 diff --git a/include/lte.h b/include/lte.h
-index 378b8faf5d43..3f8dbd535e69 100644
+index 3f8dbd535e69..91a15fdcc1a0 100644
 --- a/include/lte.h
 +++ b/include/lte.h
-@@ -13,6 +13,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_lte;
-@@ -29,6 +31,7 @@ typedef void (*ofono_lte_cb_t)(const struct ofono_error *error, void *data);
+@@ -30,6 +30,7 @@ struct ofono_lte_default_attach_info {
+ typedef void (*ofono_lte_cb_t)(const struct ofono_error *error, void *data);
  
  struct ofono_lte_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_lte *lte, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_lte *lte, unsigned int vendor, va_list args);
+ 	int (*probev)(struct ofono_lte *lte, unsigned int vendor, va_list args);
  	void (*remove)(struct ofono_lte *lte);
- 	void (*set_default_attach_info)(const struct ofono_lte *lte,
- 			const struct ofono_lte_default_attach_info *info,
-@@ -37,7 +40,7 @@ struct ofono_lte_driver {
+diff --git a/include/modem.h b/include/modem.h
+index 08a7012acae4..65cb3a15bc95 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -41,6 +41,8 @@ struct ofono_driver_desc {
+ 	const void *driver;
+ } __attribute__((aligned(8)));
  
- struct ofono_lte *ofono_lte_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_lte_register(struct ofono_lte *lte);
- 
++#define OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE	0x1
++
+ #define OFONO_ATOM_DRIVER_BUILTIN(type, name, driver)			\
+ 	_Pragma("GCC diagnostic push")					\
+ 	_Pragma("GCC diagnostic ignored \"-Wattributes\"")		\
 diff --git a/include/netmon.h b/include/netmon.h
-index 85d25706f06a..d1eef952314e 100644
+index d1eef952314e..7eac8d070c80 100644
 --- a/include/netmon.h
 +++ b/include/netmon.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -21,6 +21,7 @@ struct ofono_netmon;
+ typedef void (*ofono_netmon_cb_t)(const struct ofono_error *error, void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_netmon;
-@@ -21,6 +23,8 @@ typedef void (*ofono_netmon_cb_t)(const struct ofono_error *error, void *data);
  struct ofono_netmon_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_netmon *netmon, unsigned int vendor,
  					void *data);
-+	int (*probev)(struct ofono_netmon *netmon, unsigned int vendor,
-+					va_list args);
- 	void (*remove)(struct ofono_netmon *netmon);
- 	void (*request_update)(struct ofono_netmon *netmon,
- 					ofono_netmon_cb_t cb, void *data);
-@@ -80,7 +84,7 @@ void ofono_netmon_serving_cell_notify(struct ofono_netmon *netmon,
- 
- struct ofono_netmon *ofono_netmon_create(struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver, void *data);
-+						const char *driver, ...);
- 
- void ofono_netmon_register(struct ofono_netmon *netmon);
- 
+ 	int (*probev)(struct ofono_netmon *netmon, unsigned int vendor,
 diff --git a/include/netreg.h b/include/netreg.h
-index e70283bf6bd5..48a13e161fea 100644
+index 48a13e161fea..8d11518aa239 100644
 --- a/include/netreg.h
 +++ b/include/netreg.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_netreg;
-@@ -57,6 +59,8 @@ typedef void (*ofono_netreg_strength_cb_t)(const struct ofono_error *error,
+@@ -57,6 +57,7 @@ typedef void (*ofono_netreg_strength_cb_t)(const struct ofono_error *error,
+  * vendor extensions for signal strength notification.
+  */
  struct ofono_netreg_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_netreg *netreg, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_netreg *netreg, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_netreg *netreg);
- 	void (*registration_status)(struct ofono_netreg *netreg,
- 			ofono_netreg_status_cb_t cb, void *data);
-@@ -81,8 +85,7 @@ void ofono_netreg_time_notify(struct ofono_netreg *netreg,
- 
- struct ofono_netreg *ofono_netreg_create(struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver,
--						void *data);
-+						const char *driver, ...);
- 
- void ofono_netreg_register(struct ofono_netreg *netreg);
- void ofono_netreg_remove(struct ofono_netreg *netreg);
+ 	int (*probev)(struct ofono_netreg *netreg, unsigned int vendor,
 diff --git a/include/phonebook.h b/include/phonebook.h
-index 2944e3a0d836..2c895fa9cf13 100644
+index 2c895fa9cf13..fbe689618215 100644
 --- a/include/phonebook.h
 +++ b/include/phonebook.h
-@@ -26,6 +26,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_phonebook;
-@@ -39,6 +41,8 @@ typedef void (*ofono_phonebook_cb_t)(const struct ofono_error *error,
+@@ -39,6 +39,7 @@ typedef void (*ofono_phonebook_cb_t)(const struct ofono_error *error,
+  * occurs, ofono_phonebook_entry should not be called
+  */
  struct ofono_phonebook_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_phonebook *pb, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_phonebook *pb, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_phonebook *pb);
- 	void (*export_entries)(struct ofono_phonebook *pb, const char *storage,
- 				ofono_phonebook_cb_t cb, void *data);
-@@ -55,7 +59,7 @@ void ofono_phonebook_entry(struct ofono_phonebook *pb, int index,
- struct ofono_phonebook *ofono_phonebook_create(struct ofono_modem *modem,
- 							unsigned int vendor,
- 							const char *driver,
--							void *data);
-+							...);
- 
- void ofono_phonebook_register(struct ofono_phonebook *pb);
- void ofono_phonebook_remove(struct ofono_phonebook *pb);
+ 	int (*probev)(struct ofono_phonebook *pb, unsigned int vendor,
 diff --git a/include/radio-settings.h b/include/radio-settings.h
-index c424d374bb57..7dcccf81d226 100644
+index 7dcccf81d226..487963c589d7 100644
 --- a/include/radio-settings.h
 +++ b/include/radio-settings.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
+@@ -73,6 +73,7 @@ typedef void (*ofono_radio_settings_available_rats_query_cb_t)(
+ 						void *data);
  
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- enum ofono_radio_access_mode {
-@@ -73,6 +75,8 @@ typedef void (*ofono_radio_settings_available_rats_query_cb_t)(
  struct ofono_radio_settings_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_radio_settings *rs, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_radio_settings *rs, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_radio_settings *rs);
- 	void (*query_rat_mode)(struct ofono_radio_settings *rs,
- 				ofono_radio_settings_rat_mode_query_cb_t cb,
-@@ -103,7 +107,7 @@ struct ofono_radio_settings_driver {
- struct ofono_radio_settings *ofono_radio_settings_create(
- 						struct ofono_modem *modem,
- 						unsigned int vendor,
--						const char *driver, void *data);
-+						const char *driver, ...);
- 
- void ofono_radio_settings_register(struct ofono_radio_settings *rs);
- void ofono_radio_settings_remove(struct ofono_radio_settings *rs);
+ 	int (*probev)(struct ofono_radio_settings *rs, unsigned int vendor,
 diff --git a/include/sim.h b/include/sim.h
-index 326a6fe09709..c362cc0ecb62 100644
+index c362cc0ecb62..84592fc93e5a 100644
 --- a/include/sim.h
 +++ b/include/sim.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_sim;
-@@ -124,6 +126,7 @@ typedef void (*ofono_sim_set_active_card_slot_cb_t)(
+@@ -125,6 +125,7 @@ typedef void (*ofono_sim_set_active_card_slot_cb_t)(
+ 					void *data);
  
  struct ofono_sim_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_sim *sim, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_sim *sim, unsigned int vendor, va_list args);
+ 	int (*probev)(struct ofono_sim *sim, unsigned int vendor, va_list args);
  	void (*remove)(struct ofono_sim *sim);
- 	void (*read_file_info)(struct ofono_sim *sim, int fileid,
- 			const unsigned char *path, unsigned int path_len,
-@@ -200,7 +203,7 @@ struct ofono_sim_driver {
- 
- struct ofono_sim *ofono_sim_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_sim_register(struct ofono_sim *sim);
- void ofono_sim_remove(struct ofono_sim *sim);
 diff --git a/include/siri.h b/include/siri.h
-index be09c49236a4..0a9702b2037a 100644
+index 0a9702b2037a..7a41694f0c09 100644
 --- a/include/siri.h
 +++ b/include/siri.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_siri;
-@@ -21,6 +23,8 @@ typedef void (*ofono_siri_cb_t)(const struct ofono_error *error,
+@@ -22,6 +22,7 @@ typedef void (*ofono_siri_cb_t)(const struct ofono_error *error,
+ 					struct ofono_siri *siri);
  
  struct ofono_siri_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_siri *siri, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_siri *siri, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_siri *siri);
- 	void (*set_eyes_free_mode) (struct ofono_siri *siri, ofono_siri_cb_t cb,
- 					unsigned int val);
-@@ -30,7 +34,7 @@ void ofono_siri_set_status(struct ofono_siri *siri, int value);
- 
- struct ofono_siri *ofono_siri_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_siri_register(struct ofono_siri *siri);
- void ofono_siri_remove(struct ofono_siri *siri);
+ 	int (*probev)(struct ofono_siri *siri, unsigned int vendor,
+ 			va_list args);
 diff --git a/include/sms.h b/include/sms.h
-index 21ac6a3a3d35..d843ae6ae122 100644
+index d843ae6ae122..ba98c5e44287 100644
 --- a/include/sms.h
 +++ b/include/sms.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_sms;
-@@ -30,6 +32,7 @@ typedef void (*ofono_sms_bearer_query_cb_t)(const struct ofono_error *error,
+@@ -31,6 +31,7 @@ typedef void (*ofono_sms_bearer_query_cb_t)(const struct ofono_error *error,
+ 						int bearer, void *data);
  
  struct ofono_sms_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_sms *sms, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_sms *sms, unsigned int vendor, va_list args);
+ 	int (*probev)(struct ofono_sms *sms, unsigned int vendor, va_list args);
  	void (*remove)(struct ofono_sms *sms);
- 	void (*sca_query)(struct ofono_sms *sms, ofono_sms_sca_query_cb_t cb,
- 				void *data);
-@@ -52,7 +55,7 @@ void ofono_sms_status_notify(struct ofono_sms *sms, const unsigned char *pdu,
- 
- struct ofono_sms *ofono_sms_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_sms_register(struct ofono_sms *sms);
- void ofono_sms_remove(struct ofono_sms *sms);
 diff --git a/include/stk.h b/include/stk.h
-index 93311d564223..8575b2819b4a 100644
+index 8575b2819b4a..b99f6ba255e4 100644
 --- a/include/stk.h
 +++ b/include/stk.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_stk;
-@@ -25,6 +27,7 @@ typedef void (*ofono_stk_generic_cb_t)(const struct ofono_error *error,
+@@ -26,6 +26,7 @@ typedef void (*ofono_stk_generic_cb_t)(const struct ofono_error *error,
+ 					void *data);
  
  struct ofono_stk_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_stk *stk, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_stk *stk, unsigned int vendor, va_list args);
+ 	int (*probev)(struct ofono_stk *stk, unsigned int vendor, va_list args);
  	void (*remove)(struct ofono_stk *stk);
- 	void (*envelope)(struct ofono_stk *stk,
- 				int length, const unsigned char *command,
-@@ -37,7 +40,7 @@ struct ofono_stk_driver {
- 
- struct ofono_stk *ofono_stk_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_stk_register(struct ofono_stk *stk);
- void ofono_stk_remove(struct ofono_stk *stk);
 diff --git a/include/ussd.h b/include/ussd.h
-index 0b4895a82d52..04a91e8483b7 100644
+index 04a91e8483b7..1b928171ef9e 100644
 --- a/include/ussd.h
 +++ b/include/ussd.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- /* 3GPP TS 27.007 section 7.15, values for <m> */
-@@ -30,6 +32,8 @@ typedef void (*ofono_ussd_cb_t)(const struct ofono_error *error, void *data);
+@@ -31,6 +31,7 @@ struct ofono_ussd;
+ typedef void (*ofono_ussd_cb_t)(const struct ofono_error *error, void *data);
  
  struct ofono_ussd_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_ussd *ussd, unsigned int vendor, void *data);
-+	int (*probev)(struct ofono_ussd *ussd, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_ussd *ussd);
- 	void (*request)(struct ofono_ussd *ussd, int dcs,
- 			const unsigned char *pdu, int len,
-@@ -43,7 +47,7 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int status, int dcs,
- 
- struct ofono_ussd *ofono_ussd_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_ussd_register(struct ofono_ussd *ussd);
- void ofono_ussd_remove(struct ofono_ussd *ussd);
+ 	int (*probev)(struct ofono_ussd *ussd, unsigned int vendor,
+ 			va_list args);
 diff --git a/include/voicecall.h b/include/voicecall.h
-index 50480b5ee015..345e52b15a0e 100644
+index 345e52b15a0e..370658369538 100644
 --- a/include/voicecall.h
 +++ b/include/voicecall.h
-@@ -12,6 +12,8 @@
- extern "C" {
- #endif
- 
-+#include <stdarg.h>
-+
- #include <ofono/types.h>
- 
- struct ofono_modem;
-@@ -29,6 +31,8 @@ typedef void (*ofono_voicecall_cb_t)(const struct ofono_error *error,
+@@ -29,6 +29,7 @@ typedef void (*ofono_voicecall_cb_t)(const struct ofono_error *error,
+  * not support vendor extensions for call progress indication.
+  */
  struct ofono_voicecall_driver {
++	unsigned int flags;
  	int (*probe)(struct ofono_voicecall *vc, unsigned int vendor,
  			void *data);
-+	int (*probev)(struct ofono_voicecall *vc, unsigned int vendor,
-+			va_list args);
- 	void (*remove)(struct ofono_voicecall *vc);
+ 	int (*probev)(struct ofono_voicecall *vc, unsigned int vendor,
+diff --git a/src/gprs.c b/src/gprs.c
+index 28b3ddff6584..57b823b0f1c6 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2806,6 +2806,10 @@ static void gprs_context_remove(struct ofono_atom *atom)
+ 	g_free(gc);
+ }
  
- 	/* According to 22.030 the dial is expected to do the following:
-@@ -149,7 +153,7 @@ struct ofono_modem *ofono_voicecall_get_modem(struct ofono_voicecall *vc);
- 
- struct ofono_voicecall *ofono_voicecall_create(struct ofono_modem *modem,
- 					unsigned int vendor,
--					const char *driver, void *data);
-+					const char *driver, ...);
- 
- void ofono_voicecall_register(struct ofono_voicecall *vc);
- void ofono_voicecall_remove(struct ofono_voicecall *vc);
++static void ofono_gprs_context_register(struct ofono_gprs_context *gc)
++{
++}
++
+ OFONO_DEFINE_ATOM_CREATE(gprs_context, OFONO_ATOM_TYPE_GPRS_CONTEXT, {
+ 	atom->type = OFONO_GPRS_CONTEXT_TYPE_ANY;
+ })
 diff --git a/src/ofono.h b/src/ofono.h
-index cb4eae81db1a..c6fa16f2dc01 100644
+index c6fa16f2dc01..a853bba60ce6 100644
 --- a/src/ofono.h
 +++ b/src/ofono.h
-@@ -5,6 +5,7 @@
-  * SPDX-License-Identifier: GPL-2.0-only
-  */
- 
-+#include <stdarg.h>
- #include <glib.h>
- #include <ell/ell.h>
- 
-@@ -231,15 +232,17 @@ extern struct ofono_driver_desc __stop___ ## type[];			\
- struct ofono_ ## type *ofono_ ## type ##_create(			\
- 				struct ofono_modem *modem,		\
- 				unsigned int vendor, const char *driver,\
--				void *data)				\
-+				...)					\
- {									\
- 	const struct ofono_ ## type ## _driver *drv =			\
- 		__ofono_driver_builtin_find(driver,			\
- 				__start___ ## type,			\
- 				__stop___ ## type);			\
-+	va_list args;							\
- 	struct ofono_ ## type *atom;					\
-+	int r;								\
- 									\
--	if (!drv || !drv->probe)					\
-+	if (!drv || (!drv->probe && !drv->probev))			\
- 		return NULL;						\
- 									\
- 	atom = g_new0(struct ofono_ ##type, 1);				\
-@@ -247,7 +250,14 @@ struct ofono_ ## type *ofono_ ## type ##_create(			\
- 				type ##_remove, atom);			\
- 	__VA_ARGS__							\
- 									\
--	if (drv->probe(atom, vendor, data) < 0)	{			\
-+	va_start(args, driver);						\
-+	if (drv->probev)						\
-+		r = drv->probev(atom, vendor, args);			\
-+	else								\
-+		r = drv->probe(atom, vendor, va_arg(args, void *));	\
-+	va_end(args);							\
-+									\
-+	if (r < 0) {							\
- 		ofono_ ## type ##_remove(atom);				\
- 		return NULL;						\
+@@ -263,6 +263,11 @@ struct ofono_ ## type *ofono_ ## type ##_create(			\
  	}								\
+ 									\
+ 	atom->driver = drv;						\
++									\
++	if (atom->driver->flags &					\
++			OFONO_ATOM_DRIVER_FLAG_REGISTER_ON_PROBE)	\
++		ofono_ ## type ##_register(atom);			\
++									\
+ 	return atom;							\
+ }
+ 
 -- 
 2.45.0
 
