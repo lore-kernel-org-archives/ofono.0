@@ -1,62 +1,62 @@
-Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
+Received: from mail-ot1-f45.google.com (mail-ot1-f45.google.com [209.85.210.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E87613FD66
-	for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 21:41:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3F7E143C7B
+	for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 21:41:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718314899; cv=none; b=TXMGCUwqIjgmqunNYFLG6S4Flf3yutfwlJPY3DfkWusUP6ZQ/Soui53Vdm8Dzgvl38Xc2Ct6xRK3EzoVIIxTX3uNiUj4yUEjv9teDL14rwUM+KDiIf6q5wvhlQ5CA2SqzTrj90Id03/wv9Umia9AFP1XRve4m6nC7mCSDRzyzpk=
+	t=1718314901; cv=none; b=KosnmhhvcOT8uicx7/lL8FqIKPIC9M2vZfz1N0V/f6gcuFNc8+6IDTuWfWfNRhSfpD65IajDIiY66Y77GI02RsoCj74gPtZAV9kWiVTVEuRxLu6WNoPSYwqMbZd0aHT1GUHDODtJd78f/g69rQBODzCREBZYsku5VJwmVtrBKhg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718314899; c=relaxed/simple;
-	bh=QBF+sciQyaGmQX8QMmhepIuCOAVjsoEDOP/io7RtMAM=;
+	s=arc-20240116; t=1718314901; c=relaxed/simple;
+	bh=oenWwScYhH6lxXUYh72CYQlds6Qy0EszKgFxHy7c5uc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=CC4ts4muJY3qnG3MVORZeGFPwhBBVVN8qv1lROOwOtTVsXFqea//BCtt2Pb3oKUAzgXKqytuppr30ukQTS20FqmXR9Jv4RlnxGxrgq2fdA6ig5es2rKGiBHy7doyFwqRvUEYScajwrZeI29e6j19p658BYRkIdtk+olEawW0xGI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ncm9Vdc3; arc=none smtp.client-ip=209.85.160.43
+	 MIME-Version; b=JdtEjFiEzy71SkBqxx4SSqsEtNDo3kusY8KjHAXuNhdBeS5fcntmfMZRZkJqIwLE4m3s/nvem5VYc6DX9wlfyhZapa6M+A7JhNKVLbaIByq1HtQr2A404SzQ/m/UTTeGiH5LFCwNSenH5PO/JdVSl+nmOaHITyt/D9lArt2yypM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Jmu5KFD7; arc=none smtp.client-ip=209.85.210.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ncm9Vdc3"
-Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-2551f9437d3so876020fac.0
-        for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 14:41:38 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Jmu5KFD7"
+Received: by mail-ot1-f45.google.com with SMTP id 46e09a7af769-6f9b4d69f53so831853a34.0
+        for <ofono@lists.linux.dev>; Thu, 13 Jun 2024 14:41:39 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718314897; x=1718919697; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718314899; x=1718919699; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=7tIEe+wwLE2x1wnF43/mr+uxIejVrRX6mo7zzHX7PxA=;
-        b=Ncm9Vdc3FRToQd82CVlnL/ZNPGD6/oy62oGPhV5ynmPZ+qkuUf61huVhYHDMC2WkAv
-         JSUAp4CVcLRRm2+hTQ1GqlNzIN4ITD9qACYg68pMtXuDboWLpWYD+hyUgbxRluFPNiTX
-         aHVp/0kHsgIjtpTMcp7xtRq4S5Nh3zx6qFSpDrssx15IVcX6q0rFwyB3H1KLlifQpj+M
-         EBWbTOHPtr47ZDvviHQ2rBEARs9HXxQ8mvIwa5jcOnZDX1wEZGQBNSQPE+nRTVK0Kxzi
-         g8blWrHrmrgTuX/Xp8jqS4OxQ/bhEezOCg4oYK959OPIkE9FTzPy7NUAtKTatLsqMQ8y
-         Llxg==
+        bh=y8iTzLM1WfsArapDmALWmBs5nYg7z9haFIa9C4W82QQ=;
+        b=Jmu5KFD7AeBeTG78YmU3yqUDImv1APlPUopgM+KC9UhteyEc/Lh5QzN/Pi4JYZfe37
+         Y8kX/EI3vUPtQ6f54J7Cccw2Fim895GObsE+FCfVz21GeLrKRQGowB3LxlQl0gaRYud1
+         bTTY9MTo6JmRuduBA312OvlR4RKJS9LnhM+K9TA/bbl/DjNAJUGFI/2ATgbvSU5vwZIi
+         j10JDJ6eNlgMQa+BUH6t96PDqI4J/6CHJhvg9Fu2AAJhQnv6UKObl6FUgqnT46cEvMkr
+         assmuOZY9tcTsrBN/7i9eV7JDCMl5003DmpKBVhPZ8DvX2VWHSi2NZ1p2gaUMHnwulrY
+         +bfA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718314897; x=1718919697;
+        d=1e100.net; s=20230601; t=1718314899; x=1718919699;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=7tIEe+wwLE2x1wnF43/mr+uxIejVrRX6mo7zzHX7PxA=;
-        b=oLzvXRkiCVCMIf8wASIuU1SzQvWdPHiyVYn6IfweG82mNuGtniCLR6BOBXEnft2vfg
-         68iFPPsR1VPs61e/t/wnfZkkBosMF4gxxaSiMpgIZlsDderhJBUpyasSBzwujlIENogB
-         bfQq9vKtFV6Y+l6riqUH/rtnjGgxXNBkFFmH9FFb3x+S6lfbBR1vqxWHOINz+2Xr+Y1K
-         yWF1xfYy2vnD69nw0SAmNABaYFrFs7zyAC1LM4FDYaVLb++UROpc2PxOE17LmLDS+Eor
-         c6B5uMu3iaxQ2ZTdQhEbjQZXhxFz57/rs8CWtEdNppTH+vG0dY0imVbWmyuklhM1DCHi
-         warA==
-X-Gm-Message-State: AOJu0YziKapb8vOzoyi2oWcGXJ7JC/JcMi04Gi8VX+1bDeRkk67dHiHx
-	Gr4DNyR0IWjurQRraOBcscM2MYUlLQegppGdz9m9UVIM73C6UJGQFE+Xdw==
-X-Google-Smtp-Source: AGHT+IHPPXS5/24NRMYUpjU+jGeUxG2dF1XYLoWoaEWSYD7+vlsLXeXqVd8RSQtuRxh9GXsYbvYQPQ==
-X-Received: by 2002:a05:6870:9589:b0:254:de02:4c65 with SMTP id 586e51a60fabf-2584288e57emr1076015fac.6.1718314897321;
-        Thu, 13 Jun 2024 14:41:37 -0700 (PDT)
+        bh=y8iTzLM1WfsArapDmALWmBs5nYg7z9haFIa9C4W82QQ=;
+        b=uIAVpDhGDMCSLn1Xoca39hZoWg8nYGOsTwV43L9D8OI2oieiP6EtQ/kOdj47/qhCAb
+         38iE8E2aUrZy+k5g1ylWCajcBnBh0E6FO5Fp9+pyLumhooPJr1ICj2RufT9ObN16tc3p
+         M2BnQ924yi+ZYQRwRkjD11a0qoK3yfHd8xfzd3UAMeG5OKFzo+mul1gZM0Ch8qmJx5eR
+         OZ4ZfQmVhqz7AmHYwBK5CoSfiFTH6mxZI3EtSf4vRr6d76hM0GKB/ktMqf6DoXYa8+uO
+         1tdxHjZ8xAemInt0bhcbBmzTx6XiSAblu9usiUC9XE3mp4kz5HiDVs5SdYqyWsbXw0Q2
+         eWSw==
+X-Gm-Message-State: AOJu0YxaxkgySzH7Q8+gXfCZVIzkYqUM6/n1eEo22WdQ74aP7is1Ljjo
+	6rhdREiY8MEavN/yAT/qC7y0PIxgbvlrzn10CzYsdqRYVfCyN47HWwRHFA==
+X-Google-Smtp-Source: AGHT+IHZSQLVgqqNB1ZsQq822OXlPqC69r3ybBa6R4n0aHMdcTPFiEfGgnukqkvj8YBbRVYw7qKXnw==
+X-Received: by 2002:a05:6870:89a0:b0:254:9c46:8877 with SMTP id 586e51a60fabf-258428de7fcmr808332fac.16.1718314898655;
+        Thu, 13 Jun 2024 14:41:38 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569930f768sm601589fac.41.2024.06.13.14.41.36
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569930f768sm601589fac.41.2024.06.13.14.41.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 13 Jun 2024 14:41:37 -0700 (PDT)
+        Thu, 13 Jun 2024 14:41:38 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 02/23] qmi: lookup shared family directly by type
-Date: Thu, 13 Jun 2024 16:41:11 -0500
-Message-ID: <20240613214134.1056517-2-denkenz@gmail.com>
+Subject: [PATCH v2 04/23] unit: Update unit tests to the new API
+Date: Thu, 13 Jun 2024 16:41:13 -0500
+Message-ID: <20240613214134.1056517-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240613214134.1056517-1-denkenz@gmail.com>
 References: <20240613214134.1056517-1-denkenz@gmail.com>
@@ -68,126 +68,80 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Since it is currently no longer possible to create dedicated clients for
-a given service type, use the service type as the key to the family_list
-hashtable.  For QMUX, this allows the service family to be looked up
-directly instead of iterating over the entire hash table.  The hash
-table entry at key=service_type will always point to the shared service
-family.
 ---
- drivers/qmimodem/qmi.c | 61 +++++++++---------------------------------
- 1 file changed, 13 insertions(+), 48 deletions(-)
+ unit/test-rilmodem-cb.c  | 9 +++++++--
+ unit/test-rilmodem-cs.c  | 9 +++++++--
+ unit/test-rilmodem-sms.c | 9 +++++++--
+ 3 files changed, 21 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index dfcf46a6e35e..1b3fa34f685c 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -330,21 +330,6 @@ static bool __notify_compare(const void *data, const void *user_data)
- 			notify->service_handle == details->service_handle;
- }
- 
--struct service_find_by_type_data {
--	unsigned int type;
--	struct service_family *found_family;
--};
--
--static void __family_find_by_type(const void *key, void *value,
--					void *user_data)
--{
--	struct service_family *family = value;
--	struct service_find_by_type_data *data = user_data;
--
--	if (family->info.service_type == data->type)
--		data->found_family = family;
--}
--
- static const char *__service_type_to_string(uint8_t type)
+diff --git a/unit/test-rilmodem-cb.c b/unit/test-rilmodem-cb.c
+index 75e7e02076f6..984ea4efc64e 100644
+--- a/unit/test-rilmodem-cb.c
++++ b/unit/test-rilmodem-cb.c
+@@ -407,11 +407,16 @@ extern struct ofono_driver_desc __start___call_barring[];
+ struct ofono_call_barring *ofono_call_barring_create(struct ofono_modem *modem,
+ 							unsigned int vendor,
+ 							const char *driver,
+-							void *data)
++							...)
  {
- 	switch (type) {
-@@ -1403,7 +1388,6 @@ static struct service_family *service_family_ref(struct service_family *family)
- static void service_family_unref(struct service_family *family)
- {
- 	struct qmi_device *device;
--	unsigned int hash_id;
- 
- 	if (--family->ref_count)
- 		return;
-@@ -1412,9 +1396,15 @@ static void service_family_unref(struct service_family *family)
- 	if (!device)
- 		goto done;
- 
--	hash_id = family_list_create_hash(family->info.service_type,
-+	if (family->client_id) {
-+		unsigned int hash_id =
-+			family_list_create_hash(family->info.service_type,
- 							family->client_id);
--	l_hashmap_remove(device->family_list, L_UINT_TO_PTR(hash_id));
-+		l_hashmap_remove(device->family_list, L_UINT_TO_PTR(hash_id));
-+	}
+-	struct rilmodem_cb_data *rsd = data;
++	struct rilmodem_cb_data *rsd;
+ 	struct ofono_call_barring *cb = g_new0(struct ofono_call_barring, 1);
+ 	int retval;
++	va_list args;
 +
-+	l_hashmap_remove(device->family_list,
-+				L_UINT_TO_PTR(family->info.service_type));
++	va_start(args, driver);
++	rsd = va_arg(args, void *);
++	va_end(args);
  
- 	if (device->ops->client_release)
- 		device->ops->client_release(device, family->info.service_type,
-@@ -1799,7 +1789,6 @@ static void qmux_client_create_callback(uint16_t message, uint16_t length,
- 	struct qmi_device_qmux *qmux =
- 		l_container_of(device, struct qmi_device_qmux, super);
- 	struct service_family *family = NULL;
--	struct service_family *old_family = NULL;
- 	struct qmi_service_info info;
- 	const struct qmi_result_code *result_code;
- 	const struct qmi_client_id *client_id;
-@@ -1829,16 +1818,13 @@ static void qmux_client_create_callback(uint16_t message, uint16_t length,
- 	info.minor = data->minor;
+ 	cbdriver = __start___call_barring[0].driver;
  
- 	family = service_family_create(device, &info, client_id->client);
--
-+	family = service_family_ref(family);
- 	hash_id = family_list_create_hash(family->info.service_type,
- 							family->client_id);
--	l_hashmap_replace(device->family_list, L_UINT_TO_PTR(hash_id),
--				family, (void **) &old_family);
--
--	if (old_family)
--		family_destroy(old_family);
--
--	family = service_family_ref(family);
-+	l_hashmap_insert(device->family_list, L_UINT_TO_PTR(hash_id), family);
-+	l_hashmap_insert(device->family_list,
-+				L_UINT_TO_PTR(family->info.service_type),
-+				family);
- done:
- 	service_create_shared_pending_reply(qmux, data->type, family);
- 	if (family)
-@@ -2636,28 +2622,7 @@ bool qmi_service_create_shared(struct qmi_device *device, uint16_t type,
- 	if (type == QMI_SERVICE_CONTROL)
- 		return false;
+diff --git a/unit/test-rilmodem-cs.c b/unit/test-rilmodem-cs.c
+index 414ded61022e..8c65fb1f6bb4 100644
+--- a/unit/test-rilmodem-cs.c
++++ b/unit/test-rilmodem-cs.c
+@@ -383,11 +383,16 @@ extern struct ofono_driver_desc __start___call_settings[];
+ struct ofono_call_settings *ofono_call_settings_create(struct ofono_modem *modem,
+ 							unsigned int vendor,
+ 							const char *driver,
+-							void *data)
++							...)
+ {
+-	struct rilmodem_cs_data *rcd = data;
++	struct rilmodem_cs_data *rcd;
+ 	struct ofono_call_settings *cs = g_new0(struct ofono_call_settings, 1);
+ 	int retval;
++	va_list args;
++
++	va_start(args, driver);
++	rcd = va_arg(args, void *);
++	va_end(args);
  
--	/*
--	 * First check to see if the bare type is in the hashmap. If it is not
--	 * the family might exist already, but have the client id included in
--	 * the hash id.
--	 */
- 	family = l_hashmap_lookup(device->family_list, L_UINT_TO_PTR(type));
--
--	if (!family) {
--		struct service_find_by_type_data find_data;
--
--		/*
--		 * There is no way to find in an l_hashmap using a custom
--		 * function. Instead we use a temporary struct to store the
--		 * found service family.
--		 */
--		find_data.type = type;
--		find_data.found_family = NULL;
--		l_hashmap_foreach(device->family_list,	__family_find_by_type,
--						&find_data);
--		family = find_data.found_family;
--	}
--
- 	if (!family) {
- 		const struct qmi_service_info *info;
+ 	csdriver = __start___call_settings[0].driver;
+ 
+diff --git a/unit/test-rilmodem-sms.c b/unit/test-rilmodem-sms.c
+index 347922c309b6..8d85d23ce92a 100644
+--- a/unit/test-rilmodem-sms.c
++++ b/unit/test-rilmodem-sms.c
+@@ -414,11 +414,16 @@ extern struct ofono_driver_desc __start___sms[];
+ struct ofono_sms *ofono_sms_create(struct ofono_modem *modem,
+ 					unsigned int vendor,
+ 					const char *driver,
+-					void *data)
++					...)
+ {
+-	struct rilmodem_sms_data *rsd = data;
++	struct rilmodem_sms_data *rsd;
+ 	struct ofono_sms *sms = g_new0(struct ofono_sms, 1);
+ 	int retval;
++	va_list args;
++
++	va_start(args, driver);
++	rsd = va_arg(args, void *);
++	va_end(args);
+ 
+ 	smsdriver = __start___sms[0].driver;
  
 -- 
 2.45.0
