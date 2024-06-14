@@ -1,62 +1,62 @@
-Received: from mail-oa1-f54.google.com (mail-oa1-f54.google.com [209.85.160.54])
+Received: from mail-oo1-f53.google.com (mail-oo1-f53.google.com [209.85.161.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B45D01A01C5
-	for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 18:53:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 398F01A2C0A
+	for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 18:53:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718391186; cv=none; b=cufRcYuL1pyrTWtfCFgYdNS0SuLXSerNoJ4mPEZXB3eaeCm43R2ldqVR3GFJfi7tJsjQ1iZ0v68aIOQ/fHMAg+rOGTtA2bqJd8UI1pRIfumyXggWXMX5gsJCi5TL/6UXKGwZVoOjLL5wHRLPZ8Hnc9s38ya6PI3XdGNrUZfj5jg=
+	t=1718391188; cv=none; b=HT4mSHwcudy8HqePBxrOOgyfKzL9EViAmcSKH6/yXRhjZc2C1M/UGjFopzpti9bmj7eZf2lfwjforbPDi/iJPMOWZ0qxkSopLmd0fJIvsD9uNgvShFIuEui8OYJ9zrCYKuHvXjbYXlVcK3IaoGQiyNU63xFZp3Te7mciO6dXUho=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718391186; c=relaxed/simple;
-	bh=jhZSc7mmecQDcJyyp7Wo7xsMqmbFD4HSRjTKXpfRInk=;
+	s=arc-20240116; t=1718391188; c=relaxed/simple;
+	bh=cvtgdm1y3G36NkEXoYKr7nrLcI+ssUA9k2ctylwZ3dk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=FT06tJZ8NmP9dsV5D8iYYF0HjLQWmHqb0fxtLHlPkubJNi7Xelu0LHdbBcWMIi6H7EBMBWGYqyrvEpMxC+iVxemmsagyZmsgNYRwwWI49Rhv5w1L9Sr2P2dV1zBsIqM6x3vgh0SO+RsEPkND1Zs/jdO4WGulSVcyoomZlioFUS8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GV105X8K; arc=none smtp.client-ip=209.85.160.54
+	 MIME-Version; b=qqX//+I5Gm0JIcTOHKxXqQ2bzVWdw7I5a3sLruUjsGfQE6ogcM5vrBQvtQnxZNbD5zcGpbF8o2/AEE2sNIKTQ8EAq5P/444784t3A80eLg8/Kj5OIC6z/FKiJDh+g759lSBX+oOVo9+53S0S5ncKeWbYMfspQtNEjJyBmBYbPn0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NxfrYdEM; arc=none smtp.client-ip=209.85.161.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GV105X8K"
-Received: by mail-oa1-f54.google.com with SMTP id 586e51a60fabf-24c9f6338a4so1179606fac.1
-        for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 11:53:04 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NxfrYdEM"
+Received: by mail-oo1-f53.google.com with SMTP id 006d021491bc7-5bafe063f35so1490088eaf.0
+        for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 11:53:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718391184; x=1718995984; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718391186; x=1718995986; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=/a5GQJiVGU59uFyb+ZmHYVCwEBORjMl826K6459n2W4=;
-        b=GV105X8KyOoxD7LkgUBJeKKG2Bm6ZHnB/+eAu89F+A3etGa5XTl682u2hFDoGuejWs
-         BtWr7OZDxrYr078/r7+NCzxrDuPru32VJ+4aWq76O7BPJFDmtEFF9DUrO6gK4zSaaZeb
-         UH9a0yAWkTmmk3VzEgxAtILNHyNvnMEdHN+Y1jlg14hexNHjrWSL2K7k3qKiAG/Dxerg
-         FVVPIGz3TpmqwXvaVwkeTkft3Gf0uInBbEiTTGiZaBotmVOyoChQ3QZqyo2cxmfGrTIz
-         ISRey9gIlLlv3uIDeN/oT059aQ7SaToEQHrmgOqUsqUyr6YA+UviaTURV1tqXTNZlv3Q
-         mGwg==
+        bh=f5bZSi5L/Rb3uzEjv2RqXCaHnwLky7slVhKdTDg/n/Q=;
+        b=NxfrYdEMaDddzcDqalG57H9lGJ52pYzvjK4l4ljelOM+/WzcvI7Myw7KUbq0PrJKkI
+         MzkfUrY+WhVDnqdJBG4VawtzQ6Nx0YxHR+GFkwc8lfS4Klc2kG+tjD7z6jO1EYVXJaQc
+         55e07asZIXfxsi2jWYiwvanVXkDFAVQTaj5xChIz/yjRKEDqIgyKfJ656LrcUvbwQySE
+         o4+n1fkvbMzuePZi+V0yeZlwZFKm7yof2X/irC58i9snPe7svRePgF78CaY1JwVWWfo0
+         WL7PeTpS3RYIPvBNmaeacC/JzTzZwP+HUABycG28bHGLpPhAYe+R/FU8o6b2FvPqbSNl
+         phng==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718391184; x=1718995984;
+        d=1e100.net; s=20230601; t=1718391186; x=1718995986;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=/a5GQJiVGU59uFyb+ZmHYVCwEBORjMl826K6459n2W4=;
-        b=pSFMSmcF3tYe/b3jX0VburCbCfTYTPp6Bji876Nz26RK1C90bDkKKoU8M017+phvXo
-         iKug8EcKsN1SaCFu3DHcTKyoZte7TSeyRSngYPDe9PpcJl4ab9EzNroi7IPoqGCYRirH
-         v1rkhBYCAm/nLtCN+tdApbfH9gufhdP4pbv59uGJJsj1OFUoxSIcg0HULyT1uLAwsr2r
-         CkND6e4ECGdOfdGEA+hBH69Cx5SLIX08vFHRUlt4t14AX3WhnpJeKw0Fmd8hJJb5NDZM
-         r9uNzxgqzLixQkLZIk4NEuQufBRhitomT/aex10lcVUawE3GIFQCdnBYdGidE1k0v6IZ
-         11Ng==
-X-Gm-Message-State: AOJu0YyJEjCOLFPSskrL0unD6bDXKJzjdP9SVP+OwMjLILfnOSRD7Nx8
-	ImvDDYB+gtTj9POlLg8t8sUFcxhUd9rdF+b3kafH1jQg3Fl/2/8XJ8fYRQ==
-X-Google-Smtp-Source: AGHT+IFj/ncJyVNvnrrNxeodLABnEozDz17p8yE7m1l0NinU9g9x1mJBvfQ+7ZEeTlVmVlTlVOhw7g==
-X-Received: by 2002:a05:6870:7b41:b0:258:5143:a21a with SMTP id 586e51a60fabf-2585143a77emr1461199fac.13.1718391183730;
-        Fri, 14 Jun 2024 11:53:03 -0700 (PDT)
+        bh=f5bZSi5L/Rb3uzEjv2RqXCaHnwLky7slVhKdTDg/n/Q=;
+        b=mDAZa7thq7+AAriUVxSuWPxXxQw0QesHUSbjZ+VoejS7XoF2hweagF4iCeI3o58hPy
+         JoQ1JWbWPKRmTNAzdXvu3dMgOBQWrlub41SSDVInuMwhHFkHkmVRsiVrG5hg/xcoOsB+
+         RfYlzEnTTSxa7j37XX8tTPwDHRl4Zr4D96JkC0/+P9G9Iz3ea7F6LKAZvGTg9ulOekyO
+         ueUmy5/0q97+XzKJVLfrJYJlj/OLUmzjZVS3lG/rZRRt4VzPbLBMmLaSbcKXrX7yMDXS
+         3mOCL98yrvYChmFv7QkMbLTOG/ey25LNidgPL96NhoBWn4mr70lNM8/v2e5+nrmcFRhS
+         IPGg==
+X-Gm-Message-State: AOJu0YyFWy2wfkhS7wWvDoi82J2Pl1zDLPm5OfFxcJuhvBJ8Ythkgh/4
+	8zrvkRPyAUeDOvQ2JYS0jIVlzBpFIWre0es+TVPziAvDjjyAT0pSxkYkhw==
+X-Google-Smtp-Source: AGHT+IEnROC1hLIhreDUlAE0o08GTkmRJTv/KNy9qqq5TQV+B3vXE3shSbjz7UqwEMS2gsy+ETzRCQ==
+X-Received: by 2002:a05:6870:93c3:b0:254:a218:89e6 with SMTP id 586e51a60fabf-2552b3b455fmr3450714fac.23.1718391184297;
+        Fri, 14 Jun 2024 11:53:04 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569934cf6fsm1095763fac.47.2024.06.14.11.53.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 14 Jun 2024 11:53:03 -0700 (PDT)
+        Fri, 14 Jun 2024 11:53:04 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 03/27] qmi: Drop unused major/minor information
-Date: Fri, 14 Jun 2024 13:52:15 -0500
-Message-ID: <20240614185300.1086701-3-denkenz@gmail.com>
+Subject: [PATCH 04/27] qmi: Add qmi_qrtr_node_get_service
+Date: Fri, 14 Jun 2024 13:52:16 -0500
+Message-ID: <20240614185300.1086701-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240614185300.1086701-1-denkenz@gmail.com>
 References: <20240614185300.1086701-1-denkenz@gmail.com>
@@ -68,80 +68,89 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-QMI radio-settings, ussd and voicecall atoms request and store the
-service version major/minor numbers, but never use this information.
-Remove this functionality until needed.
+Introduce a new method that will return a qmi_service object handle
+immediately, if possible.  This allows the lightweight service handles
+to be obtained without requiring the caller to provide a callback
+function and waiting for the event loop to invoke it.  On QRTR, the
+underlying socket can access all services directly without needing to
+exchange any messages to allocate a client for that service first, as
+done by QMUX using QMI_CTL_GET_CLIENT_ID.
 ---
- drivers/qmimodem/radio-settings.c | 4 ----
- drivers/qmimodem/ussd.c           | 3 ---
- drivers/qmimodem/voicecall.c      | 4 ----
- 3 files changed, 11 deletions(-)
+ drivers/qmimodem/qmi.c | 26 ++++++++++++++++++++++++++
+ drivers/qmimodem/qmi.h |  7 ++++---
+ 2 files changed, 30 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/qmimodem/radio-settings.c b/drivers/qmimodem/radio-settings.c
-index 8463c84bf1ed..cf0b747eb681 100644
---- a/drivers/qmimodem/radio-settings.c
-+++ b/drivers/qmimodem/radio-settings.c
-@@ -21,8 +21,6 @@
- struct settings_data {
- 	struct qmi_service *nas;
- 	struct qmi_service *dms;
--	uint16_t major;
--	uint16_t minor;
- };
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index c5a4a37b917d..c3b1f7fef64f 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -2332,6 +2332,32 @@ struct qmi_device *qmi_device_new_qrtr(void)
+ 	return &qrtr->super;
+ }
  
- static void get_system_selection_pref_cb(struct qmi_result *result,
-@@ -211,8 +209,6 @@ static int qmi_radio_settings_probev(struct ofono_radio_settings *rs,
- 	data->dms = dms;
- 	data->nas = nas;
++struct qmi_service *qmi_qrtr_node_get_service(struct qmi_device *device,
++						uint32_t type)
++{
++	struct service_family *family;
++	const struct qmi_service_info *info;
++
++	if (!device)
++		return NULL;
++
++	if (type == QMI_SERVICE_CONTROL)
++		return NULL;
++
++	family = l_hashmap_lookup(device->family_list, L_UINT_TO_PTR(type));
++	if (family)
++		goto done;
++
++	info = __find_service_info_by_type(device, type);
++	if (!info)
++		return NULL;
++
++	family = service_family_create(device, info, 0);
++	l_hashmap_insert(device->family_list, L_UINT_TO_PTR(type), family);
++done:
++	return service_create(family);
++}
++
+ struct qmi_param *qmi_param_new(void)
+ {
+ 	return l_new(struct qmi_param, 1);
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index 3e532ec25abd..604e4e7e8659 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -58,9 +58,9 @@ enum qmi_data_endpoint_type {
  
--	qmi_service_get_version(data->nas, &data->major, &data->minor);
+ typedef void (*qmi_destroy_func_t)(void *user_data);
+ 
 -
- 	ofono_radio_settings_set_data(rs, data);
+ struct qmi_device;
+ struct qmi_result;
++struct qmi_service;
  
- 	return 0;
-diff --git a/drivers/qmimodem/ussd.c b/drivers/qmimodem/ussd.c
-index 6637ae759c55..51c3aaef7a19 100644
---- a/drivers/qmimodem/ussd.c
-+++ b/drivers/qmimodem/ussd.c
-@@ -24,8 +24,6 @@
+ typedef void (*qmi_debug_func_t)(const char *str, void *user_data);
+ typedef void (*qmi_shutdown_func_t)(void *user_data);
+@@ -90,6 +90,9 @@ bool qmi_device_set_expected_data_format(struct qmi_device *device,
+ struct qmi_device *qmi_device_new_qmux(const char *device);
+ struct qmi_device *qmi_device_new_qrtr(void);
  
- struct ussd_data {
- 	struct qmi_service *voice;
--	uint16_t major;
--	uint16_t minor;
- };
++struct qmi_service *qmi_qrtr_node_get_service(struct qmi_device *device,
++						uint32_t type);
++
+ struct qmi_param;
  
- static int validate_ussd_data(const struct qmi_ussd_data *data, uint16_t size)
-@@ -156,7 +154,6 @@ static int qmi_ussd_probe(struct ofono_ussd *ussd,
- 	data = l_new(struct ussd_data, 1);
- 	data->voice = voice;
+ struct qmi_param *qmi_param_new(void);
+@@ -128,8 +131,6 @@ void qmi_result_print_tlvs(struct qmi_result *result);
  
--	qmi_service_get_version(data->voice, &data->major, &data->minor);
- 	qmi_service_register(data->voice, QMI_VOICE_USSD_IND,
- 					async_ind, ussd, NULL);
- 	qmi_service_register(data->voice, QMI_VOICE_ASYNC_ORIG_USSD,
-diff --git a/drivers/qmimodem/voicecall.c b/drivers/qmimodem/voicecall.c
-index c7a5230f9680..aed662da7ef6 100644
---- a/drivers/qmimodem/voicecall.c
-+++ b/drivers/qmimodem/voicecall.c
-@@ -24,8 +24,6 @@
+ int qmi_error_to_ofono_cme(int qmi_error);
  
- struct voicecall_data {
- 	struct qmi_service *voice;
--	uint16_t major;
--	uint16_t minor;
- 	struct l_queue *call_list;
- 	struct ofono_phone_number dialed;
- 	char *full_dtmf;
-@@ -721,8 +719,6 @@ static int qmi_voicecall_probe(struct ofono_voicecall *vc,
- 	data->voice = voice;
- 	data->call_list = l_queue_new();
- 
--	qmi_service_get_version(data->voice, &data->major, &data->minor);
+-struct qmi_service;
 -
- 	qmi_service_register(data->voice, QMI_VOICE_ALL_CALL_STATUS_IND,
- 				all_call_status_ind, vc, NULL);
+ typedef void (*qmi_create_func_t)(struct qmi_service *service, void *user_data);
  
+ bool qmi_service_create_shared(struct qmi_device *device,
 -- 
 2.45.0
 
