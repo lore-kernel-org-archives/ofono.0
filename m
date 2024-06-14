@@ -1,62 +1,62 @@
-Received: from mail-oa1-f48.google.com (mail-oa1-f48.google.com [209.85.160.48])
+Received: from mail-oo1-f50.google.com (mail-oo1-f50.google.com [209.85.161.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C5351A01C8
-	for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 18:53:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41EA91A0B06
+	for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 18:53:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718391190; cv=none; b=hJroA2exkjRhdN2wW+7dB+uKUP/SJAexGiYLjPeC4F49mH+bi/hHvIWflMwsObpX0pvj3tuefXC/EMohIjkdyaas5JBRdCxMhMH6b6j7mO80kI2NKWHvh3BxU5o0ZLDsWos8Em7b9OrK34UHsHroZxn5JYlvS+YpzGwLnkf5U5k=
+	t=1718391191; cv=none; b=MYgFqwJwkPivpbvSXW0/wZN8b/VkmVNfWl9HgDie1NxpNq9W5JEszYS4GokKXO4+10JTEe9sV8LqofTrxAz+Lw2g13lwSaUG4XQMBgWliBsKKYdTYM5jOmEXuMfcl5HA8s2Wvugb7Arcgz5+oKHzip8Kk4MW4Y343gi4pm0bSgg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718391190; c=relaxed/simple;
-	bh=unJKtq2Z5x6N/Jk8IKUvMvgj4e7dYZCWPtDChk+1UUg=;
+	s=arc-20240116; t=1718391191; c=relaxed/simple;
+	bh=Y1PdZud7erIXoShijODcPVTJniAFQD+o57VgIzmdn1E=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=G+SkkHLS1HD+7ZuWmdPOHW/0uBjBMG0snQi55CLE+3ATp4kxHODcxjfk/DrYOg+2D6FUZym6qcMcrQxruh7XPQklQwA4bxjWo6BqpOv40j3GpxEcueWAm11qd/llPi1TI8/Mar4vLNTzhooGv4npST4cfn4eLZQMwTTrSFOZfmY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=IxHMs8WR; arc=none smtp.client-ip=209.85.160.48
+	 MIME-Version; b=qofefEi0KmJY18uiiiAg+a4kxvL0LcT+pXbI1jiZaufopi2hDGIUOVvDycEMNP4bNKd43vH2AJB/y0wVw2yTRByfhz02xOiLtOg0dpVvA8Pn3UQXzxkvWO66NPhHg1OnJeoFF/Rm5blqvR6n8f5KGHbEtvNPNqf12/j/zQAiroQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Gftwm8Kl; arc=none smtp.client-ip=209.85.161.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IxHMs8WR"
-Received: by mail-oa1-f48.google.com with SMTP id 586e51a60fabf-24c9f628e71so1197738fac.1
-        for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 11:53:09 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Gftwm8Kl"
+Received: by mail-oo1-f50.google.com with SMTP id 006d021491bc7-5bafe063f35so1490108eaf.0
+        for <ofono@lists.linux.dev>; Fri, 14 Jun 2024 11:53:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718391188; x=1718995988; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718391189; x=1718995989; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=vuZHh0M1cxFsKwrdJ9/jNYZOjq41OL8YScOg/IM1mOs=;
-        b=IxHMs8WRZWEnY977EKwq/0n/CybmqKU2rKKf1AnXHdWJDybjNl93q5sJEWRFSqK3lB
-         X6cAYUAbi0FuBDk4J83WThV8tWfErpM9Cxg2HR8VZS6dTqVJp+7EI1XDufjJpDXSNRN6
-         RVlrhifSMcrN+lhgftDDXqY2S1+bkdhs8VsfMK0pQzgPbeQRlWD+WzjtSDRWBBKNvrho
-         ULM3CtVowRdsoy6ZZ4gqDBylW7zh2k4IwX/M/EVqbiLy4T97CJmCPXieh8fAKgI0r68i
-         qdMpK3nnUZ7ccl7d2/2+nD9qaKY15zZteqpwoL2tV97QsfGFROxXDQtxfZdo3hE6v+Qb
-         o8/g==
+        bh=NMJ76HT01RXhDJay/m4oOJX4o+vlJaUvm7hJAa6MQ2I=;
+        b=Gftwm8Kld/VFc6grK5evWR0RQINsPhzFWnbXxGr/V/jybfBEHDTWLCL5rnjF4i1/tl
+         VvTEsH3ndYrcZjnqjgGashnZZXF88bucwbexlkEru0dsD3p62GlH8pR60fVrA/XdC391
+         jnlGwYC6ek3Z2RK5VFLjRh7Kz06zudlNC2KsQI9BjoB0+uJNHUozhoUuof8TU1D0/fRr
+         icyn9xlpbPcaYJCSSSUqE3yRHrLx1HuVEDptRhnghtiMKOF5+1gSHeInRHApDfoLV6cg
+         z4ryx0kHBkpWFUJKyvLpIn/deihQTedYmwDbrG3gMkktj2/znifcOX70gk71YB5xQhuD
+         8njA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718391188; x=1718995988;
+        d=1e100.net; s=20230601; t=1718391189; x=1718995989;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=vuZHh0M1cxFsKwrdJ9/jNYZOjq41OL8YScOg/IM1mOs=;
-        b=i8wVVm/Bj2S/dvgpi7aKQB4HHKzaOdAZUrfp3eCq4Qcqt7FwOeW6Zl8d0RJ4y6zZMj
-         nRv8J7TK6f/uxEhzbJQEv+yqavA6AnniNC9MtXMf3sGomLt6yZDkY3zWIBXei58BYDmT
-         1teH2gEOeiS7EN1L02AH9HEbu8Y+8zd8Be57xrw1cTVhhikdhnEPElLlf/pGAYL55GvN
-         mz85IzPRT0aHXxDWTIHcv8ZHVskjou/r39bAtgTEKjSqk7ZPQpD1tb7wN9knAdRJDRPB
-         /S3vncifbawNxqt8KNaQaBYvuZYgC+45B2NqxQq1AA0BatwbkqSq58m4daWPDT/A9rsr
-         k8FA==
-X-Gm-Message-State: AOJu0YxO6x2+43HLOV4ch1bwLuoZam0ppw55THHTxSzliU7Fe1gSFLOL
-	ZQKwJX3CYTbAc3MFFlVpX6WHpttE87JAS3OGVTO0lDdvTWM782ktYrMx4g==
-X-Google-Smtp-Source: AGHT+IGCcVjOUoaq52ykqUR5tw5RdMq8ujWIt6cH7ncgsABPhapA49R0F+odcNdjvLvrX2RUpeD7sA==
-X-Received: by 2002:a05:6870:1c6:b0:24c:a547:7b5a with SMTP id 586e51a60fabf-258428b6ce7mr4265337fac.14.1718391188449;
-        Fri, 14 Jun 2024 11:53:08 -0700 (PDT)
+        bh=NMJ76HT01RXhDJay/m4oOJX4o+vlJaUvm7hJAa6MQ2I=;
+        b=wCZ5kBZDAQDfYWmIPFSxf11rudmiX7UJsVgANGo1BeJOt7b4BoStuCvS55/4jx8Ux4
+         bXTGC9ZHH7kNH6usJbubVDt1aQBPqBy7YvmADhQ1qq7eBqnh6uZhOIQNh9Jr4kxQRgT+
+         zQsIW2kL87yHpsEnAAExR6WT4HIZ3zk4x0UMIlkm1pU71kfejDotkvbpvuSbPXBuEFQk
+         0P5/nLiogX8Gp/aal0vtulUM/Z+tFaJ0Z19lsKRzgOzpjWxJSCnjaTRAa69+ElFhWsXj
+         A4cz4rvqEUw4ogKHVwbexDn0l2HmaTsrIIbTf9NNGWZ0fAmj0P4bJ+VU/oBKmzW/onwR
+         E53A==
+X-Gm-Message-State: AOJu0YxtL7nVlmC39ha1WTa/sMNenjhjSvT4fHlDD1np5YrOM09dq7Su
+	nJy1I84HInG7ha7hr8WpREpTjHQ7sP5FHDQMDQSLPADqn9Ya7g7WqVwyig==
+X-Google-Smtp-Source: AGHT+IFTfoigqcPyGynZC1K7DscIars2g6PBg+hlNsGgFPVcSKE2OZsSahsdohlWCh7wvhGu4ApnOQ==
+X-Received: by 2002:a05:6870:c084:b0:254:a2c2:d3bf with SMTP id 586e51a60fabf-25841169f9dmr1980170fac.28.1718391189144;
+        Fri, 14 Jun 2024 11:53:09 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569934cf6fsm1095763fac.47.2024.06.14.11.53.07
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2569934cf6fsm1095763fac.47.2024.06.14.11.53.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Fri, 14 Jun 2024 11:53:08 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 07/27] gobi: Remove qrtr support
-Date: Fri, 14 Jun 2024 13:52:19 -0500
-Message-ID: <20240614185300.1086701-7-denkenz@gmail.com>
+Subject: [PATCH 08/27] udevng: Do not set DeviceProtocol
+Date: Fri, 14 Jun 2024 13:52:20 -0500
+Message-ID: <20240614185300.1086701-8-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240614185300.1086701-1-denkenz@gmail.com>
 References: <20240614185300.1086701-1-denkenz@gmail.com>
@@ -68,103 +68,23 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-QRTR based devices will now be managed by the qrtrqmi driver.
+This attribute is no longer used by the gobi driver.
 ---
- plugins/gobi.c | 38 ++++----------------------------------
- 1 file changed, 4 insertions(+), 34 deletions(-)
+ plugins/udevng.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 5402bedcc22e..f1a7df447a89 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -55,11 +55,6 @@
- #define GOBI_VOICE	(1 << 6)
- #define GOBI_WDA	(1 << 7)
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 5ef0bc253562..864f9c12b9c2 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -252,7 +252,6 @@ static int setup_qmi_qmux(struct modem_info *modem,
  
--enum qmi_protocol {
--	QMI_PROTOCOL_QMUX,
--	QMI_PROTOCOL_QRTR,
--};
--
- struct service_request {
- 	struct qmi_service **member;
- 	uint32_t service_type;
-@@ -87,7 +82,6 @@ struct gobi_data {
- 	char main_net_name[IFNAMSIZ];
- 	uint32_t max_aggregation_size;
- 	uint32_t set_powered_id;
--	enum qmi_protocol protocol;
- };
+ 	ofono_modem_set_driver(modem->modem, "gobi");
+ 	ofono_modem_set_string(modem->modem, "Device", qmi->devnode);
+-	ofono_modem_set_string(modem->modem, "DeviceProtocol", "qmux");
+ 	ofono_modem_set_string(modem->modem, "InterfaceNumber", net->number);
  
- static void gobi_debug(const char *str, void *user_data)
-@@ -101,10 +95,6 @@ static void gobi_debug(const char *str, void *user_data)
-  * Probe the modem.  The following modem properties are expected to be set
-  * in order to initialize the driver properly:
-  *
-- * DeviceProtocol
-- *   Can be "qrtr" or "qmux", tells the driver which QMI encapsulation protocol
-- *   is being used.
-- *
-  * NetworkInterface
-  *   The string that contains the 'main' network device.  This can be
-  *   "rmnet_ipa" on SoC systems, or "wwan0" for upstream linux systems.
-@@ -122,8 +112,6 @@ static void gobi_debug(const char *str, void *user_data)
- static int gobi_probe(struct ofono_modem *modem)
- {
- 	struct gobi_data *data;
--	const char *value;
--	enum qmi_protocol protocol;
- 	const char *if_driver;
- 	const char *ifname;
- 	int ifindex;
-@@ -131,15 +119,6 @@ static int gobi_probe(struct ofono_modem *modem)
- 
- 	DBG("%p", modem);
- 
--	value = ofono_modem_get_string(modem, "DeviceProtocol");
--
--	if (l_streq0(value, "qrtr"))
--		protocol = QMI_PROTOCOL_QRTR;
--	else if (l_streq0(value, "qmux"))
--		protocol = QMI_PROTOCOL_QMUX;
--	else
--		return -EPROTO;
--
- 	if_driver = ofono_modem_get_string(modem,
- 						"NetworkInterfaceKernelDriver");
- 	ifname = ofono_modem_get_string(modem, "NetworkInterface");
-@@ -152,7 +131,6 @@ static int gobi_probe(struct ofono_modem *modem)
- 		return -EPROTO;
- 
- 	data = l_new(struct gobi_data, 1);
--	data->protocol = protocol;
- 
- 	if (!strcmp(if_driver, "qmi_wwan_q"))
- 		data->using_qmi_wwan_q = true;
-@@ -519,19 +497,11 @@ static int gobi_enable(struct ofono_modem *modem)
- 
- 	DBG("%p", modem);
- 
--	switch (data->protocol) {
--	case QMI_PROTOCOL_QRTR:
--		data->device = qmi_device_new_qrtr();
--		break;
--	case QMI_PROTOCOL_QMUX:
--		device = ofono_modem_get_string(modem, "Device");
--		if (!device)
--			return -EINVAL;
--
--		data->device = qmi_device_new_qmux(device);
--		break;
--	}
-+	device = ofono_modem_get_string(modem, "Device");
-+	if (!device)
-+		return -EINVAL;
- 
-+	data->device = qmi_device_new_qmux(device);
- 	if (!data->device)
- 		return -EIO;
- 
+ 	ofono_modem_set_string(modem->modem, "Bus", "usb");
 -- 
 2.45.0
 
