@@ -1,62 +1,62 @@
-Received: from mail-oa1-f45.google.com (mail-oa1-f45.google.com [209.85.160.45])
+Received: from mail-oa1-f44.google.com (mail-oa1-f44.google.com [209.85.160.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D64716DC1B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E5D916DC21
 	for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 20:02:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.45
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718740965; cv=none; b=ANK0GpdcO1ViASER+0qgHAOQO0wl1AB/u1Z5ou5jXNf2rRCYHqPixYQ7oZ89JeT2cwsD5QArB0gNNm4HNXR/W6yGbGE1+xilx8gmNYm3uUNw6ARSZb0uldtvk+RSU8cJRTc7fb2iPW/OrJ+PubxiX18RY0yHw+GufjkfCM+DV1Q=
+	t=1718740966; cv=none; b=XK2cqfegXCsvt3q0fyEgpr0IIVUGQzldIbVmkheM6xX882dew3ISB+bR1E2h/KgxrTQuVhZAmKaN0qeW/jfM368a+RtnSt8xZZ4MuqkOJWq24QmKV/dpONySk+ZrrDg3/QjgmLzuccf+Fyml73Y7Uksn5w4VOfcWVJPmrg+ljXg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718740965; c=relaxed/simple;
-	bh=ckvNClCkY8uqwNMkaBkcQ/Dv+40u6hUo0a6BgUt+mCs=;
+	s=arc-20240116; t=1718740966; c=relaxed/simple;
+	bh=+zhDgJw/D82iGKx28eTwBX4xQruzeo5sOR/AkeOGjoE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=m6heomTgBlYWAqnG2Ex8Cl6ezbr6r4aFd4Aj236lwjuuz/O0qkMRajCzelTOXSjx3XKZVW9kMQJkkOWjuNwJAw/0d+wVWZKNYadPmuF5Q8kngAzWYuDcz+xmKFCa0L+1xwlMnZDcdOntahrcAeLoq6T9C/WUGdVRVMo8TvU198M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=I/OS2Q6o; arc=none smtp.client-ip=209.85.160.45
+	 MIME-Version; b=AFJyaHcX6xl2UOOWon7E86vPWtrG+NW2WkV3rjUl4eNLYJ3fQPA2R3NzJgEmqoocYkxXodD09hpB9g7pcHVv58anosR1uw92aK4kdZL33RNxCTfX6AzcIUBr+aMfzYzVV9y/PardYmS4O0Lc73WX9tp3lI1c4ycA6TxHEJAbaas=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dYlLURId; arc=none smtp.client-ip=209.85.160.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="I/OS2Q6o"
-Received: by mail-oa1-f45.google.com with SMTP id 586e51a60fabf-2598f517a33so378221fac.1
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dYlLURId"
+Received: by mail-oa1-f44.google.com with SMTP id 586e51a60fabf-254c8e27c80so3184584fac.2
         for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 13:02:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718740963; x=1719345763; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718740964; x=1719345764; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=l0LW8jWwDVbJfyz4Pq2lQKVb+OW0QTh8Ef+fpjZXzDw=;
-        b=I/OS2Q6o91QjGP0iAMyBtvmfDbvv4AZgj7qjtTN3+1RvEFkAraoU6S1Ebl3RSQZx9m
-         Fz5CFhMyELOOEWjkKVc0EQGGehvTtas+c3RKjIAiVelDcbq7lFutohx2F5y/HedD0jQW
-         nDDO8W5haIC2ARaxm91QfHzPAB3bBfK2g6Lw0nYdlTLQLdU6UdiTXdzLkMuU1/TBZ8e/
-         +/ORS3l8gBT3vMg2uAqXkt6uTRaDvOFDnGOfmaVCj62RWWhhQA/5tvqixdoR0hlh+uCt
-         L3Dm+6x060mE5vYjsxYIDruKSVYKIVcdpQMQEu9T31D6zUPA81XdWcqHQaWEpAbnR7lo
-         ZDwQ==
+        bh=J9fNNbSfh2WeZGPLrsfMCew1Ljg+9Wq+JnyF3lhrH44=;
+        b=dYlLURId8fglPyqKAzQ7fazrD+rUe17ZyFTQ4AVJ4EztMGV4dv8+LxhxQBEewcO7uP
+         l4nQYdwD+oF/inChF/eIPsJPf1Y+3qXEA3c0auj5Veg9cchA8moeTmU6bsCAvY4H7SpT
+         sLDcdgSe7qIwIl3CAIsQurDJhnHR6/Fip9uaVRrZS0iD9+cuZOgMtORbhkiEXMf+t9f+
+         buQbAkISv25oNT5UQ6/13guOqg7sAslptvEzkXGbRR1yfvzKU3Gcv3JRFxyZvMTPwCAm
+         SfHKRVvEV0kjdbF9FK4Q+dIOAxTtfQAA/DeKG6oaE1tS7fo9MG1NmKkcyO0jDVtjlyW1
+         dhRQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718740963; x=1719345763;
+        d=1e100.net; s=20230601; t=1718740964; x=1719345764;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=l0LW8jWwDVbJfyz4Pq2lQKVb+OW0QTh8Ef+fpjZXzDw=;
-        b=QDakuEB3FdTnPfmE8XMU9Lk+vkVQvnloltkNwYroKCVoizqOkWdhJtz5850lQ3NYBp
-         O3rG0Sqo65idlcDl4onadkR2QlbWUcIedh6l4cfWzU3plW97EQpk6+jewSL9h7axTEO9
-         SEitHAP2p4P2+TfrbJ7/KclhNKiutjQPhtH/JO9rIlEONj9fjdTGg4/un98HatdN4xwd
-         lj3Fa5+m7IgSA8mgMiSXLHUoc30PfRP2tx5CMQ1MFvCvPPs0odMoltbGJabgt9YqjM4h
-         JM1xfx5MEoGl1wKmPI03IpR7lUtEXuLsEb/Q6joKz3is5iGbvznMA5zcqrorKt13mURr
-         GhAg==
-X-Gm-Message-State: AOJu0YyL/lMZicWZ8DZ+VpVwXskO6m2uPP6YAxSHE30KBlfe9AnYwX7G
-	4lvDTKWDx1IyCxuTx3VUahm3SuJa2oCp18UZEQWUBt4PEcyWRDOEIpoieg==
-X-Google-Smtp-Source: AGHT+IEZ2NX00qxuM7rUAYGf+FVDQqvScxNTd0+EPh1sJ6vx7w0+q7R5mpduusxPqok1YRSWV6h5Yg==
-X-Received: by 2002:a05:6870:a11e:b0:254:a3b9:9756 with SMTP id 586e51a60fabf-25c94a212e1mr925387fac.32.1718740963399;
-        Tue, 18 Jun 2024 13:02:43 -0700 (PDT)
+        bh=J9fNNbSfh2WeZGPLrsfMCew1Ljg+9Wq+JnyF3lhrH44=;
+        b=mi683IgKcEAYRtOiQSamLh40mcBZGtOOM8I+S5UdER0gcpAia/rcJ9XH9PF5rhbMSe
+         mfKyKVZrFs6yBRvjCpQRvTpwnQ/4CZolqGDiZXu3ZpA3yS5sTsSD/a9KoFWgDYaMd7J4
+         N76YOW0kN63qufQUbpnA+FA36i3/oUplC5fwNsezOgBVWkgwGBvtkRZgl91GdYQedHM5
+         G3TWhQRWqj+Voulumng+dCs9EAVRm+WUg6C4q0lTY+weAk1Bz+4GOiwRjHQsHX0s3DC1
+         f/NBsOXEnJV1/+x5Uw6UWrSSjsQlLUTuqVYXF8OJGZbMKeJYWxdNGRXacrDa26hkF/Vw
+         +McQ==
+X-Gm-Message-State: AOJu0YyGBDx44w8BT+eYokNCeQzF6divdWMT20D5u67X1EkeCFrFCHJu
+	cq90bnBZKFmns6OOx+9VyWKKLvzJb5/BXKS0kXSDWRvPT2Dp3cbI1z9+jA==
+X-Google-Smtp-Source: AGHT+IGiYvXz+Bh4dySsEV1yDWH0NOIMqerhcTEZ0u0F/FpYpdZ7okpicbWz41n9aCOoP0aJwOpMDw==
+X-Received: by 2002:a05:6870:d889:b0:254:c617:a9a0 with SMTP id 586e51a60fabf-25c94d713eemr919841fac.50.1718740964010;
+        Tue, 18 Jun 2024 13:02:44 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2567a9a7d31sm3305744fac.14.2024.06.18.13.02.42
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2567a9a7d31sm3305744fac.14.2024.06.18.13.02.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 18 Jun 2024 13:02:43 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 12/33] qmi: Rename qmi_device_new_qmux to qmi_qmux_device_new
-Date: Tue, 18 Jun 2024 15:01:54 -0500
-Message-ID: <20240618200231.1129282-12-denkenz@gmail.com>
+Subject: [PATCH v2 13/33] unit: Drop use of qmi_service_create_shared
+Date: Tue, 18 Jun 2024 15:01:55 -0500
+Message-ID: <20240618200231.1129282-13-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240618200231.1129282-1-denkenz@gmail.com>
 References: <20240618200231.1129282-1-denkenz@gmail.com>
@@ -69,58 +69,128 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
 ---
- drivers/qmimodem/qmi.c | 2 +-
- drivers/qmimodem/qmi.h | 3 +--
- plugins/gobi.c         | 2 +-
- 3 files changed, 3 insertions(+), 4 deletions(-)
+ unit/test-qmimodem-qmi.c | 47 +++++++---------------------------------
+ 1 file changed, 8 insertions(+), 39 deletions(-)
 
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index a845e3809090..9fdc209edf7c 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -1991,7 +1991,7 @@ static const struct qmi_device_ops qmux_ops = {
- 	.destroy = qmi_device_qmux_destroy,
- };
+diff --git a/unit/test-qmimodem-qmi.c b/unit/test-qmimodem-qmi.c
+index 0fedd9803bb5..c40e9bb1d8af 100644
+--- a/unit/test-qmimodem-qmi.c
++++ b/unit/test-qmimodem-qmi.c
+@@ -34,7 +34,6 @@ struct test_info {
+ 	int service_fds[TEST_SERVICE_COUNT];
+ 	struct qmi_device *node;
+ 	struct l_timeout *timeout;
+-	struct l_queue *services;
  
--struct qmi_device *qmi_device_new_qmux(const char *device)
-+struct qmi_device *qmi_qmux_device_new(const char *device)
- {
- 	struct qmi_device_qmux *qmux;
- 	int fd;
-diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-index 10202fba6128..966d4f354d6e 100644
---- a/drivers/qmimodem/qmi.h
-+++ b/drivers/qmimodem/qmi.h
-@@ -68,6 +68,7 @@ typedef void (*qmi_discover_func_t)(void *user_data);
+ 	/* Data sent to our test service */
+ 	struct sockaddr_qrtr sender;
+@@ -159,7 +158,6 @@ static struct test_info *test_setup(void)
+ 	/* Enable ofono logging */
+ 	qmi_device_set_debug(info->node, debug_log, NULL);
  
- typedef void (*qmi_service_result_func_t)(struct qmi_result *, void *);
+-	info->services = l_queue_new();
+ 	info->timeout = l_timeout_create(TEST_TIMEOUT, test_timeout_cb, info,
+ 								NULL);
  
-+struct qmi_device *qmi_qmux_device_new(const char *device);
- void qmi_device_free(struct qmi_device *device);
+@@ -172,8 +170,6 @@ static void test_cleanup(struct test_info *info)
  
- void qmi_device_set_debug(struct qmi_device *device,
-@@ -87,8 +88,6 @@ enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
- bool qmi_device_set_expected_data_format(struct qmi_device *device,
- 			enum qmi_device_expected_data_format format);
+ 	l_free(info->received);
+ 	l_timeout_remove(info->timeout);
+-	l_queue_destroy(info->services,
+-				(l_queue_destroy_func_t) qmi_service_free);
+ 	qmi_device_free(info->node);
  
--struct qmi_device *qmi_device_new_qmux(const char *device);
+ 	/* The qrtr services will be destroyed automatically. */
+@@ -216,13 +212,6 @@ static void test_discovery(const void *data)
+ 	test_cleanup(info);
+ }
+ 
+-static void create_service_cb(struct qmi_service *service, void *user_data)
+-{
+-	struct test_info *info = user_data;
 -
- struct qmi_device *qmi_qrtr_node_new(uint32_t node);
- struct qmi_service *qmi_qrtr_node_get_service(struct qmi_device *device,
- 						uint32_t type);
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index d1da5fbc366b..5463a46edecb 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -501,7 +501,7 @@ static int gobi_enable(struct ofono_modem *modem)
- 	if (!device)
- 		return -EINVAL;
+-	l_queue_push_tail(info->services, service);
+-}
+-
+ /* Callbacks could queue other callbacks so continue until there are no more. */
+ static void perform_all_pending_work(void)
+ {
+@@ -246,12 +235,7 @@ static void test_create_services(const void *data)
+ 		uint16_t major, minor;
  
--	data->device = qmi_device_new_qmux(device);
-+	data->device = qmi_qmux_device_new(device);
- 	if (!data->device)
- 		return -EIO;
+ 		service_type = unique_service_type(i);
+-		assert(qmi_service_create_shared(info->node, service_type,
+-						create_service_cb, info, NULL));
+-		perform_all_pending_work();
+-
+-		assert(l_queue_length(info->services) == 1);
+-		service = l_queue_pop_head(info->services);
++		service = qmi_qrtr_node_get_service(info->node, service_type);
+ 		assert(service);
  
+ 		assert(qmi_service_get_version(service, &major, &minor));
+@@ -266,21 +250,14 @@ static void test_create_services(const void *data)
+ 	 * call the callback.
+ 	 */
+ 	service_type = unique_service_type(TEST_SERVICE_COUNT);
+-	assert(!qmi_service_create_shared(info->node, service_type,
+-					create_service_cb, info, NULL));
+-	perform_all_pending_work();
+-	assert(l_queue_isempty(info->services));
++	assert(!qmi_qrtr_node_get_service(info->node, service_type));
+ 
+ 	/* Confirm that multiple services may be created for the same type */
+ 	service_type = unique_service_type(0);
+ 
+ 	for (i = 0; i < L_ARRAY_SIZE(services); i++) {
+-		assert(qmi_service_create_shared(info->node, service_type,
+-						create_service_cb, info, NULL));
+-		perform_all_pending_work();
+-
+-		assert(l_queue_length(info->services) == 1);
+-		services[i] = l_queue_pop_head(info->services);
++		services[i] = qmi_qrtr_node_get_service(info->node,
++								service_type);
+ 		assert(services[i]);
+ 	}
+ 
+@@ -455,10 +432,7 @@ static void test_send_data(const void *data)
+ 	perform_discovery(info);
+ 
+ 	service_type = unique_service_type(0); /* Use the first service */
+-	assert(qmi_service_create_shared(info->node, service_type,
+-					create_service_cb, info, NULL));
+-	perform_all_pending_work();
+-	service = l_queue_pop_head(info->services);
++	service = qmi_qrtr_node_get_service(info->node, service_type);
+ 	assert(service);
+ 
+ 	io = l_io_new(info->service_fds[0]);
+@@ -505,10 +479,7 @@ static void test_notifications(const void *data)
+ 	perform_discovery(info);
+ 
+ 	service_type = unique_service_type(0); /* Use the first service */
+-	assert(qmi_service_create_shared(info->node, service_type,
+-					create_service_cb, info, NULL));
+-	perform_all_pending_work();
+-	service = l_queue_pop_head(info->services);
++	service = qmi_qrtr_node_get_service(info->node, service_type);
+ 	assert(service);
+ 
+ 	io = l_io_new(info->service_fds[0]);
+@@ -567,10 +538,8 @@ static void test_service_notification_independence(const void *data)
+ 	l_io_set_read_handler(io, received_data, info, NULL);
+ 
+ 	for (i = 0; i < L_ARRAY_SIZE(services); i++) {
+-		assert(qmi_service_create_shared(info->node, service_type,
+-						create_service_cb, info, NULL));
+-		perform_all_pending_work();
+-		services[i] = l_queue_pop_head(info->services);
++		services[i] = qmi_qrtr_node_get_service(info->node,
++								service_type);
+ 		assert(services[i]);
+ 
+ 		send_request_via_qmi(info, services[i]);
 -- 
 2.45.0
 
