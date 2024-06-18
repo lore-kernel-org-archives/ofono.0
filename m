@@ -1,62 +1,62 @@
-Received: from mail-oa1-f47.google.com (mail-oa1-f47.google.com [209.85.160.47])
+Received: from mail-oa1-f54.google.com (mail-oa1-f54.google.com [209.85.160.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BAFA816DC3C
-	for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 20:02:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9D1116DED1
+	for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 20:02:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718740970; cv=none; b=Fxs6C2lWIgKOxU1i7piZe2ybcm5GlipZ7dEd33AL8dTLVAYx4dYnGBO9K9xKiCPobslfYI/Gkov/7nQEAqmpG03CXBUAY0gZ02Tzapvw0xRCRuFzFQ3VW3A0e8sBMwL9LZpultr8tAyq4Ti7U2k52znWutaak9lQZ4c2Y5tvh6I=
+	t=1718740971; cv=none; b=AaWvqwxq5nHmFz2nU2jyWjC/01GV253ow/A/IS98c6fM9kxK3Rp58LPM+6t9qL5/CtCy665gQ6FMBUtUrSyWQ4tGrWetMQSkCS2Pf00o2VdFMwghdMHpstYPQaFK9Tyk0vTvYHLeAtCJr6RbucA8ljKcwvI3KjxbuvwDnQ01+Mo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718740970; c=relaxed/simple;
-	bh=8APWFakeWhbAhQ0r1ltM3ev+xps7sQiz4exXK7H5Fw8=;
+	s=arc-20240116; t=1718740971; c=relaxed/simple;
+	bh=pc7fpAsAsiuZxj7t5AR0cYq1vzfBL8gcVddY2nGjWy0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=MuajgVVMnF222UFXA14Xdr6NuJQi1w2D9SODg7l8M2cVaAbXocwywpGnPFV6OhlxiVIyLOulr4JH/Ny5uiICo2o09i8mOjcgbOM7nZydOPV6c8HkuErVErJc+OxGBzcRxXdDqK094sraMnWpC1crF4eahT39AOOmNztMaAH+H74=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OcM6D8wM; arc=none smtp.client-ip=209.85.160.47
+	 MIME-Version; b=EfJnynKi4D+GKJfeOyENVgUcJBP/W8uH0nuhlietixFkWZ+J4pK1bZJZjBv019WYVu+wu12fCDI2nV9+0s5qgeoBdjtnnCKowGxfgQw/kKUY7ZcPLQpNuC6GfevHOx3XVT1jzavNicNFO07MxNEvC+Kpj8tm+0k4p5WfuQZwJU4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PB+cpYeN; arc=none smtp.client-ip=209.85.160.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OcM6D8wM"
-Received: by mail-oa1-f47.google.com with SMTP id 586e51a60fabf-25c9af0102cso10079fac.0
-        for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 13:02:48 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PB+cpYeN"
+Received: by mail-oa1-f54.google.com with SMTP id 586e51a60fabf-2506fc3a6cfso2841648fac.2
+        for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 13:02:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718740968; x=1719345768; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718740969; x=1719345769; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=1UABKOq6ybuakyd5rbD6BhHRw+cJrtUDWhdxBaCGDQI=;
-        b=OcM6D8wM2xicl71uwNSLRIyHVHgih6C03cMI8IMzpPR6uU1XM0XcrIBtHjIGCp2TqM
-         Yn42Kvhm4dAN3AaGKu2a4wKw/7u7UV1iiN0h7KQmeo6oiQt6c4TMwPfKzTtfyjMb5UKN
-         xwuI6X6r3Zs+anTDYW+z3AqCaLKywBfdIziycp/GsfIY2T0wXW9qCbJUq74XNOQL5jgO
-         MsUgNm6XFJb0utqjjKBvpid4N2zX6Lm7cAgNy1xOV3NVopP2OAFHhczo0UMkNtqZ6JtY
-         hO2KtG47QoHCIc1ZRqFwNLIV9+O8PAv6+Bjjpt5wD08YCOMyHkAY9he/P4jw/LZURXvN
-         5yMg==
+        bh=ypAt5+8b2tJbJH16Wx1FjGcxMq4OFcsPPY9I+akKiwI=;
+        b=PB+cpYeNzyQ6JhcrLS5e0D1IRje9eBVedjInvUpCg3NxofT52C+09bpkuxhN1V6pxK
+         JcjTJWPc20PE7Dvw1A8kTfOw8fDSFIPzStd4Br+nRYqABeQ8ERl0D/YD5OIuHfOlHIEi
+         +L/nrFGecWVb9gJCKQVOK1qpTt0M1C5bFfjutiOtmzOVj1/jfv0ow/0pMyHf1x2UZWTY
+         HGH6DlSduO2IHVKqHfWSy1njTVYOKkJCaT4XScfQh6/dSX3505jxqNIC5lU4ic38QeXM
+         +hoATtCwo45S+vXuAohDN8Ea9Js0joupLW+Z+qOvnhAnTT/LEN8F7tQ73pIqkNXWBv0o
+         UjNg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718740968; x=1719345768;
+        d=1e100.net; s=20230601; t=1718740969; x=1719345769;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=1UABKOq6ybuakyd5rbD6BhHRw+cJrtUDWhdxBaCGDQI=;
-        b=BpSXCzI9zGFOaXlz2aqgp+FGJxMfvj1j4ryZcfPf7t9WIu+zgzSXnDT9PFZ6IFxB17
-         D9awd5LbA+ZdY3kybGvbV5lcOXtIqK3vQmrl3RN7BWfdL3NDizFrR845NMbup81Fqqd8
-         yqRYiVzYQRIrdmyGhj8m4yCKakQ5liRg2+MqpoVEw9EEj86lgamUmjKShtGNg+3cchjN
-         PmCXiLKb7dbTYsdcEKpbkm/F/gRBfGrUbMowQD4X7CptDsShaZvCUnzXmq5vlQMWxMOI
-         s27df8aP19kTy/l+wl0idMh9FVejCP0AvTwiO4CP7zQlzd/A50B4rlOSg+9W8lCM1mQ7
-         VZag==
-X-Gm-Message-State: AOJu0YyQhiHlkAy3RHnPkR0Hr16B0OqOAB1igcBEVGw17BkmT+zRdXHX
-	aJ7GqfSEFBgYDB32VdPv5bj0PWQZDLzQIFWKXRRCBjRqTNTWVkqHmBy3Jw==
-X-Google-Smtp-Source: AGHT+IFTKPGul1m0Y/QxLq19pirc3QqVPpsnGDmSMcUBsbgFULciaYxyjZZfwGpjOrngPBcQidzUzQ==
-X-Received: by 2002:a05:6870:8181:b0:254:b3cc:a6da with SMTP id 586e51a60fabf-25c94a14f35mr860979fac.29.1718740967745;
-        Tue, 18 Jun 2024 13:02:47 -0700 (PDT)
+        bh=ypAt5+8b2tJbJH16Wx1FjGcxMq4OFcsPPY9I+akKiwI=;
+        b=Fv0hL6cY2NH98uq5FsqI2Ubf5vCsC5HGrkHlevxAo+HYW90Os/199+y04EjlkOO0CA
+         ZzEkRqmERHLGr2T3uy0n3e49nANaLs4MgQrX0WfjpsBeZIqyBA9KcWPOzn7aYeptGCg0
+         am4E6RzAITnpVOSY5SfaEtAMevBq7e/Qc7SlU7KQMct4mKDNDbznG/wGJUxYBdeo58uw
+         YvntGU/5pRL9aGVNwMpySa9QQmChaN2QFhgCfRiLkUUf6fa0baD7zmTv+hv5urLd+cqj
+         g3I8V/FkLF8yQ+Aja4mbnYwmxeglW7DpY+hG2ijpnKnIagTCfcCCfsFbc3ily5LwKUye
+         BiJA==
+X-Gm-Message-State: AOJu0YzlVWPLSb1ORZLaJSaz3/Vx52L+sgdl1UaCJp4no0122AQcQZ6s
+	SACM47u/qaOw81OH12HsrjYhuE2a0mjAfvS3neeMMkV0xv8GyGV4y0VY+Q==
+X-Google-Smtp-Source: AGHT+IH3Y8qAVJlw4tcP8C8YNTeaIol9tLX3tIKHkWFWKxeBCvJsPebGOZUqsjAoNYRhf3gxtCV80w==
+X-Received: by 2002:a05:6871:3a23:b0:259:8aef:db3a with SMTP id 586e51a60fabf-25c94a0e4d9mr931201fac.29.1718740968462;
+        Tue, 18 Jun 2024 13:02:48 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2567a9a7d31sm3305744fac.14.2024.06.18.13.02.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 18 Jun 2024 13:02:47 -0700 (PDT)
+        Tue, 18 Jun 2024 13:02:48 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 18/33] qmi: break up qmi_device_free into qrtr & qmux variants
-Date: Tue, 18 Jun 2024 15:02:00 -0500
-Message-ID: <20240618200231.1129282-18-denkenz@gmail.com>
+Subject: [PATCH v2 19/33] qmi: Convert DBG statements to __debug_device
+Date: Tue, 18 Jun 2024 15:02:01 -0500
+Message-ID: <20240618200231.1129282-19-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240618200231.1129282-1-denkenz@gmail.com>
 References: <20240618200231.1129282-1-denkenz@gmail.com>
@@ -68,291 +68,153 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Introduce qmi_qrtr_node_free() that will deallocate a qrtr node object
-and qmi_qmux_device_free() that will deallocate a qmux device object.
-This removes the need for the .destroy method inside qmi_device_ops, so
-get rid of that as well.
-
-Since qrtr has no concept of shutting down (this is accomplished
-immediately using close() on the qrtr socket), move the relevant
-variables into the qmux specific structure.
-
-The destroy operation inside qmi_device_ops is no longer used, remove
-it.
 ---
- drivers/qmimodem/qmi.c   | 94 +++++++++++++++++++++-------------------
- drivers/qmimodem/qmi.h   |  3 +-
- plugins/gobi.c           |  4 +-
- plugins/qrtrqmi.c        |  2 +-
- unit/test-qmimodem-qmi.c |  2 +-
- 5 files changed, 55 insertions(+), 50 deletions(-)
+ drivers/qmimodem/qmi.c | 53 +++++++++++++++++++++++-------------------
+ 1 file changed, 29 insertions(+), 24 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 6d605d58ad65..509f3dda5945 100644
+index 509f3dda5945..d0f8a56f1461 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -69,7 +69,6 @@ struct qmi_device_ops {
- 	int (*shutdown)(struct qmi_device *device,
- 			qmi_shutdown_func_t shutdown_func,
- 			void *user, qmi_destroy_func_t destroy);
--	void (*destroy)(struct qmi_device *device);
- };
+@@ -1942,7 +1942,7 @@ static int qmi_device_qrtr_write(struct qmi_device *device,
+ 	bytes_written = sendto(fd, data, len, 0, (struct sockaddr *) &addr,
+ 							sizeof(addr));
+ 	if (bytes_written < 0) {
+-		DBG("Failure sending data: %s", strerror(errno));
++		__debug_device(device, "sendto: %s", strerror(errno));
+ 		return -errno;
+ 	}
  
- struct qmi_device {
-@@ -86,8 +85,6 @@ struct qmi_device {
- 	struct l_hashmap *family_list;
- 	const struct qmi_device_ops *ops;
- 	bool writer_active : 1;
--	bool shutting_down : 1;
--	bool destroyed : 1;
- };
+@@ -1990,20 +1990,19 @@ static void qrtr_received_control_packet(struct qmi_device *device,
+ 	uint32_t type;
+ 	uint32_t instance;
+ 	uint32_t version;
+-	uint32_t node;
+-	uint32_t port;
++	uint32_t qrtr_node;
++	uint32_t qrtr_port;
  
- struct qmi_device_qmux {
-@@ -102,6 +99,8 @@ struct qmi_device_qmux {
- 	unsigned int release_users;
- 	uint8_t next_control_tid;
- 	struct l_queue *control_queue;
-+	bool shutting_down : 1;
-+	bool destroyed : 1;
- };
- 
- struct service_family {
-@@ -890,17 +889,8 @@ static int qmi_device_init(struct qmi_device *device, int fd,
- 	return 0;
- }
- 
--static void __qmi_device_shutdown_finished(struct qmi_device *device)
-+static void __qmi_device_free(struct qmi_device *device)
- {
--	if (device->destroyed)
--		device->ops->destroy(device);
--}
--
--void qmi_device_free(struct qmi_device *device)
--{
--	if (!device)
--		return;
--
- 	__debug_device(device, "device %p free", device);
- 
- 	l_queue_destroy(device->service_queue, __request_free);
-@@ -912,11 +902,6 @@ void qmi_device_free(struct qmi_device *device)
- 	l_hashmap_destroy(device->family_list, family_destroy);
- 
- 	l_queue_destroy(device->service_infos, l_free);
--
--	if (device->shutting_down)
--		device->destroyed = true;
--	else
--		device->ops->destroy(device);
- }
- 
- void qmi_device_set_debug(struct qmi_device *device,
-@@ -1816,6 +1801,17 @@ static void qmi_device_qmux_client_release(struct qmi_device *device,
- 	__ctl_request_submit(qmux, req);
- }
- 
-+static void __qmux_device_free(struct qmi_device_qmux *qmux)
-+{
-+	l_queue_destroy(qmux->control_queue, __request_free);
-+
-+	if (qmux->shutdown_idle)
-+		l_idle_remove(qmux->shutdown_idle);
-+
-+	l_free(qmux->version_str);
-+	l_free(qmux);
-+}
-+
- static void qmux_shutdown_destroy(void *user_data)
- {
- 	struct qmi_device_qmux *qmux = user_data;
-@@ -1825,7 +1821,8 @@ static void qmux_shutdown_destroy(void *user_data)
- 
- 	qmux->shutdown_idle = NULL;
- 
--	__qmi_device_shutdown_finished(&qmux->super);
-+	if (qmux->destroyed)
-+		__qmux_device_free(qmux);
- }
- 
- static void qmux_shutdown_callback(struct l_idle *idle, void *user_data)
-@@ -1835,12 +1832,12 @@ static void qmux_shutdown_callback(struct l_idle *idle, void *user_data)
- 	if (qmux->release_users > 0)
+ 	if (len < sizeof(*packet)) {
+-		DBG("qrtr packet is too small");
++		__debug_device(device, "qrtr packet is too small");
  		return;
+ 	}
  
--	qmux->super.shutting_down = true;
-+	qmux->shutting_down = true;
+-	qrtr_debug_ctrl_request(packet, device->debug_func,
+-				device->debug_data);
++	qrtr_debug_ctrl_request(packet, device->debug_func, device->debug_data);
  
- 	if (qmux->shutdown_func)
- 		qmux->shutdown_func(qmux->shutdown_user_data);
+ 	cmd = L_LE32_TO_CPU(packet->cmd);
+ 	if (cmd != QRTR_TYPE_NEW_SERVER) {
+-		DBG("Unknown command: %d", cmd);
++		__debug_device(device, "Unknown command: %d", cmd);
+ 		return;
+ 	}
  
--	qmux->super.shutting_down = false;
-+	qmux->shutting_down = false;
+@@ -2011,7 +2010,8 @@ static void qrtr_received_control_packet(struct qmi_device *device,
  
- 	l_idle_remove(qmux->shutdown_idle);
- }
-@@ -1871,26 +1868,11 @@ static int qmi_device_qmux_shutdown(struct qmi_device *device,
- 	return 0;
- }
+ 	if (!packet->server.service && !packet->server.instance &&
+ 			!packet->server.node && !packet->server.port) {
+-		DBG("Initial service discovery has completed");
++		__debug_device(device,
++				"Initial service discovery has completed");
  
--static void qmi_device_qmux_destroy(struct qmi_device *device)
--{
--	struct qmi_device_qmux *qmux =
--		l_container_of(device, struct qmi_device_qmux, super);
--
--	l_queue_destroy(qmux->control_queue, __request_free);
--
--	if (qmux->shutdown_idle)
--		l_idle_remove(qmux->shutdown_idle);
--
--	l_free(qmux->version_str);
--	l_free(qmux);
--}
--
- static const struct qmi_device_ops qmux_ops = {
- 	.write = qmi_device_qmux_write,
- 	.discover = qmi_device_qmux_discover,
- 	.client_release = qmi_device_qmux_client_release,
- 	.shutdown = qmi_device_qmux_shutdown,
--	.destroy = qmi_device_qmux_destroy,
- };
+ 		if (data)
+ 			DISCOVERY_DONE(data, data->user_data);
+@@ -2025,16 +2025,17 @@ static void qrtr_received_control_packet(struct qmi_device *device,
+ 	version = L_LE32_TO_CPU(packet->server.instance) & 0xff;
+ 	instance = L_LE32_TO_CPU(packet->server.instance) >> 8;
  
- struct qmi_device *qmi_qmux_device_new(const char *device)
-@@ -1917,6 +1899,24 @@ struct qmi_device *qmi_qmux_device_new(const char *device)
- 	return &qmux->super;
- }
+-	node = L_LE32_TO_CPU(packet->server.node);
+-	port = L_LE32_TO_CPU(packet->server.port);
++	qrtr_node = L_LE32_TO_CPU(packet->server.node);
++	qrtr_port = L_LE32_TO_CPU(packet->server.port);
  
-+void qmi_qmux_device_free(struct qmi_device *device)
-+{
-+	struct qmi_device_qmux *qmux;
-+
-+	if (!device)
-+		return;
-+
-+	__qmi_device_free(device);
-+
-+	qmux = l_container_of(device, struct qmi_device_qmux, super);
-+	if (qmux->shutting_down) {
-+		qmux->destroyed = true;
-+		return;
-+	}
-+
-+	__qmux_device_free(qmux);
-+}
-+
- struct qmi_device_qrtr {
- 	struct qmi_device super;
- };
-@@ -2194,20 +2194,11 @@ error:
- 	return rc;
+-	DBG("New server: Type: %d Version: %d Instance: %d Node: %d Port: %d",
+-		type, version, instance, node, port);
++	__debug_device(device,
++			"New server: %d Version: %d Node/Port: %d/%d",
++			type, version, qrtr_node, qrtr_port);
+ 
+ 	memset(&info, 0, sizeof(info));
+ 	info.service_type = type;
+-	info.qrtr_port = port;
+-	info.qrtr_node = node;
++	info.qrtr_port = qrtr_port;
++	info.qrtr_node = qrtr_node;
+ 	info.major = version;
+ 	info.instance = instance;
+ 
+@@ -2049,7 +2050,8 @@ static void qrtr_received_control_packet(struct qmi_device *device,
  }
  
--static void qmi_device_qrtr_destroy(struct qmi_device *device)
--{
--	struct qmi_device_qrtr *qrtr =
--		l_container_of(device, struct qmi_device_qrtr, super);
--
--	l_free(qrtr);
--}
--
- static const struct qmi_device_ops qrtr_ops = {
- 	.write = qmi_device_qrtr_write,
- 	.discover = qmi_device_qrtr_discover,
- 	.client_release = NULL,
- 	.shutdown = NULL,
--	.destroy = qmi_device_qrtr_destroy,
- };
- 
- struct qmi_device *qmi_qrtr_node_new(uint32_t node)
-@@ -2232,6 +2223,19 @@ struct qmi_device *qmi_qrtr_node_new(uint32_t node)
- 	return &qrtr->super;
- }
- 
-+void qmi_qrtr_node_free(struct qmi_device *device)
-+{
-+	struct qmi_device_qrtr *node;
-+
-+	if (!device)
-+		return;
-+
-+	__qmi_device_free(device);
-+
-+	node = l_container_of(device, struct qmi_device_qrtr, super);
-+	l_free(node);
-+}
-+
- struct qmi_service *qmi_qrtr_node_get_service(struct qmi_device *device,
- 						uint32_t type)
+ static void qrtr_received_service_message(struct qmi_device *device,
+-						uint32_t node, uint32_t port,
++						uint32_t qrtr_node,
++						uint32_t qrtr_port,
+ 						const void *buf, size_t len)
  {
-diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-index 4de9d7bd0037..54661bf44d91 100644
---- a/drivers/qmimodem/qmi.h
-+++ b/drivers/qmimodem/qmi.h
-@@ -71,7 +71,7 @@ typedef void (*qmi_qmux_device_create_client_func_t)(struct qmi_service *,
- typedef void (*qmi_service_result_func_t)(struct qmi_result *, void *);
+ 	const struct l_queue_entry *entry;
+@@ -2059,15 +2061,16 @@ static void qrtr_received_service_message(struct qmi_device *device,
+ 				entry; entry = entry->next) {
+ 		struct qmi_service_info *info = entry->data;
  
- struct qmi_device *qmi_qmux_device_new(const char *device);
--void qmi_device_free(struct qmi_device *device);
-+void qmi_qmux_device_free(struct qmi_device *device);
+-		if (info->qrtr_node == node && info->qrtr_port == port) {
++		if (info->qrtr_node == qrtr_node &&
++				info->qrtr_port == qrtr_port) {
+ 			service_type = info->service_type;
+ 			break;
+ 		}
+ 	}
  
- bool qmi_qmux_device_create_client(struct qmi_device *device,
- 				uint16_t service_type,
-@@ -97,6 +97,7 @@ bool qmi_device_set_expected_data_format(struct qmi_device *device,
- 			enum qmi_device_expected_data_format format);
+ 	if (!service_type) {
+-		DBG("Received msg from unknown service on node: %d, port: %d",
+-			node, port);
++		__debug_device(device, "Message from unknown at node/port %d/%d",
++				qrtr_node, qrtr_port);
+ 		return;
+ 	}
  
- struct qmi_device *qmi_qrtr_node_new(uint32_t node);
-+void qmi_qrtr_node_free(struct qmi_device *device);
- struct qmi_service *qmi_qrtr_node_get_service(struct qmi_device *device,
- 						uint32_t type);
+@@ -2088,8 +2091,8 @@ static bool qrtr_received_data(struct l_io *io, void *user_data)
+ 	addr_size = sizeof(addr);
+ 	bytes_read = recvfrom(l_io_get_fd(qrtr->super.io), buf, sizeof(buf), 0,
+ 				(struct sockaddr *) &addr, &addr_size);
+-	DBG("Received %zd bytes from Node: %d Port: %d", bytes_read,
+-		addr.sq_node, addr.sq_port);
++	__debug_device(&qrtr->super, "Received %zd bytes from Node: %d Port: %d",
++			bytes_read, addr.sq_node, addr.sq_port);
  
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 63eb847eb680..3ab2efc39186 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -188,7 +188,7 @@ static void gobi_remove(struct ofono_modem *modem)
+ 	if (bytes_read < 0)
+ 		return true;
+@@ -2152,14 +2155,15 @@ static int qmi_device_qrtr_discover(struct qmi_device *device,
+ 	addr_len = sizeof(addr);
+ 	rc = getsockname(fd, (struct sockaddr *) &addr, &addr_len);
+ 	if (rc) {
+-		DBG("getsockname failed: %s", strerror(errno));
++		__debug_device(device, "getsockname failed: %s",
++				strerror(errno));
+ 		rc = -errno;
+ 		goto error;
+ 	}
  
- 	cleanup_services(data);
- 
--	qmi_device_free(data->device);
-+	qmi_qmux_device_free(data->device);
- 
- 	l_free(data);
- }
-@@ -217,7 +217,7 @@ static void shutdown_cb(void *user_data)
- 
- 	data->discover_attempts = 0;
- 
--	qmi_device_free(data->device);
-+	qmi_qmux_device_free(data->device);
- 	data->device = NULL;
- 
- 	ofono_modem_set_powered(modem, FALSE);
-diff --git a/plugins/qrtrqmi.c b/plugins/qrtrqmi.c
-index adf6625e2824..d25fd050eb88 100644
---- a/plugins/qrtrqmi.c
-+++ b/plugins/qrtrqmi.c
-@@ -113,7 +113,7 @@ static void qrtrqmi_deinit(struct qrtrqmi_data *data)
- {
- 	qmi_service_free(data->dms);
- 	data->dms = NULL;
--	qmi_device_free(data->node);
-+	qmi_qrtr_node_free(data->node);
- 	data->node = NULL;
- }
- 
-diff --git a/unit/test-qmimodem-qmi.c b/unit/test-qmimodem-qmi.c
-index 4ea9c736c284..4c035db3c9c9 100644
---- a/unit/test-qmimodem-qmi.c
-+++ b/unit/test-qmimodem-qmi.c
-@@ -170,7 +170,7 @@ static void test_cleanup(struct test_info *info)
- 
- 	l_free(info->received);
- 	l_timeout_remove(info->timeout);
--	qmi_device_free(info->node);
-+	qmi_qrtr_node_free(info->node);
- 
- 	/* The qrtr services will be destroyed automatically. */
- 	for (i = 0; i < TEST_SERVICE_COUNT; ++i)
+ 	if (addr.sq_family != AF_QIPCRTR || addr_len != sizeof(addr)) {
+-		DBG("Unexpected sockaddr from getsockname. family: %d size: %d",
+-			addr.sq_family, addr_len);
++		__debug_device(device, "Unexpected sockaddr family: %d size: %d",
++				addr.sq_family, addr_len);
+ 		rc = -EIO;
+ 		goto error;
+ 	}
+@@ -2172,7 +2176,8 @@ static int qmi_device_qrtr_discover(struct qmi_device *device,
+ 				sizeof(packet), 0,
+ 				(struct sockaddr *) &addr, addr_len);
+ 	if (bytes_written < 0) {
+-		DBG("Failure sending data: %s", strerror(errno));
++		__debug_device(device, "Failure sending data: %s",
++				strerror(errno));
+ 		rc = -errno;
+ 		goto error;
+ 	}
 -- 
 2.45.0
 
