@@ -1,62 +1,62 @@
-Received: from mail-oo1-f52.google.com (mail-oo1-f52.google.com [209.85.161.52])
+Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DC8F16DC3C
-	for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 20:02:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3236916DED1
+	for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 20:02:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718740975; cv=none; b=frptila5ShbvW0C6+7Gz1O1pzTdYrNTv0xvuJHlLjNe+RaJuQST34+WKuPYp9wMMe8OIxErLsnulbU2tPLBUVjlYwKwspsUxsg29ff+VnTRird3xm5wrzQbAeta5WDzCKbKI4B35FUw7ms+oarUAGgfgaC2mz/PtXuCjKvWbJL8=
+	t=1718740975; cv=none; b=ZFlOxGM3TyXiTyXUDIjSmKgsL2uCurvg4lW2xnGFsoxh17I+nelEpyt9xA1FZUCcBjTDNHUYn4OTro0us0ZlX6uPgMWQOUxT07bn1TBxQaxGSk83c7Sv14fH9DPq02AV/vmu2KHYdpZ+4WVtvW8FZjOn7L2aq38tO9PDZOxvHg0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1718740975; c=relaxed/simple;
-	bh=2Wuo2H4uW10SGkoxfVOHIIyd4V9tJAWoZ+ylIolJprc=;
+	bh=M3FSWRd4WUybbVJVhwwTq766oEYyHQOzwxsTlYnmMww=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Z5r5BVSGnY62vwIsOd+629Vpyy+52GktfO7pKMh7+5JBJxWS7muwTy1dpqUc28tX1BnRZKaI92Esm6qzBft984Q/+SiWd0RDRr2xVzyUW5TNZniiethbX/abR1LO7v2JiEOxK/jFei+luHiQu3qtS54xvp7TIaLYv8NPNaIcnl0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NECFJVJ9; arc=none smtp.client-ip=209.85.161.52
+	 MIME-Version; b=GznvqeiHfjpSoFctv9ILYNB7xpVsh92um0RfEUPzdYY5zhOdIsSS3IdCrJGsBLabUhL6mH0e2gY1Gt0UtQEaucpEWOTPjWLBZXuxYtcSoMha6HEs434OUHbdYc0AE8iAtnqf4uumW9wiOV2Oqh2oGWI0lFY+9ll6QAWhxcSPTCo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FFuGCaZm; arc=none smtp.client-ip=209.85.160.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NECFJVJ9"
-Received: by mail-oo1-f52.google.com with SMTP id 006d021491bc7-5c1adbcaad3so87824eaf.1
-        for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 13:02:53 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FFuGCaZm"
+Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-254e42df409so3652611fac.0
+        for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 13:02:54 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718740972; x=1719345772; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718740973; x=1719345773; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=3rGSV/QTbvGJi49PTqC3UjUvGPRyxvWmblgbTvNr5QA=;
-        b=NECFJVJ9vIx5YEghmSQWlM77f1MTuwjNO6V1MmSMgrzZcdsBWJzsTZG2tpX1cQ+pvt
-         IqfVXrt3lQIaqb7g3fuIwQLUxwfAn9bPt7+OdPwvdBnEcc9ZL0iL4p+rkaoVpyEcZ1rg
-         JH8q0yQUbACegy8DX27LKfuItNcDwx0c4XHyg0264GSJClDbFRNH7NMHdIl9FNFMxKyj
-         zMw//Xtb3jLLzMsr7E2nl881KaA0+lO0w7DX50UhUwad9Y65Q8nbC9BhGKjlX9mLUeBw
-         yR48us8skG6JtoOYlZs7nQyDOIfAefdwEMrqzJz9r7ONvjdpIDIoTuOTpK0TH3Z4bqc5
-         HykA==
+        bh=P9vAusJEn0byCJUc2wyhItz7xUsaB/1WRDdM1+7MwVM=;
+        b=FFuGCaZmIztP1lJbjXrmVWd9TIXdtxMZZ6s0KHguJmc+mo7LWtuE3FY6jtJeNGaSuS
+         MI90VDoSa1Sw7Xui4/u+Ay4fiSzjhhuLcqaOIHu3q+D5SC9d/YiV3BprJJW1EKeRGmb5
+         huX2mdT+g+ozjS9h4dGTLiZic38NqXGMqeN1ZZhkpKdRNJKFWn1lYDsSbUuBrS+q2nCo
+         PS1SZFLmTLUF/F98Bw70WfDW0VFRt4pF2CT4tG85ZkhAq6cYVrrycItFE29ARE25E0uK
+         X0HSXYCupUZyxCfOtBj0unSsUJYptxzVzc0XOiKSpkRzoocCt7az7ahcwRXAV0vT+zcI
+         jpPg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718740972; x=1719345772;
+        d=1e100.net; s=20230601; t=1718740973; x=1719345773;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=3rGSV/QTbvGJi49PTqC3UjUvGPRyxvWmblgbTvNr5QA=;
-        b=Lre9YhBYwKOOmAzYN3+0DPJjFPbAGbYRLOot/HmdjcHU/C12bwnDJKX3YelhLTuZAO
-         t0K5Vwl46Ml5KWr4w2/vU+yB50q3vsbL6Atz36y0tLqwufMFim3pIcve/PPwYNZfaI0x
-         LCovGqB2exHkzXIZvAWumw5s6gQUAj16uUT2gMjUT4fIGshDf+CQNGpmyh2kRWv7EYc9
-         Euac4vmwgvT1Ep5bWWkpnV8dya6q1I5rvu3vEmrmDxJFuFJ48Af1KfbIzLZ+v7yMp8Zf
-         BkD8hSDRewpbcs9VCHyx113j4CZoOfNNHeIEr7WQooRRYf2wrXAb382tWozJosK8hOS9
-         EBPA==
-X-Gm-Message-State: AOJu0YyO4YqcA28PRI3bn1Xd5iXYTO4tNmw3UOp2lAV2R4K5A43/MqIp
-	NhYdaCv8PtppXtwY2hPfWCdat1VR2YS+deVVtrZ+AgS2a0yPiQHxuMC8XQ==
-X-Google-Smtp-Source: AGHT+IE4lVa66goo7pxNZTaol43DlVLpDi51QLOoDcxJ6IXPB2uToR0DWemZEoPtMMOmnml8fGUIUw==
-X-Received: by 2002:a05:6871:511:b0:24f:e15a:6536 with SMTP id 586e51a60fabf-25972fc5035mr1649134fac.18.1718740972371;
-        Tue, 18 Jun 2024 13:02:52 -0700 (PDT)
+        bh=P9vAusJEn0byCJUc2wyhItz7xUsaB/1WRDdM1+7MwVM=;
+        b=bkDY/DtBk2fImTR/MHoo4SHyweYp5L7f3H78Kd1p9Iob51nazJFEDVqBg+Wg4NMX/b
+         lMwI+dpugB1/H4rbMgN92Mo26kZLv3Zc5Xs1VUWdHqFGdVSzV5sLP6cofnfwKfS4pF0S
+         Gu7hO3osLRcf6Q6poRj8PEkAmshiGO9pay8NyfyRROzxieIbAfanOjqX/t4N3DlpTyek
+         rkLzPNkwxlh0wKC8SV89CULeJ40yKKTNV6WpOM7g13XRMNYNRyjgy7eTVvD7u92tTS5E
+         1XMD0wLIiayuPULPBD5yogxGCuXV2ANIMihqQ0Bd/9xPh+yW0aIlR5NU0ivnIb9/D8Rp
+         Mz4g==
+X-Gm-Message-State: AOJu0YzaA/ReiFNKz0vl1f1ezTNohhhEJpio46RcCa4X8SBwTZuSKydy
+	y4u2ggg5+jYGp4e6sA7Xs79rd9XIvbBY3IT4BIEXSFTUzWDiZAhnkNGrRw==
+X-Google-Smtp-Source: AGHT+IFfHC46GgxmoGElCTK0qXNmQB+q+I9YEas/kwq7brfebgZiJCSq5t1bpSwvHR4dHvZqIqxCSQ==
+X-Received: by 2002:a05:6870:7681:b0:24c:5bd5:1934 with SMTP id 586e51a60fabf-25c94d5bfbcmr665444fac.39.1718740973129;
+        Tue, 18 Jun 2024 13:02:53 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2567a9a7d31sm3305744fac.14.2024.06.18.13.02.51
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2567a9a7d31sm3305744fac.14.2024.06.18.13.02.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 18 Jun 2024 13:02:52 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 24/33] qmi: Move expected data format handling into gobi
-Date: Tue, 18 Jun 2024 15:02:06 -0500
-Message-ID: <20240618200231.1129282-24-denkenz@gmail.com>
+Subject: [PATCH v2 25/33] qmi: Rename and refactor qmi_device_discover
+Date: Tue, 18 Jun 2024 15:02:07 -0500
+Message-ID: <20240618200231.1129282-25-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240618200231.1129282-1-denkenz@gmail.com>
 References: <20240618200231.1129282-1-denkenz@gmail.com>
@@ -68,362 +68,315 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The expected data format logic inside qmi_device was specific to the
-qmi_wwan driver used for USB QMI (QMUX) devices.  Move it to the gobi
-modem driver that manages such devices.  The code is greatly simplified
-since 'gobi' knows about the network interface name directly.
+Refactor the discover implementation to not use struct discover_data
+or the discovery queue.  Use a dedicated 'discover' structure instead.
+Remove the now unused discover() method from qmi_device_ops.
 ---
- drivers/qmimodem/qmi.c | 197 -----------------------------------------
- drivers/qmimodem/qmi.h |  11 ---
- plugins/gobi.c         |  67 +++++++++-----
- 3 files changed, 47 insertions(+), 228 deletions(-)
+ drivers/qmimodem/qmi.c | 153 ++++++++++++++++-------------------------
+ drivers/qmimodem/qmi.h |   7 +-
+ plugins/gobi.c         |   5 +-
+ 3 files changed, 66 insertions(+), 99 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 4dba8186c09d..306ca6092e5c 100644
+index 306ca6092e5c..2aebb197fac0 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -1028,203 +1028,6 @@ int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
- 	return device->ops->shutdown(device, func, user_data, destroy);
+@@ -65,9 +65,6 @@ struct qmi_request {
+ 
+ struct qmi_device_ops {
+ 	int (*write)(struct qmi_device *device, struct qmi_request *req);
+-	int (*discover)(struct qmi_device *device,
+-			qmi_discover_func_t discover_func,
+-			void *user, qmi_destroy_func_t destroy);
+ 	void (*client_release)(struct qmi_device *device,
+ 				uint16_t service_type, uint16_t client_id);
+ 	int (*shutdown)(struct qmi_device *device,
+@@ -105,6 +102,13 @@ struct qmi_device_qmux {
+ 	qmi_destroy_func_t shutdown_destroy;
+ 	struct l_idle *shutdown_idle;
+ 	unsigned int release_users;
++	struct {
++		qmi_qmux_device_discover_func_t func;
++		void *user_data;
++		qmi_destroy_func_t destroy;
++		struct l_timeout *timeout;
++		uint16_t tid;
++	} discover;
+ 	uint8_t next_control_tid;
+ 	struct l_queue *control_queue;
+ 	bool shutting_down : 1;
+@@ -981,41 +985,6 @@ bool qmi_qmux_device_has_service(struct qmi_device *device, uint16_t type)
+ 	return __find_service_info_by_type(device, type);
  }
  
--static bool get_device_file_name(struct qmi_device *device,
--					char *file_name, int size)
--{
--	pid_t pid;
--	char temp[100];
--	ssize_t result;
--	int fd = l_io_get_fd(device->io);
--
--	if (size <= 0)
--		return false;
--
--	pid = getpid();
--
--	snprintf(temp, 100, "/proc/%d/fd/%d", (int) pid, fd);
--	temp[99] = 0;
--
--	result = readlink(temp, file_name, size - 1);
--
--	if (result == -1 || result >= size - 1) {
--		DBG("Error %d in readlink", errno);
--		return false;
--	}
--
--	file_name[result] = 0;
--
--	return true;
--}
--
--static char *get_first_dir_in_directory(char *dir_path)
--{
--	DIR *dir;
--	struct dirent *dir_entry;
--	char *dir_name = NULL;
--
--	dir = opendir(dir_path);
--
--	if (!dir)
--		return NULL;
--
--	dir_entry = readdir(dir);
--
--	while ((dir_entry != NULL)) {
--		if (dir_entry->d_type == DT_DIR &&
--				strcmp(dir_entry->d_name, ".") != 0 &&
--				strcmp(dir_entry->d_name, "..") != 0) {
--			dir_name = l_strdup(dir_entry->d_name);
--			break;
--		}
--
--		dir_entry = readdir(dir);
--	}
--
--	closedir(dir);
--	return dir_name;
--}
--
--static char *get_device_interface(struct qmi_device *device)
--{
--	char * const driver_names[] = { "usbmisc", "usb" };
--	unsigned int i;
--	char file_path[PATH_MAX];
--	const char *file_name;
--	char *interface = NULL;
--
--	if (!get_device_file_name(device, file_path, sizeof(file_path)))
--		return NULL;
--
--	file_name = l_basename(file_path);
--
--	for (i = 0; i < L_ARRAY_SIZE(driver_names) && !interface; i++) {
--		char *sysfs_path;
--
--		sysfs_path = l_strdup_printf("/sys/class/%s/%s/device/net/",
--						driver_names[i], file_name);
--		interface = get_first_dir_in_directory(sysfs_path);
--		l_free(sysfs_path);
--	}
--
--	return interface;
--}
--
--enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
--						struct qmi_device *device)
--{
--	char *sysfs_path = NULL;
--	char *interface = NULL;
--	int fd = -1;
--	char value;
--	enum qmi_device_expected_data_format expected =
--					QMI_DEVICE_EXPECTED_DATA_FORMAT_UNKNOWN;
--
--	if (!device)
--		goto done;
--
--	interface = get_device_interface(device);
--
--	if (!interface) {
--		DBG("Error while getting interface name");
--		goto done;
--	}
--
--	/* Build sysfs file path and open it */
--	sysfs_path = l_strdup_printf("/sys/class/net/%s/qmi/raw_ip", interface);
--
--	fd = open(sysfs_path, O_RDONLY);
--	if (fd < 0) {
--		/* maybe not supported by kernel */
--		DBG("Error %d in open(%s)", errno, sysfs_path);
--		goto done;
--	}
--
--	if (read(fd, &value, 1) != 1) {
--		DBG("Error %d in read(%s)", errno, sysfs_path);
--		goto done;
--	}
--
--	if (value == 'Y')
--		expected = QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP;
--	else if (value == 'N')
--		expected = QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3;
--	else
--		DBG("Unexpected sysfs file contents");
--
--done:
--	if (fd >= 0)
--		close(fd);
--
--	if (sysfs_path)
--		l_free(sysfs_path);
--
--	if (interface)
--		l_free(interface);
--
--	return expected;
--}
--
--bool qmi_device_set_expected_data_format(struct qmi_device *device,
--			enum qmi_device_expected_data_format format)
--{
--	bool res = false;
--	char *sysfs_path = NULL;
--	char *interface = NULL;
--	int fd = -1;
--	char value;
--
--	if (!device)
--		goto done;
--
--	switch (format) {
--	case QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3:
--		value = 'N';
--		break;
--	case QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP:
--		value = 'Y';
--		break;
--	default:
--		DBG("Unhandled format: %d", (int) format);
--		goto done;
--	}
--
--	interface = get_device_interface(device);
--
--	if (!interface) {
--		DBG("Error while getting interface name");
--		goto done;
--	}
--
--	/* Build sysfs file path and open it */
--	sysfs_path = l_strdup_printf("/sys/class/net/%s/qmi/raw_ip", interface);
--
--	fd = open(sysfs_path, O_WRONLY);
--	if (fd < 0) {
--		/* maybe not supported by kernel */
--		DBG("Error %d in open(%s)", errno, sysfs_path);
--		goto done;
--	}
--
--	if (write(fd, &value, 1) != 1) {
--		DBG("Error %d in write(%s)", errno, sysfs_path);
--		goto done;
--	}
--
--	res = true;
--
--done:
--	if (fd >= 0)
--		close(fd);
--
--	if (sysfs_path)
--		l_free(sysfs_path);
--
--	if (interface)
--		l_free(interface);
--
--	return res;
--}
--
- static int qmi_device_qmux_write(struct qmi_device *device,
- 					struct qmi_request *req)
- {
-diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-index 6e6fc6912622..1158600989c5 100644
---- a/drivers/qmimodem/qmi.h
-+++ b/drivers/qmimodem/qmi.h
-@@ -41,12 +41,6 @@
- #define QMI_SERVICE_RMS		225	/* Remote management service */
- #define QMI_SERVICE_OMA		226	/* OMA device management service */
- 
--enum qmi_device_expected_data_format {
--	QMI_DEVICE_EXPECTED_DATA_FORMAT_UNKNOWN,
--	QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3,
--	QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP,
+-struct discover_data {
+-	struct discovery super;
+-	struct qmi_device *device;
+-	qmi_discover_func_t func;
+-	void *user_data;
+-	qmi_destroy_func_t destroy;
+-	uint16_t tid;
+-	struct l_timeout *timeout;
 -};
 -
- enum qmi_data_endpoint_type {
- 	QMI_DATA_ENDPOINT_TYPE_UNKNOWN   = 0x00,
- 	QMI_DATA_ENDPOINT_TYPE_HSIC      = 0x01,
-@@ -89,11 +83,6 @@ int qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
+-static void discover_data_free(void *user_data)
+-{
+-	struct discover_data *data = user_data;
+-
+-	if (data->timeout)
+-		l_timeout_remove(data->timeout);
+-
+-	if (data->destroy)
+-		data->destroy(data->user_data);
+-
+-	l_free(data);
+-}
+-
+-int qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
+-				void *user_data, qmi_destroy_func_t destroy)
+-{
+-	if (!device)
+-		return -EINVAL;
+-
+-	if (!device->ops->discover)
+-		return -ENOTSUP;
+-
+-	return device->ops->discover(device, func, user_data, destroy);
+-}
+-
+ int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
+ 				void *user_data, qmi_destroy_func_t destroy)
+ {
+@@ -1255,37 +1224,30 @@ static struct qmi_request *find_control_request(struct qmi_device_qmux *qmux,
+ 	return req;
+ }
+ 
+-static void qmux_sync_callback(uint16_t message, uint16_t length,
+-					const void *buffer, void *user_data)
++static void __qmux_discovery_finished(struct qmi_device_qmux *qmux)
+ {
+-	struct discover_data *data = user_data;
++	l_timeout_remove(qmux->discover.timeout);
++	qmux->discover.func(qmux->discover.user_data);
+ 
+-	DISCOVERY_DONE(data, data->user_data);
++	if (qmux->discover.destroy)
++		qmux->discover.destroy(qmux->discover.user_data);
++
++	memset(&qmux->discover, 0, sizeof(qmux->discover));
+ }
+ 
+-/* sync will release all previous clients */
+-static bool qmi_device_qmux_sync(struct qmi_device_qmux *qmux,
+-					struct discover_data *data)
++static void qmux_sync_callback(uint16_t message, uint16_t length,
++					const void *buffer, void *user_data)
+ {
+-	struct qmi_request *req;
+-
+-	DEBUG(&qmux->debug, "Sending sync to reset QMI");
+-
+-	req = __control_request_alloc(QMI_CTL_SYNC, NULL, 0,
+-					qmux_sync_callback, data);
+-
+-	__ctl_request_submit(qmux, req);
++	struct qmi_device_qmux *qmux = user_data;
+ 
+-	return true;
++	__qmux_discovery_finished(qmux);
+ }
+ 
+ static void qmux_discover_callback(uint16_t message, uint16_t length,
+ 					const void *buffer, void *user_data)
+ {
+-	struct discover_data *data = user_data;
+-	struct qmi_device *device = data->device;
+-	struct qmi_device_qmux *qmux =
+-		l_container_of(device, struct qmi_device_qmux, super);
++	struct qmi_device_qmux *qmux = user_data;
++	struct qmi_device *device = &qmux->super;
+ 	const struct qmi_result_code *result_code;
+ 	const struct qmi_service_list *service_list;
+ 	const void *ptr;
+@@ -1344,69 +1306,68 @@ static void qmux_discover_callback(uint16_t message, uint16_t length,
+ 	DEBUG(&qmux->debug, "version string: %s", qmux->version_str);
+ 
+ done:
+-	/* if the device support the QMI call SYNC over the CTL interface */
++	/*
++	 * If the device support the QMI call SYNC over the CTL interface,
++	 * invoke it to reset the state, including release all previously
++	 * allocated clients
++	 */
+ 	if ((qmux->control_major == 1 && qmux->control_minor >= 5) ||
+ 			qmux->control_major > 1) {
+-		qmi_device_qmux_sync(qmux, data);
++		struct qmi_request *req =
++			__control_request_alloc(QMI_CTL_SYNC, NULL, 0,
++						qmux_sync_callback, qmux);
++
++		DEBUG(&qmux->debug, "Sending sync to reset QMI");
++		qmux->discover.tid = __ctl_request_submit(qmux, req);
+ 		return;
+ 	}
+ 
+-	DISCOVERY_DONE(data, data->user_data);
++	__qmux_discovery_finished(qmux);
+ }
+ 
+ static void qmux_discover_reply_timeout(struct l_timeout *timeout,
+ 							void *user_data)
+ {
+-	struct discover_data *data = user_data;
+-	struct qmi_device *device = data->device;
++	struct qmi_device *device = user_data;
+ 	struct qmi_device_qmux *qmux =
+ 		l_container_of(device, struct qmi_device_qmux, super);
+ 	struct qmi_request *req;
+ 
+-	l_timeout_remove(data->timeout);
+-	data->timeout = NULL;
+-
+ 	/* remove request from queues */
+-	req = find_control_request(qmux, data->tid);
+-
+-	DISCOVERY_DONE(data, data->user_data);
+-
++	req = find_control_request(qmux, qmux->discover.tid);
+ 	if (req)
+ 		__request_free(req);
++
++	__qmux_discovery_finished(qmux);
+ }
+ 
+-static int qmi_device_qmux_discover(struct qmi_device *device,
+-					qmi_discover_func_t func,
+-					void *user_data,
+-					qmi_destroy_func_t destroy)
++int qmi_qmux_device_discover(struct qmi_device *device,
++				qmi_qmux_device_discover_func_t func,
++				void *user_data, qmi_destroy_func_t destroy)
+ {
+-	struct qmi_device_qmux *qmux =
+-		l_container_of(device, struct qmi_device_qmux, super);
+-	struct discover_data *data;
++	struct qmi_device_qmux *qmux;
+ 	struct qmi_request *req;
+ 
+-	DEBUG(&qmux->debug, "device %p", qmux);
++	if (!device)
++		return -EINVAL;
+ 
+-	if (l_queue_length(device->service_infos) > 0)
+-		return -EALREADY;
++	qmux = l_container_of(device, struct qmi_device_qmux, super);
+ 
+-	data = l_new(struct discover_data, 1);
++	DEBUG(&qmux->debug, "device %p", qmux);
+ 
+-	data->super.destroy = discover_data_free;
+-	data->device = device;
+-	data->func = func;
+-	data->user_data = user_data;
+-	data->destroy = destroy;
++	if (l_queue_length(device->service_infos) > 0 || qmux->discover.tid)
++		return -EALREADY;
+ 
+ 	req = __control_request_alloc(QMI_CTL_GET_VERSION_INFO, NULL, 0,
+-						qmux_discover_callback, data);
+-
+-	data->tid = __ctl_request_submit(qmux, req);
+-	data->timeout = l_timeout_create(DISCOVER_TIMEOUT,
+-						qmux_discover_reply_timeout,
+-						data, NULL);
++						qmux_discover_callback, qmux);
+ 
+-	__qmi_device_discovery_started(device, &data->super);
++	qmux->discover.func = func;
++	qmux->discover.user_data = user_data;
++	qmux->discover.destroy = destroy;
++	qmux->discover.tid = __ctl_request_submit(qmux, req);
++	qmux->discover.timeout =
++		l_timeout_create(DISCOVER_TIMEOUT, qmux_discover_reply_timeout,
++						qmux, NULL);
+ 
+ 	return 0;
+ }
+@@ -1593,6 +1554,11 @@ static void __qmux_device_free(struct qmi_device_qmux *qmux)
+ {
+ 	l_queue_destroy(qmux->control_queue, __request_free);
+ 
++	l_timeout_remove(qmux->discover.timeout);
++
++	if (qmux->discover.destroy)
++		qmux->discover.destroy(qmux->discover.user_data);
++
+ 	if (qmux->shutdown_idle)
+ 		l_idle_remove(qmux->shutdown_idle);
+ 
+@@ -1658,7 +1624,6 @@ static int qmi_device_qmux_shutdown(struct qmi_device *device,
+ 
+ static const struct qmi_device_ops qmux_ops = {
+ 	.write = qmi_device_qmux_write,
+-	.discover = qmi_device_qmux_discover,
+ 	.client_release = qmi_device_qmux_client_release,
+ 	.shutdown = qmi_device_qmux_shutdown,
+ };
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index 1158600989c5..152ebf1eb14b 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -58,7 +58,7 @@ struct qmi_service;
+ 
+ typedef void (*qmi_debug_func_t)(const char *str, void *user_data);
+ typedef void (*qmi_shutdown_func_t)(void *user_data);
+-typedef void (*qmi_discover_func_t)(void *user_data);
++typedef void (*qmi_qmux_device_discover_func_t)(void *user_data);
+ typedef void (*qmi_qmux_device_create_client_func_t)(struct qmi_service *,
+ 							void *user_data);
+ typedef void (*qmi_qrtr_node_lookup_done_func_t)(void *);
+@@ -69,6 +69,9 @@ struct qmi_device *qmi_qmux_device_new(const char *device);
+ void qmi_qmux_device_free(struct qmi_device *device);
+ void qmi_qmux_device_set_debug(struct qmi_device *device,
+ 				qmi_debug_func_t func, void *user_data);
++int qmi_qmux_device_discover(struct qmi_device *device,
++				qmi_qmux_device_discover_func_t func,
++				void *user_data, qmi_destroy_func_t destroy);
+ bool qmi_qmux_device_create_client(struct qmi_device *device,
+ 				uint16_t service_type,
+ 				qmi_qmux_device_create_client_func_t func,
+@@ -78,8 +81,6 @@ bool qmi_qmux_device_get_service_version(struct qmi_device *device,
+ 					uint16_t *major, uint16_t *minor);
+ bool qmi_qmux_device_has_service(struct qmi_device *device, uint16_t type);
+ 
+-int qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
+-				void *user_data, qmi_destroy_func_t destroy);
  int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
  				void *user_data, qmi_destroy_func_t destroy);
  
--enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
--						struct qmi_device *device);
--bool qmi_device_set_expected_data_format(struct qmi_device *device,
--			enum qmi_device_expected_data_format format);
--
- struct qmi_qrtr_node *qmi_qrtr_node_new(uint32_t node);
- void qmi_qrtr_node_free(struct qmi_qrtr_node *node);
- void qmi_qrtr_node_set_debug(struct qmi_qrtr_node *node,
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index cd740a7f5b6f..7570a7db3876 100644
+index 7570a7db3876..e39ea6c4ed0e 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -76,12 +76,13 @@ struct gobi_data {
- 	unsigned long features;
- 	unsigned int discover_attempts;
- 	uint8_t oper_mode;
--	bool using_mux;
--	bool using_qmi_wwan_q;
- 	int main_net_ifindex;
- 	char main_net_name[IFNAMSIZ];
- 	uint32_t max_aggregation_size;
- 	uint32_t set_powered_id;
-+	bool using_mux : 1;
-+	bool using_qmi_wwan : 1;
-+	bool using_qmi_wwan_q : 1;
- };
+@@ -499,7 +499,8 @@ static void discover_cb(void *user_data)
  
- static void gobi_debug(const char *str, void *user_data)
-@@ -134,6 +135,8 @@ static int gobi_probe(struct ofono_modem *modem)
+ 	if (!(data->features & GOBI_DMS)) {
+ 		if (++data->discover_attempts < 3 &&
+-				!qmi_device_discover(data->device, discover_cb,
++				!qmi_qmux_device_discover(data->device,
++								discover_cb,
+ 								modem, NULL))
+ 			return;
  
- 	if (!strcmp(if_driver, "qmi_wwan_q"))
- 		data->using_qmi_wwan_q = true;
-+	else if (!strcmp(if_driver, "qmi_wwan"))
-+		data->using_qmi_wwan = true;
+@@ -544,7 +545,7 @@ static int gobi_enable(struct ofono_modem *modem)
+ 	if (getenv("OFONO_QMI_DEBUG"))
+ 		qmi_qmux_device_set_debug(data->device, gobi_debug, "QMI: ");
  
- 	data->main_net_ifindex =
- 		ofono_modem_get_integer(modem, "NetworkInterfaceIndex");
-@@ -332,12 +335,49 @@ error:
- 	shutdown_device(modem);
- }
+-	r = qmi_device_discover(data->device, discover_cb, modem, NULL);
++	r = qmi_qmux_device_discover(data->device, discover_cb, modem, NULL);
+ 	if (!r)
+ 		return -EINPROGRESS;
  
-+static void setup_qmi_wwan(const char *interface, uint32_t llproto)
-+{
-+	char raw_ip;
-+	char new_raw_ip;
-+
-+	if (l_sysctl_get_char(&raw_ip, "/sys/class/net/%s/qmi/raw_ip",
-+				interface) < 0) {
-+		DBG("Couldn't query raw_ip setting");
-+		return;
-+	}
-+
-+	if (raw_ip != 'Y' && raw_ip != 'N') {
-+		DBG("Unexpected value: %c", raw_ip);
-+		return;
-+	}
-+
-+	switch (llproto) {
-+	case QMI_WDA_DATA_LINK_PROTOCOL_802_3:
-+		new_raw_ip = 'N';
-+		break;
-+	case QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP:
-+		new_raw_ip = 'Y';
-+		break;
-+	default:
-+		DBG("Unknown WDA Link Protocol");
-+		return;
-+	}
-+
-+	DBG("raw_ip: %c, want: %c", raw_ip, new_raw_ip);
-+
-+	if (raw_ip == new_raw_ip)
-+		return;
-+
-+	if (l_sysctl_set_char(new_raw_ip, "/sys/class/net/%s/qmi/raw_ip",
-+				interface) < 0)
-+		DBG("Fail to set raw_ip to %c", new_raw_ip);
-+}
-+
- static void get_data_format_cb(struct qmi_result *result, void *user_data)
- {
- 	struct ofono_modem *modem = user_data;
- 	struct gobi_data *data = ofono_modem_get_data(modem);
- 	uint32_t llproto;
--	enum qmi_device_expected_data_format expected_llproto;
- 
- 	DBG("");
- 
-@@ -347,24 +387,11 @@ static void get_data_format_cb(struct qmi_result *result, void *user_data)
- 	if (!qmi_result_get_uint32(result, QMI_WDA_LL_PROTOCOL, &llproto))
- 		goto done;
- 
--	expected_llproto = qmi_device_get_expected_data_format(data->device);
-+	if (data->using_qmi_wwan) {
-+		const char *interface =
-+			ofono_modem_get_string(modem, "NetworkInterface");
- 
--	if ((llproto == QMI_WDA_DATA_LINK_PROTOCOL_802_3) &&
--			(expected_llproto ==
--				QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP)) {
--		if (!qmi_device_set_expected_data_format(data->device,
--					QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3))
--			DBG("Fail to set expected data to 802.3");
--		else
--			DBG("expected data set to 802.3");
--	} else if ((llproto == QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP) &&
--			(expected_llproto ==
--				QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3)) {
--		if (!qmi_device_set_expected_data_format(data->device,
--					QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP))
--			DBG("Fail to set expected data to raw-ip");
--		else
--			DBG("expected data set to raw-ip");
-+		setup_qmi_wwan(interface, llproto);
- 	}
- 
- done:
 -- 
 2.45.0
 
