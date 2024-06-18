@@ -1,62 +1,62 @@
 Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3236916DED1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D940016DC3A
 	for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 20:02:54 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718740975; cv=none; b=ZFlOxGM3TyXiTyXUDIjSmKgsL2uCurvg4lW2xnGFsoxh17I+nelEpyt9xA1FZUCcBjTDNHUYn4OTro0us0ZlX6uPgMWQOUxT07bn1TBxQaxGSk83c7Sv14fH9DPq02AV/vmu2KHYdpZ+4WVtvW8FZjOn7L2aq38tO9PDZOxvHg0=
+	t=1718740976; cv=none; b=eUGWnbEm5cprzAbjCqfd1VfgGOyY6uut0Xfh2W3Ik9/kcX05DQH24tEHS1QZ24RcodQxkIw/DU6Nx+UQx407WIINIJc+co/AOyb35jenr2navEWpdepCJmXWFecjLtdKO7t4VC4UrvpMPzss8KroEoShAghgQ8Bi7oowb2qDako=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718740975; c=relaxed/simple;
-	bh=M3FSWRd4WUybbVJVhwwTq766oEYyHQOzwxsTlYnmMww=;
+	s=arc-20240116; t=1718740976; c=relaxed/simple;
+	bh=z68cc1ur7gn19+lZinUu8Xy5LUEFQexcoWZq1I3K8XE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GznvqeiHfjpSoFctv9ILYNB7xpVsh92um0RfEUPzdYY5zhOdIsSS3IdCrJGsBLabUhL6mH0e2gY1Gt0UtQEaucpEWOTPjWLBZXuxYtcSoMha6HEs434OUHbdYc0AE8iAtnqf4uumW9wiOV2Oqh2oGWI0lFY+9ll6QAWhxcSPTCo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FFuGCaZm; arc=none smtp.client-ip=209.85.160.43
+	 MIME-Version; b=Y3wKgYjIk5egR0h4XHBv2EzC7BAe2SpVW/1fqvaie/p+0y0y8hcj/3lKRFi88eB/YAI5n2oEGViQMfpmpYjXDb8jh4ofIX4a9Zt8CXQGfCYMHpj5qyUDMvBqmxm+n0nf/UgUZ0Ti8xP2F7FwvLI9vkeHY3TRLlueYvO6LKjuq+k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RVOprjAd; arc=none smtp.client-ip=209.85.160.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FFuGCaZm"
-Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-254e42df409so3652611fac.0
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RVOprjAd"
+Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-250ca14422aso3230244fac.0
         for <ofono@lists.linux.dev>; Tue, 18 Jun 2024 13:02:54 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718740973; x=1719345773; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718740974; x=1719345774; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=P9vAusJEn0byCJUc2wyhItz7xUsaB/1WRDdM1+7MwVM=;
-        b=FFuGCaZmIztP1lJbjXrmVWd9TIXdtxMZZ6s0KHguJmc+mo7LWtuE3FY6jtJeNGaSuS
-         MI90VDoSa1Sw7Xui4/u+Ay4fiSzjhhuLcqaOIHu3q+D5SC9d/YiV3BprJJW1EKeRGmb5
-         huX2mdT+g+ozjS9h4dGTLiZic38NqXGMqeN1ZZhkpKdRNJKFWn1lYDsSbUuBrS+q2nCo
-         PS1SZFLmTLUF/F98Bw70WfDW0VFRt4pF2CT4tG85ZkhAq6cYVrrycItFE29ARE25E0uK
-         X0HSXYCupUZyxCfOtBj0unSsUJYptxzVzc0XOiKSpkRzoocCt7az7ahcwRXAV0vT+zcI
-         jpPg==
+        bh=BM7YwLgeUpHVqmQLbUop8RywvbnihGeAaoAyFJzEgKE=;
+        b=RVOprjAd2dn3RvoAcVLDPYIDEF+8eC1Y0xFHALmDrO+NuVRcmHZYw0LwiZAYOnbv5S
+         Xgd5S6QvEKV7INWdEy73iTrzqrasaKlfIQ+GVesd5NChkwGobJquI4x3fKHvPBMkTCux
+         uI2eJnS/kQl4BcOdJDHgpFoQ4DwG5/6/Ii/pimb/HwYoLVSjTY7FXSWPpEf8BrmNgBCf
+         cARKf7vCv2ZAUzqMOxFb4GptMfvE3ImCiD0r3BymAFmTnPtf+nVxlbwkSSeFXQRQ2FS+
+         +B3MFBYD2XKkju7QVU2jMV6pTFkOEycjgRSkQzI8HsDYFGFnrpEJLIsXSJ0MfkhsV6PW
+         UBxA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718740973; x=1719345773;
+        d=1e100.net; s=20230601; t=1718740974; x=1719345774;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=P9vAusJEn0byCJUc2wyhItz7xUsaB/1WRDdM1+7MwVM=;
-        b=bkDY/DtBk2fImTR/MHoo4SHyweYp5L7f3H78Kd1p9Iob51nazJFEDVqBg+Wg4NMX/b
-         lMwI+dpugB1/H4rbMgN92Mo26kZLv3Zc5Xs1VUWdHqFGdVSzV5sLP6cofnfwKfS4pF0S
-         Gu7hO3osLRcf6Q6poRj8PEkAmshiGO9pay8NyfyRROzxieIbAfanOjqX/t4N3DlpTyek
-         rkLzPNkwxlh0wKC8SV89CULeJ40yKKTNV6WpOM7g13XRMNYNRyjgy7eTVvD7u92tTS5E
-         1XMD0wLIiayuPULPBD5yogxGCuXV2ANIMihqQ0Bd/9xPh+yW0aIlR5NU0ivnIb9/D8Rp
-         Mz4g==
-X-Gm-Message-State: AOJu0YzaA/ReiFNKz0vl1f1ezTNohhhEJpio46RcCa4X8SBwTZuSKydy
-	y4u2ggg5+jYGp4e6sA7Xs79rd9XIvbBY3IT4BIEXSFTUzWDiZAhnkNGrRw==
-X-Google-Smtp-Source: AGHT+IFfHC46GgxmoGElCTK0qXNmQB+q+I9YEas/kwq7brfebgZiJCSq5t1bpSwvHR4dHvZqIqxCSQ==
-X-Received: by 2002:a05:6870:7681:b0:24c:5bd5:1934 with SMTP id 586e51a60fabf-25c94d5bfbcmr665444fac.39.1718740973129;
+        bh=BM7YwLgeUpHVqmQLbUop8RywvbnihGeAaoAyFJzEgKE=;
+        b=kV/ir6ehPzYvI9EEdWS8Wy8FVpJYzgReBCX48wv2tRekzpAGmH5BbrcbCxsdcfJOiX
+         VHg8Azc3ZzNA3owX1JnbLemtCRbk5EyHutdo9lv14W37WWV0GbljKe66Ge2btEMOw2zt
+         xuyq7rwaaE2ssHr0Sb1gSOqayuyXqq+D7TYn/Qknt2HVHnZrh2rnantbaCUCoo6Whv1y
+         U44KuPKj6Sf/P0EU5GmLRtOaAV2wk35lXCXB2mSSClT4yKPJ4CNAKWZLRYUAn2kI2gmD
+         SatBN7hLudnOj605l2R5vfAuUlSeTVXsQGk0Cm5RmlbFZwj4qTszXFNXXkfJ7p+VSFbV
+         cGxQ==
+X-Gm-Message-State: AOJu0YzWMtRHp1ZeFqpCxZ5v+CIl6G4UbKUy/hF4JuNrJhV50cJwcCSq
+	e3nrD++0ZZG4vO7CUnVxJqKIjfBanAouVAknkOeZca87One4yEgoZ6mhSQ==
+X-Google-Smtp-Source: AGHT+IFAj1NjYiMvSzjIlbGU6sEFL0Sfv2NaH3yoS61tR2bCzhJi76cpm2H8yzsoiQJM7eqhoR6jzg==
+X-Received: by 2002:a05:6871:58a8:b0:24f:dad3:97c with SMTP id 586e51a60fabf-25c94d05a4bmr935699fac.46.1718740973801;
         Tue, 18 Jun 2024 13:02:53 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2567a9a7d31sm3305744fac.14.2024.06.18.13.02.52
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-2567a9a7d31sm3305744fac.14.2024.06.18.13.02.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 18 Jun 2024 13:02:52 -0700 (PDT)
+        Tue, 18 Jun 2024 13:02:53 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 25/33] qmi: Rename and refactor qmi_device_discover
-Date: Tue, 18 Jun 2024 15:02:07 -0500
-Message-ID: <20240618200231.1129282-25-denkenz@gmail.com>
+Subject: [PATCH v2 26/33] qmi: Rename qmi_device_shutdown
+Date: Tue, 18 Jun 2024 15:02:08 -0500
+Message-ID: <20240618200231.1129282-26-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240618200231.1129282-1-denkenz@gmail.com>
 References: <20240618200231.1129282-1-denkenz@gmail.com>
@@ -68,314 +68,236 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Refactor the discover implementation to not use struct discover_data
-or the discovery queue.  Use a dedicated 'discover' structure instead.
-Remove the now unused discover() method from qmi_device_ops.
+Rename qmi_device_shutdown to qmi_qmux_device_shutdown to make it clear
+that only the QMUX implementation requires this operation.  Remove the
+shutdown() method from qmi_device_ops since it is no longer needed.
+
+While here, move shutdown operation related members to a dedicated
+'shutdown' structure inside qmi_device_qmux.  This makes it more
+consistent with how discovery related members are setup.
 ---
- drivers/qmimodem/qmi.c | 153 ++++++++++++++++-------------------------
- drivers/qmimodem/qmi.h |   7 +-
- plugins/gobi.c         |   5 +-
- 3 files changed, 66 insertions(+), 99 deletions(-)
+ drivers/qmimodem/qmi.c | 75 ++++++++++++++++++------------------------
+ drivers/qmimodem/qmi.h |  6 ++--
+ plugins/gobi.c         |  2 +-
+ 3 files changed, 36 insertions(+), 47 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 306ca6092e5c..2aebb197fac0 100644
+index 2aebb197fac0..2844ea9f06f6 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -65,9 +65,6 @@ struct qmi_request {
- 
- struct qmi_device_ops {
+@@ -67,9 +67,6 @@ struct qmi_device_ops {
  	int (*write)(struct qmi_device *device, struct qmi_request *req);
--	int (*discover)(struct qmi_device *device,
--			qmi_discover_func_t discover_func,
--			void *user, qmi_destroy_func_t destroy);
  	void (*client_release)(struct qmi_device *device,
  				uint16_t service_type, uint16_t client_id);
- 	int (*shutdown)(struct qmi_device *device,
-@@ -105,6 +102,13 @@ struct qmi_device_qmux {
- 	qmi_destroy_func_t shutdown_destroy;
- 	struct l_idle *shutdown_idle;
- 	unsigned int release_users;
+-	int (*shutdown)(struct qmi_device *device,
+-			qmi_shutdown_func_t shutdown_func,
+-			void *user, qmi_destroy_func_t destroy);
+ };
+ 
+ struct debug_data {
+@@ -97,11 +94,6 @@ struct qmi_device_qmux {
+ 	uint16_t control_minor;
+ 	char *version_str;
+ 	struct debug_data debug;
+-	qmi_shutdown_func_t shutdown_func;
+-	void *shutdown_user_data;
+-	qmi_destroy_func_t shutdown_destroy;
+-	struct l_idle *shutdown_idle;
+-	unsigned int release_users;
+ 	struct {
+ 		qmi_qmux_device_discover_func_t func;
+ 		void *user_data;
+@@ -109,6 +101,13 @@ struct qmi_device_qmux {
+ 		struct l_timeout *timeout;
+ 		uint16_t tid;
+ 	} discover;
 +	struct {
-+		qmi_qmux_device_discover_func_t func;
++		qmi_qmux_device_shutdown_func_t func;
 +		void *user_data;
 +		qmi_destroy_func_t destroy;
-+		struct l_timeout *timeout;
-+		uint16_t tid;
-+	} discover;
++		struct l_idle *idle;
++		unsigned int release_users;
++	} shutdown;
  	uint8_t next_control_tid;
  	struct l_queue *control_queue;
  	bool shutting_down : 1;
-@@ -981,41 +985,6 @@ bool qmi_qmux_device_has_service(struct qmi_device *device, uint16_t type)
+@@ -985,18 +984,6 @@ bool qmi_qmux_device_has_service(struct qmi_device *device, uint16_t type)
  	return __find_service_info_by_type(device, type);
  }
  
--struct discover_data {
--	struct discovery super;
--	struct qmi_device *device;
--	qmi_discover_func_t func;
--	void *user_data;
--	qmi_destroy_func_t destroy;
--	uint16_t tid;
--	struct l_timeout *timeout;
--};
--
--static void discover_data_free(void *user_data)
--{
--	struct discover_data *data = user_data;
--
--	if (data->timeout)
--		l_timeout_remove(data->timeout);
--
--	if (data->destroy)
--		data->destroy(data->user_data);
--
--	l_free(data);
--}
--
--int qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
+-int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
 -				void *user_data, qmi_destroy_func_t destroy)
 -{
 -	if (!device)
 -		return -EINVAL;
 -
--	if (!device->ops->discover)
+-	if (!device->ops->shutdown)
 -		return -ENOTSUP;
 -
--	return device->ops->discover(device, func, user_data, destroy);
+-	return device->ops->shutdown(device, func, user_data, destroy);
 -}
 -
- int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
- 				void *user_data, qmi_destroy_func_t destroy)
+ static int qmi_device_qmux_write(struct qmi_device *device,
+ 					struct qmi_request *req)
  {
-@@ -1255,37 +1224,30 @@ static struct qmi_request *find_control_request(struct qmi_device_qmux *qmux,
- 	return req;
+@@ -1529,7 +1516,7 @@ static void qmux_client_release_callback(uint16_t message, uint16_t length,
+ {
+ 	struct qmi_device_qmux *qmux = user_data;
+ 
+-	qmux->release_users--;
++	qmux->shutdown.release_users--;
  }
  
--static void qmux_sync_callback(uint16_t message, uint16_t length,
--					const void *buffer, void *user_data)
-+static void __qmux_discovery_finished(struct qmi_device_qmux *qmux)
+ static void qmi_device_qmux_client_release(struct qmi_device *device,
+@@ -1541,7 +1528,7 @@ static void qmi_device_qmux_client_release(struct qmi_device *device,
+ 	uint8_t release_req[] = { 0x01, 0x02, 0x00, service_type, client_id };
+ 	struct qmi_request *req;
+ 
+-	qmux->release_users++;
++	qmux->shutdown.release_users++;
+ 
+ 	req = __control_request_alloc(QMI_CTL_RELEASE_CLIENT_ID,
+ 					release_req, sizeof(release_req),
+@@ -1559,8 +1546,8 @@ static void __qmux_device_free(struct qmi_device_qmux *qmux)
+ 	if (qmux->discover.destroy)
+ 		qmux->discover.destroy(qmux->discover.user_data);
+ 
+-	if (qmux->shutdown_idle)
+-		l_idle_remove(qmux->shutdown_idle);
++	if (qmux->shutdown.idle)
++		l_idle_remove(qmux->shutdown.idle);
+ 
+ 	l_free(qmux->version_str);
+ 	l_free(qmux);
+@@ -1570,10 +1557,10 @@ static void qmux_shutdown_destroy(void *user_data)
  {
--	struct discover_data *data = user_data;
-+	l_timeout_remove(qmux->discover.timeout);
-+	qmux->discover.func(qmux->discover.user_data);
+ 	struct qmi_device_qmux *qmux = user_data;
  
--	DISCOVERY_DONE(data, data->user_data);
-+	if (qmux->discover.destroy)
-+		qmux->discover.destroy(qmux->discover.user_data);
-+
-+	memset(&qmux->discover, 0, sizeof(qmux->discover));
- }
+-	if (qmux->shutdown_destroy)
+-		qmux->shutdown_destroy(qmux->shutdown_user_data);
++	if (qmux->shutdown.destroy)
++		qmux->shutdown.destroy(qmux->shutdown.user_data);
  
--/* sync will release all previous clients */
--static bool qmi_device_qmux_sync(struct qmi_device_qmux *qmux,
--					struct discover_data *data)
-+static void qmux_sync_callback(uint16_t message, uint16_t length,
-+					const void *buffer, void *user_data)
+-	qmux->shutdown_idle = NULL;
++	qmux->shutdown.idle = NULL;
+ 
+ 	if (qmux->destroyed)
+ 		__qmux_device_free(qmux);
+@@ -1583,41 +1570,45 @@ static void qmux_shutdown_callback(struct l_idle *idle, void *user_data)
  {
--	struct qmi_request *req;
--
--	DEBUG(&qmux->debug, "Sending sync to reset QMI");
--
--	req = __control_request_alloc(QMI_CTL_SYNC, NULL, 0,
--					qmux_sync_callback, data);
--
--	__ctl_request_submit(qmux, req);
-+	struct qmi_device_qmux *qmux = user_data;
+ 	struct qmi_device_qmux *qmux = user_data;
  
--	return true;
-+	__qmux_discovery_finished(qmux);
- }
- 
- static void qmux_discover_callback(uint16_t message, uint16_t length,
- 					const void *buffer, void *user_data)
- {
--	struct discover_data *data = user_data;
--	struct qmi_device *device = data->device;
--	struct qmi_device_qmux *qmux =
--		l_container_of(device, struct qmi_device_qmux, super);
-+	struct qmi_device_qmux *qmux = user_data;
-+	struct qmi_device *device = &qmux->super;
- 	const struct qmi_result_code *result_code;
- 	const struct qmi_service_list *service_list;
- 	const void *ptr;
-@@ -1344,69 +1306,68 @@ static void qmux_discover_callback(uint16_t message, uint16_t length,
- 	DEBUG(&qmux->debug, "version string: %s", qmux->version_str);
- 
- done:
--	/* if the device support the QMI call SYNC over the CTL interface */
-+	/*
-+	 * If the device support the QMI call SYNC over the CTL interface,
-+	 * invoke it to reset the state, including release all previously
-+	 * allocated clients
-+	 */
- 	if ((qmux->control_major == 1 && qmux->control_minor >= 5) ||
- 			qmux->control_major > 1) {
--		qmi_device_qmux_sync(qmux, data);
-+		struct qmi_request *req =
-+			__control_request_alloc(QMI_CTL_SYNC, NULL, 0,
-+						qmux_sync_callback, qmux);
-+
-+		DEBUG(&qmux->debug, "Sending sync to reset QMI");
-+		qmux->discover.tid = __ctl_request_submit(qmux, req);
+-	if (qmux->release_users > 0)
++	if (qmux->shutdown.release_users > 0)
  		return;
- 	}
  
--	DISCOVERY_DONE(data, data->user_data);
-+	__qmux_discovery_finished(qmux);
+ 	qmux->shutting_down = true;
+ 
+-	if (qmux->shutdown_func)
+-		qmux->shutdown_func(qmux->shutdown_user_data);
++	if (qmux->shutdown.func)
++		qmux->shutdown.func(qmux->shutdown.user_data);
+ 
+ 	qmux->shutting_down = false;
+ 
+-	l_idle_remove(qmux->shutdown_idle);
++	l_idle_remove(qmux->shutdown.idle);
  }
  
- static void qmux_discover_reply_timeout(struct l_timeout *timeout,
- 							void *user_data)
- {
--	struct discover_data *data = user_data;
--	struct qmi_device *device = data->device;
-+	struct qmi_device *device = user_data;
- 	struct qmi_device_qmux *qmux =
- 		l_container_of(device, struct qmi_device_qmux, super);
- 	struct qmi_request *req;
- 
--	l_timeout_remove(data->timeout);
--	data->timeout = NULL;
--
- 	/* remove request from queues */
--	req = find_control_request(qmux, data->tid);
--
--	DISCOVERY_DONE(data, data->user_data);
--
-+	req = find_control_request(qmux, qmux->discover.tid);
- 	if (req)
- 		__request_free(req);
-+
-+	__qmux_discovery_finished(qmux);
- }
- 
--static int qmi_device_qmux_discover(struct qmi_device *device,
--					qmi_discover_func_t func,
--					void *user_data,
--					qmi_destroy_func_t destroy)
-+int qmi_qmux_device_discover(struct qmi_device *device,
-+				qmi_qmux_device_discover_func_t func,
-+				void *user_data, qmi_destroy_func_t destroy)
+-static int qmi_device_qmux_shutdown(struct qmi_device *device,
+-					qmi_shutdown_func_t func,
++int qmi_qmux_device_shutdown(struct qmi_device *device,
++					qmi_qmux_device_shutdown_func_t func,
+ 					void *user_data,
+ 					qmi_destroy_func_t destroy)
  {
 -	struct qmi_device_qmux *qmux =
 -		l_container_of(device, struct qmi_device_qmux, super);
--	struct discover_data *data;
 +	struct qmi_device_qmux *qmux;
- 	struct qmi_request *req;
- 
--	DEBUG(&qmux->debug, "device %p", qmux);
++
 +	if (!device)
 +		return -EINVAL;
- 
--	if (l_queue_length(device->service_infos) > 0)
--		return -EALREADY;
++
 +	qmux = l_container_of(device, struct qmi_device_qmux, super);
  
--	data = l_new(struct discover_data, 1);
-+	DEBUG(&qmux->debug, "device %p", qmux);
+-	if (qmux->shutdown_idle)
++	if (qmux->shutdown.idle)
+ 		return -EALREADY;
  
--	data->super.destroy = discover_data_free;
--	data->device = device;
--	data->func = func;
--	data->user_data = user_data;
--	data->destroy = destroy;
-+	if (l_queue_length(device->service_infos) > 0 || qmux->discover.tid)
-+		return -EALREADY;
+ 	DEBUG(&qmux->debug, "device %p", &qmux);
  
- 	req = __control_request_alloc(QMI_CTL_GET_VERSION_INFO, NULL, 0,
--						qmux_discover_callback, data);
--
--	data->tid = __ctl_request_submit(qmux, req);
--	data->timeout = l_timeout_create(DISCOVER_TIMEOUT,
--						qmux_discover_reply_timeout,
--						data, NULL);
-+						qmux_discover_callback, qmux);
+-	qmux->shutdown_idle = l_idle_create(qmux_shutdown_callback, qmux,
++	qmux->shutdown.idle = l_idle_create(qmux_shutdown_callback, qmux,
+ 						qmux_shutdown_destroy);
  
--	__qmi_device_discovery_started(device, &data->super);
-+	qmux->discover.func = func;
-+	qmux->discover.user_data = user_data;
-+	qmux->discover.destroy = destroy;
-+	qmux->discover.tid = __ctl_request_submit(qmux, req);
-+	qmux->discover.timeout =
-+		l_timeout_create(DISCOVER_TIMEOUT, qmux_discover_reply_timeout,
-+						qmux, NULL);
+-	if (!qmux->shutdown_idle)
++	if (!qmux->shutdown.idle)
+ 		return -EIO;
+ 
+-	qmux->shutdown_func = func;
+-	qmux->shutdown_user_data = user_data;
+-	qmux->shutdown_destroy = destroy;
++	qmux->shutdown.func = func;
++	qmux->shutdown.user_data = user_data;
++	qmux->shutdown.destroy = destroy;
  
  	return 0;
  }
-@@ -1593,6 +1554,11 @@ static void __qmux_device_free(struct qmi_device_qmux *qmux)
- {
- 	l_queue_destroy(qmux->control_queue, __request_free);
- 
-+	l_timeout_remove(qmux->discover.timeout);
-+
-+	if (qmux->discover.destroy)
-+		qmux->discover.destroy(qmux->discover.user_data);
-+
- 	if (qmux->shutdown_idle)
- 		l_idle_remove(qmux->shutdown_idle);
- 
-@@ -1658,7 +1624,6 @@ static int qmi_device_qmux_shutdown(struct qmi_device *device,
- 
+@@ -1625,7 +1616,6 @@ static int qmi_device_qmux_shutdown(struct qmi_device *device,
  static const struct qmi_device_ops qmux_ops = {
  	.write = qmi_device_qmux_write,
--	.discover = qmi_device_qmux_discover,
  	.client_release = qmi_device_qmux_client_release,
- 	.shutdown = qmi_device_qmux_shutdown,
+-	.shutdown = qmi_device_qmux_shutdown,
  };
+ 
+ struct qmi_device *qmi_qmux_device_new(const char *device)
+@@ -1889,7 +1879,6 @@ static bool qrtr_received_data(struct l_io *io, void *user_data)
+ static const struct qmi_device_ops qrtr_ops = {
+ 	.write = qmi_qrtr_node_write,
+ 	.client_release = NULL,
+-	.shutdown = NULL,
+ };
+ 
+ struct qmi_qrtr_node *qmi_qrtr_node_new(uint32_t node)
 diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-index 1158600989c5..152ebf1eb14b 100644
+index 152ebf1eb14b..64eebc27c17c 100644
 --- a/drivers/qmimodem/qmi.h
 +++ b/drivers/qmimodem/qmi.h
-@@ -58,7 +58,7 @@ struct qmi_service;
+@@ -57,10 +57,10 @@ struct qmi_result;
+ struct qmi_service;
  
  typedef void (*qmi_debug_func_t)(const char *str, void *user_data);
- typedef void (*qmi_shutdown_func_t)(void *user_data);
--typedef void (*qmi_discover_func_t)(void *user_data);
-+typedef void (*qmi_qmux_device_discover_func_t)(void *user_data);
+-typedef void (*qmi_shutdown_func_t)(void *user_data);
+ typedef void (*qmi_qmux_device_discover_func_t)(void *user_data);
  typedef void (*qmi_qmux_device_create_client_func_t)(struct qmi_service *,
  							void *user_data);
++typedef void (*qmi_qmux_device_shutdown_func_t)(void *user_data);
  typedef void (*qmi_qrtr_node_lookup_done_func_t)(void *);
-@@ -69,6 +69,9 @@ struct qmi_device *qmi_qmux_device_new(const char *device);
- void qmi_qmux_device_free(struct qmi_device *device);
- void qmi_qmux_device_set_debug(struct qmi_device *device,
- 				qmi_debug_func_t func, void *user_data);
-+int qmi_qmux_device_discover(struct qmi_device *device,
-+				qmi_qmux_device_discover_func_t func,
-+				void *user_data, qmi_destroy_func_t destroy);
- bool qmi_qmux_device_create_client(struct qmi_device *device,
- 				uint16_t service_type,
- 				qmi_qmux_device_create_client_func_t func,
-@@ -78,8 +81,6 @@ bool qmi_qmux_device_get_service_version(struct qmi_device *device,
+ 
+ typedef void (*qmi_service_result_func_t)(struct qmi_result *, void *);
+@@ -80,8 +80,8 @@ bool qmi_qmux_device_get_service_version(struct qmi_device *device,
+ 					uint16_t type,
  					uint16_t *major, uint16_t *minor);
  bool qmi_qmux_device_has_service(struct qmi_device *device, uint16_t type);
- 
--int qmi_device_discover(struct qmi_device *device, qmi_discover_func_t func,
--				void *user_data, qmi_destroy_func_t destroy);
- int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
+-
+-int qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t func,
++int qmi_qmux_device_shutdown(struct qmi_device *device,
++				qmi_qmux_device_shutdown_func_t func,
  				void *user_data, qmi_destroy_func_t destroy);
  
+ struct qmi_qrtr_node *qmi_qrtr_node_new(uint32_t node);
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 7570a7db3876..e39ea6c4ed0e 100644
+index e39ea6c4ed0e..74df3c360c96 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -499,7 +499,8 @@ static void discover_cb(void *user_data)
+@@ -234,7 +234,7 @@ static void shutdown_device(struct ofono_modem *modem)
  
- 	if (!(data->features & GOBI_DMS)) {
- 		if (++data->discover_attempts < 3 &&
--				!qmi_device_discover(data->device, discover_cb,
-+				!qmi_qmux_device_discover(data->device,
-+								discover_cb,
- 								modem, NULL))
- 			return;
+ 	cleanup_services(data);
  
-@@ -544,7 +545,7 @@ static int gobi_enable(struct ofono_modem *modem)
- 	if (getenv("OFONO_QMI_DEBUG"))
- 		qmi_qmux_device_set_debug(data->device, gobi_debug, "QMI: ");
- 
--	r = qmi_device_discover(data->device, discover_cb, modem, NULL);
-+	r = qmi_qmux_device_discover(data->device, discover_cb, modem, NULL);
- 	if (!r)
- 		return -EINPROGRESS;
+-	if (qmi_device_shutdown(data->device, shutdown_cb, modem, NULL) < 0)
++	if (qmi_qmux_device_shutdown(data->device, shutdown_cb, modem, NULL) < 0)
+ 		shutdown_cb(modem);
+ }
  
 -- 
 2.45.0
