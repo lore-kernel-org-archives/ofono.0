@@ -1,62 +1,62 @@
-Received: from mail-oi1-f176.google.com (mail-oi1-f176.google.com [209.85.167.176])
+Received: from mail-oi1-f172.google.com (mail-oi1-f172.google.com [209.85.167.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03BD61AE84E
-	for <ofono@lists.linux.dev>; Thu, 20 Jun 2024 14:52:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C7E031AE87D
+	for <ofono@lists.linux.dev>; Thu, 20 Jun 2024 14:52:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718895140; cv=none; b=sSQij0MVPQJ8Cr2d0HW8REKg5vbqetBYdc/temRXOu/SK/uVLeTJS7/AninXB+MmhWraZ7vmJPGDCjGZlJAtBtYeXuG53ENB052WZAsUDIrsBtOACkoQqTvjxV9Rvv/nO+ixmw7St7OCn+g6xoLGaH/2nDtu57pwLZrjqBHPVEE=
+	t=1718895141; cv=none; b=gIzDWgEJD5ACsh9nWDccMmdMR+w/FOQ4ILpteA+9D4TbHOYt9Mz/EWzHpVUpF6rMQgecqhQgc0ftA1Dqb6fQjiF7Z5Fc2cjk6Dd0k16saZsRtdgtbUiCFDwu+55dOhj8dL6Px96KjPXD+xJpH9UZqxSxa4eOf/T729dbH+S4C5E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718895140; c=relaxed/simple;
-	bh=yCASfTUa+mVbFQpxIgvKw6xLhMDlWjmwUkHHvr0CTFA=;
+	s=arc-20240116; t=1718895141; c=relaxed/simple;
+	bh=cKIaJ66AL5AWhs8O/mUG2hL2EMBYlebuTzuZ866/o7c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=awdVCR943LS/kwNENQLYb5L6zz1SlK0swipi4ad/pWl9dgI+KGtLlv8iBoEurzWv0HbiVDR0nB+qdQLxqxXmTN+H+UcPhurdihdosbUEhGdRN4xp4P9n1fNfUVgRh9Ew25m8kEhjhYXiEQSzvAFNtZPNl4jYapZRyO1S4cIpSh4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=H1kctCW2; arc=none smtp.client-ip=209.85.167.176
+	 MIME-Version; b=Kipwsu3uo/ErtA1TWj5zYWq7fKpC6ZuuN/ijbjHYT3EMWj4DGza40Pxh7P+GnUuqoSHdph5yddGz9tZBsfOJhnKkxh5lb0jE2uAlSynAO2hrsmOv+nRiPXgEmNpo2BJjo9r7HDPYk5bXGKCN3pXV1Vk6argNJoBl59aLI/68ET4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Y5ePTaHq; arc=none smtp.client-ip=209.85.167.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="H1kctCW2"
-Received: by mail-oi1-f176.google.com with SMTP id 5614622812f47-3c9b94951cfso524634b6e.3
-        for <ofono@lists.linux.dev>; Thu, 20 Jun 2024 07:52:18 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Y5ePTaHq"
+Received: by mail-oi1-f172.google.com with SMTP id 5614622812f47-3c9cc681ee7so405071b6e.1
+        for <ofono@lists.linux.dev>; Thu, 20 Jun 2024 07:52:19 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718895138; x=1719499938; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1718895139; x=1719499939; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=3wIy4qRUI1gV6a2AuRMXprV+NjXE4khA/yj+e1Qp8qQ=;
-        b=H1kctCW25YvP/EK4Z0zf6qUb8IhuAUEzC/ncSHLmbVpJRVLm3UAqGZClxhEnyyGCIj
-         R8usjk+pXpn3Xc+rsc69FFIf2LB1flSGnJZ2W6MF5M/+M+lDgaMDdBBVW+P4VdUmvLeq
-         lJIdaP7TnZH/VmVJNbuq4ExOyYJDgHuRqPlBwK2wI1xDSv+x38ohKzKEQt76pCfTieLT
-         gsSXqAGg6PeJ8K94bo00aoPWltInxWv8QT5esqQKpGRPHX0qSMRs6sxlS+3WZcy/CPJ+
-         ypXrqmZPp6f6xGyDmBHnbfT8cLFdUn9stYmPvl0d/0oPLBjKrAlbhutZ8FzUJhBwkXse
-         HfKQ==
+        bh=inCgtKfHc5T0FMjikFwxW/MC3LMHDrydzTA6wxZFvbk=;
+        b=Y5ePTaHq1geLavCZZ0lXDgEbz0m7LxT249lmuGpKODUY7f8rvC6hi1+LmA8Zr/7coN
+         g72D4U/qf5Z02Y6zm8L4u6d7FrtpfLT8KLQDLMC/xNBWcDnoLDkykfwrPeoQsjC9+L+7
+         ve23oSQ9KIyez/rKJDffjP3Rj3Lwnhq9RaybT5nUWc0ttaHqvAaJAnQsxBkLz3mD2l7T
+         TzUqmdFq1HNYyQ0FaVkEivrEJcg7Dyd0lNQ1ms/4BBZUne6yrXfIR0Sr39zNqZxFqUcD
+         ztHK7uzvC9+4Xk0VVI/kPA7D8ebsu05tPdRhdEgww//PqEtd1P/AS0e9xcNlPcAeO06I
+         v8rg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718895138; x=1719499938;
+        d=1e100.net; s=20230601; t=1718895139; x=1719499939;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=3wIy4qRUI1gV6a2AuRMXprV+NjXE4khA/yj+e1Qp8qQ=;
-        b=MNcfqWvvVeC54WxevF8syi8x5WhGFJzOHzh4rRNw8uSDCooh/4FcvDr8XsqqKIq4ae
-         zL1OkKHkoe71fJQPBg7bAXVjToysW/r4kUBSGYugss2q2mJP+bxBsmycoXuMd2OZrsK+
-         I49WqvoeeV101Hvcb7K79cG7O8nEMpCnJBa+GEhhzlG81ouTsnAOCMtTw3lyXxsBX4hs
-         GWsHIE40sn9w+NwUmq64Yj4Jvn0QytgV++dXGiLAtqfwByCNPcuAnA//ef0InGLE4w5c
-         nAUAm4UmHQSYtqU7XE9Kop25P7OnPgWKK4fC7EuT9Q0BFmUIAFxYWMf6Um5bbOJkc5Z2
-         TNIg==
-X-Gm-Message-State: AOJu0YymuEeY2t6nuSTD+riLYTS35lXSn3k9SE2KDIuhFkFTwWmBDOZ9
-	Y2Hi3koBEe/xR+USXpkIaGPycMoGuAweDABs8IkKvVaxTSwbrD7YCKSliQ==
-X-Google-Smtp-Source: AGHT+IFmEYX07HhrhzpO/agtfH/ng9ATwkLdzq8GHJkw03RxR+KGLoYmpPjb7aMYhFImX+yGkh3oQg==
-X-Received: by 2002:a05:6808:15a6:b0:3d5:123b:e2db with SMTP id 5614622812f47-3d51bac5225mr5788112b6e.41.1718895138160;
+        bh=inCgtKfHc5T0FMjikFwxW/MC3LMHDrydzTA6wxZFvbk=;
+        b=u+CziKsXM8ains+8FoanZJwaIIrlg2Sb4q5sw/PnIYU73GMbbEvT+w3Ew3ZZUu4WKR
+         BWn25pc7ZKkxGKXbSBONjKTYMLKtl+ziWHJ4cYkyiKTi6BVyiHXCn8aFQd72wRQNEB2i
+         baF48/Y4qKzFjixlmxs12i58ZBiHcELF4DmO3RxuXmATvLAg5mJiImWbp9tdcJIAXyt7
+         VULKJz60GCXX20chmkm4V+X2px39N9ZNqpIyDbY+nOgpx0QSPm5ejnVJFxonjqzq8dSE
+         m8YBbt1N0tjCHHqIqjMM91GpsuR8DqxmNolhv2C6WqiiFJdYin0r59mnA5rg9oy75EZ/
+         BWPw==
+X-Gm-Message-State: AOJu0Yxwb90jBKaP88U1jzMzOVul9mmHq7dpCWVFU9hkadMd+7f+tyxU
+	C/g5Wgu/mZx5v1vGZNTSLWlAj13v5GDVu3OwB/GhpgWs4ElCu9amtUB4Xg==
+X-Google-Smtp-Source: AGHT+IELyrsl/SSQh7UysshFcz7fVf+YPfjnaXhDmZ7jcHN+BmuSFZ0VRVcxuqX9Wwq4HufK0U4Dtw==
+X-Received: by 2002:a05:6808:1b14:b0:3d5:145e:36aa with SMTP id 5614622812f47-3d51b5d6383mr2836436b6e.8.1718895138775;
         Thu, 20 Jun 2024 07:52:18 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 5614622812f47-3d2476069ffsm2510209b6e.13.2024.06.20.07.52.17
+        by smtp.gmail.com with ESMTPSA id 5614622812f47-3d2476069ffsm2510209b6e.13.2024.06.20.07.52.18
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 20 Jun 2024 07:52:17 -0700 (PDT)
+        Thu, 20 Jun 2024 07:52:18 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v3 31/33] gprs: Fix memory leak
-Date: Thu, 20 Jun 2024 09:51:18 -0500
-Message-ID: <20240620145139.1135899-31-denkenz@gmail.com>
+Subject: [PATCH v3 32/33] qmi:gprs: Don't fail on unsupported INDICATION_REGISTER
+Date: Thu, 20 Jun 2024 09:51:19 -0500
+Message-ID: <20240620145139.1135899-32-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240620145139.1135899-1-denkenz@gmail.com>
 References: <20240620145139.1135899-1-denkenz@gmail.com>
@@ -68,70 +68,56 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-As reported by lsan:
-==1120532==ERROR: LeakSanitizer: detected memory leaks
+Some modems (like Sierra MC7710) seemingly do not support
+INDICATION_REGISTER request on WDS.  Do not fail gprs atom registration
+if so.  Only indications of interest are currently used only for
+informational output to syslog.
 
-Direct leak of 24 byte(s) in 1 object(s) allocated from:
-    #0 0x761c0dadf359 in __interceptor_malloc /usr/src/debug/gcc/gcc/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x9ae9b9 in l_malloc ell/util.c:49
-    #2 0x9f41a7 in l_uintset_new_from_range ell/uintset.c:181
-    #3 0x8e486f in ofono_gprs_set_cid_range src/gprs.c:2669
-    #4 0x55b8d0 in get_default_profile_number_cb drivers/qmimodem/gprs.c:399
-    #5 0x52f822 in service_send_callback drivers/qmimodem/qmi.c:2311
-    #6 0x51f461 in __rx_message drivers/qmimodem/qmi.c:801
-    #7 0x521d22 in received_qmux_data drivers/qmimodem/qmi.c:1052
-    #8 0x9da348 in io_callback ell/io.c:105
-    #9 0x9d5077 in l_main_iterate ell/main.c:461
-    #10 0x7811df in event_check src/main.c:182
-    #11 0x761c0e1260ed  (/usr/lib/libglib-2.0.so.0+0x5b0ed) (BuildId: e717410de6953d0e1e85882d796204ca2675f1d4)
-    #12 0x7ffe00000000  (<unknown module>)
-
-Indirect leak of 8 byte(s) in 1 object(s) allocated from:
-    #0 0x761c0dadf359 in __interceptor_malloc /usr/src/debug/gcc/gcc/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x9ae9b9 in l_malloc ell/util.c:49
-    #2 0x9f4211 in l_uintset_new_from_range ell/uintset.c:182
-    #3 0x8e486f in ofono_gprs_set_cid_range src/gprs.c:2669
-    #4 0x55b8d0 in get_default_profile_number_cb drivers/qmimodem/gprs.c:399
-    #5 0x52f822 in service_send_callback drivers/qmimodem/qmi.c:2311
-    #6 0x51f461 in __rx_message drivers/qmimodem/qmi.c:801
-    #7 0x521d22 in received_qmux_data drivers/qmimodem/qmi.c:1052
-    #8 0x9da348 in io_callback ell/io.c:105
-    #9 0x9d5077 in l_main_iterate ell/main.c:461
-    #10 0x7811df in event_check src/main.c:182
-    #11 0x761c0e1260ed  (/usr/lib/libglib-2.0.so.0+0x5b0ed) (BuildId: e717410de6953d0e1e85882d796204ca2675f1d4)
-    #12 0x7ffe00000000  (<unknown module>)
-
-The cid range can be set by the driver at any time.  If the gprs atom is
-removed prior to being registered, the memory is not freed.  Fix that by
-moving uintset deallocation to the remove method.
+ofonod[1120532]: drivers/qmimodem/gprs.c:set_event_report_cb()
+ofonod[1120532]: drivers/qmimodem/lte.c:modify_profile_cb()
+ofonod[1120532]: drivers/qmimodem/gprs.c:indication_register_cb()
+ofonod[1120532]: indication_register_cb: 71
+ofonod[1120532]: src/gprs.c:gprs_remove() atom: 0x504000022a90
+ofonod[1120532]: drivers/qmimodem/gprs.c:qmi_gprs_remove()
 ---
- src/gprs.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/qmimodem/gprs.c | 8 ++++++--
+ drivers/qmimodem/qmi.h  | 4 ++++
+ 2 files changed, 10 insertions(+), 2 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 57b823b0f1c6..97d6f382e87d 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -3014,9 +3014,6 @@ static void gprs_unregister(struct ofono_atom *atom)
+diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+index da7ad63c49cb..547b32059da4 100644
+--- a/drivers/qmimodem/gprs.c
++++ b/drivers/qmimodem/gprs.c
+@@ -279,8 +279,12 @@ static void indication_register_cb(struct qmi_result *result, void *user_data)
+ 	DBG("");
  
- 	free_contexts(gprs);
- 
--	l_uintset_free(gprs->used_cids);
--	gprs->used_cids = NULL;
--
- 	if (gprs->netreg_watch) {
- 		if (gprs->status_watch) {
- 			__ofono_netreg_remove_status_watch(gprs->netreg,
-@@ -3055,6 +3052,9 @@ static void gprs_remove(struct ofono_atom *atom)
- 	if (gprs->suspend_timeout)
- 		g_source_remove(gprs->suspend_timeout);
- 
-+	l_uintset_free(gprs->used_cids);
-+	gprs->used_cids = NULL;
+ 	if (qmi_result_set_error(result, &error)) {
+-		ofono_error("indication_register_cb: %hd", error);
+-		goto error;
++		ofono_error("%s: %s(%hd)", __func__,
++				qmi_result_get_error(result), error);
 +
- 	l_uintset_free(gprs->used_pids);
- 	gprs->used_pids = NULL;
++		/* Some modems do not support indications, ignore */
++		if (error != QMI_ERROR_INVALID_QMI_COMMAND)
++			goto error;
+ 	}
  
+ 	/*
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index 966f99f114fe..db20280f9aa3 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -50,6 +50,10 @@ enum qmi_data_endpoint_type {
+ 	QMI_DATA_ENDPOINT_TYPE_BAM_DMUX  = 0x05,
+ };
+ 
++enum qmi_error {
++	QMI_ERROR_INVALID_QMI_COMMAND				= 71,
++};
++
+ typedef void (*qmi_destroy_func_t)(void *user_data);
+ 
+ struct qmi_service;
 -- 
 2.45.0
 
