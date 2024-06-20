@@ -1,83 +1,176 @@
-Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oi1-f172.google.com (mail-oi1-f172.google.com [209.85.167.172])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE69847F53
-	for <ofono@lists.linux.dev>; Thu, 20 Jun 2024 07:29:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50188176255
+	for <ofono@lists.linux.dev>; Thu, 20 Jun 2024 14:51:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718868551; cv=none; b=mjEpriDCffCSeeRlzJ4lHdn5WPaKlj+hZNID4s8qNe+VO0YfyCievr6HGVeATVLMZkNAZ1FT+JZ5xMVVk61kM/J5//Zja/EKnOE2qkeR4oPXPQEAumd0JEdCzboARCCt6KLWGEEGOfSQjPbiqxjmPnZMrbk9lgFMkgkQA2gtQMw=
+	t=1718895109; cv=none; b=oKV07nFZpVRqM65W7ped18eDqRG4HQiJvF/giR0ZcVLbjdCfM+dq9kKp4J9ahlIxkX62EGItQ8qQo4YjJ7N4WYzYmphiePf5l2JRbSyvKbS91n9a8VWQ/Y5zfWm/z4u3VvKcZge1WcAQ2URthG+ixL6PT3vWkSOc8zTBpyhjuZ4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718868551; c=relaxed/simple;
-	bh=ajg+ReZb7Gs7vzjvg7Mpd5yfXNn00L1DFuCPgvgTQPM=;
-	h=From:Content-Type:Mime-Version:Subject:Message-Id:Date:Cc:To; b=ljiBz2UQxNXXPO3m319TCtCpd3Smtibq2m9XgGQyxsNuozfsZtKIz2NKOZR6+/99YXp75eIvZiAlUFbzhJjWBYVQauXLHy2RhACUApibzgnhC19sNRNuo9QwRaSLkiPM1UI9cAtOJMLztz04NdcdG91valFlD9sBGfD/zTntGsY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=WkPExFeY; arc=none smtp.client-ip=188.40.30.78
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
+	s=arc-20240116; t=1718895109; c=relaxed/simple;
+	bh=HUU3sUQwdUaQObDoIMlsAJAGfuur9LlGmMKFRvkjIlA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=PJfRTqk+4ndEnVcXS2/PMOzFsB1YHEr8peIXNqasOHvOE+hFT4kWcQ+46rhGfhhvJGkvPggJg8JKvgoMdCU17wiqn0ifCseHU6B3auEZ/FY6IbF0B5SkCpUHXXFrs+6WXLbg7SlH/y3nrswGej1/MUAuAgw/qjooQQq+L7224bs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cc4E0RHm; arc=none smtp.client-ip=209.85.167.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="WkPExFeY"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
-	s=default2211; h=To:Cc:Date:Message-Id:Subject:Mime-Version:
-	Content-Transfer-Encoding:Content-Type:From:Sender:Reply-To:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:In-Reply-To:References;
-	bh=ajg+ReZb7Gs7vzjvg7Mpd5yfXNn00L1DFuCPgvgTQPM=; b=WkPExFeYE7hakKngsU6YgdhnZg
-	byKM0AoeQJxePyjsIBN/KcRtzGe/gTMeUtmkFUeQ12z30J8hkwevWuS8MVHuc4lkyTUSghw3h+zty
-	JvjHoxALku6qjywj7JJ1JOfOabb+bUjgxkbBcV3k7gqMJhxwEX12mFN3qcSZP6KfUTyKhyQb9a5/9
-	klD0V29z7bEQS8nXiO32Yz80sSgIPIq7EzC8v1aUyEVucwEWa3KDgIf+ac/s+WKYvYYP2Kf8kPqhC
-	OyTScV/14NJ2nq8iCOGkPygbzZ8ha1C6N0gjxA6/advjLNVZeWTildATDmxdDlaZhK1bsASI79lM4
-	RqByZ23g==;
-Received: from sslproxy01.your-server.de ([78.46.139.224])
-	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.94.2)
-	(envelope-from <sean@geanix.com>)
-	id 1sKCE8-000JiC-Bj; Thu, 20 Jun 2024 09:29:00 +0200
-Received: from [185.17.218.86] (helo=smtpclient.apple)
-	by sslproxy01.your-server.de with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.96)
-	(envelope-from <sean@geanix.com>)
-	id 1sKCE7-0005zp-1A;
-	Thu, 20 Jun 2024 09:29:00 +0200
-From: Sean Nyekjaer <sean@geanix.com>
-Content-Type: text/plain;
-	charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cc4E0RHm"
+Received: by mail-oi1-f172.google.com with SMTP id 5614622812f47-3d518cdb252so453082b6e.1
+        for <ofono@lists.linux.dev>; Thu, 20 Jun 2024 07:51:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1718895107; x=1719499907; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=ku0cRHSkqfHg1v79ZIDpC0B8jaIvjzt5KGSfHCSRpGk=;
+        b=cc4E0RHm+YQyh1xJyulO3MQWPW56gExE71fkPdNma1Q/pb+G6PZxO4n5s+e1GPDMyM
+         sgWIdnP5EcUVp+zcSinvP2ZMW5eSIO7vLXr7/hoxq3dMNOGIyYoutzHImmeetZkKXbNr
+         2toxyuiZRlFtncCeIH4/ONb3Pf8ryhC11zchAoLJxSo7VXVoGY7h+imZd2W3Tgd7dgyH
+         NGFYZOMFbe2ln//fdQVJhl/KmBmN3umNssg0LI806o0iTegAv4EtfilGhjj4dCO8XUxX
+         A8BLEAb/vlI4Kz3fVC5skPurs6OiYbVwjLjDw4e1sklvTq1BIyMXHxB+j7mSmM4U8HqR
+         LjIg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1718895107; x=1719499907;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=ku0cRHSkqfHg1v79ZIDpC0B8jaIvjzt5KGSfHCSRpGk=;
+        b=l68Fq+SCzYcD9VHYn11H6FbizntxdzdEQEs05VCR0xVQWCJRgMF+fbfvij9G9ir7ZA
+         s2/7T5hG1GiPXeEQtn5sPKye8zAHd9aZO3gfExIaZ75ys8H2vMU/4sp15VyUjB5M0DBW
+         BAAWr++nfQ5Aibsp3vmYtpdKaPokdPP2qYDlhH+zjQNADZO+J/fD1W/7HYJTDHSIbSDm
+         k0K0dnxK0LG85mwIiPxDbQEAtK8pkyBCg68S32QksgHPzIa9dkfrcyGR33NlHq1u1zqp
+         wlPx/pzVtQOCVwIqsN04zDiobndDP/5TKA0hSMGv9q4d+nypdrKN04R7Umoo2Z79L07M
+         9u+Q==
+X-Gm-Message-State: AOJu0YyIWuOuOiUp8/tCatz1QorXN3Qnsd8X3s3rG0geHJNT9IsAsDqf
+	0ZV4B0YHVpYj85Z7eFORPHrImg6D42pGbP1Gqz8sfWowZtkoJQI7rSqkHQ==
+X-Google-Smtp-Source: AGHT+IGKqWBthjwIQNpN9uMxyhFR3XzERfBi8xWgH8gc64/61PXI+sJYpSHOz2/QNNo0RzZr061uBA==
+X-Received: by 2002:a05:6808:1985:b0:3d2:27cd:fe1 with SMTP id 5614622812f47-3d51bac5643mr6390748b6e.40.1718895107227;
+        Thu, 20 Jun 2024 07:51:47 -0700 (PDT)
+Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id 5614622812f47-3d2476069ffsm2510209b6e.13.2024.06.20.07.51.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 20 Jun 2024 07:51:46 -0700 (PDT)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH v3 01/33] qmi: Remove qmi_free()
+Date: Thu, 20 Jun 2024 09:50:48 -0500
+Message-ID: <20240620145139.1135899-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.45.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3774.600.62\))
-Subject: qmi: differentiate between lte-cat-m1 and lte-cat-nb1
-Message-Id: <13BA976A-5959-4708-97F2-77285400EFB1@geanix.com>
-Date: Thu, 20 Jun 2024 09:28:48 +0200
-Cc: ofono@lists.linux.dev,
- =?utf-8?Q?Martin_Hundeb=C3=B8ll?= <martin@geanix.com>
-To: Denis Kenzior <denkenz@gmail.com>
-X-Mailer: Apple Mail (2.3774.600.62)
-X-Authenticated-Sender: sean@geanix.com
-X-Virus-Scanned: Clear (ClamAV 0.103.10/27311/Wed Jun 19 10:38:14 2024)
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Hi Denis,
+This was just a simple wrapper around l_free, get rid of it.
+---
+ drivers/qmimodem/devinfo.c    | 8 ++++----
+ drivers/qmimodem/qmi.c        | 5 -----
+ drivers/qmimodem/qmi.h        | 2 --
+ drivers/qmimodem/sim-legacy.c | 6 +++---
+ drivers/qmimodem/sim.c        | 2 +-
+ 5 files changed, 8 insertions(+), 15 deletions(-)
 
-We are using the Quectel BG96, when online Technology comes up as =
-=E2=80=9Clte=E2=80=9D.
-We would like to see if it=E2=80=99s connected via =E2=80=9Clte-cat-m1=E2=80=
-=9D or =E2=80=9Clte-cat-nb1=E2=80=9D.
-It doesn=E2=80=99t look like the QMI standard is supporting this =
-differentiation,
-I have also looked in libqmi and uqmi. Is this the correct assumption?
-
-Via AT commands, we can get the info:
-AT+QCSQ
-+QCSQ: "CAT-M1",-62,-88,168,-11
-AT+QNWINFO
-+QNWINFO: "CAT-M1","23801","LTE BAND 20",6350
-
-Guess we are in the same boat as the folks from "RFC - Add AT interface =
-to qmi device=E2=80=9D thread.
-We need to add the AT interface in the modem driver and in some way =
-prefer the technology from the AT interface.
-
-Br,
-Sean
+diff --git a/drivers/qmimodem/devinfo.c b/drivers/qmimodem/devinfo.c
+index 2e514cfa3265..fd1ca3ceb2dd 100644
+--- a/drivers/qmimodem/devinfo.c
++++ b/drivers/qmimodem/devinfo.c
+@@ -45,7 +45,7 @@ static void string_cb(struct qmi_result *result, void *user_data)
+ 
+ 	CALLBACK_WITH_SUCCESS(cb, str, cbd->data);
+ 
+-	qmi_free(str);
++	l_free(str);
+ }
+ 
+ static void qmi_query_manufacturer(struct ofono_devinfo *devinfo,
+@@ -136,9 +136,9 @@ static void get_ids_cb(struct qmi_result *result, void *user_data)
+ 	else
+ 		CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+ 
+-	qmi_free(esn);
+-	qmi_free(imei);
+-	qmi_free(meid);
++	l_free(esn);
++	l_free(imei);
++	l_free(meid);
+ }
+ 
+ static void qmi_query_serial(struct ofono_devinfo *devinfo,
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 91469dc2e00c..632f647e5ea7 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -181,11 +181,6 @@ struct qmi_tlv_hdr {
+ } __attribute__ ((packed));
+ #define QMI_TLV_HDR_SIZE 3
+ 
+-void qmi_free(void *ptr)
+-{
+-	l_free(ptr);
+-}
+-
+ static bool qmi_service_info_matches(const void *data, const void *user)
+ {
+ 	const struct qmi_service_info *info = data;
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index 821e54443658..de6238f25e62 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -56,8 +56,6 @@ enum qmi_data_endpoint_type {
+ 	QMI_DATA_ENDPOINT_TYPE_BAM_DMUX  = 0x05,
+ };
+ 
+-void qmi_free(void *ptr);
+-
+ typedef void (*qmi_destroy_func_t)(void *user_data);
+ 
+ 
+diff --git a/drivers/qmimodem/sim-legacy.c b/drivers/qmimodem/sim-legacy.c
+index 1feaf86976c6..4c909f7f4ae4 100644
+--- a/drivers/qmimodem/sim-legacy.c
++++ b/drivers/qmimodem/sim-legacy.c
+@@ -71,14 +71,14 @@ static void get_iccid_cb(struct qmi_result *result, void *user_data)
+ 
+ 	len = strlen(str);
+ 	if (len > 20) {
+-		qmi_free(str);
++		l_free(str);
+ 		CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
+ 		return;
+ 	}
+ 
+ 	sim_encode_bcd_number(str, iccid);
+ 	iccid_len = len / 2;
+-	qmi_free(str);
++	l_free(str);
+ 
+ 	CALLBACK_WITH_SUCCESS(cb, iccid, iccid_len, cbd->data);
+ }
+@@ -128,7 +128,7 @@ static void get_imsi_cb(struct qmi_result *result, void *user_data)
+ 
+ 	CALLBACK_WITH_SUCCESS(cb, str, cbd->data);
+ 
+-	qmi_free(str);
++	l_free(str);
+ }
+ 
+ static void qmi_read_imsi(struct ofono_sim *sim,
+diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
+index 876274fa87b4..1fffae27f63e 100644
+--- a/drivers/qmimodem/sim.c
++++ b/drivers/qmimodem/sim.c
+@@ -427,7 +427,7 @@ static void get_imsi_cb(struct qmi_result *result, void *user_data)
+ 
+ 	CALLBACK_WITH_SUCCESS(cb, str, cbd->data);
+ 
+-	qmi_free(str);
++	l_free(str);
+ }
+ 
+ static void qmi_read_imsi(struct ofono_sim *sim,
+-- 
+2.45.0
 
