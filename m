@@ -1,62 +1,62 @@
-Received: from mail-oo1-f45.google.com (mail-oo1-f45.google.com [209.85.161.45])
+Received: from mail-oo1-f52.google.com (mail-oo1-f52.google.com [209.85.161.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47B5D1A01A9
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFF971A00F1
 	for <ofono@lists.linux.dev>; Mon, 24 Jun 2024 19:33:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.45
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719257607; cv=none; b=OrFiXLqHqeFevMapQ7Iohun4F0RjEZYTzXwZyeUVauVWDY2zUvi3vtsX8W/Hqw3SZYf8ziqZCN24yV+vmF0fKqpRri7lFFkWJHrwJH6NL7GDxieERmPPA3Tzt6Gtrf/EHwNOgKk97ewMYKQyWxEajhCuoRpDMNOhlaxP5FMVTIA=
+	t=1719257608; cv=none; b=IcbdnVUVo8ODtPbBj1mPaPY5Osy6yKRBkLJLQqhxgNnbpFPxisvcmBAIeZiM7WKmKNQp/LnBWgqBoAY2F2zXmWQB+howZPVCp65kPG2VxYC+zGMk6Qo3SrUaGEjgma54YIiW8hW/0uB53w95zJtJVbYbkQiDWN+ihPm9iHW9+VQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719257607; c=relaxed/simple;
-	bh=q2xnZlt/m5I5YG0NKJYp1eMi2APojbTBKYtZs/5/h2I=;
+	s=arc-20240116; t=1719257608; c=relaxed/simple;
+	bh=Sf9SAntpBFui7nghYemR2jMqlLdL23TjEM13Oni+L9c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=U2mFFLxVZlB6q5FDvLSGlDH0ZvnRmml69mO5s0up4268hiDXxssyoR0S6CJuVcZwI7UF3erXuazqYAbu6HWmIT2dsxbpub1gzdX6kToP+hT4xIOlTMHW1XyTYiHsoOBiENAfWMPZ416mpzYkO+8wAcbNlW1v6ahDbYOTk14Szds=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MXMF86X7; arc=none smtp.client-ip=209.85.161.45
+	 MIME-Version; b=LHjpAuq+8BXp9GWJDIJYAgDx9uq3xtpaWZ+e8+mWbwRt+Gq4R8xbH1pvWipq/ykOo7KRe3jwP1yCeEd1XwPYLPtcHI7aJ9Cy6TRqJz0W+FjBwmVugM2NNIIcKPSh3dErLjBxPTpk6l6Y5HOITUvuohnBdGtTX/G0yU3hKTDzJ1o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RNgyvdzW; arc=none smtp.client-ip=209.85.161.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MXMF86X7"
-Received: by mail-oo1-f45.google.com with SMTP id 006d021491bc7-5c1ef5ac47eso892943eaf.2
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RNgyvdzW"
+Received: by mail-oo1-f52.google.com with SMTP id 006d021491bc7-5c204600d49so568963eaf.0
         for <ofono@lists.linux.dev>; Mon, 24 Jun 2024 12:33:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1719257605; x=1719862405; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1719257606; x=1719862406; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=QIOf5a18nPN8XVNLEkurhAgeKtw6Y5gH32tbhaqR5jM=;
-        b=MXMF86X7BkqKODIUsKKkcVA5bEZ8A5wXzqjUk7wH5TYtbXEvQ3HKdbfiPEgBjD2Wbe
-         jw1QjVMAs0nz4TUOFhUwR2bdCaDq/IuXAKaWwvWzZqPND+o0Fz6gHOAsgo325trKKmBP
-         K172gTTile04VX6XqlOmlZsdGf/sr8m57X0GqLxWLWUJkApTE+8DjOxxCSW7GBtdANqr
-         wOg5BaLSQPKzVz/gZ0wMTdyfnf9yrCbtKsJWq2F2OBIoqplH66Qo4KWKFAFiykFVG+e0
-         Hx1GipuVwSh00sQgZXEIS65dSup7frWf6I3nKzyjk/O3kudxKJvLm5CgPZH/C6Wo46az
-         oaGw==
+        bh=GEJTUCe2wf8DQsbo+XSZs7Jrvac30T/fzttl+mCxL7Y=;
+        b=RNgyvdzWI+zHAI2/mN1tyOjLQGZeVGxJGQZq3DWpHuZ43Md5h5+JUNcUZkEgl83B3v
+         qyahV77RM53nxTldgtAOueF1/YDhrA2wYLuzcLA/GPyLwTd3eWP4fFclJD9ULkFWeJ6P
+         towfRUCeShiSzjqcctIlIDT9CPwnDE8dmEUSEKudiU+viKFImCQxmSiSdB1PqSF+JDkF
+         iiaaJwiNirkx0wBx0/wSqKzLQ+jnluGMIWQZWOnVxSOFGfLW7ohRueXYYo+ie6T6XoYV
+         o4ubGaoo2wU2Tvb4FofWGuLLgo6gR6+ASlR2B0nMTh/naj9frPePgUT269Dsg7VYA420
+         98tQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719257605; x=1719862405;
+        d=1e100.net; s=20230601; t=1719257606; x=1719862406;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=QIOf5a18nPN8XVNLEkurhAgeKtw6Y5gH32tbhaqR5jM=;
-        b=GSODwC1afAKiwlQzJMffgJS9dTqR9dEIFGCal5S9T3yjktkJe9AYWtUqDBIplKfNQh
-         5GRXsZKdtnaFVygsFBNPJ+YoKzLiWJY/8E8Ccy3j3xfv9U5b55YanaU2F1/ZQrP6bS/x
-         UWRfJGskq/wAMjl/gUta5h9FVPBB+eAotYsGnSO4w9IwvLHtxZOxvm/6AVFGMX7XitEY
-         54nj4p0b3I/gbN+GfxTb7/mhV46bEDtkXGpKTGpq7gXFF+6gBwO78cKmDtENFiPU//rN
-         zTADDdtr6zOLiazh0ot13UXj4cvIIg4QzNPJfmYHHG5/7RE9UQeVvTUC4f8icONfiDn8
-         Efpg==
-X-Gm-Message-State: AOJu0Yx6Vn2H2vXYHyF16obIoThA6AIVif2LTHChg/2FjiUEL/CGUejf
-	fAL8oPhMmfFkShRywlTaoJhLPuVD6P1o4u3cZHlrN9sGkda1fD7Q/hKtFQ==
-X-Google-Smtp-Source: AGHT+IHuTWsX+tsVEMyOJaKFc/m7OdV/b4NjZX4R58tTvpti8JyKUFyxYG98dENzs/P7hhfMgAbvdw==
-X-Received: by 2002:a4a:92c9:0:b0:5bd:a078:aba2 with SMTP id 006d021491bc7-5c1e95e1358mr6104256eaf.2.1719257605246;
-        Mon, 24 Jun 2024 12:33:25 -0700 (PDT)
+        bh=GEJTUCe2wf8DQsbo+XSZs7Jrvac30T/fzttl+mCxL7Y=;
+        b=KDQaniiuRmdSRM76G0wsk4IpY0aDIDkkpeKJohkrwFBRkDaSTgxg/MsecC+TV796Yi
+         ylgvSMBGb3Ba4VtCwoRwuv+aHW4y6LidglczKCjAv0br/bKbxP2FedoW9unm9i7rZYTZ
+         4ecJJpNHS/M10/AuPiX9/SGFiwjB5oAVHvkqObWOGCLZXJ5CdGKyV3bBiaigRKysLDDb
+         OQxsOyea1LAl1f/wQPADxfLwwBHUxcFwSFZ7kMsDihXM3ipGlAjCm0G+uKPCMFbhC7p/
+         N22+Bnw+GO1z4FA6QO6qyzvKubhUgWVqTuHbHwLktqteKX5GqhqiR/j+Vh/xGIx+OTMA
+         5KKw==
+X-Gm-Message-State: AOJu0Yx1Wrprkpcf6b0Zujaxuz/l5pC4ljZ313I6+lB4uHw9yA2S1KvH
+	8llaTm4ZNlF4eWyv38c5siQREo3i1gD95Q6i6THycLHXCVLVJ9ZU5fRhAg==
+X-Google-Smtp-Source: AGHT+IE/xqzQ+nHdRb52aYgjfRsLc/+HQzKBD6U0YIcKjtYHUvrluorJL8ZuOUxpVAB8K4hwySTdPQ==
+X-Received: by 2002:a4a:e501:0:b0:5c1:ebec:81fa with SMTP id 006d021491bc7-5c1ebec8fd8mr5932212eaf.4.1719257606038;
+        Mon, 24 Jun 2024 12:33:26 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5c1d54c2d44sm1480831eaf.8.2024.06.24.12.33.24
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5c1d54c2d44sm1480831eaf.8.2024.06.24.12.33.25
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Mon, 24 Jun 2024 12:33:25 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 10/13] qmi: Move release_client operation into service_family
-Date: Mon, 24 Jun 2024 14:32:53 -0500
-Message-ID: <20240624193315.1164943-10-denkenz@gmail.com>
+Subject: [PATCH 11/13] qmi: Add dedicated service for qrtr
+Date: Mon, 24 Jun 2024 14:32:54 -0500
+Message-ID: <20240624193315.1164943-11-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240624193315.1164943-1-denkenz@gmail.com>
 References: <20240624193315.1164943-1-denkenz@gmail.com>
@@ -68,224 +68,127 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-qmi_device has been renamed into qmi_transport which now encapsulated
-the details of maintaining a list of outstanding requests, active
-service families and low-level tx/rx details.  The client_remove
-operation is now out of place and logically fits much better on the
-service_family object.
-
-Remove the release_client operation from qmi_transport_ops.  Introduce
-two specializations of service_family for qrtr and qmux respectively.
-Release of QMUX clients will now be triggered when the QMUX service
-family object is destroyed.
 ---
- drivers/qmimodem/qmi.c | 121 +++++++++++++++++++++++++----------------
- 1 file changed, 74 insertions(+), 47 deletions(-)
+ drivers/qmimodem/qmi.c | 91 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/qmimodem/qmi.h |  3 ++
+ 2 files changed, 94 insertions(+)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index de2d3410a702..7fba86eb1e29 100644
+index 7fba86eb1e29..639c0c44b519 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -81,8 +81,6 @@ struct debug_data {
- 
- struct qmi_transport_ops {
- 	int (*write)(struct qmi_transport *transport, struct qmi_request *req);
--	void (*client_release)(struct qmi_transport *transport,
--				uint16_t service_type, uint16_t client_id);
- };
- 
- struct qmi_transport {
-@@ -132,6 +130,7 @@ struct service_family {
- 	uint16_t next_notify_id;
- 	unsigned int next_service_handle;
- 	struct l_queue *notify_list;
-+	void (*free_family)(struct service_family *);
- };
- 
- struct qmi_service {
-@@ -1080,14 +1079,9 @@ static void service_family_unref(struct service_family *family)
- 	l_hashmap_remove(transport->family_list,
- 				L_UINT_TO_PTR(family->info.service_type));
- 
--	if (transport->ops->client_release)
--		transport->ops->client_release(transport,
--						family->info.service_type,
--						family->client_id);
--
- done:
- 	l_queue_destroy(family->notify_list, NULL);
--	l_free(family);
-+	family->free_family(family);
+@@ -2041,6 +2041,97 @@ bool qmi_qrtr_node_has_service(struct qmi_qrtr_node *node, uint16_t type)
+ 	return __qrtr_service_info_find(node, type);
  }
  
- static uint8_t __ctl_request_submit(struct qmi_qmux_device *qmux,
-@@ -1112,21 +1106,18 @@ static uint8_t __ctl_request_submit(struct qmi_qmux_device *qmux,
- 	return req->tid;
- }
- 
--static struct service_family *service_family_create(
--			struct qmi_transport *transport,
--			unsigned int group_id,
--			const struct qmi_service_info *info, uint8_t client_id)
-+static void __service_family_init(struct service_family *family,
-+					struct qmi_transport *transport,
-+					unsigned int group_id,
-+					const struct qmi_service_info *info,
-+					uint8_t client_id)
- {
--	struct service_family *family = l_new(struct service_family, 1);
--
- 	family->ref_count = 0;
- 	family->transport = transport;
- 	family->client_id = client_id;
- 	family->notify_list = l_queue_new();
- 	family->group_id = group_id;
- 	memcpy(&family->info, info, sizeof(family->info));
--
--	return family;
- }
- 
- static struct qmi_service *service_create(struct service_family *family)
-@@ -1310,6 +1301,50 @@ int qmi_qmux_device_discover(struct qmi_qmux_device *qmux,
- 	return 0;
- }
- 
-+static void qmux_client_release_callback(struct qmi_request *req,
-+					uint16_t message, uint16_t length,
-+					const void *buffer)
-+{
-+	struct qmi_qmux_device *qmux = req->user_data;
++struct qrtr_service_family_dedicated {
++	struct service_family super;
++	struct qmi_transport transport;
++};
 +
-+	qmux->shutdown.release_users--;
++static void qrtr_service_family_dedicated_free(struct service_family *family)
++{
++	struct qrtr_service_family_dedicated *dfamily =
++		l_container_of(family,
++				struct qrtr_service_family_dedicated, super);
++
++	qmi_transport_close(&dfamily->transport);
++	l_free(dfamily);
 +}
 +
-+static void qmux_service_family_free(struct service_family *family)
++static bool qrtr_service_family_dedicated_rx(struct l_io *io, void *user_data)
 +{
-+	struct qmi_qmux_device *qmux = l_container_of(family->transport,
-+							struct qmi_qmux_device,
-+							transport);
-+	uint8_t release_req[] = { 0x01, 0x02, 0x00,
-+				family->info.service_type, family->client_id };
-+	struct qmi_request *req;
++	struct qrtr_service_family_dedicated *family = user_data;
++	struct debug_data *debug = &family->transport.debug;
++	const struct qmi_service_info *info = &family->super.info;
++	struct sockaddr_qrtr addr;
++	unsigned char buf[2048];
++	ssize_t bytes_read;
++	socklen_t addr_size;
++	int fd = l_io_get_fd(family->transport.io);
 +
-+	if (family->transport) {
-+		qmux->shutdown.release_users++;
-+		req = __control_request_alloc(QMI_CTL_RELEASE_CLIENT_ID,
-+					release_req, sizeof(release_req), 0);
-+		req->user_data = qmux;
++	addr_size = sizeof(addr);
++	bytes_read = recvfrom(fd, buf, sizeof(buf), 0,
++				(struct sockaddr *) &addr, &addr_size);
++	DEBUG(debug, "fd %d Received %zd bytes from Node: %d Port: %d",
++			fd, bytes_read, addr.sq_node, addr.sq_port);
 +
-+		__ctl_request_submit(qmux, req, qmux_client_release_callback);
++	if (bytes_read < 0)
++		return true;
++
++	if (addr.sq_port != info->qrtr_port && addr.sq_node != info->qrtr_node)
++		return true;
++
++	l_util_hexdump(true, buf, bytes_read, debug->func, debug->user_data);
++	__qrtr_debug_msg(' ', buf, bytes_read, info->service_type, debug);
++	__rx_message(&family->transport, info->service_type, 0, buf);
++
++	return true;
++}
++
++struct qmi_service *qmi_qrtr_node_get_dedicated_service(
++						struct qmi_qrtr_node *node,
++						uint16_t type)
++{
++	struct qrtr_service_family_dedicated *family;
++	const struct qmi_service_info *info;
++	int fd;
++
++	if (!node)
++		return NULL;
++
++	if (type == QMI_SERVICE_CONTROL)
++		return NULL;
++
++	info = __qrtr_service_info_find(node, type);
++	if (!info)
++		return NULL;
++
++	fd = socket(AF_QIPCRTR, SOCK_DGRAM, 0);
++	if (fd < 0)
++		return NULL;
++
++	family = l_new(struct qrtr_service_family_dedicated, 1);
++
++	if (qmi_transport_open(&family->transport, fd, &qrtr_ops) < 0) {
++		close(fd);
++		l_free(family);
++		return NULL;
 +	}
 +
-+	l_free(family);
++	DEBUG(&node->debug, "Opening dedicated service for %u", type);
++	__service_family_init(&family->super, &family->transport,
++				next_id(&node->next_group_id), info, 0);
++	family->super.free_family = qrtr_service_family_dedicated_free;
++	l_hashmap_insert(family->transport.family_list,
++					L_UINT_TO_PTR(type), family);
++
++	l_io_set_read_handler(family->transport.io,
++					qrtr_service_family_dedicated_rx,
++					family, NULL);
++	memcpy(&family->transport.debug, &node->transport.debug,
++						sizeof(struct debug_data));
++
++	return service_create(&family->super);
 +}
 +
-+static struct service_family *qmux_service_family_new(
-+					struct qmi_transport *transport,
-+					unsigned int group_id,
-+					const struct qmi_service_info *info,
-+					uint8_t client_id)
-+{
-+	struct service_family *family = l_new(struct service_family, 1);
-+
-+	__service_family_init(family, transport, group_id, info, client_id);
-+	family->free_family = qmux_service_family_free;
-+
-+	return family;
-+}
-+
- struct qmux_create_client_request {
- 	struct qmi_qmux_device *qmux;
- 	uint8_t type;
-@@ -1389,7 +1424,7 @@ static void qmux_create_client_callback(struct qmi_request *r,
- 	info.major = req->major;
- 	info.minor = req->minor;
- 
--	family = service_family_create(&qmux->transport,
-+	family = qmux_service_family_new(&qmux->transport,
- 					next_id(&qmux->next_group_id),
- 					&info, client_id->client);
- 	DEBUG(&qmux->debug, "service family created [client=%d,type=%d]",
-@@ -1453,33 +1488,6 @@ bool qmi_qmux_device_create_client(struct qmi_qmux_device *qmux,
- 	return true;
- }
- 
--static void qmux_client_release_callback(struct qmi_request *req,
--					uint16_t message, uint16_t length,
--					const void *buffer)
--{
--	struct qmi_qmux_device *qmux = req->user_data;
--
--	qmux->shutdown.release_users--;
--}
--
--static void qmi_qmux_device_client_release(struct qmi_transport *transport,
--						uint16_t service_type,
--						uint16_t client_id)
--{
--	struct qmi_qmux_device *qmux =
--		l_container_of(transport, struct qmi_qmux_device, transport);
--	uint8_t release_req[] = { 0x01, 0x02, 0x00, service_type, client_id };
--	struct qmi_request *req;
--
--	qmux->shutdown.release_users++;
--
--	req = __control_request_alloc(QMI_CTL_RELEASE_CLIENT_ID,
--					release_req, sizeof(release_req), 0);
--	req->user_data = qmux;
--
--	__ctl_request_submit(qmux, req, qmux_client_release_callback);
--}
--
- static void __qmux_device_free(struct qmi_qmux_device *qmux)
+ struct qmi_param *qmi_param_new(void)
  {
- 	l_queue_destroy(qmux->control_queue, __request_free);
-@@ -1555,7 +1563,6 @@ int qmi_qmux_device_shutdown(struct qmi_qmux_device *qmux,
+ 	return l_new(struct qmi_param, 1);
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index e61e9cc9e878..0e48313ebb64 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -100,6 +100,9 @@ int qmi_qrtr_node_lookup(struct qmi_qrtr_node *node,
+ 			void *user_data, qmi_destroy_func_t destroy);
+ struct qmi_service *qmi_qrtr_node_get_service(struct qmi_qrtr_node *node,
+ 						uint32_t type);
++struct qmi_service *qmi_qrtr_node_get_dedicated_service(
++						struct qmi_qrtr_node *node,
++						uint16_t type);
+ bool qmi_qrtr_node_has_service(struct qmi_qrtr_node *node, uint16_t type);
  
- static const struct qmi_transport_ops qmux_ops = {
- 	.write = qmi_qmux_device_write,
--	.client_release = qmi_qmux_device_client_release,
- };
- 
- struct qmi_qmux_device *qmi_qmux_device_new(const char *device)
-@@ -1672,6 +1679,25 @@ static void __qrtr_lookup_finished(struct qmi_qrtr_node *node)
- 	memset(&node->lookup, 0, sizeof(node->lookup));
- }
- 
-+static void qrtr_service_family_free(struct service_family *family)
-+{
-+	l_free(family);
-+}
-+
-+static struct service_family *qrtr_service_family_new(
-+					struct qmi_transport *transport,
-+					unsigned int group_id,
-+					const struct qmi_service_info *info,
-+					uint8_t client_id)
-+{
-+	struct service_family *family = l_new(struct service_family, 1);
-+
-+	__service_family_init(family, transport, group_id, info, client_id);
-+	family->free_family = qrtr_service_family_free;
-+
-+	return family;
-+}
-+
- static int qmi_qrtr_node_write(struct qmi_transport *transport,
- 					struct qmi_request *req)
- {
-@@ -1999,8 +2025,9 @@ struct qmi_service *qmi_qrtr_node_get_service(struct qmi_qrtr_node *node,
- 	if (!info)
- 		return NULL;
- 
--	family = service_family_create(transport, next_id(&node->next_group_id),
--					info, 0);
-+	family = qrtr_service_family_new(transport,
-+						next_id(&node->next_group_id),
-+						info, 0);
- 	l_hashmap_insert(transport->family_list, L_UINT_TO_PTR(type), family);
- done:
- 	return service_create(family);
+ struct qmi_param;
 -- 
 2.45.0
 
