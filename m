@@ -1,62 +1,62 @@
-Received: from mail-oo1-f44.google.com (mail-oo1-f44.google.com [209.85.161.44])
+Received: from mail-oo1-f52.google.com (mail-oo1-f52.google.com [209.85.161.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E576619EED7
-	for <ofono@lists.linux.dev>; Mon, 24 Jun 2024 19:33:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B34111A00FC
+	for <ofono@lists.linux.dev>; Mon, 24 Jun 2024 19:33:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719257602; cv=none; b=kR2MHElNW77cTiyB/9xQfazZuGsDak8sy0KQ2HiJRJnD++BI59gzRdJebGGZyZ4bGziGmUVd5JM5roy1+iDuIvcqwtXl60bb5RFcOwD7aC2MvjocpgV5N4qhRd6cMdAEUDFnUMkADU4HJmEj3u+hUGM5gP50nyU4ZFhpAF0aI6s=
+	t=1719257603; cv=none; b=e1ewixOED3OMiSqbQanT5VnvyR0/R/OuUXxyQ7l1Z5ya7zT3Sf4gLBP2SHGenDP6NnleHtMqyiJNMJmPCZO8pFMMVIEUfU4+Pm+pd7E2cyAReiy24Hps/V6eBJ7YQu4BLCtiSgm4jmKjLGLqj/tKI198YVLg0Gq4e3u69B0V0iI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719257602; c=relaxed/simple;
-	bh=1+sQ9K8OPFNJBbvDYPpjxVlqqc6+2sxYzZRnuyh8aAg=;
+	s=arc-20240116; t=1719257603; c=relaxed/simple;
+	bh=x3lulOVynjNZfS6qC1lx4Kq8eCSVP0h4tOyBr2qglqQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=qzhzYKT02vZmlBTopEeB2ObgcE76nBB6ELqgcfKjUzeIG9O24tpVpZqJ0lTtTa4uDjZQY/a+d7o+bjiflHS8hdGSy6c51fpMWQsMoQ+64XBi5jc15HtdiUyn7UoOw7D298CuxF/u3/+n1duzgyzFGm0GgcMbzOXGkbAXYXGn6R0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=moo987hX; arc=none smtp.client-ip=209.85.161.44
+	 MIME-Version; b=fnmTUPt4Gx9LA995S1of5nCH315p5VhNt9fjzF0B3uPrB6xPVZhTtDwU784WW0epvTH4ZPvXpdvZ1ugNnSTNzkOixwmdI6Y4SFb6CfSh0xKpBeoVxbT6+ZWhOkgfT8MRBNYrDpjxMFG1kZxZE9JiLWW7yq8qsKJbDZMhPE4LP/k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gdMW1y/K; arc=none smtp.client-ip=209.85.161.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="moo987hX"
-Received: by mail-oo1-f44.google.com with SMTP id 006d021491bc7-5b970a97e8eso2564853eaf.1
-        for <ofono@lists.linux.dev>; Mon, 24 Jun 2024 12:33:20 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gdMW1y/K"
+Received: by mail-oo1-f52.google.com with SMTP id 006d021491bc7-5c1b734383cso2196688eaf.3
+        for <ofono@lists.linux.dev>; Mon, 24 Jun 2024 12:33:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1719257600; x=1719862400; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=psw16ttjtER33796PhTeXerRJsahRiSzkaP+NSpJRiU=;
-        b=moo987hXOdMPzJT1cS7ulZ3X3NKJUIYSGwAs/ORpXFgZ+ifiRw2JpHSOfh/Pxj2dDj
-         sHrt1EOlVFPjGweIIOkj9NYKeG6qAdg06UBqxyZRTCSTNQsgSO0TL2LbFfdEbQcRS3Qd
-         xuEZ/AHWd6Q9/SdihZcQh1eotmjUcJ4k2G/5sI85YiqtJa2FUlORCe/SpKubdhr93n9u
-         QYSc9mwxs3DA2npMlEtda40fccXhKH+S5OTPBQJ85/T7RIVW2OZHORpE2TF0P1ogbxhZ
-         JyciwBvk6B70N2Mh+avVnuqrBBkUjlibashVwNT60cEBdF3zrogntbqSVM4Ys2SweP0C
-         cfpw==
+        bh=sMFARyTsy6XXkj+xUBaXbSXxxujjadb8XkGI0ICr1Z8=;
+        b=gdMW1y/KXAjLC0MdGQ2NwQY8EeblIAfmgCYBltbyKTZBIxsFcgsd2tHAPMqAP36Cax
+         wzk/1e5eJTZwJqxrwNQmtrBPMBb4hog2x1RZli0cN9pnINgC05q65t5eyz97/vjOOj2d
+         h2hJiWI6NnJNp7lLGXwkxBsgAYd/VuoOXduFFC4XCKZ0R/DDbjd4cPN+oZRtn9HSAIJ6
+         oPLtyruSvyk5CW4Xueon9tG2VH1qGKhGueMyFRbrpu09E738fSipy25aqCIC94kOwUoe
+         Yteknyu1hNJh6zTA3fojYxuAyCWvrTU4/Ijr+SUfPTkoHrXLE6H4lWxnyhNEKHJrhjY2
+         O6Vw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1719257600; x=1719862400;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=psw16ttjtER33796PhTeXerRJsahRiSzkaP+NSpJRiU=;
-        b=TQpnFVMQS+NHrJ6srXxPJwt7keHZdFJ8TvnCQM4+MAcYsBRiQo96aE0msRfPiR2oOB
-         2AkxxteEeo92S4hKTu9s/p6ZDM4/D+sSbjT6FxmOyuxz6RIV7GBe3MFOlglLIRD99hld
-         miXRDUzzeQHeaUeO3rLNk+u39Hbu1DATs0ZimyidjNexGEUeFXdOh2dQm977+xbcXjzX
-         UmZTy69ngNhwKuqcDNCJzKez6YYMZHZD1lKqYhEvItAPxjLhJUO0Y3LjD8vLVZYkVDxv
-         9rvKIo3zCzboPljN5IfppdUkNueI5b2ywogJD5lpA8mJCMdynqlMRqqvonznk4TlptWn
-         ulog==
-X-Gm-Message-State: AOJu0YwnvMy743MLUz93fTiJ/tHgjDQSWY0vdjTsVM6WyTVqK4nd8wMk
-	y5eez6lFvBqObsSAn2DA0T1+dua0jEhS5ub0GvWfz59/p3d3CWen5gpikQ==
-X-Google-Smtp-Source: AGHT+IGa7bUvGHWG+Iu8iodwydv9FFDdXMwWQCCN6v3jeMI70K4fkjQTwpI5UKtONrIlU0uTFYNiyQ==
-X-Received: by 2002:a4a:2447:0:b0:5ba:e995:3efa with SMTP id 006d021491bc7-5c1eb9dc263mr6210496eaf.1.1719257599817;
-        Mon, 24 Jun 2024 12:33:19 -0700 (PDT)
+        bh=sMFARyTsy6XXkj+xUBaXbSXxxujjadb8XkGI0ICr1Z8=;
+        b=j7tZ1fc3hzCrB05gJFjfIaBziv6/qj6rSkcE+fck2McAEV1OJcvCnKQYtdUs6LPkB5
+         vfrA7uYKv+6sdMfCWyAV0Vs3y9VV7RdZHNOWrtBnCjvGTzWr9RkNgacRJa9Ra4yDG++3
+         qW8PU6si3xr8ZGm9yAg54BRV5TwyhClKrMXZDPLlHpu/zNeaGRaD1/J+PZakvAf8Edjh
+         ki1pv0Og44dmngJlT016QgsgK4t5O7d/u98ASJxnupxTu9dDYX/1wcVrVfxq68gxIwrA
+         0mUHZ1cw6LhGOrdPznltIXtdv5wq+CW8oBvZfih1QQyyDdGCdrLTojBUPXNzpE8RxuKX
+         3RJQ==
+X-Gm-Message-State: AOJu0Yw/U1uio88l6rwaidwFWPv/OIt12nUlEgkYbqi5zqk9dUgT4ST/
+	y8/NNly35cOlKMMAL18IL6Ia3RG5G+9i//fJPGx0s90vwD9fK/qgTzuISg==
+X-Google-Smtp-Source: AGHT+IHRwj+UPJjSJLxOPVtT7ku7DYPN+AJn4E4oDaTQAvqqbpgHvAHOOz2VIeXk3x6b2h6QV3avzw==
+X-Received: by 2002:a4a:85c1:0:b0:5c1:bdf5:df22 with SMTP id 006d021491bc7-5c1eecf1addmr5338805eaf.4.1719257600562;
+        Mon, 24 Jun 2024 12:33:20 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5c1d54c2d44sm1480831eaf.8.2024.06.24.12.33.19
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5c1d54c2d44sm1480831eaf.8.2024.06.24.12.33.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 24 Jun 2024 12:33:19 -0700 (PDT)
+        Mon, 24 Jun 2024 12:33:20 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 03/13] qmi: Move service_handle allocation to service_family
-Date: Mon, 24 Jun 2024 14:32:46 -0500
-Message-ID: <20240624193315.1164943-3-denkenz@gmail.com>
+Subject: [PATCH 04/13] qmi: Move group id allocation out of qmi_device
+Date: Mon, 24 Jun 2024 14:32:47 -0500
+Message-ID: <20240624193315.1164943-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240624193315.1164943-1-denkenz@gmail.com>
 References: <20240624193315.1164943-1-denkenz@gmail.com>
@@ -68,162 +68,98 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-A unique service handle identifiers is allocated every time a new
-service is created.  The unique identifier is generated by qmi_device
-and is monotonically increasing.  qmi_device has now been completely
-refactored out of the public API and only remains as an implementation
-detail.  It is desirable to remove it and transform it into a QMI
-transport abstraction.  As a first step, remove service handle id
-allocation from struct qmi_device and move it into struct service_family
-instead.
-
-As a consequence, ensure that when a request is canceled, compare both
-the service_handle and the service_family group_id since both are
-required to identify that a request belongs to a particular service.  As
-a side effect, lightweight service handles are now not able to
-accidentally cancel (by tid) requests they do not own.
+As another step of removing qmi_device vestiges, move group_id
+allocation into qmi_qrtr_node and qmi_qmux_device classes.
 ---
- drivers/qmimodem/qmi.c | 65 +++++++++++++++++++++++++++++++-----------
- 1 file changed, 49 insertions(+), 16 deletions(-)
+ drivers/qmimodem/qmi.c | 26 +++++++++++++++++---------
+ 1 file changed, 17 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 238039d4add7..828f62584ea0 100644
+index 828f62584ea0..2095a952fffd 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -90,7 +90,6 @@ struct qmi_device {
+@@ -89,7 +89,6 @@ struct qmi_device {
+ 	struct l_io *io;
  	struct l_queue *req_queue;
  	struct l_queue *service_queue;
- 	unsigned int next_group_id;	/* Matches requests with services */
--	unsigned int next_service_handle;
+-	unsigned int next_group_id;	/* Matches requests with services */
  	uint16_t next_service_tid;
  	struct l_queue *service_infos;
  	struct l_hashmap *family_list;
-@@ -129,6 +128,7 @@ struct service_family {
- 	unsigned int group_id;
- 	uint8_t client_id;
- 	uint16_t next_notify_id;
-+	unsigned int next_service_handle;
- 	struct l_queue *notify_list;
- };
+@@ -116,6 +115,7 @@ struct qmi_qmux_device {
+ 		unsigned int release_users;
+ 	} shutdown;
+ 	uint8_t next_control_tid;
++	unsigned int next_group_id;	/* Matches requests with services */
+ 	struct l_queue *control_queue;
+ 	bool shutting_down : 1;
+ 	bool destroyed : 1;
+@@ -194,6 +194,14 @@ struct qmi_tlv_hdr {
+ } __attribute__ ((packed));
+ #define QMI_TLV_HDR_SIZE 3
  
-@@ -1140,14 +1140,13 @@ static struct service_family *service_family_create(struct qmi_device *device,
- 
- static struct qmi_service *service_create(struct service_family *family)
- {
--	struct qmi_device *device = family->device;
- 	struct qmi_service *service;
- 
--	if (device->next_service_handle == 0) /* 0 is reserved for control */
--		device->next_service_handle = 1;
-+	if (family->next_service_handle == 0) /* 0 is reserved for control */
-+		family->next_service_handle = 1;
- 
- 	service = l_new(struct qmi_service, 1);
--	service->handle = device->next_service_handle++;
-+	service->handle = family->next_service_handle++;
- 	service->family = service_family_ref(family);
- 
- 	return service;
-@@ -2349,11 +2348,32 @@ uint16_t qmi_service_send(struct qmi_service *service,
- 	return __service_request_submit(device, service, &sreq->super);
- }
- 
-+struct request_lookup {
-+	uint16_t tid;
-+	unsigned int service_handle;
-+	unsigned int group_id;
-+};
-+
-+static bool __request_compare_for_cancel(const void *a, const void *b)
++static unsigned int next_id(unsigned int *id)
 +{
-+	const struct qmi_request *req = a;
-+	const struct request_lookup *lookup = b;
++	if (*id == 0) /* 0 is reserved for control */
++		*id = 1;
 +
-+	if (req->service_handle != lookup->service_handle)
-+		return false;
-+
-+	if (req->group_id != lookup->group_id)
-+		return false;
-+
-+	return req->tid == lookup->tid;
++	return *id++;
 +}
 +
- bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
+ static bool qmi_service_info_matches(const void *data, const void *user)
  {
- 	struct qmi_device *device;
- 	struct qmi_request *req;
- 	struct service_family *family;
-+	struct request_lookup lookup = { .tid = id };
- 
- 	if (!service || !id)
- 		return false;
-@@ -2367,12 +2387,15 @@ bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
- 	if (!device)
- 		return false;
- 
--	req = l_queue_remove_if(device->req_queue, __request_compare,
--					L_UINT_TO_PTR(id));
-+	lookup.group_id = family->group_id;
-+	lookup.service_handle = service->handle;
-+
-+	req = l_queue_remove_if(device->req_queue, __request_compare_for_cancel,
-+					&lookup);
- 	if (!req) {
- 		req = l_queue_remove_if(device->service_queue,
--						__request_compare,
--						L_UINT_TO_PTR(id));
-+						__request_compare_for_cancel,
-+						&lookup);
- 		if (!req)
- 			return false;
- 	}
-@@ -2385,9 +2408,12 @@ bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
- static bool remove_req_if_match(void *data, void *user_data)
- {
- 	struct qmi_request *req = data;
--	unsigned int service_handle = L_PTR_TO_UINT(user_data);
-+	struct request_lookup *lookup = user_data;
- 
--	if (req->service_handle != service_handle)
-+	if (req->service_handle != lookup->service_handle)
-+		return false;
-+
-+	if (req->group_id != lookup->group_id)
- 		return false;
- 
- 	__request_free(req);
-@@ -2395,10 +2421,15 @@ static bool remove_req_if_match(void *data, void *user_data)
- 	return true;
+ 	const struct qmi_service_info *info = data;
+@@ -1119,6 +1127,7 @@ static uint8_t __ctl_request_submit(struct qmi_qmux_device *qmux,
  }
  
--static void remove_client(struct l_queue *queue, unsigned int service_handle)
-+static void remove_client(struct l_queue *queue, unsigned int group_id,
-+						unsigned int service_handle)
+ static struct service_family *service_family_create(struct qmi_device *device,
++			unsigned int group_id,
+ 			const struct qmi_service_info *info, uint8_t client_id)
  {
--	l_queue_foreach_remove(queue, remove_req_if_match,
--				L_UINT_TO_PTR(service_handle));
-+	struct request_lookup lookup = {
-+		.group_id = group_id,
-+		.service_handle = service_handle,
-+	};
-+
-+	l_queue_foreach_remove(queue, remove_req_if_match, &lookup);
- }
+ 	struct service_family *family = l_new(struct service_family, 1);
+@@ -1127,12 +1136,7 @@ static struct service_family *service_family_create(struct qmi_device *device,
+ 	family->device = device;
+ 	family->client_id = client_id;
+ 	family->notify_list = l_queue_new();
+-
+-	if (device->next_group_id == 0) /* 0 is reserved for control */
+-		device->next_group_id = 1;
+-
+-	family->group_id = device->next_group_id++;
+-
++	family->group_id = group_id;
+ 	memcpy(&family->info, info, sizeof(family->info));
  
- static bool qmi_service_cancel_all(struct qmi_service *service)
-@@ -2415,8 +2446,10 @@ static bool qmi_service_cancel_all(struct qmi_service *service)
- 	if (!device)
- 		return false;
+ 	return family;
+@@ -1397,7 +1401,9 @@ static void qmux_create_client_callback(struct qmi_request *r,
+ 	info.major = req->major;
+ 	info.minor = req->minor;
  
--	remove_client(device->req_queue, service->handle);
--	remove_client(device->service_queue, service->handle);
-+	remove_client(device->req_queue,
-+				service->family->group_id, service->handle);
-+	remove_client(device->service_queue,
-+				service->family->group_id, service->handle);
+-	family = service_family_create(&qmux->super, &info, client_id->client);
++	family = service_family_create(&qmux->super,
++					next_id(&qmux->next_group_id),
++					&info, client_id->client);
+ 	DEBUG(&qmux->debug, "service family created [client=%d,type=%d]",
+ 			family->client_id, family->info.service_type);
  
- 	return true;
- }
+@@ -1614,6 +1620,7 @@ void qmi_qmux_device_set_debug(struct qmi_qmux_device *qmux,
+ 
+ struct qmi_qrtr_node {
+ 	struct qmi_device super;
++	unsigned int next_group_id;	/* Matches requests with services */
+ 	struct debug_data debug;
+ 	struct {
+ 		qmi_qrtr_node_lookup_done_func_t func;
+@@ -1954,7 +1961,8 @@ struct qmi_service *qmi_qrtr_node_get_service(struct qmi_qrtr_node *node,
+ 	if (!info)
+ 		return NULL;
+ 
+-	family = service_family_create(device, info, 0);
++	family = service_family_create(device, next_id(&node->next_group_id),
++					info, 0);
+ 	l_hashmap_insert(device->family_list, L_UINT_TO_PTR(type), family);
+ done:
+ 	return service_create(family);
 -- 
 2.45.0
 
