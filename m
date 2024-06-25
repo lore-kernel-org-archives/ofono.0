@@ -1,62 +1,62 @@
-Received: from mail-oo1-f51.google.com (mail-oo1-f51.google.com [209.85.161.51])
+Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com [209.85.210.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A586D17334B
-	for <ofono@lists.linux.dev>; Tue, 25 Jun 2024 16:42:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 388B417334B
+	for <ofono@lists.linux.dev>; Tue, 25 Jun 2024 16:42:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719333726; cv=none; b=N7/qpqzs5R4j7qzi+XnrI8IIAEZxoXlcjkzV+v/pk1qwNhV7Lw7XS+vs2WDusJmMbNpk8DjKSUD/2X39gpSK3r162crejXXoz8OaV7NqT+RtGEjNfDaBxTECOMQ00aAQ9GGLJbe+t4lF5xJyFk2qDt7QC88St0Cc0hJGQv4mzVI=
+	t=1719333728; cv=none; b=UiA+LhlszRmF0chmRACdcuUvWBpoY0PTGg71IFv+RX3SIvBUq0e0KG+dM0fq64mbDLGzJVysSCgT20s0o2YzD5C3uYLD9KllW3U6+ZjOjNrTW9xa5LettS3TBbgtyBntLPLHFTSbOdaciS8KM+x24CxyHMVx+c6kz9/65MnxvVE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719333726; c=relaxed/simple;
-	bh=x3lulOVynjNZfS6qC1lx4Kq8eCSVP0h4tOyBr2qglqQ=;
+	s=arc-20240116; t=1719333728; c=relaxed/simple;
+	bh=Y6pk/Epc+DnYPENa/ALKt7JWYOnYzQLreTucHf93GOQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ubd27E1oYfuCy7pd5RO2HUPPOZYLhIrrj6U0KJyLIRVuKDQ6m93ffnzXp/dUd1WhtlukAZFx/R0coUZCxZ9bi19T8Orej9QLdoXSxlG4dFvOr/yfMWnnQE2YbrPkS7drT5hu3m0csek19JzVqkVYjFv+NOSkCZsSEzg0CMoQBtQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RWJgoaCY; arc=none smtp.client-ip=209.85.161.51
+	 MIME-Version; b=PQVmRdhm3kZK6vBYNE+czMtJnf5FVNKZzHrFT+64OLEh5xyRyyd0lUvr2c013tFsjxCtmxbfEBTtkwLMcmydMBNZyuIXOhWMd8T81sNt/cKKdRBg4sYfnBbcnSuUvSLBp4fFfAic1l2QBn0AqQzDXMtL+LSe5gbVTxWQjmjFHVc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UuJtllTY; arc=none smtp.client-ip=209.85.210.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RWJgoaCY"
-Received: by mail-oo1-f51.google.com with SMTP id 006d021491bc7-5b9776123a3so2577827eaf.0
-        for <ofono@lists.linux.dev>; Tue, 25 Jun 2024 09:42:04 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UuJtllTY"
+Received: by mail-ot1-f44.google.com with SMTP id 46e09a7af769-70024655285so3405580a34.0
+        for <ofono@lists.linux.dev>; Tue, 25 Jun 2024 09:42:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1719333723; x=1719938523; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1719333726; x=1719938526; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=sMFARyTsy6XXkj+xUBaXbSXxxujjadb8XkGI0ICr1Z8=;
-        b=RWJgoaCYwTQpFW+rvrUCcnlse9XEsu935uPAh7GFVJLBbOfbH/IwWIG81Uv1HZoBfB
-         ZL5AAHGzYj3epJIRRw/zeiQQJ/WpyDYeDxJqSYRYmEjAoYyTbF0kK2YUex8P4Tre+zIq
-         YzJVjaQ6pU52C1O3jwOl9d7A/IrAB48cFyTadcoAcGOQdxoXFo87McXNrYlVqrofH5xM
-         5Ew3vTWvn+0/aHpUNngiDMJZal9EOXcS49DJ2nRp70H0g8VrpwvvIPrB922Y7LnUybeQ
-         0V3rF4hNFpV+8J+x1Lxv4ScqHFpxI0CbKybpkrkZ2UTkkcK3jdkg2ZR/zQfh9TwVnJw5
-         ItvA==
+        bh=PKlhb3KKjn5rkdS+78jiw2gNekNCU7VOTiVTG5mkm9U=;
+        b=UuJtllTYxRQGbzUnkQK9UfCPHYIMUF1iltXf0kejsSp+SwFSzwh1tv04w+DGBprKc9
+         lRViic9NFFNqGwmL/Q2FbXq9ZocQN/wFiK85ibnkJm/RMNyVYPwQL4ojXnrc8kJv6Zjl
+         Ri466gV/TrMHEY4DPQJmEu+bWZPAe2Vz4oau8G9rplX/4lOdtuwreCDcV9SN7bKk6dc7
+         3cJ7ZgoZy8ErfmBy4x5vFXxQjzCAKKRWz46nX+SH0xlZdxaBzw76eCzchEBeCsPOptsj
+         m/wVqI4OGS6aInm9tZzPWlwFqvtkorSasInyk7k80vQcGwYkgWrJt4X92YhzwV/t2jo4
+         gJ/w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719333723; x=1719938523;
+        d=1e100.net; s=20230601; t=1719333726; x=1719938526;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=sMFARyTsy6XXkj+xUBaXbSXxxujjadb8XkGI0ICr1Z8=;
-        b=lKZjTD51uLRAlTeb0bx35MD5sQoKXzZlI5hHW6N5ubHw5nPt4Gx9cXPESKg16sH7YW
-         IE8O1lKV+MFs4xnV2s0RDJucvc1n/s3dO+eEEBV+dMnAceygu9FVYoi/cn2Nv3YL3C0Q
-         JiNtMLKyCb//pfUsGIsAzDmGDbE6Fm6wv2gpENxTLaDFCNw34ohUbh+ZoFaXtk9T08nb
-         mPyG7CrsHFT/r2Neesn+6jfqKELmEyw+pi/TC7026eIjQHppc2R+ti8/S2OqbHUz1Av5
-         zEOUj0jjKa4wqJStVqWRmaW+CChzZc3qnmSwiZwQKb1ulpPp/OKfqY0qTTKPtWfMy+LK
-         ZFZA==
-X-Gm-Message-State: AOJu0YyFqnOgL2GgaQI/rb/BvC+rxFfIBIok30vzKSwK+XCvoY1kZlqC
-	HevkzQOufNPc6x9zmj34izg9m9nIqyEn3ZNiUt6+wkEjLM1/qYVKMIgayw==
-X-Google-Smtp-Source: AGHT+IEgpUOH7AYuD2vX4S6r0x2jJHWi8qWsArXY/qyWWdTjM20cQb26qW4v3c1WxXKpxZMP79cCDg==
-X-Received: by 2002:a4a:85c1:0:b0:5c1:bdf5:df22 with SMTP id 006d021491bc7-5c1eecf1addmr7654882eaf.4.1719333723450;
-        Tue, 25 Jun 2024 09:42:03 -0700 (PDT)
+        bh=PKlhb3KKjn5rkdS+78jiw2gNekNCU7VOTiVTG5mkm9U=;
+        b=UkJBsKYl4wwlx/G3Bu5DMmVn5eCOp2SUcYP1ejOYjYIrntbMpFDjTGKm8YJRwwpIAT
+         BD9un/s+n0HEGayDuFsZ/KbOG9Yms+zJSuaI4QcfcoCQuEvhsdLWAX+1vZ+fRhk6ZEwG
+         uZ+7ZAB3ZyEOFaXna+NQXRK/IZCDGQJEmNMbXqPojPmKxudnsky9blxRQPhuewOWSODF
+         VZwMN7h8XF91bIFO6o5cEDRlt9quVTbGjN7a8p20JutX2kXsAB4z0HByySBETbHXiQcM
+         ijTS1F5iXdaOUS3L8WR/5xJd/VjiJusyyScT42/VDL51/TT01Jx5njwP9cnvc7zve6/X
+         PoeA==
+X-Gm-Message-State: AOJu0YwztCWcqM8RaOzVuhTOTQbkoYdiCqTaXwNi9G/VYg6xG2h8JfnI
+	k9NoNfrB4ccrlcUQ9ZPQ0MeDVL8jMXM7iIhQvKwL9tQyrltceLRxZIreLA==
+X-Google-Smtp-Source: AGHT+IF44mx8ThC9+nxOlbltV1ZWwGeqA2CzNv9NuiseVG250ho6Jj+DiVMGB5GgS5XpNx2dzep/kw==
+X-Received: by 2002:a05:6830:120f:b0:700:cc10:6622 with SMTP id 46e09a7af769-700cc106639mr1263419a34.25.1719333724225;
+        Tue, 25 Jun 2024 09:42:04 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5c1d55dc2dcsm1884844eaf.27.2024.06.25.09.42.02
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5c1d55dc2dcsm1884844eaf.27.2024.06.25.09.42.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 25 Jun 2024 09:42:03 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 04/14] qmi: Move group id allocation out of qmi_device
-Date: Tue, 25 Jun 2024 11:41:40 -0500
-Message-ID: <20240625164158.1170937-4-denkenz@gmail.com>
+Subject: [PATCH v2 05/14] qmi: Move service_info management into qrtr/qmux
+Date: Tue, 25 Jun 2024 11:41:41 -0500
+Message-ID: <20240625164158.1170937-5-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <20240625164158.1170937-1-denkenz@gmail.com>
 References: <20240625164158.1170937-1-denkenz@gmail.com>
@@ -68,98 +68,296 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-As another step of removing qmi_device vestiges, move group_id
-allocation into qmi_qrtr_node and qmi_qmux_device classes.
+Break out service_info management from struct qmi_device into qrtr and
+qmux classes.  This allows to optimize how service info is managed
+slightly:
+ - On QMUX, the list is static and obtained during discovery.  An array
+   can be used instead of a linked list.  Certain comparisons which are
+   only relevant for QRTR can be skipped.
+ - QRTR behavior remains the same.
 ---
- drivers/qmimodem/qmi.c | 26 +++++++++++++++++---------
- 1 file changed, 17 insertions(+), 9 deletions(-)
+ drivers/qmimodem/qmi.c | 103 +++++++++++++++++++++++------------------
+ 1 file changed, 59 insertions(+), 44 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 828f62584ea0..2095a952fffd 100644
+index 2095a952fffd..59a50eabeb2b 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -89,7 +89,6 @@ struct qmi_device {
- 	struct l_io *io;
+@@ -90,7 +90,6 @@ struct qmi_device {
  	struct l_queue *req_queue;
  	struct l_queue *service_queue;
--	unsigned int next_group_id;	/* Matches requests with services */
  	uint16_t next_service_tid;
- 	struct l_queue *service_infos;
+-	struct l_queue *service_infos;
  	struct l_hashmap *family_list;
-@@ -116,6 +115,7 @@ struct qmi_qmux_device {
- 		unsigned int release_users;
- 	} shutdown;
- 	uint8_t next_control_tid;
-+	unsigned int next_group_id;	/* Matches requests with services */
- 	struct l_queue *control_queue;
- 	bool shutting_down : 1;
- 	bool destroyed : 1;
-@@ -194,6 +194,14 @@ struct qmi_tlv_hdr {
- } __attribute__ ((packed));
- #define QMI_TLV_HDR_SIZE 3
+ 	const struct qmi_device_ops *ops;
+ 	bool writer_active : 1;
+@@ -98,6 +97,8 @@ struct qmi_device {
  
-+static unsigned int next_id(unsigned int *id)
-+{
-+	if (*id == 0) /* 0 is reserved for control */
-+		*id = 1;
-+
-+	return *id++;
-+}
-+
- static bool qmi_service_info_matches(const void *data, const void *user)
- {
- 	const struct qmi_service_info *info = data;
-@@ -1119,6 +1127,7 @@ static uint8_t __ctl_request_submit(struct qmi_qmux_device *qmux,
+ struct qmi_qmux_device {
+ 	struct qmi_device super;
++	struct qmi_service_info *service_list;
++	uint16_t n_services;
+ 	char *version_str;
+ 	struct debug_data debug;
+ 	struct {
+@@ -219,16 +220,6 @@ static bool qmi_service_info_matches(const void *data, const void *user)
+ 	return true;
  }
  
- static struct service_family *service_family_create(struct qmi_device *device,
-+			unsigned int group_id,
- 			const struct qmi_service_info *info, uint8_t client_id)
+-static void __qmi_service_appeared(struct qmi_device *device,
+-					const struct qmi_service_info *info)
+-{
+-	if (l_queue_find(device->service_infos, qmi_service_info_matches, info))
+-		return;
+-
+-	l_queue_push_tail(device->service_infos,
+-				l_memdup(info, sizeof(struct qmi_service_info)));
+-}
+-
+ static void *__request_alloc(uint32_t service_type,
+ 					uint8_t client, uint16_t message,
+ 					const void *data, uint16_t length,
+@@ -843,7 +834,6 @@ static int qmi_device_init(struct qmi_device *device, int fd,
+ 
+ 	device->req_queue = l_queue_new();
+ 	device->service_queue = l_queue_new();
+-	device->service_infos = l_queue_new();
+ 	device->family_list = l_hashmap_new();
+ 
+ 	device->next_service_tid = 256;
+@@ -861,8 +851,6 @@ static void __qmi_device_free(struct qmi_device *device)
+ 	l_io_destroy(device->io);
+ 
+ 	l_hashmap_destroy(device->family_list, family_destroy);
+-
+-	l_queue_destroy(device->service_infos, l_free);
+ }
+ 
+ void qmi_result_print_tlvs(struct qmi_result *result)
+@@ -905,23 +893,17 @@ static const void *tlv_get(const void *data, uint16_t size,
+ 	return NULL;
+ }
+ 
+-static const struct qmi_service_info *__find_service_info_by_type(
+-				struct qmi_device *device, uint16_t type)
++static const struct qmi_service_info *__qmux_service_info_find(
++				struct qmi_qmux_device *qmux, uint16_t type)
  {
- 	struct service_family *family = l_new(struct service_family, 1);
-@@ -1127,12 +1136,7 @@ static struct service_family *service_family_create(struct qmi_device *device,
- 	family->device = device;
- 	family->client_id = client_id;
- 	family->notify_list = l_queue_new();
+-	const struct qmi_service_info *info = NULL;
+-	const struct l_queue_entry *entry;
 -
--	if (device->next_group_id == 0) /* 0 is reserved for control */
--		device->next_group_id = 1;
+-	for (entry = l_queue_get_entries(device->service_infos);
+-						entry; entry = entry->next) {
+-		struct qmi_service_info *data = entry->data;
++	unsigned int i;
+ 
+-		if (data->service_type == type) {
+-			info = data;
+-			break;
+-		}
++	for (i = 0; i < qmux->n_services; i++) {
++		if (qmux->service_list[i].service_type == type)
++			return qmux->service_list + i;
+ 	}
+ 
+-	return info;
++	return NULL;
+ }
+ 
+ bool qmi_qmux_device_get_service_version(struct qmi_qmux_device *qmux,
+@@ -933,7 +915,7 @@ bool qmi_qmux_device_get_service_version(struct qmi_qmux_device *qmux,
+ 	if (!qmux)
+ 		return false;
+ 
+-	info = __find_service_info_by_type(&qmux->super, type);
++	info = __qmux_service_info_find(qmux, type);
+ 	if (!info)
+ 		return false;
+ 
+@@ -947,7 +929,7 @@ bool qmi_qmux_device_has_service(struct qmi_qmux_device *qmux, uint16_t type)
+ 	if (!qmux)
+ 		return false;
+ 
+-	return __find_service_info_by_type(&qmux->super, type);
++	return __qmux_service_info_find(qmux, type);
+ }
+ 
+ static int qmi_qmux_device_write(struct qmi_device *device,
+@@ -1197,7 +1179,6 @@ static void qmux_discover_callback(struct qmi_request *req, uint16_t message,
+ 					uint16_t length, const void *buffer)
+ {
+ 	struct qmi_qmux_device *qmux = req->user_data;
+-	struct qmi_device *device = &qmux->super;
+ 	const struct qmi_result_code *result_code;
+ 	const struct qmi_service_list *service_list;
+ 	const void *ptr;
+@@ -1219,6 +1200,13 @@ static void qmux_discover_callback(struct qmi_request *req, uint16_t message,
+ 	if (len < QMI_SERVICE_LIST_SIZE)
+ 		goto done;
+ 
++	if (!service_list->count)
++		goto done;
++
++	l_free(qmux->service_list);
++	qmux->n_services = 0;
++	qmux->service_list = l_new(struct qmi_service_info, service_list->count);
++
+ 	for (i = 0; i < service_list->count; i++) {
+ 		uint16_t major =
+ 			L_LE16_TO_CPU(service_list->services[i].major);
+@@ -1226,7 +1214,6 @@ static void qmux_discover_callback(struct qmi_request *req, uint16_t message,
+ 			L_LE16_TO_CPU(service_list->services[i].minor);
+ 		uint8_t type = service_list->services[i].type;
+ 		const char *name = __service_type_to_string(type);
+-		struct qmi_service_info info;
+ 
+ 		if (name)
+ 			DEBUG(&qmux->debug, "discovered service [%s %d.%d]",
+@@ -1240,12 +1227,10 @@ static void qmux_discover_callback(struct qmi_request *req, uint16_t message,
+ 			continue;
+ 		}
+ 
+-		memset(&info, 0, sizeof(info));
+-		info.service_type = type;
+-		info.major = major;
+-		info.minor = minor;
 -
--	family->group_id = device->next_group_id++;
--
-+	family->group_id = group_id;
- 	memcpy(&family->info, info, sizeof(family->info));
+-		__qmi_service_appeared(device, &info);
++		qmux->service_list[qmux->n_services].service_type = type;
++		qmux->service_list[qmux->n_services].major = major;
++		qmux->service_list[qmux->n_services].minor = minor;
++		qmux->n_services += 1;
+ 	}
  
- 	return family;
-@@ -1397,7 +1401,9 @@ static void qmux_create_client_callback(struct qmi_request *r,
- 	info.major = req->major;
- 	info.minor = req->minor;
+ 	ptr = tlv_get(buffer, length, 0x10, &len);
+@@ -1304,7 +1289,7 @@ int qmi_qmux_device_discover(struct qmi_qmux_device *qmux,
  
--	family = service_family_create(&qmux->super, &info, client_id->client);
-+	family = service_family_create(&qmux->super,
-+					next_id(&qmux->next_group_id),
-+					&info, client_id->client);
- 	DEBUG(&qmux->debug, "service family created [client=%d,type=%d]",
- 			family->client_id, family->info.service_type);
+ 	DEBUG(&qmux->debug, "device %p", qmux);
  
-@@ -1614,6 +1620,7 @@ void qmi_qmux_device_set_debug(struct qmi_qmux_device *qmux,
+-	if (l_queue_length(qmux->super.service_infos) > 0 || qmux->discover.tid)
++	if (qmux->n_services || qmux->discover.tid)
+ 		return -EALREADY;
  
+ 	req = __control_request_alloc(QMI_CTL_GET_VERSION_INFO, NULL, 0, 0);
+@@ -1439,7 +1424,7 @@ bool qmi_qmux_device_create_client(struct qmi_qmux_device *qmux,
+ 	if (service_type == QMI_SERVICE_CONTROL)
+ 		return false;
+ 
+-	info = __find_service_info_by_type(&qmux->super, service_type);
++	info = __qmux_service_info_find(qmux, service_type);
+ 	if (!info)
+ 		return false;
+ 
+@@ -1504,6 +1489,7 @@ static void __qmux_device_free(struct qmi_qmux_device *qmux)
+ 	if (qmux->shutdown.idle)
+ 		l_idle_remove(qmux->shutdown.idle);
+ 
++	l_free(qmux->service_list);
+ 	l_free(qmux->version_str);
+ 	l_free(qmux);
+ }
+@@ -1621,6 +1607,7 @@ void qmi_qmux_device_set_debug(struct qmi_qmux_device *qmux,
  struct qmi_qrtr_node {
  	struct qmi_device super;
-+	unsigned int next_group_id;	/* Matches requests with services */
+ 	unsigned int next_group_id;	/* Matches requests with services */
++	struct l_queue *service_infos;
  	struct debug_data debug;
  	struct {
  		qmi_qrtr_node_lookup_done_func_t func;
-@@ -1954,7 +1961,8 @@ struct qmi_service *qmi_qrtr_node_get_service(struct qmi_qrtr_node *node,
+@@ -1630,6 +1617,32 @@ struct qmi_qrtr_node {
+ 	} lookup;
+ };
+ 
++static const struct qmi_service_info *__qrtr_service_info_find(
++				struct qmi_qrtr_node *node, uint16_t type)
++{
++	const struct l_queue_entry *entry;
++
++	for (entry = l_queue_get_entries(node->service_infos);
++						entry; entry = entry->next) {
++		struct qmi_service_info *info = entry->data;
++
++		if (info->service_type == type)
++			return info;
++	}
++
++	return NULL;
++}
++
++static void __qrtr_service_appeared(struct qmi_qrtr_node *node,
++					const struct qmi_service_info *info)
++{
++	if (l_queue_find(node->service_infos, qmi_service_info_matches, info))
++		return;
++
++	l_queue_push_tail(node->service_infos,
++				l_memdup(info, sizeof(struct qmi_service_info)));
++}
++
+ static void __qrtr_lookup_finished(struct qmi_qrtr_node *node)
+ {
+ 	if (!node->lookup.func) {
+@@ -1708,7 +1721,6 @@ static void qrtr_debug_ctrl_request(const struct qrtr_ctrl_pkt *packet,
+ static void qrtr_received_control_packet(struct qmi_qrtr_node *node,
+ 						const void *buf, size_t len)
+ {
+-	struct qmi_device *device = &node->super;
+ 	const struct qrtr_ctrl_pkt *packet = buf;
+ 	struct qmi_service_info info;
+ 	uint32_t cmd;
+@@ -1755,7 +1767,7 @@ static void qrtr_received_control_packet(struct qmi_qrtr_node *node,
+ 	info.major = version;
+ 	info.instance = instance;
+ 
+-	__qmi_service_appeared(device, &info);
++	__qrtr_service_appeared(node, &info);
+ 
+ 	if (!node->lookup.func)
+ 		return;
+@@ -1772,7 +1784,7 @@ static void qrtr_received_service_message(struct qmi_qrtr_node *node,
+ 	const struct l_queue_entry *entry;
+ 	uint32_t service_type = 0;
+ 
+-	for (entry = l_queue_get_entries(device->service_infos);
++	for (entry = l_queue_get_entries(node->service_infos);
+ 				entry; entry = entry->next) {
+ 		struct qmi_service_info *info = entry->data;
+ 
+@@ -1844,6 +1856,8 @@ struct qmi_qrtr_node *qmi_qrtr_node_new(uint32_t node)
+ 		return NULL;
+ 	}
+ 
++	qrtr->service_infos = l_queue_new();
++
+ 	l_io_set_read_handler(qrtr->super.io, qrtr_received_data, qrtr, NULL);
+ 
+ 	return qrtr;
+@@ -1855,6 +1869,7 @@ void qmi_qrtr_node_free(struct qmi_qrtr_node *node)
+ 		return;
+ 
+ 	__qmi_device_free(&node->super);
++	l_queue_destroy(node->service_infos, l_free);
+ 
+ 	if (node->lookup.destroy)
+ 		node->lookup.destroy(node->lookup.user_data);
+@@ -1957,7 +1972,7 @@ struct qmi_service *qmi_qrtr_node_get_service(struct qmi_qrtr_node *node,
+ 	if (family)
+ 		goto done;
+ 
+-	info = __find_service_info_by_type(device, type);
++	info = __qrtr_service_info_find(node, type);
  	if (!info)
  		return NULL;
  
--	family = service_family_create(device, info, 0);
-+	family = service_family_create(device, next_id(&node->next_group_id),
-+					info, 0);
- 	l_hashmap_insert(device->family_list, L_UINT_TO_PTR(type), family);
- done:
- 	return service_create(family);
+@@ -1973,7 +1988,7 @@ bool qmi_qrtr_node_has_service(struct qmi_qrtr_node *node, uint16_t type)
+ 	if (!node)
+ 		return false;
+ 
+-	return __find_service_info_by_type(&node->super, type);
++	return __qrtr_service_info_find(node, type);
+ }
+ 
+ struct qmi_param *qmi_param_new(void)
 -- 
 2.45.0
 
