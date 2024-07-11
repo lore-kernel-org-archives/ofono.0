@@ -1,62 +1,62 @@
-Received: from mail-io1-f45.google.com (mail-io1-f45.google.com [209.85.166.45])
+Received: from mail-io1-f42.google.com (mail-io1-f42.google.com [209.85.166.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB93218635
-	for <ofono@lists.linux.dev>; Thu, 11 Jul 2024 16:46:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB24D2BD0D
+	for <ofono@lists.linux.dev>; Thu, 11 Jul 2024 16:46:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720716420; cv=none; b=iWDLX9MWTmm8x6w4nvogH53Ii068iV679E5F+lCKiQ6h2xaRE2To70mlPVqZMGm6e6OHB2AUWmDU58d7Aq2H69Rysqj4A57udW32N76a9XWxXLY72txaHoA0Am5T36T2MUfk7GyghwdcaegXzmSnNGDx2IcHzLoDem5+FzujRz8=
+	t=1720716421; cv=none; b=rymeqNP+NNS75J9NLkDpuBc7S63NEdJd5Ml73CO8ZAnlRHr20/sigV7XtVrtF6YLqN4prwAObI9NjhN0lheZqhgNukl1E7kLEWTvaeejnUPYEk4Jfw7FR+DPBcAASDew9FwyhV8RyJP/4ji2ligUh9RpcMEa4zJbQ93Cr49/aOw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720716420; c=relaxed/simple;
-	bh=v0v7zU7SfV5hf7UJ7ywGy/Wso6ZtVANjHh6GDJxnbp8=;
+	s=arc-20240116; t=1720716421; c=relaxed/simple;
+	bh=VBJdnq/Br6eI4igqVnMW/sTXg0Gzz2fZ4MEiET6TZ3E=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=FbuQqrKLUYUVFCDpCzmFzMmVB/Cedx5GgO36kbS5vOzf44hKhk8h1NqW+U1BFIIp0UbaXxT/Gw/m1b3/Ziv9fcPcTW6JArUvrW1Tkcad/a5y08GaeeHUZ28f2EFJftMzc0bOMA1KT9cail2wA1sJpubemN5EF67QgvQYF7GQ9ds=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bicZ9TCD; arc=none smtp.client-ip=209.85.166.45
+	 MIME-Version; b=CffTd8RtIRzvLHEy3zHdgFqjB+4adKUHbkNxrfAnde3SSBypAUDdrTe0P+8Ol9WFJsjbJ2kEFVhgIqomCy04wDjXx8hC6DZJOgkbfEELgK7zcs21t6LF2RMeI9V7+Dz7vs/ImZ6fpY/BRqUJ9avV6sQ2R3DyS50OOAvYI6BZ0J8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YFbm0Qm+; arc=none smtp.client-ip=209.85.166.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bicZ9TCD"
-Received: by mail-io1-f45.google.com with SMTP id ca18e2360f4ac-8036ce66164so41661339f.3
-        for <ofono@lists.linux.dev>; Thu, 11 Jul 2024 09:46:58 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YFbm0Qm+"
+Received: by mail-io1-f42.google.com with SMTP id ca18e2360f4ac-7f97e794f34so45361039f.3
+        for <ofono@lists.linux.dev>; Thu, 11 Jul 2024 09:46:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1720716418; x=1721321218; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=iiE7/RanaIDCqOfIBMI4yOLghOxvZGR+2aVfftt5bCU=;
-        b=bicZ9TCDH7tJCMc8C1XI3dAnh3quHEFrNS1fWs2W+uExX5xxRy2f9DW858PrzjH9XM
-         m/5BdlIs6cBPO+NZWOmjxt3p7M1kq/UnBY13xEeDTXP8SnQ2w++LhH00NEboJfQtKSMG
-         ZF28Ef5ZMbFsVxLQ+D04AJS4Dua4oDzEl7xleLzqR/qjx/jSQLD2ASAFlQoHyHBf/1GT
-         0S527qVC1Kk5WeMa5xb79X283Kh8ipX9Z6C7Zj0rkn/RMlNQDOUIGmcC5H0eNyZvSB7I
-         uMceaNOIng3yfn69Va1rboHTpqUXJ6JTTKeVT6NUEdpHm1W3eL57MXwc+Og9zlezssqz
-         uTqA==
+        bh=4hFYFd2wxJVjFo1RYvq8oVkHVsdRhr45mMwFvFgqeFg=;
+        b=YFbm0Qm+oOInNJEXb+f1xDvoRAgzXPoaZeXdISD9OQE6q5rLCivqJyp5R0ftIB7F8K
+         xgmhQvNsxrU+By0o15QWcS/o9HBNnF9j1MpCC2w+OfR0rIhbfCPjXFwNGgy9eIX3ZDTf
+         blJ4vQyaHg8UmDLpaOa76TSyIqrITkKksPFYNLQQcMJLDbTO5wYCzUd/Rwbw6IjoU3XW
+         ExtNowTF/usvUkeW4A7QANJ19WQam/H4B4CWavQ/jJOn7AmRb47cdBnAfWkT3p/z7y09
+         q+6LrulOkZKqjY9oVg8r22NtNlf2WVOORn053GPgupq+5AlqkzPUnZPB96cuTfcoC0vo
+         3clA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1720716418; x=1721321218;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=iiE7/RanaIDCqOfIBMI4yOLghOxvZGR+2aVfftt5bCU=;
-        b=jkvWupZ43sPEqxXTh9FcoApgeSd54WHHdCRIKKlqu5AnPsmBa81GIxKmpnw9oE/FhT
-         At3V3dzAflm3U+y6QYjKTgKstm8gioBpbxjA/c3JYiwArBJ+cUjOazS3ALCiuPwu6NAg
-         YRAcLm6/HDrYwRYogGbGx+eS92fchiGH3lfxS0FogOypfhzUjZXrI5vqpa0rU8vUDySA
-         oTXjmBXeQUkDHrfy6nIyM5RITJlyfaPto35QvS3td+27fFnklA89mhKKc0ImAkcPLQeg
-         WUsHacI49k3CtpgQmkuFfBVjK8jkcCf6oe/Ur5jvoA4ebbeu8ZjNjGl/jVQMO73krBcV
-         foQA==
-X-Gm-Message-State: AOJu0Yyt+iDMOB3dsKALmXwg2Xtz4xVmmW8rdHDvl2ZVqdnKSYO8ino/
-	tsRNOoLpew7YLH2sPuZ93xKXbAYWMXF2JSN9ppdXdg1bTmcBT/HJnthPDg==
-X-Google-Smtp-Source: AGHT+IF7I1gvW0sBFvF0zcJEIb3w08xXeuOj4eMXtIsgrH+m3Duo+c6d6cYfidWVeYqIp0dHN3vdqw==
-X-Received: by 2002:a05:6602:1512:b0:7f6:8636:f89d with SMTP id ca18e2360f4ac-7fffece156dmr1350945339f.3.1720716417956;
-        Thu, 11 Jul 2024 09:46:57 -0700 (PDT)
+        bh=4hFYFd2wxJVjFo1RYvq8oVkHVsdRhr45mMwFvFgqeFg=;
+        b=C6lFL7Av5tSzsy94LE38KyyWNZd93VT9K7X7l8FXvJaKyh+bJPZc/vDE1wLGUuIxAR
+         WFLKar/JJrExIy6atRil/LJByA4KcvLuHxraSw8F0MkFy7LwgYTenZoDnWLiEPI2sj4V
+         8x01AMVf9hjRCvhOnkCoCTsVfY4wXYzkwCAMDTjCSaXPKSXCgLofe1hdWeGRdXFkoEqB
+         YtKqUgsQ6+msxgF4+yqMP7//88jCRgRWAyG3bmumhDCFj+q2DUUoWmjvwT1HZXt7Y6E6
+         Fnqixex/OBYKzPELrX4AYoYaPtsgFFTzG7quX0TMHLL+SM9BLstMoll3tYs5PNmd4zV8
+         nNcw==
+X-Gm-Message-State: AOJu0YwHBXGyAYO6/cIsXCu1SEY1zkun3rkHXYfYMDxjv96rPi60Yuhv
+	V1RgL85ZVxrl+JfylTDRmXnJBfFXlPC+n+6frF9hzEpIkkoMvT3urULwHw==
+X-Google-Smtp-Source: AGHT+IF2xT/XZRglp8tjAZo+PrMLRgn5S1qS/VhWkvvRHzpywSY09kLoX9MKFu4a+DJvdgkjRFRX4A==
+X-Received: by 2002:a05:6602:2819:b0:7f6:2d58:8d6a with SMTP id ca18e2360f4ac-800004e8269mr1029440239f.7.1720716418710;
+        Thu, 11 Jul 2024 09:46:58 -0700 (PDT)
 Received: from localhost.localdomain ([2605:a601:ad99:2e00:e9ed:d1b6:6b3c:b7f3])
-        by smtp.gmail.com with ESMTPSA id ca18e2360f4ac-7ffed680fa4sm194096039f.46.2024.07.11.09.46.57
+        by smtp.gmail.com with ESMTPSA id ca18e2360f4ac-7ffed680fa4sm194096039f.46.2024.07.11.09.46.58
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Jul 2024 09:46:57 -0700 (PDT)
+        Thu, 11 Jul 2024 09:46:58 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 04/11] gobi: Limit number of premultiplexed contexts to 4
-Date: Thu, 11 Jul 2024 11:46:21 -0500
-Message-ID: <20240711164654.1688558-4-denkenz@gmail.com>
+Subject: [PATCH v2 05/11] gobi: Request dedicated WDS services for contexts
+Date: Thu, 11 Jul 2024 11:46:22 -0500
+Message-ID: <20240711164654.1688558-5-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240711164654.1688558-1-denkenz@gmail.com>
 References: <20240711164654.1688558-1-denkenz@gmail.com>
@@ -68,97 +68,75 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-4 was chosen somewhat arbitrarily, but it is the maximum that the
-qmi_wwan_q driver can support out of the box.  The only limit is the
-number of clients under QMI.  Two WDS clients are typically required for
-each active context, one for IPv4 and one for IPv6.  The total number of
-clients cannot exceed 255 (uint8).
+Each context the modem supports (up to MAX_CONTEXTS) will require two
+dedicated WDS services.  One will manage the IPv4 configuration, the
+other will manage IPv6 configuration.
 ---
- plugins/gobi.c | 19 +++++++++++++++----
- 1 file changed, 15 insertions(+), 4 deletions(-)
+ plugins/gobi.c | 23 ++++++++++++++++++++++-
+ 1 file changed, 22 insertions(+), 1 deletion(-)
 
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 88e4c7fc4887..b6df849de47e 100644
+index b6df849de47e..76e1e133860d 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -55,6 +55,8 @@
- #define GOBI_VOICE	(1 << 6)
- #define GOBI_WDA	(1 << 7)
- 
-+#define MAX_CONTEXTS 4
-+
- struct service_request {
- 	struct qmi_service **member;
- 	uint32_t service_type;
-@@ -75,6 +77,7 @@ struct gobi_data {
+@@ -72,7 +72,11 @@ struct gobi_data {
+ 	struct qmi_service *voice;
+ 	struct qmi_service *pds;
+ 	struct qmi_service *uim;
+-	struct service_request service_requests[16];
++	struct {
++		struct qmi_service *wds_ipv4;
++		struct qmi_service *wds_ipv6;
++	} context_services[MAX_CONTEXTS];
++	struct service_request service_requests[8 + MAX_CONTEXTS * 2];
+ 	int cur_service_request;
  	int num_service_requests;
  	unsigned long features;
- 	unsigned int discover_attempts;
-+	uint8_t n_premux;
- 	uint8_t oper_mode;
- 	int main_net_ifindex;
- 	char main_net_name[IFNAMSIZ];
-@@ -124,6 +127,7 @@ static int gobi_probe(struct ofono_modem *modem)
- 	const char *ifname;
- 	int ifindex;
- 	const char *bus;
-+	int n_premux;
+@@ -170,6 +174,8 @@ static int gobi_probe(struct ofono_modem *modem)
  
- 	DBG("%p", modem);
+ static void cleanup_services(struct gobi_data *data)
+ {
++	int i;
++
+ 	qmi_service_free(data->dms);
+ 	data->dms = NULL;
  
-@@ -132,10 +136,11 @@ static int gobi_probe(struct ofono_modem *modem)
- 	ifname = ofono_modem_get_string(modem, "NetworkInterface");
- 	ifindex = ofono_modem_get_integer(modem, "NetworkInterfaceIndex");
- 	bus = ofono_modem_get_string(modem, "Bus");
-+	n_premux = ofono_modem_get_integer(modem, "NumPremuxInterfaces");
+@@ -193,6 +199,13 @@ static void cleanup_services(struct gobi_data *data)
  
- 	DBG("net: %s[%s](%d) %s", ifname, if_driver, ifindex, bus);
- 
--	if (!if_driver || !ifname || !ifindex || !bus)
-+	if (!if_driver || !ifname || !ifindex || !bus || n_premux < 0)
- 		return -EPROTO;
- 
- 	data = l_new(struct gobi_data, 1);
-@@ -145,6 +150,13 @@ static int gobi_probe(struct ofono_modem *modem)
- 	else if (!strcmp(if_driver, "qmi_wwan"))
- 		data->using_qmi_wwan = true;
- 
-+	if (n_premux > MAX_CONTEXTS) {
-+		l_warn("NumPremuxInterfaces > %d, limiting to %d",
-+				MAX_CONTEXTS, MAX_CONTEXTS);
-+		n_premux = MAX_CONTEXTS;
+ 	qmi_service_free(data->uim);
+ 	data->uim = NULL;
++
++	for (i = 0; i < MAX_CONTEXTS; i++) {
++		qmi_service_free(data->context_services[i].wds_ipv4);
++		qmi_service_free(data->context_services[i].wds_ipv6);
 +	}
 +
-+	data->n_premux = n_premux;
- 	data->main_net_ifindex =
- 		ofono_modem_get_integer(modem, "NetworkInterfaceIndex");
- 	l_strlcpy(data->main_net_name,
-@@ -753,7 +765,6 @@ static void gobi_pre_sim(struct ofono_modem *modem)
- static void gobi_setup_gprs(struct ofono_modem *modem)
- {
++	memset(&data->context_services, 0, sizeof(data->context_services));
+ }
+ 
+ static void gobi_remove(struct ofono_modem *modem)
+@@ -489,6 +502,7 @@ static void discover_cb(void *user_data)
  	struct gobi_data *data = ofono_modem_get_data(modem);
--	int n_premux = ofono_modem_get_integer(modem, "NumPremuxInterfaces");
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
- 	const char *interface;
-@@ -770,7 +781,7 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 	}
+ 	uint16_t major;
+ 	uint16_t minor;
++	int i;
  
- 	/* Simple case of 802.3 interface, no QMAP */
--	if (n_premux == 0) {
-+	if (data->n_premux == 0) {
- 		interface = ofono_modem_get_string(modem, "NetworkInterface");
+ 	DBG("");
  
- 		gc = ofono_gprs_context_create(modem, 0, "qmimodem", -1,
-@@ -793,7 +804,7 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 		ofono_modem_get_integer(modem, "MaxAggregationSize");
- 	DBG("max_aggregation_size: %u", data->max_aggregation_size);
+@@ -538,6 +552,13 @@ static void discover_cb(void *user_data)
+ 	if (data->features & GOBI_UIM)
+ 		add_service_request(data, &data->uim, QMI_SERVICE_UIM);
  
--	for (i = 0; i < n_premux; i++) {
-+	for (i = 0; i < data->n_premux; i++) {
- 		int mux_id;
- 
- 		sprintf(buf, "PremuxInterface%dMuxId", i + 1);
++	for (i = 0; i < (data->n_premux ? data->n_premux : 1); i++) {
++		add_service_request(data, &data->context_services[i].wds_ipv4,
++							QMI_SERVICE_WDS);
++		add_service_request(data, &data->context_services[i].wds_ipv6,
++							QMI_SERVICE_WDS);
++	}
++
+ 	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
+ 					request_service_cb, modem, NULL) > 0)
+ 		return;
 -- 
 2.45.2
 
