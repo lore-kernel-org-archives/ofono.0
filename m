@@ -1,62 +1,62 @@
-Received: from mail-io1-f54.google.com (mail-io1-f54.google.com [209.85.166.54])
+Received: from mail-io1-f49.google.com (mail-io1-f49.google.com [209.85.166.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A0AB381AD
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA82316B743
 	for <ofono@lists.linux.dev>; Thu, 11 Jul 2024 16:47:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.54
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720716423; cv=none; b=SsB2r+RRoHciMAU7bHZjwJ5BMbg9Rwh0cPhBu40mA4nXMBiKvcN90DjjKD9mJ2AZ5/g+NlmgJQtwDls6nnZEb/Iw8oH+9eLVchzhvM0CH4thOeEFIHCYWwYI3FQYEH9glgv5K8gDsB4yF5kkJg/+IPKMF/wGvmWQEdpFnRQn3mM=
+	t=1720716424; cv=none; b=h+RBzTD+TNXsCM44jPDomfjHXRNElObvXsmTpFgX5Nk7MBbiO2/+OslR89eCbf/ySRRUTxqVqG+1838KzzlntKvbo8L7K39Eg7GFW6KWt08gMpNeU1y9R0nuoBOiG5oM++3qVTeKovCYMmB8hQtctS88pRgAai+uHV8zAk0airk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720716423; c=relaxed/simple;
-	bh=iZlHt/A2O6grO/X1yTE1vnMtETKWcpgDowWu9LQLCbc=;
+	s=arc-20240116; t=1720716424; c=relaxed/simple;
+	bh=0UKrj6psPpqKrHfsfXGzVkrlHHzbsnYn0x2SxeReDmI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=q1ejB3q/M6Ov1WQDvWPbiUzyJXWB4wCkSfm/vw3El+KjB/0zTrJiHDKfCv6jCwk/m3bowgqCao3iC1FmCp7HgNwTyKdKW6R/KLj7YjtKALnsBPinY9tYIyZ5MRa/Iv3trkUG82dH0h9Sq42pKAYy+wgJAClffhKTRPLRyAbERTI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DvVdjUIt; arc=none smtp.client-ip=209.85.166.54
+	 MIME-Version; b=lH8L3Ezz/VbZoV/wsBaAVGlHBPju6HMz2psvCoF3WsQ3T6P5iSjw0x70eUOVf2JlUxhSsOxHSJaTeHT5cOMSXEIiIDOgvrHZZ1ugIfR3s+JeIrGmIqOne4rvzlnLlJwvPlIyLtP6DWd4Kr5tRppfUMC7xkBtzzh3gFJjlK15Abo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=niU4lR/m; arc=none smtp.client-ip=209.85.166.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DvVdjUIt"
-Received: by mail-io1-f54.google.com with SMTP id ca18e2360f4ac-7f70a708f8aso45265339f.2
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="niU4lR/m"
+Received: by mail-io1-f49.google.com with SMTP id ca18e2360f4ac-7f3c5af0a04so53862139f.0
         for <ofono@lists.linux.dev>; Thu, 11 Jul 2024 09:47:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1720716421; x=1721321221; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1720716422; x=1721321222; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=xxcAHt31rhaZUfXbtRdoehzVhraF5OL1R/CyD/8mu7M=;
-        b=DvVdjUItdI2YsL0fGQHn9+9s1nlC6XawFUclHQHgpEvI9UWB/o0JJIBqB+/cfu5b6J
-         n7RcRnaip9FMaLVv4PHtNLghB+ptlumkYltViqmNhHdlPkBRmgQQREW7wYuDV71vZvXz
-         uR+88BhFQzBac9L/GZmgPWsXHXhx3NhEBGYRo4dpSFL4ReRS8N0UKp9jUiMPhP9raABK
-         G71w+IWBwE6xKKtKuIa7bs3ckvdayFbV+Hk9WfNwuBGN3HaQUi5Ts6I64d13ZR1FLILi
-         YwvkOXN5bFmM8ArPAHiPbsyR8dESy/Q0LArwGJWdjAf8mMUvJqHuw3PwZMy9wvonDT6f
-         T1Zw==
+        bh=rs8F02vWqEf3iOs19nUa1+NSb0ZJzw+ofar/3zu1nbw=;
+        b=niU4lR/mRZHXv9m0lXvNId7a+JeY419Dyps0B0tUTKJGvwLUIlA5r2rgAi6CG0HVL5
+         udfr/rUi6M3zDQuHXM36f8T/2zV0Jb6hTucVLaQe0fzK5c9DKkqRWRBtlwh4jHF2radA
+         KQl2gF8ng/KQWCZSNuoDd2aQz8hBR/BvV4h1pTKIGRSVRdIHDDe483Rk+fQMnxNzmuqR
+         3Cpk9Me3HPmTUoY7zT9tPu1qpWNPbfrpzhE4aboViJJnzzgzTQ46AD609uc1p/IXCvNY
+         JVN1hEz7vGVuDU85SJKvTxzsOeZQ0Ttck1j1hkvyzov4rMkb/wioXeyf/z8564fVZN4/
+         4gcQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720716421; x=1721321221;
+        d=1e100.net; s=20230601; t=1720716422; x=1721321222;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=xxcAHt31rhaZUfXbtRdoehzVhraF5OL1R/CyD/8mu7M=;
-        b=i9fdZnlGFLFZgGBSplFxGbXNyh3x9lo56/NcQJvau050S2wuVPDvR/WXMAM3p+gX/M
-         NAEOjJcFQ9YGkXfKmF/jErKik+1cOEhisijBB5HzmR8RFkjKjRe7RvfrIq7DBFwDUbny
-         NO8t0LYhLbUWSW0pxaJhLM01vzQo+f4yhara0z9d9FbB4KD0Itkf5RFtMbXujqHnohLk
-         wyTaAi0ZUS+bYmaQOpyLuGeKFfRmTATAgqp2sox3p4/37705o2Jy/6GzcwjNd2V3zGmZ
-         VDPJE3D7jVHvNin0EFZfrXssqD2ctNHm4sDRpU2DnI4nt0xY5RxF0imp1bd4hJYbSi1L
-         M9eA==
-X-Gm-Message-State: AOJu0Yw7YFC+6KLrGvkrK5mF/Ubp6sbjplyDRz95mq22xVUuU2PODE2O
-	z+ewyAGfzk56fhjWZBK61gtcQcUKY0w/Q7qkXxvuT+3h4vw4oMQnFlZcwQ==
-X-Google-Smtp-Source: AGHT+IGZFxZMxO0UgboUgIIN/EWKrHMtuGLjXQr4TCC4ACxWD1EQ7a9RGQmhTat+TAUkK3nNG7qE0Q==
-X-Received: by 2002:a5d:9304:0:b0:7f9:217c:c109 with SMTP id ca18e2360f4ac-7ffffc36bffmr916072139f.9.1720716421315;
+        bh=rs8F02vWqEf3iOs19nUa1+NSb0ZJzw+ofar/3zu1nbw=;
+        b=T8QHItYZXNKeTwobD/KRaYzV+Jy9UsJ1e/PJIFai8D6T7gJEdsQkYxIl+LE4MLTnlf
+         3yLVEEDQmuWkv3+Xnwwpr6hhd0DepJs6gaVwniNxPIwXYPwdFSIz19bzqTyFKDwR278I
+         UWA74XxxNZIfyQqzUAiifdQLi9dP+hLLDKacMnwCtNYWhHp2I/FumFAdeibPhRIMrSDs
+         vN1tRxGUnM5mwdBkHXaGG8q0up99e8+lLAt9h0S3TNjOizAGI68zEmkL+G8s+TFNa1IF
+         yuOBKz0l2vk9WOFhp8HEH8rADJqX50URmvWAbn+wTObAJSyvNYJOX51nRayC1npt9ODo
+         NOPg==
+X-Gm-Message-State: AOJu0YwyzBNHPHhAYWkz9iydp/8QZVyu5MU3fbmZ02ymugA+Nn7+Voxf
+	KOBxg4wMKXEDPPpETLhRFXFPT0fDhfMe7SMrwpdSA7fFGI4IDvVu18byyg==
+X-Google-Smtp-Source: AGHT+IHNH/7nYM72jvkRQKC4oHZDjUYJjneG37y4KC9nbnI4maODlFdqZeFUPKl6OHu1j36ixtuRWA==
+X-Received: by 2002:a5e:870f:0:b0:804:4024:cd14 with SMTP id ca18e2360f4ac-8044024ce46mr572130139f.21.1720716421823;
         Thu, 11 Jul 2024 09:47:01 -0700 (PDT)
 Received: from localhost.localdomain ([2605:a601:ad99:2e00:e9ed:d1b6:6b3c:b7f3])
-        by smtp.gmail.com with ESMTPSA id ca18e2360f4ac-7ffed680fa4sm194096039f.46.2024.07.11.09.47.00
+        by smtp.gmail.com with ESMTPSA id ca18e2360f4ac-7ffed680fa4sm194096039f.46.2024.07.11.09.47.01
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Jul 2024 09:47:00 -0700 (PDT)
+        Thu, 11 Jul 2024 09:47:01 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 08/11] qmi: Pass two dedicated WDS services to gprs-context
-Date: Thu, 11 Jul 2024 11:46:25 -0500
-Message-ID: <20240711164654.1688558-8-denkenz@gmail.com>
+Subject: [PATCH v2 09/11] qmi: gprs-context: Remove parsing of unused TLVs
+Date: Thu, 11 Jul 2024 11:46:26 -0500
+Message-ID: <20240711164654.1688558-9-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240711164654.1688558-1-denkenz@gmail.com>
 References: <20240711164654.1688558-1-denkenz@gmail.com>
@@ -68,105 +68,49 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-gprs-context driver will not take two qmi_service objects, each with a
-dedicated WDS service.  This will allow gprs-context to support dual
-stack (ipv4 + ipv6) contexts (in future commits).  For now, the behavior
-is left unchanged with the second qmi_service being destroyed.
+The information from these TLVs is currently unused and only printed to
+debug output.  Same can be accomplished using an external sniffer.
+Remove this code until the information in these TLVs is needed for
+something.
 ---
- drivers/qmimodem/gprs-context.c |  8 +++++---
- plugins/gobi.c                  | 11 +++++++++--
- plugins/qrtrqmi.c               |  7 +++++--
- 3 files changed, 19 insertions(+), 7 deletions(-)
+ drivers/qmimodem/gprs-context.c | 14 +-------------
+ 1 file changed, 1 insertion(+), 13 deletions(-)
 
 diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
-index 7d13889bf603..5582a8052c0b 100644
+index 5582a8052c0b..f29f10720710 100644
 --- a/drivers/qmimodem/gprs-context.c
 +++ b/drivers/qmimodem/gprs-context.c
-@@ -554,21 +554,23 @@ static int qmi_gprs_context_probev(struct ofono_gprs_context *gc,
- 					unsigned int vendor, va_list args)
+@@ -173,29 +173,17 @@ static void get_settings_ipv4(struct ofono_gprs_context *gc,
+ 
+ static void get_settings_cb(struct qmi_result *result, void *user_data)
  {
- 	int mux_id = va_arg(args, int);
--	_auto_(qmi_service_free) struct qmi_service *wds =
-+	_auto_(qmi_service_free) struct qmi_service *ipv4 =
-+					va_arg(args, struct qmi_service *);
-+	_auto_(qmi_service_free) struct qmi_service *ipv6 =
- 					va_arg(args, struct qmi_service *);
- 	struct gprs_context_data *data;
+-	static const uint8_t RESULT_PDP_TYPE = 0x11;	/* uint8 */
+-	static const uint8_t RESULT_APN = 0x14;		/* string */
+ 	static const uint8_t RESULT_IP_FAMILY = 0x2b;	/* uint8 */
+ 	struct cb_data *cbd = user_data;
+ 	ofono_gprs_context_cb_t cb = cbd->cb;
+ 	struct ofono_gprs_context *gc = cbd->user;
+-	uint8_t pdp_type, ip_family;
+-	char *apn;
++	uint8_t ip_family;
  
  	DBG("");
  
- 	if (mux_id != -1) {
--		int r = qmi_gprs_context_bind_mux(gc, wds, mux_id);
-+		int r = qmi_gprs_context_bind_mux(gc, ipv4, mux_id);
+ 	if (qmi_result_set_error(result, NULL))
+ 		goto done;
  
- 		if (r < 0)
- 			return r;
- 	}
- 
- 	data = l_new(struct gprs_context_data, 1);
--	data->wds = l_steal_ptr(wds);
-+	data->wds = l_steal_ptr(ipv4);
- 	data->mux_id = mux_id;
- 
- 	qmi_service_register(data->wds, QMI_WDS_PACKET_SERVICE_STATUS,
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 76e1e133860d..cb20824cc424 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -803,10 +803,14 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 
- 	/* Simple case of 802.3 interface, no QMAP */
- 	if (data->n_premux == 0) {
-+		struct qmi_service *ipv4 = data->context_services[0].wds_ipv4;
-+		struct qmi_service *ipv6 = data->context_services[0].wds_ipv6;
-+
- 		interface = ofono_modem_get_string(modem, "NetworkInterface");
- 
- 		gc = ofono_gprs_context_create(modem, 0, "qmimodem", -1,
--						qmi_service_clone(data->wds));
-+						qmi_service_clone(ipv4),
-+						qmi_service_clone(ipv6));
- 		if (!gc) {
- 			ofono_warn("Unable to create gprs-context for: %s",
- 					ofono_modem_get_path(modem));
-@@ -826,13 +830,16 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 	DBG("max_aggregation_size: %u", data->max_aggregation_size);
- 
- 	for (i = 0; i < data->n_premux; i++) {
-+		struct qmi_service *ipv4 = data->context_services[i].wds_ipv4;
-+		struct qmi_service *ipv6 = data->context_services[i].wds_ipv6;
- 		int mux_id;
- 
- 		sprintf(buf, "PremuxInterface%dMuxId", i + 1);
- 		mux_id = ofono_modem_get_integer(modem, buf);
- 
- 		gc = ofono_gprs_context_create(modem, 0, "qmimodem", mux_id,
--						qmi_service_clone(data->wds));
-+						qmi_service_clone(ipv4),
-+						qmi_service_clone(ipv6));
- 
- 		if (!gc) {
- 			ofono_warn("gprs-context creation failed for [%d] %s",
-diff --git a/plugins/qrtrqmi.c b/plugins/qrtrqmi.c
-index b64ab355a2e8..21103371046a 100644
---- a/plugins/qrtrqmi.c
-+++ b/plugins/qrtrqmi.c
-@@ -324,10 +324,13 @@ static int setup_gprs_context(uint8_t mux_id, const char *interface,
- 	struct ofono_modem *modem = ofono_gprs_get_modem(gprs);
- 	struct qrtrqmi_data *data = ofono_modem_get_data(modem);
- 	struct qmi_qrtr_node *node = data->node;
-+	struct qmi_service *ipv4 = qmi_qrtr_node_get_dedicated_service(node,
-+								QMI_SERVICE_WDS);
-+	struct qmi_service *ipv6 = qmi_qrtr_node_get_dedicated_service(node,
-+								QMI_SERVICE_WDS);
- 	struct ofono_gprs_context *gc;
- 
--	gc = ofono_gprs_context_create(modem, 0, "qmimodem", mux_id,
--			qmi_qrtr_node_get_service(node, QMI_SERVICE_WDS));
-+	gc = ofono_gprs_context_create(modem, 0, "qmimodem", mux_id, ipv4, ipv6);
- 	if (!gc) {
- 		ofono_warn("Unable to create gprs-context for: %s, %s[%u]",
- 				ofono_modem_get_path(modem), interface, mux_id);
+-	apn = qmi_result_get_string(result, RESULT_APN);
+-	if (apn) {
+-		DBG("APN: %s", apn);
+-		l_free(apn);
+-	}
+-
+-	if (qmi_result_get_uint8(result, RESULT_PDP_TYPE, &pdp_type))
+-		DBG("PDP type %d", pdp_type);
+-
+ 	if (!qmi_result_get_uint8(result, RESULT_IP_FAMILY, &ip_family)) {
+ 		ofono_error("No IP family in results");
+ 		goto done;
 -- 
 2.45.2
 
