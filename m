@@ -1,29 +1,29 @@
 Received: from mx01.omp.ru (mx01.omp.ru [90.154.21.10])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C74444369
-	for <ofono@lists.linux.dev>; Tue, 16 Jul 2024 10:12:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96E0144369
+	for <ofono@lists.linux.dev>; Tue, 16 Jul 2024 10:12:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.154.21.10
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721124741; cv=none; b=Vmkaubc7A4VtrX+ndLUxjAsrk16c37xpnkK8v4TxOyAF8AGsjQfUgOrrdeThafr2T3XhlDLgS5BvBnPpdTFDtrkwdNRTh5Ex4WrgjJ9J/TsvQ/oGNeGeTwh0ncM79sXp1cVBosMmpfEvDlgFVaziCWeYSBI42kT2m2F8syBevCY=
+	t=1721124744; cv=none; b=rU4Vvhu3luXoR/KT89VYx77pLiJfVNfzsaHFoeemTLC+L9Uoyi04Dd7QVLV89YWnvuWKoIbB+MPOU9rOuPqtcMJ9QL8Wt26eRpjlG6e9l/cF01vIzsGuv3mPWLzSZ8ktxVNcFiuV+9CLaxnYJZ/Iav1CuYK4wnlHbco63rEt+WY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721124741; c=relaxed/simple;
-	bh=gfRIMN7WpYySLkOZrlIWIrCRfeZToL713glRK0W8Bqk=;
+	s=arc-20240116; t=1721124744; c=relaxed/simple;
+	bh=gQWxC68/VhkrFORdJagqcRz5Pmk42RPKAm7IE6TOUqo=;
 	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=lc9jdnDJOOinC4pfxcdJlD8eIOiwME7mAKeuOEk+ls3teUpOijyvkpNjD4llki9Lapaz1hESyqRcEEvluoBzCwdPIwJTOGCB5hjfCKs0QBRV5KravKUJEG6DFMgQR254Dm2xydHRodEwcBO0rROnpzcrJd5OwIpMwzZlKapBbUs=
+	 MIME-Version:Content-Type; b=EMx3eBokrdyvjfr7Hbw3omj4imBDjlCPBcGhxgx57jAg1zBVf4oXBZaYquNsOhBG6TItx0msBjyq8zlt450zpRgaKHEhjDPfcvuKAuvO5+TVKT8HvMPcbIHj3Lxgdfs0wqQZLjagRA6jFHgHrjBJuHIyfnKkppDhYTqXBs+WnS4=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru; spf=pass smtp.mailfrom=omp.ru; arc=none smtp.client-ip=90.154.21.10
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=omp.ru
 Received: from localhost.localdomain (90.154.15.122) by msexch01.omp.ru
  (10.188.4.12) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id 15.2.1258.12; Tue, 16 Jul
- 2024 13:12:04 +0300
+ 2024 13:12:09 +0300
 From: Max Rudik <m.rudik@omp.ru>
 To: <ofono@lists.linux.dev>
 CC: <denkenz@gmail.com>, Max Rudik <m.rudik@omp.ru>
-Subject: [PATCH 2/4] cbs: Fix possible NULL dereference
-Date: Tue, 16 Jul 2024 13:11:34 +0300
-Message-ID: <20240716101136.44583-3-m.rudik@omp.ru>
+Subject: [PATCH 3/4] stk: Fix possible NULL dereference
+Date: Tue, 16 Jul 2024 13:11:35 +0300
+Message-ID: <20240716101136.44583-4-m.rudik@omp.ru>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240716101136.44583-1-m.rudik@omp.ru>
 References: <20240716101136.44583-1-m.rudik@omp.ru>
@@ -74,22 +74,23 @@ X-KSE-Attachment-Filter-Triggered-Filters: Clean
 X-KSE-BulkMessagesFiltering-Scan-Result: InTheLimit
 
 ---
- src/cbs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ src/stk.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/src/cbs.c b/src/cbs.c
-index 760fd860..246157b1 100644
---- a/src/cbs.c
-+++ b/src/cbs.c
-@@ -593,7 +593,7 @@ static void cbs_unregister(struct ofono_atom *atom)
- 		cbs->settings = NULL;
- 	}
+diff --git a/src/stk.c b/src/stk.c
+index 70e8ae30..083920a3 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -121,6 +121,9 @@ static int stk_respond(struct ofono_stk *stk, struct stk_response *rsp,
+ 	if (stk->driver->terminal_response == NULL)
+ 		return -ENOSYS;
  
--	if (cbs->netreg_watch) {
-+	if (cbs->netreg_watch && cbs->netreg) {
- 		if (cbs->location_watch) {
- 			__ofono_netreg_remove_status_watch(cbs->netreg,
- 							cbs->location_watch);
++	if (stk->pending_cmd == NULL)
++		return -EINVAL;
++
+ 	rsp->src = STK_DEVICE_IDENTITY_TYPE_TERMINAL;
+ 	rsp->dst = STK_DEVICE_IDENTITY_TYPE_UICC;
+ 	rsp->number = stk->pending_cmd->number;
 -- 
 2.34.1
 
