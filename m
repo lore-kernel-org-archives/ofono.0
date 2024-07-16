@@ -1,29 +1,29 @@
 Received: from mx01.omp.ru (mx01.omp.ru [90.154.21.10])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B42D44369
-	for <ofono@lists.linux.dev>; Tue, 16 Jul 2024 10:12:10 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C74444369
+	for <ofono@lists.linux.dev>; Tue, 16 Jul 2024 10:12:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.154.21.10
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721124735; cv=none; b=dLTWYySu7Wg2AyzfRot7alvsXVehN1Bq74XQTdbNhWAZBB9vpUig3mRRHl4C6vvCJMhWXN2YX1kCcjCqt0w9l4ZQ6aCmGVc08iD1nxrYEiNJRKXMh8zRin77u7JmbYahRqlYed+ixYzDxN1QyVW6MB9Xh0hRHzMoGnwpuesWNA4=
+	t=1721124741; cv=none; b=Vmkaubc7A4VtrX+ndLUxjAsrk16c37xpnkK8v4TxOyAF8AGsjQfUgOrrdeThafr2T3XhlDLgS5BvBnPpdTFDtrkwdNRTh5Ex4WrgjJ9J/TsvQ/oGNeGeTwh0ncM79sXp1cVBosMmpfEvDlgFVaziCWeYSBI42kT2m2F8syBevCY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721124735; c=relaxed/simple;
-	bh=fCSOLi0mH0JvA2/eMcnEmIhdeIPpec6IUSUI8EC8EVA=;
+	s=arc-20240116; t=1721124741; c=relaxed/simple;
+	bh=gfRIMN7WpYySLkOZrlIWIrCRfeZToL713glRK0W8Bqk=;
 	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=SbpZDYZt3UsCUn0da/mhy9K0OJ4ebVStxUmcD/uIB8bfinrOQMtRlvkzeTOWxNP2v8xBh2YtiyXeADY2tBk0AlaMORNYKvhO57cgeCaTRqPszyqNB1N3aysTbf8yXUTDO8Odx4M9QkLosEhkFYOTULYTDR3XIVTVjaA+s78WqMQ=
+	 MIME-Version:Content-Type; b=lc9jdnDJOOinC4pfxcdJlD8eIOiwME7mAKeuOEk+ls3teUpOijyvkpNjD4llki9Lapaz1hESyqRcEEvluoBzCwdPIwJTOGCB5hjfCKs0QBRV5KravKUJEG6DFMgQR254Dm2xydHRodEwcBO0rROnpzcrJd5OwIpMwzZlKapBbUs=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru; spf=pass smtp.mailfrom=omp.ru; arc=none smtp.client-ip=90.154.21.10
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=omp.ru
 Received: from localhost.localdomain (90.154.15.122) by msexch01.omp.ru
  (10.188.4.12) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id 15.2.1258.12; Tue, 16 Jul
- 2024 13:12:00 +0300
+ 2024 13:12:04 +0300
 From: Max Rudik <m.rudik@omp.ru>
 To: <ofono@lists.linux.dev>
 CC: <denkenz@gmail.com>, Max Rudik <m.rudik@omp.ru>
-Subject: [PATCH 1/4] stemodem: Fix possible NULL dereference
-Date: Tue, 16 Jul 2024 13:11:33 +0300
-Message-ID: <20240716101136.44583-2-m.rudik@omp.ru>
+Subject: [PATCH 2/4] cbs: Fix possible NULL dereference
+Date: Tue, 16 Jul 2024 13:11:34 +0300
+Message-ID: <20240716101136.44583-3-m.rudik@omp.ru>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240716101136.44583-1-m.rudik@omp.ru>
 References: <20240716101136.44583-1-m.rudik@omp.ru>
@@ -56,15 +56,12 @@ X-KSE-AntiSpam-Info: {Found in DNSBL: 90.154.15.122 in (user)
  dbl.spamhaus.org}
 X-KSE-AntiSpam-Info:
 	127.0.0.199:7.1.2;90.154.15.122:7.1.2;omp.ru:7.1.1;d41d8cd98f00b204e9800998ecf8427e.com:7.1.1
-X-KSE-AntiSpam-Info: FromAlignment: s
-X-KSE-AntiSpam-Info: {rdns complete}
-X-KSE-AntiSpam-Info: {fromrtbl complete}
 X-KSE-AntiSpam-Info: ApMailHostAddress: 90.154.15.122
 X-KSE-AntiSpam-Info: {DNS response errors}
 X-KSE-AntiSpam-Info: Rate: 59
 X-KSE-AntiSpam-Info: Status: not_detected
 X-KSE-AntiSpam-Info: Method: none
-X-KSE-AntiSpam-Info: Auth:dmarc=none header.from=omp.ru;spf=none
+X-KSE-AntiSpam-Info: Auth:dmarc=temperror header.from=omp.ru;spf=temperror
  smtp.mailfrom=omp.ru;dkim=none
 X-KSE-Antiphishing-Info: Clean
 X-KSE-Antiphishing-ScanningType: Heuristic
@@ -77,24 +74,22 @@ X-KSE-Attachment-Filter-Triggered-Filters: Clean
 X-KSE-BulkMessagesFiltering-Scan-Result: InTheLimit
 
 ---
- drivers/stemodem/gprs-context.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ src/cbs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-context.c
-index a23c6f83..58085f5b 100644
---- a/drivers/stemodem/gprs-context.c
-+++ b/drivers/stemodem/gprs-context.c
-@@ -193,6 +193,10 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *result, gpointer user_data)
- 	for (i = 0; i < g_at_result_num_response_lines(result); i++) {
- 		g_at_result_iter_next(&iter, NULL);
- 		res_string = g_at_result_iter_raw_line(&iter);
-+
-+		if (res_string == NULL)
-+			goto error;
-+
- 		length = strlen(res_string);
+diff --git a/src/cbs.c b/src/cbs.c
+index 760fd860..246157b1 100644
+--- a/src/cbs.c
++++ b/src/cbs.c
+@@ -593,7 +593,7 @@ static void cbs_unregister(struct ofono_atom *atom)
+ 		cbs->settings = NULL;
+ 	}
  
- 		if (!g_markup_parse_context_parse(context, res_string,
+-	if (cbs->netreg_watch) {
++	if (cbs->netreg_watch && cbs->netreg) {
+ 		if (cbs->location_watch) {
+ 			__ofono_netreg_remove_status_watch(cbs->netreg,
+ 							cbs->location_watch);
 -- 
 2.34.1
 
