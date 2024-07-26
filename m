@@ -1,65 +1,59 @@
-Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com [209.85.128.43])
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07C1816E891
-	for <ofono@lists.linux.dev>; Mon, 22 Jul 2024 16:30:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87ACC7494
+	for <ofono@lists.linux.dev>; Fri, 26 Jul 2024 17:03:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721665814; cv=none; b=urYyz7lBWa3M6N+LCEiPkFrsAOcUXdb8muh1ns/hFoweZyubLhWJofiz3FkTz3T6k4sjDwJQZ8FkXwaSZuvjHy3/l0bVZyW8Kvc4pU9bpr2uLNZH9oiwyYBvH9ZSCdO8TRBS9kG2aefZNB6GuWUfhuzT7exv8BbpLJm6FtiK3OI=
+	t=1722013404; cv=none; b=LVkjyS09w7dN2xcYGOcK9BC/AeBpasW2Xqjvzhmzi09b1MoLN7iutH+zXkHY65FqmXnOfAwEKEov1hXXBS1f9EihO7P53wc2BiwNjuDA9kHvGgeq8tDsRAJ4UpWVlhxlyhSaMe9Lbeq0AfDf3UQ8FLQee+HG3PzGyhe2GL9c3xE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721665814; c=relaxed/simple;
-	bh=e0BveJUXoCNw5TDmEqSx+XCDFXNcHzBnOUzohFyioqs=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=ed1wSTvvxjm9jiqLA/VJ2L/7tb3Ipx3ZgTtnp/qqlftrSz8yu0aHM4uY9NjHGtQsvHR3udfif/zljLwoLmtNtdavjwO5RQozZCP0B6DIe5ZtcUeViNonuPzaxPpvyPdBNE9FI7N9WiTb+nLQ9EvLm5ix2BAt5tEQhVL89jabvO0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lrDphrKX; arc=none smtp.client-ip=209.85.128.43
+	s=arc-20240116; t=1722013404; c=relaxed/simple;
+	bh=TqPI0pCTvRx0Gz9Y8CpNeJVqC7poyapn0SVnEtIyAx8=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version:Content-Type; b=tZsSX7P/PBPkippbP5heHyljYJd3skO/z7IoR/LcwLkbfPBAcmxj0gg6kLKLFZukb+yZBKGMrOpbkUjzvY+a0t+TJ+GaNgLXxX1ohAh3aCXLTqCv5X8bi+NIe9E8eoP8Fwm98uJwJJ1R6ktiLHL9Ynj0zdY9Q5xkN98r0I3Quzc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hK0ARTEA; arc=none smtp.client-ip=209.85.128.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lrDphrKX"
-Received: by mail-wm1-f43.google.com with SMTP id 5b1f17b1804b1-427db004e36so19032595e9.3
-        for <ofono@lists.linux.dev>; Mon, 22 Jul 2024 09:30:12 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hK0ARTEA"
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4280c493719so6946995e9.3
+        for <ofono@lists.linux.dev>; Fri, 26 Jul 2024 10:03:22 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1721665811; x=1722270611; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=OO75YvvcLVbW9WW8AS4aVh+/cdkXHqgVgMtOLpNwN7w=;
-        b=lrDphrKX5k2+ZNPLclTBLsjT9xOmn22L77ZXloGs6WEp5yzHpdhzOKk0HsYGrlGBqf
-         koQg6Eua7/O9zyzagIQ3pO06RSUwHPRnMVmodmhicPW1eAXB9vDU71Yr0FB3GjoVd4gT
-         liR3VTRsT+R2cwr/uCAyhG8XHAd3wVw+fU5jeTDBbdP6vKPR3MgNBmz9mnTVOP6MqkII
-         YNcAEQV63ctlXTdANFl9tpIefqMbW71U+78NOpiobwmbktwqBYHzqmpYdYR/lXbiDscR
-         ZjQdiIsvLGfFC0qfG7M8uJq60IwGp6Z6o0wNhFXAmIb7ety5Mm9mgpdfnaFNmbPOoJnf
-         mWYA==
+        d=gmail.com; s=20230601; t=1722013401; x=1722618201; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:to
+         :from:from:to:cc:subject:date:message-id:reply-to;
+        bh=n7EgeGu3DGonGiydwmAB/JHulv1UxDKtr92qixUb6UE=;
+        b=hK0ARTEAz7zWltABcckCW/XVrBlc9Dk5iuX1OXjVVC0lETsu5AZL9fJzKc3XT6Sccj
+         DXG+hgdJxCZrKMKAOV5KJatApiPyr+KTEcqQjHVLmA4yIwH6Q5blLlSl9ap7orIew11M
+         8/kDejwf0e0e2ysOYsFYqC/bSZIqVCV/wyEukhOAi6e9CnrG4D0mAB+S5yCfC7o2pswd
+         LbjheiedvSPZBfYl5c/IEtURecn8zvHofR4UZBvQSKsFshtQ9AJ/7xKYA0ML1nTA79lb
+         +vJ+NGle3UfN9n4KM8cpRCnst2NVf0YwAaat/XHHuR8iS9C7zjdNG9RYVdh7Qf7SsXlq
+         x8qw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721665811; x=1722270611;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=OO75YvvcLVbW9WW8AS4aVh+/cdkXHqgVgMtOLpNwN7w=;
-        b=pAXDjx8UNRBLv+PM5Xg+k78apmDLxCRkGu69OTPjBere5LDMu0bFQGWaamxnrPaf9j
-         zYaq8vWisBXd0ai8AfcMfZITOYk5gytWuvbBqHjHqktAQexhpuUDrm8OUU80Hn3zJuxy
-         Lnt/VkAOW6pyJyUatAPtCnNaarphrRvG9rN0Sg2OT7gXW5WestxGgs/DKuwaNEeVnk2y
-         lkpiXhllHvqSnjLjAA/8H1G+I8snCKmZCxIY2NveMtxFEBnXElFD1+x76nekmAJ/hsXs
-         GkR17urJq8gypKQ83NtDs4z7aAtV2aNjCPz5IP8VOcZA9nwF506pQV+vefDMwPtXTv23
-         7c7g==
-X-Gm-Message-State: AOJu0Yzca0RlmGB9ff3kdn9oK18PsdnR4pzeK/iyyV3fkkygH0DRHrfS
-	8H99LaoOYqqVunutaQB1KqS1FoBfa42oNOuvSvOro6q/bUqotrRowCSaJA==
-X-Google-Smtp-Source: AGHT+IHlGlKrbNuk767GSJWl4HNGHQ2jgKJKa8NPEN/QpS36YtvpA9+nXtqfhP+PlZ2E7Ruuh0/toA==
-X-Received: by 2002:a05:600c:1381:b0:426:5b3b:88b0 with SMTP id 5b1f17b1804b1-427dc523cf5mr43940795e9.14.1721665810687;
-        Mon, 22 Jul 2024 09:30:10 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1722013401; x=1722618201;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:to
+         :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=n7EgeGu3DGonGiydwmAB/JHulv1UxDKtr92qixUb6UE=;
+        b=eVKzG0DQLDOV1BEE3dorhKfrNm4UBVVsd0S5fHWhqrEgYvlnvEET1pTe/eRubxpm1a
+         wicG8NboXDpF7oczmAP8JRsmUWIZikQE39k4dVSoMIZrqqZ2IPnQGLfVh+Z4dxRuCjjg
+         0fV9jA3Z/DSkiKleFB3zBygyoqCUN2YD8YIEvYUNkTDO5iz2Unbk0yzwL/Am5g+vFTpq
+         oEzn6JWTwKc0BPBqGsScqGZhToh7mQpRjHLIY2BE+Kbnd7gKjisIjBBvQpFkt0AMv4bD
+         82cdgbxv7/Yg7HrQicHADDkJva/iGpWZAUH9NCxjoLfoEydishPDeEwgoz4bQ9Z0dwrx
+         ulwQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXHhK77uueUqz9yGfZl0hZh5viNex+Jv3WigREIe9wY4T7Prg3atMw4MhhqWjjotIVQYds73kKBqh7o3E8iEShb+bSguUc=
+X-Gm-Message-State: AOJu0Yz2EKkHgfPRUg8CAKU+4c75d0p5Xp8ZQSxxMZ7J5SwLrI7XYZeL
+	7qxFBJ2ZR8b5ny0sl+hfTeghGMK/Djsi0gMezyXH1CQ0ihwKC93YVAzIGw==
+X-Google-Smtp-Source: AGHT+IFaIvyiiwqv42ZO9fEX6MpoSyiOFBJzmfnlnoeexhaDozw3/m4/e9DFki6GPtkIHRg314MkYg==
+X-Received: by 2002:a05:600c:354a:b0:426:6c70:dd9c with SMTP id 5b1f17b1804b1-42811e0b770mr1468245e9.31.1722013400585;
+        Fri, 26 Jul 2024 10:03:20 -0700 (PDT)
 Received: from adam-laptop-hp.localnet ([90.246.116.218])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-427d2a8e42bsm164220515e9.30.2024.07.22.09.30.07
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-427f935954fsm129482605e9.9.2024.07.26.10.03.19
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 22 Jul 2024 09:30:08 -0700 (PDT)
+        Fri, 26 Jul 2024 10:03:19 -0700 (PDT)
 From: Adam Pigg <piggz1@gmail.com>
-To: ofono@lists.linux.dev, Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Linker errors with external ELL
-Date: Mon, 22 Jul 2024 17:30:05 +0100
-Message-ID: <4735172.vXUDI8C0e8@adam-laptop-hp>
-In-Reply-To: <0b06f3d4-c509-465e-bceb-574d900fed6d@gmail.com>
-References:
- <2705084.vuYhMxLoTh@adam-laptop-hp>
- <0b06f3d4-c509-465e-bceb-574d900fed6d@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>, ofono@lists.linux.dev
+Subject: Idle Loop
+Date: Fri, 26 Jul 2024 18:03:16 +0100
+Message-ID: <4939268.OV4Wx5bFTl@adam-laptop-hp>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -71,25 +65,33 @@ Content-Type: text/plain; charset="utf-8"
 
 Hi Dennis
 
-Ah, ok, i (wrongly) assumed some of them (the dbus ones) were upstream, so 
-this is a self inflicted issue!
+Wondered if I could pick your brain about a new issue I have.
 
-Adam
-On Monday 22 July 2024 16:55:23 BST Denis Kenzior wrote:
-> Hi Adam,
-> 
-> On 7/21/24 6:14 AM, Adam Pigg wrote:
-> > Hi Dennnis
-> > 
-> > Just to let you know, I have to patch Makefile.am when building with
-> > external ELL as a few of the unit tests fail to link due to missing
-> > l_basename.
-> None of the unit tests listed in your Makefile.am patch are upstream.  I
-> suspect they're present only in the Sailfish ofono fork you're using?
-> 
-> Regards,
-> -Denis
+In the patches I apply ontop of stock Ofono for Sailfish, there is a plugin 
+called the Slot Manager.
 
+On 2.7 all is fine.
 
+On 2.9 not so.
+
+The code in the slot manager, after its creation waits for 5 iterations of the 
+event loop before disallowing any more drivers to register, and it seems that 
+in 2.9, this is much more likely to happen, though its a bit inconsistent.
+
+I wondered if it could be related to https://git.kernel.org/pub/scm/network/
+ofono/ofono.git/commit/?id=063856a2ba9308e1776a3f906bd2ed9a9f760744 and what a 
+correct solution might look like (I understand this is my issue as the code 
+isnt upstream!)
+
+Potentially the check for 5 iterations of the loop isnt even necessary (and 
+seems very arbitrary!) so Ill test without it.
+
+Is there a reason that the gobi plugin/qmimodem driver combination now takes 
+an indeterminate amount of event loop time to appear?
+
+Any thoughts welcome, 
+Kind Regards
+
+Adam 
 
 
