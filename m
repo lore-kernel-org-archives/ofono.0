@@ -1,88 +1,83 @@
-Received: from mail-ot1-f53.google.com (mail-ot1-f53.google.com [209.85.210.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx01.omp.ru (mx01.omp.ru [90.154.21.10])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12A19BE5D
-	for <ofono@lists.linux.dev>; Tue, 30 Jul 2024 03:50:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9B84198852
+	for <ofono@lists.linux.dev>; Tue, 30 Jul 2024 09:29:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.154.21.10
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722311429; cv=none; b=iH/9w4B1WGNATIArokF8/Pbc/UVfU/yBT7CddAg0n3u6KJ+dx21tuLV68x9RDC9JStBFf42JZpxlfgb+g/huWbuIU5ZCYxx3Pnw835/WBm+ZVOcOBBTOxpaZXBfMAY1SLOj0Z2tHixLwCRfwopsqkQMtJP1YBRiHIstHscK1O0Q=
+	t=1722331780; cv=none; b=poLPGCiIdO7tF3oyLAZtq9a1TK8rVs1WfguTceuHUXw3oTkLz4eLXaZyv8TnsffesbsLFnhOtyCASwqufbJtuUicOmamk54OyhpbAKx8yleMDaUjp4qo5FqCCXhBo1MXggPX6QtDMv4kYQk+fexN228J6UF/AYP8JdNigwFKf8g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722311429; c=relaxed/simple;
-	bh=uG3aZN+o7xd920BrsM6gtf1bFUNn/CwU4RVoY5yUmyQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=iBdFzC0Yi7YFJa/eVh2o3SBpRI2vg9wVtRHlPCxtIuZC0veWHCYX6bmq7qcSIJq1KL5hoW7czlbAzEoJ55HM1pU2Bu3o3v/Eejewd6ZKxrjUX0IwYouAnX48HrZC7ERCEe8tGJOBzE9zTzvrryNArq9JQ+P6QOtbKK9BWv0K/5k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CkpYUfkv; arc=none smtp.client-ip=209.85.210.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CkpYUfkv"
-Received: by mail-ot1-f53.google.com with SMTP id 46e09a7af769-7093705c708so4197719a34.1
-        for <ofono@lists.linux.dev>; Mon, 29 Jul 2024 20:50:27 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1722311427; x=1722916227; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=buMlYig8Y60VNtm+DUlgnWA9ZFf8hWnpc9PTVaZuU38=;
-        b=CkpYUfkvfDwGuC//hVjFc9bV18MIsKCvxSHutC+1h7NiGM1G+Y6U/f1G3wJOop4WbW
-         wxpnDpLqjw+4I3a2/+ffTH46xHB0OBKivzlUrMyWbPtw+GMPaVSAA3XJwUBzupJ07ukY
-         POXhGsCg/UNew4zgsEtfgzCIvlcmZpoZLyeHUmw66rNA0sRmQh5+jbGDVjnHZAL1LvKp
-         mRanh1TO/LWi/YIDM6b3kJOMAj9Z+ZD06vAfch7TZ/ItACUzQPqFV4SMDRVX/H1sbVU6
-         aogGcAz6CXpbKNCZ3+IQKrd1AztZPnAmKvDRafL7uAT9EglLgZe3RSBVJFBmK3EAfi3k
-         BQGg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1722311427; x=1722916227;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=buMlYig8Y60VNtm+DUlgnWA9ZFf8hWnpc9PTVaZuU38=;
-        b=iRfuRYI28cgZej0H+jUns8ZTOThfRjTgNyucCVQRJQtA7dz53mf2Ty9zi3iTKisv12
-         xkJOs/AJN23utLvDPpUWrM4tp0GaHmtxWscbBoNy6266O4Osf+RFsZ9uJOFCpwYPkyx+
-         nKrIwjO6Ziev+9Y55e7vRf8qK8pXrSXGISe/tT4u7KTPTWrrLiuDVG0dTwl3qvMs5Jhr
-         tobYcn+cIxC/GmBj0f2mTInrTm9DsiWQZ5qx1soTqjINU5rtnujDWmKg3NK1X0fKo5pq
-         ycJS5cJJqNxkrhs/axdEWZC03j6nZ6JY7YkLetepheF97rNL5LeZgd376awQANQRGh5h
-         WA1Q==
-X-Forwarded-Encrypted: i=1; AJvYcCXFNCi7iHgBggAoCeOLxWh4Fh9nUIe5k3qSXM+r8HjKH2kLhmDFZ85AxKiFandBwOsCGVLaBtUpaYiMi/szRX/DgRdjI5Y=
-X-Gm-Message-State: AOJu0YzxyDq4pD/oTeewZ9kgkQpHbD8EmgZAte8SXfsXPXQCn9/IRVaD
-	m4FTXLNELdCnNrXliNHI9pcDVkT3PzogcPwYFzvvFIcLFneBtK4j
-X-Google-Smtp-Source: AGHT+IGv8F5UR+ETiq2PZAo2Hh3OPpn7uxOZP63c4YdDPDBS1cOH9BEbtk674w30u/oTBIW0tOX35g==
-X-Received: by 2002:a05:6830:18ed:b0:703:7051:4018 with SMTP id 46e09a7af769-70940c70bbamr10394733a34.28.1722311427129;
-        Mon, 29 Jul 2024 20:50:27 -0700 (PDT)
-Received: from [192.168.1.22] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 46e09a7af769-7095ad81928sm232535a34.33.2024.07.29.20.50.26
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 29 Jul 2024 20:50:26 -0700 (PDT)
-Message-ID: <b817df74-5f2a-4a53-bfb0-116e5bb5c1a6@gmail.com>
-Date: Mon, 29 Jul 2024 22:50:25 -0500
+	s=arc-20240116; t=1722331780; c=relaxed/simple;
+	bh=QktwTiDsA+EAAgL9mJIFGr+RzCivVrcJLQT40cHPSaM=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Sezobd5owcaim2c7/BtSpOOCJyw2J3/HtWz61ESCxjdJ0R3PORvOCdWb0AjZ7HlRPeypKux6ERSJEDjA7/vr7pnFfdIftut6xbBxhfyG/THVd3NnRS9FhIqi8CAI/UkrmwLz1j9ZcFsVDa+PISVjn1CO+3TfC8q1t1IdrEnBUWs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru; spf=pass smtp.mailfrom=omp.ru; arc=none smtp.client-ip=90.154.21.10
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=omp.ru
+Received: from spb1wst017.omp.ru (109.73.39.18) by msexch01.omp.ru
+ (10.188.4.12) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id 15.2.1258.12; Tue, 30 Jul
+ 2024 12:14:09 +0300
+From: Denis Grigorev <d.grigorev@omp.ru>
+To: <ofono@lists.linux.dev>
+CC: <denkenz@gmail.com>, Denis Grigorev <d.grigorev@omp.ru>
+Subject: [PATCH 0/1] Fix use-after-free
+Date: Tue, 30 Jul 2024 12:13:31 +0300
+Message-ID: <20240730091332.20031-1-d.grigorev@omp.ru>
+X-Mailer: git-send-email 2.17.1
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Idle Loop
-To: Adam Pigg <piggz1@gmail.com>, ofono@lists.linux.dev
-References: <4939268.OV4Wx5bFTl@adam-laptop-hp>
- <1f7fc554-43a1-49f3-aa3e-f2b51bafeb5a@gmail.com>
- <2131096.YKUYFuaPT4@adam-laptop-hp>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <2131096.YKUYFuaPT4@adam-laptop-hp>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
+X-ClientProxiedBy: msexch01.omp.ru (10.188.4.12) To msexch01.omp.ru
+ (10.188.4.12)
+X-KSE-ServerInfo: msexch01.omp.ru, 9
+X-KSE-AntiSpam-Interceptor-Info: scan successful
+X-KSE-AntiSpam-Version: 6.1.0, Database issued on: 07/30/2024 08:52:44
+X-KSE-AntiSpam-Status: KAS_STATUS_NOT_DETECTED
+X-KSE-AntiSpam-Method: none
+X-KSE-AntiSpam-Rate: 19
+X-KSE-AntiSpam-Info: Lua profiles 186785 [Jul 30 2024]
+X-KSE-AntiSpam-Info: Version: 6.1.0.4
+X-KSE-AntiSpam-Info: Envelope from: d.grigorev@omp.ru
+X-KSE-AntiSpam-Info: LuaCore: 24 0.3.24
+ 186c4d603b899ccfd4883d230c53f273b80e467f
+X-KSE-AntiSpam-Info: {rep_avail}
+X-KSE-AntiSpam-Info: {Tracking_from_domain_doesnt_match_to}
+X-KSE-AntiSpam-Info: {SMTP from is not routable}
+X-KSE-AntiSpam-Info:
+	d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;spb1wst017.omp.ru:7.1.1;127.0.0.199:7.1.2;omp.ru:7.1.1
+X-KSE-AntiSpam-Info: ApMailHostAddress: 109.73.39.18
+X-KSE-AntiSpam-Info: {DNS response errors}
+X-KSE-AntiSpam-Info: Rate: 19
+X-KSE-AntiSpam-Info: Status: not_detected
+X-KSE-AntiSpam-Info: Method: none
+X-KSE-AntiSpam-Info: Auth:dmarc=temperror header.from=omp.ru;spf=temperror
+ smtp.mailfrom=omp.ru;dkim=none
+X-KSE-Antiphishing-Info: Clean
+X-KSE-Antiphishing-ScanningType: Heuristic
+X-KSE-Antiphishing-Method: None
+X-KSE-Antiphishing-Bases: 07/30/2024 08:56:00
+X-KSE-Antivirus-Interceptor-Info: scan successful
+X-KSE-Antivirus-Info: Clean, bases: 7/30/2024 7:19:00 AM
+X-KSE-Attachment-Filter-Triggered-Rules: Clean
+X-KSE-Attachment-Filter-Triggered-Filters: Clean
+X-KSE-BulkMessagesFiltering-Scan-Result: InTheLimit
 
-Hi Adam,
+Hi Denis,
 
-> However, ive now hit a different 2.9 issue.
-> 
-> On boot, ofono is started via the system service.  Looking at the log output,
-> at the disocver_cb stage, instead of creating all the services, it instead
-> goes to the shutdown stage.  If I restart ofono after this is works fine.  Ive
-> attached the failing log to the end of this email.
+It looks like the static analyzer is reporting a false alarm and the recent
+change is causing a regression, so I suggest reverting one commit.
 
-Hmm, I might have caused a regression.  Can you test the patch I just sent to 
-you and the list?
 
-Regards,
--Denis
+Denis Grigorev (1):
+  Revert "cbs: Fix possible NULL dereference"
+
+ src/cbs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+-- 
+2.17.1
+
