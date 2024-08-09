@@ -1,119 +1,158 @@
-Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from EUR02-DB5-obe.outbound.protection.outlook.com (mail-db5eur02on2126.outbound.protection.outlook.com [40.107.249.126])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 893DE38B
-	for <ofono@lists.linux.dev>; Tue, 30 Jul 2024 21:13:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722373989; cv=none; b=uxyCxGdVBxOjXzp1XDwPwjJYGL/PYCo+BaTUKceJWWuB/UUIo2DPsf9RGZm2Bgp8fbQOxnFwL/Ye1hFrfF2cFKNOHCEnVgJqEkFqIS4aYpgu249tzRKN7EZy+/Ng1ZFZERVO7IC/+lhIIRrGr91GPuB6z7X8BbQHn4NeUR4gfY0=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722373989; c=relaxed/simple;
-	bh=j7KQdI0ShPwswLTbMyZOhNEpWGOQ1s2js9qSnk0zloY=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=tYrR5t6oTqsZLpmLHJ5k9+G+JET4xPhXAee77BFjWC/quHoFXzdRkrXuxzQcrLPPocewzdGWTqIeCYK9xfmrfBCr+kM6BqIDxDo1H/YWbaCO3qltTrT1EpWFV+f+JozJk1X6MK3Wp4SwKnPSsB7S2uUmgYvz35g5vFEm8pVccCY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OPyqivPd; arc=none smtp.client-ip=209.85.221.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 409E216CD05
+	for <ofono@lists.linux.dev>; Fri,  9 Aug 2024 11:12:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.249.126
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1723201952; cv=fail; b=njXkRWMmHBWMFOYDArDAT4+ZHa3HSmo9ndHchNXndjhBgGBQxqCshWdaKwUDdZ1E4W1uWKjyiP1uR78xOC4KgvjqYJRSo8Zm0jhrWeUsWWIGLuNsqdYmNLOFy8WwJN4bFvm7ibsqultIjptYVsvEpgfoK2ebOAeSyeFMfvUZFEk=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1723201952; c=relaxed/simple;
+	bh=NPxgPOMHiy1r5EP+VvtRpO+jNQv/m2zvKtuZSTr6vFg=;
+	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=OXJwKP7NC3Uq00cP0NgJeYEZeVRTleOTjE6CF+9IdFCDdptEzI+P8YumB5GCdzK1N2C3CMCYUTugGxkfbYZwP0QZ22v/DpIrBFi0c7acdYFUd0hz4i5aKYuquRfO1IvNwSpI9wj7qYO7kWsPoJgSSxYM8gCwIHI/XhCbPE+/Xto=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=kerlink.fr; spf=pass smtp.mailfrom=kerlink.fr; dkim=pass (2048-bit key) header.d=kerlink.fr header.i=@kerlink.fr header.b=Hsia8Y96; arc=fail smtp.client-ip=40.107.249.126
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=kerlink.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kerlink.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OPyqivPd"
-Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-3684bea9728so2784296f8f.3
-        for <ofono@lists.linux.dev>; Tue, 30 Jul 2024 14:13:07 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1722373986; x=1722978786; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=VGyW3vJ+n0QIKi3cR0x3zVL7ksnFxGeSu8UPWl8ZR0s=;
-        b=OPyqivPdCbYyPYUmbDZFm0Q9PMerXrt1oM0hE1PU4dMkr3RI0dufSye0ExntxRNXRi
-         53iMdvA1VvjyDru0E8USZIZiOftlNu8+d7hquItCy1d0c0jg9mjLVL6J7J7l5dAKoKMC
-         YL8E1HEaOcg81jCAjPRZmZ9ip5txximjaMCFZHccgd1m/7+rtNQtCjvP3JIW75p8e8vs
-         OXHSDxIWyUpf5VvWVIA/Iu63LCwjjoyVd00v/fyBX6OY0soI63Z0M4vhtbXK3Xt+Nl71
-         r9vLFdNf/mGQ9J4aWdLLZnbrDF0jM8Vg9vdT9euOsOXwyEgmMP6YoLnRczPUlPyWCT1W
-         61sw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1722373986; x=1722978786;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=VGyW3vJ+n0QIKi3cR0x3zVL7ksnFxGeSu8UPWl8ZR0s=;
-        b=j/foszXFpHkrNO4u2vV7wJKd9OITJtwY/m7zaETEJVg1yhzN5bqJ9at0YusWgv+vpo
-         8VT88FmrOQ2Rr7NrTaS0pFEPk8T0pJd2T9rd5DIBXh9F8PXSoyAZf442hkp3aoMQWiTy
-         POEy+1US6pfMuQmtdndjDVOikzsXnVrJRsEX0Yidt+l/CXU2gX4y/+MCTCf6kIyO4M1W
-         MOMhrRoX5U7r93p/EVGzsuGgVeean6yW3lQe+7p9qsuuSgyugHiEnLpx/HxtmUNNzmyb
-         LRoUjQqreftJYGM1M5KNEX/RyUFB9Tf1F1lRSG62bzUkN8wr9fz93CjJdubfxoKsnWBl
-         u8jw==
-X-Forwarded-Encrypted: i=1; AJvYcCUnI7EfVDdQ5O11YM9wXK0fn8eVWZErhVis0zaj6mfEaRpzoUM+IybfPJFfcZkWRkM+0afXDggGY1O2riQZO+eIrqrfo1o=
-X-Gm-Message-State: AOJu0Yz1EZhKQ66XRpsFzr9th/yXfBp3qd8y09cGxTYdCA+KBDAbTKU5
-	wzPIjTTe8k5MmqSMCsKZsE2EDPolmvpOOhhLvHzpcZaJ+x13SYm/
-X-Google-Smtp-Source: AGHT+IFvsqhl+L1437rXBkjpnJy8prA7I7ErFHvTezV1wdoJrH3iCdrWu2gF85FrPm+JrxOd3cZpaQ==
-X-Received: by 2002:adf:fa07:0:b0:368:6598:131e with SMTP id ffacd0b85a97d-36b5d0ae58fmr8178742f8f.38.1722373985499;
-        Tue, 30 Jul 2024 14:13:05 -0700 (PDT)
-Received: from adam-laptop-hp.localnet ([90.246.116.218])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-36b367c0344sm15597717f8f.2.2024.07.30.14.13.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jul 2024 14:13:04 -0700 (PDT)
-From: Adam Pigg <piggz1@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>, ofono@lists.linux.dev
-Subject:
- Re: [PATCH] qmi: Allow qmi_qmux_device_discover be called from callback
-Date: Tue, 30 Jul 2024 22:13:02 +0100
-Message-ID: <3482701.LZWGnKmheA@adam-laptop-hp>
-In-Reply-To: <0b03c25f-bf31-48eb-bc92-4a4eac783d04@gmail.com>
-References:
- <20240730034738.222227-1-denkenz@gmail.com>
- <2517208.XAFRqVoOGU@adam-laptop-hp>
- <0b03c25f-bf31-48eb-bc92-4a4eac783d04@gmail.com>
+	dkim=pass (2048-bit key) header.d=kerlink.fr header.i=@kerlink.fr header.b="Hsia8Y96"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=YEc++ckvvzg6rcBz/dyOWm4949nKnEg3iLYWmg4fj+ewXYXbj9rwPI3FeyY/Pj8vVnfEcp/eRUn6o1fuw7hEoaO63LLBRN9VN1cY/XPvRT1ZtPaqWrWC15d4/BIsOFZjm+RxP8IKhjqc4oapf2lhKGZiowP/rp2/NdshRK/8zp6mzgiHJjH/fqQDWzjvVb4H4kI0YqGlzS9gqBdj0MxxyJ6JatFSUHVHiceUcWYDNvQc/vIHB0mFgJQenkDJ0ULMZkPaLDK+l7w9G+j8gXHAZSZoo1xGJe4gLfIUhODbCyRcBYn1sVTTRYik+dId7sKYk5C9EjYDxtik6zewwEiBiw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=eZuRkD2LMb+ZSBge2Nfuv8oDFYYPg6KEA4ZkObYconk=;
+ b=NCyoV27B8EgDg3LiRqIVG/PcF9dcRGcZAcV4TkJbW16M3uLbgabsvAetiw0M83PVT9NU7MAIvC0kAHIRMoFa9AUGGdiJfOjbYytXTEBM0dZykLpbELng8iBJnKwRXKzoRfUB9P7RhH5mgmFCns7uRJn76ApU3kMtRUXcXXK4mhY3Yjxh1eK205pMq6GlwC979NLSDaQe/YgEmNsnp8668D/qmjtVoH/sp1asZyBIWWkNaavetp4wJjUetWREJNDrxMMLEZ4HZScdYty2u5Ea9Xq4P+RT6DF1M4VzIRnAIJ8m/9ZyMAWM5bTZxWzOw14ijk+zQCgHXCzSXaCD8xGjqg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=kerlink.fr; dmarc=pass action=none header.from=kerlink.fr;
+ dkim=pass header.d=kerlink.fr; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kerlink.fr;
+ s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=eZuRkD2LMb+ZSBge2Nfuv8oDFYYPg6KEA4ZkObYconk=;
+ b=Hsia8Y961k15ELh1Ptiqf0G8nUhzGaHTx+RAiTKltXFjvLtRWhs/vKaKOY3HA5uT7g0v4huuJRKwqTP1RNjbr4iEPgSxbPy0475cJbO8omtn1XQ6kgBJ5U3qhJ4IulYhtjGufRMpQBLeTm0TowcN9KuvXLfRzphKOh5uFoBPPZOBfQq7XzxfowF6QNtYdpWzVvx3MTztgDGYAQkkx5aeGLdZut3P7IsykF7EUSDILvgByEK4b8RmBGjjVyZYQK+T26BzYfbW4PEEcoRbfrQmc/Fl4hauZeINgVdF5Th2eoCv1pWRtXmNEDmx8TEXk1fSBKx4P0WMLVczhDep7srhdA==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=kerlink.fr;
+Received: from AS2PR10MB7480.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:590::22)
+ by GVXPR10MB5791.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:150:6f::18) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7828.27; Fri, 9 Aug
+ 2024 11:12:24 +0000
+Received: from AS2PR10MB7480.EURPRD10.PROD.OUTLOOK.COM
+ ([fe80::83b5:b6a3:6e6a:bdf2]) by AS2PR10MB7480.EURPRD10.PROD.OUTLOOK.COM
+ ([fe80::83b5:b6a3:6e6a:bdf2%4]) with mapi id 15.20.7849.008; Fri, 9 Aug 2024
+ 11:12:24 +0000
+From: Jean-Marie Lemetayer <j.lemetayer@kerlink.fr>
+To: ofono@lists.linux.dev
+Cc: Jean-Marie Lemetayer <j.lemetayer@kerlink.fr>
+Subject: [PATCH] smsutil: check that user data length fits in internal buffer
+Date: Fri,  9 Aug 2024 13:12:13 +0200
+Message-Id: <20240809111213.853665-1-j.lemetayer@kerlink.fr>
+X-Mailer: git-send-email 2.34.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: PA7P264CA0443.FRAP264.PROD.OUTLOOK.COM
+ (2603:10a6:102:37d::26) To AS2PR10MB7480.EURPRD10.PROD.OUTLOOK.COM
+ (2603:10a6:20b:590::22)
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="utf-8"
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: AS2PR10MB7480:EE_|GVXPR10MB5791:EE_
+X-MS-Office365-Filtering-Correlation-Id: 63904375-f200-49d0-c846-08dcb8642538
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|376014|366016|52116014|1800799024|38350700014;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?9fziGYlVShSQSbulL0PV4ou+GMI2vmzpYZCdOwFrDZ/5eFvin8eEBCPSHMKU?=
+ =?us-ascii?Q?KPzrKtjvITyWA9vA8IKGnihTTuNl6J/AQ7KHLtRjuw19gNt9dc1WF2IobBco?=
+ =?us-ascii?Q?VT0R58m2EFi0gCZy9cNgoYMQumZ3b5k400o6WcxY24J2rqBOts19N12BC1U1?=
+ =?us-ascii?Q?wiu4kVOUDQG4RV1klRM6Bnk354wozjQERxpE1fiadw9zCdMosicOtJhD9Lw7?=
+ =?us-ascii?Q?mjQ9kEf7cRcxwNV5Lbgz0ykC65A91XjVI8oJR5UUAGic+lONb18y6HoOFvTA?=
+ =?us-ascii?Q?4PZU5nJj8GrJsO9zwpbV73jTpshHrlP9y9pOrRi4BHroEMIZrwk0nUyru91o?=
+ =?us-ascii?Q?jFlpwYiU3qZTGFXrGcqRRnQFVRPdhKbOCM1Q7A87oLzTpLWgtwefxAVsTelZ?=
+ =?us-ascii?Q?dUsAlW/BIZ2Bc+uPT924ITLkF5XglW4VhJOrIFHt+vm9D4FTahsPqYWGt6mk?=
+ =?us-ascii?Q?N3vzkJ8IbMgp833lAKwqhYYLIybVS86Hm9GgHyJFyTTPYGr+7S2iw0dsl4Cy?=
+ =?us-ascii?Q?hD0M0IoU62PRjqHf61OPJlEaS3QkOUD3yGduqh8QyB8hrtacWGdQHsqKFs+W?=
+ =?us-ascii?Q?6rna0IbQeJVcehNvj8y3ltHGjy1uNkYnwnygbewLWFjyhbKjKoh5K8bE3N3g?=
+ =?us-ascii?Q?hwAUPVvNPw7j6w6eq0NreBizHnUMezvcfQZE7x0lv0lP+gfJuu/nR7bFPuGc?=
+ =?us-ascii?Q?fF3GhToz3Zo7qwy0V2t57t8w8PR36uqS2veTnafQYV0tAOuXukGkNZXk1ktB?=
+ =?us-ascii?Q?I0XJLbSwPP6v+80dl3JJLVpXY78ImJiLV/xk7enT/xgv4URQHCFIQb5yuzjJ?=
+ =?us-ascii?Q?g7wmrV78/m0PaZXjE/L9aywRvQWY1mbo2iy8ZEK+7IqZHIn8+0sXqPVKQuS1?=
+ =?us-ascii?Q?LyKmvcst2rFpTzKJNDnlZpPNeZwb/NiSHtBktpFrBwh11/aGdOk4r+XEQ1NM?=
+ =?us-ascii?Q?fYKgmCTKTfCkxEk347o9WfNEeLyZJ/M/nGcbc2zGKlrBpyAh3gzUeRHSxv0G?=
+ =?us-ascii?Q?Q3daKrusrHBD/LcFzdGNx5gIlS59ICP8K0XEJSM+nDxUQQYG/zgPYP+k2PNU?=
+ =?us-ascii?Q?zoLx/wYYZQyS19SomKUHH1b2WxF26UbU+Jmt+rUAJ6NdnewGnltqKFNAN41c?=
+ =?us-ascii?Q?S0gmX1acIQca3Op2nyJnSoQnxsZzfVKOsBR2Oha+vvJMIiC9+3xnaR9b/zDf?=
+ =?us-ascii?Q?wp71mNbu6y/nYAv5ssQGM4pbPeJ8+AQAZqbqzmLK7Le3WO3MZJtisidTn4jH?=
+ =?us-ascii?Q?GdAqzp/tGRLE75nl8mH2Fsm9NgIaMorWoOlAy9ThSpdvsJwFVn3P7eLQ8gqR?=
+ =?us-ascii?Q?OXlUoMtbUsHbX6JqxNzMQceXFIEXMkSq8+NIwYpx9WdcV3eB2c9aKSoxHqrr?=
+ =?us-ascii?Q?ClhegsZJ0Iglx9V5Dk7541Mu3yFEfZPS59HQfhG/fm655vZnBQ=3D=3D?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AS2PR10MB7480.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(376014)(366016)(52116014)(1800799024)(38350700014);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?b5/NWKcV14F65aF/C/Ful5gGNUJZjgKi1Xgdu8gSpGXTgAjzVeks4EPObHKo?=
+ =?us-ascii?Q?X1WBG80rgCajY2fpadKMqzo/l9Go7a7vMaTsADPFOJXEXxzy6oA73KX+8L2d?=
+ =?us-ascii?Q?yj3vGr5NzuuB20ZIrJrTmH52Hd3lB0j14C3fIBjqZQeH9r0sBkFOce+Hoj/b?=
+ =?us-ascii?Q?t2waRi0GVdB3JLLYOSuDSAV4q+jWUxwzhNEQupWgAvVSdzO4FI6NUKbChC5t?=
+ =?us-ascii?Q?rXnfMj3FGxLv7AMn19EiAQ0BUMmsbVktgs9c0nXr67fXS3tZq3uOcthIpf4P?=
+ =?us-ascii?Q?1qPwPlwRb73zKZ7KEGJ9oR2uL1vEzbD3Pu61/1nd2F/S2D3be5xrD47yL45d?=
+ =?us-ascii?Q?sVtoiA7QIC4wxqpmBSXjHbcYIhmSDqPZ8SFEatnz1oQE39EdAiZunKHXTNpI?=
+ =?us-ascii?Q?kIMfbjcwxDXhrVypfzLVSAZRGH9JeHDCUKSaSm41ZajUX/82a+VKo9re9iQ2?=
+ =?us-ascii?Q?cEh4Hst0d6fFj+Dv2sFYhNNCbN0VKIx2D9gtXn/RlwPt2a90Oph1jq3E1G/c?=
+ =?us-ascii?Q?+xUFmFqTpoR52ohMegHFKfVK7RkX6PwYH30Aq6EhbBPPnkzybYJVIAKR0XFB?=
+ =?us-ascii?Q?OgG4N8wzidqYciqGrcoKobKWTvlfon8vrlsMxC1VsdCYEQZf6HeEVEMqDvWR?=
+ =?us-ascii?Q?b55nF1beqh5DzFIaoym/y9YQ3v4LJZUGh/+n9kziLjjZfrqgdhgQPmas+/1+?=
+ =?us-ascii?Q?p2t9e4l0RbctVeBGjFoq0n98jOcynd9QRs+mZczaQpsFf9Xk0U0Dbzi45M9f?=
+ =?us-ascii?Q?32n1hVLi323XALQkUuszXfJXZQc8+8lXWN7tBbFN+2Lx2F7Wn23DrDwhyucs?=
+ =?us-ascii?Q?vJskgGERmyI6dOiyAM4A5TGAfTWbKRidWgUP+cQ9dWnNuXSJJ038zCw9efc7?=
+ =?us-ascii?Q?iWjK4jZVS/H07GUlfdHigRtyOiVNukpFaIaUrfUpA3Blt1qjYdGZrLepKVGu?=
+ =?us-ascii?Q?2TvPiWQmVZ3RuUJpb5WxGCRjoyhOJqPWaVtRflIW70tuFNlmGJx2BAigJkSN?=
+ =?us-ascii?Q?hqkegAtZTbk/yfkGMoRCIiaAO8o1vcrm3XIMWk+cTbz1w34KtVBSjgnDjIZX?=
+ =?us-ascii?Q?Jidx5qgTF+JKPvBFc9Y2PwGhz38VG5F5eTc3l87LtckbjrBGCbeRFOUxl81a?=
+ =?us-ascii?Q?+gApM+ZbWcA3TmsP+NVpRLC70UuZt6PSABW++MhrnnbZf1laMFHWof04De2L?=
+ =?us-ascii?Q?XERXu3EFjsjpHWtlAwwt3yjWPAcetTUaJIDJQ1K/56IfkB2hv+3PXq2JSaMM?=
+ =?us-ascii?Q?zQyF7YlGbHZ9w4AaKyYE2sB8nbMtDEKFD3GSyEGJtsEOyOXNIMID59q22zQ5?=
+ =?us-ascii?Q?7r62OIgcwMeMx0euP1qgW08Xz+cHN61BwbIwBEDBlA3wucLCKApfJX6nr/uQ?=
+ =?us-ascii?Q?MJA4wFjGGP/LkDuObNXKD08bHqQAsK9a2VFtmtdtTueP1aSaeALxCKevxr0j?=
+ =?us-ascii?Q?tLBft4imdiHpmXcZc82NZRAjN/jHE1x3eTcFAM989n3YcbqEALRmE7D4KruC?=
+ =?us-ascii?Q?GKyHLyKMfMxsY2J/FLvVuUR46IU9HeaYgHpB8hQTcPZIEqkMnNsWfx/V4fHW?=
+ =?us-ascii?Q?9h4tsv59UacF+gIe+INQIEtpp2bXeEfZVoBr/3Dn?=
+X-OriginatorOrg: kerlink.fr
+X-MS-Exchange-CrossTenant-Network-Message-Id: 63904375-f200-49d0-c846-08dcb8642538
+X-MS-Exchange-CrossTenant-AuthSource: AS2PR10MB7480.EURPRD10.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Aug 2024 11:12:24.2095
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: e53a72e6-936b-4019-8ac1-596e63242dec
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: CSy6BElwCUZVm5YhF44mikImdE1CiBkPVja8d7C4Nra3i9hNy7ZjMeV87M3UFXdwCzlwcXgomwGXc3lSe30bww==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: GVXPR10MB5791
 
-On Tuesday 30 July 2024 20:48:54 BST you wrote:
-> Hi Adam,
-> 
-> > This certainly seems to improve the situation.  what happens now on boot
-> > is
-> > that the driver loads Ok, the UI shows the signal strength for a few
-> > seconds, but then appears to go to an unregistered state, which is
-> > supported by the logs below.  When I restart ofono, it seems to work
-> > fine, this log is also below.
-> 
->  From the first part of the log:
-> Jul 30 10:44:40 PinePhone ofonod[2543]: src/gprs.c:registration_status_cb()
-> / quectelqmi_0 error 0 status 1
-> Jul 30 10:44:40 PinePhone ofonod[2543]:
-> src/gprs.c:ofono_gprs_status_notify() /quectelqmi_0 status registered (1)
-> ...
-> Jul 30 10:44:40 PinePhone ofonod[2543]: src/
-> network.c:ofono_netreg_status_notify() /quectelqmi_0 status 1 tech 7 lac
-> 11016 ci -1
-> 
-> Looks like we're registered at this point.  Then:
-> Jul 30 10:44:41 PinePhone ofonod[2543]:
-> src/gprs.c:ofono_gprs_status_notify() /quectelqmi_0 status unregistered (0)
-> ...
-> Jul 30 10:44:57 PinePhone ofonod[2543]:
-> src/gprs.c:ofono_gprs_status_notify() /quectelqmi_0 status unregistered (0)
-> Jul 30 10:44:57 PinePhone ofonod[2543]: src/gprs.c:netreg_status_changed() 0
-> (unregistered)
-> 
-> Then you restart oFono.  I'm not really sure why the firmware says it isn't
-> registered?  You haven't observed this before on boot?
-> 
+This addresses CVE-2023-2794.
+---
+ src/smsutil.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-Maybe it was a hiccup .. I just shutdown and booted, and its working fine this 
-time. i'll keep an eye on it!
-
-Since the service restart this morning, it appears to have been working fine 
-all day.
-
-> Regards,
-> -Denis
-
-
-
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 39f0ecc6..7f065d9d 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -773,6 +773,9 @@ static gboolean decode_deliver(const unsigned char *pdu, int len,
+ 	if ((len - offset) < expected)
+ 		return FALSE;
+ 
++	if (expected > sizeof(out->deliver.ud))
++		return FALSE;
++
+ 	memcpy(out->deliver.ud, pdu + offset, expected);
+ 
+ 	return TRUE;
+-- 
+2.34.1
 
