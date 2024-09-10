@@ -1,35 +1,52 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E6ECC43AB0
-	for <ofono@lists.linux.dev>; Tue, 13 Aug 2024 19:40:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E6D017C7BE
+	for <ofono@lists.linux.dev>; Tue, 10 Sep 2024 07:22:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723578038; cv=none; b=YP8xpfCwgURDZcbzLQ03AEHxl3eD5Pd4RWtvp1/5m8Ftd1Lepl8OGbnJWYDziZOMLYMYpz++fzrTJlg16nYi07QcIhlLtv6dnL7KMLisHgsvUqiFEmZ9KVg0V8LCEcqiMHU0qOk2DndibIw0gXkhd71jZBCj9vgcW+j5xtrd4EQ=
+	t=1725952962; cv=none; b=IpQU0fCV21DZeLct8LGhewubXqxGa9PGTMoP1LsT9SwMhpoJlVITkNGLtAT1yZLjEIKCPGdPAU/sLUCvWZZGeHwuzkuZCcdz+Dwz5fEd7GdUPPNKVf6gLsBZeSB2TtDk8Bi8UsXJoCre02/FLAeDUJPJnu0QddI5EnZ9EXi5+ZY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723578038; c=relaxed/simple;
-	bh=2Mu8DPz8EWFjhQMh17AHY0Yu7Jze8mhT4z2tQsDMoro=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=HhU5SdqMEEEKEpvS1DOS6kwPAhpgnTUfr9q88ccuHPiXClkOArz54TfxeIVHXFxhpGSNNDtJt2cbbERFRuTqNr0TjvH1aGXz1d7zZAt14hD7EGbVGV3bFHKIFSu/076LT0OJ76s9FNNlfoV2xUT0f/2Vchu0kQsTK6jsHcZz3do=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=uegs2CKE; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1725952962; c=relaxed/simple;
+	bh=T+lOr/0y6fFjDB3m/PwhqEF4RlSps1nrdde6cKWVq2A=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=YgtWxc/Gcp+T5xPyDnXv5NjRIhE6XeJyGJOeZZ3TArvJ2kbHX9DCM7cPyaR/eJIaDtyZldVVUB/qkou85B6H9DmreDYFmp/0uSqLfqiYveZcHAauvqmBblqhKCnYkjIdMV4+x7kT8pmVCHqi1AhamK4lQQrfpSMSoUyJc8DU2jI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=bqPaiOEp; arc=none smtp.client-ip=188.40.30.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="uegs2CKE"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6A8EDC32782;
-	Tue, 13 Aug 2024 19:40:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1723578037;
-	bh=2Mu8DPz8EWFjhQMh17AHY0Yu7Jze8mhT4z2tQsDMoro=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=uegs2CKE7JYg7Mcq8pvlrC/tPVtz8uu4gDowt3L2p5i3K/toevvVtmZLjPgYF38TS
-	 UG59SHeyGLpg232+DrOT4hbgXm++xbl+lVxd4oQB444fxRZKCfnIA7MCizf0i+71B6
-	 1pdIwdYSVL3qRxj08Q4CYzgpZK4NBNrfMiLwZLEtOjMtL1qHXotGuOu9jxlGzry+Fq
-	 twaDzk+3ScS8kRNeaUHXRCk3Kz4ZECpIHjmA9a1agVRqFgwcSA2/DvSTm/f3B2dv17
-	 A3U/BCftraaOZ85QBm83g/hoc3M8p2lyI08bH+Q3Do7dAyp15duBklvSbNsvD8SAU2
-	 LNLVKxuEF1TMQ==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id AF7423823327;
-	Tue, 13 Aug 2024 19:40:37 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="bqPaiOEp"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
+	s=default2211; h=Content-Transfer-Encoding:MIME-Version:Message-Id:Date:
+	Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:In-Reply-To:References;
+	bh=gw92Jd8XyWsQuB6aY+yM0g9jyT6MCt7CZVUOAyatkYw=; b=bqPaiOEpf11HWyvW8TsvKKmiXM
+	LzqUl47GnI4v3srUSx5AV/SxjOg4apextGNMhbSLo1s0lIhW7ucKLzj8eaKGUVT85y+WGW4586Ck/
+	7tBetvdP0xc5tA7tFhC5+myff709tVUx7tlk+UJbWqMb7JK6veP48da1ZwhReDcbVUka0T4AYKIZq
+	7lVHLxuQbMG9ADqhRPQRiSgeiapQtXC4I+HK6jI42aiWa9b2lKBHrNdt5rqAlr+WGF0/LDcYQ3IJX
+	Iv2Qd5GV9yIVtPpo4v7edRjhoS0MjAVX5nJN4ltBmmz9geXO7dSVkVn7XZY/VEoiw9yplbBvm1QEZ
+	1P3NMRsA==;
+Received: from sslproxy02.your-server.de ([78.47.166.47])
+	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.94.2)
+	(envelope-from <benjamin@geanix.com>)
+	id 1snvCu-0009YS-Nn; Tue, 10 Sep 2024 09:22:36 +0200
+Received: from [185.17.218.86] (helo=benjamin-ThinkPad.geanix.com)
+	by sslproxy02.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <benjamin@geanix.com>)
+	id 1snvCu-0005mq-0k;
+	Tue, 10 Sep 2024 09:22:36 +0200
+From: "Benjamin B. Frost" <benjamin@geanix.com>
+To: ofono@lists.linux.dev
+Cc: sean@geanix.com,
+	martin@geanix.com,
+	denkenz@gmail.com,
+	"Benjamin B. Frost" <benjamin@geanix.com>
+Subject: [PATCH 0/3] add support for Quectel EG916Q-GL
+Date: Tue, 10 Sep 2024 09:22:07 +0200
+Message-Id: <20240910072210.2618396-1-benjamin@geanix.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,35 +54,27 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH v2] smsutil: check that user data length fits in internal
- buffer
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <172357803652.1736044.13589834836772584626.git-patchwork-notify@kernel.org>
-Date: Tue, 13 Aug 2024 19:40:36 +0000
-References: <20240812085134.74064-1-j.lemetayer@kerlink.fr>
-In-Reply-To: <20240812085134.74064-1-j.lemetayer@kerlink.fr>
-To: Jean-Marie Lemetayer <j.lemetayer@kerlink.fr>
-Cc: ofono@lists.linux.dev
+X-Authenticated-Sender: benjamin@geanix.com
+X-Virus-Scanned: Clear (ClamAV 0.103.10/27393/Mon Sep  9 10:29:16 2024)
 
-Hello:
+The aim for this patchset is to add support for quectel EG916Q-GL
+using the usb serial port.
 
-This patch was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
+Benjamin B. Frost (3):
+  udevng: support for EG916Q-GL using option driver.
+  quectel: support for EG916Q-GL
+  atmodem: Support for Quectel EG916Q-GL modem
 
-On Mon, 12 Aug 2024 10:51:34 +0200 you wrote:
-> This addresses CVE-2023-2794.
-> ---
->  src/smsutil.c | 3 +++
->  1 file changed, 3 insertions(+)
+ drivers/atmodem/gprs-context.c         |  3 +++
+ drivers/atmodem/gprs.c                 |  1 +
+ drivers/atmodem/network-registration.c |  1 +
+ drivers/atmodem/sim.c                  |  1 +
+ drivers/atmodem/sms.c                  |  2 ++
+ drivers/atmodem/vendor.h               |  1 +
+ plugins/quectel.c                      | 10 +++++++++-
+ plugins/udevng.c                       |  4 +++-
+ 8 files changed, 21 insertions(+), 2 deletions(-)
 
-Here is the summary with links:
-  - [v2] smsutil: check that user data length fits in internal buffer
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=5209fd65ff41
-
-You are awesome, thank you!
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.34.1
 
