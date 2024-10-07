@@ -1,50 +1,35 @@
-Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E586112CDAE
-	for <ofono@lists.linux.dev>; Thu,  3 Oct 2024 12:47:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 713491DDC05
+	for <ofono@lists.linux.dev>; Mon,  7 Oct 2024 18:00:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727959679; cv=none; b=gmW3eLAga2itBo1seQb79TMrACzlLhEf9uAwRutPitiAQ8EZDZF3LTmZZvO8im57gS2zJ8ypec5r8gPuCPlVuNdX1MGi+fr9Hxr9o4CFHkmCATg43nh+hRx6MysS0RDCZUG0/yQyu7GvMt2xBMVPz/FCtfN+Q2T5idcsueQatwc=
+	t=1728324029; cv=none; b=KeglMUiqy6ZELvqzmPbawI14fSM4fDoB2/v8L8weFfKocN4CRhrH2GIT0cj4nWolc3ER87epUO97HQrBEB8e7YgOA+SyYhkBqZIO/MyUlAGymT6Kvx7//Vw0yPOMA5eh+k8gZO5/z+6JIARUpPsxxXN6wMfvFFMzr/bgrBXhkwg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727959679; c=relaxed/simple;
-	bh=5VDLj2E3DCN2q9Qdw5aid449W+lyxws/51TNOGyhJ+A=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=UYEURVAH/ASD/HMutp224XUsDeeP/kvJBLcChM07pughQaju404LHzKPhtuHUckl6dO+POQnUwP6yyaioI25aEZtW4NKu6dTOKCP8PEQklHDtvbaVTKmfGu6Ze5Cj5giqqaD0RoFQbM1b9v6jf3WbEngw4YfR3BTZqmxsHQePcI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=pZMfG9w/; arc=none smtp.client-ip=188.40.30.78
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
+	s=arc-20240116; t=1728324029; c=relaxed/simple;
+	bh=QHlFgYsevh0I3Js2gPBzNAmW0bWXozCeIs8WN0ZxbcQ=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=PBfSlr3s46dsiHs8NUyDJrPaEduFA+ccMyqFj0hNyDA51ei7jKQs1Hj0E8JCm7d3jzWHg/df1HTW+Lq58/QzDoNTjOtgvoyOrqEOU0flxhCNKTK7Udjv3U5rgrG4eSzAtSx1Xt9RoEh94ZsV8QXgbpHvE6c+QHO5kBrkpPv5cYc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=sULYH7I1; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="pZMfG9w/"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
-	s=default2211; h=Content-Transfer-Encoding:MIME-Version:Message-ID:Date:
-	Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:In-Reply-To:References;
-	bh=4CxqZIe+dJSIYAkYocYvbJ34yGilPnX3AylUyyYxBtw=; b=pZMfG9w/J+m7e/Ht5RAuoXSwsa
-	K+7eb2QjVzTnIsC3e4s0n/3YWsD3mqWkZooyahBovwTmOK9aTx++GnShRnpSPUvydbcuBQy4vGMKI
-	r8ouGY2bFa4fhA10Ke5MPjZY7geShqiWZVjXV9H77bFADfds27A6MJtArHNCJis6ZvPrTDs+5aBfW
-	CLiSGpUxVFQl+6LqoPKxPY4zlaqKvkwCKOia/Ae5PTDDAr6VgjFRxGU1+nVuHPiSTH36r/4zQSvp5
-	PnAR6Af1Yr/9yRE9Veza/Rf6AmTTrhJwFz1rIv5OeJ4U775icnTkILoCdZDlLbaO6JhH67m4moTFC
-	5bFuJ1tw==;
-Received: from sslproxy06.your-server.de ([78.46.172.3])
-	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.94.2)
-	(envelope-from <sean@geanix.com>)
-	id 1swLFG-000Oli-Fc; Thu, 03 Oct 2024 14:47:50 +0200
-Received: from [185.17.218.86] (helo=zen..)
-	by sslproxy06.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.96)
-	(envelope-from <sean@geanix.com>)
-	id 1swLFG-0005rp-0Z;
-	Thu, 03 Oct 2024 14:47:50 +0200
-From: Sean Nyekjaer <sean@geanix.com>
-To: ofono@lists.linux.dev
-Cc: Sean Nyekjaer <sean@geanix.com>,
-	denkenz@gmail.com
-Subject: [PATCH] gprs: allow attach on eutran networks
-Date: Thu,  3 Oct 2024 14:47:34 +0200
-Message-ID: <20241003124737.666419-1-sean@geanix.com>
-X-Mailer: git-send-email 2.46.2
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="sULYH7I1"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DEC35C4CEC6;
+	Mon,  7 Oct 2024 18:00:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1728324028;
+	bh=QHlFgYsevh0I3Js2gPBzNAmW0bWXozCeIs8WN0ZxbcQ=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=sULYH7I1IayYuXKiGsXHTFO/2BuX6/KUuUuxtBi+lCxji926fsiZdMll8IRJenaxk
+	 UxuxnNB9QBwNpKM7OrKo5ah0cDXbz5q5Nc/rwibP8I4/ftqeQugBCPRMSG1fl72g25
+	 Gm5oFNgiFxDnx8MIdy5dEVC/CLS7xeAXtUTmJO0LAYBmxNqSrT1DyKdjdNPNVo2Jz2
+	 IsnyRpJEulFaurFp8j2EoJiV34OJsc03+o/0WDabNO5zlJ3E92fIFgClZpiVQbx8HI
+	 zOd6FMOtytm7MYcP0f36pMX2ILBlbJKkIkSOiA0jOBxiKg0K+kRDYnlLbI8kbsrXc6
+	 v386qK6rlf3Qg==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 33B9C3803262;
+	Mon,  7 Oct 2024 18:00:34 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -52,36 +37,37 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Authenticated-Sender: sean@geanix.com
-X-Virus-Scanned: Clear (ClamAV 0.103.10/27416/Thu Oct  3 10:37:25 2024)
+Subject: Re: [PATCH] gprs: allow attach on eutran networks
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <172832403301.4120599.4007089110853357062.git-patchwork-notify@kernel.org>
+Date: Mon, 07 Oct 2024 18:00:33 +0000
+References: <20241003124737.666419-1-sean@geanix.com>
+In-Reply-To: <20241003124737.666419-1-sean@geanix.com>
+To: Sean Nyekjaer <sean@geanix.com>
+Cc: ofono@lists.linux.dev, denkenz@gmail.com
 
-SIMCom A7672E-FASE shows attached on LTE with +CREG <stat> either
-6 registered for "SMS only", home network (applicable only when E-UTRAN)
-7 registered for "SMS only", roaming (applicable only when <AcT> indicates E-UTRAN)
-+COPS supplies the <AcT> = EUTRAN
----
- src/gprs.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+Hello:
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 97d6f382..46668820 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1731,10 +1731,12 @@ static void gprs_netreg_update(struct ofono_gprs *gprs)
- 	if (gprs->netreg_status < 0)
- 		return;
- 
--	attach = gprs->netreg_status == NETWORK_REGISTRATION_STATUS_REGISTERED;
-+	attach = (gprs->netreg_status == NETWORK_REGISTRATION_STATUS_REGISTERED) ||
-+		(gprs->netreg_status == NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN);
- 
- 	attach = attach || (gprs->roaming_allowed &&
--		gprs->netreg_status == NETWORK_REGISTRATION_STATUS_ROAMING);
-+		((gprs->netreg_status == NETWORK_REGISTRATION_STATUS_ROAMING) ||
-+		(gprs->netreg_status == NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN)));
- 
- 	attach = attach && gprs->powered;
- 
+This patch was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Thu,  3 Oct 2024 14:47:34 +0200 you wrote:
+> SIMCom A7672E-FASE shows attached on LTE with +CREG <stat> either
+> 6 registered for "SMS only", home network (applicable only when E-UTRAN)
+> 7 registered for "SMS only", roaming (applicable only when <AcT> indicates E-UTRAN)
+> +COPS supplies the <AcT> = EUTRAN
+> ---
+>  src/gprs.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
+
+Here is the summary with links:
+  - gprs: allow attach on eutran networks
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=8a61a0c44110
+
+You are awesome, thank you!
 -- 
-2.46.2
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
