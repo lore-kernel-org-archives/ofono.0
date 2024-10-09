@@ -1,59 +1,59 @@
-Received: from mail-oi1-f177.google.com (mail-oi1-f177.google.com [209.85.167.177])
+Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72D1B1E1C19
-	for <ofono@lists.linux.dev>; Wed,  9 Oct 2024 15:20:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E3FE197A7E
+	for <ofono@lists.linux.dev>; Wed,  9 Oct 2024 15:27:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728487257; cv=none; b=oFdWEG/LBIYK0G6Th8SJYSmYmXQnMrZLTAITBDnsFf1uIsN3NCFj6rvGnywbieDM9LhwGxMraVf01Ghg7lYh2xWIdBF657smtoOCe3kWf96j+3bJZ6iVp8ZQ1ZvOR1ynA+BzJ37B88gq2eqfDMVXwsb1GJbTBbw/gPvxD/TV5II=
+	t=1728487627; cv=none; b=WSijp8rlJP87dhAZtKxcgwVsAVY90Xi2LRNme6dLoRjkBlwPDbfktsagL2x41Cdw+GF0QfuNJU0A47aAtWKxS85ioK/zY00tgjX5mSUE687FBboR5lL937g0THrekjFh/Iq7mdBfBrc7k8oLIPGfbs4zuBQe1xCWjHGY8MY0ffY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728487257; c=relaxed/simple;
-	bh=mot0fVBRoJpdAKz+VxHXQkEzO3OQr4AqzM/5a0Hi9jw=;
+	s=arc-20240116; t=1728487627; c=relaxed/simple;
+	bh=DERreDqNGWZ+Wrm/Vaecb2+GWWoiB0ak4jhwvgyUndM=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=QKzkMGu7+ACYFa9fbvsyQDKPISuQmD3HP4+xPl/xKrNiFn0K8ZUme0DIQevmRsmv5WY679kHIwQJ4nD1XnS9KMlY3EnoDezKn3LSR2yEdQNd+9qiCYrPROW5fT+V/ZH3/6NCOvfAGeTJLZIdwNycCxC0J1iAyV15lXd36wD1yBk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hEFdvSVW; arc=none smtp.client-ip=209.85.167.177
+	 In-Reply-To:Content-Type; b=E/IME41jZ1wCDlQmvX/rI9fEqj/dkyEHYoxzTlsUu3P24wctXjgwl283jYhiE4ldrexwbJMDk5HzDrJfY9B9I50KeGCf+4Ocx4keB35/DcB/LwJLQ7jYTgfQjWI/QCtBJClTNShzcwPjQKgJFjJEFaaFdoiZjyvObmGtvKrIBDM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ApkUTL/c; arc=none smtp.client-ip=209.85.210.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hEFdvSVW"
-Received: by mail-oi1-f177.google.com with SMTP id 5614622812f47-3e411aff454so475281b6e.1
-        for <ofono@lists.linux.dev>; Wed, 09 Oct 2024 08:20:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ApkUTL/c"
+Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-715716974baso1361480a34.1
+        for <ofono@lists.linux.dev>; Wed, 09 Oct 2024 08:27:06 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1728487255; x=1729092055; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1728487625; x=1729092425; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:to:subject:user-agent:mime-version:date:message-id:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=K8pbFXwfjfcZQULs/GLCfvPWB1q/CYhVQ29f6psnuos=;
-        b=hEFdvSVWsxrMZ+gKraS8Rt9SRTPHSoTMYYY/6UIAKvlHQiLyZ+qSIsdgFvPXOc45Gw
-         g+IDXZWcZRGlKHEFagD33rRNvjP95V8PR/J0wLqEl4eO4Ruke/EMEEYSzm8W4WPxQFsd
-         6Fe5wiUU/O80bJm4Qva+NFry+jk449b2exGNzwEwQ6mWdasrFuxKa/mtvd4IJPkE7Q7O
-         pcGXlHYeQctRIfiOn3fuz7nmE2Srjq0OmJAWOBvmJfMCkDpHi8Wn/pQTv+O4rk0etsoo
-         Qic0kLPv6BX2PmaufIhiobBbZWpKKOMBKs2gsAYcTgQz4zFxOl30B1CZKTdec30pPwBw
-         aq8A==
+        bh=Ox9nhcDjmufSDP+2Yi2OvFprO2vZi/mv0KmFimT2plU=;
+        b=ApkUTL/c6DWvRkmqWBO9YelWaoHbU7cDWKtkjlQxCOiXnQtNp9wFJRbJV6fcivvcgH
+         GCzbOHQNPbyOJvdQYjOtRdV6IpKb73Eezwi9VEeP7ShWCvSE/LEk0xWklZsikHqxjeMA
+         aMiwByHCFhTxF04m6Rx2D6DbTMRO8gNXd5GFD3DQ0PpEEbQuUBgxpVrFxy+R/Z5z6jjx
+         b3HhotCYHDyGBFIDsn1v2rTD1ZGHKsZ4d6zm+Ug3KnlPjJ8nL3Oks/ZnxyYjoNVz4oKo
+         AJf4hAfjCRrHyeA805zi96rcAq211zDSKlAjqTdye8ysUxy+rl2wEhG26KHoq1GXXSQE
+         SfZQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1728487255; x=1729092055;
+        d=1e100.net; s=20230601; t=1728487625; x=1729092425;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:to:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=K8pbFXwfjfcZQULs/GLCfvPWB1q/CYhVQ29f6psnuos=;
-        b=aP9Q21+Sm0Nqc2pd9gkkKh1pnVOhO5gkJm0+B5tP5uGzvdF9bu04OyZQL4w2E0nNOh
-         BY6TxUiJYSE0lPSUz7IROkQtpzRLGQa6ZyBGJMEdV4ZZ16khp00T0Un3pZSSt6L4idiF
-         T4ThwN0wgTlAooU1ilH+++pUAEjelk7lRwWh8hyr3fVycZJKBJnyRKNTjv7fx/fiDxTn
-         h/gHDtsJ0LbjqO4anAjbLiZXWUh6nGjtjYGJbVYwOeblhIJYqSDWCZ/TqvIKdnXN3kLs
-         rna2HXXVey0M4GDKKj7d2CNTuQYqjiLF9HoH3/Yr2HxVLJ88m8vSWeThnTBoW5fl9oa+
-         u2Hw==
-X-Forwarded-Encrypted: i=1; AJvYcCVFpaXOZxr5kd68n1RX3E7zaR3W1bak53OpLcFpFb06Xaxm39xvr9aKJulW6QCX+Q1NPjWQhw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyeOcMmMcqZ0uX5B1YkZJyQxhbeOimnLpwV+QCvsa20cfNPwWkp
-	hPmpguMF2IGRNNjxp1EDNRQccMBD5v4w7WH10uIxm8pvFvm2EY2bnawWjA==
-X-Google-Smtp-Source: AGHT+IFHSlsoMfmQRbGUV8n9Tf3+KUfCjMV6Ldw/LBiSjRrx0D8aL+6DS2+TtAi6CR58bHIXb++W0g==
-X-Received: by 2002:a05:6870:d107:b0:270:130f:cee8 with SMTP id 586e51a60fabf-28834386cdfmr2250334fac.6.1728487255351;
-        Wed, 09 Oct 2024 08:20:55 -0700 (PDT)
+        bh=Ox9nhcDjmufSDP+2Yi2OvFprO2vZi/mv0KmFimT2plU=;
+        b=nXOLyqOntAWSIMxMbrlGVuoKfH+gfKSoO/VBYURVNHWusZFM9jwN8Gf1SvS9+sBHVt
+         u3AOw0u0JulQlAKz8xAub4Fx5ivYIntOmdJX4h30zoWdNXw843JoQ9AYpSfSWcatJidZ
+         8ul+q7m57ofCRdcMhyjUDINZYzqIliWI8ErZzuI4tYzQYNFpclXiSIGWBLZqUGl0ZRbt
+         3hZzG8bX6Dtuwj+NKzBKCpF6ErjhTL1DkprIePh3/dFKX4kgBaOUbmqXCQ2Kk8wharvu
+         GrX0SEh4hMzb7HtZZveu3CzOtvAq3z/Hs2Dc9oNHPoZCMsaHFOLrtjtXQSOcCkAp8BrV
+         3b3w==
+X-Forwarded-Encrypted: i=1; AJvYcCVAakMI40d6Tlh9sdBGVQ0xEUvkp1QeV82hmg76HVvzGkX6DlgzVznUwKYKTGSNguUEAe3+KA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yyg4cOhiXnDSIPviZb+8gUDlwKY5rOX3H1sS57D34Y93x18+GNj
+	wS1Z1ST8ISw/DRJUqyCK5geQDxCeTllqAat2ewZv4127ExoBd5HjQDzjZQ==
+X-Google-Smtp-Source: AGHT+IF8U6tCoIOsvXTHmpknhDekTgv42MrOjvrjEUAlCvIfvchlpNwrYJmB6UXfVfBoquTj07sCTQ==
+X-Received: by 2002:a05:6830:43a3:b0:713:c883:88d3 with SMTP id 46e09a7af769-716a41dc3b1mr2586539a34.15.1728487625320;
+        Wed, 09 Oct 2024 08:27:05 -0700 (PDT)
 Received: from [192.168.1.22] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-2883c2de252sm284578fac.53.2024.10.09.08.20.54
+        by smtp.googlemail.com with ESMTPSA id 006d021491bc7-5e7d7148f40sm2399420eaf.24.2024.10.09.08.27.04
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 09 Oct 2024 08:20:54 -0700 (PDT)
-Message-ID: <e907f07a-fbf2-4c34-acb4-b0c92a2815b9@gmail.com>
-Date: Wed, 9 Oct 2024 10:20:53 -0500
+        Wed, 09 Oct 2024 08:27:05 -0700 (PDT)
+Message-ID: <8fbd4cf7-ef82-4a44-8cbb-76ee26cf0591@gmail.com>
+Date: Wed, 9 Oct 2024 10:27:03 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -61,107 +61,108 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/3] drivers: simcommodem: create rat to radio_access_mode
- function
+Subject: Re: [PATCH 2/3] drivers: simcommodem: query modem for available rat
+ modes
 To: Sean Nyekjaer <sean@geanix.com>, ofono@lists.linux.dev
 References: <20241008091038.1567406-1-sean@geanix.com>
+ <20241008091038.1567406-2-sean@geanix.com>
 Content-Language: en-US
 From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20241008091038.1567406-1-sean@geanix.com>
+In-Reply-To: <20241008091038.1567406-2-sean@geanix.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 Hi Sean,
 
 On 10/8/24 4:10 AM, Sean Nyekjaer wrote:
-> This is done in preparation for querying available rat modes
 > ---
->   drivers/simcommodem/radio-settings.c | 44 +++++++++++++++++-----------
->   1 file changed, 27 insertions(+), 17 deletions(-)
+> Should we default to gsm, umts + lte if the call fails?
 > 
-
-CI complains about this set:
-
-Build Failed:
-drivers/simcommodem/radio-settings.c:36:5: error: no previous declaration for 
-'r_mode_to_radio_access_mode' [-Werror=missing-declarations]
-36 | int r_mode_to_radio_access_mode(int r_mode)
-| ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-drivers/simcommodem/radio-settings.c: In function 'cnmp_query_cb':
-drivers/simcommodem/radio-settings.c:89:18: error: comparison of unsigned 
-expression in '< 0' is always false [-Werror=type-limits]
-89 | if (mode < 0)
-| ^
-cc1: all warnings being treated as errors
-make[1]: *** [Makefile:4073: drivers/simcommodem/radio-settings.o] Error 1
-make[1]: Target 'all-am' not remade because of errors.
-make: *** [Makefile:2383: all] Error 2
-
+>   drivers/simcommodem/radio-settings.c | 53 +++++++++++++++++++++++++---
+>   1 file changed, 49 insertions(+), 4 deletions(-)
+> 
 > diff --git a/drivers/simcommodem/radio-settings.c b/drivers/simcommodem/radio-settings.c
-> index 0feba960..2a9dbaa2 100644
+> index 2a9dbaa2..2bb0d148 100644
 > --- a/drivers/simcommodem/radio-settings.c
 > +++ b/drivers/simcommodem/radio-settings.c
-> @@ -33,6 +33,30 @@ struct radio_settings_data {
->   	GAtChat *chat;
->   };
+> @@ -97,6 +97,46 @@ error:
+>   	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+>   }
 >   
-> +int r_mode_to_radio_access_mode(int r_mode)
-
-Naming might need some work.  Maybe cnmp_mode_to_radio_access_mode?
-
+> +static void cnmp_rat_support_cb(gboolean ok, GAtResult *result, gpointer user_data)
 > +{
-> +	int mode;
+> +	struct cb_data *cbd = user_data;
+> +	ofono_radio_settings_rat_mode_query_cb_t cb = cbd->cb;
+> +	struct ofono_error error;
+> +	int index;
+> +	GAtResultIter iter;
+> +	unsigned int available_rats = 0;
 > +
-> +	switch (r_mode) {
-> +	case 2:
-> +		mode = OFONO_RADIO_ACCESS_MODE_ANY;
-> +		break;
-> +	case 13:
-> +		mode = OFONO_RADIO_ACCESS_MODE_GSM;
-> +		break;
-> +	case 14:
-> +		mode = OFONO_RADIO_ACCESS_MODE_UMTS;
-> +		break;
-> +	case 38:
-> +		mode = OFONO_RADIO_ACCESS_MODE_LTE;
-> +		break;
-> +	default:
-> +		return -1;
+> +	DBG("ok %d", ok);
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +
+> +	if (!ok) {
+> +		goto error;
+> +	}
+
+No {} if not needed please
+
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	while (g_at_result_iter_next(&iter, "+CNMP:")) {
+> +		if (!g_at_result_iter_open_list(&iter))
+> +			break;
+
+doc/coding-style.txt item M1
+
+> +		while (1) {
+> +			if (!g_at_result_iter_next_number(&iter, &index))
+> +				break;
+> +			available_rats |= r_mode_to_radio_access_mode(index);
+
+as above
+
+> +
+> +		}
 > +	}
 > +
-> +	return mode;
+> +	DBG("available_rats %d", available_rats);
+> +
+> +	cb(&error, available_rats, cbd->data);
+> +
+> +	return;
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
 > +}
 > +
->   static void cnmp_query_cb(gboolean ok, GAtResult *result, gpointer user_data)
+>   static void simcom_query_rat_mode(struct ofono_radio_settings *rs,
+>   				ofono_radio_settings_rat_mode_query_cb_t cb,
+>   				void *data)
+> @@ -169,11 +209,16 @@ static void simcom_query_available_rats(struct ofono_radio_settings *rs,
+>   			ofono_radio_settings_available_rats_query_cb_t cb,
+>   			void *data)
 >   {
->   	struct cb_data *cbd = user_data;
-> @@ -61,23 +85,9 @@ static void cnmp_query_cb(gboolean ok, GAtResult *result, gpointer user_data)
+> -	unsigned int available_rats = OFONO_RADIO_ACCESS_MODE_GSM
+> -				| OFONO_RADIO_ACCESS_MODE_UMTS
+> -				| OFONO_RADIO_ACCESS_MODE_LTE;
+> +	struct radio_settings_data *rsd = ofono_radio_settings_get_data(rs);
+> +	struct cb_data *cbd = cb_data_new(cb, data);
+> +
+> +	DBG("");
 >   
->   	DBG("r_mode %d", r_mode);
+> -	CALLBACK_WITH_SUCCESS(cb, available_rats, data);
+> +	if (g_at_chat_send(rsd->chat, "AT+CNMP=?", cnmp_prefix,
+> +				cnmp_rat_support_cb, cbd, g_free) == 0) {
+> +		CALLBACK_WITH_FAILURE(cb, -1, data);
+> +		g_free(cbd);
+> +	}
+>   }
 >   
-> -	switch (r_mode) {
-> -	case 2:
-> -		mode = OFONO_RADIO_ACCESS_MODE_ANY;
-> -		break;
-> -	case 13:
-> -		mode = OFONO_RADIO_ACCESS_MODE_GSM;
-> -		break;
-> -	case 14:
-> -		mode = OFONO_RADIO_ACCESS_MODE_UMTS;
-> -		break;
-> -	case 38:
-> -		mode = OFONO_RADIO_ACCESS_MODE_LTE;
-> -		break;
-> -	default:
-> -		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-> -		return;
-> -	}
-> +	mode = r_mode_to_radio_access_mode(r_mode);
-> +	if (mode < 0)
-> +		goto error;
->   
->   	cb(&error, mode, cbd->data);
->   
+>   static void cnmp_support_cb(gboolean ok, GAtResult *result, gpointer user_data)
+
 
 Regards,
 -Denis
