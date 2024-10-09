@@ -1,59 +1,59 @@
-Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
+Received: from mail-oo1-f44.google.com (mail-oo1-f44.google.com [209.85.161.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E3FE197A7E
-	for <ofono@lists.linux.dev>; Wed,  9 Oct 2024 15:27:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8FCC1925A0
+	for <ofono@lists.linux.dev>; Wed,  9 Oct 2024 15:35:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728487627; cv=none; b=WSijp8rlJP87dhAZtKxcgwVsAVY90Xi2LRNme6dLoRjkBlwPDbfktsagL2x41Cdw+GF0QfuNJU0A47aAtWKxS85ioK/zY00tgjX5mSUE687FBboR5lL937g0THrekjFh/Iq7mdBfBrc7k8oLIPGfbs4zuBQe1xCWjHGY8MY0ffY=
+	t=1728488151; cv=none; b=b9nkS3ziCdsDjSr4CovrWch11GwElLxjRoy8QvwLTJ+Tl9awk0QP8UTLiVN6LyY80ZP7Vy9MdGUvwizokI75IQQhwdsCZOUNUe1uq+Jn9DHNEhD4dElVP5fM88TqaOavjCVA+rVbNWCLTkWrAxxGKPE6XBNcYKU5MLXo4VlM/PY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728487627; c=relaxed/simple;
-	bh=DERreDqNGWZ+Wrm/Vaecb2+GWWoiB0ak4jhwvgyUndM=;
+	s=arc-20240116; t=1728488151; c=relaxed/simple;
+	bh=mIlC24DcwTQB/UwGWKWzfCGrVvwOuqO3B6JH/IuFYN4=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=E/IME41jZ1wCDlQmvX/rI9fEqj/dkyEHYoxzTlsUu3P24wctXjgwl283jYhiE4ldrexwbJMDk5HzDrJfY9B9I50KeGCf+4Ocx4keB35/DcB/LwJLQ7jYTgfQjWI/QCtBJClTNShzcwPjQKgJFjJEFaaFdoiZjyvObmGtvKrIBDM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ApkUTL/c; arc=none smtp.client-ip=209.85.210.51
+	 In-Reply-To:Content-Type; b=RkOE5pQHUbSbnOhHdWEzhiA9Uzb0CcEOTdmTbK+0D8NybQv4CrHtHxWJRRJhLYblSbsYC7aYa+KgiX/et17j8tc1yoR9jY+478j7jX5ZGbym1/7MoSFt7aEGd2wiYAkqe6qtsRRjch/joU7iNLwC0I9r/Z5fY5hXkIV/ZWqqAzc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mPJdDujJ; arc=none smtp.client-ip=209.85.161.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ApkUTL/c"
-Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-715716974baso1361480a34.1
-        for <ofono@lists.linux.dev>; Wed, 09 Oct 2024 08:27:06 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mPJdDujJ"
+Received: by mail-oo1-f44.google.com with SMTP id 006d021491bc7-5e5a0519d00so2607089eaf.3
+        for <ofono@lists.linux.dev>; Wed, 09 Oct 2024 08:35:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1728487625; x=1729092425; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1728488149; x=1729092949; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:to:subject:user-agent:mime-version:date:message-id:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=Ox9nhcDjmufSDP+2Yi2OvFprO2vZi/mv0KmFimT2plU=;
-        b=ApkUTL/c6DWvRkmqWBO9YelWaoHbU7cDWKtkjlQxCOiXnQtNp9wFJRbJV6fcivvcgH
-         GCzbOHQNPbyOJvdQYjOtRdV6IpKb73Eezwi9VEeP7ShWCvSE/LEk0xWklZsikHqxjeMA
-         aMiwByHCFhTxF04m6Rx2D6DbTMRO8gNXd5GFD3DQ0PpEEbQuUBgxpVrFxy+R/Z5z6jjx
-         b3HhotCYHDyGBFIDsn1v2rTD1ZGHKsZ4d6zm+Ug3KnlPjJ8nL3Oks/ZnxyYjoNVz4oKo
-         AJf4hAfjCRrHyeA805zi96rcAq211zDSKlAjqTdye8ysUxy+rl2wEhG26KHoq1GXXSQE
-         SfZQ==
+        bh=vkVuNpghMv/g+ld5lNojOMXECxdCgjvcuciIqTtceI4=;
+        b=mPJdDujJonlv+F8F6yj8c0r+PKebjYDJZmwko5IRPrO6ImISWx8Zq0eLDWCjsJR274
+         uM9OyN6ZQtAw3XjUrKUm3Ys9DNlSWqflh9WobL76rVJZDn5bLpQf4Z+3fvH6c7cZ99Yc
+         YhCvbfp7ascqn4qos0FGII+vefdSMTUwpOIC3rQDky/4qifyQ08M4lq5fgZEY/06YNiM
+         +pyJ+rYqDz8r9lSn7DUIMMaMsCFzZKCUseECAbjq8rlr792l0PF4jajPBIWAGEzmlZRy
+         IwA/davnlnQSlkSfUlp9E3KmtUEiJB5lPzNS8081TuXTErQpWWlTD1EsmQ38GND6QFxB
+         CaIQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1728487625; x=1729092425;
+        d=1e100.net; s=20230601; t=1728488149; x=1729092949;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:to:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Ox9nhcDjmufSDP+2Yi2OvFprO2vZi/mv0KmFimT2plU=;
-        b=nXOLyqOntAWSIMxMbrlGVuoKfH+gfKSoO/VBYURVNHWusZFM9jwN8Gf1SvS9+sBHVt
-         u3AOw0u0JulQlAKz8xAub4Fx5ivYIntOmdJX4h30zoWdNXw843JoQ9AYpSfSWcatJidZ
-         8ul+q7m57ofCRdcMhyjUDINZYzqIliWI8ErZzuI4tYzQYNFpclXiSIGWBLZqUGl0ZRbt
-         3hZzG8bX6Dtuwj+NKzBKCpF6ErjhTL1DkprIePh3/dFKX4kgBaOUbmqXCQ2Kk8wharvu
-         GrX0SEh4hMzb7HtZZveu3CzOtvAq3z/Hs2Dc9oNHPoZCMsaHFOLrtjtXQSOcCkAp8BrV
-         3b3w==
-X-Forwarded-Encrypted: i=1; AJvYcCVAakMI40d6Tlh9sdBGVQ0xEUvkp1QeV82hmg76HVvzGkX6DlgzVznUwKYKTGSNguUEAe3+KA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyg4cOhiXnDSIPviZb+8gUDlwKY5rOX3H1sS57D34Y93x18+GNj
-	wS1Z1ST8ISw/DRJUqyCK5geQDxCeTllqAat2ewZv4127ExoBd5HjQDzjZQ==
-X-Google-Smtp-Source: AGHT+IF8U6tCoIOsvXTHmpknhDekTgv42MrOjvrjEUAlCvIfvchlpNwrYJmB6UXfVfBoquTj07sCTQ==
-X-Received: by 2002:a05:6830:43a3:b0:713:c883:88d3 with SMTP id 46e09a7af769-716a41dc3b1mr2586539a34.15.1728487625320;
-        Wed, 09 Oct 2024 08:27:05 -0700 (PDT)
+        bh=vkVuNpghMv/g+ld5lNojOMXECxdCgjvcuciIqTtceI4=;
+        b=OlkHnueRcpM4b2F4AobGRFrEkhbbxFamFHjkg/RHFVVcE8u260Mgww65e04cKmKbOq
+         jeGI4fJDibHk2HBCIHfeosxBcA4/uQV2235hL8nyn6pe5LYQJ6PDbgFZ5h/ve+BJY2Ql
+         MkDh2rRPRUneywI9w7KE586e6CSCPdm16giSFkCxmnnCLzbF/vVEny7g7t6Y0UgnOb/b
+         ZEg+IkQxANOtjI9hNl9iNH/AF1ECm0UgAj6Q+NdoGNdaiu7SeR3LIUUXq1LwfDl7JYiG
+         W91vRMRfztDf2gYSojVivVJ+FmJiZrPK218JfD/1ymzTdk+n9gDNGaI3iIM998iqJ1Hs
+         5kqA==
+X-Forwarded-Encrypted: i=1; AJvYcCXcsQWo6aMzErMPWomsAAKmEziSr4MUIvW6DzGzyrYf7+TwjjFGsCNQTvNKpemAmEAYDetxsA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyYQsjP8jS4D+ffLvAMKAMwfbSMWPL/GoC1cXdFqps/2mkGy5Jy
+	5XWkbNHmvzZRMZXypkKN4xqO7FnryZUTo7GBHubQYDrg2aqNRbK6
+X-Google-Smtp-Source: AGHT+IEH+XJL1j5357eQ5gr2ypsbowYB4FOLT+z5Z7AMBMsf4QHr6Kri/glMRjJQKlWhq7l7xmPXxA==
+X-Received: by 2002:a05:6870:3308:b0:270:1dab:64a9 with SMTP id 586e51a60fabf-288342bdc97mr2001188fac.14.1728488148622;
+        Wed, 09 Oct 2024 08:35:48 -0700 (PDT)
 Received: from [192.168.1.22] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 006d021491bc7-5e7d7148f40sm2399420eaf.24.2024.10.09.08.27.04
+        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-287d719b17asm3501818fac.30.2024.10.09.08.35.47
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 09 Oct 2024 08:27:05 -0700 (PDT)
-Message-ID: <8fbd4cf7-ef82-4a44-8cbb-76ee26cf0591@gmail.com>
-Date: Wed, 9 Oct 2024 10:27:03 -0500
+        Wed, 09 Oct 2024 08:35:48 -0700 (PDT)
+Message-ID: <80d58c8a-182e-4727-bf6b-4afd5e20f63e@gmail.com>
+Date: Wed, 9 Oct 2024 10:35:47 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -61,108 +61,173 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 2/3] drivers: simcommodem: query modem for available rat
- modes
+Subject: Re: [PATCH 1/2] network: allow status' and notifications on eutran
+ networks
 To: Sean Nyekjaer <sean@geanix.com>, ofono@lists.linux.dev
-References: <20241008091038.1567406-1-sean@geanix.com>
- <20241008091038.1567406-2-sean@geanix.com>
+References: <20241008091104.1567517-1-sean@geanix.com>
 Content-Language: en-US
 From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20241008091038.1567406-2-sean@geanix.com>
+In-Reply-To: <20241008091104.1567517-1-sean@geanix.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 Hi Sean,
 
-On 10/8/24 4:10 AM, Sean Nyekjaer wrote:
+On 10/8/24 4:11 AM, Sean Nyekjaer wrote:
+> SIMCom A7672E-FASE shows attached on LTE with +CREG <stat> either
+> 6 registered for "SMS only", home network (applicable only when E-UTRAN)
+> 7 registered for "SMS only", roaming (applicable only when <AcT> indicates E-UTRAN)
+> +COPS supplies the <AcT> = EUTRAN
+
+Do you know the distinction between registered/roaming and "SMS only" variants 
+in practical terms?  Are data calls available on "SMS only"?  Voicecalls?
+
 > ---
-> Should we default to gsm, umts + lte if the call fails?
+>   src/network.c | 58 +++++++++++++++++++++++++++++++++++++++++----------
+>   1 file changed, 47 insertions(+), 11 deletions(-)
 > 
->   drivers/simcommodem/radio-settings.c | 53 +++++++++++++++++++++++++---
->   1 file changed, 49 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/simcommodem/radio-settings.c b/drivers/simcommodem/radio-settings.c
-> index 2a9dbaa2..2bb0d148 100644
-> --- a/drivers/simcommodem/radio-settings.c
-> +++ b/drivers/simcommodem/radio-settings.c
-> @@ -97,6 +97,46 @@ error:
->   	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
->   }
+
+CI complains:
+
+Checkpatch Output
+=================
+0001-network-allow-status-and-notifications-on-eutran-net.patch:9: WARNING: 
+Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+0001-network-allow-status-and-notifications-on-eutran-net.patch:36: ERROR: 
+switch and case should be at the same indent
+0001-network-allow-status-and-notifications-on-eutran-net.patch:63: ERROR: 
+switch and case should be at the same indent
+0001-network-allow-status-and-notifications-on-eutran-net.patch:92: ERROR: 
+switch and case should be at the same indent
+0001-network-allow-status-and-notifications-on-eutran-net.patch:114: ERROR: 
+switch and case should be at the same indent
+total: 4 errors, 1 warnings, 100 lines checked
+0002-gprs-allow-attached-updates-and-status-on-eutran-net.patch:9: WARNING: 
+Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+total: 0 errors, 1 warnings, 47 lines checked
+
+> diff --git a/src/network.c b/src/network.c
+> index 40626179..02853e23 100644
+> --- a/src/network.c
+> +++ b/src/network.c
+> @@ -376,7 +376,8 @@ static char *get_operator_display_name(struct ofono_netreg *netreg)
+>   		return name;
+>   	}
 >   
-> +static void cnmp_rat_support_cb(gboolean ok, GAtResult *result, gpointer user_data)
-> +{
-> +	struct cb_data *cbd = user_data;
-> +	ofono_radio_settings_rat_mode_query_cb_t cb = cbd->cb;
-> +	struct ofono_error error;
-> +	int index;
-> +	GAtResultIter iter;
-> +	unsigned int available_rats = 0;
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	decode_at_error(&error, g_at_result_final_response(result));
-> +
-> +	if (!ok) {
-> +		goto error;
-> +	}
-
-No {} if not needed please
-
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	while (g_at_result_iter_next(&iter, "+CNMP:")) {
-> +		if (!g_at_result_iter_open_list(&iter))
+> -	if (netreg->status == NETWORK_REGISTRATION_STATUS_REGISTERED)
+> +	if (netreg->status == NETWORK_REGISTRATION_STATUS_REGISTERED ||
+> +		netreg->status == NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN)
+>   		home_or_spdi = TRUE;
+>   	else
+>   		home_or_spdi = sim_spdi_lookup(netreg->spdi,
+> @@ -1205,9 +1206,15 @@ static void current_operator_callback(const struct ofono_error *error,
+>   	 * in which case the operator information frequently comes in bogus.
+>   	 * We ignore it here
+>   	 */
+> -	if (netreg->status != NETWORK_REGISTRATION_STATUS_REGISTERED &&
+> -			netreg->status != NETWORK_REGISTRATION_STATUS_ROAMING)
+> -		current = NULL;
+> +	switch (netreg->status) {
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED:
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN:
 > +			break;
-
-doc/coding-style.txt item M1
-
-> +		while (1) {
-> +			if (!g_at_result_iter_next_number(&iter, &index))
-> +				break;
-> +			available_rats |= r_mode_to_radio_access_mode(index);
-
-as above
-
-> +
-> +		}
+> +		default:
+> +			current = NULL;
 > +	}
-> +
-> +	DBG("available_rats %d", available_rats);
-> +
-> +	cb(&error, available_rats, cbd->data);
-> +
-> +	return;
-> +
-> +error:
-> +	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-> +}
-> +
->   static void simcom_query_rat_mode(struct ofono_radio_settings *rs,
->   				ofono_radio_settings_rat_mode_query_cb_t cb,
->   				void *data)
-> @@ -169,11 +209,16 @@ static void simcom_query_available_rats(struct ofono_radio_settings *rs,
->   			ofono_radio_settings_available_rats_query_cb_t cb,
->   			void *data)
+>   
+>   	if (error->type != OFONO_ERROR_TYPE_NO_ERROR) {
+>   		DBG("Error during current operator");
+> @@ -1324,6 +1331,8 @@ static void notify_emulator_status(struct ofono_atom *atom, void *data)
+>   void ofono_netreg_status_notify(struct ofono_netreg *netreg, int status,
+>   			int lac, int ci, int tech)
 >   {
-> -	unsigned int available_rats = OFONO_RADIO_ACCESS_MODE_GSM
-> -				| OFONO_RADIO_ACCESS_MODE_UMTS
-> -				| OFONO_RADIO_ACCESS_MODE_LTE;
-> +	struct radio_settings_data *rsd = ofono_radio_settings_get_data(rs);
-> +	struct cb_data *cbd = cb_data_new(cb, data);
+> +	ofono_bool_t netreg_status;
 > +
-> +	DBG("");
+>   	if (netreg == NULL)
+>   		return;
 >   
-> -	CALLBACK_WITH_SUCCESS(cb, available_rats, data);
-> +	if (g_at_chat_send(rsd->chat, "AT+CNMP=?", cnmp_prefix,
-> +				cnmp_rat_support_cb, cbd, g_free) == 0) {
-> +		CALLBACK_WITH_FAILURE(cb, -1, data);
-> +		g_free(cbd);
+> @@ -1351,8 +1360,18 @@ void ofono_netreg_status_notify(struct ofono_netreg *netreg, int status,
+>   	if (netreg->technology != tech)
+>   		set_registration_technology(netreg, tech);
+>   
+> -	if (netreg->status == NETWORK_REGISTRATION_STATUS_REGISTERED ||
+> -		netreg->status == NETWORK_REGISTRATION_STATUS_ROAMING) {
+> +	switch (netreg->status) {
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED:
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN:
+> +			netreg_status = true;
+> +			break;
+> +		default:
+> +			netreg_status = false;
 > +	}
->   }
->   
->   static void cnmp_support_cb(gboolean ok, GAtResult *result, gpointer user_data)
+> +
+> +	if (netreg_status) {
+>   		if (netreg->driver->current_operator != NULL)
+>   			netreg->driver->current_operator(netreg,
+>   					current_operator_callback, netreg);
+> @@ -1448,6 +1467,7 @@ static void init_registration_status(const struct ofono_error *error,
+>   					void *data)
+>   {
+>   	struct ofono_netreg *netreg = data;
+> +	ofono_bool_t netreg_status;
 
+Simple bool is fine.  The plan is to remove ofono_bool_t entirely.
+
+>   
+>   	if (error->type != OFONO_ERROR_TYPE_NO_ERROR) {
+>   		DBG("Error during registration status query");
+> @@ -1460,8 +1480,18 @@ static void init_registration_status(const struct ofono_error *error,
+>   	 * Bootstrap our signal strength value without waiting for the
+>   	 * stack to report it
+>   	 */
+> -	if (netreg->status == NETWORK_REGISTRATION_STATUS_REGISTERED ||
+> -		netreg->status == NETWORK_REGISTRATION_STATUS_ROAMING) {
+> +	switch (netreg->status) {
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED:
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN:
+> +			netreg_status = true;
+> +			break;
+> +		default:
+> +			netreg_status = false;
+> +	}
+> +
+> +	if (netreg_status) {
+>   		if (netreg->driver->strength != NULL)
+>   			netreg->driver->strength(netreg,
+>   					signal_strength_callback, netreg);
+> @@ -1516,9 +1546,15 @@ void ofono_netreg_strength_notify(struct ofono_netreg *netreg, int strength)
+>   	 * Theoretically we can get signal strength even when not registered
+>   	 * to any network.  However, what do we do with it in that case?
+>   	 */
+> -	if (netreg->status != NETWORK_REGISTRATION_STATUS_REGISTERED &&
+> -			netreg->status != NETWORK_REGISTRATION_STATUS_ROAMING)
+> -		return;
+> +	switch (netreg->status) {
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED:
+> +		case NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING:
+> +		case NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN:
+> +			break;
+> +		default:
+> +			return;
+> +	}
+
+Might be nicer to do:
+
+if (!L_IN_SET(netreg->status, NETWORK_REGISTRATION_STATUS_REGISTERED,
+			NETWORK_REGISTRATION_STATUS_ROAMING,
+			...))
+	return;
+
+>   
+>   	DBG("strength %d", strength);
+>   
 
 Regards,
 -Denis
