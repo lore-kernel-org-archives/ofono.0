@@ -1,50 +1,61 @@
-Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB81D192582
-	for <ofono@lists.linux.dev>; Fri, 25 Oct 2024 05:56:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A39881D2B37
+	for <ofono@lists.linux.dev>; Sat, 26 Oct 2024 11:53:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729835784; cv=none; b=MQ3Zql8Gwqi1XLusnzCF599hG0ZncuG9fSSdQXAffuu25uDpzKwSXH/f6FYtyIulxragMAfBx4/kfd3bnsiJoOnAhOH8wT0YWq5Y+yfG1dH5Gw3TyRC6LjU+AVNd1dlnhiF4Zfk5cM1iErQq2+czU4RmULNTO9DUMcwvI1NtDgU=
+	t=1729943632; cv=none; b=Ai5jwvfQa5sNWZBxxRGEm23bWeIVbNfU3PmAZGovIY+u8eHEAHFk+6Y9+VSAd9w+fbts6SUbKV+t4zyMz3sR55Xqc3vmedQXnCGEHpYVQ+d/lvTl7ZlQ/0gBzIOaNNjqcLxdLABhA4vWWP5QkKkS0uh26+FoWF4pydQQChRnBQ4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729835784; c=relaxed/simple;
-	bh=EQCe2sE55IFbeiNDg/1x+UDQAuRc9I/lta2l7q8Lico=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=rupISa2lAB2HentrO/h3uPxq/p9xeg3Jnq2U/uRmRwLYufGoeHKu85VUd1uy5GHqMLDvQnbxeYbWsrOMkkicOXrSsRkoZ6/4NnmSuhpJpe0PFwqV+7kbap2oJueXHHSvWsbVJjBCtgN3lb2+zsty12524xP6G+kit2krSuNOj/4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=jITpNGGV; arc=none smtp.client-ip=188.40.30.78
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
+	s=arc-20240116; t=1729943632; c=relaxed/simple;
+	bh=51lwKIL4ofxFaKOOmJ9HMJ6APGgoBZev9ILzWF7HcN0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=hkOqV0Pzrb1jVFOx2r3sdhEffCaHZiCwCGv4mNgGJ5GR4O3hw+a/ySBSnynL3LYGzqZ0KXQ2Db4mUgDausbAY1Sg5b7DIfiG8xXVqPvJyuUCX4yiDt++vC3zFo+gEXol+tYkudE/Xsr9nzv+FOl2syK7jeI1ZBpUhlTX9OtHkdg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LbINmY6U; arc=none smtp.client-ip=209.85.218.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="jITpNGGV"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
-	s=default2211; h=Content-Transfer-Encoding:MIME-Version:Message-ID:Date:
-	Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:In-Reply-To:References;
-	bh=5MER8f4azzfYHJ8o4u6vh73ov+u1Rl6xSVKPbCHPmLQ=; b=jITpNGGVJJ71Vz1iQNMz7lNTq5
-	ih62OwpZflH+B0Bt1uT6KxMYDIr8Pcq2RdwRcJP+Mpl3FnaIlTZEs6EWHpC1+MK1h33Ch3CqdggoR
-	9XzXnDlBpp6GhQjyQk2rs/4ExW2MsnekmpKJz8TPPTWzUAqhzt5NMWbQkIMfVDDwWglR3MhmbRK5a
-	isyrC0xT356eX/3p2inxm7LUuezuzTMJV5elBdh0ErObCuUWzP16SxRLL5Nn3svjyxUHMl0pVhJdu
-	jl3vwh2uPAtQwgO+vQiH2okhGzNsajOshO8Y/HixNGIMeM24ucLQ/GOfcfzyLVT4HwPDbUGwpa5yg
-	DRDG+LRQ==;
-Received: from sslproxy07.your-server.de ([78.47.199.104])
-	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.94.2)
-	(envelope-from <sean@geanix.com>)
-	id 1t4DIv-0007iV-Br; Fri, 25 Oct 2024 07:56:09 +0200
-Received: from [185.17.218.86] (helo=zen..)
-	by sslproxy07.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.96)
-	(envelope-from <sean@geanix.com>)
-	id 1t4DIv-0007j6-0r;
-	Fri, 25 Oct 2024 07:56:09 +0200
-From: Sean Nyekjaer <sean@geanix.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LbINmY6U"
+Received: by mail-ej1-f47.google.com with SMTP id a640c23a62f3a-a9a4031f69fso386737866b.0
+        for <ofono@lists.linux.dev>; Sat, 26 Oct 2024 04:53:50 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1729943629; x=1730548429; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=RHtaTbddKrMWdealnuzI9US+w2zF3VpzTQfBy8J7dEM=;
+        b=LbINmY6ULM2GcV8lvO/vV5zr/iC2BSrt9EpeQjJcrGfqerq+pbzJa5baDw8msjsgG1
+         nDj4VoAVUDpfK/eVmHyfMoJRBDJIgVdBFYHlUniEy1fXlSNtrA+gnMVz0dvVfzAci96G
+         Z1RP1JxWgxASTyGIW5lxPyVsIxJA3UbrqtL6OpBoxaBnNWvEsLUefCc7pfiKCtW1BbxJ
+         RTKe4JVMDrZtTAOgY+NGwqQg6f+332NlLEv3tXRmE4t8VEEHi1PZ4RsTDFxsIKTVbrAE
+         Vok2IXpqWbeYbTg66TLwBtjEfLCAL8ur0LPnd+iMiNh0k10RONC7ZMO4TkFo+nT2GNrt
+         hn+A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1729943629; x=1730548429;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=RHtaTbddKrMWdealnuzI9US+w2zF3VpzTQfBy8J7dEM=;
+        b=QLO8G2FN3wRrGdBRgBGRHqjQjVIO818/m8ok9l5FCRMY8vLhK+8xIIg/xMAxsuNP2E
+         Kn1NuehxoGbNvIMtR0B8H1DhwDdPAynrEutdDOaBc+qD96EeKvLAZy5EVJMuA/E8Iwwu
+         C+a0pft77y2/Eil6ynYiJbpdMiPksdnp1iOuuMOWpSpb/+myOEgVZxqiIWrcTXIc1Uau
+         7lzIKQPcmiZ+ato62C+jBd/v3dad0OusfxOAw4f7AK0a6AQxTcVimJ558QRjWMkACA5h
+         vdaeAVADk8NOc8i/rINf0xqsAcJ+TSSA3WDSuMyVSIOo0GRQW/7khroYyhxz1SyawJOH
+         OUUA==
+X-Gm-Message-State: AOJu0Yy9C8JVtUqJA8C1hWTeOg7XmVwpMznYHF7h5LhLlsUt2+c0oD06
+	6pbrIdD3onKM68D7ygLeButz3So5cGpQJee0u7EwewLeg0pI/8wvfDEIzA==
+X-Google-Smtp-Source: AGHT+IFI82Wt+274aFMbzu0ECAoB4Njp6hf0lWFKGJlRlhi6HoX5K/AW8JMTveiAfiFDJkD36+pRPA==
+X-Received: by 2002:a17:907:9617:b0:a99:5466:2556 with SMTP id a640c23a62f3a-a9de61a2218mr149344266b.61.1729943628670;
+        Sat, 26 Oct 2024 04:53:48 -0700 (PDT)
+Received: from tpt440p.. ([41.84.226.50])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a9b3a086c1esm167366866b.213.2024.10.26.04.53.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 26 Oct 2024 04:53:47 -0700 (PDT)
+From: "Sicelo A. Mhlongo" <absicsz@gmail.com>
 To: ofono@lists.linux.dev
-Cc: Sean Nyekjaer <sean@geanix.com>,
-	denkenz@gmail.com
-Subject: [PATCH] Revert "sim7100: create lte atom in post_sim()"
-Date: Fri, 25 Oct 2024 07:55:56 +0200
-Message-ID: <20241025055558.2563056-1-sean@geanix.com>
-X-Mailer: git-send-email 2.46.2
+Cc: "Sicelo A. Mhlongo" <absicsz@gmail.com>
+Subject: [PATCH] udevng: restore support for phonet modems
+Date: Sat, 26 Oct 2024 13:53:11 +0200
+Message-ID: <20241026115324.211317-1-absicsz@gmail.com>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -52,54 +63,41 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Authenticated-Sender: sean@geanix.com
-X-Virus-Scanned: Clear (ClamAV 0.103.10/27437/Thu Oct 24 10:33:37 2024)
 
-SIMCom A7672E-FASE doesn't support initial PDP context (AT+CGAUTH=0,...
-and AT+CGDCONT=0,...) which is what the lte atom is enables.
+Commit 296347f8a4f1 ("udevng: Detect embedded qmi QRTR modems") introduced
+a constraint that only rmnet_* modems are valid "net" subsystem devices, thus
+breaking phonet modems, which are located in that subsystem as well.
 
-This reverts commit 8869b39c1e3a1b76637ffb13fc5de800d7f88c2c.
+    P: /devices/platform/68000000.ocp/48058000.ssi-controller/ssi0/port0/ssi-protocol/net/phonet0
+    E: DEVPATH=/devices/platform/68000000.ocp/48058000.ssi-controller/ssi0/port0/ssi-protocol/net/phonet0
+    E: INTERFACE=phonet0
+    E: OFONO_DRIVER=n900
+    E: OFONO_ISI_ADDRESS=108
+    E: SUBSYSTEM=net
+
+Fix the regression by specifically checking for phonet inside
+check_net_device().
+
+Fixes: 296347f8a4f1 ("udevng: Detect embedded qmi QRTR modems")
 ---
-Kinda embarrassing sorry :)
+ plugins/udevng.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
- plugins/sim7100.c | 7 -------
- 1 file changed, 7 deletions(-)
-
-diff --git a/plugins/sim7100.c b/plugins/sim7100.c
-index 215f4a28..b6389b09 100644
---- a/plugins/sim7100.c
-+++ b/plugins/sim7100.c
-@@ -24,7 +24,6 @@
- #include <gattty.h>
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index f4266f39..f34cdcb7 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -2455,6 +2455,10 @@ static void check_net_device(struct udev_device *device)
+ 	}
  
- #define OFONO_API_SUBJECT_TO_CHANGE
--#include <ofono.h>
- #include <ofono/plugin.h>
- #include <ofono/log.h>
- #include <ofono/modem.h>
-@@ -105,13 +104,9 @@ static void sim7100_remove(struct ofono_modem *modem)
- static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem = user_data;
--	struct sim7100_data *data = ofono_modem_get_data(modem);
+ 	name = udev_device_get_sysname(device);
++	if (l_str_has_prefix(name, "phonet")) {
++		add_serial_device(device);
++		return;
++	}
+ 	if (!l_str_has_prefix(name, "rmnet_"))
+ 		return;
  
- 	DBG("");
- 
--	if (data->model == SIMCOM_A76XX)
--		ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
--
- 	if (ok)
- 		ofono_modem_set_powered(modem, TRUE);
- }
-@@ -277,8 +272,6 @@ static void sim7100_post_sim(struct ofono_modem *modem)
- 		ofono_radio_settings_create(modem, 0, "simcommodem", data->at);
- 		gprs = ofono_gprs_create(modem, OFONO_VENDOR_SIMCOM_A76XX,
- 							"atmodem", data->at);
--		ofono_lte_create(modem, OFONO_VENDOR_SIMCOM_A76XX,
--							"atmodem", data->at);
- 		break;
- 	default:
- 		ofono_netreg_create(modem, 0, "atmodem", data->at);
 -- 
-2.46.2
+2.45.2
 
