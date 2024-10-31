@@ -1,62 +1,62 @@
-Received: from mail-ot1-f49.google.com (mail-ot1-f49.google.com [209.85.210.49])
+Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com [209.85.210.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0600D14A4F9
-	for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 22:06:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC4581BF311
+	for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 22:06:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730412412; cv=none; b=F6gQzDGRcqUlX1S1asiFxyfRK+KWEpd6T8j2weOVJAmxGdZ4k2o0oA8S9UTL4vUoyYIuu58RPi5gevgZdf+3UxvPfGI52c/iJB2lzTGSnsndXHBIlqwWmaX01G6VPIz08YygBiUeQXCqe7A3xEz1tYOMhI8O6fTMA38xgXmnsi8=
+	t=1730412413; cv=none; b=PNBHSUVQGQOLseaD0fU+RTeAo+WgfnAkRRFPUfz/3c9Jz+dSz0319vT1VDuBtjzKgklKJ0/HInIiv7v5VLMRFhQY7xHdr56EBvF2RRdrSC9Oa2ImSd7UZRchM3OzYE08ZIaaNugWfbG4cjswHwfPj22t6ddnQvxUuNVRqam4nSE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730412412; c=relaxed/simple;
-	bh=dy5YfC8aR5Yafxj9SZNxALiklkLqMqXx2W3H2NHO3PI=;
+	s=arc-20240116; t=1730412413; c=relaxed/simple;
+	bh=HGXJ/r4C6AmiB3QjKmlFK6KmAG6+wwX20S9ietVQRvg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=WITQk7O/TNhml7OxvsC/Xn2bW1JXXGvjTZIT+z4RX0T2W9Lrzwwv/5sv+kezdUswvHXGi9wE1FdI9ON0oew6uKK6WGR6teF7EYuDf9YzpEUloOu+YVw3a8kdI0jn7rTJDmV5OGCdFn10JHfd+rZaqo+HGGbkIi4MkZNlAYVvMCk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KUk+uLkr; arc=none smtp.client-ip=209.85.210.49
+	 MIME-Version; b=Y//md8o33V0DI6IJTjRMH4nBDhOET2ORpwUW46e4zsFMbTKBca8UybWsp1rkw5T35hBTgkMIXXp3RAP0gblFXiZMizIBIp5MpBMccaPO1lTA6MX2J83otWa1fIoGmGoFxAXxFQSBV+no5Qen5mdJyrpWwP9g9TAcgXMyGen57pw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=O3KyaBRp; arc=none smtp.client-ip=209.85.210.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KUk+uLkr"
-Received: by mail-ot1-f49.google.com with SMTP id 46e09a7af769-71809fe188cso713759a34.0
-        for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 15:06:46 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="O3KyaBRp"
+Received: by mail-ot1-f44.google.com with SMTP id 46e09a7af769-715716974baso771338a34.1
+        for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 15:06:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1730412406; x=1731017206; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=18AtsgWHDiTaoS1b/PGZ/dqplJ9MnnwXhQdL835lwfA=;
-        b=KUk+uLkrD7raIyA+S0PtDJWxYRg6E+4Xps332+uijN9oEW4xyYZ8CEiT3mDQJM5/kd
-         XiWhiesnxhA0qhygq/kUZ4RmqS6pgs1f4RDS5K9wPmlTuEtGIUHHy+qSuW4eXwKui+06
-         JOX2FZMnVi9bRncSzGlH1fKe6daxebj2da9cCfc6xf0lL43R+cp0IcHec3Fk0RiXpXte
-         Xw1VxjP9s2PJVj3e321Tlyonk+46QJV0qHtm0vaM8Ek2MWiZ51bsM0AYZ25n492LL7UI
-         DI6FuvrTMj6oTw6rUG8n/Vip0nAkeIpAEfvul8jBPR/Q1glLiGsbZp3uWEpW95kqsbDw
-         Fexg==
+        bh=Xng9xLEpYuT45AD+WPG4mpkyy5fbFtYRxR9Zg77oj8E=;
+        b=O3KyaBRp1wvfv4k4RtT49RVmD962kUgvxUBdno/yanl7MaoNJRrQOmqT5mXeLt8b4i
+         pZ1LHxeulwNyOXSihHN4A7VdFuym1ihy9zJWCEDB0kCVQ1pUnH0UCt0Ffpiq6hcY5Esf
+         qkmGAp2mrXw3RvoHgtW4Pf1F7DpLpfMlHiATqgIHai9iWB8kkiwCQrQyavmiBL+MzHrU
+         u9UOD7CZx3qAcOh/68lOgfFzCLZ3K+c498GRMdaUtq8/LKNL1Vh0dJ2U6h7JqVHtQeou
+         9U+6TJFnq92ZiisCNyXXXpghlbJq/gFYlHbxox7YPo2SOepWfts3WbM9Xg+VDG1+PPVR
+         OF9A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1730412406; x=1731017206;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=18AtsgWHDiTaoS1b/PGZ/dqplJ9MnnwXhQdL835lwfA=;
-        b=QsXlgIZ9L6wWMZgJbGBUNZ3/QbsnbEQW/eKEo70ztIGvdi9VGN7GlsOTecN6HnyuEu
-         Sg7lz5QoxbaGx/CfyH7TZch73vMy4TpAsMttJ5WqaGtEsuFvBccfP8eIMMZS1STqRYi/
-         JlCaQCG1GlVh6tIwbDo2tamLHcyHecMyKsf56TmsRJNnJu08Udu+i4yGbTkEA+4ud3sr
-         mLeCozcrGPnsoGSA/9WPCwnSQPZro20CpbhtL62F0xRarbUkc4xS8R0QGqgeXFTAWX6I
-         HI5xBvgJ4BnnzejKXsR1Qwesuji2nWf8XkZ1+Hk10Dc+GYRBKeobebAYDmiH/RXu5iQ4
-         Fjhw==
-X-Gm-Message-State: AOJu0YwVrLyRttXgLhttkIn/gg+ODcdp4x/Op379OsGsYZCCO6I/iscI
-	9uMI7ShbqR7a79MN3RLR5Sw5rB2wvpT/haTc2A4BNJmVhAR4wdNkEcmVYw==
-X-Google-Smtp-Source: AGHT+IFNQEsCHSbiz43u6NLRWxqWNwA/On8iZdvUvFVafJYy8OE4qwqVjeHcBy1+ay669xSNhGrlsg==
-X-Received: by 2002:a05:6830:374a:b0:718:8b6:d628 with SMTP id 46e09a7af769-7189b55a986mr3945576a34.32.1730412405847;
-        Thu, 31 Oct 2024 15:06:45 -0700 (PDT)
+        bh=Xng9xLEpYuT45AD+WPG4mpkyy5fbFtYRxR9Zg77oj8E=;
+        b=E7izvxKmAfI4OKpgArb2o455D+AUsPedypyvSd3yhEiADu34h8j3GtFAk+vkELLk+U
+         +LxR+7+n1dr5mTUgXJmlMXD43V3AYl2JMk9PfzzVsc2PYSmg4NNNrYAJoDh6O5kAquhU
+         mosB9gbGS5q4X5dIWnd2m1QI+LocblwlM5/vfYXG5MG3ST6fwJLcYqU7LxLLSfDc748S
+         voBoACPzRUUkuIdKhOlSgtyFQ6NOSa9/77/0eRdljCjcFVTh1xV6esia6k9ehH9WsOaJ
+         tKgHy/XhVr81FtWaRQp25J9YRHpoMnIkKfo0ADS4AEVZcxxQtEVJVmZIxsZKQ/XtBTI/
+         JXdg==
+X-Gm-Message-State: AOJu0YwEG8uCNqgSgJpCqc9vsMGIvKEhcsNzUWRf5Bge62K+Enz9pnus
+	ODgdPh+YLBs+x8yidmkZXd9USjZnmEyIGHzPnuGf6Gybk2olQk72Jpncng==
+X-Google-Smtp-Source: AGHT+IH8kQXPtmPlJxWQjk8iLMNCB0Xq3PVVS+oVD9Rh14NW3VuvzUwrFTPZOZRUkgdQl8nlRQSy9w==
+X-Received: by 2002:a05:6830:442b:b0:718:41c6:821c with SMTP id 46e09a7af769-719ca174d66mr1971387a34.5.1730412406537;
+        Thu, 31 Oct 2024 15:06:46 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id 46e09a7af769-7189cccf4a7sm507577a34.73.2024.10.31.15.06.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 31 Oct 2024 15:06:45 -0700 (PDT)
+        Thu, 31 Oct 2024 15:06:46 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 09/13] udevng: Remove non-upstream qmi_wwan_q support
-Date: Thu, 31 Oct 2024 17:06:16 -0500
-Message-ID: <20241031220638.1582166-9-denkenz@gmail.com>
+Subject: [PATCH 10/13] gobi: Bring down the main interface at startup
+Date: Thu, 31 Oct 2024 17:06:17 -0500
+Message-ID: <20241031220638.1582166-10-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20241031220638.1582166-1-denkenz@gmail.com>
 References: <20241031220638.1582166-1-denkenz@gmail.com>
@@ -68,129 +68,110 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This reverts commit:
-fd1b44514315 ("udevng: Detect Quectel devices that use qmi_wwan_q driver")
----
- plugins/udevng.c | 71 ++++--------------------------------------------
- 1 file changed, 5 insertions(+), 66 deletions(-)
+The current gobi logic tried to set the qmi_wwan 'raw_ip' state based on
+the results of wda_get_data_format.  If link_layer protocol was
+'raw_ip', then 'raw_ip' setting on qmi_wwan was set to 'Y'.  For 802.3,
+'raw_ip' setting was set to 'N'.
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index f34cdcb731ee..64875a47752b 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1108,19 +1108,6 @@ static gboolean setup_quectel(struct modem_info *modem)
- 		return FALSE;
+Unfortunately this was broken at some point and the setting could not be
+toggled when the main network device was IFF_UP (default when USB device
+is detected by the kernel).
+
+Fix this by having .enable callback bring the device down at
+initialization time.  oFono core will set the device IFF_UP once the
+context is activated, and bring it down when the context is deactivated.
+---
+ plugins/gobi.c | 46 ++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 38 insertions(+), 8 deletions(-)
+
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 5c3ae0737a15..e75a0312f6d0 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -230,13 +230,10 @@ static void add_service_request(struct gobi_data *data,
+ 	data->service_requests[data->num_service_requests++] = req;
  }
  
--static gboolean is_premultiplexed(const struct device_info *net)
--{
--	struct udev_device *parent = udev_device_get_parent(net->udev_device);
--
--	if (!parent)
--		return FALSE;
--
--	if (g_strcmp0(udev_device_get_subsystem(parent), "net") == 0)
--		return TRUE;
--
--	return FALSE;
--}
--
- static gboolean setup_quectelqmi(struct modem_info *modem)
+-static void shutdown_cb(void *user_data)
++static void __shutdown_device(struct ofono_modem *modem)
  {
- 	const struct device_info *net = NULL;
-@@ -1128,11 +1115,6 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
- 	const char *gps = NULL;
- 	const char *aux = NULL;
- 	GSList *list;
--	const char *premux_interfaces[8];
--	int n_premux = 0;
--	const char *qmap_size;
--
--	memset(premux_interfaces, 0, sizeof(premux_interfaces));
+-	struct ofono_modem *modem = user_data;
+ 	struct gobi_data *data = ofono_modem_get_data(modem);
  
- 	DBG("%s", modem->syspath);
+-	DBG("");
+-
+ 	data->discover_attempts = 0;
+ 	memset(&data->service_requests, 0, sizeof(data->service_requests));
+ 	data->cur_service_request = 0;
+@@ -245,7 +242,15 @@ static void shutdown_cb(void *user_data)
  
-@@ -1144,22 +1126,12 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
- 		DBG("%s %s %s %s %s", info->devnode, info->interface,
- 				info->number, info->label, subsystem);
+ 	qmi_qmux_device_free(data->device);
+ 	data->device = NULL;
++}
++
++static void shutdown_cb(void *user_data)
++{
++	struct ofono_modem *modem = user_data;
  
--		if (g_strcmp0(info->interface, "255/255/255") == 0) {
--			if (g_strcmp0(subsystem, "usbmisc") == 0) {
-+		if (g_strcmp0(info->interface, "255/255/255") == 0 &&
-+				g_strcmp0(info->number, "04") == 0) {
-+			if (g_strcmp0(subsystem, "net") == 0)
-+				net = info;
-+			else if (g_strcmp0(subsystem, "usbmisc") == 0)
- 				qmi = info;
--				continue;
--			}
--
--			if (g_strcmp0(subsystem, "net"))
--				continue;
--
--			if (is_premultiplexed(info)) {
--				premux_interfaces[n_premux] = info->devnode;
--				n_premux += 1;
--				continue;
--			}
--
--			net = info;
- 		} else if (g_strcmp0(info->interface, "255/0/0") == 0 &&
- 				g_strcmp0(info->number, "01") == 0) {
- 			gps = info->devnode;
-@@ -1177,44 +1149,12 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
- 	if (setup_qmi_qmux(modem, qmi, net) < 0)
- 		return FALSE;
- 
--	qmap_size = udev_device_get_sysattr_value(net->udev_device,
--							"qmap_size");
--	if (qmap_size) {
--		uint32_t max_aggregation_size;
--
--		if (l_safe_atou32(qmap_size, &max_aggregation_size) == 0)
--			ofono_modem_set_integer(modem->modem,
--						"MaxAggregationSize",
--						max_aggregation_size);
--	}
--
- 	if (gps)
- 		ofono_modem_set_string(modem->modem, "GPS", gps);
- 
- 	if (aux)
- 		ofono_modem_set_string(modem->modem, "Aux", aux);
- 
--	if (n_premux) {
--		char buf[256];
--		int i;
--
--		ofono_modem_set_integer(modem->modem,
--					"NumPremuxInterfaces", n_premux);
--		for (i = 0; i < n_premux; i++) {
--			const char *device = premux_interfaces[i];
--			int len = strlen(device);
--
--			if (!len)
--				continue;
--
--			sprintf(buf, "PremuxInterface%d", i + 1);
--			ofono_modem_set_string(modem->modem, buf, device);
--			sprintf(buf, "PremuxInterface%dMuxId", i + 1);
--			ofono_modem_set_integer(modem->modem, buf,
--						0x80 + device[len - 1] - '0');
--		}
--	}
--
- 	return TRUE;
++	DBG("");
++
++	__shutdown_device(modem);
+ 	ofono_modem_set_powered(modem, FALSE);
  }
  
-@@ -2160,7 +2100,6 @@ static struct {
- 	{ "quectelqmi", "qmi_wwan",	"2c7c", "0800"	},
- 	{ "quectelqmi", "qcserial",	"2c7c", "0800"	},
- 	{ "quectelqmi", "option",	"2c7c", "0800"	},
--	{ "quectelqmi", "qmi_wwan_q",	"2c7c", "0452"	},
- 	{ "ublox",	"cdc_acm",	"1546", "1010"	},
- 	{ "ublox",	"cdc_ncm",	"1546", "1010"	},
- 	{ "ublox",	"cdc_acm",	"1546", "1102"	},
+@@ -552,11 +557,32 @@ error:
+ 	shutdown_device(modem);
+ }
+ 
++static void init_powered_down_cb(int error, uint16_t type,
++					const void *msg, uint32_t len,
++					void *user_data)
++{
++	struct ofono_modem *modem = user_data;
++	struct gobi_data *data = ofono_modem_get_data(modem);
++	int r;
++
++	DBG("error: %d", error);
++
++	data->set_powered_id = 0;
++
++	if (error)
++		goto error;
++
++	r = qmi_qmux_device_discover(data->device, discover_cb, modem, NULL);
++	if (!r)
++		return;
++error:
++	__shutdown_device(modem);
++}
++
+ static int gobi_enable(struct ofono_modem *modem)
+ {
+ 	struct gobi_data *data = ofono_modem_get_data(modem);
+ 	const char *device;
+-	int r;
+ 
+ 	DBG("%p", modem);
+ 
+@@ -575,11 +601,15 @@ static int gobi_enable(struct ofono_modem *modem)
+ 		qmi_qmux_device_set_io_debug(data->device,
+ 						gobi_io_debug, "QMI: ");
+ 
+-	r = qmi_qmux_device_discover(data->device, discover_cb, modem, NULL);
+-	if (!r)
++	data->set_powered_id =
++		l_rtnl_set_powered(l_rtnl_get(), data->main_net_ifindex,
++					false, init_powered_down_cb,
++					modem, NULL);
++	if (data->set_powered_id)
+ 		return -EINPROGRESS;
+ 
+-	return r;
++	__shutdown_device(modem);
++	return -EIO;
+ }
+ 
+ static void power_disable_cb(struct qmi_result *result, void *user_data)
 -- 
 2.45.2
 
