@@ -1,62 +1,62 @@
-Received: from mail-ot1-f53.google.com (mail-ot1-f53.google.com [209.85.210.53])
+Received: from mail-ot1-f49.google.com (mail-ot1-f49.google.com [209.85.210.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 249DB1CDFB6
-	for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 22:06:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0600D14A4F9
+	for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 22:06:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730412412; cv=none; b=Q4BtYiisqwn6nFdDm3JuIkOUYSPyA2H9+LF8mhRqr+2wo7Pm5CYQOIb0TiHxtKaXiG8da/uNvjnzeYIuN1GtvEsrWpUlzh7Bdd5WSUocPZAAilfWIUNm7f1x/efUExoy2VEEX5nzHd6Cx8oZ8/o+VMD8bJ28+lWDUDnSSnslGzI=
+	t=1730412412; cv=none; b=F6gQzDGRcqUlX1S1asiFxyfRK+KWEpd6T8j2weOVJAmxGdZ4k2o0oA8S9UTL4vUoyYIuu58RPi5gevgZdf+3UxvPfGI52c/iJB2lzTGSnsndXHBIlqwWmaX01G6VPIz08YygBiUeQXCqe7A3xEz1tYOMhI8O6fTMA38xgXmnsi8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1730412412; c=relaxed/simple;
-	bh=Okk3S1HM1g6gNtefnoPG3ETV0XXja0IyW6xCVU+e98k=;
+	bh=dy5YfC8aR5Yafxj9SZNxALiklkLqMqXx2W3H2NHO3PI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Bsn0xKsAuaJgl5zov1/uVcBBpvfTC99FxigQgNnjGMdpy4Yza9D9ISWeWepcSxj8KRW2Kil2tT9sRmleejoVS8E+RV9j7ZrirgehSyXVbZYMjYPPdBAJqy+1VhwZAnKD1rkYItjAFapkIqgxoRBSMjQtJTNGPajcHrpzLtnwZ/Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WPxaUkaS; arc=none smtp.client-ip=209.85.210.53
+	 MIME-Version; b=WITQk7O/TNhml7OxvsC/Xn2bW1JXXGvjTZIT+z4RX0T2W9Lrzwwv/5sv+kezdUswvHXGi9wE1FdI9ON0oew6uKK6WGR6teF7EYuDf9YzpEUloOu+YVw3a8kdI0jn7rTJDmV5OGCdFn10JHfd+rZaqo+HGGbkIi4MkZNlAYVvMCk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KUk+uLkr; arc=none smtp.client-ip=209.85.210.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WPxaUkaS"
-Received: by mail-ot1-f53.google.com with SMTP id 46e09a7af769-718065d6364so761043a34.3
-        for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 15:06:45 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KUk+uLkr"
+Received: by mail-ot1-f49.google.com with SMTP id 46e09a7af769-71809fe188cso713759a34.0
+        for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 15:06:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1730412405; x=1731017205; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1730412406; x=1731017206; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=WkcpqLAIqWaqoAEcU0snVUbt7KAKP+bmZalqm6+LTQI=;
-        b=WPxaUkaSqtaphoT43pI9z1CZCQfR+On1caF63m2MeLPC1Nlq43sJhvQeGhGV754s++
-         WGFzx5TEaRDfnRRmxWqJDaE/QechCiFgsg8rachjXgEtv68i91aQDX0NP4YpkcysQkVT
-         /6+//f3QbJeMdCv3Vnadcvl4W+rcE4M5dYx9iwLToUr3UJ99ZtayAFPNwzc3daoG6aWq
-         MHQIrnHzvCAbfbOgL3bmgbOE0uUDuRWVrNBzKQKxuF2XIeBaICh/w+rpGjWiktPlk5uf
-         8ucGAkWcoSYKXEirqJEmgGrROxko0Iq5ZijMqg25tPr8LFN8St7QX1aE0YvJ3/2wlGl4
-         5cWg==
+        bh=18AtsgWHDiTaoS1b/PGZ/dqplJ9MnnwXhQdL835lwfA=;
+        b=KUk+uLkrD7raIyA+S0PtDJWxYRg6E+4Xps332+uijN9oEW4xyYZ8CEiT3mDQJM5/kd
+         XiWhiesnxhA0qhygq/kUZ4RmqS6pgs1f4RDS5K9wPmlTuEtGIUHHy+qSuW4eXwKui+06
+         JOX2FZMnVi9bRncSzGlH1fKe6daxebj2da9cCfc6xf0lL43R+cp0IcHec3Fk0RiXpXte
+         Xw1VxjP9s2PJVj3e321Tlyonk+46QJV0qHtm0vaM8Ek2MWiZ51bsM0AYZ25n492LL7UI
+         DI6FuvrTMj6oTw6rUG8n/Vip0nAkeIpAEfvul8jBPR/Q1glLiGsbZp3uWEpW95kqsbDw
+         Fexg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1730412405; x=1731017205;
+        d=1e100.net; s=20230601; t=1730412406; x=1731017206;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=WkcpqLAIqWaqoAEcU0snVUbt7KAKP+bmZalqm6+LTQI=;
-        b=nf9Lril8r7eZTLa0Rjm/ScIh7+FLpgNfC/6o5cuGe0bXmsaA0D/JzvV0VHuwWUPKvU
-         mt4Ngwo86KbyKpXBzvSe3Klvs8EMF9HT80ztJTTg7UTkOIq88rW/bnuAAwSXpQ43Qv1A
-         T3XLjKf+ne/cqdLMYdEeX9IDzTrIvELlgYfarUqRj5w3nn/hT83TTUEhV4R6VC2FP1iu
-         5hgymzkubqECGvG3QIXUalMtJ7I3jRCTDyedw6uyrEu8l4QIHYKdihvYfntIXbUVBKjj
-         EYE9cEow2i4MYoowN4F5a7BW3dVvb+Zf9XcySrnKftB4bJoaeS4D/XDHEJP+ljxMzq1B
-         vpEQ==
-X-Gm-Message-State: AOJu0YwGrdlnfk5A4VBczVEM5AeKZQASRK/0jXLI7hXmyq/rX2PQ8Kbd
-	LjGKGS0JLysVntQSeMZ8htpLLMntwkpkLuAWGW8TW6oTUPQasrUVdZxp3A==
-X-Google-Smtp-Source: AGHT+IEUL0y5lb4xvOZUMqa79KGG/6djUzxc18Cx4XmO/WNsycuIqlwA7gZQcSv2g5woz3eTOG8wEg==
-X-Received: by 2002:a05:6830:4117:b0:718:186a:497d with SMTP id 46e09a7af769-719ca191433mr1724329a34.5.1730412405082;
+        bh=18AtsgWHDiTaoS1b/PGZ/dqplJ9MnnwXhQdL835lwfA=;
+        b=QsXlgIZ9L6wWMZgJbGBUNZ3/QbsnbEQW/eKEo70ztIGvdi9VGN7GlsOTecN6HnyuEu
+         Sg7lz5QoxbaGx/CfyH7TZch73vMy4TpAsMttJ5WqaGtEsuFvBccfP8eIMMZS1STqRYi/
+         JlCaQCG1GlVh6tIwbDo2tamLHcyHecMyKsf56TmsRJNnJu08Udu+i4yGbTkEA+4ud3sr
+         mLeCozcrGPnsoGSA/9WPCwnSQPZro20CpbhtL62F0xRarbUkc4xS8R0QGqgeXFTAWX6I
+         HI5xBvgJ4BnnzejKXsR1Qwesuji2nWf8XkZ1+Hk10Dc+GYRBKeobebAYDmiH/RXu5iQ4
+         Fjhw==
+X-Gm-Message-State: AOJu0YwVrLyRttXgLhttkIn/gg+ODcdp4x/Op379OsGsYZCCO6I/iscI
+	9uMI7ShbqR7a79MN3RLR5Sw5rB2wvpT/haTc2A4BNJmVhAR4wdNkEcmVYw==
+X-Google-Smtp-Source: AGHT+IFNQEsCHSbiz43u6NLRWxqWNwA/On8iZdvUvFVafJYy8OE4qwqVjeHcBy1+ay669xSNhGrlsg==
+X-Received: by 2002:a05:6830:374a:b0:718:8b6:d628 with SMTP id 46e09a7af769-7189b55a986mr3945576a34.32.1730412405847;
         Thu, 31 Oct 2024 15:06:45 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-7189cccf4a7sm507577a34.73.2024.10.31.15.06.44
+        by smtp.gmail.com with ESMTPSA id 46e09a7af769-7189cccf4a7sm507577a34.73.2024.10.31.15.06.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 31 Oct 2024 15:06:44 -0700 (PDT)
+        Thu, 31 Oct 2024 15:06:45 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 08/13] gobi: Remove support for qmi_wwan_q
-Date: Thu, 31 Oct 2024 17:06:15 -0500
-Message-ID: <20241031220638.1582166-8-denkenz@gmail.com>
+Subject: [PATCH 09/13] udevng: Remove non-upstream qmi_wwan_q support
+Date: Thu, 31 Oct 2024 17:06:16 -0500
+Message-ID: <20241031220638.1582166-9-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20241031220638.1582166-1-denkenz@gmail.com>
 References: <20241031220638.1582166-1-denkenz@gmail.com>
@@ -68,169 +68,129 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Focus this driver purely on qmi_wwan and its quirks.  This simplifies
-the logic considerably.
+This reverts commit:
+fd1b44514315 ("udevng: Detect Quectel devices that use qmi_wwan_q driver")
 ---
- plugins/gobi.c | 60 +++++++++++---------------------------------------
- 1 file changed, 13 insertions(+), 47 deletions(-)
+ plugins/udevng.c | 71 ++++--------------------------------------------
+ 1 file changed, 5 insertions(+), 66 deletions(-)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index b2c9c3d50ea4..5c3ae0737a15 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -88,8 +88,6 @@ struct gobi_data {
- 	uint32_t max_aggregation_size;
- 	uint32_t set_powered_id;
- 	bool using_mux : 1;
--	bool using_qmi_wwan : 1;
--	bool using_qmi_wwan_q : 1;
- };
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index f34cdcb731ee..64875a47752b 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1108,19 +1108,6 @@ static gboolean setup_quectel(struct modem_info *modem)
+ 		return FALSE;
+ }
  
- static void gobi_debug(const char *str, void *user_data)
-@@ -111,15 +109,15 @@ static void gobi_io_debug(const char *str, void *user_data)
-  * in order to initialize the driver properly:
-  *
-  * NetworkInterface
-- *   The string that contains the 'main' network device.  This can be
-- *   "rmnet_ipa" on SoC systems, or "wwan0" for upstream linux systems.
-+ *   The string that contains the 'main' network device.  This is typically
-+ *   'wwanX' on upstream linux systems.
-  *
-  * NetworkInterfaceIndex
-  *   The index of the main interface given by NetworkInterface
-  *
-  * NetworkInterfaceKernelDriver
-- *   The kernel driver that is being used by the main network device.  Certain
-- *   drivers such as 'qmi_wwan' or 'qmi_wwan_q' are treated specifically.
-+ *   The kernel driver that is being used by the main network device.  Only
-+ *   'qmi_wwan' is supported.
-  *
-  * Bus
-  *   The bus of the modem.  Values can be "usb", "embedded", or "pci"
-@@ -131,7 +129,6 @@ static int gobi_probe(struct ofono_modem *modem)
- 	const char *ifname;
- 	int ifindex;
- 	const char *bus;
--	int n_premux;
- 
- 	DBG("%p", modem);
- 
-@@ -140,32 +137,22 @@ static int gobi_probe(struct ofono_modem *modem)
- 	ifname = ofono_modem_get_string(modem, "NetworkInterface");
- 	ifindex = ofono_modem_get_integer(modem, "NetworkInterfaceIndex");
- 	bus = ofono_modem_get_string(modem, "Bus");
--	n_premux = ofono_modem_get_integer(modem, "NumPremuxInterfaces");
- 
- 	DBG("net: %s[%s](%d) %s", ifname, if_driver, ifindex, bus);
- 
--	if (!if_driver || !ifname || !ifindex || !bus || n_premux < 0)
-+	if (!if_driver || !ifname || !ifindex || !bus)
- 		return -EPROTO;
- 
--	data = l_new(struct gobi_data, 1);
+-static gboolean is_premultiplexed(const struct device_info *net)
+-{
+-	struct udev_device *parent = udev_device_get_parent(net->udev_device);
 -
--	if (!strcmp(if_driver, "qmi_wwan_q"))
--		data->using_qmi_wwan_q = true;
--	else if (!strcmp(if_driver, "qmi_wwan"))
--		data->using_qmi_wwan = true;
+-	if (!parent)
+-		return FALSE;
 -
--	if (n_premux > MAX_CONTEXTS) {
--		l_warn("NumPremuxInterfaces > %d, limiting to %d",
--				MAX_CONTEXTS, MAX_CONTEXTS);
--		n_premux = MAX_CONTEXTS;
+-	if (g_strcmp0(udev_device_get_subsystem(parent), "net") == 0)
+-		return TRUE;
+-
+-	return FALSE;
+-}
+-
+ static gboolean setup_quectelqmi(struct modem_info *modem)
+ {
+ 	const struct device_info *net = NULL;
+@@ -1128,11 +1115,6 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
+ 	const char *gps = NULL;
+ 	const char *aux = NULL;
+ 	GSList *list;
+-	const char *premux_interfaces[8];
+-	int n_premux = 0;
+-	const char *qmap_size;
+-
+-	memset(premux_interfaces, 0, sizeof(premux_interfaces));
+ 
+ 	DBG("%s", modem->syspath);
+ 
+@@ -1144,22 +1126,12 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
+ 		DBG("%s %s %s %s %s", info->devnode, info->interface,
+ 				info->number, info->label, subsystem);
+ 
+-		if (g_strcmp0(info->interface, "255/255/255") == 0) {
+-			if (g_strcmp0(subsystem, "usbmisc") == 0) {
++		if (g_strcmp0(info->interface, "255/255/255") == 0 &&
++				g_strcmp0(info->number, "04") == 0) {
++			if (g_strcmp0(subsystem, "net") == 0)
++				net = info;
++			else if (g_strcmp0(subsystem, "usbmisc") == 0)
+ 				qmi = info;
+-				continue;
+-			}
+-
+-			if (g_strcmp0(subsystem, "net"))
+-				continue;
+-
+-			if (is_premultiplexed(info)) {
+-				premux_interfaces[n_premux] = info->devnode;
+-				n_premux += 1;
+-				continue;
+-			}
+-
+-			net = info;
+ 		} else if (g_strcmp0(info->interface, "255/0/0") == 0 &&
+ 				g_strcmp0(info->number, "01") == 0) {
+ 			gps = info->devnode;
+@@ -1177,44 +1149,12 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
+ 	if (setup_qmi_qmux(modem, qmi, net) < 0)
+ 		return FALSE;
+ 
+-	qmap_size = udev_device_get_sysattr_value(net->udev_device,
+-							"qmap_size");
+-	if (qmap_size) {
+-		uint32_t max_aggregation_size;
+-
+-		if (l_safe_atou32(qmap_size, &max_aggregation_size) == 0)
+-			ofono_modem_set_integer(modem->modem,
+-						"MaxAggregationSize",
+-						max_aggregation_size);
 -	}
-+	if (!L_IN_STRSET(if_driver, "qmi_wwan"))
-+		return -ENOTSUP;
- 
--	data->n_premux = n_premux;
-+	data = l_new(struct gobi_data, 1);
- 	data->main_net_ifindex =
- 		ofono_modem_get_integer(modem, "NetworkInterfaceIndex");
- 	l_strlcpy(data->main_net_name,
- 			ofono_modem_get_string(modem, "NetworkInterface"),
- 			sizeof(data->main_net_name));
-+
- 	ofono_modem_set_data(modem, data);
- 	ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
- 
-@@ -423,12 +410,7 @@ static void get_data_format_cb(struct qmi_result *result, void *user_data)
- 	if (!qmi_result_get_uint32(result, QMI_WDA_LL_PROTOCOL, &llproto))
- 		goto done;
- 
--	if (data->using_qmi_wwan) {
--		const char *interface =
--			ofono_modem_get_string(modem, "NetworkInterface");
 -
--		setup_qmi_wwan(interface, llproto);
+ 	if (gps)
+ 		ofono_modem_set_string(modem->modem, "GPS", gps);
+ 
+ 	if (aux)
+ 		ofono_modem_set_string(modem->modem, "Aux", aux);
+ 
+-	if (n_premux) {
+-		char buf[256];
+-		int i;
+-
+-		ofono_modem_set_integer(modem->modem,
+-					"NumPremuxInterfaces", n_premux);
+-		for (i = 0; i < n_premux; i++) {
+-			const char *device = premux_interfaces[i];
+-			int len = strlen(device);
+-
+-			if (!len)
+-				continue;
+-
+-			sprintf(buf, "PremuxInterface%d", i + 1);
+-			ofono_modem_set_string(modem->modem, buf, device);
+-			sprintf(buf, "PremuxInterface%dMuxId", i + 1);
+-			ofono_modem_set_integer(modem->modem, buf,
+-						0x80 + device[len - 1] - '0');
+-		}
 -	}
-+	setup_qmi_wwan(data->main_net_name, llproto);
- 
- done:
- 	if (qmi_service_send(data->dms, QMI_DMS_GET_CAPS, NULL,
-@@ -674,10 +656,6 @@ static void powered_up_cb(int error, uint16_t type,
- 	if (!param)
- 		goto error;
- 
--	if (data->using_qmi_wwan_q)
--		l_sysctl_set_u32(1, "/sys/class/net/%s/link_state",
--					data->main_net_name);
 -
- 	cb_data_ref(cbd);
+ 	return TRUE;
+ }
  
- 	if (qmi_service_send(data->dms, QMI_DMS_SET_OPER_MODE, param,
-@@ -711,10 +689,6 @@ static void powered_down_cb(int error, uint16_t type,
- 	if (!param)
- 		goto error;
- 
--	if (data->using_qmi_wwan_q)
--		l_sysctl_set_u32(0, "/sys/class/net/%s/link_state",
--					data->main_net_name);
--
- 	cb_data_ref(cbd);
- 
- 	if (qmi_service_send(data->dms, QMI_DMS_SET_OPER_MODE, param,
-@@ -792,8 +766,6 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 	struct gobi_data *data = ofono_modem_get_data(modem);
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
--	const char *interface;
--	char buf[256];
- 	int i;
- 
- 	gprs = ofono_gprs_create(modem, 0, "qmimodem",
-@@ -810,8 +782,6 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 		struct qmi_service *ipv4 = data->context_services[0].wds_ipv4;
- 		struct qmi_service *ipv6 = data->context_services[0].wds_ipv6;
- 
--		interface = ofono_modem_get_string(modem, "NetworkInterface");
--
- 		gc = ofono_gprs_context_create(modem, 0, "qmimodem", -1,
- 						qmi_service_clone(ipv4),
- 						qmi_service_clone(ipv6));
-@@ -822,20 +792,16 @@ static void gobi_setup_gprs(struct ofono_modem *modem)
- 		}
- 
- 		ofono_gprs_add_context(gprs, gc);
--		ofono_gprs_context_set_interface(gc, interface);
-+		ofono_gprs_context_set_interface(gc, data->main_net_name);
- 
- 		return;
- 	}
- 
--	data->using_mux = true;
--
--	data->max_aggregation_size =
--		ofono_modem_get_integer(modem, "MaxAggregationSize");
--	DBG("max_aggregation_size: %u", data->max_aggregation_size);
--
- 	for (i = 0; i < data->n_premux; i++) {
- 		struct qmi_service *ipv4 = data->context_services[i].wds_ipv4;
- 		struct qmi_service *ipv6 = data->context_services[i].wds_ipv6;
-+		const char *interface;
-+		char buf[256];
- 		int mux_id;
- 
- 		sprintf(buf, "PremuxInterface%dMuxId", i + 1);
+@@ -2160,7 +2100,6 @@ static struct {
+ 	{ "quectelqmi", "qmi_wwan",	"2c7c", "0800"	},
+ 	{ "quectelqmi", "qcserial",	"2c7c", "0800"	},
+ 	{ "quectelqmi", "option",	"2c7c", "0800"	},
+-	{ "quectelqmi", "qmi_wwan_q",	"2c7c", "0452"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1010"	},
+ 	{ "ublox",	"cdc_ncm",	"1546", "1010"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1102"	},
 -- 
 2.45.2
 
