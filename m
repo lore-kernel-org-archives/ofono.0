@@ -1,62 +1,62 @@
-Received: from mail-ot1-f43.google.com (mail-ot1-f43.google.com [209.85.210.43])
+Received: from mail-oi1-f176.google.com (mail-oi1-f176.google.com [209.85.167.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA3A41BF311
-	for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 22:06:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF0A91CCB4D
+	for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 22:06:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730412407; cv=none; b=IL7F1EcnBx5eJYQ5BPVCNwKnVHAecrtKr2mWbYzM+cdADICij/erGQ0B4dDGRIiMUJnV0F2BwYL4uEq/Vwnw/wa3XjwU/jTewSBAUWsLLGGFJSHLyIaHwVdYj/3EwaOWmUnFKVtvk7XEDr3YtcjH7phNTwb8iL/J91ACeX4BLaA=
+	t=1730412408; cv=none; b=n1A4oUqnobXSJkzrJTN9DWZYTYPXOS+bZhJVQ4igQ3zT7rrUVpIdHqAuQVhLWNFX+zggqamJUI6/NUKhgi0vV9lQMg6wSWn5sQVf2MMLEFyFuAXJkvoPc113gjq8FtD55leiHy0b2AO/FaJ4DnOuQ0kaGtF6isjgXxU1OUDyIZ8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730412407; c=relaxed/simple;
-	bh=O9NDoYm5BfihaP6TQdznlFB2ncPu5Sx3anqsMe6AiWU=;
+	s=arc-20240116; t=1730412408; c=relaxed/simple;
+	bh=boI1wG4U9fGqbhg9LryOgFjVggLT1YikhGc29SyY5IU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=OirHIuKX8h72jvfHb9A5Y8iip+r/QrMkeWcbfQVcVD2b2MfF75eZLqU8rPe8mV7KuJo1+9B03bQ19ktSi3OF3snAYeV96N2hWL/zqVSe3SVQNjvYzIg9Adqsg3RMRY4EcJ1vruBHeIyyMRypSCCmEWRUD/ACs8u0oZcKRSVshDA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QUzU/9/J; arc=none smtp.client-ip=209.85.210.43
+	 MIME-Version; b=Bc2od3JtlZbKZJPGvjQrvBCJ3tpx/aQwoXTxCH5xujtCXdQlDNKuMSl7ImFIDLmd+rn4ytTzoWz2LYMcqvtDfaYWU4qIRtEFlC8gs1K+jWHZn4py8QdctvrGQGByawHqA41taO3G8tW43JW02+FA6Hl0ww1EQ9kJ5O5k3vauK4k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=B4eTt1fx; arc=none smtp.client-ip=209.85.167.176
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QUzU/9/J"
-Received: by mail-ot1-f43.google.com with SMTP id 46e09a7af769-7181eb9ad46so708542a34.1
-        for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 15:06:41 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="B4eTt1fx"
+Received: by mail-oi1-f176.google.com with SMTP id 5614622812f47-3e602a73ba1so809208b6e.2
+        for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 15:06:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1730412401; x=1731017201; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=uTEFh79suQnSWdh1U1OosoBGup/bjYSedyxyg2O2A7g=;
-        b=QUzU/9/JbPBGRD8FZmKvOAv/ICad/4DlLy9A6X/8jUDR2Zl7i5PoeTHPd2KxkAxKZ9
-         WdpVdeXdSV+XYKUXaZQk47ET7xuSF503oX91NecPFBWlqUjrZqVTLflZOgm2f9rF28sZ
-         8kAsudiBefvIdlG/hsXDl4AV/PRWwRTXlUWJamftxX38MjJXIB24wrXskv4XLPknk+HF
-         6Bkbp5wVOsjiXk8wZ71Hl4sFQxNY21tio2xYD9+icp465MdIj50YARgDRSEOQKBazG/X
-         wYaySeYtPMz7iTqKFSYLxq5jJx7QZCL9AQ2xmM/6Diltbu4JhDdol03pFkbiSQbvIlbP
-         kYmA==
+        bh=dI+ujphGKonkH/pnb7/SHybvYXL4ovkTfulcizxQDCE=;
+        b=B4eTt1fxPPK434cVl1wDVrAG+Og5mCAkqNlLT9Non03S3Rtchwe/6y4/I++QC8ESY2
+         DUa7nPX2olvwGTJvymdvpQSahcEce9D6BsPyIWcDFZjuRsqQXdDDkkfkP7s89rRiwVbi
+         2pTrmZNChyVdS220N5b2PbQYbW24LwGaOW3Io2JjGTulIloHi8tfZUPWdiqyBTfcWH7a
+         Goa2aEloHRK6vOTi3aCZK+ubQ6wCtvv018bMuwZmIBEgqpif28Mn8eybArTUcBVU5Uys
+         vhEgkNv3i0QyfoXaPtF1LQElkWr4qbYtMxHZg1hRdLJzeJ8exgWNmy2517uEMBxBRw9F
+         XIag==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1730412401; x=1731017201;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=uTEFh79suQnSWdh1U1OosoBGup/bjYSedyxyg2O2A7g=;
-        b=tHMDYZdy8AJXmQz4RkM+SAq3H7eycgh5iJx8G+SzpkFZZ3QFk4Jgc5nmMD/Qf7L8/d
-         qCyx5iU8oE2ZiWjBO7a7SzSUmgyvs4nk9bY7xjkVLNi+2vqEYJaWcCvGB/e9fTAJtRJl
-         EAmb8dTMZASgajUsF4bEJoY5HI6QO+G3W1xl8gOC/bhkg1Bg+TtM6x6wE0DKr9AzUCFx
-         K+rE736kCZOCnnfPLaYNuwNlbeCEChKg9FzdrBHo+fJdihbHqE1zzLB0ipS5O5M7eWqs
-         QDqZBEI2rzpCsMl+u0NAsThUyOUd6Wfcp5ABb171U+V3P+sJwjAIISHfLzkL0rHzH46M
-         +mfw==
-X-Gm-Message-State: AOJu0YzAdbkeDPeMrJZqGTlsXWwr4ZpyDNkmwV7dlmMEHbQ54e4P99sI
-	j6CF3yqlUVpQGg+OEmWwxK8qQYK5BEWrkcox+wtfB5RCK1Tzvr/8U2Tfow==
-X-Google-Smtp-Source: AGHT+IEE6tEWTL7IyjNMDorF26XFyK3tOBed1gy115igVdZWts48yc+MM9Rz4ts0xH1hzv/gFknMrQ==
-X-Received: by 2002:a05:6830:6e91:b0:716:a8d5:d501 with SMTP id 46e09a7af769-71868229580mr21226051a34.19.1730412400710;
-        Thu, 31 Oct 2024 15:06:40 -0700 (PDT)
+        bh=dI+ujphGKonkH/pnb7/SHybvYXL4ovkTfulcizxQDCE=;
+        b=R//0Jt7l6bC3ki5cseAT1YVJ+XjtbUD3IuzB6+YMxcl+5TAk1Cu9+I1g1OKVSDM2uB
+         6POcUhFH13huuBybn1/vmCjcQwr7YGUN3MNzG6sIdhObmy8ckTURa0Tw4WSRqz8mNud0
+         aAlgMn2jXDG060QVCLI0rVMhOvVzcTHYEhBQsAhbWv9bfdMgCmoVHggqOiToKIi3DYSy
+         5N0LDOakQdtcjEr3BKGyaEDh7qzdF3w7gdMP38WfytNm6u+KR1OE78BxyVM9d+9l8sb3
+         Hf7fas99fsMhUSdTmxSbVjPVYWgHiFx9q8Rqinq2y2REKYeqhLP2vBH5Hr7ralb+b4Iu
+         5+xg==
+X-Gm-Message-State: AOJu0Yyj/a60hR0IsqetKAw3IQVIj7g+0f1Sa6iebVsAKT7gZwloI7mE
+	VEpoOOe/wE8egYqW28tY6UqZ9PSL3j9jElBImonPTWQsVFrVKpWwIawb6A==
+X-Google-Smtp-Source: AGHT+IHDkUxyDBHBI+dm0jFuvuXW+DZmmKzgu4gA/GzjYlRRkvgqY8MDiL02M85sYjYQLf2ZFRyJcA==
+X-Received: by 2002:a05:6830:2117:b0:710:f5bf:c4df with SMTP id 46e09a7af769-7189b55edcbmr5167460a34.30.1730412401590;
+        Thu, 31 Oct 2024 15:06:41 -0700 (PDT)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
         by smtp.gmail.com with ESMTPSA id 46e09a7af769-7189cccf4a7sm507577a34.73.2024.10.31.15.06.40
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 31 Oct 2024 15:06:40 -0700 (PDT)
+        Thu, 31 Oct 2024 15:06:41 -0700 (PDT)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 02/13] gobi: Clear out service request queue on shutdown
-Date: Thu, 31 Oct 2024 17:06:09 -0500
-Message-ID: <20241031220638.1582166-2-denkenz@gmail.com>
+Subject: [PATCH 03/13] simutil: Return early if file is not found
+Date: Thu, 31 Oct 2024 17:06:10 -0500
+Message-ID: <20241031220638.1582166-3-denkenz@gmail.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20241031220638.1582166-1-denkenz@gmail.com>
 References: <20241031220638.1582166-1-denkenz@gmail.com>
@@ -68,41 +68,39 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Not doing so can result in a crash on subsequent .enable() calls
+Certain Elementary Files are only present on SIM (2G) or USIMs (3G/4G).
+If the file is not relevant to a given generation, its parent2g or
+parent3g member will be set to 0.  Return early if the file is found to
+be irrelevant for a given phase.  This also fixes a runtime sanitizer
+warning:
 
-ofonod[365853]: #0  0x743188e15ae0 in /usr/lib/libc.so.6
-ofonod[365853]: #1  0x472b94 in request_service_cb() at plugins/gobi.c:475
-ofonod[365853]: #2  0x45ce9f in qmux_create_client_callback() at drivers/qmimodem/qmi.c:1448
-ofonod[365853]: #3  0x45bd87 in __rx_ctl_message() at drivers/qmimodem/qmi.c:993
-ofonod[365853]: #4  0x45bf97 in received_qmux_data() at drivers/qmimodem/qmi.c:1041
-ofonod[365853]: #5  0x597df3 in io_callback() at ell/io.c:105 (discriminator 1)
-ofonod[365853]: #6  0x59674a in l_main_iterate() at ell/main.c:461
-ofonod[365853]: #7  0x508898 in event_check() at src/main.c:183
-ofonod[365853]: #8  0x743189073ae1 in /usr/lib/libglib-2.0.so.0
-ofonod[365853]: #9  0x7431890d4816 in /usr/lib/libglib-2.0.so.0
-ofonod[365853]: #10 0x743189073787 in /usr/lib/libglib-2.0.so.0
-ofonod[365853]: #11 0x508d35 in main() at src/main.c:302
-ofonod[365853]: #12 0x743188dfec88 in /usr/lib/libc.so.6
-ofonod[365853]: #13 0x743188dfed4c in /usr/lib/libc.so.6
+src/simutil.c:1345:10: runtime error: null pointer passed as argument 1, which is declared to never be null
 ---
- plugins/gobi.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ src/simutil.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index cb20824cc424..b2c9c3d50ea4 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -251,6 +251,10 @@ static void shutdown_cb(void *user_data)
- 	DBG("");
+diff --git a/src/simutil.c b/src/simutil.c
+index a504e9aa8e3b..0fafcb7f77de 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -1302,7 +1302,7 @@ unsigned int sim_ef_db_get_path_2g(unsigned short id, unsigned char out_path[])
  
- 	data->discover_attempts = 0;
-+	memset(&data->service_requests, 0, sizeof(data->service_requests));
-+	data->cur_service_request = 0;
-+	data->num_service_requests = 0;
-+	data->features = 0;
+ 	info = bsearch(GUINT_TO_POINTER((unsigned int) id), ef_db, nelem,
+ 				sizeof(struct sim_ef_info), find_ef_by_id);
+-	if (info == NULL)
++	if (info == NULL || !info->parent2g)
+ 		return 0;
  
- 	qmi_qmux_device_free(data->device);
- 	data->device = NULL;
+ 	path[i++] = info->parent2g & 0xff;
+@@ -1335,7 +1335,7 @@ unsigned int sim_ef_db_get_path_3g(unsigned short id, unsigned char out_path[])
+ 
+ 	info = bsearch(GUINT_TO_POINTER((unsigned int) id), ef_db, nelem,
+ 				sizeof(struct sim_ef_info), find_ef_by_id);
+-	if (info == NULL)
++	if (info == NULL || !info->parent3g)
+ 		return 0;
+ 
+ 	path[i++] = info->parent3g & 0xff;
 -- 
 2.45.2
 
