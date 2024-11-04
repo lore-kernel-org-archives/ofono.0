@@ -1,65 +1,35 @@
-Received: from mail-ot1-f50.google.com (mail-ot1-f50.google.com [209.85.210.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B2621CEE91
-	for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 22:06:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B55EB1C32E2
+	for <ofono@lists.linux.dev>; Mon,  4 Nov 2024 22:20:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730412415; cv=none; b=hmWLerzZMcuBn0JjFM2SeXXTjUoYWCgcWo9hmmvpoepzGmD8z5/GHRUMg6XNePF8J/qPbk5bPacDHt24GPYx/wwrfHwo0gBjGvrv9pCg+R6p8yDRl1V8hh2sJFAxPUR/OEqKrxnZIqS+TaMoP2GEYUP7g6gCa8kK1cqj/O6MfWI=
+	t=1730758823; cv=none; b=LDg/2W06b1PgpL8bbs+nJKWjcS5oRz95dG7oBmas1SVIkAO4cMoSGEyGkN5S1jCpMst6ZjIVOpiv3ozNJlpBtbjkx5yjuep4ph1pzzg2Ni4MFCqLH8PikP8v+Mt4Kgq7XKM+iucCWXTbdQslBFNOw0DziMZr6BSCbPpGah+BjUk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730412415; c=relaxed/simple;
-	bh=8iwI4CYNvmkG6/t1MmpsVOWSzwmdQkGiJhJkcI37gj4=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=jqtzxbpgSuiOoixD8SD+u1qtA7+93qMqbss/uPIj2GYBEBzALtcWCss+C8vXNXp8DrFXc5FMfpCCZYuhJwHybCf0G99ejugR0MRSdVs9X54fRGdz+fjPjUpyNKP9GKR/MgHROw6RU9bXPrC/nbAPxbv/KHsSch2AZX22zzVg8ok=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jp/uOIGm; arc=none smtp.client-ip=209.85.210.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1730758823; c=relaxed/simple;
+	bh=5x5Id6cu6ncbK953jt6k5IILK0w3YNqEq+94NdxZZBM=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=RSWj4M0BneZrRwLHXjgpFsSZ60bh3VmbYxMTaHd0b+I5f69pIUvOfAuTU3+TeNTB95kphVB3nnv4k2hIXeBjUAmwA7JgqX7t9amxKLOxHfGee1uZF1JyTMXaqD0Veq3KbLRA2X++COyms07auz/M7FgoTFbq9NjzBfh5tLa+Sdc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=B5iYYFiJ; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jp/uOIGm"
-Received: by mail-ot1-f50.google.com with SMTP id 46e09a7af769-71811c7eb8dso866343a34.0
-        for <ofono@lists.linux.dev>; Thu, 31 Oct 2024 15:06:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1730412408; x=1731017208; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=6wni+vWfXstmxk9EPEv18jU1QK8QaTG115FjggOXVjE=;
-        b=jp/uOIGmvOKsHzwL7c62amhOaBV9eAgDQExP52Pwr0LU0Zw1UtmRM21jzCnCFOJUMU
-         GY0+BYZgdDY/kSxFAHYxA9Cgq/bnuCvFAyvnCpNCILt3v03PbZ+8jWzHFVvxviMRXY27
-         6rWu3oUiB1xjvK+P8kMQIkHKK/ri0YISssRubOswN6hVuuK23n7LzStdt1bjtl6TBm2Q
-         prWb/ulnlc1lNTJLAwIAQ5HabfLUcUb7r5ZAL4mNcJt+owqqYiv2b/mbrPBryZurzAnf
-         In0iFp4ceAf+b1HXlHhAYFxZRvyXg2fAKaJaMM1Gj4GYrpndzxZDTGRuEBG0c/F6cNPl
-         dLeg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1730412408; x=1731017208;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=6wni+vWfXstmxk9EPEv18jU1QK8QaTG115FjggOXVjE=;
-        b=OztHRcJZKCAM33C8zZuG+lB1DqudlUrRqcVL6z/aR5OnVEMrNk0MmjNJeJHD+x1W0O
-         qdap5iv8O7CnvfYCz4BvFx4XE7DBQj4YxdthsWmI8hYbB96ncYNpjW9o1FKusEcxdTcY
-         BZxFUVHlABRSxmtZmkosJcY1Mysv7ItYxWxPIEuDVckm8ncDCkCj5JFzNBqctp4qisf6
-         0vuSYmxC06rGE1dJJYqIdbuwlI9TsGX56R2sYQZtKDa0N8ofaMXNFcPj6xv1k5gRSA8k
-         wq2zS5EAMfBcfi6FCUu3zWHe3F4XeFzmPJ/BUTOVMPVzuWicoabseXP4Ovy8EIq9pP6m
-         orNQ==
-X-Gm-Message-State: AOJu0Ywr4pw4NixoGxHS2f5cjPOAiwc+h1y5qScMDhl9tQ5uYNutfcb0
-	aSXaxL0zgc4hfNISlXe/PSaBazT2QkIAC90QD8A8wU5GCpgibzBZfpin6Q==
-X-Google-Smtp-Source: AGHT+IF175eA1l9QaW74/u9o1slhdwcagLKm8/X5Ra3KZl/Ds193yY8SVEliYCyU91F4GRDBe5We7Q==
-X-Received: by 2002:a05:6830:25d6:b0:717:f707:cb92 with SMTP id 46e09a7af769-719ca25e885mr1465358a34.28.1730412408414;
-        Thu, 31 Oct 2024 15:06:48 -0700 (PDT)
-Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-7189cccf4a7sm507577a34.73.2024.10.31.15.06.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 31 Oct 2024 15:06:48 -0700 (PDT)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 13/13] qmi: wda: Convert #defines to an enum
-Date: Thu, 31 Oct 2024 17:06:20 -0500
-Message-ID: <20241031220638.1582166-13-denkenz@gmail.com>
-X-Mailer: git-send-email 2.45.2
-In-Reply-To: <20241031220638.1582166-1-denkenz@gmail.com>
-References: <20241031220638.1582166-1-denkenz@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="B5iYYFiJ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 51D67C4CECE;
+	Mon,  4 Nov 2024 22:20:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1730758823;
+	bh=5x5Id6cu6ncbK953jt6k5IILK0w3YNqEq+94NdxZZBM=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=B5iYYFiJOaLYUBM6pVC+WuuGqwhdn1CNo+5yIhY9FMVyTMzUnOcUMKxOPSXxa3dzt
+	 hN++ihcd2lOxzobjrSgmj3Tnqx250zJZsL+/qSN06ZJEGhin+ScjqOzk5f8KJy6HmF
+	 dLpf7sBfvaQij/AULd++ft1rTD8Y7JiWJ/lC2nk7GROkXvtZPDk2CK7n6VhjnWBhIf
+	 CQlF81S4PWr5Bckf8aN6OcpGoTbMU1Al9nuASOxMxnmxcVzH79itts1JKQX8W1UpaZ
+	 r/oZndNg8oNsIvo/zrpWESMqZJtIi5a3EXGJpGvrnQhQ8Np31g05SqNY6poXFdjHNx
+	 /Yaj6WQyOVAnQ==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 33B593809A80;
+	Mon,  4 Nov 2024 22:20:33 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -67,28 +37,60 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH 01/13] qmi: validate TLV length
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <173075883201.37255.17067684461259773345.git-patchwork-notify@kernel.org>
+Date: Mon, 04 Nov 2024 22:20:32 +0000
+References: <20241031220638.1582166-1-denkenz@gmail.com>
+In-Reply-To: <20241031220638.1582166-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev
 
----
- drivers/qmimodem/wda.h | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+Hello:
 
-diff --git a/drivers/qmimodem/wda.h b/drivers/qmimodem/wda.h
-index 25bc01eb7565..fd1e1f63ab1e 100644
---- a/drivers/qmimodem/wda.h
-+++ b/drivers/qmimodem/wda.h
-@@ -10,6 +10,9 @@
- 
- /* Get and set data format interface */
- #define QMI_WDA_LL_PROTOCOL	0x11	/* uint32_t */
--#define QMI_WDA_DATA_LINK_PROTOCOL_UNKNOWN	0
--#define QMI_WDA_DATA_LINK_PROTOCOL_802_3	1
--#define QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP	2
-+
-+enum qmi_wda_data_link_protocol {
-+	QMI_WDA_DATA_LINK_PROTOCOL_UNKNOWN =			0x00,
-+	QMI_WDA_DATA_LINK_PROTOCOL_802_3 =			0x01,
-+	QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP =			0x02,
-+};
+This series was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Thu, 31 Oct 2024 17:06:08 -0500 you wrote:
+> For qmi_result_get_(u)int[8,16,32], make sure that the length
+> corresponds to the size of the basic type prior to performing the
+> memcpy.
+> ---
+>  drivers/qmimodem/qmi.c | 10 +++++-----
+>  1 file changed, 5 insertions(+), 5 deletions(-)
+
+Here is the summary with links:
+  - [01/13] qmi: validate TLV length
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ba768fa893e8
+  - [02/13] gobi: Clear out service request queue on shutdown
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=3c6eda5e3470
+  - [03/13] simutil: Return early if file is not found
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=b59850d0a4e3
+  - [04/13] simfs: Quiet sanitizer runtime error
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ede833c92f54
+  - [05/13] radio-settings: quiet sanitizer runtime error
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=b697463bc642
+  - [06/13] gprs: Default CID range to 1..NUM_CONTEXTS -1
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=0fba72b098a1
+  - [07/13] qmimodem: Drop call to ofono_gprs_set_cid_range
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=40ecee4aff07
+  - [08/13] gobi: Remove support for qmi_wwan_q
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4b854f0736d5
+  - [09/13] udevng: Remove non-upstream qmi_wwan_q support
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=da340fd02b80
+  - [10/13] gobi: Bring down the main interface at startup
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=147de7a149f9
+  - [11/13] gobi: Support only "usb" Bus values
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=f5d36c1c11b9
+  - [12/13] gobi: document and validate "interfaceNumber"
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=d4df0fb906f9
+  - [13/13] qmi: wda: Convert #defines to an enum
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=5677ffdbe643
+
+You are awesome, thank you!
 -- 
-2.45.2
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
