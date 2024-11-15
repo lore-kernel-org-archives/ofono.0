@@ -1,35 +1,61 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oi1-f176.google.com (mail-oi1-f176.google.com [209.85.167.176])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B55EB1C32E2
-	for <ofono@lists.linux.dev>; Mon,  4 Nov 2024 22:20:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B821A1E0E0C
+	for <ofono@lists.linux.dev>; Fri, 15 Nov 2024 22:00:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730758823; cv=none; b=LDg/2W06b1PgpL8bbs+nJKWjcS5oRz95dG7oBmas1SVIkAO4cMoSGEyGkN5S1jCpMst6ZjIVOpiv3ozNJlpBtbjkx5yjuep4ph1pzzg2Ni4MFCqLH8PikP8v+Mt4Kgq7XKM+iucCWXTbdQslBFNOw0DziMZr6BSCbPpGah+BjUk=
+	t=1731708059; cv=none; b=O8qbJhyI8z0DAJydOmRBGGsqtXR6gVZnMYOOCe4O/q+WPgL4VuGEQgmB2iV+sE7C/yzO9MMRsSr3HWf1UZ38Ou5Gep5W+uR9e5Q+C/plY7JJ3GM3tJUv1dbzapDoyuWWW8z0VooCW8s80swtPzFVqnNa+wIrn7Ii0+LP+mUvFuY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730758823; c=relaxed/simple;
-	bh=5x5Id6cu6ncbK953jt6k5IILK0w3YNqEq+94NdxZZBM=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=RSWj4M0BneZrRwLHXjgpFsSZ60bh3VmbYxMTaHd0b+I5f69pIUvOfAuTU3+TeNTB95kphVB3nnv4k2hIXeBjUAmwA7JgqX7t9amxKLOxHfGee1uZF1JyTMXaqD0Veq3KbLRA2X++COyms07auz/M7FgoTFbq9NjzBfh5tLa+Sdc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=B5iYYFiJ; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1731708059; c=relaxed/simple;
+	bh=2y3yf7W5FTQF4oAsUzgpFbw55n/dVLzxrntw8T01hLo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=IrllQ3x+PsVIw94WktFJPrRVVNJIqImtnP4zu76oR9LElQOsn/thPiQZWopAuU5hWtBH8A/aQ675m11L0SdpxSfcclY/oEAraAYojQJ3ry8Lzj1h/k0ygibkIOhxwv2Fv7Jnw8t7LtwGJUsn1eCkeMwfCE7Taxbxvtfh+yBBSlg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mNfIbzgV; arc=none smtp.client-ip=209.85.167.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="B5iYYFiJ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 51D67C4CECE;
-	Mon,  4 Nov 2024 22:20:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1730758823;
-	bh=5x5Id6cu6ncbK953jt6k5IILK0w3YNqEq+94NdxZZBM=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=B5iYYFiJOaLYUBM6pVC+WuuGqwhdn1CNo+5yIhY9FMVyTMzUnOcUMKxOPSXxa3dzt
-	 hN++ihcd2lOxzobjrSgmj3Tnqx250zJZsL+/qSN06ZJEGhin+ScjqOzk5f8KJy6HmF
-	 dLpf7sBfvaQij/AULd++ft1rTD8Y7JiWJ/lC2nk7GROkXvtZPDk2CK7n6VhjnWBhIf
-	 CQlF81S4PWr5Bckf8aN6OcpGoTbMU1Al9nuASOxMxnmxcVzH79itts1JKQX8W1UpaZ
-	 r/oZndNg8oNsIvo/zrpWESMqZJtIi5a3EXGJpGvrnQhQ8Np31g05SqNY6poXFdjHNx
-	 /Yaj6WQyOVAnQ==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 33B593809A80;
-	Mon,  4 Nov 2024 22:20:33 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mNfIbzgV"
+Received: by mail-oi1-f176.google.com with SMTP id 5614622812f47-3e604425aa0so1267207b6e.0
+        for <ofono@lists.linux.dev>; Fri, 15 Nov 2024 14:00:57 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1731708056; x=1732312856; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=76ipTuZs611cMa72IIm7uS2EmczVP9AEscq2U3NN+rk=;
+        b=mNfIbzgV3GiOZhQhfuiPRJv67YgC765c7MKg2DbL4AjqKGPSMtFikR9GDPVF/gcFPw
+         Jac4aIYQynWq3c3GWm3UJ+wwnCmlMiPIigsum5Yo2Et0GIfXm1duRWWzg/P0cTwJmvjR
+         UWhmlPbuY6URvED2sYVpc4caQi1FQ+fP/ApVuJypQI8h+w/hdsmD7LrWQy4rR6sguary
+         g6QgGn3VBX+5ZRDas7DB35EVB9rtZBQu562hlYHLJUa82M9MA1urZ7DMPeqAJHyogBlC
+         l5aMRNVVHTjDiixa/FhSKtuSMH+4bvhyx/XxYF8PmS52MCIgXOoTlNw34a1iaZm1Wxxp
+         +h8Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731708056; x=1732312856;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=76ipTuZs611cMa72IIm7uS2EmczVP9AEscq2U3NN+rk=;
+        b=DY48Ol3PlQOgd0TOqz5RZHoWfBJy3wflRYDYwMFC9qU2UDU6lbJJBmkD2CKj3vmfQG
+         3r3zWdLudzdis8jow0ko0owDNZSqxV0jZEVhzjSOHWvsLrvFTvWWdkSYDr658ZMslmFF
+         sBxWTY4OiIqu+8RG7ERWZb1IfD4kd4gR9Imo7y96irrIqm3cp/Q6zXyYgKsAmRz7qkXB
+         s0VtOy7t2nknLsfCoZYTSyisQyd54FdHaIzjyg6J+dpo8t+eidrewCBbvW9OqJW6kjIx
+         6EVWc5/W5WOwIhblLfZB08tDd2pRHEuaDpsAzwKD69eeacNyjwmNnfZF9JmNmYg7wDXS
+         wdCQ==
+X-Gm-Message-State: AOJu0YylLchWcovWGBj6cScCf5QXAUCGUZtWI932KGy+Ne8Ie4WqG29w
+	3icrlfWYtsZZVxq7RfTVp9P4PK1H0do7KPtkn3JwDF4poUjgY0nxMx16Uw==
+X-Google-Smtp-Source: AGHT+IGug2tYoh5ACxQH1BpitYfoEiZ5oAeOLY43cpy7gZlaEb1d18BrRePyTsqDGfRdV1O+b08Jvg==
+X-Received: by 2002:a05:6808:1449:b0:3e6:4f5b:afd1 with SMTP id 5614622812f47-3e7bc7a58c6mr4141333b6e.6.1731708056570;
+        Fri, 15 Nov 2024 14:00:56 -0800 (PST)
+Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id 5614622812f47-3e7bcd82997sm879003b6e.34.2024.11.15.14.00.55
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 15 Nov 2024 14:00:56 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 1/8] rmnet: Add skeleton
+Date: Fri, 15 Nov 2024 16:00:26 -0600
+Message-ID: <20241115220053.49613-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,60 +63,126 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH 01/13] qmi: validate TLV length
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <173075883201.37255.17067684461259773345.git-patchwork-notify@kernel.org>
-Date: Mon, 04 Nov 2024 22:20:32 +0000
-References: <20241031220638.1582166-1-denkenz@gmail.com>
-In-Reply-To: <20241031220638.1582166-1-denkenz@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>
-Cc: ofono@lists.linux.dev
 
-Hello:
+Add skeleton of the RMNet interface management module.  Implement the
+basic API structure and register the module with oFono core.
+---
+ Makefile.am |  2 ++
+ src/rmnet.c | 59 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/rmnet.h | 25 +++++++++++++++++++++++
+ 3 files changed, 86 insertions(+)
+ create mode 100644 src/rmnet.c
+ create mode 100644 src/rmnet.h
 
-This series was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Thu, 31 Oct 2024 17:06:08 -0500 you wrote:
-> For qmi_result_get_(u)int[8,16,32], make sure that the length
-> corresponds to the size of the basic type prior to performing the
-> memcpy.
-> ---
->  drivers/qmimodem/qmi.c | 10 +++++-----
->  1 file changed, 5 insertions(+), 5 deletions(-)
-
-Here is the summary with links:
-  - [01/13] qmi: validate TLV length
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ba768fa893e8
-  - [02/13] gobi: Clear out service request queue on shutdown
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=3c6eda5e3470
-  - [03/13] simutil: Return early if file is not found
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=b59850d0a4e3
-  - [04/13] simfs: Quiet sanitizer runtime error
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ede833c92f54
-  - [05/13] radio-settings: quiet sanitizer runtime error
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=b697463bc642
-  - [06/13] gprs: Default CID range to 1..NUM_CONTEXTS -1
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=0fba72b098a1
-  - [07/13] qmimodem: Drop call to ofono_gprs_set_cid_range
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=40ecee4aff07
-  - [08/13] gobi: Remove support for qmi_wwan_q
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4b854f0736d5
-  - [09/13] udevng: Remove non-upstream qmi_wwan_q support
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=da340fd02b80
-  - [10/13] gobi: Bring down the main interface at startup
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=147de7a149f9
-  - [11/13] gobi: Support only "usb" Bus values
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=f5d36c1c11b9
-  - [12/13] gobi: document and validate "interfaceNumber"
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=d4df0fb906f9
-  - [13/13] qmi: wda: Convert #defines to an enum
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=5677ffdbe643
-
-You are awesome, thank you!
+diff --git a/Makefile.am b/Makefile.am
+index d379201d362b..d107dc410fd2 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -353,6 +353,8 @@ builtin_sources += plugins/u8500.c
+ endif
+ 
+ if QMIMODEM
++builtin_sources += src/rmnet.h src/rmnet.c
++
+ qmi_sources = drivers/qmimodem/qmi.h drivers/qmimodem/qmi.c \
+ 					drivers/qmimodem/ctl.h \
+ 					drivers/qmimodem/dms.h \
+diff --git a/src/rmnet.c b/src/rmnet.c
+new file mode 100644
+index 000000000000..58f841a49a59
+--- /dev/null
++++ b/src/rmnet.c
+@@ -0,0 +1,59 @@
++/*
++ *  oFono - Open Source Telephony
++ *  Copyright (C) 2024  Cruise, LLC
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <stddef.h>
++#include <errno.h>
++#include <unistd.h>
++#include <linux/rtnetlink.h>
++#include <net/if.h>
++
++#include <ell/ell.h>
++
++#include "ofono.h"
++#include "rmnet.h"
++
++static struct l_netlink *rtnl;
++
++int rmnet_get_interfaces(uint32_t parent_ifindex, unsigned int n_interfaces,
++				rmnet_new_interfaces_func_t cb,
++				void *user_data, rmnet_destroy_func_t destroy)
++{
++	return -ENOTSUP;
++}
++
++int rmnet_del_interfaces(unsigned int n_interfaces,
++					const struct rmnet_ifinfo *interfaces)
++{
++	return -ENOTSUP;
++}
++
++int rmnet_cancel(int id)
++{
++	return -ENOTSUP;
++}
++
++static int rmnet_init(void)
++{
++	DBG("");
++
++	rtnl = l_netlink_new(NETLINK_ROUTE);
++	if (!rtnl)
++		return -EIO;
++
++	return 0;
++}
++
++static void rmnet_exit(void)
++{
++	l_netlink_destroy(rtnl);
++}
++
++OFONO_MODULE(rmnet, rmnet_init, rmnet_exit)
+diff --git a/src/rmnet.h b/src/rmnet.h
+new file mode 100644
+index 000000000000..dc416e0d5d51
+--- /dev/null
++++ b/src/rmnet.h
+@@ -0,0 +1,25 @@
++/*
++ *  oFono - Open Source Telephony
++ *  Copyright (C) 2024  Cruise, LLC
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++struct rmnet_ifinfo {
++	uint32_t ifindex;
++	uint16_t mux_id;
++	char ifname[IF_NAMESIZE];
++};
++
++typedef void (*rmnet_new_interfaces_func_t)(int error,
++					unsigned int n_interfaces,
++					const struct rmnet_ifinfo *interfaces,
++					void *user_data);
++typedef void (*rmnet_destroy_func_t)(void *user_data);
++
++int rmnet_get_interfaces(uint32_t parent_ifindex, unsigned int n_interfaces,
++				rmnet_new_interfaces_func_t cb,
++				void *user_data, rmnet_destroy_func_t destroy);
++int rmnet_del_interfaces(unsigned int n_interfaces,
++					const struct rmnet_ifinfo *interfaces);
++int rmnet_cancel(int id);
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.47.0
 
