@@ -1,199 +1,134 @@
-Received: from mail-oo1-f52.google.com (mail-oo1-f52.google.com [209.85.161.52])
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7E181BE852
-	for <ofono@lists.linux.dev>; Mon, 18 Nov 2024 16:54:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B42B18B47E
+	for <ofono@lists.linux.dev>; Mon, 18 Nov 2024 17:01:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731948883; cv=none; b=kfa7zUcWMuLD3q3N1kbhLhGXjYHGM2NQ3OXSRrCR+Ivvgw3pJP/BVQ2G5p6T99dHOAj6WgNDdoP0IPxrcWMSjiNK9PBqa9VmCD0G3r4YdMTMsnJiwJxBktpDhR6trb9KAxo2gHZWc/8ebI6bkgyrih9MWpy9pcHHevF9Fi0kMoI=
+	t=1731949284; cv=none; b=ZnImbGycy3Q0F+cbRaDS17SWCJZPR7aV0v3oiio2/JRaeQNmdgj2z8MjTIlHFIfaTw7uZBTF82YvDJOTv1CZMVJ4kMQd1Kg4EqCqRSvSZ7JuxijjxFbtNKRXnE8EOGCfeo5NK/e8fbZRKcnbpu2KWwF84iikc9905Ri1H8woHoc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731948883; c=relaxed/simple;
-	bh=rAfhxGVkUklig/gdo74J4uvFSAveBJPz8GqBlEljRV4=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=KZeVMFL/32U2jTP8qYKecK1F/nhWKuBXev/457HTpCMYtbb7fkaFd0RxM5J3Zzh3+5sHFli+RbIcoDvXbVDmoCfgmIpqIG+FblwdL7mUiDEb44XklhKh7/+ReHdQsyEpEpnNvS8I6qlpSMjXI2WsBdm10KkGrA+mTIDePqc/8lU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZgPzhy9G; arc=none smtp.client-ip=209.85.161.52
+	s=arc-20240116; t=1731949284; c=relaxed/simple;
+	bh=MAHs8px5hGi2ymf8rd3ORsKHx0Op2VAD3iv/ZX3SyWg=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=ipbmkZ+bhk45HWz8IqO0jwDP6rySNRWA68MVwgF8P50Dixq99PAZN882mBK01LXsEFRrIN1QfE4IkfjYvUOx7LwT+XPZ/Nl2kNOYHWtbDSb/pmcWLuBdXArD12vDKPaz9tMqoJyHw2ln2ZAhD3KFuV55honXNKwSfcAEboc5HJg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dpIiI7MA; arc=none smtp.client-ip=209.85.128.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZgPzhy9G"
-Received: by mail-oo1-f52.google.com with SMTP id 006d021491bc7-5ee354637b4so2646325eaf.3
-        for <ofono@lists.linux.dev>; Mon, 18 Nov 2024 08:54:41 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dpIiI7MA"
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4315c1c7392so20670655e9.1
+        for <ofono@lists.linux.dev>; Mon, 18 Nov 2024 09:01:22 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1731948881; x=1732553681; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=E8SeyxVUxV4qVGRqS7KKbPqXpZMi8J0RiezzF3qpcgI=;
-        b=ZgPzhy9G9OkYp3xAxkENmpZjdz3GtRYRoxnsvbKe9F+rteNqCP5JRxluibBvmGae+B
-         xJwB3FLz2Qs5Sq1THjvE+NTny3JtvuoGKX/8GL59r0OrlchoVHJgYZ6auA0KPGpXZl4a
-         Y6/yA9BnWnfPEwtCs0ePLWyacPYgn7pOXtBfjs0mmYierzzgjI9aa2z/XEawgegigUSo
-         LyhAXowJApQ7MeW5vJtEnJmVDFIzXHYf9UhtOy9vvcgs1AqPX83H42ABL4zsFneQlEXn
-         MiDqArRi9wvEJX8j/+wVIxYs4hB3MKdch4h/vE7LuDLglryRLB9D/KbjRNBKpZ++s8af
-         yXVw==
+        d=gmail.com; s=20230601; t=1731949281; x=1732554081; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-language:in-reply-to:mime-version
+         :user-agent:date:message-id:from:references:cc:to:subject:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=454AAeKGBfTgEaN2JIOn4hxd1j+5PrZa/9FQKertM20=;
+        b=dpIiI7MAm+U5di3pfLEFNSJbgkIDO+j4VcB0aR3aon3lxdWdevgJy6SZDIdDsDAXNG
+         oPBn8c0dYFHTZTCsdVBVKakL1KS/pZM6pgteBD84i0PtgtnatXFWNbjaYMlM5aHeZZL7
+         I81GXHn3XH+sfH2cY2VLyxJ1vilYXDwwwni3YbAua6vGF4uX9aM8wi+64UDaFxLvys10
+         mCJ/8n258z8EQql29BlYpg+ztbqVIQyWXXcWC1dBfhtI6d184NztUB0zb5sso/Gkl1i7
+         dICbOyhJfnYK1T9tnw/hfLxhDhs9Y1X6US4l+TqogThiMzs+EL7RcncTsCAJYJMlcp5i
+         ttPg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731948881; x=1732553681;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
+        d=1e100.net; s=20230601; t=1731949281; x=1732554081;
+        h=content-transfer-encoding:content-language:in-reply-to:mime-version
+         :user-agent:date:message-id:from:references:cc:to:subject
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=E8SeyxVUxV4qVGRqS7KKbPqXpZMi8J0RiezzF3qpcgI=;
-        b=iHd6uSvuNIZnD5o0mIEAL7u0mDTjLO+aQMFB2JGj5yHT4xXnI7K3DBLexwj7jnS6hs
-         Ns90RP3hRzsLF8BHrbSjFgTQ9A5N2KFhlP9IDJIifOw718aEO66m3E7z2KGnyQKZT0Rj
-         9jH28amhYkWxRcBG5qEcj72ooLVW6Mzm7IyCGpzDNK/DB5YNWX4yZRnDV4WmCcLEOCZ+
-         8uW/hDjSu4DTxJEI2tFdWOO353SnjlzrQOMPVlKI8T2j5yPI/9o8qCXtKuAW7/+4+KHo
-         VfN2C1Ky2YQDMFJgNe/MhGz01nbnWIgMO3llwa2AJoMwdrlQBzEDtEDxaN3SYaNyoqXH
-         fv9w==
-X-Forwarded-Encrypted: i=1; AJvYcCVUvOeiQjSxhVGzWAZbWBO/7LHGehB4ioxceZxibBXez6wk8ifXmdx3d3x69X4o3rWlbxx50Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyzKS5JTdgd4/BrrZpCULyCwgCho2Aitn1PhSI3gRaWwF//711t
-	7WKqvO01O060ZYVT5qxmHMSdNZQpJxFa5PB+l9PwW0O2u6reZ4HC0+LDew==
-X-Google-Smtp-Source: AGHT+IFzWIL2FrRPFPt+D/at+pbOTTkxm6ujNPRMpt+R63giG3k/BvVza/SjpnvKUZ6c2zF1v/vETQ==
-X-Received: by 2002:a05:6820:1e82:b0:5eb:c6ba:796d with SMTP id 006d021491bc7-5eeab2bc8eamr9858678eaf.1.1731948880676;
-        Mon, 18 Nov 2024 08:54:40 -0800 (PST)
-Received: from [192.168.1.22] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 006d021491bc7-5eeabd7feaesm2894927eaf.39.2024.11.18.08.54.39
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 18 Nov 2024 08:54:40 -0800 (PST)
-Message-ID: <fb513766-cec4-48c0-977a-a4457b6021cf@gmail.com>
-Date: Mon, 18 Nov 2024 10:54:38 -0600
+        bh=454AAeKGBfTgEaN2JIOn4hxd1j+5PrZa/9FQKertM20=;
+        b=hXiyCKfI2ce++ezlr8S/TBswkSg0CsCD9VDiWBZhJJ6KhdERAEQaeRGc7AvdBFjfIL
+         qppvhBLYnMlURrrXXEddJk9vvl8hYIzDt+Jin/uB0iDCy1qhclmHlz7KvX7YeV7DoQPC
+         oowuDRgpGu2h4G9NYIB60qsLd5v8QHmrGGwRhb51M0tzT49bS6RdC4SrHuM/tGXMqVaa
+         plNbwq9OQOVPcBh6sWaTu2UlqJvvUDbUU4cTiE+C8GJnEA4wLZ0dHBKA8G3uuRhdBT52
+         oqCBPoBnyxZNVmN2HOCxFoH9RSwPlm+HbiGY5ybGJJkLQ0TMh4iCn4EjhIwXvNPx9onL
+         WPzw==
+X-Forwarded-Encrypted: i=1; AJvYcCXFZRZAABvpkWYukz2luFWHVvhTv9t2dgP6KIOO0UBEsQ589NeyXJao9SrFLUcqcBObGFEu0w==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yz7swuydq247Ww0O8hpJOKwI7eUWRx9gh8iVDBXOyLf65Rd1myl
+	4Q+eSGG81OYgwNSsGgyo6uA7/B4AWdKM+phrwydB+wc+jYJvMapm8pdOfg==
+X-Google-Smtp-Source: AGHT+IFyygL2BHW8gn1MhnTYDP+0NQ1qvfg/imYVgPx/anGyXJF0P2iKCygKoMwIC7Jrn5MncTCyOQ==
+X-Received: by 2002:a05:600c:510b:b0:431:5e3c:2ff0 with SMTP id 5b1f17b1804b1-432df72cf45mr114259725e9.8.1731949281064;
+        Mon, 18 Nov 2024 09:01:21 -0800 (PST)
+Received: from [192.168.1.10] ([95.43.220.235])
+        by smtp.googlemail.com with ESMTPSA id 5b1f17b1804b1-432da29978dsm163718985e9.41.2024.11.18.09.01.20
+        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+        Mon, 18 Nov 2024 09:01:20 -0800 (PST)
+Subject: Re: [PATCH] qmi: sim: Implement query_facility_lock(LockedPins
+ property)
+To: Denis Kenzior <denkenz@gmail.com>, ofono@lists.linux.dev
+Cc: absicsz@gmail.com, merlijn@wizzup.org
+References: <1731841478-10479-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
+ <908f9eab-6dbb-429c-b35f-f81cdda2088c@gmail.com>
+From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+Message-ID: <82438d23-e666-a480-e79a-ba62a3d70504@gmail.com>
+Date: Mon, 18 Nov 2024 19:01:18 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Firefox/60.0 Thunderbird/60.6.1
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] qmi: sim: implement lock(LockPin method)
-To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, ofono@lists.linux.dev
-Cc: absicsz@gmail.com, merlijn@wizzup.org
-References: <1731845036-11874-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <1731845036-11874-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+In-Reply-To: <908f9eab-6dbb-429c-b35f-f81cdda2088c@gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-GB
+Content-Transfer-Encoding: 8bit
 
-Hi Ivo,
+Hi Denis,
 
-On 11/17/24 6:03 AM, Ivaylo Dimitrov wrote:
-> ---
->   drivers/qmimodem/sim.c | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++
->   drivers/qmimodem/uim.h |  1 +
->   2 files changed, 71 insertions(+)
-
-Looks like this patch is on top of the query_facility_lock.  Please send these 
-as a series in the future, otherwise the CI gets confused.
-
+On 18.11.24 г. 18:43 ч., Denis Kenzior wrote:
+> Hi Ivo,
 > 
-> diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
-> index b1d8f22..65c0fa6 100644
-> --- a/drivers/qmimodem/sim.c
-> +++ b/drivers/qmimodem/sim.c
-> @@ -844,6 +844,75 @@ static void qmi_query_locked(struct ofono_sim *sim,
->   	l_free(cbd);
->   }
->   
-> +static void qmi_lock(struct ofono_sim *sim,
-> +		enum ofono_sim_password_type passwd_type,
-> +		int enable, const char *passwd,
-> +		ofono_sim_lock_unlock_cb_t cb, void *user_data)
-> +{
-> +	struct sim_data *data = ofono_sim_get_data(sim);
-> +	struct cb_data *cbd = cb_data_new(cb, user_data);
-> +	int passwd_len;
-> +	uint16_t info_len;
-> +	uint8_t pin_id;
-> +	struct qmi_param *param;
-> +	uint8_t session[2];
-> +	struct {
-> +		uint8_t id;
-> +		uint8_t enabled;
-> +		uint8_t length;
-> +		uint8_t pin[0];
-> +	} __attribute__((__packed__)) *info;
-> +
-> +	DBG("");
-> +
-> +	switch (passwd_type) {
-> +	case OFONO_SIM_PASSWORD_SIM_PIN:
-> +		pin_id = 0x01;
-> +		break;
-> +	case OFONO_SIM_PASSWORD_SIM_PIN2:
-> +		pin_id = 0x02;
-> +		break;
-> +	default:
-> +		goto error;
-> +	}
-> +
-> +	if (!passwd)
-> +		goto error;
-> +
-> +	passwd_len = strlen(passwd);
-> +
-> +	if (passwd_len <= 0 || passwd_len > 0xFF)
+> On 11/17/24 5:04 AM, Ivaylo Dimitrov wrote:
+>> ---
+>>   drivers/qmimodem/sim.c | 93 
+>> ++++++++++++++++++++++++++++++++++++++++++++++++++
+>>   1 file changed, 93 insertions(+)
+>>
+>> diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
+>> index 1fffae2..b1d8f22 100644
+>> --- a/drivers/qmimodem/sim.c
+>> +++ b/drivers/qmimodem/sim.c
+>> @@ -41,6 +41,8 @@ struct sim_status {
+>>       uint8_t app_type;
+>>       uint8_t passwd_state;
+>>       int retries[OFONO_SIM_PASSWORD_INVALID];
+>> +    uint8_t pin1_state;
+>> +    uint8_t pin2_state;
+>>   };
+>>   struct sim_data {
+>> @@ -52,6 +54,20 @@ struct sim_data {
+>>       struct l_timeout *retry_timer;
+>>   };
+>> +struct query_locked_data {
+>> +    enum ofono_sim_password_type passwd_type;
+>> +};
+> 
+> Why is this structure needed?  Can't you simply stuff this into 
+> cb_data::user using L_UINT_TO_PTR and L_PTR_TO_UINT?
+> 
 
-strlen returns a size_t, so checking < 0 doesn't really make sense.  Also, the 
-core already performs validation of the pin using 'is_valid_pin'.  So I'm not 
-really sure any of this validation is needed?
+I was wondering what is GUINT_TO_POINTER() replacement in ell, however...
 
-> +		goto error;
-> +
-> +	param = qmi_param_new();
-> +
-> +	/* info */
-> +	info_len = sizeof(*info) + passwd_len;
-> +	info = alloca(info_len);
-> +	info->id = pin_id;
-> +	info->enabled = enable ? 0x01 : 0x00;
-> +	info->length = (uint8_t) passwd_len;
-> +	memcpy(info->pin, passwd, passwd_len);
-> +
-> +	qmi_param_append(param, QMI_UIM_PARAM_MESSAGE_INFO, info_len, info);
-> +
-> +	/* session */
-> +	session[0] = 0x6; /* card on slot 1 */
-> +	session[1] = 0x0;
+>> +
+>> +static inline void cb_user_data_unref(void *user_data)
+>> +{
+>> +    struct cb_data *cbd = user_data;
+>> +
+>> +    if (cbd->ref == 1 && cbd->user)
+>> +        l_free(cbd->user);
+>> +
+>> +    cb_data_unref(user_data);
+>> +}
+>> +
+> 
+> That way this could also be dropped
+> 
 
-Hmm, can we get some #defines for these magic numbers? Or static const variable 
-declaration?
+I introduced that for the future (sim pin change functionality), 
+however, looking now at the code, I wonder why I decided it will be needed.
 
-> +	qmi_param_append(param, QMI_UIM_PARAM_MESSAGE_SESSION_INFO,
-> +					sizeof(session), session);
-> +
-> +	if (qmi_service_send(data->uim, QMI_UIM_ENABLE_PIN, param,
-> +					pin_send_cb, cbd, cb_data_unref) > 0)
-> +		return;
-> +
-> +	qmi_param_free(param);
-> +
-> +error:
-> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
-> +	l_free(cbd);
-> +}
-> +
->   static void get_card_status_cb(struct qmi_result *result, void *user_data)
->   {
->   	struct ofono_sim *sim = user_data;
-> @@ -987,6 +1056,7 @@ static const struct ofono_sim_driver driver = {
->   	.query_pin_retries	= qmi_query_pin_retries,
->   	.send_passwd		= qmi_pin_send,
->   	.query_facility_lock	= qmi_query_locked,
-> +	.lock			= qmi_lock,
->   };
->   
->   OFONO_ATOM_DRIVER_BUILTIN(sim, qmimodem, &driver)
-> diff --git a/drivers/qmimodem/uim.h b/drivers/qmimodem/uim.h
-> index 439e25b..602ec0f 100644
-> --- a/drivers/qmimodem/uim.h
-> +++ b/drivers/qmimodem/uim.h
-> @@ -11,6 +11,7 @@
->   #define QMI_UIM_WRITE_RECORD		35	/* Write a record */
->   #define QMI_UIM_GET_FILE_ATTRIBUTES	36	/* Get file attributes */
->   
-> +#define QMI_UIM_ENABLE_PIN		37	/* Set PIN protection */
->   #define QMI_UIM_VERIFY_PIN		38	/* Verify PIN */
->   
->   #define QMI_UIM_EVENT_REGISTRATION	46	/* Register for indications */
+Will drop and resend.
 
-Otherwise, LGTM.
-
-Regards,
--Denis
+Thanks and regards,
+Ivo
