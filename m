@@ -1,65 +1,35 @@
-Received: from mail-oo1-f50.google.com (mail-oo1-f50.google.com [209.85.161.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00C251C07D5
-	for <ofono@lists.linux.dev>; Tue, 19 Nov 2024 17:18:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B43F81ABEA2
+	for <ofono@lists.linux.dev>; Wed, 20 Nov 2024 20:30:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732036724; cv=none; b=gIXGMayqzRz8iwJb/sJv+PSDhZ0Vgd/uK2nPm7iMdlHLF6/D0Ax/OdbMBXgrlbPsVBtbwy+WZRBB57b4X2/imePGV+u6zvlGNdLdPVFKPCHgqVde9CjFamwBlfpxJ4OZz9ji6N4oVwHrvGLdyoYkWWmUinzYrQ2fRN1EajMaqAY=
+	t=1732134625; cv=none; b=RE3LrZjFXTwgSOW3kbyxReRs5UN/9NWsqrZFExcs53Vsi6pvbAZfnw3CZl03Fv4Wcc40IwOqeswoVh/xh13F8qPCKU4oc5H4fqzjkemrZNUBQOFohpqBxxhQanPb/SRrfklFxK3M6kqNweSflSqjQgN+OQDSvSWmpAt8Se5mSlc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732036724; c=relaxed/simple;
-	bh=7UupV5U7V0Ks6seIWmf4hYiVCj2Sm3KN9bmB2RzOlSU=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=bQ0FMWJJhZD/x1HBzjtJ+t08ug9558HJEXqF1Sp2x+owKKBKgjN8JZMBvUnpgex8yIG+loJMfddKmBn8TQBNLl+gq2olucd42KlL5+EpPiIY8h67TryG1suSgYIn6t1Dm8iBocJ2dYlSQXnUo1meU/kzlY/4HhFiDsv4CpmU1IQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FaJ9Ej1a; arc=none smtp.client-ip=209.85.161.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1732134625; c=relaxed/simple;
+	bh=DlyxC+FR+dWURyEMfRGwWm5JO1GXg7W3GcFOa5ZBF/I=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=E8GHr/mXGGmy054SMTc5YqznJAfkkorSUIt/nnYLljvngp0xAXarZIr8XBdx9G8Cu5d09wsy4iwbvHJvzLrgnSLhuHDfkP4/qanfislHNmQyX++Oyqgh6swa4XWzMEzdgirsChXnj1DkITOdZPYZCay72gptdFKMN8351elxqV4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=b6/nhDvZ; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FaJ9Ej1a"
-Received: by mail-oo1-f50.google.com with SMTP id 006d021491bc7-5edfe8c17c4so1495826eaf.2
-        for <ofono@lists.linux.dev>; Tue, 19 Nov 2024 09:18:42 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1732036722; x=1732641522; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=jvRSzLEw1nW6La6Iyj8LiVTVOvcPlwY7JWuWmeJ0nVs=;
-        b=FaJ9Ej1aD4+0eVPkr66eAThXP5k9XkQToJXebWyR47L56fXT4tHjVAsRFaSPN/7rST
-         wcGlGHXBr833CKeJeYur/MJXfZAxu+2hv3CpNxFJ+er9GcIekM9pWPp4m4KabZ3Yjzru
-         55hCrmR8hTT2G/U8WmoWB65P3BGXZdURO0sBzZYM4QleZiA1WdzVUiYuZC1YP5Pzxe3V
-         Mz0QnIjIYfG1Wz/UeZVkGtshtG3wzAPCl9nEP6tncO5Oe860pskn1KYZOqW0zezsdwRl
-         mUkmSoweTjSH/G2X91y4w+g+0k4u6vjsZ8SKtLhLf5KN+JRpsk+TWMs8ET1N42ZRdL06
-         RroA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732036722; x=1732641522;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=jvRSzLEw1nW6La6Iyj8LiVTVOvcPlwY7JWuWmeJ0nVs=;
-        b=CleBLF/hPCkhZppwUTAKOIw95MchxK7cGdacalCIJxzxgGcAdyZZJg9Fr6VJuksvO0
-         Zc3wCL06bd7GjvsKbPZafbcPLQkEK7s1FPhnz20/yHCrP/MwhwqfdZym3FKUJCKHh8IA
-         wVNSrV9gkm1XH+pYRl6h1NVR7kK7snPWTAKYwynkjXu9euDTTCl0+BjjFASFEiQHqMTw
-         3uRUD6aejwCigK6YXkky9bM9ASM5vzIpIR+IepqL6F5CjU826A73+9y3HMNkI3D4sb5S
-         5PoqNpOfWrJ+iriYHVEtbSoFnf3XcMYd05GUf0FUpJmHWqlWiFNjeXYbn5sAGDiSl04w
-         JsnQ==
-X-Gm-Message-State: AOJu0YxyL3k6kWmlGdOK3ZimAMjuixsbwa+FXUIunBGN+pIv0lKiCiea
-	kUxkEj5VwCzzUdvPMbaEchIdTXrrnykHXnONgQc8iXiJTcMg0mi6G4ObbQ==
-X-Google-Smtp-Source: AGHT+IFFT6RnCGbpVFwzg8L3poXCenhVCnIXQk8iZbI2FVMftDJorIm5FITwekzwWJl6jDFi62h5PA==
-X-Received: by 2002:a05:6820:4ccc:b0:5eb:85ee:2cbd with SMTP id 006d021491bc7-5eeab446133mr13105320eaf.6.1732036721926;
-        Tue, 19 Nov 2024 09:18:41 -0800 (PST)
-Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-5eeabd7feaesm3664016eaf.39.2024.11.19.09.18.41
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Nov 2024 09:18:41 -0800 (PST)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH v2 8/8] rmnet: Implement cancel
-Date: Tue, 19 Nov 2024 11:18:19 -0600
-Message-ID: <20241119171832.1119-8-denkenz@gmail.com>
-X-Mailer: git-send-email 2.47.0
-In-Reply-To: <20241119171832.1119-1-denkenz@gmail.com>
-References: <20241119171832.1119-1-denkenz@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="b6/nhDvZ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8029CC4CECD;
+	Wed, 20 Nov 2024 20:30:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1732134625;
+	bh=DlyxC+FR+dWURyEMfRGwWm5JO1GXg7W3GcFOa5ZBF/I=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=b6/nhDvZ22dZHcWwEa1UAoOOJ2XvS3nA5ktE6JK/9fLf8h1PMU3Y7i3eB03anSh2u
+	 FqxkGm6t9IvZ8OuXMrkYaEwHJoweKCbBYG9lqxREnbBOVN2bygbNwH4zgk8PP/Tpzb
+	 KQnIrWN5h9cj0Pq31tHjgHyJtiOoemrZOtSoIaDJBkF+t6+Ti4rOF+j2FYbqlHJlmg
+	 +SyQ333Z3KidQv9H5gkoaV4dauWa0V32nxKbg/dRiXcF0TJ/B1r9HlvXltYlBXdR1v
+	 c5aGvQx+VO5vIBjV/fnqSjDEjXrsrdWxfE3hl9V9w+++9C6TAjt7MKbDPc04rnh+Py
+	 MwIozJZ57ugzg==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 70CCB3809A80;
+	Wed, 20 Nov 2024 20:30:38 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -67,113 +37,53 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH v2 1/8] rmnet: Add skeleton
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <173213463723.1339331.11103757423014979754.git-patchwork-notify@kernel.org>
+Date: Wed, 20 Nov 2024 20:30:37 +0000
+References: <20241119171832.1119-1-denkenz@gmail.com>
+In-Reply-To: <20241119171832.1119-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev
 
-Implement cancellation of an ongoing rmnet request.  Any links that
-have already been created are deleted by putting another request to
-the head of the queue.
----
- src/rmnet.c | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 58 insertions(+), 2 deletions(-)
+Hello:
 
-diff --git a/src/rmnet.c b/src/rmnet.c
-index b51ebfd18f65..83110c33a980 100644
---- a/src/rmnet.c
-+++ b/src/rmnet.c
-@@ -32,6 +32,7 @@ struct rmnet_request {
- 	void *user_data;
- 	rmnet_destroy_func_t destroy;
- 	int id;
-+	bool canceled;
- 	uint32_t netlink_id;
- 	uint16_t request_type;
- 	uint8_t current;
-@@ -54,6 +55,14 @@ static void rmnet_request_free(struct rmnet_request *req)
- 	l_free(req);
- }
- 
-+static bool rmnet_request_id_matches(const void *a, const void *b)
-+{
-+	const struct rmnet_request *req = a;
-+	int id = L_PTR_TO_INT(b);
-+
-+	return req->id == id;
-+}
-+
- static struct rmnet_request *__rmnet_del_request_new(unsigned int n_interfaces,
- 					const struct rmnet_ifinfo *interfaces)
- {
-@@ -199,7 +208,7 @@ static void rmnet_new_link_cb(int error, uint16_t type, const void *data,
- 	if (!error)
- 		req->current += 1;
- 
--	if (error) {
-+	if (error || req->canceled) {
- 		__rmnet_cancel_request();
- 		req->n_interfaces = 0;
- 	} else {
-@@ -273,6 +282,7 @@ int rmnet_get_interfaces(uint32_t parent_ifindex, unsigned int n_interfaces,
- 	req->user_data = user_data;
- 	req->destroy = destroy;
- 	req->id = next_request_id++;
-+	req->canceled = false;
- 	req->request_type = RTM_NEWLINK;
- 	req->netlink_id = 0;
- 	req->current = 0;
-@@ -309,7 +319,53 @@ int rmnet_del_interfaces(unsigned int n_interfaces,
- 
- int rmnet_cancel(int id)
- {
--	return -ENOTSUP;
-+	struct rmnet_request *req;
-+
-+	req = l_queue_peek_head(request_q);
-+	if (!req)
-+		return -ENOENT;
-+
-+	/* Simple Case: Request not yet started (not queue head) */
-+	if (req->id != id) {
-+		req = l_queue_remove_if(request_q, rmnet_request_id_matches,
-+						L_INT_TO_PTR(id));
-+		if (!req)
-+			return -ENOENT;
-+
-+		DBG("Removing non-head of queue request %d", id);
-+		rmnet_request_free(req);
-+		return 0;
-+	}
-+
-+	/* Harder Case: In progress, but the next request not in flight */
-+	if (!l_netlink_request_sent(rtnl, req->netlink_id)) {
-+		DBG("Removing in-progress request (not in flight) %d", id);
-+		req = __rmnet_cancel_request();
-+		l_netlink_cancel(rtnl, req->netlink_id);
-+		rmnet_request_free(req);
-+
-+		if (l_queue_length(request_q))
-+			rmnet_start_next_request();
-+
-+		return 0;
-+	}
-+
-+	/*
-+	 * Hardest Case: In progress, next request in flight
-+	 * We have to wait until the next callback since the ifindex won't be
-+	 * known until then.
-+	 */
-+	if (req->destroy)
-+		req->destroy(req->user_data);
-+
-+	req->new_cb = NULL;
-+	req->destroy = NULL;
-+	req->user_data = NULL;
-+
-+	DBG("Setting canceled on in-progress request %d", id);
-+	req->canceled = true;
-+
-+	return 0;
- }
- 
- static int rmnet_parse_info_data(struct l_netlink_attr *linkinfo,
+This series was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Tue, 19 Nov 2024 11:18:12 -0600 you wrote:
+> Add skeleton of the RMNet interface management module.  Implement the
+> basic API structure and register the module with oFono core.
+> ---
+>  Makefile.am |  2 ++
+>  src/rmnet.c | 59 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  src/rmnet.h | 25 +++++++++++++++++++++++
+>  3 files changed, 86 insertions(+)
+>  create mode 100644 src/rmnet.c
+>  create mode 100644 src/rmnet.h
+
+Here is the summary with links:
+  - [v2,1/8] rmnet: Add skeleton
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ad000eabb49a
+  - [v2,2/8] rmnet: Add logic to dump out RMNet interfaces
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=5f5b3b65efdd
+  - [v2,3/8] rmnet: Track link notifications
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=cfb78944ec4f
+  - [v2,4/8] rmnet: Track used mux ids
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=db18da4b4e91
+  - [v2,5/8] rmnet: Delete stale RMnet links at startup
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=0cc9a035a8d1
+  - [v2,6/8] rmnet: Implement rmnet_del_interfaces
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=982aa444b98e
+  - [v2,7/8] rmnet: Implement getting new interfaces
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=99a68a774de0
+  - [v2,8/8] rmnet: Implement cancel
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=a0d8117a04c9
+
+You are awesome, thank you!
 -- 
-2.47.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
