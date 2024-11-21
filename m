@@ -1,67 +1,67 @@
-Received: from mail-oa1-f52.google.com (mail-oa1-f52.google.com [209.85.160.52])
+Received: from mail-oa1-f45.google.com (mail-oa1-f45.google.com [209.85.160.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B62561369B4
-	for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 15:29:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A3C119D080
+	for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 15:29:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732202996; cv=none; b=eLTh5AFlaiOIwPbz2oH+dE1zi0K/e1Sa4W2tqJFnDp0MbANRjEzr0HogQEFOWXLlag/fX+jgnvVQs55QzY99f+lyCl5ej6lPIq5BAJcRpq9+Q5ZoED3Z5oPCo47c+vkI4QEuIfnJuMqb7RV1zLeSms9W3fgjn3fWDtvS9QgVJG0=
+	t=1732202997; cv=none; b=e94zhktljX+QdWbUmYHtFq9LALVi+4kzrKk/ydK8mRWBntyJBrDxyoB6YzQC+doCPQSLAMJwUMah7de4rnMfwK0OfagIJQ2WeChfJboTbL+BXbiIJ6j7S3Y/wQp7VzkVCP2csZqyDGDPwIA0aic9H8mnnt2ypl+7lW6R4W8Jk50=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732202996; c=relaxed/simple;
-	bh=xregUDOpLXmogpkaDnz5Rcr5Qh6XR4lIzMjwLez0j6k=;
+	s=arc-20240116; t=1732202997; c=relaxed/simple;
+	bh=goXx78K2KumYVXCBKxzF4raCV0W0ReQPQ98vi51FmHw=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=c1Gi0wEjtuhRLXAtwDgZuZMBVymggjwVNOkKGvfgtePr/IClogUirkjjSvBNt+RJgjHnY1I/WNGlPlA8vc1dRgcKKDiCnTSbIYp3J2mkuv+DPlD7qAUBn+DWDG8oPYYZBcjHiWKsG/RfO+jfsIALEtGLvxmofbx7U66IxsZLdT4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=K0tec7il; arc=none smtp.client-ip=209.85.160.52
+	 MIME-Version; b=GrLL1gQzeGLZxHqfz88gjq+45zPcWlhuocOuAxzEJmuSTRbzH8ayzvnj9NsNHuySUFgm6nLC5tv0NA8aCKw5PGnsRUWriZyGjIcaE0W99/9KH28NkPNEAnPBnEFAAo5AzMUFggKfg8y2/x+Qdc6uhIUQt4FCmmX8P9KnG5eTy0Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lnSEEsXM; arc=none smtp.client-ip=209.85.160.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="K0tec7il"
-Received: by mail-oa1-f52.google.com with SMTP id 586e51a60fabf-296c184ed6bso642165fac.0
-        for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 07:29:54 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lnSEEsXM"
+Received: by mail-oa1-f45.google.com with SMTP id 586e51a60fabf-296b0d2271aso668946fac.0
+        for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 07:29:55 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1732202993; x=1732807793; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1732202994; x=1732807794; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=80CTRyuEUF3ZQoRGp6bgbgOH1IDCwiiaGWfqq1ywHNc=;
-        b=K0tec7il7GlIfQJ93lyp/q45G6srGotETebmQWbFJddu7tSIdAomPA0eJxoiwJ9j2H
-         YchvL5HHLtDfmMMAyHTYbxMKJ1wENUWSrbv7JHoa68oFpInSFQECgyJX2nydrEZuCHYm
-         TsaGvey/qiYNt1OOfpnQIzvMeGoafQ0Idd3GUW1ElYNeS2XXM/6pMpotVKtSlbvgey2L
-         XYZHrKuWQ937Cny9Vw0N+bxwFNkXhS+U6czsdb1GSqMHB78wg2qY+yN9BXBbvXBFQCvM
-         GMln8+SincSsmbWJitDk4A0RAgCOqTnlhIorgNpxnlvfYsU0l0PG9eZHMb9aa8gLj2N3
-         qlMA==
+        bh=3ej4MTVy6vT9sqHMDE1EKLAEae+qaoh0XppUwehHJDo=;
+        b=lnSEEsXMtckDtiukJFBDFPj4RLK966jdO/mHO7NtL/xIiXcpzBwe3L9znfxAYOlM24
+         nw2ckY2+T4nZDvxIaF9PEZWoKmasu0J1VAKl04roSsuWTkaknEGNiSktoUZiMhS/XW2p
+         Q4miD66CDnNALPFU0/T4K+bQXC05778iJ9kM2s8O3HphulE1qjW5Wlzkpn1S6n8ISisy
+         zuKSWUjr4983Z1p1Ly2y7A1JbaTp/OPGuFgT178lbPlw0IAuMo+JM0I2Iu0bVMifYLY8
+         ew8NmH825JxT/W/fbL+59uqhsUyP/NQ0+XYUnlrVVfEDSoLxDSL0pEm075c90H2+5sKE
+         2KrQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732202993; x=1732807793;
+        d=1e100.net; s=20230601; t=1732202994; x=1732807794;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=80CTRyuEUF3ZQoRGp6bgbgOH1IDCwiiaGWfqq1ywHNc=;
-        b=H9Y3EtDv8M+jVXCLOceWEGP4GPIQSQNKzsV144fqo8W14e7w4f0MVq5ziB1VjUsZlZ
-         fLsU3VH6rlJ7XOKq1GOvmx1q+iLfn9bF5KunjiUELpLm+c8DfmYh/eZ207MzQyT4T1nh
-         GOYVXM2NA4+TjoBi0tg/1C2RbkMFMYOuRKmpyxEObf1qlxiK46IvOOiD5dh2RgCBRnqN
-         v4O4X5IeGoKJ44U2AFZNXTe+tsZqxiVBh+JAPEiZf53miFFdNjD7s/yGsp3F/w//2fSX
-         1kxvzncPsKCLTaJ0p6CatxmEzNTxuldXAlRk5oTPsxve5OyhI5/J+fPdB5i0gIdRx9KX
-         61sA==
-X-Gm-Message-State: AOJu0YxFXisSBcgKjJ7QZMHhkiQ57N7Jz1rjugOmxTig6o7SeSICu4Z0
-	FbMmEG7rsaXMxJBaoEY+9G5vGxid5Nl5EdRxF/dW5FLLq/MYoLEn+nNC8g==
-X-Gm-Gg: ASbGncvVVrW7SfdVJ7pZD8xElc3q5PuFCxXbHBP/dQrDWKR10nlwNhAoNNOMtG8S5wY
-	PCO0EZQFXT9LZ79cBaHR9Yq8kZHWAFjsO4VWHZ44biitOHn0k27gxxY1colf/pFrFT3az6wVk8O
-	+4ioiN8Dny5T2aagJkkQUjGlF1Y5mNp8LDEt/D1RTcXr7m5e+e5CNRZmwU6XX5weit2gXKsAm6u
-	Jo6CWek7S8fIwOd8P4TRuFPMaGvhnkPBvGDCtTCA89H9y5wkNrNv8qAUTV7AcTCD28eiYkn9ek6
-	RjrjRvhdSdtm//yn2BbQ/t41
-X-Google-Smtp-Source: AGHT+IGk62XZmdItay4SDXYKWfR277dMbuXdVxnlVhzkR36YRM0ELzVRRmmdGjK5oxxzDZXm2Xki6Q==
-X-Received: by 2002:a05:6871:5287:b0:296:a7bf:b503 with SMTP id 586e51a60fabf-296d9ae0a64mr7392417fac.7.1732202993554;
-        Thu, 21 Nov 2024 07:29:53 -0800 (PST)
+        bh=3ej4MTVy6vT9sqHMDE1EKLAEae+qaoh0XppUwehHJDo=;
+        b=L2HRoMRIJ8ol1UaHgAbOw/VGvkf3hznxJ1I7S/l1ZqaqGHwCPIJpU5hnIx4EBbOJ71
+         OMb94I46aQQ24mBXl3lIts3edesPOdhihjuJMG5ZH6MVqCPS3xtZNfKzaB4vT/vaMPSv
+         UOSMCnYpyxqBIc/yVHD1VY1UYiP6GoPjID9sPAjfBjiY1xbbABp9meQxBL3X9tVxbLuQ
+         RZddtQfemGernnWNoAi+YxT/wYU6JHcGtlgOK2SVFVbN4F+naJ4lhJriwnjUPRtR/u/W
+         yzmciFEHRULPcq0qw+ox0CEOSUmqiRUHyd7x17LURxYgltPpvO/3/Wgbf0+E5bp2sUnM
+         BZZw==
+X-Gm-Message-State: AOJu0Yy7fSgdKQILRX8L7/rKENnOucl1Xf1oWUkj8QXNg7zCSHsmaOVO
+	/RTzhrmofHQXlOCzNpkNN8eFH7Z2dP+6i5ivzALob2/clgHPLx65/HMa7w==
+X-Gm-Gg: ASbGncu72ImQnCSn4Er8XuS1bSD0BXNt4Gns7QxvNfHOUSd4/VzfE7Oy1gyJZEs4ATQ
+	m74v8V8DA/95nRfMzU00qXOONBwayidNpYBmChRTchBdnL8DzXfZn/brLdI508Hw0OfCL40iIQV
+	qouiXUpcreJQ6zgEzGud1FZg/ByOILibwX6clW4fcead1LibssNq4Jv5AZnr9dm6uOKe2AA7OP6
+	Pi5q5wsj+zaE4nf7gaGmeof+cgWxUMxF97sFQPPl//K5loTFpJHuY39JsiVGQoGW9jc0lSvGMsn
+	bHT1wSUku9O92gHnAtAcy2u4
+X-Google-Smtp-Source: AGHT+IERwkBaGURGRYJhFBNUMxx21M/p0h6CiS1W0CgVKK09G4srv7w4ABIPKor4FaMpbLQeLO8ahw==
+X-Received: by 2002:a05:6871:d205:b0:288:6d7e:2e19 with SMTP id 586e51a60fabf-296d9b57fcfmr7518199fac.10.1732202994423;
+        Thu, 21 Nov 2024 07:29:54 -0800 (PST)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-29651ac5ff9sm4856831fac.42.2024.11.21.07.29.52
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-29651ac5ff9sm4856831fac.42.2024.11.21.07.29.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 21 Nov 2024 07:29:53 -0800 (PST)
+        Thu, 21 Nov 2024 07:29:54 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 03/10] gobi: Explicitly set 802.3 data format
-Date: Thu, 21 Nov 2024 09:29:31 -0600
-Message-ID: <20241121152949.56962-3-denkenz@gmail.com>
+Subject: [PATCH 04/10] gobi: Detect qmi_wwan pass_through support
+Date: Thu, 21 Nov 2024 09:29:32 -0600
+Message-ID: <20241121152949.56962-4-denkenz@gmail.com>
 X-Mailer: git-send-email 2.47.0
 In-Reply-To: <20241121152949.56962-1-denkenz@gmail.com>
 References: <20241121152949.56962-1-denkenz@gmail.com>
@@ -73,322 +73,112 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The current logic relies on querying the current data format, and
-setting the qmi_wwan parameters accordingly.  Unfortunately, the logic
-does not take data aggregation settings into account and can get
-confused if the modem is using such settings.  Fix this by explicitly
-setting the WDA data format to 802.3.
-
-While here, add some preparatory logic to support other data modes
-easily.  This will be used in the future to support multiple contexts
-using RMNet + QMAP.
+Detect the presence of 'pass_through' sysfs entry and record it in a
+flag for future reference.  pass_through mode is used when QMI_WWAN and
+rmnet interfaces are used in a multiplexed fashion.
 ---
- plugins/gobi.c | 191 ++++++++++++++++++++++++++++---------------------
- 1 file changed, 108 insertions(+), 83 deletions(-)
+ plugins/gobi.c | 35 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
 
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 54b64acb7871..4af3f3846694 100644
+index 4af3f3846694..87b54ae05f17 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -45,6 +45,7 @@
- #include <drivers/qmimodem/dms.h>
- #include <drivers/qmimodem/wda.h>
- #include <drivers/qmimodem/util.h>
-+#include <drivers/qmimodem/common.h>
+@@ -15,6 +15,7 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <net/if.h>
++#include <sys/stat.h>
  
- #define GOBI_DMS	(1 << 0)
- #define GOBI_NAS	(1 << 1)
-@@ -57,6 +58,13 @@
- 
+ #define OFONO_API_SUBJECT_TO_CHANGE
+ #include <ofono/plugin.h>
+@@ -59,6 +60,7 @@
  #define MAX_CONTEXTS 4
  
-+#define QMI_WWAN_RAW_IP "/sys/class/net/%s/qmi/raw_ip"
-+
-+enum wda_data_format {
-+	WDA_DATA_FORMAT_UNKNOWN = 0,
-+	WDA_DATA_FORMAT_802_3,	/* Last, most compatible legacy fallback */
-+};
-+
- struct service_request {
- 	struct qmi_service **member;
- 	uint32_t service_type;
-@@ -88,6 +96,7 @@ struct gobi_data {
- 	uint8_t interface_number;
- 	uint32_t max_aggregation_size;
+ #define QMI_WWAN_RAW_IP "/sys/class/net/%s/qmi/raw_ip"
++#define QMI_WWAN_PASS_THROUGH "/sys/class/net/%s/qmi/pass_through"
+ 
+ enum wda_data_format {
+ 	WDA_DATA_FORMAT_UNKNOWN = 0,
+@@ -98,6 +100,7 @@ struct gobi_data {
  	uint32_t set_powered_id;
-+	enum wda_data_format data_format;
+ 	enum wda_data_format data_format;
  	bool using_mux : 1;
++	bool no_pass_through : 1;
  };
  
-@@ -105,6 +114,28 @@ static void gobi_io_debug(const char *str, void *user_data)
- 	ofono_debug("%s%s", prefix, str);
+ static void gobi_debug(const char *str, void *user_data)
+@@ -136,6 +139,11 @@ static int qmi_wwan_set_raw_ip(const char *interface, char value)
+ 	return l_sysctl_set_char(value, QMI_WWAN_RAW_IP, interface);
  }
  
-+static bool wda_get_data_format(struct gobi_data *data,
-+				struct qmi_wda_data_format *out_format)
++static int qmi_wwan_set_pass_through(const char *interface, char value)
 +{
-+	if (data->data_format == WDA_DATA_FORMAT_UNKNOWN ||
-+			data->data_format > WDA_DATA_FORMAT_802_3)
-+		return false;
-+
-+	memset(out_format, 0, sizeof(struct qmi_wda_data_format));
-+
-+	if (data->data_format == WDA_DATA_FORMAT_802_3) {
-+		out_format->ll_protocol = QMI_WDA_DATA_LINK_PROTOCOL_802_3;
-+		return true;
-+	}
-+
-+	return false;
-+}
-+
-+static int qmi_wwan_set_raw_ip(const char *interface, char value)
-+{
-+	return l_sysctl_set_char(value, QMI_WWAN_RAW_IP, interface);
++	return l_sysctl_set_char(value, QMI_WWAN_PASS_THROUGH, interface);
 +}
 +
  /*
   * Probe the modem.  The following modem properties are expected to be set
   * in order to initialize the driver properly:
-@@ -159,11 +190,8 @@ static int gobi_probe(struct ofono_modem *modem)
+@@ -165,6 +173,9 @@ static int gobi_probe(struct ofono_modem *modem)
+ 	uint8_t interface_number;
+ 	int ifindex;
+ 	const char *bus;
++	struct stat st;
++	_auto_(l_free) char *pass_through = NULL;
++	bool no_pass_through = false;
+ 
+ 	DBG("%p", modem);
+ 
+@@ -189,10 +200,19 @@ static int gobi_probe(struct ofono_modem *modem)
+ 				&interface_number) < 0)
  		return -EINVAL;
  
++	pass_through = l_strdup_printf(QMI_WWAN_PASS_THROUGH, ifname);
++	if (stat(pass_through, &st) == -1) {
++		if (errno == ENOENT)
++			no_pass_through = true;
++		else
++			return -errno;
++	}
++
  	data = l_new(struct gobi_data, 1);
--	data->main_net_ifindex =
--		ofono_modem_get_integer(modem, "NetworkInterfaceIndex");
--	l_strlcpy(data->main_net_name,
--			ofono_modem_get_string(modem, "NetworkInterface"),
--			sizeof(data->main_net_name));
-+	data->main_net_ifindex = ifindex;
-+	l_strlcpy(data->main_net_name, ifname, sizeof(data->main_net_name));
+ 	data->main_net_ifindex = ifindex;
+ 	l_strlcpy(data->main_net_name, ifname, sizeof(data->main_net_name));
  	data->interface_number = interface_number;
++	data->no_pass_through = no_pass_through;
  
  	ofono_modem_set_data(modem, data);
-@@ -252,6 +280,7 @@ static void __shutdown_device(struct ofono_modem *modem)
- 	data->cur_service_request = 0;
- 	data->num_service_requests = 0;
- 	data->features = 0;
-+	data->data_format = WDA_DATA_FORMAT_UNKNOWN;
- 
- 	qmi_qmux_device_free(data->device);
- 	data->device = NULL;
-@@ -376,126 +405,113 @@ error:
- 	shutdown_device(modem);
- }
- 
--static void setup_qmi_wwan(const char *interface, uint32_t llproto)
--{
--	char raw_ip;
--	char new_raw_ip;
--
--	if (l_sysctl_get_char(&raw_ip, "/sys/class/net/%s/qmi/raw_ip",
--				interface) < 0) {
--		DBG("Couldn't query raw_ip setting");
--		return;
--	}
--
--	if (raw_ip != 'Y' && raw_ip != 'N') {
--		DBG("Unexpected value: %c", raw_ip);
--		return;
--	}
--
--	switch (llproto) {
--	case QMI_WDA_DATA_LINK_PROTOCOL_802_3:
--		new_raw_ip = 'N';
--		break;
--	case QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP:
--		new_raw_ip = 'Y';
--		break;
--	default:
--		DBG("Unknown WDA Link Protocol");
--		return;
--	}
--
--	DBG("raw_ip: %c, want: %c", raw_ip, new_raw_ip);
--
--	if (raw_ip == new_raw_ip)
--		return;
--
--	if (l_sysctl_set_char(new_raw_ip, "/sys/class/net/%s/qmi/raw_ip",
--				interface) < 0)
--		DBG("Fail to set raw_ip to %c", new_raw_ip);
--}
--
--static void get_data_format_cb(struct qmi_result *result, void *user_data)
-+static void request_service_cb(struct qmi_service *service, void *user_data)
- {
- 	struct ofono_modem *modem = user_data;
- 	struct gobi_data *data = ofono_modem_get_data(modem);
--	uint32_t llproto;
-+	struct service_request *req =
-+		&data->service_requests[data->cur_service_request];
- 
- 	DBG("");
- 
--	if (qmi_result_set_error(result, NULL))
--		goto done;
-+	if (!service)
-+		goto error;
- 
--	if (!qmi_result_get_uint32(result, QMI_WDA_LL_PROTOCOL, &llproto))
--		goto done;
-+	*req->member = service;
- 
--	setup_qmi_wwan(data->main_net_name, llproto);
-+	data->cur_service_request += 1;
-+	if (data->cur_service_request == data->num_service_requests) {
-+		DBG("All services requested, query DMS Capabilities");
- 
--done:
--	if (qmi_service_send(data->dms, QMI_DMS_GET_CAPS, NULL,
-+		if (qmi_service_send(data->dms, QMI_DMS_GET_CAPS, NULL,
- 						get_caps_cb, modem, NULL) > 0)
-+			return;
-+
-+		goto error;
-+	}
-+
-+	req = &data->service_requests[data->cur_service_request];
-+	DBG("Requesting: %u", req->service_type);
-+
-+	if (qmi_qmux_device_create_client(data->device, req->service_type,
-+					request_service_cb, modem, NULL))
- 		return;
- 
-+error:
- 	shutdown_device(modem);
- }
- 
--static void create_wda_cb(struct qmi_service *service, void *user_data)
-+static void set_data_format_cb(struct qmi_result *result, void *user_data)
- {
- 	struct ofono_modem *modem = user_data;
- 	struct gobi_data *data = ofono_modem_get_data(modem);
-+	struct qmi_endpoint_info endpoint_info = {
-+		.endpoint_type = QMI_DATA_ENDPOINT_TYPE_HSUSB,
-+		.interface_number = data->interface_number,
-+	};
-+	struct qmi_wda_data_format format;
- 
- 	DBG("");
- 
--	if (!service) {
--		DBG("Failed to request WDA service, continue initialization");
-+	if (!qmi_result_set_error(result, NULL))
-+		goto done;
-+
-+	if (data->data_format == WDA_DATA_FORMAT_802_3)
- 		goto error;
--	}
- 
--	data->wda = service;
-+	DBG("Trying next data format");
-+	data->data_format += 1;
- 
--	if (qmi_service_send(data->wda, QMI_WDA_GET_DATA_FORMAT, NULL,
--				get_data_format_cb, modem, NULL) > 0)
--		return;
-+	if (!wda_get_data_format(data, &format))
-+		goto error;
- 
--error:
--	if (qmi_service_send(data->dms, QMI_DMS_GET_CAPS, NULL,
--						get_caps_cb, modem, NULL) > 0)
-+	if (qmi_wda_set_data_format(data->wda, &endpoint_info, &format,
-+					set_data_format_cb, modem, NULL) > 0)
- 		return;
- 
-+	goto error;
-+
-+done:
-+	DBG("Set Data Format succeeded, proceeding to create services");
-+
-+	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
-+				request_service_cb, modem, NULL) > 0)
-+		return;
-+error:
- 	shutdown_device(modem);
- }
- 
--static void request_service_cb(struct qmi_service *service, void *user_data)
-+static void create_wda_cb(struct qmi_service *service, void *user_data)
- {
- 	struct ofono_modem *modem = user_data;
- 	struct gobi_data *data = ofono_modem_get_data(modem);
--	struct service_request *req =
--		&data->service_requests[data->cur_service_request];
-+	struct qmi_endpoint_info endpoint_info = {
-+		.endpoint_type = QMI_DATA_ENDPOINT_TYPE_HSUSB,
-+		.interface_number = data->interface_number,
-+	};
-+	struct qmi_wda_data_format format;
- 
- 	DBG("");
- 
--	if (!service)
--		goto error;
--
--	*req->member = service;
--
--	data->cur_service_request += 1;
--	if (data->cur_service_request == data->num_service_requests) {
--		DBG("All services requested, proceeding to create WDA");
-+	if (!service) {
-+		DBG("Failed to request WDA service, assume 802.3");
- 
--		if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_WDA,
--						create_wda_cb, modem, NULL))
-+		if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
-+					request_service_cb, modem, NULL) > 0)
- 			return;
- 
- 		goto error;
+ 	ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
+@@ -504,7 +524,11 @@ static void create_wda_cb(struct qmi_service *service, void *user_data)
  	}
  
--	req = &data->service_requests[data->cur_service_request];
--	DBG("Requesting: %u", req->service_type);
-+	data->wda = service;
-+	data->data_format = WDA_DATA_FORMAT_UNKNOWN + 1;
- 
--	if (qmi_qmux_device_create_client(data->device, req->service_type,
--					request_service_cb, modem, NULL))
--		return;
-+	if (!wda_get_data_format(data, &format))
-+		goto error;
- 
-+	if (qmi_wda_set_data_format(data->wda, &endpoint_info, &format,
-+					set_data_format_cb, modem, NULL) > 0)
-+		return;
- error:
- 	shutdown_device(modem);
- }
-@@ -563,9 +579,10 @@ static void discover_cb(void *user_data)
- 							QMI_SERVICE_WDS);
- 	}
- 
--	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
--					request_service_cb, modem, NULL) > 0)
-+	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_WDA,
-+						create_wda_cb, modem, NULL))
- 		return;
+ 	data->wda = service;
+-	data->data_format = WDA_DATA_FORMAT_UNKNOWN + 1;
 +
- error:
- 	shutdown_device(modem);
- }
-@@ -585,6 +602,14 @@ static void init_powered_down_cb(int error, uint16_t type,
- 	if (error)
++	if (data->no_pass_through)
++		data->data_format = WDA_DATA_FORMAT_802_3;
++	else
++		data->data_format = WDA_DATA_FORMAT_UNKNOWN + 1;
+ 
+ 	if (!wda_get_data_format(data, &format))
  		goto error;
+@@ -604,6 +628,15 @@ static void init_powered_down_cb(int error, uint16_t type,
  
-+	DBG("Setting QMI_WWAN to 802.3 mode");
-+
-+	r = qmi_wwan_set_raw_ip(data->main_net_name, 'N');
-+	if (r < 0) {
-+		ofono_warn("Unable to reset raw_ip");
-+		goto error;
+ 	DBG("Setting QMI_WWAN to 802.3 mode");
+ 
++	/* Must set pass_through first, before toggling raw_ip */
++	if (!data->no_pass_through) {
++		r = qmi_wwan_set_pass_through(data->main_net_name, 'N');
++		if (r < 0) {
++			ofono_warn("Unable to reset pass_through");
++			goto error;
++		}
 +	}
 +
- 	r = qmi_qmux_device_discover(data->device, discover_cb, modem, NULL);
- 	if (!r)
- 		return;
+ 	r = qmi_wwan_set_raw_ip(data->main_net_name, 'N');
+ 	if (r < 0) {
+ 		ofono_warn("Unable to reset raw_ip");
 -- 
 2.47.0
 
