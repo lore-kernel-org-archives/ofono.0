@@ -1,67 +1,67 @@
-Received: from mail-oa1-f46.google.com (mail-oa1-f46.google.com [209.85.160.46])
+Received: from mail-oa1-f51.google.com (mail-oa1-f51.google.com [209.85.160.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 297E51DBB0C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26D2D1DACB8
 	for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 15:29:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.46
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732202999; cv=none; b=bkT5zjQcgXooXF3lRRgJRC3gVUs5RgmdelFq6sojZ9rtiGiBu9d+HzL//CMe6Pul2dwkFTYI0zsBY7q9O9lMk3O+17OVkATwmmdefPaVytl2jXlhzxIM+JyOH8d4EX3DacMyw2JBUo40BrkdIUoiMBlKD469B07OyjmDFsfkG3Y=
+	t=1732202999; cv=none; b=YAV9NaOv800DKaaeIxWmwk7QOznOPTtE3Z2EOwORcpCv1WayTSp3vz9GBsflvRxb/FFMSAU3Oy/qpRxE659ArIEzfYqCJlJZN41Nndh8MJKPKM6gUEOGQB+oizehaZOjNgv620hztktiPyiBZ4S7ny7M31nZm3s4usuOi0I3McQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1732202999; c=relaxed/simple;
-	bh=jHJtBN7tkMY4JC//mjCTgudJ0dOjinrjj4fP8n7TlJs=;
+	bh=jY/wHj5U3dVQgXSkp/y0W5yZpsZ/+GfYTXyDcNS6tLo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=U2xkEJeR6m3lTk5F9TgXzP4L7IcsA+9d1L2Gi5qbCm9hnkk9U8fYSKI0jCdaJlfOaKylEqhcp4kQ9PIOk9oktiaCkH9HVw339PgpkHrbSapsluY8efip6OlRqaZ02sHsYW9q55Pq2TJscfOuQULj8aGB+z4uo9EYfnLse6UUVMc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CjZA2duF; arc=none smtp.client-ip=209.85.160.46
+	 MIME-Version; b=VCSWSslQTHGWIyAWnxL+wpjHXT69mAp/6W2m0VK9osuQL8tkkIPoyI17MaO1tiJXk+Ie6tEEN5NNahFfk4H04HTznjYCQVnfcdJBdWIkczD6BF98nG8kRZUUpr6dQH3+rYMgmSZHbwhJH15oAmxQBNDIUBMUrJof/jNDIUmsIH0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=fD1zhy95; arc=none smtp.client-ip=209.85.160.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CjZA2duF"
-Received: by mail-oa1-f46.google.com with SMTP id 586e51a60fabf-295d27f9fc9so824560fac.0
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fD1zhy95"
+Received: by mail-oa1-f51.google.com with SMTP id 586e51a60fabf-29678315c06so577679fac.1
         for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 07:29:57 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1732202997; x=1732807797; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1732202996; x=1732807796; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=2Ep1rTPQ/w023Pu6vGt8sVkI4wCxQQ4L5eMNM+GvPrY=;
-        b=CjZA2duFHma2vCDn/pHA60PGbBX/hkHbnO9AYsVhJaowbr6a1cyDI5j34tYha0zg/J
-         n4pSteSuqGFbu4mvfKOxqUPPgW3puqLlJw4GLuX/wh1Kk2hFlUGqlS3Gs+8BMFd5b6Gj
-         0+/hIQRcCSjmn8QJu95j8MId40Lngbv813RWuVhhh4NJAVHih0HnbBNWLkBY+kjJ2D/P
-         yk8EzEQJVfHNTNCLtIM4XiAZ08pWrYM2pXJ4WAQ6uzJrgutGwtwe/x0MrokAt00FLmdb
-         2/t9kSGBGKG+0D8MkdgngFLLh5FuqTBDXO2SdXrSw2/wsQBeDwkrbEEohihNytByVuPi
-         TvNg==
+        bh=PHLrc/XyOgHIIittARvCLdeNYWmDnYH7A/qXwEn8zdE=;
+        b=fD1zhy95zW3CWBluxcPJnLvWW7PYOdFQzoEbxOl9z9wllbpJjo2EH/XU9atDM3iK86
+         2qj8yyKkHaA51QRdRftbf3/GB1fUcu0RNDMb7GOVmo/FAOLLBgFBy1OAeBcRmKBJBPty
+         +eqP7wPtq1uJb8VEU6DEO1U4W7DLzvtXuVTdYBLlfXgwkJ9Jh0XLmcMx1nX5SEjTx4tl
+         5w24VHX3IafXaSqwlzYcyvGnYfqM3/jp2PdNzDNUWyhxmVL+FhZPBnWcJE3V8Ni+8uNz
+         5wR4LcBUT6QmXX6l09s8pVCw/gXGiPfayHLRbGESftE2MAqatQjskt8440KnxUY0d9y6
+         quZg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732202997; x=1732807797;
+        d=1e100.net; s=20230601; t=1732202996; x=1732807796;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=2Ep1rTPQ/w023Pu6vGt8sVkI4wCxQQ4L5eMNM+GvPrY=;
-        b=Z12FYmzkdhnq0PTqedRVrr5iyyOYieAe/WbJ3J/8zhR3P7yb7ChB9H5Q/ysYHcLsEY
-         L/ubLyjbyrh8gSVeoiiExbAzaOHFFizh82ebuFjGbZpBfYqEKwwnKuhVAiGWy8SnS+Tb
-         1y4PKtnG5J/WPR2L9BySvuRJtA1jFpd0pt4cj3J89Tx9MqGy3mQ8eMkIpRUd8wjTBuOS
-         UUxnWdgLXWV5A/sE2SPMY+UnWSxE3UkZWBx7xqK/oCfmr+egPBBF5yaK0zL0IWMzjIlG
-         o7x6u2Lv0YD2jKy2E7NBhzmutIoxAAwoVxtoDP8ymbMFbdRJ6CGxBIrpTYoRSHaH6M44
-         vbKA==
-X-Gm-Message-State: AOJu0YzKoKmh3uKBH1WxJiU0IWUjk1FSm7CNTaLwj42cfGEojPqptvkV
-	vNkQX5BBqrz1ptiD4PDtzfp0TA/RupQoW2FjhKyjP8EHhKLdqbAkBk2kgw==
-X-Gm-Gg: ASbGnctEdc1o2nzUjG32oc9ooM3yK3Pu2GwDxtAD/lB32L/HZaFX6Fnr4b4qOl2SOa4
-	AFUj4W6f3BTUIkvxd0U+FsFdKA2RJksyTkVzkxzJ5/ZcuS0t5q80HfzBE6BnCNBrkxXUAwVp06F
-	Rt6LflfQCYyEZRVQ+9Sp14q+d5j3lnke8BjnYq46C2GuSvj8Cw6VQPOXRxZZy/JJ5NYck1ZN6lT
-	G5a6wZ/2w1a0WAwtaRlpGCikwfLp4bsU7SFTIW5fuzrpAatB5j2pE2zdE+C6KOoI+26WJpbse5D
-	c243iArK/QcOKADDLiLrK8cY
-X-Google-Smtp-Source: AGHT+IE7i5iIZeMPlcPj1WNn3wXnn+u9v2l1YHWoABkDTqhUZC3z5wtVmy0yEAyaiJ6rIXvP0JZNDA==
-X-Received: by 2002:a05:6870:2b09:b0:296:88d2:6428 with SMTP id 586e51a60fabf-296d9b972c2mr7788649fac.16.1732202996978;
+        bh=PHLrc/XyOgHIIittARvCLdeNYWmDnYH7A/qXwEn8zdE=;
+        b=b5XTi6Erw5mbDkAgeTBvQBvungMFalLi+yPEexyWMbKZv/QcMR3roz72zNiU0syPwT
+         v+ryV7FZlf3h6JRKg0jExUNfrMA/A+AfNMe5F0SfKi2QBVD4BhRdE/mEnnDAIDdTzqrz
+         j0IOB4b0KH4zucII2GGYr4Fq06HaD4iOYNxhZ9cqwvpo+K/iUtRvDqevuxWTSnQqA76L
+         i4DjAvXSVVX8mId5rqBoF7fAI/ZdByA04rXC52tHvXw2Fq64EHJeZA+mwSlzjsOMiqnE
+         MYRzGlhqZpzfmDt+RdpgLU1DVdfDm7MVxuyTNZWZx/eUKap9aiSTkbn9WOB7N49K/mbr
+         oeug==
+X-Gm-Message-State: AOJu0YwJja1fT6DaEhp4iqYS46z825fOpDfGzhc4MucL/OdyCZED/rOO
+	8PZdqbLsbYr9TEuBSz86CZiuIs1mF1TvcF/eW0i0eh5nJ2B/qOd9FR7ZbA==
+X-Gm-Gg: ASbGncsf57mUJUD2IiTfcXZP4T3u79EHsKd4j3liZn1xJNwf/fJv0V+dm/GgHe1qkKT
+	WeVcj+dSASoT6dvaEuFQIfW6cUGqairIbqfdNAqJ8Fy6NeJL+14Uoqcxix80qRsHDNBkr//5yDt
+	6cbNvy4htapui0ikBzCeOKehHCWFEmU0yEFLklYElOB01OQ9TOgqrz9kjLayrR6PQDsb7mCrwsN
+	LMl1u1SZyj0UzjNyjv5qqwqyLoZ9zAXyF8pHWBR0xNecasFMipgSS8vgOdKTHunrBEXkQxeYyhb
+	OAo3Sg+QJnHRQQUye8m47XyV
+X-Google-Smtp-Source: AGHT+IFklczpuOIse/YOq83/gmoQFgWlwKeO/hRg0Fh8xhkbdcVFDzTXDzBn1pKiyHLCp6PUemX6qw==
+X-Received: by 2002:a05:6871:e7c5:b0:270:64ed:c125 with SMTP id 586e51a60fabf-296d9b84f56mr8041515fac.16.1732202996085;
         Thu, 21 Nov 2024 07:29:56 -0800 (PST)
 Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-29651ac5ff9sm4856831fac.42.2024.11.21.07.29.56
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-29651ac5ff9sm4856831fac.42.2024.11.21.07.29.55
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 21 Nov 2024 07:29:56 -0800 (PST)
+        Thu, 21 Nov 2024 07:29:55 -0800 (PST)
 From: Denis Kenzior <denkenz@gmail.com>
 To: ofono@lists.linux.dev
 Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 07/10] gobi: Support RAW_IP configuration
-Date: Thu, 21 Nov 2024 09:29:35 -0600
-Message-ID: <20241121152949.56962-7-denkenz@gmail.com>
+Subject: [PATCH 06/10] gobi: Set MTU when initializing QMI_WWAN
+Date: Thu, 21 Nov 2024 09:29:34 -0600
+Message-ID: <20241121152949.56962-6-denkenz@gmail.com>
 X-Mailer: git-send-email 2.47.0
 In-Reply-To: <20241121152949.56962-1-denkenz@gmail.com>
 References: <20241121152949.56962-1-denkenz@gmail.com>
@@ -73,62 +73,132 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Most newer QMI modem firmware only support RAW_IP based configurations.
-This is a more efficient data path since 802.3 headers do not need to be
-emulated.  Support this data format by configuring the 'raw_ip' setting
-on QMI_WWAN accordingly.
+MTU on cellular networks is generally smaller than the default 1500 MTU
+used by ethernet.  Most network providers recommend a particular
+setting, typically around ~1430 bytes.  The recommended MTU should also
+be provided by the network when the context is activated.
+On AT command modems, the setting can be read using +CGDCONTRDP.
+
+oFono does not currently manage MTU settings; setup a conservative
+1400 byte MTU to bootstrap.
 ---
- plugins/gobi.c | 16 +++++++++++++++-
- 1 file changed, 15 insertions(+), 1 deletion(-)
+ plugins/gobi.c | 60 +++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 57 insertions(+), 3 deletions(-)
 
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index cb53ec582385..111ddd3464fe 100644
+index 321a2ae0bca7..cb53ec582385 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -65,6 +65,7 @@
+@@ -58,6 +58,7 @@
+ #define GOBI_WDA	(1 << 7)
  
- enum wda_data_format {
- 	WDA_DATA_FORMAT_UNKNOWN = 0,
-+	WDA_DATA_FORMAT_RAW_IP,
- 	WDA_DATA_FORMAT_802_3,	/* Last, most compatible legacy fallback */
- };
+ #define MAX_CONTEXTS 4
++#define DEFAULT_MTU 1400
  
-@@ -133,7 +134,10 @@ static bool wda_get_data_format(struct gobi_data *data,
- 		return true;
- 	}
- 
--	return false;
-+	/* For everything except 802.3, use RAW_IP */
-+	out_format->ll_protocol = QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP;
-+
-+	return true;
+ #define QMI_WWAN_RAW_IP "/sys/class/net/%s/qmi/raw_ip"
+ #define QMI_WWAN_PASS_THROUGH "/sys/class/net/%s/qmi/pass_through"
+@@ -98,6 +99,7 @@ struct gobi_data {
+ 	uint8_t interface_number;
+ 	uint32_t max_aggregation_size;
+ 	uint32_t set_powered_id;
++	uint32_t set_mtu_id;
+ 	enum wda_data_format data_format;
+ 	bool using_mux : 1;
+ 	bool no_pass_through : 1;
+@@ -134,6 +136,24 @@ static bool wda_get_data_format(struct gobi_data *data,
+ 	return false;
  }
  
- static int wda_data_format_to_mtu(enum wda_data_format format, uint32_t *out_mtu)
-@@ -142,6 +146,7 @@ static int wda_data_format_to_mtu(enum wda_data_format format, uint32_t *out_mtu
- 
- 	switch (format) {
- 	case WDA_DATA_FORMAT_802_3:
-+	case WDA_DATA_FORMAT_RAW_IP:
- 		mtu = DEFAULT_MTU;
- 		break;
- 	default:
-@@ -500,6 +505,15 @@ static void enable_set_mtu_cb(int error, uint16_t type,
- 	if (error)
- 		goto error;
- 
-+	if (data->data_format == WDA_DATA_FORMAT_RAW_IP) {
-+		DBG("Setting QMI WWAN to raw_ip");
++static int wda_data_format_to_mtu(enum wda_data_format format, uint32_t *out_mtu)
++{
++	uint32_t mtu;
 +
-+		if (qmi_wwan_set_raw_ip(data->main_net_name, 'Y') < 0) {
-+			ofono_warn("Unable to set raw_ip");
-+			goto error;
-+		}
++	switch (format) {
++	case WDA_DATA_FORMAT_802_3:
++		mtu = DEFAULT_MTU;
++		break;
++	default:
++		return -ENOTSUP;
 +	}
 +
- 	DBG("Requesting services");
++	if (out_mtu)
++		*out_mtu = mtu;
++
++	return 0;
++}
++
+ static int qmi_wwan_set_raw_ip(const char *interface, char value)
+ {
+ 	return l_sysctl_set_char(value, QMI_WWAN_RAW_IP, interface);
+@@ -269,6 +289,11 @@ static void gobi_remove(struct ofono_modem *modem)
+ 		data->set_powered_id = 0;
+ 	}
  
- 	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
++	if (data->set_mtu_id) {
++		l_netlink_cancel(l_rtnl_get(), data->set_mtu_id);
++		data->set_mtu_id = 0;
++	}
++
+ 	cleanup_services(data);
+ 
+ 	qmi_qmux_device_free(data->device);
+@@ -461,6 +486,29 @@ error:
+ 	shutdown_device(modem);
+ }
+ 
++static void enable_set_mtu_cb(int error, uint16_t type,
++					const void *msg, uint32_t len,
++					void *user_data)
++{
++	struct ofono_modem *modem = user_data;
++	struct gobi_data *data = ofono_modem_get_data(modem);
++
++	DBG("error: %d", error);
++
++	data->set_mtu_id = 0;
++
++	if (error)
++		goto error;
++
++	DBG("Requesting services");
++
++	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
++				request_service_cb, modem, NULL) > 0)
++		return;
++error:
++	shutdown_device(modem);
++}
++
+ /*
+  * Some firmware accepts the Set Data Format command successfully, but doesn't
+  * change anything.  Try to detect and warn if that happens
+@@ -497,6 +545,7 @@ static void set_data_format_cb(struct qmi_result *result, void *user_data)
+ 		.interface_number = data->interface_number,
+ 	};
+ 	struct qmi_wda_data_format format;
++	uint32_t mtu;
+ 
+ 	DBG("");
+ 
+@@ -523,10 +572,15 @@ static void set_data_format_cb(struct qmi_result *result, void *user_data)
+ 	goto error;
+ 
+ done:
+-	DBG("Set Data Format succeeded, proceeding to create services");
++	DBG("Set Data Format succeeded, try to set MTU...");
+ 
+-	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
+-				request_service_cb, modem, NULL) > 0)
++	if (L_WARN_ON(wda_data_format_to_mtu(data->data_format, &mtu) < 0))
++		goto error;
++
++	data->set_mtu_id = l_rtnl_link_set_mtu(l_rtnl_get(),
++						data->main_net_ifindex, mtu,
++						enable_set_mtu_cb, modem, NULL);
++	if (data->set_mtu_id)
+ 		return;
+ error:
+ 	shutdown_device(modem);
 -- 
 2.47.0
 
