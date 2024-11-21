@@ -1,35 +1,66 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f53.google.com (mail-oa1-f53.google.com [209.85.160.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B43F81ABEA2
-	for <ofono@lists.linux.dev>; Wed, 20 Nov 2024 20:30:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD2A71369B4
+	for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 15:29:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732134625; cv=none; b=RE3LrZjFXTwgSOW3kbyxReRs5UN/9NWsqrZFExcs53Vsi6pvbAZfnw3CZl03Fv4Wcc40IwOqeswoVh/xh13F8qPCKU4oc5H4fqzjkemrZNUBQOFohpqBxxhQanPb/SRrfklFxK3M6kqNweSflSqjQgN+OQDSvSWmpAt8Se5mSlc=
+	t=1732202994; cv=none; b=ltB38FXqQ7h5O16bltTf80EE6bAztlymuB9QwTRwJIOldgSFmoC5FheRtRHyN5mLb4umn5EPtLS+qmbysd4YMcEXsYtKZ+4BZ2ppwAmwF/fsZCIPJ25zjEVaGHwk6SbhgCQGsvagwUR8N6wLDN7v3tSFAhtFGxy+ZHIUgxQ3M/k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732134625; c=relaxed/simple;
-	bh=DlyxC+FR+dWURyEMfRGwWm5JO1GXg7W3GcFOa5ZBF/I=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=E8GHr/mXGGmy054SMTc5YqznJAfkkorSUIt/nnYLljvngp0xAXarZIr8XBdx9G8Cu5d09wsy4iwbvHJvzLrgnSLhuHDfkP4/qanfislHNmQyX++Oyqgh6swa4XWzMEzdgirsChXnj1DkITOdZPYZCay72gptdFKMN8351elxqV4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=b6/nhDvZ; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1732202994; c=relaxed/simple;
+	bh=cOXjnlud4QKvzsTQ4OznMq8o9Vx9AcDQ5rCN6r1aqhE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DVXwS7BjotusIZsv2q12sQan45UorP20/E2YXurMcx/cELQx9aUnSbK//pB2U1V0ZddBE49wvtbEAmaDAMubYmCSC/tS2mqMRd6Z4Qn4unw4Fqe39qSRcxOm875i1M5F7bGXOqXJgfNaDoi48a3GVSpN17roT+3T7WlPyhz8zr0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lzcrJep2; arc=none smtp.client-ip=209.85.160.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="b6/nhDvZ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8029CC4CECD;
-	Wed, 20 Nov 2024 20:30:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1732134625;
-	bh=DlyxC+FR+dWURyEMfRGwWm5JO1GXg7W3GcFOa5ZBF/I=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=b6/nhDvZ22dZHcWwEa1UAoOOJ2XvS3nA5ktE6JK/9fLf8h1PMU3Y7i3eB03anSh2u
-	 FqxkGm6t9IvZ8OuXMrkYaEwHJoweKCbBYG9lqxREnbBOVN2bygbNwH4zgk8PP/Tpzb
-	 KQnIrWN5h9cj0Pq31tHjgHyJtiOoemrZOtSoIaDJBkF+t6+Ti4rOF+j2FYbqlHJlmg
-	 +SyQ333Z3KidQv9H5gkoaV4dauWa0V32nxKbg/dRiXcF0TJ/B1r9HlvXltYlBXdR1v
-	 c5aGvQx+VO5vIBjV/fnqSjDEjXrsrdWxfE3hl9V9w+++9C6TAjt7MKbDPc04rnh+Py
-	 MwIozJZ57ugzg==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 70CCB3809A80;
-	Wed, 20 Nov 2024 20:30:38 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lzcrJep2"
+Received: by mail-oa1-f53.google.com with SMTP id 586e51a60fabf-2965e10da1bso573367fac.0
+        for <ofono@lists.linux.dev>; Thu, 21 Nov 2024 07:29:52 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1732202992; x=1732807792; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=5UGQrXToXTTTC19kbDwKCetW1cXwDHGKCfCEl17ztIg=;
+        b=lzcrJep2yKgt+qLW2vuavMX7lbYfxbHj2J9XKtJX0gupN/WaZ3aTM78QhoJRazUeGG
+         GDqWcdmaT2LlaG6P7ai+VDcplFzzhkUeSQlpD60pJcMgb524GLX0TEcpDDvav8ehpKVU
+         cMQmeVWW9pRdq+dBdf/O9euGmNekZMb0Ybw+PcmmjnNlQQ81UEpJV5fxgjQPJenEQHEZ
+         hY86pd2iYkSdjHgQEEBCMf+IBaW9X6EmMDEuSoKFCu5YNXOgeEsLnh4NTC2jUAkoqYc4
+         BjPQ3oNJXxgHy9Ca5SH+RLonSdx8nXCl2GLA8OkeJAYTwtkCC3nLWBtq/y+vqGJJP7o3
+         Jbvg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1732202992; x=1732807792;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=5UGQrXToXTTTC19kbDwKCetW1cXwDHGKCfCEl17ztIg=;
+        b=qaHBkwbaqz1LVL28CvNxwwWb5bO+rDdOcCsHztiJrOUYh6igJPZMitKCPDVBVcb63R
+         i2QpwA7jXFTpoVGqtnAPrvQ15ywMH4zjJshFzdbuBIdD3uzd3RL2VxTBTzYcH92Qrxvl
+         +1bT2U6k4RZ5GWV+SVIeRpTnm7Ll0ZiQ5H2f+iI7qam5MwNpkKSjGYEwWM+z7beFsr0u
+         5C3KZbJxztVc6uBo2O2gTfVcQY/tHF8MD2lL0hcBliQrVoRVDvWi3Zg8ti38yyG0rjm5
+         dhJfrA8M0d+JkumRHLGzvWDn4C8ICHzTnExEICVM+dGSGLlUTtSKBZ3KOjvsZrYRN2Ct
+         1pHQ==
+X-Gm-Message-State: AOJu0YzJcyu4r8igqr7TGkZLbJrhXwnI+U/sftlt+9BXXAKgySODHnj1
+	u9htrVF1vIN4c/2snnynuk6TiGksrzxZC+xdpqT7ZogR59fK01zjNSpF8w==
+X-Gm-Gg: ASbGncvXYhUzYmV7ir3NJkf5rU32JzuCmBXaL88VG4lui1OvQ9mVAwIMsL5+azKlv8J
+	Ae9d4dgF8pEZ4qDpTPCvN6hGjdRLzC7OJ5yukgZ6tp0Ip7N8XtDBEMBukRAEP3566gQjcjnp+F/
+	8Il/Xo02fQymc0mZ8IFcE8evjJ17XbZEoo/baMVF+XxVW3mrXXdPKygvx94JD6kasPNjWqqSBJn
+	ZJyKWkvHUPQQ4qExY+OwXEguPLi5JlKQejHhd8elIS81RNFPzb8jJtOGn9/vAa+diPDXHXbrveG
+	QZGd3k7I0SpXxIn48NWPG3ZG
+X-Google-Smtp-Source: AGHT+IGwgMguNYjE5M0s0oI2WpvmCV8hvmtqnOj9ZpWRKyHsQYc40O8DXvMfIseqwcumqyjfzw81dQ==
+X-Received: by 2002:a05:6870:b507:b0:296:80aa:a9b7 with SMTP id 586e51a60fabf-296d9bf04f9mr7114432fac.21.1732202991661;
+        Thu, 21 Nov 2024 07:29:51 -0800 (PST)
+Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-29651ac5ff9sm4856831fac.42.2024.11.21.07.29.50
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 21 Nov 2024 07:29:51 -0800 (PST)
+From: Denis Kenzior <denkenz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 01/10] qmi: wda: Add qmi_wda_set_data_format utility
+Date: Thu, 21 Nov 2024 09:29:29 -0600
+Message-ID: <20241121152949.56962-1-denkenz@gmail.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,53 +68,162 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH v2 1/8] rmnet: Add skeleton
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <173213463723.1339331.11103757423014979754.git-patchwork-notify@kernel.org>
-Date: Wed, 20 Nov 2024 20:30:37 +0000
-References: <20241119171832.1119-1-denkenz@gmail.com>
-In-Reply-To: <20241119171832.1119-1-denkenz@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>
-Cc: ofono@lists.linux.dev
 
-Hello:
+This utility function builds a WDA Set Data Format message and sends it
+to the desired wda service handle.
+---
+ Makefile.am                     |  1 +
+ drivers/qmimodem/common.h       |  5 ++++
+ drivers/qmimodem/gprs-context.c |  6 ++--
+ drivers/qmimodem/wda.c          | 51 +++++++++++++++++++++++++++++++++
+ drivers/qmimodem/wda.h          | 23 +++++++++++++++
+ 5 files changed, 82 insertions(+), 4 deletions(-)
+ create mode 100644 drivers/qmimodem/wda.c
 
-This series was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Tue, 19 Nov 2024 11:18:12 -0600 you wrote:
-> Add skeleton of the RMNet interface management module.  Implement the
-> basic API structure and register the module with oFono core.
-> ---
->  Makefile.am |  2 ++
->  src/rmnet.c | 59 +++++++++++++++++++++++++++++++++++++++++++++++++++++
->  src/rmnet.h | 25 +++++++++++++++++++++++
->  3 files changed, 86 insertions(+)
->  create mode 100644 src/rmnet.c
->  create mode 100644 src/rmnet.h
-
-Here is the summary with links:
-  - [v2,1/8] rmnet: Add skeleton
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=ad000eabb49a
-  - [v2,2/8] rmnet: Add logic to dump out RMNet interfaces
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=5f5b3b65efdd
-  - [v2,3/8] rmnet: Track link notifications
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=cfb78944ec4f
-  - [v2,4/8] rmnet: Track used mux ids
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=db18da4b4e91
-  - [v2,5/8] rmnet: Delete stale RMnet links at startup
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=0cc9a035a8d1
-  - [v2,6/8] rmnet: Implement rmnet_del_interfaces
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=982aa444b98e
-  - [v2,7/8] rmnet: Implement getting new interfaces
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=99a68a774de0
-  - [v2,8/8] rmnet: Implement cancel
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=a0d8117a04c9
-
-You are awesome, thank you!
+diff --git a/Makefile.am b/Makefile.am
+index d107dc410fd2..2d198f52a4a0 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -366,6 +366,7 @@ qmi_sources = drivers/qmimodem/qmi.h drivers/qmimodem/qmi.c \
+ 					drivers/qmimodem/pds.h \
+ 					drivers/qmimodem/common.h \
+ 					drivers/qmimodem/wda.h \
++					drivers/qmimodem/wda.c \
+ 					drivers/qmimodem/wds.c \
+ 					drivers/qmimodem/voice.h
+ 
+diff --git a/drivers/qmimodem/common.h b/drivers/qmimodem/common.h
+index b0788285b5e7..1610f1da9e45 100644
+--- a/drivers/qmimodem/common.h
++++ b/drivers/qmimodem/common.h
+@@ -76,3 +76,8 @@
+ #define QMI_LTE_BAND_MASK_EUTRA_41	0x0000010000000000
+ #define QMI_LTE_BAND_MASK_EUTRA_42	0x0000020000000000
+ #define QMI_LTE_BAND_MASK_EUTRA_43	0x0000040000000000
++
++struct qmi_endpoint_info {
++	uint32_t endpoint_type;
++	uint32_t interface_number;
++} __attribute__((packed));
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-context.c
+index 89d68d154ed8..a8ac3cb18c80 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -17,6 +17,7 @@
+ #include <ofono/gprs-context.h>
+ 
+ #include "qmi.h"
++#include "common.h"
+ #include "wds.h"
+ #include "util.h"
+ 
+@@ -715,10 +716,7 @@ static int qmi_gprs_context_bind_mux(struct ofono_gprs_context *gc,
+ 	struct qmi_param *param;
+ 	const char *interface_number;
+ 	const char *bus;
+-	struct {
+-		uint32_t endpoint_type;
+-		uint32_t interface_number;
+-	} __attribute__((packed)) endpoint_info;
++	struct qmi_endpoint_info endpoint_info;
+ 	uint8_t u8;
+ 
+ 	bus = ofono_modem_get_string(modem, "Bus");
+diff --git a/drivers/qmimodem/wda.c b/drivers/qmimodem/wda.c
+new file mode 100644
+index 000000000000..cf32aa094d69
+--- /dev/null
++++ b/drivers/qmimodem/wda.c
+@@ -0,0 +1,51 @@
++/*
++ * oFono - Open Source Telephony
++ * Copyright (C) 2024  Cruise, LLC
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++#include <stdint.h>
++#include <stddef.h>
++
++#include <ell/ell.h>
++
++#include "src/common.h"
++
++#include "qmi.h"
++#include "common.h"
++#include "wda.h"
++
++uint16_t qmi_wda_set_data_format(struct qmi_service *wda,
++				const struct qmi_endpoint_info *endpoint_info,
++				const struct qmi_wda_data_format *format,
++				qmi_service_result_func_t func,
++				void *user_data, qmi_destroy_func_t destroy)
++{
++	static const uint8_t PARAM_LL_PROTO = 0x11;
++	static const uint8_t PARAM_UL_AGGREGATION_PROTOCOL = 0x12;
++	static const uint8_t PARAM_DL_AGGREGATION_PROTOCOL = 0x13;
++	static const uint8_t PARAM_DL_MAX_DATAGRAMS = 0x15;
++	static const uint8_t PARAM_DL_MAX_SIZE = 0x16;
++	static const uint8_t PARAM_EP_INFO = 0x17;
++	struct qmi_param *param = qmi_param_new();
++	uint32_t req_id;
++
++	qmi_param_append_uint32(param, PARAM_LL_PROTO, format->ll_protocol);
++	qmi_param_append_uint32(param, PARAM_UL_AGGREGATION_PROTOCOL,
++					format->ul_aggregation_protocol);
++	qmi_param_append_uint32(param, PARAM_DL_AGGREGATION_PROTOCOL,
++					format->dl_aggregation_protocol);
++	qmi_param_append_uint32(param, PARAM_DL_MAX_DATAGRAMS,
++					format->dl_max_datagrams);
++	qmi_param_append_uint32(param, PARAM_DL_MAX_SIZE, format->dl_max_size);
++	qmi_param_append(param, PARAM_EP_INFO,
++				sizeof(*endpoint_info), endpoint_info);
++
++	req_id = qmi_service_send(wda, QMI_WDA_SET_DATA_FORMAT,
++					param, func, user_data, destroy);
++	if (!req_id)
++		qmi_param_free(param);
++
++	return req_id;
++}
+diff --git a/drivers/qmimodem/wda.h b/drivers/qmimodem/wda.h
+index fd1e1f63ab1e..4facc0cb6677 100644
+--- a/drivers/qmimodem/wda.h
++++ b/drivers/qmimodem/wda.h
+@@ -5,6 +5,8 @@
+  * SPDX-License-Identifier: GPL-2.0-only
+  */
+ 
++struct qmi_endpoint_info;
++
+ #define QMI_WDA_SET_DATA_FORMAT	32	/* Set data format */
+ #define QMI_WDA_GET_DATA_FORMAT	33	/* Get data format */
+ 
+@@ -16,3 +18,24 @@ enum qmi_wda_data_link_protocol {
+ 	QMI_WDA_DATA_LINK_PROTOCOL_802_3 =			0x01,
+ 	QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP =			0x02,
+ };
++
++enum qmi_wda_aggregation_protocol {
++	QMI_WDA_AGGREGATION_PROTOCOL_DISABLED =			0x00,
++	QMI_WDA_AGGREGATION_PROTOCOL_QMAP =			0x05,
++	QMI_WDA_AGGREGATION_PROTOCOL_QMAPV4 =			0x08,
++	QMI_WDA_AGGREGATION_PROTOCOL_QMAPV5 =			0x09,
++};
++
++struct qmi_wda_data_format {
++	uint32_t ll_protocol;
++	uint32_t ul_aggregation_protocol;
++	uint32_t dl_aggregation_protocol;
++	uint32_t dl_max_datagrams;
++	uint32_t dl_max_size;
++};
++
++uint16_t qmi_wda_set_data_format(struct qmi_service *wda,
++				const struct qmi_endpoint_info *endpoint_info,
++				const struct qmi_wda_data_format *format,
++				qmi_service_result_func_t func,
++				void *user_data, qmi_destroy_func_t destroy);
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.47.0
 
