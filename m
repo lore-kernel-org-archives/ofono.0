@@ -1,155 +1,92 @@
-Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
+Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0B111442F2
-	for <ofono@lists.linux.dev>; Mon,  2 Dec 2024 19:17:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05C7B7E0E8
+	for <ofono@lists.linux.dev>; Tue,  3 Dec 2024 19:44:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733167029; cv=none; b=PmOEtAzLhxotwAuKFzifMcloPv3IREEz0/pGlqwgOuzOPmy7ZZik521+nyM9Nepkf33EaCuK3umcYiFYzPkLtVyr6OjLx+wgETT+XmLV9iUqUZNLDgdefAXWdVP363+6Al6ZhXsnMv/nKe5TN0uAcJEj3h6FAPl53lkBT90L1LU=
+	t=1733255052; cv=none; b=IR65+wODm/2Le9yVYh3oISeAvjC5Z69JTWlUjiW+0Ku52xGnWUlSwWwsfk6UUcz6nqm+mRJTW6kwKBFyYEqDg9aDw8cO9EzuILNn0H/+f4V8MxjqdVV3vUDBEKITSfc0o0akSbREGa0of7wkwgU3tWSNA5n/D8J3hNlbDkMaqS8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733167029; c=relaxed/simple;
-	bh=3hG5EmQ/ELqXvjKeAnfqr5rOBZnaadfGMGTrsYC5JPw=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=fsXfdZh38oRF1xnUrjwnuI98V2lijhLksx2e2YXtJll2n1hTq4iCBN4cL0WtNO0rchAKZj/oBb4qsRwXaecZXTnqg29iapop8iJhGIOUROuS0vreOlXfhJX4ZZ9yG3oX4Hhh9aDTuYS8DE3gykbUReuDz5/ENUzcS2mE9urVfRg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mPrph825; arc=none smtp.client-ip=209.85.167.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk
+	s=arc-20240116; t=1733255052; c=relaxed/simple;
+	bh=ZnK7vKM6zjrX7qiXlOWDfFZ7JGZBfUzisAc9dNlTxwE=;
+	h=From:To:Cc:Subject:Date:Message-Id; b=lQGytkTDVE9bBQ9Ul78466aShYyrifnmZ5VgVS42zlnJ42knessh4EFsaVNgeE97tTtXM/rzIYzu2FQGCN06Zwngr+0UxElzBqrAYZUVJqN/hwS6Ufl/qaWqg3kNuj7/8q1DQm8sv/SwvJaI4BYPgKmhhlL3peiho0nVycdYwZQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jeTi3kKR; arc=none smtp.client-ip=209.85.128.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mPrph825"
-Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-53de8ecb39bso5456067e87.2
-        for <ofono@lists.linux.dev>; Mon, 02 Dec 2024 11:17:06 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jeTi3kKR"
+Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-434a742481aso48923285e9.3
+        for <ofono@lists.linux.dev>; Tue, 03 Dec 2024 11:44:10 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1733167024; x=1733771824; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:sender:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1733255049; x=1733859849; darn=lists.linux.dev;
+        h=message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=WuqV9HfYlVhJOV/RLJwEMnZR1zBahnDIhb/AyxGIvzM=;
-        b=mPrph825SE8aFUhZOSkzCSAAF5m54XTWJxUrN3cm40qc+QyVrZNVdulAVPpW3bBHN9
-         WbfFW5E9HHHDcpHvpupyklJqhbymNmnuC7usrq/EdJODLrP5mSO75j6Sdq8zH+gi/FTB
-         fCmhIlNNbxm/WQR3fdhZ1K1RO7/daED0mH/kw2wL9OY1UhuPfZjqBYu9xSU31X46PPHl
-         E5xr07gJPPycVjTbEoTAbzxRGCxNwU0NjCJpQeQAQWh2xSaIUhYGQr++0T+D8EqQslbW
-         GwzCw27GHkSZXW0RNu2T6XJynY9/nKvTuIDuyOemumxU890b837d+/UGYFtiGUV+ggAv
-         3FgA==
+        bh=rNB247370OIrls+RAYczpbDPvqzyokPSj12SRkMxsUg=;
+        b=jeTi3kKRtYd0dX5f/Z+FsPCIYgEyfMpU8dOvzeF8rEdmIuJFhs08ZnuWQ+D0ZweLjy
+         sPI8eysH8ZFNs8+Bxy4qUWpxV9LjoGLH4kXh+3rdDoJvoJDA6zezymWZErnyb6Y9aQnn
+         LhLdXkYi8S3Zc8hADhi2jO8tGnbMyoE0/LKOBoCP+LOJ8nW6PcBDX30gw/XlWy8HJBFF
+         UCOSQKppQIsIJ927B92x7nnVVvnMTz/HTWHH9ZDH7qSGpYjSuPQ9LiiUb8hXprAXJPoL
+         xkIfW2nz3gItPOKZScoKcgxDDRsFfy8bxgp3um9RGLYcBkm9Jseh1pRQUdUauScv04oF
+         8B9w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1733167024; x=1733771824;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:sender:x-gm-message-state:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=WuqV9HfYlVhJOV/RLJwEMnZR1zBahnDIhb/AyxGIvzM=;
-        b=avHrjHlchkW8gcq2mwZvz3uSoNTjbzXjQk+sPpbfkSaH0WO1W2FzZTSHFW3g9pWKnN
-         /uigeCBMvkrsNOTMo3ACW7MXugWmqf/W8aE91tuG5zYf+x461wZArv5J8ZQ0Ks+aG/48
-         zDm+NzyS1aaKE/s3w0N8aTClCZ6T7lqbBgl2RHcPsj33pn2EOId2FLTJTvsegOF9iK1M
-         gT9JW8UxyqjJF9Qo4KdQ099q/58fW71xqwXf9yob8vCPzJdxOQl59S7IRzxUUAXgbvuI
-         OlKAgyWzNxg9Z24bNfC1LaPd/a4HGGBdB+aIHfxw4yRgB1W5uOWOc5Ivmw7O1IRwRxeS
-         8q4A==
-X-Gm-Message-State: AOJu0YyV/s2+ZyEH7KoLGAfmK2txbYz7WGZJDQWOKIrkbBW5JHCzMozm
-	N/isX+agxZfuVlLc90BOGghmLRopfWyj4maqgcqlFngwmnJe3MahspHlnA==
-X-Gm-Gg: ASbGncuT50tKk+0ysm7qkZKrsVD4Vb+N+eI5eG9qgisUZEGFka5TJmRK4xiNCYo7BE/
-	OvphesADnAvn/0EwSehm4DeL9FmohGidTjflCWvnJJTbhURNhbJJ8iajUV2pFfiinD8qmzieHtk
-	8cMj9X26JKXwQhUgu/mpxO/kUlMmbyJWzobVJ6/5Mc5G2j6ORtBI48YrJiZRsDLaRJfHyqR6v1q
-	4qe2fruE5lylhlbVMdvEh4I5vu1y0NL5ByVYWt20shFH4XJY1CjreE8gUdV7w==
-X-Google-Smtp-Source: AGHT+IGAGpOA7Knrkmq+Z9YinGCnfldOESsSSMNt7+lRI66wO/UAsWkpMw6ZRZAmRkq4QNGMVG8VaQ==
-X-Received: by 2002:a05:6512:3c99:b0:53d:abc8:b6d3 with SMTP id 2adb3069b0e04-53df00aa00bmr14320811e87.12.1733167024010;
-        Mon, 02 Dec 2024 11:17:04 -0800 (PST)
-Received: from adam-laptop-hp.localnet ([2a0a:ef40:c2f:5c01:9ed2:c18c:329:f12e])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-434aa763a59sm194252865e9.11.2024.12.02.11.17.02
+        d=1e100.net; s=20230601; t=1733255049; x=1733859849;
+        h=message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=rNB247370OIrls+RAYczpbDPvqzyokPSj12SRkMxsUg=;
+        b=HLln0mFwAEEscfmm1aKwXcoTJITTM8NSQspThZG26thDkJoFHd2wDvVH29CogUVqSM
+         OtwUrr+vQsYmJR7Z+sbNMK98IfY5UA5iE3gEzvJx38DZzOs2KIktbk2BN1oEemJRueYj
+         zc5+Pw1dzGjLYTqQwekCETO2Ghe/F6jPQNyEnUwt2ARu/J/BXK+8tML32q1doSwAF9eg
+         slL/RtFKLZ4kFYen7D86m2TeGN8iaz4BFieQiSY23H9RWdjVgHU9x+S9nHzbluP6k/Oi
+         4OO6AnXqwMSTutkxwrz1TXkqqqj/vWy0TadBVcHt4YcWGKfHbkWT9CXu3EqfHTmN95rW
+         +o6w==
+X-Gm-Message-State: AOJu0YwvsZvB/SBF7Fce7sbJ/6yd3w9pnL5fc89dfRpU3aooojqD2LEF
+	l2L6bzLMYsVMcS1QCK+Bw6iS/SY46aPWVh8//bn8teA0ksB3ZEDVC6w+Vg==
+X-Gm-Gg: ASbGncssaVgJpaTmQPklDt5SA3gH6ySyyLEGz9e/EYs/NZkGJclnHBuQHHWpHnuyKpQ
+	HUbW5CmVY80i/6ZiyyENDo3dtXlm8QUnk2MqcESxTQb3IJfUdjbDpVQpZdcS9X6rgvQbwdLDPK2
+	IUPIPE4LrWvuj/QYDh4pey1VlE+N++Bg90AidNQ1O2QcAAZjDxl8V76JapEqv1wfFRimG7YsBqR
+	EyUqhOqhrFFrH1eLLG3MXCAwi7WaZ5K64KxaXOVpWk0OmDG65OaDgzFz+vxo5YAThWgIEpq
+X-Google-Smtp-Source: AGHT+IH8T/l3tXvZ/6zNzqJZTO0twMFRZ3h1j1OdMBcuQd2kGbpYUCuuHD9RTwNYoPgCWWIDg0GVqg==
+X-Received: by 2002:a05:600c:a4b:b0:433:c76d:d57e with SMTP id 5b1f17b1804b1-434d09a8c9bmr35053685e9.5.1733255048901;
+        Tue, 03 Dec 2024 11:44:08 -0800 (PST)
+Received: from localhost.localdomain ([95.43.220.235])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-434b0d9bec1sm204553455e9.5.2024.12.03.11.44.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Dec 2024 11:17:03 -0800 (PST)
-Sender: Adam Pigg <piggz1@gmail.com>
-From: Adam Pigg <adam@piggz.co.uk>
-To: ofono@lists.linux.dev, Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Pinephone Issue in 2.13
-Date: Mon, 02 Dec 2024 19:16:59 +0000
-Message-ID: <2292663.Vs0nDVz2aQ@adam-laptop-hp>
-In-Reply-To: <d9fdd0f1-3231-4f0e-9775-270ca31d71ce@gmail.com>
-References:
- <2830691.vuYhMxLoTh@adam-laptop-hp>
- <d9fdd0f1-3231-4f0e-9775-270ca31d71ce@gmail.com>
+        Tue, 03 Dec 2024 11:44:08 -0800 (PST)
+From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+To: ofono@lists.linux.dev
+Cc: denkenz@gmail.com,
+	absicsz@gmail.com,
+	merlijn@wizzup.org,
+	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH 1/4] stkutil: Fix CVE-2024-7544
+Date: Tue,  3 Dec 2024 21:43:49 +0200
+Message-Id: <20241203194352.25514-1-ivo.g.dimitrov.75@gmail.com>
+X-Mailer: git-send-email 2.17.1
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="utf-8"
 
-Hi Dennis
+---
+ src/stkutil.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-On Monday 2 December 2024 17:55:18 Greenwich Mean Time Denis Kenzior wrote:
-> Hi Adam,
-> 
-> On 11/28/24 11:41 AM, Adam Pigg wrote:
-> > Hi Dennis
-> > 
-> > Myself and some users have an issue since upgrading from 2.12 to 2.13.
-> 
-> 2.13 added multiple simultaneous data bearer support, but they should have
-> been backwards compatible with those devices that don't support them. 
-> Guess I broke something :)  Sorry about that.
-> 
-No problem, its hard to debug devices you dont have access to, I know the 
-feeling! (i support an app that interfaces with various "smart" watches)
-
-> > The logs on my own PP and PPP, and from another users PPP show the
-> > following code path, with the device being shut down:
-> > Nov 28 17:35:59 PinePhone ofonod[2557]: plugins/gobi.c:discover_cb()
-> > Nov 28 17:35:59 PinePhone ofonod[2557]: plugins/gobi.c:create_wda_cb()
-> > Nov 28 17:35:59 PinePhone ofonod[2557]:
-> > plugins/gobi.c:set_data_format_cb()
-> > Nov 28 17:35:59 PinePhone ofonod[2557]:
-> > plugins/gobi.c:set_data_format_cb()
-> > Trying next data format
-> > Nov 28 17:35:59 PinePhone ofonod[2557]:
-> > plugins/gobi.c:set_data_format_cb()
-> > Nov 28 17:35:59 PinePhone ofonod[2557]:
-> > plugins/gobi.c:set_data_format_cb()
-> > Trying next data format
-> > Nov 28 17:35:59 PinePhone ofonod[2557]:
-> > plugins/gobi.c:set_data_format_cb()
-> > Nov 28 17:35:59 PinePhone ofonod[2557]: plugins/gobi.c:shutdown_device()
-> > 0x2088ba20
-> > Nov 28 17:35:59 PinePhone ofonod[2557]: plugins/gobi.c:shutdown_cb()
-> 
-> What oFono tries to do is to cycle through three currently supported data
-> formats:
-> 
-> - RAW_IP + QMAPv5 -> this enables multiple simultaneous bearer support. 
-> There's also in theory RAW_IP + QMAPv4, but I don't have any devices that
-> only support this format.
-> - RAW_IP -> Single context, no 802.3 framing overhead
-> - 802.3 -> Supported by really old Qualcomm devices.
-> 
-> Looks like the firmware is rejecting every single format we try to set it
-> into. Do you know what format PinePhone uses?  Do you have libqmi / qmicli
-> installed on the PinePhone to run some commands?  Something like:
-> 
-I dont have these packaged, but I can look into that if needed, or ask around
-
-> qmicli --device=/dev/cdc-wdm0
-> --wda-get-data-format=ep-type=hsusb,ep-iface-number=<InterfaceNumber>
-> 
-> where InterfaceNumber is what is being passed to gobi plugin from udevng
-> inside the "InterfaceNumber" modem property.
-> 
-> For oFono 2.12, what do the contents of
-> /sys/class/net/<netif>/qmi/raw_ip
-> and
-> /sys/class/net/<netif>/qmi/pass_through
-> 
-[root@PinePhone defaultuser]# cat /sys/class/net/wwan0/qmi/pass_through 
-N
-[root@PinePhone defaultuser]# cat /sys/class/net/wwan0/qmi/raw_ip 
-Y
-
-
-> look like?  <netif> in this case is the QMI wwan network device, something
-> like wwan0.
-> 
-> Regards,
-> -Denis
-
-Adam
-
-
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 60cad102..066731c9 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -1880,6 +1880,10 @@ static bool parse_dataobj_mms_id(struct comprehension_tlv_iter *iter,
+ 
+ 	data = comprehension_tlv_iter_get_data(iter);
+ 	mi->len = len;
++
++	if (len > sizeof(mi->id))
++		return false;
++
+ 	memcpy(mi->id, data, len);
+ 
+ 	return true;
+-- 
+2.17.1
 
