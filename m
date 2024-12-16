@@ -1,35 +1,65 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8FF31FF1B8
-	for <ofono@lists.linux.dev>; Wed, 11 Dec 2024 18:30:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4A492010EF
+	for <ofono@lists.linux.dev>; Mon, 16 Dec 2024 10:20:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733941815; cv=none; b=DbPdHG4BK9T92+A8idR7wD7SvcE2MV+WR1KGx43z+rbfh95XxNaqGgIMiDSIfheDvBgF8hSBTxaeLHjTxGQoX8cKZ0Y2Rk6zrQF6mTDNlP4bauwULEmROJAe2HBZDB3HAYF9RZrkeZF7GQwczZlJ76I37Gh3OSuOydgw1iKzxCw=
+	t=1734344444; cv=none; b=Tsxv4vlw98A2lheT26fHsDebjEOOk0TlVmWEW6680g0c4xnLeW1Fgnr4bILirzvhKe05apjpI75WXF6lD2H41mB26rh24YXz9RNZ1iJM2shE/K+eNpBHuRZswK7IWDJ8H7zzic/4qq1z7O2y+PMAzRDB7TnrLf79+vxC8ucPJiE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733941815; c=relaxed/simple;
-	bh=HjNjengZPe1bCtNW5Xgz5CiSmSlasn/J+W9j8s4RG/U=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=GKLRU/vx3H/ggUxN3zaztMoW0v/r7BjA0wi/F3oSjlZY8eNQcL5RJb0PyZ84G5cW7nHD73vm4itm3WTasEhw3Z4EpetjtAKUp+WeZxsjdmAkwTl/s8ECeZLo/FADSYGw8Fmz6gEDR+DJJGGczWRK6m6O09wRavwLzHEWEk/3Dww=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=YXazDVuf; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1734344444; c=relaxed/simple;
+	bh=ILZAYwUk/DSCT7EuUJZ2MMDiq7SKf25AU6N/814bC+E=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=RymrCSZcM4p2v9TOzqL3Ats1x5m/shz12IYJarW0+8cwkZ9wesjbnGsHQay+CZ4p2wj1Q9kzstg/zfDN9hYrxURnGDCJgDrIV0dyR19k0gsusfplKDFGxA6P2m2HlSBdOUI5lB/oFzUd/CWsT4+e233yYazALZIOdWqmghmMxYE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=km6MY0Lj; arc=none smtp.client-ip=209.85.208.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="YXazDVuf"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7B534C4CED2;
-	Wed, 11 Dec 2024 18:30:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1733941815;
-	bh=HjNjengZPe1bCtNW5Xgz5CiSmSlasn/J+W9j8s4RG/U=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=YXazDVufUxLxhin7BCrm9/KwNWh3qr+odYvLwriq/wi2jXWXjR7MT6rzTs9vL4T4/
-	 PB97E7S7NezcIVnpQv/a4BeHGUUH4SKWI2hd+uQFnoL/0LLqpl/HrmzBQ1qRK0xKZk
-	 1ALComfFRVzKD2sFl6WyJyXLJwcRBc1cSKv5/BBzFrbXx4SrcNEiLLO1YOf7Qo/Tm4
-	 wVuEkxnf436ebZahQt+C1eHTOrE3PgUY6zVQkRVyY0IMmOkqeXLM3NypI6Ts7tdbFK
-	 bjFcRPQmtCkMO9Cg9rcDdM89UY/If9cgjssHakegrYSi3JolPDDqIVQuj2lZKKyb65
-	 CLycFdD7hx49g==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id AE20B380A962;
-	Wed, 11 Dec 2024 18:30:32 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="km6MY0Lj"
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-5d4e2aa7ea9so7404794a12.2
+        for <ofono@lists.linux.dev>; Mon, 16 Dec 2024 02:20:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1734344440; x=1734949240; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=KJsc4o1c6jnSv9LOCDTRbPOWWQRnItGG2p5/yupt4Hw=;
+        b=km6MY0LjFEVsFcITArt+KcFS7RHzy0BDkBS91kMgIthR5uEa9x6lrsG0lOHO1n7+FI
+         uR9oJZ8ws6+vuQvnbk0SxgJ4+QHnj/69SD8TdZHEBkyyJDFQb/cgIH366m3JmK7PnuyQ
+         qn670om8YZ5+0zQ0M/sgfj/+/fnJ2lxQszcy7l7tAbG3o36pGqzm4gBP8H+UUv40c75t
+         sUBjYFMGq6MrEUg/Lfkq6rnwgXxlbGLuprB6GBUk6OCenvv3Ohrh6oDezHhjjk7L0IFb
+         nIZ5c3sP5o5EOziboPsqSWd9+7NodyXAhwwyaU1ctiuaChsGRQpaakdSJxROI04ZdYMe
+         Wh/w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1734344440; x=1734949240;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=KJsc4o1c6jnSv9LOCDTRbPOWWQRnItGG2p5/yupt4Hw=;
+        b=b/sddAhPQtqL+eUQHb95FpIiBwBlehiTHSKWvh6Xs8bQz/ZHcbDXzJFEsJxhqzRyGZ
+         yLN2qfCr2E18m2NPveG0oLvCrscafiGsVS8cZdlRd7Vdp/ykvAYfpdBA02EWdppd32iP
+         SwXJLgQO+RwG2ijayyQbUdL3zuXI5MpyDkGkCVBP6sIsghIbsZiFzS7gbyBrd8pFVddH
+         +87d4a1NxistLTMjT5rX6IPZQnoZW7FxEoui1bJpjD9Ze5e3f0RZtfLVknzR4fAK0Mm3
+         bs4aE0XbUvq442TBmoROYRiaAIVWpfe27ZQ6Cr0XHW4io0x62tk8PbQ679LVQLz+QrYf
+         mgfQ==
+X-Gm-Message-State: AOJu0YztUm6nGHwVopkGKLJfdIYZuCHtCTeyLqTFmPTBrX9GoYRT1MOE
+	DGkkw0CbQDwpn+TuQAvNDawxS5Uf9sPqzdtwvUdlqACAQFQA/aGY8ODutw5K
+X-Gm-Gg: ASbGncsAqRFGMWjb/lYxYW2aU06jGNPiyXG1TUTXUSW25EVJdX6qNz0b2TIhMbaSsgl
+	sGPKvi3U8YbeWeREI2vHsUQQEfaIFMcEK3CjJntOBscZcv3Bpo/Mwni1Baqbm6hv6/am4sXKMbk
+	5a9CVkeP9/m/hVIy0UVtWYk5rlMrzJGvyjPWHZy0HeVS2jqL8ibGBoWhWCtJ9UyajkIn+qY+Yha
+	ITdXmxr6OAEx3y7C/szcnFdWnw/GqS0c57qFmUDP18r29tLEuM+g4r4
+X-Google-Smtp-Source: AGHT+IGcyK0pxLycJG6lmbRUV5Ec/9sx23ZXY2ijDp3BUltQk3KQ9o11Cuvip6wJ3evdlsE/1GR2gw==
+X-Received: by 2002:a05:6402:1f8e:b0:5d3:cd5b:64a9 with SMTP id 4fb4d7f45d1cf-5d63c3c08d7mr10886777a12.34.1734344439816;
+        Mon, 16 Dec 2024 02:20:39 -0800 (PST)
+Received: from tpt440p.. ([69.63.64.50])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5d652ab604fsm3026099a12.2.2024.12.16.02.20.37
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 16 Dec 2024 02:20:39 -0800 (PST)
+From: "Sicelo A. Mhlongo" <absicsz@gmail.com>
+To: ofono@lists.linux.dev
+Cc: "Sicelo A. Mhlongo" <absicsz@gmail.com>
+Subject: [PATCH 1/3] util: ensure decode_hex_own_buf is passed a valid buffer
+Date: Mon, 16 Dec 2024 12:19:42 +0200
+Message-ID: <20241216102021.345566-1-absicsz@gmail.com>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,37 +67,25 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH v3] qmi: call-forwarding: fallback to basic forwarding info if
- no extended
-From: patchwork-bot+ofono@kernel.org
-Message-Id: 
- <173394183149.1671235.3508407473609403879.git-patchwork-notify@kernel.org>
-Date: Wed, 11 Dec 2024 18:30:31 +0000
-References: <20241211165443.500978-1-ivo.g.dimitrov.75@gmail.com>
-In-Reply-To: <20241211165443.500978-1-ivo.g.dimitrov.75@gmail.com>
-To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Cc: ofono@lists.linux.dev, denkenz@gmail.com, absicsz@gmail.com,
- merlijn@wizzup.org
 
-Hello:
+---
+ src/util.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-This patch was applied to ofono.git (master)
-by Denis Kenzior <denkenz@gmail.com>:
-
-On Wed, 11 Dec 2024 18:54:43 +0200 you wrote:
-> At least Motorola Droid 4 does not support extended call forward info, so
-> fallback to basic
-> ---
->  drivers/qmimodem/call-forwarding.c | 80 ++++++++++++++++++------------
->  1 file changed, 49 insertions(+), 31 deletions(-)
-
-Here is the summary with links:
-  - [v3] qmi: call-forwarding: fallback to basic forwarding info if no extended
-    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=37f7aea74270
-
-You are awesome, thank you!
+diff --git a/src/util.c b/src/util.c
+index 53d55d7e..bfe46ef2 100644
+--- a/src/util.c
++++ b/src/util.c
+@@ -3181,6 +3181,9 @@ unsigned char *decode_hex_own_buf(const char *in, long len, long *items_written,
+ 	char c;
+ 	unsigned char b;
+ 
++	if (!buf)
++		return NULL;
++
+ 	if (len < 0)
+ 		len = strlen(in);
+ 
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.45.2
 
