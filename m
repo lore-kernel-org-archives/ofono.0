@@ -1,106 +1,159 @@
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
+Received: from mail-io1-f46.google.com (mail-io1-f46.google.com [209.85.166.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64205A937
-	for <ofono@lists.linux.dev>; Mon, 16 Dec 2024 11:01:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4BD6813D29A
+	for <ofono@lists.linux.dev>; Mon, 16 Dec 2024 20:28:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734346898; cv=none; b=QuS3dlVF7PmMfpqU5YNwcyHFr+/kR+7YMbW3pTNOhKO7rOsqDdWOWqSinV0MWmjU2TZ9U3hGVBAn3cn6jo/5FPvF0O6BjwtLaoKtKTO0OhiQQXJUmmlPWiykYhlCYYdldIWTXKFZWTla/EeY7M+uXZL8atfIkNia0fwuZc8riqk=
+	t=1734380911; cv=none; b=ub0cYdvWp9ANp20ML+OZjzo6VqZgd1moReY0dpnj6kAm0LBGNVYz4O45BKfGHImbDrjWw5oH1Uqsp8XreWl4haaWCdLKdaB4X+SYysMGS7sMAlXr8C2jo+w0zuir3vRR09D00Kau9zYcJ9svC29Ii99QK0GjezB2TCaAaWiFVpg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734346898; c=relaxed/simple;
-	bh=ZvTo4mSEZvWYC/6FSfhljKDJoALQVPrJXBOajtsSsJs=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ZxMbqLiL/1iQm1lp2BFvq2VhskdzQ4m8hyMULLJ+wEonggQXtFLaHcOTWEVLMTRrYpG/MPM93pakVaDB8p4KD+qlzbsohJhHnORbfKmAXPSAfkfM7Y4ZSDke9TTdwmtnf1+aarBzC48kJiEGw5R4n2/+UDFmFuR4hjOiXohlviQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NQDMWJVk; arc=none smtp.client-ip=209.85.218.41
+	s=arc-20240116; t=1734380911; c=relaxed/simple;
+	bh=ngWj5a80B6BpgaUXcZIAokhOhz37rh54/IIi8z1aar8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=RRV5xyAVKVBgKBNpCGp9ImyNZF+OD4zKWz+k9RceCKqVMyeXqP/P36ZfIMexpRl0ZPZDpWgy+O15FTXXRP/bvYZx7STcoaOa8TvCDjKnvrotEvelrxmba8Upf40j7jaC2TMTlkVe8PUiDWFXIpsgTArfpXwlMMU+bVKRBBPA7ME=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aJt399R8; arc=none smtp.client-ip=209.85.166.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NQDMWJVk"
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-aa67f31a858so736494466b.2
-        for <ofono@lists.linux.dev>; Mon, 16 Dec 2024 03:01:36 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aJt399R8"
+Received: by mail-io1-f46.google.com with SMTP id ca18e2360f4ac-844d67eb693so326834639f.3
+        for <ofono@lists.linux.dev>; Mon, 16 Dec 2024 12:28:29 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1734346895; x=1734951695; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=0B+O3dcA9s0ua/YpNVc+6ZFqISH4mKs9Hq4NLRDgvnM=;
-        b=NQDMWJVkJQr/L0T/zLnno/xOJVfS7SYl+AgAQAnBFoTwMmmQatdekX/QxRo9TW8Wyv
-         XBUNaX2Cade2VV5AAWZnQap+Pa2oMGqNiaW3xW3J9ZHFhS6lfrLCZrvfgxh9hdSs0gIQ
-         2w0Gh/egkhxPi3FGLI+8qDePkhBcxJPKUha0LNNLsoN/ad2SZyNRaG+nmHljuh7Ehk2u
-         zdh/A2sjx9SF/Hj7R2nHZ6MeSe8oXc3QdWez13yf+t5S/zXCPbZcIpqG0EJLQkrv0F7T
-         qAdsAXB5XJ4XvHPA4Xn1FALi3r3xSqxJ1UzZn+yt5z11MCGGi1BWJ5ycCaMFzfEFTTLd
-         6ztA==
+        d=gmail.com; s=20230601; t=1734380909; x=1734985709; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=Tm2acXhtzbz0KBWd5pCLwwOkiJmhQXO+Y7DqQHnCHYw=;
+        b=aJt399R88dRnK5Ik14q/N/00RwD0iQGZoXi5seiDMLS4gej5DXoESGRmTBih/v61Oi
+         Qn6grXq1SHDvzM4xWQ9MhzwZ7SUsTtNk+nAle49s1yAIkbOYer/PCYbCMy5fqjYlKdVI
+         gVl3IaJVL5QLiGAOPE0MMKA47GSVQhWfwW4CTI1q3Dgy9VHwCw8NZVkrCSDAafyuiWkk
+         EDmu5NW32jvAWP3snpmyfk/C/OR6AsYfSGdFGO+zLgpDVkZO+EEpZypTg8OtQpLnNQtC
+         bHnxQBl7IOgLm1xowzNr7OOzw9S3JrStFE56pwGI3fjK6oLpEgpGjyGqFPdup3KPzCrh
+         bZEw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734346895; x=1734951695;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=0B+O3dcA9s0ua/YpNVc+6ZFqISH4mKs9Hq4NLRDgvnM=;
-        b=RDT2TxVUDwvstMKE0U6bCswOAiQafGNPYpQPW1CKSjODNhpzOkImcDfFIkadLf56zO
-         iKbRUEyfr7Aiiy+E6J4gIa1hAnbgPB7fn0TVRFJfp0k/KPM9Nr/F7JDSOyUXV4nnlC+f
-         xWJF/zaY78IVZjcBh51senL4H3PrA8+9MZ1w41pNa9bz+O28MFhDCI5JikDEfcphIBqN
-         ET1gfAkxfI/Yh7rOxbJbI5zU3uBt8koK/6YaCEHeDZqJEIhRJiwkcZxxLwEy30UEqfkZ
-         ll5MublLXczbutDLYki68B1YG5A3gPvfOjK1VdYd3aicx44LaBVv52DEiC+K78+Za+br
-         4W2g==
-X-Gm-Message-State: AOJu0YyheI5h3/oJFwRGFPM2kdTJ0hJLHSg3Tjcm8VcyBi/lPIQ5Tden
-	QrHia490Tfw25ZbnMK4v0tr3YN2s0wRYXSetutcbe21eYNmOcUHaejNBNmJl
-X-Gm-Gg: ASbGnctHyZFW15pAgpPxWAT+du1vpx6oMlvai07aXQ3X3FojL3Qdi/FnXo5U8etfZnX
-	xUXXA400tFCQREYJAv/LjRNTwbyhkFGOCkvgzdzyTtLSs1u9aPy/uTgFWeTa7Y34CH4mm8Grq3+
-	zoQAsd5dt1EoFlJIfThExNKX+LxAELzGAwg8lSnsN5/eF+73RdxNgr1m1nuc67CT/T7hnN/+cNt
-	ws4DILGDTwOGkFab5hHusUfdtD7MCdRm7LCK+hrxcjPdpXvGd3PRtkI
-X-Google-Smtp-Source: AGHT+IEBRtID0lVYfOFlZwJGaogNhBQBhrbrS8KGcu+LszGiVphvmnZmNsy/bJRYBLAWF0ZKCbhKyg==
-X-Received: by 2002:a17:907:7809:b0:aa6:6a52:974 with SMTP id a640c23a62f3a-aab779cead3mr962443366b.35.1734346894512;
-        Mon, 16 Dec 2024 03:01:34 -0800 (PST)
-Received: from tpt440p.. ([69.63.64.50])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aab9638ecacsm318006166b.145.2024.12.16.03.01.32
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 16 Dec 2024 03:01:34 -0800 (PST)
-From: "Sicelo A. Mhlongo" <absicsz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: "Sicelo A. Mhlongo" <absicsz@gmail.com>
-Subject: [PATCH 2/2] huaweimodem: ussd: ensure ussd content fits in buffer
-Date: Mon, 16 Dec 2024 13:00:21 +0200
-Message-ID: <20241216110106.567830-2-absicsz@gmail.com>
-X-Mailer: git-send-email 2.45.2
-In-Reply-To: <20241216110106.567830-1-absicsz@gmail.com>
-References: <20241216110106.567830-1-absicsz@gmail.com>
+        d=1e100.net; s=20230601; t=1734380909; x=1734985709;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Tm2acXhtzbz0KBWd5pCLwwOkiJmhQXO+Y7DqQHnCHYw=;
+        b=m5N+80lOH3Qh5vkmkBay5dwl8Shr5B/yAO9EfOhHEkSb1WidDFxIYgQjMoO34HuDUU
+         tQ40082p2uJocspZrK+cq3Yc4iPIY4/gZgbHjxgHeWECtTem1H9Cr6Vwxv0/SgQoDq04
+         vuOeRaQGgo75Zz2LJJ+RU14qf5rG7CRTT7bS0fMuLZiFGfkfGczGztuiRzQBrdmOwQ5x
+         cbO/IjhN7+gtpDnj8UjsmZF4tV4qoLr5+HAjeeR9sF2e+MZsIHOjkBKy/rth7d8APz9x
+         Q3v91RSjTAlep8mkzhCqtOlrsOTJalSNSItrF/qnZm+6ZAnwMn69xtFbZ6/upR7lUTU5
+         NYtg==
+X-Forwarded-Encrypted: i=1; AJvYcCX7caGdVpdvaFuB5pUqrAkGgBgLz80nLbHMxnxgAaxf34JmNJIwwTvsF0Lxagt+VNM/OnW11w==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyKyW/E6PAQB2l/cqBQZVTdfELN8fDTFDvy7qO+DSVHoWUEdsBS
+	QiOonI5u64iogxgtBiv5Vuj7K0AD9uTt7v4ob2458wzZEVERhBBkxURmBQ==
+X-Gm-Gg: ASbGncsPB2UbU9a7uJPjV0Nk4h7lRuHu5U34zfTikl5ocZ7L4LcVis1NOMo1LGnWgCX
+	9r3Hdh/hRU9H8dai5MJlQvWrvncgZLiZwCaRZg48qm3f9yp/wdBFhNqK6l/CnTD7jcEiXeOVPI8
+	SFP0Rb+SCT96gzwHNKYy4GM9g7NNX85iqTAO6HM6KUZ39udDN1QU5NYypx/mmFn4KPyuhTy0kn8
+	uWEvHcqogIggbUfMTQfJuKyCzxHY1s1NiPlzcGYUPTvUvn4LALLI7pkvA==
+X-Google-Smtp-Source: AGHT+IF2GLsP/43u9jFZZKGNKQo/SHB6DpG3Vd8VhJigQlpAMU+nFgOU23Ml00GxQOKnHPTrNEdjHA==
+X-Received: by 2002:a92:cd83:0:b0:3a7:6e97:9877 with SMTP id e9e14a558f8ab-3aff1303cd1mr148113365ab.24.1734380909259;
+        Mon, 16 Dec 2024 12:28:29 -0800 (PST)
+Received: from [192.168.1.184] ([136.35.146.47])
+        by smtp.googlemail.com with ESMTPSA id 8926c6da1cb9f-4e5e378ceb9sm1346225173.136.2024.12.16.12.28.28
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 16 Dec 2024 12:28:28 -0800 (PST)
+Message-ID: <d23bba82-77f7-4d5a-abf9-aaa745bb6061@gmail.com>
+Date: Mon, 16 Dec 2024 14:26:12 -0600
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/3] util: ensure decode_hex_own_buf is passed a valid
+ buffer
+To: "Sicelo A. Mhlongo" <absicsz@gmail.com>, ofono@lists.linux.dev
+References: <20241216102021.345566-1-absicsz@gmail.com>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20241216102021.345566-1-absicsz@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Additional fix for CVE-2024-7539
----
- drivers/huaweimodem/ussd.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+On 12/16/24 4:19 AM, Sicelo A. Mhlongo wrote:
+> ---
+>   src/util.c | 3 +++
+>   1 file changed, 3 insertions(+)
+> 
 
-diff --git a/drivers/huaweimodem/ussd.c b/drivers/huaweimodem/ussd.c
-index 5e1c9078..1e246e5d 100644
---- a/drivers/huaweimodem/ussd.c
-+++ b/drivers/huaweimodem/ussd.c
-@@ -38,7 +38,7 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 	int status;
- 	int dcs = 0;
- 	const char *content;
--	unsigned char msg[160];
-+	unsigned char msg[160] = {0};
- 	const unsigned char *msg_ptr = NULL;
- 	long msg_len;
- 
-@@ -55,6 +55,10 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 
- 	g_at_result_iter_next_number(&iter, &dcs);
- 
-+	if (strlen(content) > sizeof(msg) * 2)
-+		goto out;
-+	}
-+
- 	msg_ptr = decode_hex_own_buf(content, -1, &msg_len, 0, msg);
- 
- out:
--- 
-2.45.2
+This set fails to compile:
 
+Fedora (glibc) clang debug+sanitizers
+=====================================
+Configure: PASS
+Build: FAIL
+     drivers/atmodem/ussd.c:126:3: error: misleading indentation; statement is 
+not part of the previous 'if' [-Werror,-Wmisleading-indentation]
+       126 |                 goto out;
+           |                 ^
+     drivers/atmodem/ussd.c:124:2: note: previous statement is here
+       124 |         if (strlen(content) > sizeof(msg) * 2)
+           |         ^
+     drivers/atmodem/ussd.c:97:23: error: unused variable 'msg_ptr' 
+[-Werror,-Wunused-variable]
+        97 |         const unsigned char *msg_ptr = NULL;
+           |                              ^~~~~~~
+     drivers/atmodem/ussd.c:98:7: error: unused variable 'msg_len' 
+[-Werror,-Wunused-variable]
+        98 |         long msg_len;
+           |              ^~~~~~~
+     drivers/atmodem/ussd.c:110:8: error: use of undeclared label 'out'
+       110 |                 goto out;
+           |                      ^
+     drivers/atmodem/ussd.c:129:2: error: expected identifier or '('
+       129 |         switch (charset) {
+           |         ^
+     drivers/atmodem/ussd.c:159:2: error: expected identifier or '('
+       159 |         DBG("msg ptr %p msg len %ld", msg_ptr, msg_len);
+           |         ^
+     ./include/ofono/log.h:46:26: note: expanded from macro 'DBG'
+        46 | #define DBG(fmt, arg...) do { \
+           |                          ^
+     drivers/atmodem/ussd.c:159:2: error: while loop outside of a function
+     ./include/ofono/log.h:54:3: note: expanded from macro 'DBG'
+        54 | } while (0)
+           |   ^
+     drivers/atmodem/ussd.c:161:1: error: type specifier missing, defaults to 
+'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]
+       161 | out:
+           | ^
+           | int
+     drivers/atmodem/ussd.c:161:4: error: expected ';' after top level declarator
+       161 | out:
+           |    ^
+           |    ;
+     drivers/atmodem/ussd.c:162:48: error: redefinition of parameter 'msg_ptr'
+       162 |         ofono_ussd_notify(ussd, status, dcs, msg_ptr, msg_ptr ? 
+msg_len : 0);
+           |                                                       ^
+     drivers/atmodem/ussd.c:162:56: error: expected ')'
+       162 |         ofono_ussd_notify(ussd, status, dcs, msg_ptr, msg_ptr ? 
+msg_len : 0);
+           |                                                               ^
+     drivers/atmodem/ussd.c:162:19: note: to match this '('
+       162 |         ofono_ussd_notify(ussd, status, dcs, msg_ptr, msg_ptr ? 
+msg_len : 0);
+           |                          ^
+     drivers/atmodem/ussd.c:162:2: error: type specifier missing, defaults to 
+'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]
+       162 |         ofono_ussd_notify(ussd, status, dcs, msg_ptr, msg_ptr ? 
+msg_len : 0);
+           |         ^
+           |         int
+     drivers/atmodem/ussd.c:162:20: error: a parameter list without types is 
+only allowed in a function definition
+       162 |         ofono_ussd_notify(ussd, status, dcs, msg_ptr, msg_ptr ? 
+msg_len : 0);
+           |                           ^
+     drivers/atmodem/ussd.c:163:1: error: extraneous closing brace ('}')
+       163 | }
+           | ^
+     14 errors generated.
+     make[1]: *** [Makefile:4083: drivers/atmodem/ussd.o] Error 1
+     make[1]: Target 'all-am' not remade because of errors.
+     make: *** [Makefile:2388: all] Error 2
