@@ -1,153 +1,76 @@
-Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com [209.85.218.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B54771D3566
-	for <ofono@lists.linux.dev>; Tue, 17 Dec 2024 09:32:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65C2612C80C
+	for <ofono@lists.linux.dev>; Tue, 17 Dec 2024 11:14:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734427955; cv=none; b=uzimJ8dy2cNv2eg+GIqupuzMOT7UzjaNWgP7OCBZUHbMx05PkMpLyOFfhrytHZkc2my3h2AeaC03eY1mF0mJ9jF5CAJbrhvWf/8H7BZx6fZKj+tvejJyziB5oakwdTGgjTLFuDqONax3P6z/Sc/Xs0pcLSUzYANWk7I3AKMGRNQ=
+	t=1734434063; cv=none; b=SrH1PSCkr4g4U8JCKAH288Z1IuCg7xOlB2XFkH8+xoEEUwIcga8GNElIgym04/c3AZLDoN10nzLsFLeabqdqvo8kJO54j4tkDx4HpCK0aHg3ePh2eCIgiArdbSd0hJCechOqrZzGEOOWqNzwGk2NcXzwAFU8sQH6sf9Y9eyz1zs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734427955; c=relaxed/simple;
-	bh=sNKVwUxBtVO443p6ZuI6VwL+m/3+CDvSVAyQaGWEyZw=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=b8gzU3TFQ7U78WAz17Sio/Ydpjyxe0lwnfhF97TqOtMN/VJXbt8yyXxJz1ADvYCF7TEXwAgVOE2iKNgoEav7M+5+5fgIuauSPhKeIJrsMF9cFrBYxnio4Loo6M3rhqVen3l5Zs9GvviYxlFSm1C0LTQxQhKXz2Leyl6ETiCkIuU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TxJgxvHi; arc=none smtp.client-ip=209.85.218.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1734434063; c=relaxed/simple;
+	bh=+l3B/4LwkFZulKJGFABgsjPr0ABZrS+UDgUwXSg1nDA=;
+	h=From:Content-Type:Mime-Version:Subject:Message-Id:Date:Cc:To; b=VIQJSv2SmziUHChhq5Slb62anU0UwUpbxO8jo2ERBz6YPgB5mxbXrSAYmwhaQhmeGciEJcdRw/cpQFwVZQMt498cd9365Ux1u1NB9j2CgO7ImtpK/qKb9a23qSsPhB14biTLqipsmdyVVaMvSnFlGVHQVO9CPM6WrY9ECDBCqnM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=d+3F+MgG; arc=none smtp.client-ip=188.40.30.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TxJgxvHi"
-Received: by mail-ej1-f48.google.com with SMTP id a640c23a62f3a-aa543c4db92so1018019466b.0
-        for <ofono@lists.linux.dev>; Tue, 17 Dec 2024 01:32:33 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1734427952; x=1735032752; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=DVTAlOWE2gy7iO+wRGunLYX4/k4U17fbbGbvELSH9mg=;
-        b=TxJgxvHiO6K4UswB0UoEyQsDgfZ6E5v3hZh590YFi7mGBES6/jCEovQjUKpmbr3+k8
-         PQKFnoPcrJRj3xmcD5NSJePHS+rhr870bJAW75Zjg536KbvGF6atujrJfUylwYfkJUPH
-         fmqp4t3qY2ZNTuPXRwlFJXDw1xQTr+Geg2428mBukSdVxIfXNDOPnZPXRGnGry0IP8g5
-         9OxiA0S/uuLy9n2dLBfUmk36mba0WzzL3NVM0aR3g60niayCgXrnGpYlpG+XtszN9RYt
-         XwOhWi0q2/CzMStoap4Fwso8wmT/oKAdxBGOXacO/EHOy6guGclVVE9zJlFsUKw7x/n+
-         FbQQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734427952; x=1735032752;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=DVTAlOWE2gy7iO+wRGunLYX4/k4U17fbbGbvELSH9mg=;
-        b=p8fAF9jjw96MY64EAMRofv3nj2PrJpbqET7+O9N3X8S3kJB3/WMK0+d5ArZvwIdmqo
-         98IkThJ70lTds4zDUZuZhU6clH4/Wt+C1/M/r/ocYnwZjLp5tVLMaVAU6bb2UX0nnJ+J
-         QTNT2QIVSv7NrQ8gQp0uR9cILjc/bYfQzLzzF8gV4Y+3H7b6E100X19lFTCDrQLCy84G
-         /5BHBCI1lCHiBp9x2TMsZvlQTv+avr1ySZmpj/r0VGViFsO2FXUl482BtxbMDpKFNSAu
-         MXz24Rk9UXAOcNdjjisvn75N+egZPpD6DaYWZN9zTb1Gw14pvYKa3/0bkYmQ/6bRj6SK
-         siHQ==
-X-Gm-Message-State: AOJu0YysDweARG+fT1NRmwBKZss0ikWLrlDDbI++UKXVuy1FzAUGzgs5
-	qeSef4pYwSbrd11qV924q6x2+Q6BDv5ZKE5hIrBZK+wPtCv/Q/eKdeGuI5LC
-X-Gm-Gg: ASbGncvHvec6rzgFqANMzIpzwl6R1GYsY/H5aXfNqMwNreknP/5ayal4zL1lHesmCLs
-	HBSQ8QcYS1r91roXOAryUSbGPu6NbsFMZygq6TG9NCgj4ccklUTUT2FTczIUrfeH/fZPxvPD7uo
-	eitcObE5h4ppb5+/xNHD3TbhUkBX9+jLIW6Y1LNk8XU9FmsGoSiVbKSd+FHw4G48TlnxXsHe0Bu
-	JM/szNKbA9hQRng+HwdaxPRdfiuPdXVF8DtrJHhs2romR9F3kIe7biC
-X-Google-Smtp-Source: AGHT+IEp8t6cA2AiZOuj07JFqi+dD4loRhEJHH56LcVCSQEeqgPg6q8Cy099jodAKf011cTJv/T/sw==
-X-Received: by 2002:a17:907:7809:b0:aa6:c169:4e21 with SMTP id a640c23a62f3a-aab778c1445mr1289759066b.6.1734427951864;
-        Tue, 17 Dec 2024 01:32:31 -0800 (PST)
-Received: from tpt440p.. ([69.63.64.50])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aab963598b7sm425536566b.101.2024.12.17.01.32.30
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 17 Dec 2024 01:32:31 -0800 (PST)
-From: "Sicelo A. Mhlongo" <absicsz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: "Sicelo A. Mhlongo" <absicsz@gmail.com>
-Subject: [PATCH v2 3/3] ussd: ensure ussd content fits in buffers
-Date: Tue, 17 Dec 2024 11:31:29 +0200
-Message-ID: <20241217093207.20636-3-absicsz@gmail.com>
-X-Mailer: git-send-email 2.45.2
-In-Reply-To: <20241217093207.20636-1-absicsz@gmail.com>
-References: <20241217093207.20636-1-absicsz@gmail.com>
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="d+3F+MgG"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
+	s=default2211; h=To:Cc:Date:Message-Id:Subject:Mime-Version:
+	Content-Transfer-Encoding:Content-Type:From:Sender:Reply-To:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:In-Reply-To:References;
+	bh=+l3B/4LwkFZulKJGFABgsjPr0ABZrS+UDgUwXSg1nDA=; b=d+3F+MgGv0BsfYWKPb2Ocivrjz
+	II9wWYCrhU74xhc64hMtv/UzeqPGNMvuZwKtlqii4cBEqfO7d65T7LO+16O+XRo299xKzVqiEmpGF
+	fDG3i6fpgBEz69ykLot29HUeEQ3BFfRk2ZlERgv8n+Si9y+s0zU37zJtNWmlxuf2f04ERrBSkfBFc
+	Zu2Dgc0oDYx7HI5IsGnskt3vHty1r0Umv5Nzc9TPNUhIzphA67VXOPVxU22O+aTbeWnMLt8IDaZdY
+	LS86fNGbQ/RtJupLYSk6TwQ5O66kiKICbq6CR3BCX2i4/CabMeO//bTOvcaHFpHuXxTOluF929AZN
+	BUdyr5Bw==;
+Received: from sslproxy06.your-server.de ([78.46.172.3])
+	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.96.2)
+	(envelope-from <sean@geanix.com>)
+	id 1tNVGQ-000OJ2-2n;
+	Tue, 17 Dec 2024 11:57:18 +0100
+Received: from [2a06:4004:10df:0:143a:685d:95a5:d71d] (helo=smtpclient.apple)
+	by sslproxy06.your-server.de with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <sean@geanix.com>)
+	id 1tNVGQ-0006b9-1w;
+	Tue, 17 Dec 2024 11:57:18 +0100
+From: Sean Nyekjaer <sean@geanix.com>
+Content-Type: text/plain;
+	charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.300.87.4.3\))
+Subject: Forbidden Public Land Mobile Network (FPLMN)
+Message-Id: <0B16BA07-4A2C-4FF7-AB06-3D670BB40A91@geanix.com>
+Date: Tue, 17 Dec 2024 11:57:07 +0100
+Cc: ofono@lists.linux.dev,
+ =?utf-8?Q?Martin_Hundeb=C3=B8ll?= <martin@geanix.com>
+To: Denis Kenzior <denkenz@gmail.com>
+X-Mailer: Apple Mail (2.3826.300.87.4.3)
+X-Authenticated-Sender: sean@geanix.com
+X-Virus-Scanned: Clear (ClamAV 1.0.7/27489/Mon Dec 16 10:39:01 2024)
 
-Fixes: CVE-2024-7539
----
- drivers/atmodem/ussd.c      | 5 ++++-
- drivers/huaweimodem/ussd.c  | 5 ++++-
- drivers/speedupmodem/ussd.c | 5 ++++-
- 3 files changed, 12 insertions(+), 3 deletions(-)
+Hi Denis,
 
-diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
-index 32a9fe91..59dd2e59 100644
---- a/drivers/atmodem/ussd.c
-+++ b/drivers/atmodem/ussd.c
-@@ -93,7 +93,7 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 	const char *content;
- 	int dcs;
- 	enum sms_charset charset;
--	unsigned char msg[160];
-+	unsigned char msg[160] = {0};
- 	const unsigned char *msg_ptr = NULL;
- 	long msg_len;
- 
-@@ -113,6 +113,9 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 	if (!g_at_result_iter_next_number(&iter, &dcs))
- 		dcs = 0;
- 
-+	if (strlen(content) > sizeof(msg) * 2)
-+		goto out;
-+
- 	if (!cbs_dcs_decode(dcs, NULL, NULL, &charset, NULL, NULL, NULL)) {
- 		ofono_error("Unsupported USSD data coding scheme (%02x)", dcs);
- 		status = 4; /* Not supported */
-diff --git a/drivers/huaweimodem/ussd.c b/drivers/huaweimodem/ussd.c
-index 5e1c9078..3d165c87 100644
---- a/drivers/huaweimodem/ussd.c
-+++ b/drivers/huaweimodem/ussd.c
-@@ -38,7 +38,7 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 	int status;
- 	int dcs = 0;
- 	const char *content;
--	unsigned char msg[160];
-+	unsigned char msg[160] = {0};
- 	const unsigned char *msg_ptr = NULL;
- 	long msg_len;
- 
-@@ -55,6 +55,9 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 
- 	g_at_result_iter_next_number(&iter, &dcs);
- 
-+	if (strlen(content) > sizeof(msg) * 2)
-+		goto out;
-+
- 	msg_ptr = decode_hex_own_buf(content, -1, &msg_len, 0, msg);
- 
- out:
-diff --git a/drivers/speedupmodem/ussd.c b/drivers/speedupmodem/ussd.c
-index aafa4bc9..a5efde0c 100644
---- a/drivers/speedupmodem/ussd.c
-+++ b/drivers/speedupmodem/ussd.c
-@@ -37,7 +37,7 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 	int status;
- 	int dcs = 0;
- 	const char *content;
--	unsigned char msg[160];
-+	unsigned char msg[160] = {0};
- 	const unsigned char *msg_ptr = NULL;
- 	long msg_len;
- 
-@@ -54,6 +54,9 @@ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- 
- 	g_at_result_iter_next_number(&iter, &dcs);
- 
-+	if (strlen(content) > sizeof(msg) * 2)
-+		goto out;
-+
- 	msg_ptr = decode_hex_own_buf(content, -1, &msg_len, 0, msg);
- 
- out:
--- 
-2.45.2
+One of our IoT providers recommends us to clear the FPLMN list.
+We have been running out-of-tree patches, that clears the list when we =
+go offline.
 
+We would like to share it, other IoT providers might have the same =
+challenges.
+Could it be a boolean set via dbus to the SimManager?
+
+=
+https://help.onomondo.com/en/articles/233768-how-to-clear-the-fplmn-list-o=
+n-the-sim
+
+Br,
+/Sean=
