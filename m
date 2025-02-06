@@ -1,35 +1,35 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 406FA12E5D
-	for <ofono@lists.linux.dev>; Thu,  6 Feb 2025 00:38:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0E6114286
+	for <ofono@lists.linux.dev>; Thu,  6 Feb 2025 00:38:02 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738802284; cv=none; b=VzeREQJqhOb4vVxonZZyZuTnJ2rS3R8DPtoh8hkDH4d0BHL5L8Er+iJ269MBQow0oaiuANtuAAUD105QndW7OujAOyaRVzTMRWJvQviPE6aQAZPlS6Rp4m0HHWu7kiKyoP3/WJQtNi8zQIE/jhL8BmG3ZpVq6RU4EwGGICYlSZ4=
+	t=1738802284; cv=none; b=Z51XrikAk7h/0KLVpVneXStoo8R7I5l0UUWsfZe9Q/dFJP6A3Ps2Q2ImezT41qSQvFHy0nGHzeyRq4ocnral46FCtjglRi35EMA5C7+jSjwIT/g5iFC/YDu4iu0grCUe5eqZedrWCCbuDcD9X5VeLSEuwXGlVxO4FbPQsq6mzsM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1738802284; c=relaxed/simple;
-	bh=PflI5qBIaSJTT0QG7PTcHZOFe0bNQBtAKHMARNLtY7Y=;
+	bh=gpRpLgEOZ6w5LfuL9jmK1G4ipbNWBqrlBreMRKpxcWU=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=roLmBbJowQysM3BAq0CrWFMPa/lZx5Rf5fv2StwGnVhRDohKDokNp1R+dZur3dM9/ZyAMw7cc6k9Dd/EUrkPkS/9uSKD6dXPQ5yekxMST8wQBWSk7tvDYE2vZTlovjTqZuL2yjoQfK0yK4dQHfrOQ2gbHckWCM1hGzyAXyulCpI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=MzCyZZaC; arc=none smtp.client-ip=66.39.139.36
+	 MIME-Version; b=uLZmkAk6BxuFPybQo4O0vf9kGbnZi/vcJcGAHDxDDHgPLhaLaYngLNLAlTrBZiXEd8jlX0A3IRRwKzbbziOEb4r6z3OqX9LqwU322urFRVgXtT2G+rnsJSHA0zKr3Y84IxEb+LbLiybBWqvTSE11a0O3DGZl8lN7IkIxQBzJ2lY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=iBw7nRVR; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="MzCyZZaC"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="iBw7nRVR"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 51F0A164A94
+	by mail5.g24.pair.com (Postfix) with ESMTP id C97C0164A96
 	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:38:01 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 08792124FD3
-	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:38:00 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 75125124FD3
+	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:38:01 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH 1/3] doc: Initial revision of 'ofono.conf.5.in'.
-Date: Wed,  5 Feb 2025 16:37:57 -0800
-Message-ID: <233b3b434b84a459e9197cd643a32a71b44a763f.1738802120.git.gerickson@nuovations.com>
+Subject: [PATCH 2/3] doc: Add SEE ALSO reference to ofono.conf(5).
+Date: Wed,  5 Feb 2025 16:37:58 -0800
+Message-ID: <88913a4e8bdb8c7566be8ae8f7068017d999f626.1738802120.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <cover.1738802120.git.gerickson@nuovations.com>
 References: <cover.1738802120.git.gerickson@nuovations.com>
@@ -40,58 +40,29 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=stcyPdIoR3aAZswof5OIeNa/MlZDFXY714cjYkEnoKQ=; b=MzCyZZaCNiWAuODNH49/HnqKonegtmxYaP9fhmu3EJ8f4Ey14YXj0qAaYaBOSBLU9ZASp1YR9N9XoihXj5SYIpPF/6sH2o9nv+7kQMjQEQl4K4Mn7v8YZ+ad5vkBVPnz7XaSm6aB41khl/9ffZIidLAZ6JmlteZUss/gowe4E8HG2YTFjR+Mcdsk8NlCY6wi5DICEft8ahyGHYZwfk3rODF+jBXiaznx3iKYGmym44v3sG6ikMSiPuJaU/IvYihJMIRIrmKEKcNCJaSBvqey0vBoqcTT0dyRIv/SGsA/5gah2ZgZl5D1mEmsivqH5AxqzMMvT0fa1Xq4lUShwKjxsg==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=McDPogJxuyaGLxEwM8bfrX8wjpzZEWlUaWwN7/TTDpw=; b=iBw7nRVRQl9xtXFJb5AylISfeFUaq15S+kXU1ml42gdSqnvLiYYVhUKYE0fn8LJR7S2AML593/86TXO9kEeNdhiVYmSOKqqZ45POJOpdoOKnOr1bHyKZJCgvDoUI/LkhPMmJahvM3t+XAi1U/uO/2xEd1FFXZFPOzgsh9/fw/lL1y+WLH2PCtYxpGzi+wRJvFM2hMRUZ9cm+YtzNMIQdQf8o6vnJwqBqGzubNXF3S1bsD6BuXZLC04KBpAAIb/HfMsvbJ7IkJg53cqk9Xk8j4dtskzXxvA80OoOERZGVMi8RGKz2oXxNIVQRKMhUYiA0M6FuRJ6IynuXwPw9diGMog==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Initial revision.
+Add a "SEE ALSO" reference to the newly-added ofono.conf manual
+reference page.
 ---
- doc/ofono.conf.5.in | 37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
- create mode 100644 doc/ofono.conf.5.in
+ doc/ofonod.8 | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/doc/ofono.conf.5.in b/doc/ofono.conf.5.in
-new file mode 100644
-index 000000000000..7ce2941ed53e
---- /dev/null
-+++ b/doc/ofono.conf.5.in
-@@ -0,0 +1,37 @@
-+.\" ofono.conf(5) manual page
-+.\"
-+.\" Copyright (C) 2025 The oFono Authors
-+.\"
-+.TH "ofono.conf" "5" "2025-02-05" ""
-+.SH NAME
-+main.conf \- oFono configuration file
-+.SH SYNOPSIS
-+.B @sysconfdir@/ofono/main.conf
-+.SH DESCRIPTION
-+.P
-+.B main.conf
-+is a configuration file for oFono. The configuration file is
-+optional but it can be used to set up various aspects of oFono's
-+behavior. The location of the file may be changed through use of
-+the \fB\-\-config= \fRargument for \fBofonod\fP(8).
-+.SH "FILE FORMAT"
-+.P
-+The configuration file consists of sections (groups) of key-value pairs.
-+Lines beginning with a '#' and blank lines are considered comments.
-+Sections are started by a header line containing the section enclosed
-+in '[' and ']', and ended implicitly by the start of the next section
-+or the end of the file. Each key-value pair must be contained in a section.
-+.P
-+Description of sections and available keys follows:
-+.SS [Provision]
-+This section is an optional section of the configuration file that
-+influences the behavior of Cellular network provisioning.
-+.TP
-+.BI TagsFilter= tag\fR[,...]
-+One or more tag strings to help filter and downselect the desired
-+Cellular access point name(s) (APN(s)) when provisioning and/or
-+attaching to the network when multiple such APNs exist for a given
-+Cellular home network identity (HNI) (that is, mobile country code
-+(MCC) + mobile network code (MNC) pair).
-+.SH "SEE ALSO"
-+.BR ofonod (8)
+diff --git a/doc/ofonod.8 b/doc/ofonod.8
+index 7bb908cba272..d6164116200c 100644
+--- a/doc/ofonod.8
++++ b/doc/ofonod.8
+@@ -28,7 +28,8 @@ Don't run as daemon in background.
+ .TP
+ .SH SEE ALSO
+ .PP
+-\&\fIdbus-send\fR\|(1)
++.BR ofono.conf (5), \c
++.BR \ dbus-send (1)
+ 
+ .SH FILES
+ .BR /etc/dbus-1/system.d/ofono.conf
 -- 
 2.45.0
 
