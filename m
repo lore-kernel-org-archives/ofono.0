@@ -1,38 +1,35 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51BFA2F4A
-	for <ofono@lists.linux.dev>; Thu,  6 Feb 2025 00:34:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBA9B11185
+	for <ofono@lists.linux.dev>; Thu,  6 Feb 2025 00:38:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738802099; cv=none; b=GpM7whWn39lOPXhjM4exuKZd9l9uSoGMOwm/riJeBV/c7Dw25ATUjBBpPy44BpGB054sdI7XYjBtWOtQFu6WatIbm5wNbcb93ZgEiIS6j5jbvfGSxpILJ3TTpcAX7T0WVZBmDiB6HuEUw0x/Ru+YTFsxSPOJ7o9CUIgilryO3kQ=
+	t=1738802284; cv=none; b=Es09w0KIlywXG8tyEftfmwWn61/mTZTZJI1xfqf6RUuhCyQvMJpKV33xkktRsLJ/qn7bMV8qNAN7/z3C3ev8TUufvn4y9aMgXqd0h5c4iUzb3zo67x2Zruz8Kbc02z7c6yzOcbgmQL5DysmMtw2N3eO+OMGH+FkGpF89sI8aRsc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738802099; c=relaxed/simple;
-	bh=joaTwBn02dmmkjAKhIwkPEcrVnIZdpz5oBmf8Hono3c=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=sdvl/eojLBYHdMQ9ziOZQ1kLm67dEBI1R//eO+yfRZ1MPCOmc/ehx9uw4X8MALzvaLgxcxIkYhuFzwYradblUTqoNjyqtXgdXC48sxjjQmM/UprQJT4BYatY5xZ/gq05eGveP+wUV4juDfOzMApoHlAGLOFKNgGnpa7WTGxaPZE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=RqMOy9Ug; arc=none smtp.client-ip=66.39.139.36
+	s=arc-20240116; t=1738802284; c=relaxed/simple;
+	bh=Rqfjq/eVdUNJjCQl7wKPlki73sGkuFzKqzsP9ZCCTg8=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=iFkehWByoE00NLeaHtGlom0qj7qyJd+f1MjWWKTOyRtbPkGHNsuIYtg5V9kyP1TiD16R0KyWHY1ZbgD5TAsRiEO8QwkrREZaEcAiikxJFOUTM/4RwmMBvrEZuagyzl/VxClQg/bV9R1iPYnna6uwdmuC9JaBZRhCU7hyeymmP/I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=m5FYl0F8; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="RqMOy9Ug"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="m5FYl0F8"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id CC442164A93
-	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:34:50 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTP id D8E0F164A93
+	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:38:00 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 82011125168
-	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:34:50 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 87691124FD3
+	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:38:00 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH 5/5] provisiondb: Document '__get_contexts'.
-Date: Wed,  5 Feb 2025 16:34:46 -0800
-Message-ID: <d1c543a4ed39a2e8f0ae2f7ab97d008299346700.1738800116.git.gerickson@nuovations.com>
+Subject: [PATCH 0/3] Document and Generate ofono.conf(5)
+Date: Wed,  5 Feb 2025 16:37:56 -0800
+Message-ID: <cover.1738802120.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
-In-Reply-To: <cover.1738800116.git.gerickson@nuovations.com>
-References: <cover.1738800116.git.gerickson@nuovations.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -40,50 +37,22 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=+BOQAv0qxrwY1uKf1jjJrtdq2MG4ZbQ/yigaD+DVcF0=; b=RqMOy9UgSbOuOu4ndZBdOTCW/OBI0H192SxyI4Xypjo8ytg30temkqKxn0E88ZWZ1IN61/nhvSqyZL9T099iv+pfdUoEK+8br2ogc72WPFjgQPvDQq8UIcWJChDZuLXi/to33cBKliFBXjQ9ichjW6pFxw16cshtJ8n5uCpmU+5818VnfBvKupkXICNFvMf7656aGtIJOrIJYl8vxxdwazE3FHAaPPMSR1l/mGFm39rUarV4HuZCvH1hUTL8pceHm+zuTDIta9lXAOsXYd24jB49Y/3DNo0CBJicXbTkwZwM70+TtnMazfCj4fby46h0WrrZ7IqEjbmqN+Q0GgwfcA==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=n3m6483H0QCOGEsRPIZv/gP0x70aeW91kdd/GBAKN18=; b=m5FYl0F8X8xVBO2m67PDYtqD3SKFuB8WnDe2tgijUZVOH7/NHi1RIflG4/EUsw5FpKHRB6fy4gdEmxcKm5mnaKpnyybOdg6bLggWwpevhTzC5PGgA8/e0Z9LOcLmcxxLAcjrUtW9mCXo9o2R280txhElXUfb5/PjMC2itQOFQ3UcK8auP+bZpRpJ51DteI/6EVoE9/f6cMArQLV+ncobAzherwptG/wIFPu1QPdtCICJwkCaJNuYMvUV3P7OHhYsDw2SPf6SrCftc4odjaEGcxMluVLeQfYXBrMbLTrkbt3dO6ZyIhLj7irVLbqQD18tIDMRgJOqNoq1vl/ISLpl5Q==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Adds documentation to the '__get_contexts' function.
----
- src/provisiondb.c | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+This adds documentation for and auto-generates ofono.conf(5).
 
-diff --git a/src/provisiondb.c b/src/provisiondb.c
-index c7d35e4ada8f..2d7b29fdab45 100644
---- a/src/provisiondb.c
-+++ b/src/provisiondb.c
-@@ -269,6 +269,31 @@ static bool tags_match(char **tags_filter, const char *tags)
- 	return false;
- }
- 
-+/**
-+ *  @brief
-+ *    Get contexts from the provisioning database at the specified
-+ *    offset, potentially matching the optionally-specified tags.
-+ *
-+ *  @param[in]   pdb          A pointer to the immutable
-+ *                            provisioning database from which to
-+ *                            return contexts.
-+ *  @param[in]   offset       The offset in @a pdb from which to
-+ *                            return contexts.
-+ *  @param[in]   tags_filter  An optional pointer to a string array
-+ *                            of tags to match against candidate
-+ *                            contexts.
-+ *  @param[out]  contexts     A pointer to mutable storage for a
-+ *                            an array of retrieved contexts.
-+ *  @param[out]  n_contexts   A pointer to mutable storage for the
-+ *                            number of contexts pointed to by @a
-+ *                            contexts.
-+ *
-+ *  @retval  0        If successful.
-+ *  @retval  -EPROTO  If @a offset results in an overrun of @a pdb.
-+ *
-+ *  @private
-+ *
-+ */
- static int __get_contexts(struct provision_db const *pdb, uint64_t offset,
- 				char **tags_filter,
- 				struct provision_db_entry **contexts,
+Grant Erickson (3):
+  doc: Initial revision of 'ofono.conf.5.in'.
+  doc: Add SEE ALSO reference to ofono.conf(5).
+  build: Add variables and rules for generating ofono.conf(5).
+
+ Makefile.am         | 11 ++++++++++-
+ doc/ofono.conf.5.in | 37 +++++++++++++++++++++++++++++++++++++
+ doc/ofonod.8        |  3 ++-
+ 3 files changed, 49 insertions(+), 2 deletions(-)
+ create mode 100644 doc/ofono.conf.5.in
+
 -- 
 2.45.0
 
