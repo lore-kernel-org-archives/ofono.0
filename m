@@ -1,38 +1,38 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 22F4B15E90
-	for <ofono@lists.linux.dev>; Thu,  6 Feb 2025 00:38:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F66AF4ED
+	for <ofono@lists.linux.dev>; Thu,  6 Feb 2025 00:41:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738802284; cv=none; b=V86OZiJejHrv7gPcVi9hClAFmtlCa0B9ktZomIZI4HgJm33ck/XRRnX3Av0+nEKYOiiQnsj67NllWbvpjP7mOAqtpgNGj+s2qidnA4DfK3IQAohwbchCOZblPw5RImxf6XE3hls6MsA+RL4sIzWsR1N9XGh35KTiLigvbxB9/NE=
+	t=1738802479; cv=none; b=lE9/kkFZ879Gr/A2nzdIdWjkkMNRvhc/G/JTNV5I60Dc5vWOcFVvHcb8gIm4fYg2FFyT1sJT6KETM5W+ok6h1VkBxUm4ph8jXtWVSyI4b1xBrAfcIdVxChZj/L3rPzbZg6ZJpL/6Q4tOSy11v79QDQefrpB2BU0Bd0UjpnxKneU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738802284; c=relaxed/simple;
-	bh=95RP/dK9W2pF/stP+zBqznwCfGh21SdUUlXS+GC+4pI=;
+	s=arc-20240116; t=1738802479; c=relaxed/simple;
+	bh=VPUL13pmlLMuij4gvaURQQYUkMaElvTNvVR40lgp4PQ=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Dg78JhZFKSBEIn25SNNS4fAHsorpspkY3OBCvMXYj6a4pvuQrBxlROS0LMX2uo7LREW8nr1EVyAmX9PskO7rw5T5OU89iK/zsC3glXcEoviRAv8Wwh8+SThHrn0AfaPGwx85+XmnSGrsE4YcL1bi7Aq9OOsggQjdZ+89TQ3E0E8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=LmxQm7Tk; arc=none smtp.client-ip=66.39.139.36
+	 MIME-Version; b=J5YxOkQufxSupu3NZpzIybuiMqEPyIF3rBKV1YtS3rmSjWnaj1eXt/k8lFB9csXaf7kjcbulpwKgozxYi2G43LpFCaoqn1a9Qx0xmiQ/HqD98Gz6cRBIKXa2+MU4ike8Un8xml/dKzO+c2c3WOjis0JTWGnUfflhk1a9jzdtj94=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=gDp8fPcV; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="LmxQm7Tk"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="gDp8fPcV"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 42695164A98
-	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:38:02 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTP id 021EF164A67
+	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:34:49 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id EC7C9124FD3
-	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:38:01 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id A3C90125168
+	for <ofono@lists.linux.dev>; Wed,  5 Feb 2025 19:34:48 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH 3/3] build: Add variables and rules for generating ofono.conf(5).
-Date: Wed,  5 Feb 2025 16:37:59 -0800
-Message-ID: <0e05d9aa4338ea30b579917d8294fece34edf469.1738802120.git.gerickson@nuovations.com>
+Subject: [PATCH 1/5] provisiondb: Const-qualify '__get_string'.
+Date: Wed,  5 Feb 2025 16:34:42 -0800
+Message-ID: <3d9fa4cd278a96af3fbf47480e63ccc175868d2b.1738800116.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
-In-Reply-To: <cover.1738802120.git.gerickson@nuovations.com>
-References: <cover.1738802120.git.gerickson@nuovations.com>
+In-Reply-To: <cover.1738800116.git.gerickson@nuovations.com>
+References: <cover.1738800116.git.gerickson@nuovations.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -40,47 +40,29 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=hIhZg0le6dRMN6n4Hz7PRSurI4E6aqJl35zCyCfvZhk=; b=LmxQm7TknYl598Ez7bCrs7c7K/YlpvCoDlylScP/LgJFvo8Tg7RH61l2vYI2maNv/7TgBpZMZU8JxmavB8JnFOE9YqQBRDXgtH42z1TTnw+AVsRxtxunp72eymyjtVnqvD0Rd8jn4sSW8w9FcomIKj0ZC5UI6cwDPiUBsS3W5mepWKyF2jJnv9keFSv3AqAu+H1eL9FmY5IE0S51xZl83qHeh7yofmrZysWjcdKXNo2vDn8p4mEt3W7jslh7bAap6P8PZt9WzNXlP8EplXlgx3nCQSA9/8/5ltUZzPgBIpN4AEk2gEr+j1oeH1vlboI3nkQlbE/eXeR6xDLu+sEPlQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=Yp1i/DyJLdm0irVvOCCzVjLrlwJ0+3o/O9ZknMhEwf0=; b=gDp8fPcV0aVvkRG9gH9ufL1jhZLKY4GRlSr+9+uBg9kppSPmjRh4RRBIE+eCXFfRgfaOWOqPaKYRuczJ3vc8aOAtAkBJuCW/xyxzs0a8I8Fa4zVGOOm6CsLZQGd8TNYHnlGRgJoIZq4c56MEBBdDs256sGGFcuYcWqPA5kbLblT8jiHgG3KtnVdHCBYbysxTTWFHLsOz2MSb/foKw0/Y5Osa+tupRj+oQWBxaHP0+QpsElecDdbbDpYrra4+pWUSNi+qQPbp/mKxWcfKOBdncsNNPVxwoBJ5mjFPB8BcTpBD8aEFTiV7Vbvvv38FuQd+bbTcn+4n5eBgrfRVsERddQ==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-This adds variables and rules for auto-generating ofono.conf.5 from
-ofono.conf.5.in.
+Const-qualify the pdb argument of '__get_string' to make it clear to
+the compiler, static analyzers, and human readers that the function
+is strictly a getter with no pdb argument mutation side effects.
 ---
- Makefile.am | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ src/provisiondb.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 2d198f52a4a0..8ca4eaf16dd5 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -832,10 +832,12 @@ endif
- EXTRA_DIST = src/genbuiltin plugins/ofono.rules plugins/ofono-speedup.rules \
- 		tools/provisiontool \
- 		data/provision.json unit/test-provision.json \
-+		doc/ofono.conf.5.in \
- 		$(doc_files) $(test_scripts)
+diff --git a/src/provisiondb.c b/src/provisiondb.c
+index 6a913d8d1540..8a71978b8afe 100644
+--- a/src/provisiondb.c
++++ b/src/provisiondb.c
+@@ -204,7 +204,7 @@ static struct provision_data *__get_provision_data(struct node *node)
+ 	return ((void *) node) + sizeof(struct node);
+ }
  
--dist_man_MANS = doc/ofonod.8
-+MANUAL_PAGES = doc/ofono.conf.5 doc/ofonod.8
- 
-+dist_man_MANS = $(MANUAL_PAGES)
- 
- unit_objects =
- 
-@@ -1038,6 +1040,13 @@ src/builtin.h: src/genbuiltin config.status
- plugins/%.rules:
- 	$(AM_V_GEN)cp $(srcdir)/$(subst 97-,,$@) $@
- 
-+do_subst = $(AM_V_GEN)$(SED) \
-+		-e 's,[@]sysconfdir[@],$(sysconfdir),g'
-+
-+%.5 : %.5.in
-+	$(AM_V_at)$(MKDIR_P) $(dir $@)
-+	$(do_subst) < $< > $@
-+
- include/ofono/version.h: include/version.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
- 	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
+-static int __get_string(struct provision_db *pdb, uint64_t offset,
++static int __get_string(struct provision_db const *pdb, uint64_t offset,
+ 				const char **out_str)
+ {
+ 	if (!offset) {
 -- 
 2.45.0
 
