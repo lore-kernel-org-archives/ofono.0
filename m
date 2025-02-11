@@ -1,35 +1,35 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5236F39AD6
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA2F14204E
 	for <ofono@lists.linux.dev>; Tue, 11 Feb 2025 00:36:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739234164; cv=none; b=VGZoiqweBCaFOJ7cUYvKYcDkyXrHg7ad/g0ijq2AQi6sCU8A/B3ogN7j2FD/Ra+0NmB7TUIdkOYti7ZF6Cneu0n0O/Ft10eFLWbT8RnllakoMqSZm6XMIqVTA3EY/pJ3K3DYvIaLAg0V34SDrdiBGNhzhrzqkkI0jwS3ANuVMEM=
+	t=1739234165; cv=none; b=LQGl32wZHD6LfvL/KZj6rOztFRj4wXhYL3ITZsQLT7nmbD5FErxJjBedDIk3Lyg39ioDhtOkl8CJM7bJLtjRojYcuitHKyCVgOAiPjwg787F0a6+jbH12deJCR3+fWrodyg2TLdAKmvwsAXZbRtJdj2/g8YJVUn1NE/7abJgH8Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739234164; c=relaxed/simple;
-	bh=GwuLmh+tZj+1JXkhT5M9corltkKPLRZZitUEVCG5gFQ=;
+	s=arc-20240116; t=1739234165; c=relaxed/simple;
+	bh=m932xtl1vVPdkAiS7VtSq5DbhwudQGD6RDlnz0sAmsI=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=gHgOeh7W8cAnEhACvTqB0d4U8Mk7QM6/IZ8nXF2xecDVaaHP4BIvYFFuUXSErs9v+/tNltOm2yNPjQstmfAfzwFSmdk4bBTqPshXD/764ab3HrNQ8iPh0YqBfITI9fzwue+lO6kSDmCK5YQ0Tke4i9xbCvjUHLcw7gthSBirsbk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=owhTAnBx; arc=none smtp.client-ip=66.39.139.36
+	 MIME-Version; b=i+6UFadhzaUpbUKilCerFqzaAq/L1hX6v9DtvpDytY0BkL6ax5C9BazA9qBLeg8kykeUvuX2u4dGNZuq953MVtwGPD4cJuq6lOzNRsVx/obCKpQNsbrRWIc7BXkq0dnlBvyqmDWwt5jf5Jiq7V8Wz/n8ceNN9SfBQ5P7E1kO52Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=KiYtxTxX; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="owhTAnBx"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="KiYtxTxX"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 6F315164A7B
+	by mail5.g24.pair.com (Postfix) with ESMTP id DC3C4164A7F
 	for <ofono@lists.linux.dev>; Mon, 10 Feb 2025 19:36:00 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 2068E124FE6
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 93212124FE6
 	for <ofono@lists.linux.dev>; Mon, 10 Feb 2025 19:36:00 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH 1/2] data: Add initial attach type to Verizon 'vzwinternet' context.
-Date: Mon, 10 Feb 2025 16:35:57 -0800
-Message-ID: <7848513cba60c3258cda3d315b7a770db46dffb6.1739233526.git.gerickson@nuovations.com>
+Subject: [PATCH 2/2] data: Add tags to Verizon APN contexts.
+Date: Mon, 10 Feb 2025 16:35:58 -0800
+Message-ID: <544c23a03eb34f9529b5fe1efb96fa62fbeca732.1739233526.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <cover.1739233526.git.gerickson@nuovations.com>
 References: <cover.1739233526.git.gerickson@nuovations.com>
@@ -40,7 +40,7 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=LfYbWy9/mZufEPYJUrJdKwljNwl/lyJXN4VpSy13n8U=; b=owhTAnBxbE3IBHZ+U+bz1W3JSTouTHBRM3sBNnEqs0e+osSKWiieQeGDVFP1fZhcj/5M9r0JuxeBdqDXHeU+QVmYSau5ztsEMX8fTURRb628nYE65SV+FPbASaFI2fixXnU5BMksiuC2uwS6mj6y9ldiHy3tiQ29ewKuAb4FeMHnsSrnwoNU/lwJuEvnrG5aLvkoo3Ra2WC1zSoV78PmJPHLDWAMfh16GnvE0oQBEDLKIc+3+Da6F8wvlFqaNDlxwt6pOpJ/RZVw/yl/Oz7evs2DM871qt/Gt2iUHjirVJrfwy7Qon9I1+d3w+afhAH3ChKbcJRL65Qm6pyaJwEM3w==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=gOY8YB1P3yZxVh6xUwxV9NDftDmzAVViEvoWinJCW3A=; b=KiYtxTxX7OtLaKgIm2vBlf5vERh4ssggOmWKWu9/rt40un04RN9DjBX69OeFXZtu8vVwdrgrU3+n4bDoxxwHlDb533crL5qWs/EbgA6GMYZYVk5Tx748kyywht9cHipzCeQHSu2erA8pkm1XHDYDKJn1cUDwzB4riJrFOGpBfBVNYLUSUIgu/ofFKbKZR4DhfU0t7w5nEinsINr9BZSoAo/MumMxSliGp9jkoze7Yzk54+kTbodiBUU/mjg7TgjbdYHHfVlEYlvtKa8lVgbK0xPpJup3Rw5fxkwdXgyhiHpw4qJHOwHpbO6oCPGzLDR2ZaCZJgaC4Z+H1N+l138Zcg==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
 Verizon has a number of different Cellular access point names (APNs)
@@ -49,32 +49,51 @@ here:
 
     https://www.verizon.com/support/knowledge-base-72601/
 
-Some of those contexts must be used for initial attach (IA). For Voice
-over LTE (VoLTE) applications, the 'vzwims' APN is such an IA context
-and is currently marked as such.
+One partition of those contexts are appropriate for LTE and/or Voice
+over LTE (VoLTE) applications while another is appropriate for
+Internet of Things (IoT) or machine-to-machine (M2M) applications.
 
-However, for Internet of Things (IoT) or machine-to-machine (M2M)
-applications, the 'vzwinternet' APN is also such an IA context but is
-not presently marked as such. This change adds the 'ia' type to this
-APN context.
+This applies the 'iot', 'm2m', and 'volte' tags to the three current
+Verizon APN contexts such that no tags or some combination of those
+tags produce the desired set of APN contexts for the desired
+application.
 ---
- data/provision.json | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ data/provision.json | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/data/provision.json b/data/provision.json
-index 50319cf33a51..9d65ac08b394 100644
+index 9d65ac08b394..b7072af256cf 100644
 --- a/data/provision.json
 +++ b/data/provision.json
-@@ -14291,7 +14291,8 @@
-         "name": "4G LTE Contract",
-         "apn": "vzwinternet",
+@@ -14285,7 +14285,8 @@
          "type": [
--          "internet"
-+          "internet",
-+          "ia"
-         ]
+           "ims",
+           "ia"
+-        ]
++        ],
++        "tags": "volte"
        },
        {
+         "name": "4G LTE Contract",
+@@ -14293,14 +14294,16 @@
+         "type": [
+           "internet",
+           "ia"
+-        ]
++        ],
++        "tags": "iot,m2m,volte"
+       },
+       {
+         "name": "4G LTE Contract",
+         "apn": "vzwapp",
+         "type": [
+           "wap"
+-        ]
++        ],
++        "tags": "volte"
+       }
+     ]
+   },
 -- 
 2.45.0
 
