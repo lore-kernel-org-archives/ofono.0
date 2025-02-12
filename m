@@ -1,34 +1,34 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53AFB3EA98
-	for <ofono@lists.linux.dev>; Tue, 11 Feb 2025 00:36:00 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D94011F427D
+	for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 05:53:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739234165; cv=none; b=aJ8XauakSvFwz1F26+0A/UfOb6NoXnVIaNDJD+3q1BTmtWStca3lqyyEPXJywThjVyJq3nYNH9lP/jlOXjYUvKj+VRZBEwHSgg80RgrRY/5Dn+dz4DQAYZQRwVGHSA+Ruw6CqV1yOBrap3qlki9CC6R27z68KTDTwAkJ1x5FZMA=
+	t=1739339590; cv=none; b=f6YfJDy8RT5gQNIpxdDHdszBlYifNvSmFaIrrIJq9QVhRyvXpIcatGoj7Nq1KWRi1sYkjM0Pdh6o0PKE7X6b6N+Z/updFnAUXGG81Jc1mwdfeMq0aGjbrjrlNahqbGlLmwvkIzomZpzuDKwZwps8lQPm8PzosSi0u9383ITQmUw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739234165; c=relaxed/simple;
-	bh=qB1jD7zCvTcS7I+Y9QpJY2pdouf8SjGK2usX3sI0/Vo=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=QAa6lXJwAaz+TeU/JGGd4PrO3c4/7E3UvtOpn8tf1DUcxQyWBzFNykI66BiaaBSOgdWMmN0THStZcUOO/wsMjKvZrAPEMUzLV3Nm3k0dmJMttnD+jJlEWtu/WyksTIqeRRYZqJw27UV+k1u40+gnxS3QH03p87mA/qnWsJfIX2c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=MbC7J3jd; arc=none smtp.client-ip=66.39.139.36
+	s=arc-20240116; t=1739339590; c=relaxed/simple;
+	bh=8HGIebPe42iNyqoUdfrmP/sFDzGP0IXYa/ttDJ80N7M=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=a4zOXCYN20xqbzpcLqNIs0j1UtwGcRTEWjALXsxoF4rTGCZKRplGmtB/B7K0eY/V8tHaPdoTeR5nHtt8xxZbwFBUJia4XMLytf79VmekFTladl4ceARCgRzfZSnjsIbeYqR3XOseFwowC2pmbwLLm7lzxuTXtuCcW9T1ME9nIC4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=eLly3GH8; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="MbC7J3jd"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="eLly3GH8"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id F04A2164A14
-	for <ofono@lists.linux.dev>; Mon, 10 Feb 2025 19:35:59 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTP id 908FE1648AC
+	for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 00:53:01 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id A35CD124FE6
-	for <ofono@lists.linux.dev>; Mon, 10 Feb 2025 19:35:59 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 3CDC5124C08
+	for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 00:53:01 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH 0/2] data: Update Verizon APN Contexts
-Date: Mon, 10 Feb 2025 16:35:56 -0800
-Message-ID: <cover.1739233526.git.gerickson@nuovations.com>
+Subject: [PATCH 00/10] Add QMI Device Service Request Rate-limit Option
+Date: Tue, 11 Feb 2025 21:52:49 -0800
+Message-ID: <cover.1739339173.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
@@ -37,40 +37,45 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=npwdZSV5qgGs6J3uauZ+gtjEtojiqnisnJPC2BRSwbw=; b=MbC7J3jdMncniERd4JNBxOlm9YBsKhun79iBIljQ4R5CL5UVRRKO08QJ5BWCPpj3jpdlhFM0G2M9ok+nD8LhCw/NeTwu1Chgh+OoUUhbaM3Im/TS5TUKVLBy6d7y4mriAog8AoLmB6J/kr83V8WC+o1wE1v+x1TxsL7OtVjr/ILH2inrYg3spbhZ3CjCOPTZ4rKSCBmhfQgj07Xdxz9xbOf65/J7gYXKZayOywMHEUp8dteYGwbOp9auZHgn8pTi7ss/U/237bxbr3ohkFx1vHkqwG53RYzPKAWbpby/Nvn19rhognz3gaddrTmlztoDcXzj0/yCWpvRMa6CX+b8uA==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=9CZV7i6y7wjJi9Uxt8cpiRzDFTkdxajG7G53xWGpGHY=; b=eLly3GH8A652yymqNQTw/ZCTflyAfPC/W6pCYzTAwvOZK7BfMPDd3GCKxW3j5MZUWeE20eHAkeU0gSdUqNGcJzqLCgQp5wTJKDssAXShY4Vw22Q0F7nIGEUoj94v4ovNAFN6sRFitLj3KlH2qbFvEj6GfS3hJGZOpSe56xlolhNBRXPTnlrWiWi0AcKzz8ZHLr+kE7WaNLTiTgfiQGRJsiKyoU+TZcxxLh1PYyfqqOkd1J9EBSMHyFV7SHvnIqYVc7tAkho43kMqbWQPLOqXnFhtgIjG6up5h5wanYg21UMB+U4tSVKwA72Co8uQ1kCj5OnZ2Di/pxVmDJJiTm19IQ==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Verizon has a number of different Cellular access point names (APNs)
-and contexts, depending on the application, per their documentation
-here:
+Certain modems, among them the Quectel Wireless Solutions Co.,
+Ltd. (2c7c) BG96 CAT-M1/NB-IoT modem (0296), have a firmware issue
+where they can lock up and hang (not responding to subsequent
+commands) due to high QMI service request arrival rates.
 
-    https://www.verizon.com/support/knowledge-base-72601/
+QMI service request rate limiting is achieved by:
 
-Some of those contexts must be used for initial attach (IA). For Voice
-over LTE (VoLTE) applications, the 'vzwims' APN is such an IA context
-and is currently marked as such.
+1. Adding a new, optional options structure to qmi_qmux_device_new
+   that has its rate-limit "quirk" and minimum request period fields
+   set when the modem "QMIMinReqPeriodUs" integer property is set.
 
-However, for Internet of Things (IoT) or machine-to-machine (M2M)
-applications, the 'vzwinternet' APN is also such an IA context but is
-not presently marked as such. This change adds the 'ia' type to this
-APN context.
+2. Adding logic to the QMI driver that, when a minimum request period
+   is set, limits the QMI service request rate accordingly.
 
-In addition, one partition of those contexts are appropriate for LTE
-and/or VoLTE applications while another is appropriate for IoT or M2M
-applications.
+(1) and (2) are used by the udevng and gobi plugins such that when the
+modem vendor and model match 2c7c/0296, then the option to rate limit
+QMI service requests is set to no more than one every 2,000 us.
 
-These changes add the 'ia' type to the 'vzwinternet' APN context and
-add the 'iot', 'm2m', and 'volte' tags to the three current
-Verizon APN contexts such that no tags or some combination of those
-tags produce the desired set of APN contexts for the desired
-application(s).
+Grant Erickson (10):
+  qmi: Added minimum service request period property string.
+  qmi: Added enumeration for device quirk flags.
+  qmi: Added structure for device options.
+  qmi: Added device options parameter to 'qmi_qmux_device_new'.
+  qmi: Added minimum request period data member to 'qmi_transport'.
+  qmi: Added last request time data member to 'qmi_transport'.
+  qmi: Handle request rate limit option in 'qmi_qmux_device_new'.
+  qmi: Implement QMI service request rate limiting in 'can_write_data'.
+  udevng: Set the QMI minimum service request period for Quectel BG96
+    modems.
+  gobi: Pass QMI qmux device options to 'qmi_qmux_device_new'.
 
-Grant Erickson (2):
-  data: Add initial attach type to Verizon 'vzwinternet' context.
-  data: Add tags to Verizon APN contexts.
-
- data/provision.json | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ drivers/qmimodem/qmi.c | 42 +++++++++++++++++++++++++++++++++++++++++-
+ drivers/qmimodem/qmi.h | 42 +++++++++++++++++++++++++++++++++++++++++-
+ plugins/gobi.c         | 14 +++++++++++++-
+ plugins/udevng.c       | 14 ++++++++++++++
+ 4 files changed, 109 insertions(+), 3 deletions(-)
 
 -- 
 2.45.0
