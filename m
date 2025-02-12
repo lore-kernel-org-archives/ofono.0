@@ -1,64 +1,64 @@
-Received: from mail-oi1-f175.google.com (mail-oi1-f175.google.com [209.85.167.175])
+Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4EF211DEFDD
-	for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 19:29:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CEDF271813
+	for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 19:30:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739388550; cv=none; b=aAoKWcyvkwrsiiPQRmYidwjofhwWLYfwjhrtFjHPiQUr4mn02ezzyLyXUYTmuSZSMmf0ymcjd4BBLFF0BMRoZTT6/rWiuJACmJXpEusXe4Cg4J54Vht8NXzWQz01Ft0jW25O2F39OTFjrrJ2cg9sshRM/IFNXmECo056KANzC9M=
+	t=1739388652; cv=none; b=a8vSwOdVpzvkoZGsX1CBgheU+Xj0R6FSWifZ8Ujkom3ebjpLzrQNlNKH3CzkgwYJzEdMd9ck9rB9BkKV5hTbi+LSjT/zh6TrNoRQvvs7rEQTDTAWoKP7SQFkhL5+uPu855OYjxHMPu89DJOOiL2SOwXXUv8fNgsTWLL0H/EOk9M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739388550; c=relaxed/simple;
-	bh=gbeL2j1APelLw4lNF4TLFH3zz9q1OUnULs7EhTlt8Qk=;
+	s=arc-20240116; t=1739388652; c=relaxed/simple;
+	bh=1O1bTHcBOPpn4q6xaWxgPGL+9/0yb4MCG1OK8mi2CbA=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=QKY8v9O9aSemjGzjzAVp2dWldjDNL/Ibzwirw9TgA4TEPiNXVPHBi9PC+sQQPHxLpODgxt15rX+73vcp1kWN/WFY+moixkQcKple8pCigt5IoP1eVvaF0mvgh3G4rYetH2fBp4Ch0A2INLOPUcvHhXD99BVh+aZ2VylyJyZpLBU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lAYRDt+E; arc=none smtp.client-ip=209.85.167.175
+	 In-Reply-To:Content-Type; b=GbPu/h7upmslEYydrygZbesnotogXpvluwPGDDYMx0sCV1YZGozfmY0IgYlsNfcbJY1KuvSM54JTiKJMXHZsA6T6khw2TOhUgB+7J9mDskIHDAdjr9uPRA5YG1ldfx+SOmHJCkPln/qY/hkswpyce8SxnFpEdLWwfpswWya014Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jqwHTHto; arc=none smtp.client-ip=209.85.210.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lAYRDt+E"
-Received: by mail-oi1-f175.google.com with SMTP id 5614622812f47-3f3d9348251so11357b6e.0
-        for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 11:29:09 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jqwHTHto"
+Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-726ef4cba96so33337a34.2
+        for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 11:30:51 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1739388548; x=1739993348; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1739388650; x=1739993450; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:to:subject:user-agent:mime-version:date:message-id:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=90xtQXplDDgqic1zh5pyCIzS9FtMHu4PKiM5yadzq3s=;
-        b=lAYRDt+Ey86DFzuNosJvSFHD7sHt0x3FoYqI9DFi0s+OfYYdOgcX9k1srz6muthmUt
-         Xw9D5cuwqQgmLrVOJxtmnyufy/IA8n0wlCuPaFjt7aWSUhI6weS66sIkphEsrXUOwFek
-         ad7FmoNU6qebvB879P5AbU/fVrmrT/81J8hd5I10L4mKPyqedcLz2o0QvTxnUsiSonGu
-         tk0FE5Ob/YUfj63uCYxzSJOj6HuGHxxfwdOP3TwP6eHK4gx++AUUs8BbTFYT9182knGe
-         oE/q4GavVoSe+qzqSeceYtyDIvi0yZmP/LGqGvKnWa5yKFoOey3w0ql8t4ynnOG9QUsB
-         PiBQ==
+        bh=4fx0PkMsUCr+B7ubj6/0XaRyoIME1olhKdpGSWf9cRo=;
+        b=jqwHTHtoJ0uMCr6ms6fscn9vZ19PUByxiFfYNLj9Jmnb35Ek6SZ1QYcYuWt8MSWnuT
+         rxS9VCw5lkHLGKtlIioFfrjKLjryuyhqwyt/9Sux6hlBSd4Oc4TZoT3cu0J5YpNWVESB
+         jxG3nH3PHCIYLaAaQJFosfB2XPxtkyg2yORu6wkUzfm5K8RzNjPZU5wWdhpQkqTznhIN
+         3m+HMvhcTGsLqWAeyqFfT58o8xwqkEzYIt/QfgD7umGKgo8KzhI4hSptA3QHGLjsqtBN
+         nSp9oe+l8YkXRksrb32togPZjiz950FcAOLjJiUN4hlHaoz5HOaITxz+iQs5JLLmOPKv
+         JA3Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739388548; x=1739993348;
+        d=1e100.net; s=20230601; t=1739388650; x=1739993450;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:to:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=90xtQXplDDgqic1zh5pyCIzS9FtMHu4PKiM5yadzq3s=;
-        b=DBUjP8vS2y3ZDoqqj+gM+Xq9Gf0j4JolrWrpu8FimsXh1DuNPpQ4TQIoPZBARQIuGy
-         H4aXJ6OamGu0PjaaK4HW+1AlGpCAPhQt5pbnMAf6HXXhR16OYfUcjQV8tS+2RzqvEZTq
-         zOXOq+NaX5ysYEcOlRR4rfmamnOkHrWQYUg26S2zhFc/awdqBhy7DKIQ3TGRKqkoMQoe
-         G0A7kGjI+EkdYyTiAKgSMP+y3sUek2nUzM27sKjZM3k6l5Tqqei8/qD04nCQoNXa1Cex
-         duFmaLIIE0EA/WjrJigC1eKMrTSpZ7oi3O/RMnFyh39KlFNQBBHm2JQWh/aqaRwmHkuC
-         gJJQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWGSTvI1PIp4x/h/MuR1FgI3nKOUyFLDVXOSBq796lnySkyOi9NtjELNgQiph9lSiKuJrkZVA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxGBDlmD5h+dYLGzUrR4gnmGkssQoHmyNW5zVQqv1M1Pz9G1A1t
-	99oeUfOmuXWxwKJ6SsFzcWLvOiDTGMpqW4jU5FrGDDfsk2f0daWONhF85Q==
-X-Gm-Gg: ASbGncvDQ5rhhCBfLAKqqydvsbTnNmJ9gvBAQUl+YXb3dCAdup9dw7TBAVqsYUebKbj
-	HDbBp0XbpN5kE5EPyQb2rjiQeZ3UZU/6Knifl1Or3qPlmSXI8gHLJn+QH0Kv2GQ3QxKBaVKHY3K
-	DpnRUOaybaSFQol1oD4tMMFnOEA6F6Xrk3mecQ7t9B8BvNsMsDjVkcMcLLSqYXVFusaYjfxe8Ae
-	z5LizVym3mChoRelcwQJK6LHEKS9y6TEJuh0RlBw62hEVEjkFHm6MMcI7Kk9uP142xz9hkMSCYf
-	+d6/efqkNAhZkZVgh2vIZBSa4jlHMWXjuCRYkr2qPkss8dmi+K7ao1oZ
-X-Google-Smtp-Source: AGHT+IHLfOezdk5BSn4+DFX2gVHMThu18rsQ+rxEHfP0x3VtBtAvbY97jbS5iuQnq+XvRfVJV33ciw==
-X-Received: by 2002:a05:6808:2447:b0:3f3:4128:42ce with SMTP id 5614622812f47-3f3cf220ab0mr2601984b6e.35.1739388548309;
-        Wed, 12 Feb 2025 11:29:08 -0800 (PST)
+        bh=4fx0PkMsUCr+B7ubj6/0XaRyoIME1olhKdpGSWf9cRo=;
+        b=MSiZkhsv/8JZCMQbBm05gpNE4f/VkKrik4t0vt40gQywu0gao7Yaup8TjVItSUO71a
+         2GMSEWnhduSX12Xadg8V+3Lt/6G34WjBRWVaK269onIYARbeaEnKy9YmCZBZ+z2pi+Va
+         6oEX4UduLcmty9KXWUpUlrwNhMLDSzR4qvbgChK/l1iVTimQ0sU/neBiazwQ32NHBNnG
+         zppo8KdXse0SJbIl9auP3rNSdehhEHFGnml+dTZreHVny+GZVVfxDb7cwCFTIbqVM7Bs
+         /7xqIzA2tPvRqtk6ihy+DW32+zsjTnZ6l6k07dy+aEt3K3RmOKFeIx8EgJl9Sirpct8R
+         q7Hw==
+X-Forwarded-Encrypted: i=1; AJvYcCWuj9FwdYpPM42uFGNnS4jZJS6Mm6VdtR3YTtyA1g4i/7I6n+kLGbBPh4X7pyrue5Zzj3gp3Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0YybsAG+Nm6hrGvbpcGn830j4bQHvHpRAUZxjKmxg44xqAFcpvPe
+	CECEnLFICK1cKST4sBsDgDC/XBzx2k4UuYH+NUa0BovnDqy9+EHJ
+X-Gm-Gg: ASbGncs5W25gu99aaVh7nGkrsnlZZbq2pbDdjPTj1zJKijNmlbR67IAP9+KA5nyMtn/
+	YPn0e06ce2J8qiWuDPzkCTi2+bfE/gYgYey94k2KATOlldz9pXztGNig7qV5p6bdR2mJZcXgcND
+	LAnezUuqKffjeXWYb+WuA7kfrJj0/PksJw5cTu2mT8Y4IJB7N5pL6Z70DiXBicCitBshX7aX4Xx
+	vAs7aeUM2GiTCCNqSK3p5ye8W6HtRHrqCQiSsqHQi45KNWjQZyt2dOo8rnfZOPsQIuaYvy0SS4O
+	zNocrlaIfaE43KvuQTMwt/hZTsx+cgo2nL8iy2OByR+Z2da4XromDxu2
+X-Google-Smtp-Source: AGHT+IEd7405PMPvyQdiModRRXdhWqMMENIyK4zDCDcWq0QRzHXDv+jcbZsP2hM9UGYropnQ0aGfEQ==
+X-Received: by 2002:a05:6830:6f07:b0:718:1163:ef8f with SMTP id 46e09a7af769-726f1c35d7amr2827921a34.2.1739388650274;
+        Wed, 12 Feb 2025 11:30:50 -0800 (PST)
 Received: from [192.168.1.25] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 5614622812f47-3f389fda9b4sm4534277b6e.49.2025.02.12.11.29.07
+        by smtp.googlemail.com with ESMTPSA id 006d021491bc7-5fcacd2606asm427410eaf.24.2025.02.12.11.30.49
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 12 Feb 2025 11:29:08 -0800 (PST)
-Message-ID: <382fba22-d60b-4f46-9897-7f674221dec0@gmail.com>
-Date: Wed, 12 Feb 2025 13:29:07 -0600
+        Wed, 12 Feb 2025 11:30:49 -0800 (PST)
+Message-ID: <c4f049bc-12ad-40dd-ac1a-7886e8fb7acc@gmail.com>
+Date: Wed, 12 Feb 2025 13:30:48 -0600
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -66,77 +66,60 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 08/10] qmi: Implement QMI service request rate limiting in
- 'can_write_data'.
+Subject: Re: [PATCH 09/10] udevng: Set the QMI minimum service request period
+ for Quectel BG96 modems.
 To: Grant Erickson <gerickson@nuovations.com>, ofono@lists.linux.dev
 References: <cover.1739339173.git.gerickson@nuovations.com>
- <1cf82d1527078e71d7a64b4f8caa7c5adad680c7.1739339173.git.gerickson@nuovations.com>
+ <5f9277b84477f13890620d4dbda3804881142946.1739339173.git.gerickson@nuovations.com>
 Content-Language: en-US
 From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <1cf82d1527078e71d7a64b4f8caa7c5adad680c7.1739339173.git.gerickson@nuovations.com>
+In-Reply-To: <5f9277b84477f13890620d4dbda3804881142946.1739339173.git.gerickson@nuovations.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 Hi Grant,
 
 On 2/11/25 11:52 PM, Grant Erickson wrote:
-> Determine if we need to rate-limit QMI services requests to a
-> transport-specific minimum request period. If so, return true so that
-> the queue can be retried again later.
+> The Quectel Wireless Solutions Co., Ltd. (2c7c) BG96 CAT-M1/NB-IoT
+> modem (0296) has a firmware issue where it can lock up and hang (not
+> responding to subsequent commands) due to high QMI service request
+> arrival rates. If the vendor and model match those, then rate limit
+> QMI service requests to no more than one every 2,000 us.
 > ---
->   drivers/qmimodem/qmi.c | 17 +++++++++++++++++
->   1 file changed, 17 insertions(+)
+>   plugins/udevng.c | 14 ++++++++++++++
+>   1 file changed, 14 insertions(+)
 > 
-
-Patches 5, 6 and 8 should belong in the same commit.  Prefer to group new member 
-definitions with their first use.
-
-> diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-> index 00086578da10..591129c252e3 100644
-> --- a/drivers/qmimodem/qmi.c
-> +++ b/drivers/qmimodem/qmi.c
-> @@ -665,8 +665,23 @@ static bool can_write_data(struct l_io *io, void *user_data)
->   {
->   	struct qmi_transport *transport = user_data;
->   	struct qmi_request *req;
-> +	const uint64_t now = l_time_now();
-> +	uint64_t delta = 0;
->   	int r;
+> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index 64875a47752b..e7cf494a70ff 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -1118,6 +1118,20 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
+>   
+>   	DBG("%s", modem->syspath);
 >   
 > +	/*
-> +	 * Determine if we need to rate-limit commands to a
-> +	 * transport-specific minimum request period. If so,
-> +	 * return true so that the queue can be retried again
-> +	 * later.
+> +	 * The Quectel Wireless Solutions Co., Ltd. (2c7c) BG96
+> +	 * CAT-M1/NB-IoT modem (0296) has a firmware issue where it can
+> +	 * lock up and hang (not responding to subsequent commands) due to
+> +	 * high QMI service request arrival rates. If the vendor and model
+> +	 * match those, then rate limit QMI service requests to no more
+> +	 * than one every 2,000 us.
 > +	 */
-> +	if (transport->last_req_sent_time_us != 0) {
+> +	if (g_strcmp0(modem->vendor, "2c7c") == 0) {
 
-Shouldn't this check min_req_period_us first, before incurring l_time_now overhead?
+Please use ell for all new code.  l_streq0 or so.
 
-> +		delta = l_time_diff(now, transport->last_req_sent_time_us);
-> +
-> +		if (delta < transport->min_req_period_us)
-> +			return true;
+> +		if (g_strcmp0(modem->model, "0296") == 0) {
+> +			ofono_modem_set_integer(modem->modem, "QMIMinReqPeriodUs", 2000);
+> +		}
 > +	}
+
+The {} are unnecessary.
+
 > +
-
-Something like:
-if (throttling_enabled) {
-	now = l_time_now();
-	delta = l_time_diff(now, transport->last_req_sent_time_us);
-
-	if (delta < min_req_period_us)
-		return true;
-^^^^ Note, that this is a poor approach since it just busy-loops the event-loop 
-until the throttle time gate expires.  Much better would be to use some sort of 
-timeout.
-
-	transport->last_req_sent_time_us = now;
-}
-
->   	req = l_queue_pop_head(transport->req_queue);
->   	if (!req)
->   		return false;
+>   	for (list = modem->devices; list; list = g_slist_next(list)) {
+>   		const struct device_info *info = list->data;
+>   		const char *subsystem =
 
 Regards,
 -Denis
