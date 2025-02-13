@@ -1,34 +1,34 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 549E428A2CE
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 19:35:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B79542661B1
+	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 20:55:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739475311; cv=none; b=vCo9+TiuDECZb1ozlfuT8chU1kMYXu8zgd6GxAK+REUmSQryHMvrNhGbBnc/YskotrHTFONQmCpeCdFKxxEXcK4ggCDt4yzC1eHAyixqu416BgHkWHi6hfeW9VGvnY8wRABvnMHdV6rWwvD3EgOvbsNt3ZfGXE8tg/Oh60PRnlQ=
+	t=1739480131; cv=none; b=tHe0bBmo1huhsBZaLwZXFnnmLv40fLSysGjkvxE/DTisNJP65yfUuH4FrFvGxIJWzSGkP5pfFto2D2P1YBAJzpxHTGI2QRdkwbTN8H/VEJO2HbrKx46ARj5IIf34JQJD5zD9Shnw85AqDnQJ4hzhdHaL4dbQlj0eQ+0cDcxpR9A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739475311; c=relaxed/simple;
-	bh=b5+JR9IxhVnU3dZDzJmyTeLWBGtJQQFaSY0mu3kClq8=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=hgP6f/FAxpItfBVXoOigPyslTeLyKFQXA734kAsN2VRIHRMaxncgaQZD+NVKe67yjshdnwKSLmvaFYx/ZQrPrS5UUnpGpMQNEkfZS4poyQpT0ORVLmMin0/O/RgHOZj1YW8bmUd3z6W7mkAV+1fEObOI/I5eWzNFlrJg7FF6lCE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=RE4mPcIj; arc=none smtp.client-ip=66.39.139.36
+	s=arc-20240116; t=1739480131; c=relaxed/simple;
+	bh=0yOBFFXGQYHejCbF0FCClcrLDAwrrJ6Hs8TsFJuj0K4=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=joVkYq593JHJsqnflV6Redc54bz0qyMn7dASCwgrfk4MEI7zZbwsGf1pdc2dPR13UMOMzSkEZAVdaimBM+6LJ0koKGAztGdF325fJjUw6d6ccIWjaNEp8ycurykDgJNNqYA08kQ6W3IntY849oNBSpyxQa3Tm9jQEV3F5NpYLz8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=VcClLTqz; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="RE4mPcIj"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="VcClLTqz"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 4D651164952
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 14:35:02 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTP id 8BD1716499F
+	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 15:55:27 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 043EE124FB3
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 14:35:01 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id AF73E124EE1
+	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 15:55:25 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH] data: Add 310 030 MCC/MNC (HNI) as AT&T.
-Date: Thu, 13 Feb 2025 11:35:00 -0800
-Message-ID: <bbfc59214e9740499221d0084dd7a223b1583a47.1739475286.git.gerickson@nuovations.com>
+Subject: [PATCH] data: AT&T 'data device' public APN.
+Date: Thu, 13 Feb 2025 12:55:24 -0800
+Message-ID: <e140e827103cd893938e0c113bc38b2c1f4f28b0.1739480113.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
@@ -37,36 +37,51 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=Et8/obs6oX6UTPZNaUun/NUnMKDWAJC8i8WQ+LCWyLA=; b=RE4mPcIj5Eatd7HkpoENvp9v8mamuufGzKqJyqZsjpXdQrGjRLW8vZW64etq/wUFhgq8QlyVX8iDECTCVoRcNzQbzfHO8imxoCDjTWuBV6DHsyKOHx9yggkHe2ypmM/OklUdSVZGZx5sgcceGI+2wFEw6jRVPpLm2/0ULSqhvak/f6ALmxaEiRfepXBLsVkPqVlWVpby4re6zLT7HljwzjefFSQ8YNRH87rEp1obUxKaPYrDVd4oj3BtPk/chMNRG0+FuPfS8HDCN485hTv0xFuUpx3IhbMukxa89QUO/mvpZ3y6eV0AA7bBlmt+1JYoyG5L0HS/e7y5qrv4+l6V+w==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=p7cjOyESboZfo6P5Ma1AnKK1z9dLlQIgjhzJE/nFirc=; b=VcClLTqzHH/S6f8eelNjtL2uq7Lzq3Qh8vWqWtTlL1E+sG9bMlXrPuvG/YEoKS1kLA9PJJtMlZRqfKRUcN+Xxro/AbCtqd2M6kisvztVEnNmyw44StPeRExA33syqoLyN3H8dfleBLSHGA9sFPJ5O0y2EvgS2vb8pVsOF2NHk5S2FzzqwhAhKYzf+p7CSwDR2wz+8ZZMzSQxoWvXyxdxNCxEutWv1TLkV/O7+3RAANGpV5JQw7Q7kqk6lz5IxKkGLLJirdjL7rAnR+OWtdGnJl0VvdOCFZzojIfcyO9GojjLBwQxCcAUXXY8rKYZpgy/LCFHTqXbGNKW8Iu1FkvReg==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-The 310 030 MCC/MNC (HNI) for the GSM 850 MHz band was acquired by
-AT&T Mobility from Centennial Wireless; however, at the time of this
-commit and as of "ITU Operational Bulletin No. 1280", published
-2023-11-15, AT&T has formally withdrawn this MNC and the status of
-this MNC is non-operational.
+Per AT&T documentation at
+<https://www.att.com/support/article/wireless/KM1062162/>, AT&T
+currently has three "public" APNs:
 
-Nonetheless, "AT&T Business" SIMs issued have SIM IMSIs prefixed with
-310 030.
+    1. 'ENHANCEDPHONE'
+       - For 5G smart phone devices.
 
-By including this MCC/MNC (HNI) in the provisioning database for AT&T,
-it allows such SIMs to successfully auto-provision.
+    2. 'NXTGENPHONE'
+       - For 4G / LTE smart phone devices.
+
+    3. '[Bb]roadband'
+       - For "data devices" such as Wi-Fi hotspots or IoT/M2M devices.
+
+The first two are already in the provisioning database; this adds the
+third under the tag `kore-public` since the AT&T mobile virtual
+network operator (MVNO) KORE Wireless recommends this AT&T public APN
+for users of its issued "AT&T Business" SIMs and since there is
+already a generic 'm2m'-tagged entry with the same types.
 ---
- data/provision.json | 1 +
- 1 file changed, 1 insertion(+)
+ data/provision.json | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/data/provision.json b/data/provision.json
-index 50319cf33a51..f10b9b70ddfb 100644
+index 50319cf33a51..0cb6b8c3dffc 100644
 --- a/data/provision.json
 +++ b/data/provision.json
-@@ -14141,6 +14141,7 @@
-     "name": "AT&T",
-     "ids": [
-       "310016",
-+      "310030",
-       "310038",
-       "310070",
-       "310080",
+@@ -14183,6 +14183,15 @@
+         "mmsproxy": "proxy.mobile.att.net:80",
+         "tags": "5g"
+       },
++      {
++        "name": "AT&T MVNO IoT/M2M (Public)",
++        "apn": "broadband",
++        "type": [
++          "internet",
++          "ia"
++        ],
++        "tags": "kore-public"
++      },
+       {
+         "name": "AT&T M2M",
+         "apn": "m2m005246.attz",
 -- 
 2.45.0
 
