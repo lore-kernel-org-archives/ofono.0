@@ -1,125 +1,85 @@
-Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CEDF271813
-	for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 19:30:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85BE02C190
+	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 00:00:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739388652; cv=none; b=a8vSwOdVpzvkoZGsX1CBgheU+Xj0R6FSWifZ8Ujkom3ebjpLzrQNlNKH3CzkgwYJzEdMd9ck9rB9BkKV5hTbi+LSjT/zh6TrNoRQvvs7rEQTDTAWoKP7SQFkhL5+uPu855OYjxHMPu89DJOOiL2SOwXXUv8fNgsTWLL0H/EOk9M=
+	t=1739404842; cv=none; b=kC6lKm5cUfCBW9Ma5KOdhMeYr+Oq8VCfrzrEs6OUu53wPBDWPNmXNv9NycQtqmlJbFwKTgP8AAnupPpRzYXDbchUMGeXo2EI1ax2LA7YKnPzMiWeZvSt6qZf21MmetGlZ/eG46U78BLjhqFANRuyYOLYnXPU+H+WPpNg6TUvTrw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739388652; c=relaxed/simple;
-	bh=1O1bTHcBOPpn4q6xaWxgPGL+9/0yb4MCG1OK8mi2CbA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=GbPu/h7upmslEYydrygZbesnotogXpvluwPGDDYMx0sCV1YZGozfmY0IgYlsNfcbJY1KuvSM54JTiKJMXHZsA6T6khw2TOhUgB+7J9mDskIHDAdjr9uPRA5YG1ldfx+SOmHJCkPln/qY/hkswpyce8SxnFpEdLWwfpswWya014Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jqwHTHto; arc=none smtp.client-ip=209.85.210.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1739404842; c=relaxed/simple;
+	bh=Ye4ujEDHMLMk8Yd8e+ccnHviaxBm7BcUSWyqGOs+6us=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=JkeaHQVHCaVjJy1VYB6OArnP1nJv/yEO7/7FayJp+yzl8Iihkdo4rXSGciaW6q8IaSUPqDHqAJTa4GV4hCtBsUz3dD6jvh6pOql3cZPI3rV/EATiync4iaX8KScZs2iRC7S+Rig0d2nIjcIeZm0O0h3TK+u89U6j41qwvp5j0PE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=sBqTIV+M; arc=none smtp.client-ip=66.39.139.36
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jqwHTHto"
-Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-726ef4cba96so33337a34.2
-        for <ofono@lists.linux.dev>; Wed, 12 Feb 2025 11:30:51 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1739388650; x=1739993450; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=4fx0PkMsUCr+B7ubj6/0XaRyoIME1olhKdpGSWf9cRo=;
-        b=jqwHTHtoJ0uMCr6ms6fscn9vZ19PUByxiFfYNLj9Jmnb35Ek6SZ1QYcYuWt8MSWnuT
-         rxS9VCw5lkHLGKtlIioFfrjKLjryuyhqwyt/9Sux6hlBSd4Oc4TZoT3cu0J5YpNWVESB
-         jxG3nH3PHCIYLaAaQJFosfB2XPxtkyg2yORu6wkUzfm5K8RzNjPZU5wWdhpQkqTznhIN
-         3m+HMvhcTGsLqWAeyqFfT58o8xwqkEzYIt/QfgD7umGKgo8KzhI4hSptA3QHGLjsqtBN
-         nSp9oe+l8YkXRksrb32togPZjiz950FcAOLjJiUN4hlHaoz5HOaITxz+iQs5JLLmOPKv
-         JA3Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739388650; x=1739993450;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=4fx0PkMsUCr+B7ubj6/0XaRyoIME1olhKdpGSWf9cRo=;
-        b=MSiZkhsv/8JZCMQbBm05gpNE4f/VkKrik4t0vt40gQywu0gao7Yaup8TjVItSUO71a
-         2GMSEWnhduSX12Xadg8V+3Lt/6G34WjBRWVaK269onIYARbeaEnKy9YmCZBZ+z2pi+Va
-         6oEX4UduLcmty9KXWUpUlrwNhMLDSzR4qvbgChK/l1iVTimQ0sU/neBiazwQ32NHBNnG
-         zppo8KdXse0SJbIl9auP3rNSdehhEHFGnml+dTZreHVny+GZVVfxDb7cwCFTIbqVM7Bs
-         /7xqIzA2tPvRqtk6ihy+DW32+zsjTnZ6l6k07dy+aEt3K3RmOKFeIx8EgJl9Sirpct8R
-         q7Hw==
-X-Forwarded-Encrypted: i=1; AJvYcCWuj9FwdYpPM42uFGNnS4jZJS6Mm6VdtR3YTtyA1g4i/7I6n+kLGbBPh4X7pyrue5Zzj3gp3Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0YybsAG+Nm6hrGvbpcGn830j4bQHvHpRAUZxjKmxg44xqAFcpvPe
-	CECEnLFICK1cKST4sBsDgDC/XBzx2k4UuYH+NUa0BovnDqy9+EHJ
-X-Gm-Gg: ASbGncs5W25gu99aaVh7nGkrsnlZZbq2pbDdjPTj1zJKijNmlbR67IAP9+KA5nyMtn/
-	YPn0e06ce2J8qiWuDPzkCTi2+bfE/gYgYey94k2KATOlldz9pXztGNig7qV5p6bdR2mJZcXgcND
-	LAnezUuqKffjeXWYb+WuA7kfrJj0/PksJw5cTu2mT8Y4IJB7N5pL6Z70DiXBicCitBshX7aX4Xx
-	vAs7aeUM2GiTCCNqSK3p5ye8W6HtRHrqCQiSsqHQi45KNWjQZyt2dOo8rnfZOPsQIuaYvy0SS4O
-	zNocrlaIfaE43KvuQTMwt/hZTsx+cgo2nL8iy2OByR+Z2da4XromDxu2
-X-Google-Smtp-Source: AGHT+IEd7405PMPvyQdiModRRXdhWqMMENIyK4zDCDcWq0QRzHXDv+jcbZsP2hM9UGYropnQ0aGfEQ==
-X-Received: by 2002:a05:6830:6f07:b0:718:1163:ef8f with SMTP id 46e09a7af769-726f1c35d7amr2827921a34.2.1739388650274;
-        Wed, 12 Feb 2025 11:30:50 -0800 (PST)
-Received: from [192.168.1.25] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 006d021491bc7-5fcacd2606asm427410eaf.24.2025.02.12.11.30.49
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 12 Feb 2025 11:30:49 -0800 (PST)
-Message-ID: <c4f049bc-12ad-40dd-ac1a-7886e8fb7acc@gmail.com>
-Date: Wed, 12 Feb 2025 13:30:48 -0600
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="sBqTIV+M"
+Received: from mail5.g24.pair.com (localhost [127.0.0.1])
+	by mail5.g24.pair.com (Postfix) with ESMTP id 96E31164922;
+	Wed, 12 Feb 2025 19:00:39 -0500 (EST)
+Received: from smtpclient.apple (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 4C3E4124FD3;
+	Wed, 12 Feb 2025 19:00:39 -0500 (EST)
+Content-Type: text/plain;
+	charset=utf-8
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 09/10] udevng: Set the QMI minimum service request period
- for Quectel BG96 modems.
-To: Grant Erickson <gerickson@nuovations.com>, ofono@lists.linux.dev
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51.11.1\))
+Subject: Re: [PATCH 01/10] qmi: Added minimum service request period property
+ string.
+From: Grant Erickson <gerickson@nuovations.com>
+In-Reply-To: <d2b9a654-790e-4629-b1c3-53409ca694e8@gmail.com>
+Date: Wed, 12 Feb 2025 16:00:28 -0800
+Cc: ofono@lists.linux.dev
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <99653208-7699-4721-8769-CFB7B036D749@nuovations.com>
 References: <cover.1739339173.git.gerickson@nuovations.com>
- <5f9277b84477f13890620d4dbda3804881142946.1739339173.git.gerickson@nuovations.com>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <5f9277b84477f13890620d4dbda3804881142946.1739339173.git.gerickson@nuovations.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+ <78fcde63abae5551db9893dbfbaca842e4d38b32.1739339173.git.gerickson@nuovations.com>
+ <d2b9a654-790e-4629-b1c3-53409ca694e8@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+X-Mailer: Apple Mail (2.3776.700.51.11.1)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=content-type:mime-version:subject:from:in-reply-to:date:cc:content-transfer-encoding:message-id:references:to; s=pair-202401062137; bh=502IN5sJqaBeXKhm8AIAalrEIeZ5l8/FhNO0X/ndwnY=; b=sBqTIV+MxAOrDsTcnUatbDbhfXlx5tGhe9i/h8wCKUBGthhOj4rOnQzAXJ2lW+kgoGnMevFbSMg0DtvkJLXrPmS/6s5dCGRI5w8sUMEYW33iU4yxB53rTPAn8FOl9drJzgjiUA8p2z46vFflBaVe3Gs3jZH2J6Og24OURFUhS1kN4g9fMEaUyJHRgv7KptTh5r8c9Kr5Fw+dopkA7Rbsqp4PbczxYcmEZhhSpU36uqx6g1iMPEfNDTr4xZuD0gr/kuF5AgwiWZS/xrUoRfDJ4TJ32tCvYC+BkYNZdpnwsSvdFTExOhR2k2EU8rmsTDZzaZQJ++skBEf0J+unBo+dwg==
+X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Hi Grant,
+On Feb 12, 2025, at 11:15=E2=80=AFAM, Denis Kenzior <denkenz@gmail.com> =
+wrote:
+> On 2/11/25 11:52 PM, Grant Erickson wrote:
+>> This may be used by ofono_modem_{g,s}et_integer to get or set the QMI
+>> minimum service request period, in microseconds, modem property.
+>> ---
+>>  drivers/qmimodem/qmi.h | 2 ++
+>>  1 file changed, 2 insertions(+)
+>> diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+>> index 69698ee049c6..0c786ed065a3 100644
+>> --- a/drivers/qmimodem/qmi.h
+>> +++ b/drivers/qmimodem/qmi.h
+>> @@ -43,6 +43,8 @@
+>>  #define QMI_SERVICE_RMS 225 /* Remote management service */
+>>  #define QMI_SERVICE_OMA 226 /* OMA device management service */
+>>  +#define QMI_PROP_MIN_REQ_PERIOD_US "QMIMinReqPeriodUs"
+>> +
+>=20
+> This doesn't really belong here.  Properties that are communicated =
+between udevng and gobi/qrtrqmi are documented above the probe() method =
+implementation. Also, maybe 'RequestThrottleTimeUs'?
 
-On 2/11/25 11:52 PM, Grant Erickson wrote:
-> The Quectel Wireless Solutions Co., Ltd. (2c7c) BG96 CAT-M1/NB-IoT
-> modem (0296) has a firmware issue where it can lock up and hang (not
-> responding to subsequent commands) due to high QMI service request
-> arrival rates. If the vendor and model match those, then rate limit
-> QMI service requests to no more than one every 2,000 us.
-> ---
->   plugins/udevng.c | 14 ++++++++++++++
->   1 file changed, 14 insertions(+)
-> 
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index 64875a47752b..e7cf494a70ff 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -1118,6 +1118,20 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
->   
->   	DBG("%s", modem->syspath);
->   
-> +	/*
-> +	 * The Quectel Wireless Solutions Co., Ltd. (2c7c) BG96
-> +	 * CAT-M1/NB-IoT modem (0296) has a firmware issue where it can
-> +	 * lock up and hang (not responding to subsequent commands) due to
-> +	 * high QMI service request arrival rates. If the vendor and model
-> +	 * match those, then rate limit QMI service requests to no more
-> +	 * than one every 2,000 us.
-> +	 */
-> +	if (g_strcmp0(modem->vendor, "2c7c") == 0) {
+Noted, will change this in a v2 patch set.
 
-Please use ell for all new code.  l_streq0 or so.
+Best,
 
-> +		if (g_strcmp0(modem->model, "0296") == 0) {
-> +			ofono_modem_set_integer(modem->modem, "QMIMinReqPeriodUs", 2000);
-> +		}
-> +	}
+Grant
 
-The {} are unnecessary.
+--=20
+Principal
+Nuovations
 
-> +
->   	for (list = modem->devices; list; list = g_slist_next(list)) {
->   		const struct device_info *info = list->data;
->   		const char *subsystem =
+gerickson@nuovations.com
+https://www.nuovations.com/
 
-Regards,
--Denis
