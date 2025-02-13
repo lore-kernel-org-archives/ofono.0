@@ -1,29 +1,29 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ADDD04414
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 00:04:18 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D32CEEC4
+	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 00:08:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739405060; cv=none; b=MdQM3wzJU7vhYFwwZV0V+LpCZIk2MlC+WYACMpZcBQqc4vyfB26QLnxUBzc7j4Ehr5OjhtcMUs5c2FnadDpIKcKfPejvkeDgoEatyV57HhOFWDNShtKVRA8VHJtJB6W1Nk3/vR+2LVQjtrobR4F13Jf8NDEcA8I7bjr9PVSNabw=
+	t=1739405292; cv=none; b=AuXFGnvtLCvJVt6Ol1J0NPSuE2Jx+Q9Y3JusVivBIBAeTZIph0SaYDg6B41AoGZ/EAHW04Pwfgw352SNBBOm7sX0onguZsofuyOGam0qbM9JUXHHUZusbYecRP/QlwL0IzxhTIyxpbrhTyiu0sgFKJ+z0R2JQgg+UIIo1tuSz3k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739405060; c=relaxed/simple;
-	bh=jXX0AuRujJ/yr2zzm7auGjzZH7dlpox6oHXUyGl361c=;
+	s=arc-20240116; t=1739405292; c=relaxed/simple;
+	bh=kyO3yEKEOH3ygb2uQ6TVtZEgkSYwyKoKUH2HNLHlMb4=;
 	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=jaMsZ96KB2uZwlJE9dINWaYoY+1vdOvcy+a+8Bwwjh5Wn+sbgkzcUC9bpV/8mwvPYUKirUV7ydC7DeIyKds9wlfwGBDP0ninTZdqBos4VKrx9EYQhBAnc8nWPRFtfQ6q3rcwOJnJPo7Hdwws2RwhRLg2Kvv6grCxqSu0pAvBVjY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=Sw0QuxhN; arc=none smtp.client-ip=66.39.139.36
+	 Message-Id:References:To; b=W7L5RYmBK55HI4yjjzZyFO2GbpaoFB/F7sGclZLywB2MR6k0StZjNojS83mboQL593U27uhTTqDBZx7v+A2NiOU8KxE/nCq9kDLXQX7UVZJT72nngjikQsMNa+3Re6UZwFKu3LibAnzeCniioFhHCiWbp5PArSWOLK+vl4yv1aE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=DfokSsBD; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="Sw0QuxhN"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="DfokSsBD"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id C4BA61648AC;
-	Wed, 12 Feb 2025 19:04:17 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTP id E5E391648AC;
+	Wed, 12 Feb 2025 19:08:09 -0500 (EST)
 Received: from smtpclient.apple (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 7935B124F0C;
-	Wed, 12 Feb 2025 19:04:17 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 96B3F125167;
+	Wed, 12 Feb 2025 19:08:09 -0500 (EST)
 Content-Type: text/plain;
 	charset=utf-8
 Precedence: bulk
@@ -32,74 +32,85 @@ List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51.11.1\))
-Subject: Re: [PATCH 03/10] qmi: Added structure for device options.
+Subject: Re: [PATCH 08/10] qmi: Implement QMI service request rate limiting in
+ 'can_write_data'.
 From: Grant Erickson <gerickson@nuovations.com>
-In-Reply-To: <2672a62a-05b2-4720-8af9-f6272d5d7497@gmail.com>
-Date: Wed, 12 Feb 2025 16:04:06 -0800
+In-Reply-To: <382fba22-d60b-4f46-9897-7f674221dec0@gmail.com>
+Date: Wed, 12 Feb 2025 16:07:58 -0800
 Cc: ofono@lists.linux.dev
 Content-Transfer-Encoding: quoted-printable
-Message-Id: <2E84DA59-6E0E-43A0-8353-9A0EFDB49884@nuovations.com>
+Message-Id: <1CE7F093-091F-411C-9026-DDD3EA63EA47@nuovations.com>
 References: <cover.1739339173.git.gerickson@nuovations.com>
- <92dd49e261569657414c1e43825cbe8928ace900.1739339173.git.gerickson@nuovations.com>
- <2672a62a-05b2-4720-8af9-f6272d5d7497@gmail.com>
+ <1cf82d1527078e71d7a64b4f8caa7c5adad680c7.1739339173.git.gerickson@nuovations.com>
+ <382fba22-d60b-4f46-9897-7f674221dec0@gmail.com>
 To: Denis Kenzior <denkenz@gmail.com>
 X-Mailer: Apple Mail (2.3776.700.51.11.1)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=content-type:mime-version:subject:from:in-reply-to:date:cc:content-transfer-encoding:message-id:references:to; s=pair-202401062137; bh=GZRV071u1ByeEXU52+xh838WYnPlzIWww3PEBlf6SWY=; b=Sw0QuxhNn4PE7tjaGipJZYNbTmxY1Rv+XjEdMGDg9g2BWrPMVD7ytiCTPayk83XQDJ1MbUbu6Q3FP/gM1hNSHLuiUJA5qoBW60IiWxGzNKtB8e3Pz2xPt4s0uCsTZ0deS0SbxwliHBh9oI4KB/3KmoXBIG3zl8cexgZP5xXbdPsN9ZXW2S9f9BLgcemKfXfk99DVW9bDoFpdIkvQpfUv3WyuQA1llUs3j6+hD++98kO/2WcE1ee6eI0zzIAyO8wT2FNRYZ2GRQI+ytartiCuHanzzdkwLawbXaj7ZUbrYDqnRHZqk3hSyKJd1AR6OcytTQC7V929fC8awgxVjtLRnw==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=content-type:mime-version:subject:from:in-reply-to:date:cc:content-transfer-encoding:message-id:references:to; s=pair-202401062137; bh=ErSGpGHVUGtbiCNCVxExCGBMZ74mJ4zS3J7M2aTN0gg=; b=DfokSsBD2QpNHfbJTDPSvJfhUaU0wzq33fpZJTQWiw+kb1wj1LmqWriFAtUztr7WOdYMkmlJFonjIOKWh9vO+Ds3nk2btQxV+ksGXvg/UZVaD24HpssP8iOSrtu2aEBr3PJEN1+GIQ4ICNoEqU/zaxdZV1VWuW3PQx6bOA1LyTS4cSn/YxQYiKaB9VOOpUvpQhWS8zIl6+UwVnTW3os0KWVlwn3RsXdukAdkhUsuUci8zhAWYc5lVQc1y6jcKQAswPhUqDb3GGVZ0YrZ7gm1U5r6fWqorHMtyhG7rTUqrAIDM9li9KSFZ0j41EWTRz9S7uIYxXLqW2gNXDn7RyPcRw==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-On Feb 12, 2025, at 11:21=E2=80=AFAM, Denis Kenzior <denkenz@gmail.com> =
+On Feb 12, 2025, at 11:29=E2=80=AFAM, Denis Kenzior <denkenz@gmail.com> =
 wrote:
 > On 2/11/25 11:52 PM, Grant Erickson wrote:
->> Defines options that may alter the default behavior of the QMI driver
->> for a specific, instantiated device.
+>> Determine if we need to rate-limit QMI services requests to a
+>> transport-specific minimum request period. If so, return true so that
+>> the queue can be retried again later.
 >> ---
->>  drivers/qmimodem/qmi.h | 19 +++++++++++++++++++
->>  1 file changed, 19 insertions(+)
->> diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
->> index 913035897ea4..3f60e90c015a 100644
->> --- a/drivers/qmimodem/qmi.h
->> +++ b/drivers/qmimodem/qmi.h
->> @@ -76,6 +76,25 @@ enum qmi_qmux_device_quirk {
->>   QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT =3D 0x01
->>  };
->>  +/**
->> + * Defines options that may alter the default behavior of the QMI
->> + * driver for a specific, instantiated device.
->> + */
->> +struct qmi_qmux_device_options {
->> + /**
->> + * Device-specific "quirk".
->> + */
->> + enum qmi_qmux_device_quirk quirks;
->> +
->> + /**
->> + * If quirks has #QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT set, this
->> + * is the minimum period, in microseconds, in which back-to-back
->> + * QMI service requests may be sent to avoid triggering a
->> + * firmware lock up and hang.
->> + */
->> + unsigned int min_req_period_us;
+>>  drivers/qmimodem/qmi.c | 17 +++++++++++++++++
+>>  1 file changed, 17 insertions(+)
 >=20
-> Why do you need both?  Isn't setting min_req_period_us non-zero =
-enough?  Also, strictly speaking this may also apply to qrtr devices.  =
-Maybe just add
-> bool qmi_qmux_device_set_request_throttle(device, us_time) ...?
+> Patches 5, 6 and 8 should belong in the same commit.  Prefer to group =
+new member definitions with their first use.
 
-Denis,
+Noted. I=E2=80=99ll coalesce these in a v2 patch set.
 
-I had originally started with a hard-coded 1,000 us value and the quirk =
-flag just determined whether that value and functionality was used or =
-not (in effect, making it nullable).
+>> diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+>> index 00086578da10..591129c252e3 100644
+>> --- a/drivers/qmimodem/qmi.c
+>> +++ b/drivers/qmimodem/qmi.c
+>> @@ -665,8 +665,23 @@ static bool can_write_data(struct l_io *io, void =
+*user_data)
+>>  {
+>>   struct qmi_transport *transport =3D user_data;
+>>   struct qmi_request *req;
+>> + const uint64_t now =3D l_time_now();
+>> + uint64_t delta =3D 0;
+>>   int r;
+>>  + /*
+>> + * Determine if we need to rate-limit commands to a
+>> + * transport-specific minimum request period. If so,
+>> + * return true so that the queue can be retried again
+>> + * later.
+>> + */
+>> + if (transport->last_req_sent_time_us !=3D 0) {
+>=20
+> Shouldn't this check min_req_period_us first, before incurring =
+l_time_now overhead?
 
-However, after realizing during further testing that the 1,000 us value =
-didn=E2=80=99t work past 60 back-to-back tests and needed to be bumped =
-to 2,000 us, I added the ability to parameterize the value at the driver =
-level and figured that quirk flags were valuable enough a construct to =
-stay as-is where future quirk flags might be added.
+I=E2=80=99d originally had this in a pre-submit draft. That=E2=80=99s a =
+good optimization; noted for v2.
 
-More abstractly, I like that the quick flag makes the value explicitly =
-nullable. I tend to not otherwise like =E2=80=9Cmagic=E2=80=9D sentinel =
-values (in this case, zero).
+>> + delta =3D l_time_diff(now, transport->last_req_sent_time_us);
+>> +
+>> + if (delta < transport->min_req_period_us)
+>> + return true;
+>> + }
+>> +
+>=20
+> Something like:
+> if (throttling_enabled) {
+> now =3D l_time_now();
+> delta =3D l_time_diff(now, transport->last_req_sent_time_us);
+>=20
+> if (delta < min_req_period_us)
+> return true;
+> ^^^^ Note, that this is a poor approach since it just busy-loops the =
+event-loop until the throttle time gate expires.  Much better would be =
+to use some sort of timeout.
+
+Noted. I=E2=80=99d debated a timeout / timer approach; however, it =
+seemed much more complicated in terms of its impact on the send / =
+dequeue path, so I went with this approach first to validate the =
+concept.
 
 Best,
 
