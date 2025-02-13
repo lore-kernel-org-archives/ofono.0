@@ -1,35 +1,35 @@
-Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B79542661B1
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 20:55:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F1C14266B5A
+	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 21:00:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739480131; cv=none; b=tHe0bBmo1huhsBZaLwZXFnnmLv40fLSysGjkvxE/DTisNJP65yfUuH4FrFvGxIJWzSGkP5pfFto2D2P1YBAJzpxHTGI2QRdkwbTN8H/VEJO2HbrKx46ARj5IIf34JQJD5zD9Shnw85AqDnQJ4hzhdHaL4dbQlj0eQ+0cDcxpR9A=
+	t=1739480412; cv=none; b=ivxs3DTcwJFnaSPTd6x6OZsLWhfGLeiwIHwhUkKyJeptqErMxZR2EE+3hTho1iImJX+0WIm2U4Bw2/MLfL0oPTVTD3yh6e/SPCJu9hbVGAYjnxM3r2MZTZaJ+YRAwvqhMlXhJFuNj54G54oZNHNiDx9jkWzYc1Mj6V/UEdw0s/s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739480131; c=relaxed/simple;
-	bh=0yOBFFXGQYHejCbF0FCClcrLDAwrrJ6Hs8TsFJuj0K4=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=joVkYq593JHJsqnflV6Redc54bz0qyMn7dASCwgrfk4MEI7zZbwsGf1pdc2dPR13UMOMzSkEZAVdaimBM+6LJ0koKGAztGdF325fJjUw6d6ccIWjaNEp8ycurykDgJNNqYA08kQ6W3IntY849oNBSpyxQa3Tm9jQEV3F5NpYLz8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=VcClLTqz; arc=none smtp.client-ip=66.39.139.36
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
+	s=arc-20240116; t=1739480412; c=relaxed/simple;
+	bh=js5LccS39b5y3i5aBalVsaV+q22cr+HTdKduVsrxYmE=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=Jq0EPq/HADvXiX31yWMPqHqXOH8DPgn54/l/DIssmv1ZE6hvXIpDnY9tsm3p/l8UnPNjJTTks/Lo+aUDuZhqC/p2KyXa4KvpVeAMKAtq+arIa/EB4FZMnrb7HgC4V/h+xABB/KV9s9ZJ8SaK6UJ94RFkSxzVYp1R3iexWtbdvl0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ebD71yyj; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="VcClLTqz"
-Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 8BD1716499F
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 15:55:27 -0500 (EST)
-Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id AF73E124EE1
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 15:55:25 -0500 (EST)
-From: Grant Erickson <gerickson@nuovations.com>
-To: ofono@lists.linux.dev
-Subject: [PATCH] data: AT&T 'data device' public APN.
-Date: Thu, 13 Feb 2025 12:55:24 -0800
-Message-ID: <e140e827103cd893938e0c113bc38b2c1f4f28b0.1739480113.git.gerickson@nuovations.com>
-X-Mailer: git-send-email 2.45.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ebD71yyj"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 76065C4CED1;
+	Thu, 13 Feb 2025 21:00:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1739480411;
+	bh=js5LccS39b5y3i5aBalVsaV+q22cr+HTdKduVsrxYmE=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=ebD71yyjjx9BTP2is28phEHTbK+P+EDOHHScvuE1owrcBL71UidM99v3FnXE+12xD
+	 GlD6T5SbPeKTZfXcPE5I4FCkPdTtnbXy+j4OVp0Ar0ng1mfeqi434AYwNltakq7NEA
+	 uBxN+PfwxIwM7MZ9rtFuljAD9mF1hZumFbU8YcSOOxGkMI9JBjirS6H31ZvbDoC3Sw
+	 iP9Cvbo5ttEPFPgP/P6Pusc5ATdh4SYENeSi6NTlaEpFnr4r040gdM/Zvxpn+c/WDg
+	 QjKB+48hFu0714mPCi7nrqRRT69bnC7dZ5v8wM4v8rMvTP/sLhINBGG0hxN/NPT/Ct
+	 4hMUs8aAOWBxg==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id EB2BA380CEF1;
+	Thu, 13 Feb 2025 21:00:41 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,51 +37,40 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=p7cjOyESboZfo6P5Ma1AnKK1z9dLlQIgjhzJE/nFirc=; b=VcClLTqzHH/S6f8eelNjtL2uq7Lzq3Qh8vWqWtTlL1E+sG9bMlXrPuvG/YEoKS1kLA9PJJtMlZRqfKRUcN+Xxro/AbCtqd2M6kisvztVEnNmyw44StPeRExA33syqoLyN3H8dfleBLSHGA9sFPJ5O0y2EvgS2vb8pVsOF2NHk5S2FzzqwhAhKYzf+p7CSwDR2wz+8ZZMzSQxoWvXyxdxNCxEutWv1TLkV/O7+3RAANGpV5JQw7Q7kqk6lz5IxKkGLLJirdjL7rAnR+OWtdGnJl0VvdOCFZzojIfcyO9GojjLBwQxCcAUXXY8rKYZpgy/LCFHTqXbGNKW8Iu1FkvReg==
-X-Scanned-By: mailmunge 3.10 on 66.39.139.36
+Subject: Re: [PATCH] data: Add 310 030 MCC/MNC (HNI) as AT&T.
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <173948044079.1373628.2383733173984484210.git-patchwork-notify@kernel.org>
+Date: Thu, 13 Feb 2025 21:00:40 +0000
+References: <bbfc59214e9740499221d0084dd7a223b1583a47.1739475286.git.gerickson@nuovations.com>
+In-Reply-To: <bbfc59214e9740499221d0084dd7a223b1583a47.1739475286.git.gerickson@nuovations.com>
+To: Grant Erickson <gerickson@nuovations.com>
+Cc: ofono@lists.linux.dev
 
-Per AT&T documentation at
-<https://www.att.com/support/article/wireless/KM1062162/>, AT&T
-currently has three "public" APNs:
+Hello:
 
-    1. 'ENHANCEDPHONE'
-       - For 5G smart phone devices.
+This patch was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
 
-    2. 'NXTGENPHONE'
-       - For 4G / LTE smart phone devices.
+On Thu, 13 Feb 2025 11:35:00 -0800 you wrote:
+> The 310 030 MCC/MNC (HNI) for the GSM 850 MHz band was acquired by
+> AT&T Mobility from Centennial Wireless; however, at the time of this
+> commit and as of "ITU Operational Bulletin No. 1280", published
+> 2023-11-15, AT&T has formally withdrawn this MNC and the status of
+> this MNC is non-operational.
+> 
+> Nonetheless, "AT&T Business" SIMs issued have SIM IMSIs prefixed with
+> 310 030.
+> 
+> [...]
 
-    3. '[Bb]roadband'
-       - For "data devices" such as Wi-Fi hotspots or IoT/M2M devices.
+Here is the summary with links:
+  - data: Add 310 030 MCC/MNC (HNI) as AT&T.
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=d2dd983e0686
 
-The first two are already in the provisioning database; this adds the
-third under the tag `kore-public` since the AT&T mobile virtual
-network operator (MVNO) KORE Wireless recommends this AT&T public APN
-for users of its issued "AT&T Business" SIMs and since there is
-already a generic 'm2m'-tagged entry with the same types.
----
- data/provision.json | 9 +++++++++
- 1 file changed, 9 insertions(+)
-
-diff --git a/data/provision.json b/data/provision.json
-index 50319cf33a51..0cb6b8c3dffc 100644
---- a/data/provision.json
-+++ b/data/provision.json
-@@ -14183,6 +14183,15 @@
-         "mmsproxy": "proxy.mobile.att.net:80",
-         "tags": "5g"
-       },
-+      {
-+        "name": "AT&T MVNO IoT/M2M (Public)",
-+        "apn": "broadband",
-+        "type": [
-+          "internet",
-+          "ia"
-+        ],
-+        "tags": "kore-public"
-+      },
-       {
-         "name": "AT&T M2M",
-         "apn": "m2m005246.attz",
+You are awesome, thank you!
 -- 
-2.45.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
