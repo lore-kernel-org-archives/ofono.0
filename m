@@ -1,29 +1,29 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85BE02C190
-	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 00:00:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ADDD04414
+	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 00:04:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739404842; cv=none; b=kC6lKm5cUfCBW9Ma5KOdhMeYr+Oq8VCfrzrEs6OUu53wPBDWPNmXNv9NycQtqmlJbFwKTgP8AAnupPpRzYXDbchUMGeXo2EI1ax2LA7YKnPzMiWeZvSt6qZf21MmetGlZ/eG46U78BLjhqFANRuyYOLYnXPU+H+WPpNg6TUvTrw=
+	t=1739405060; cv=none; b=MdQM3wzJU7vhYFwwZV0V+LpCZIk2MlC+WYACMpZcBQqc4vyfB26QLnxUBzc7j4Ehr5OjhtcMUs5c2FnadDpIKcKfPejvkeDgoEatyV57HhOFWDNShtKVRA8VHJtJB6W1Nk3/vR+2LVQjtrobR4F13Jf8NDEcA8I7bjr9PVSNabw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739404842; c=relaxed/simple;
-	bh=Ye4ujEDHMLMk8Yd8e+ccnHviaxBm7BcUSWyqGOs+6us=;
+	s=arc-20240116; t=1739405060; c=relaxed/simple;
+	bh=jXX0AuRujJ/yr2zzm7auGjzZH7dlpox6oHXUyGl361c=;
 	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=JkeaHQVHCaVjJy1VYB6OArnP1nJv/yEO7/7FayJp+yzl8Iihkdo4rXSGciaW6q8IaSUPqDHqAJTa4GV4hCtBsUz3dD6jvh6pOql3cZPI3rV/EATiync4iaX8KScZs2iRC7S+Rig0d2nIjcIeZm0O0h3TK+u89U6j41qwvp5j0PE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=sBqTIV+M; arc=none smtp.client-ip=66.39.139.36
+	 Message-Id:References:To; b=jaMsZ96KB2uZwlJE9dINWaYoY+1vdOvcy+a+8Bwwjh5Wn+sbgkzcUC9bpV/8mwvPYUKirUV7ydC7DeIyKds9wlfwGBDP0ninTZdqBos4VKrx9EYQhBAnc8nWPRFtfQ6q3rcwOJnJPo7Hdwws2RwhRLg2Kvv6grCxqSu0pAvBVjY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=Sw0QuxhN; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="sBqTIV+M"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="Sw0QuxhN"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 96E31164922;
-	Wed, 12 Feb 2025 19:00:39 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTP id C4BA61648AC;
+	Wed, 12 Feb 2025 19:04:17 -0500 (EST)
 Received: from smtpclient.apple (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 4C3E4124FD3;
-	Wed, 12 Feb 2025 19:00:39 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 7935B124F0C;
+	Wed, 12 Feb 2025 19:04:17 -0500 (EST)
 Content-Type: text/plain;
 	charset=utf-8
 Precedence: bulk
@@ -32,45 +32,74 @@ List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51.11.1\))
-Subject: Re: [PATCH 01/10] qmi: Added minimum service request period property
- string.
+Subject: Re: [PATCH 03/10] qmi: Added structure for device options.
 From: Grant Erickson <gerickson@nuovations.com>
-In-Reply-To: <d2b9a654-790e-4629-b1c3-53409ca694e8@gmail.com>
-Date: Wed, 12 Feb 2025 16:00:28 -0800
+In-Reply-To: <2672a62a-05b2-4720-8af9-f6272d5d7497@gmail.com>
+Date: Wed, 12 Feb 2025 16:04:06 -0800
 Cc: ofono@lists.linux.dev
 Content-Transfer-Encoding: quoted-printable
-Message-Id: <99653208-7699-4721-8769-CFB7B036D749@nuovations.com>
+Message-Id: <2E84DA59-6E0E-43A0-8353-9A0EFDB49884@nuovations.com>
 References: <cover.1739339173.git.gerickson@nuovations.com>
- <78fcde63abae5551db9893dbfbaca842e4d38b32.1739339173.git.gerickson@nuovations.com>
- <d2b9a654-790e-4629-b1c3-53409ca694e8@gmail.com>
+ <92dd49e261569657414c1e43825cbe8928ace900.1739339173.git.gerickson@nuovations.com>
+ <2672a62a-05b2-4720-8af9-f6272d5d7497@gmail.com>
 To: Denis Kenzior <denkenz@gmail.com>
 X-Mailer: Apple Mail (2.3776.700.51.11.1)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=content-type:mime-version:subject:from:in-reply-to:date:cc:content-transfer-encoding:message-id:references:to; s=pair-202401062137; bh=502IN5sJqaBeXKhm8AIAalrEIeZ5l8/FhNO0X/ndwnY=; b=sBqTIV+MxAOrDsTcnUatbDbhfXlx5tGhe9i/h8wCKUBGthhOj4rOnQzAXJ2lW+kgoGnMevFbSMg0DtvkJLXrPmS/6s5dCGRI5w8sUMEYW33iU4yxB53rTPAn8FOl9drJzgjiUA8p2z46vFflBaVe3Gs3jZH2J6Og24OURFUhS1kN4g9fMEaUyJHRgv7KptTh5r8c9Kr5Fw+dopkA7Rbsqp4PbczxYcmEZhhSpU36uqx6g1iMPEfNDTr4xZuD0gr/kuF5AgwiWZS/xrUoRfDJ4TJ32tCvYC+BkYNZdpnwsSvdFTExOhR2k2EU8rmsTDZzaZQJ++skBEf0J+unBo+dwg==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=content-type:mime-version:subject:from:in-reply-to:date:cc:content-transfer-encoding:message-id:references:to; s=pair-202401062137; bh=GZRV071u1ByeEXU52+xh838WYnPlzIWww3PEBlf6SWY=; b=Sw0QuxhNn4PE7tjaGipJZYNbTmxY1Rv+XjEdMGDg9g2BWrPMVD7ytiCTPayk83XQDJ1MbUbu6Q3FP/gM1hNSHLuiUJA5qoBW60IiWxGzNKtB8e3Pz2xPt4s0uCsTZ0deS0SbxwliHBh9oI4KB/3KmoXBIG3zl8cexgZP5xXbdPsN9ZXW2S9f9BLgcemKfXfk99DVW9bDoFpdIkvQpfUv3WyuQA1llUs3j6+hD++98kO/2WcE1ee6eI0zzIAyO8wT2FNRYZ2GRQI+ytartiCuHanzzdkwLawbXaj7ZUbrYDqnRHZqk3hSyKJd1AR6OcytTQC7V929fC8awgxVjtLRnw==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-On Feb 12, 2025, at 11:15=E2=80=AFAM, Denis Kenzior <denkenz@gmail.com> =
+On Feb 12, 2025, at 11:21=E2=80=AFAM, Denis Kenzior <denkenz@gmail.com> =
 wrote:
 > On 2/11/25 11:52 PM, Grant Erickson wrote:
->> This may be used by ofono_modem_{g,s}et_integer to get or set the QMI
->> minimum service request period, in microseconds, modem property.
+>> Defines options that may alter the default behavior of the QMI driver
+>> for a specific, instantiated device.
 >> ---
->>  drivers/qmimodem/qmi.h | 2 ++
->>  1 file changed, 2 insertions(+)
+>>  drivers/qmimodem/qmi.h | 19 +++++++++++++++++++
+>>  1 file changed, 19 insertions(+)
 >> diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
->> index 69698ee049c6..0c786ed065a3 100644
+>> index 913035897ea4..3f60e90c015a 100644
 >> --- a/drivers/qmimodem/qmi.h
 >> +++ b/drivers/qmimodem/qmi.h
->> @@ -43,6 +43,8 @@
->>  #define QMI_SERVICE_RMS 225 /* Remote management service */
->>  #define QMI_SERVICE_OMA 226 /* OMA device management service */
->>  +#define QMI_PROP_MIN_REQ_PERIOD_US "QMIMinReqPeriodUs"
+>> @@ -76,6 +76,25 @@ enum qmi_qmux_device_quirk {
+>>   QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT =3D 0x01
+>>  };
+>>  +/**
+>> + * Defines options that may alter the default behavior of the QMI
+>> + * driver for a specific, instantiated device.
+>> + */
+>> +struct qmi_qmux_device_options {
+>> + /**
+>> + * Device-specific "quirk".
+>> + */
+>> + enum qmi_qmux_device_quirk quirks;
 >> +
+>> + /**
+>> + * If quirks has #QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT set, this
+>> + * is the minimum period, in microseconds, in which back-to-back
+>> + * QMI service requests may be sent to avoid triggering a
+>> + * firmware lock up and hang.
+>> + */
+>> + unsigned int min_req_period_us;
 >=20
-> This doesn't really belong here.  Properties that are communicated =
-between udevng and gobi/qrtrqmi are documented above the probe() method =
-implementation. Also, maybe 'RequestThrottleTimeUs'?
+> Why do you need both?  Isn't setting min_req_period_us non-zero =
+enough?  Also, strictly speaking this may also apply to qrtr devices.  =
+Maybe just add
+> bool qmi_qmux_device_set_request_throttle(device, us_time) ...?
 
-Noted, will change this in a v2 patch set.
+Denis,
+
+I had originally started with a hard-coded 1,000 us value and the quirk =
+flag just determined whether that value and functionality was used or =
+not (in effect, making it nullable).
+
+However, after realizing during further testing that the 1,000 us value =
+didn=E2=80=99t work past 60 back-to-back tests and needed to be bumped =
+to 2,000 us, I added the ability to parameterize the value at the driver =
+level and figured that quirk flags were valuable enough a construct to =
+stay as-is where future quirk flags might be added.
+
+More abstractly, I like that the quick flag makes the value explicitly =
+nullable. I tend to not otherwise like =E2=80=9Cmagic=E2=80=9D sentinel =
+values (in this case, zero).
 
 Best,
 
