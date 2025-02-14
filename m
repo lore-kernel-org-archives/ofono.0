@@ -1,137 +1,79 @@
-Received: from mail-ot1-f52.google.com (mail-ot1-f52.google.com [209.85.210.52])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D66AC15749C
-	for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 15:29:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CEE0526868B
+	for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 17:22:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739546987; cv=none; b=bzFZQ51Cw52lIauibIK1bXufOn16Wn5FnNNurR+uDWVXFSuyAOzhQzEHqCqxgNf0Y3IFKC3QyY0oURhgmxqt3A5R4/5Rk1tnSlR6yswY/80IbqNCf/xFTPJ3C/aASoxmMhdnonXI27mmJ4iuuRO7/8GGj89YzGWFvbPyYXyPV4A=
+	t=1739553766; cv=none; b=DbpSJsbH7orImbaZpXMDFFNWhsNCpXeFsrt8oI99uS0TzY0xYcSD0Rl2ThsxlhKoSQmwOMjW3DcYlf+Pxg4I6+bKwjTYVyUiFt7H2E/sNsVRdYt8Z+HQ8X9JbAtFzbK4FUA7dBgjVnkauicTIOsgata0jxHtCNHivRFSfy0CouQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739546987; c=relaxed/simple;
-	bh=vPPXcWTpzMa0AshoZt1kk8+jdhEUi+hIrhEuM1AxMDI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=N4jo99F/2OiXeoqtMHEqwe6hoisotLZ9fnMNNZzdDdMWjPpWSPp05WSVVtNYgqqNh84NECQ/woop0i2mF1tng37x1ccpF/TzKxG5xjOWVnqClLpA8dNEbyyP/2T1m8Qg7iCD7fOpodiS+NEvnDFkGwnzj/nJTf/YDS58Du9B03Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cEhvwvI5; arc=none smtp.client-ip=209.85.210.52
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1739553766; c=relaxed/simple;
+	bh=JZLyXfNnx1FSbO3X4ylJSWONausuDVPL2RJGzxRi67c=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=GUVa7EPPZdgduzMgEEoMjmXgsbww4F41xyDXfTNt9g81nUMhHWMqgTBtc9hjMj81b/iQJqZ/FfpR1SO4tQruJpM6+gGKRsd0lH1F85/FtBy0OZwlwDdsUkcDWAORt1aBrNk6IbI5lZJDuQ9XECOB6uViEfRmv+qKvl6O37RuCsE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=inXFPEYU; arc=none smtp.client-ip=66.39.139.36
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cEhvwvI5"
-Received: by mail-ot1-f52.google.com with SMTP id 46e09a7af769-726ed7a316cso1225926a34.2
-        for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 07:29:44 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1739546984; x=1740151784; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=Ax66SL5P70iubyrnw8N7LqqVxcH2zDAkInhZFfR1HSg=;
-        b=cEhvwvI5VqdEdKiEAwaJo6QkIrWXDxWTwQvTToEidlMk8MH8Na76CjT+IAC7xyXVUb
-         RUZaecVQNX2LTfCZCxFNfaV81YgClyoxyoHM7XTIpF8TkDf2es4gBwxWb0QscLpjwVZQ
-         5u+2iF+WWLC9QWkOA0nFmyzcOxl+CAiAbLrxeLS6YnOVe7iDo6EPpvCh+W5OttKrWSUI
-         gvk8jsdzux4o9BxFi2mlkrIwD2YovGDVvLWLeriRJvqJccnoTFBZqtdCCwsMbwNI5egh
-         VkeMvP13Df7CLpvqbmHL6I8uSBGSxlmh5CbtK00et9rK4SutQ4lJM66Iqc+RXsKX8r5A
-         a89A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739546984; x=1740151784;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Ax66SL5P70iubyrnw8N7LqqVxcH2zDAkInhZFfR1HSg=;
-        b=K/qvt88ho9XpnbMGQSP/HDZR4BYqAJB4GyoaSA0+ecxrCxeD5LbNeYPiV9Y1sY2pGL
-         6DBJDqyLHZxf+WDHj3KW5kts28In4j5BenWzohb/MBEvR3Z6M+aF/LQKiU825bUsFQMI
-         AHwXva6LVMSNZgu3GzGXHiRc5ZMoTE9RAk+T47CG5MqZBJVPKxaySLoQd/2N70K/87ux
-         7sEv7kspJJu8l4aQDi2+R7igx9oPTzdm9RjxQinTNi4747wjiLTS14mDGHaTM9CpTBF1
-         PrHSaLjjGP9FBX5HmkfmMP72giA3dfiBbvC0+tCbz5htrnAj2P7B+MXf9Kl/pDGVbMnW
-         GFjw==
-X-Forwarded-Encrypted: i=1; AJvYcCVuLjh4sUMYpM7sirC7OV7pz5ugWa6p/TiXLHdooQG1fiaXerfi78ExEHqQ4qZc30nnW2SKTg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwJycAS6nuNa4yCAif1aPK+2NZJkNGZezsiNsqMsNWpXJQMHnL1
-	LxSWiYLUk8mhpAOMn5LeOtJ9ZVtb8MJb+CueOGafyhJ4teOUh+6yV++78A==
-X-Gm-Gg: ASbGncvKEbc331lF43dGhjJZEIlv9YbZFCcQnsa+mxenvLvGXo45z33Zl/hhFfT5xvp
-	dwIL+u7IM41zHpT+35PWdWjIrX10PuoHFz0DxuYUOH+zm771WBBWhkn4qJOlnPBsANhFmzhkjob
-	5yZJxMnP5h1xUrcHeoFmdmbb8YKzM9u/zE5W+HNjcOaAk1rVQek8M8ofQUkLAoaRsXrd0upiSxN
-	wYgfRowb1/xI5ZADX3rVZ5WjYkUlFhMuc3d+hEIoiAnwd2iMbRJg44STn/jDorGqTnMKBpQZnvy
-	bwARVy6OMMQm5QXHQamQVfPwfFCfmSWGnJTs8A23i0b1kO8H/OgTUNAk
-X-Google-Smtp-Source: AGHT+IF9VPTf7O2sFytfyqrI2lSt43thiomyKxKM55HR81AHX38Z0XfuHYZJyrgxlhwJed7stpVrkw==
-X-Received: by 2002:a05:6830:349c:b0:727:dd8:ed01 with SMTP id 46e09a7af769-7270dd8eddbmr1231202a34.21.1739546983830;
-        Fri, 14 Feb 2025 07:29:43 -0800 (PST)
-Received: from [192.168.1.25] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 46e09a7af769-727104af7d6sm79119a34.65.2025.02.14.07.29.43
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 14 Feb 2025 07:29:43 -0800 (PST)
-Message-ID: <bee3deed-8285-4452-9c14-c40b60c06ade@gmail.com>
-Date: Fri, 14 Feb 2025 09:29:42 -0600
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="inXFPEYU"
+Received: from mail5.g24.pair.com (localhost [127.0.0.1])
+	by mail5.g24.pair.com (Postfix) with ESMTP id C4C4B164953
+	for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 12:22:42 -0500 (EST)
+Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 753CE124F0D
+	for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 12:22:42 -0500 (EST)
+From: Grant Erickson <gerickson@nuovations.com>
+To: ofono@lists.linux.dev
+Subject: [PATCH v4 0/7] Add QMI Device Service Request Rate-limit Option
+Date: Fri, 14 Feb 2025 09:22:34 -0800
+Message-ID: <cover.1739553712.git.gerickson@nuovations.com>
+X-Mailer: git-send-email 2.45.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 4/7] qmi: Implement QMI service request rate limiting
- in 'can_write_data'.
-To: Grant Erickson <gerickson@nuovations.com>, ofono@lists.linux.dev
-References: <cover.1739509438.git.gerickson@nuovations.com>
- <31c04f926af6ddfe0e244c2d6b0999ee9442659a.1739509438.git.gerickson@nuovations.com>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <31c04f926af6ddfe0e244c2d6b0999ee9442659a.1739509438.git.gerickson@nuovations.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=8fisuG479cyLTgJNl3onan2DjRZhDbVOW7LRJ0/Depo=; b=inXFPEYUbHHcpr+5dXU2gdyefBbSlHRzPONGC10PQKJyLMBJdqoelOQ+HGcBIkwaorsbIIQqDj9zsXJAZI/9Eq9NozYWJVt20deRGi0Oq1siyHgopZip8/QKfg5CLdTGPz86TSOrzjuVdeX4OLgcrQjBdQSe2E+qHc7BvbmA4+9pRMbzKid0/BuJGzGQGzB455nosDpCfKkodr5YcIE1da59UkRUcpCCUgkG8PqMBhE3vIGTOsepYIJPPUCtYGi9oR809bGvHDMQQWXyDYXyiBBJHxopmsak6Oc8uGl5nAx0qBL5iaiPt6ItoR+qMI17sZmGn3DZLx2b/Kfu4CxLuQ==
+X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Hi Grant,
+Certain modems, among them the Quectel Wireless Solutions Co.,
+Ltd. (2c7c) BG96 CAT-M1/NB-IoT modem (0296), have a firmware issue
+where they can lock up and hang (not responding to subsequent
+commands) due to high QMI service request arrival rates.
 
- >   struct qmi_qmux_device {
-> @@ -653,8 +665,25 @@ static bool can_write_data(struct l_io *io, void *user_data)
->   {
->   	struct qmi_transport *transport = user_data;
->   	struct qmi_request *req;
-> +	const bool throttle_enabled = transport->min_req_period_us > 0;
-> +	uint64_t now = 0;
+QMI service request rate limiting is achieved by:
 
-I think this is still wrong?  There's a reason why we have doc/coding-style.txt 
-item M7.
+1. Adding a new, optional options structure to qmi_qmux_device_new
+   that has its rate-limit "quirk" and minimum request period fields
+   set when the modem "RequestThrottleTimeUs" integer property is set.
 
-> +	uint64_t delta;
->   	int r;
->   
-> +	/*
-> +	 * Determine if we need to rate-limit commands to a
-> +	 * transport-specific minimum request period. If so,
-> +	 * return true so that the queue can be retried again
-> +	 * later.
-> +	 */
-> +	if (throttle_enabled && transport->last_req_sent_time_us != 0) {
+2. Adding logic to the QMI driver that, when a minimum request period
+   is set, limits the QMI service request rate accordingly.
 
-Consider the starting condition:
+(1) and (2) are used by the udevng and gobi plugins such that when the
+modem vendor and model match 2c7c/0296, then the option to rate limit
+QMI service requests is set to no more than one every 2,000 us.
 
-- last_req_sent_time_us -> zero
-- throttle_enabled -> true
+Grant Erickson (7):
+  qmi: Added enumeration for device quirk flags.
+  qmi: Added structure for device options.
+  qmi: Added device options parameter to 'qmi_qmux_device_new'.
+  qmi: Implement QMI service request rate limiting in 'can_write_data'.
+  qmi: Handle request rate limit option in 'qmi_qmux_device_new'.
+  udevng: Set the QMI minimum service request period for Quectel BG96
+    modems.
+  gobi: Pass QMI qmux device options to 'qmi_qmux_device_new'.
 
-We don't enter into this if(), 'now' is still zero.
+ drivers/qmimodem/qmi.c | 48 +++++++++++++++++++++++++++++++++++++++++-
+ drivers/qmimodem/qmi.h | 40 ++++++++++++++++++++++++++++++++++-
+ plugins/gobi.c         | 22 ++++++++++++++++++-
+ plugins/udevng.c       | 14 ++++++++++++
+ 4 files changed, 121 insertions(+), 3 deletions(-)
 
-> +		now = l_time_now();
-> +		delta = l_time_diff(now, transport->last_req_sent_time_us);
-> +
-> +		if (delta < transport->min_req_period_us)
-> +			return true;
-> +	}
-> +
->   	req = l_queue_pop_head(transport->req_queue);
->   	if (!req)
->   		return false;
-> @@ -665,6 +694,9 @@ static bool can_write_data(struct l_io *io, void *user_data)
->   		return false;
->   	}
->   
-> +	if (throttle_enabled)
-> +		transport->last_req_sent_time_us = now;
-> +
+-- 
+2.45.0
 
-throttle_enabled is true, we set last_req_sent_time_us to 0.  In effect your 
-throttling doesn't work...?
-
->   	if (l_queue_length(transport->req_queue) > 0)
->   		return true;
->   
-
-Regards,
--Denis
