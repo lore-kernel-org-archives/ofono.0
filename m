@@ -1,35 +1,35 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA9166AAD
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B8159443
 	for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 00:42:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739493746; cv=none; b=SO1wNav11SYw/QYVABFWgbNMBbwnL217Ank2FdSNbgDqXLd7AfdKviLlXvIIw2p0uUPiNU+P0AuHMZrTzKVe2l2em4yhX6+SpyF0ZsHjP1Q85xO4E1PDKRe2ykhj+A6BOZCDF2J5hu/aKrfqA/hcVI9rxqL91tpYXkHOG/gaN8g=
+	t=1739493746; cv=none; b=ZfqLItAVPRm/Z3CLA8rBxIMEssDtbQLOM6Q/7/JRreF2Nut1riNGTJ5n90Z4xRTupQBTSKr8vhDbiWVNzbGQDCEvq21RtnkRNZJntIA0nFp3J7hh4A/lq0L8XZu7aQE1lOeaQGYkr+g/AgTjYvMfMhDccbpjcexI7so+EJUA2GQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1739493746; c=relaxed/simple;
-	bh=8ayDTWoYV2R6BhlowtlnPs99x01noqG9PkhFuvaPML4=;
+	bh=0nOZ0+u0fOVLLm4E6Mb8BJXLs0+8JDxnbhEuR5dmCGU=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=JCl4GlRB9aCC4tfq2OeTPvX01YdOj22jBLRd84jsM6GKZbxU72GSw/SfeNO0GB96qbDyz/eW+6gn0GmuCUjDnUfM4hpQNMf9vlEEIu+ZmT1O9LaY4h+2qseIATYDDljQCrOClH+e/4nclQ4Mmm+t7SsnJFPs6sbohQ4Nffwb5OY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=QOXClBb+; arc=none smtp.client-ip=66.39.139.36
+	 MIME-Version; b=rEwSvxj4E9v4R51uLAgR1cSnz/e2rm4b+eB4+9jjjyMOquZei6ncF8n/vrEUtHGkpTtKk4nkcGs1tvlG6I8U1RF5MxGNhEi1C/RsLhofNKfPdtfPlHh861Uy2sXCoY6RMmZ5oL+cIko8yQ+jZnXTBwlpzbpsxRFT1mVTuztJWcQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=ZbSBNoaL; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="QOXClBb+"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="ZbSBNoaL"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id E4C0A164A79
+	by mail5.g24.pair.com (Postfix) with ESMTP id 774EF164A4D
 	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 19:42:22 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 9B6EC124B2B
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 2DFE61260CA
 	for <ofono@lists.linux.dev>; Thu, 13 Feb 2025 19:42:22 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH 2/2] data: Add T-Mobile MVNO IoT/M2M 'Private' APN.
-Date: Thu, 13 Feb 2025 16:42:20 -0800
-Message-ID: <1b1a091686b60589ef6832bddec58e62419b3658.1739493541.git.gerickson@nuovations.com>
+Subject: [PATCH 1/2] data: Add T-Mobile MVNO IoT/M2M 'Public' APN.
+Date: Thu, 13 Feb 2025 16:42:19 -0800
+Message-ID: <8346f3cb79a55cd08b45168fa6f8c16b6ee5d21f.1739493541.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <cover.1739493541.git.gerickson@nuovations.com>
 References: <cover.1739493541.git.gerickson@nuovations.com>
@@ -40,7 +40,7 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=bDm4BqhA/wk98J6iheMgga57/+Vd75mlWScr8nKtGVo=; b=QOXClBb+bh5qPnjxPUEVbBxd3IeIpYvF/cqjFSwogvY9m90YNiewfvXvGqmKADkc4ktcbegOiQeVQV22/vfB907NYjOswTtdHkFgkZ0NPCCqWDjfTH6YlDwaoGnfSv3fKSZkxvjd7kwZepqagbYV6xUh5o0VsTqPC5Rl+s2uzISTdcY8wP0lJBrc8yKNAI/6ugXQS1emncOoqhi6nBSIVF8oNh6DIXHqjS/sDjqWuDzCxBoevAfzcPqUrP2yVenDYUlTiQW3pjlnHPQ66vnuLFtFVAoQoyGSHtCTxXeAGhrYnIH5mhCBRQf3ly780PcivXsNXW8couoe31Pdzr3BmQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=GSXdaJ+FS5EK70N+SPMjZGHXBKw/JLrd0i8wDqmqR7M=; b=ZbSBNoaLkR0cIbXUZVl4xs0BUwUJ+8B97UCIx+/zFuCTooAZXvNZWDRAWClrwbUF/nmdOXnCWKytp2hWhxMoqUNdHIO737QteM03f+bIXZqzoWghnIDOCGGzp7CnNnlSCKYY7wirCgIimkBaVBSU9KQEEaHIEs8I6jQWqPOWM2ByYGlpLJ18LDdD/haOdVJvv53ChjSz+7SZE/hTIxWyDADd50HNvYg1tShsttbfsqhHtNGcVM7sI9f5qgA4QJoRkCkfNW+iWexL4ulVknfkN44gohpfkc/JTnPkHCpLdOvl1WMffBbBXfaQxrk8UZ44iKxY2wdl2CRA5WRBV3y+HA==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
 At least in North America / United States, there exist Cellular MVNOs
@@ -75,29 +75,30 @@ In addition, those MVNOs typically have two or three APN schemes:
 KORE Wireless is one such IoT / M2M MVNO that uses AT&T, T-Mobile, and
 Verizon as parent network operators.
 
-This adds a MNVO-specific IoT / M2M APN of type (2) above that is used
-by KORE Wireless for the T-Mobile parent network operator.
+This adds a MNVO-generic IoT / M2M APN of type (1) above that is used
+by KORE Wireless as well as by other MVNOs for the T-Mobile parent
+operator.
 ---
  data/provision.json | 9 +++++++++
  1 file changed, 9 insertions(+)
 
 diff --git a/data/provision.json b/data/provision.json
-index 568055b14233..85e29790c736 100644
+index e74d42a2758b..568055b14233 100644
 --- a/data/provision.json
 +++ b/data/provision.json
-@@ -14251,6 +14251,15 @@
+@@ -14242,6 +14242,15 @@
            "ia"
          ],
-         "tags": "kore-public"
+         "tags": "iot"
 +      },
 +      {
-+        "name": "T-Mobile LTE KORE Wireless MVNO IoT/M2M (Private)",
-+        "apn": "c1.korem2m.com",
++        "name": "T-Mobile LTE KORE Wireless MVNO IoT/M2M (Public)",
++        "apn": "iot.tmowholesale",
 +        "type": [
 +          "internet",
 +          "ia"
 +        ],
-+        "tags": "kore-private"
++        "tags": "kore-public"
        }
      ]
    },
