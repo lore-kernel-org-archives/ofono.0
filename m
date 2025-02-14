@@ -1,129 +1,123 @@
-Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f53.google.com (mail-ot1-f53.google.com [209.85.210.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76AB226772B
-	for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 17:27:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19B921C8622
+	for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 21:08:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739554046; cv=none; b=MWtDn7p9sxtqzTSQUh9T5visLO3nWJ/UeMupGjhUaZCaZfKRyrE1MJjZpvd7krClJ+K+W50ZGBU4sWpBrtUsWGHQuTPOjV968g8o1dkTcz/GsPp59NEdw8BeIp86vE07lgVV/vgI08IufjWKG8BZEYaa7jOgErheNcyq1ebBC5c=
+	t=1739567287; cv=none; b=i0OwnvdqxjjrgtNOztptkpqYpNZp+SkiDZ29OxMQRV3MJipcyQ4ZK5KaT1dsRJQpKvpZrrh5vvTBM5xYLRDmRII4feoefW+TlfGwTp/54RC7ZUQ9LM4uDy+O1K0kTgYW7gnqpixbG7Wiqyp2jy9CSKnt4fX2TMwzfKjaq/FsexU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739554046; c=relaxed/simple;
-	bh=TdM46v39GGQLsvqJW2ybfrF6nTtj6yypNrN/w/DJ+X4=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=HSOonMNtz/EZMJOlwXc6KO+vWNUYknOWBCyEHnrSNDJvECGhAznAGpaCbymETMt4cOi5lMEMC1nNVhGIgRkAwmA/OFTaXOiGFueIXizfuvMGZrstNVXuWorcTikVim8wvCgCWX73IPHmikgB9xcyThc7Pzj4tlJlTaMBXMdayhA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=KlPfMU/V; arc=none smtp.client-ip=66.39.139.36
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
+	s=arc-20240116; t=1739567287; c=relaxed/simple;
+	bh=aa7w9nEDDV+dC/b4Dk4TZv7tGfgvuaDb5sMuITB3M08=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=NbE84wL8i08BvHyLcevb+qeUuszW7bMu9gBUYmGhVb/U+0JWu0YvXxkIIf/kQ8fuftiy1+f20bvAIH9wudQ1NrXG8XZyGVCv4C9Mhee3jdYOVOWAibnjh7HfvaJksuoP5PEVFrhawSnGTpK42MyRpSBYNkVBOw8KjXgCT3uRgxA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VpCLjEl6; arc=none smtp.client-ip=209.85.210.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="KlPfMU/V"
-Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 90641164953;
-	Fri, 14 Feb 2025 12:27:23 -0500 (EST)
-Received: from smtpclient.apple (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 43842124F0D;
-	Fri, 14 Feb 2025 12:27:23 -0500 (EST)
-Content-Type: text/plain;
-	charset=utf-8
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VpCLjEl6"
+Received: by mail-ot1-f53.google.com with SMTP id 46e09a7af769-721d213e2aeso738608a34.3
+        for <ofono@lists.linux.dev>; Fri, 14 Feb 2025 13:08:04 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1739567284; x=1740172084; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=K4DTE1RY/oOG4pUdku4pRefnLMVqpQhLFnG79RW3VtA=;
+        b=VpCLjEl6AcCRXdK2PAZ8+MtD1YT3PN7/jLU9kkWFS3yD3j6OA//fEcg5XkaXLjsSTW
+         c+TB1qmXsClb6W01P5FzqdH3qyVNl/0J6fKRkyeIczVrWLshAtLzbwc5CwXsUeLiqkEw
+         RHnuDozjeC03ytoY3/GILLu4HasiMbLXxZzW/cAW+IPV/x7K5xwnwsGnB/CPOVYCH48g
+         ZXPvWFdSGXapjdy3bY//5I6lovJe/Vx1OoinuSI1t7rF4iwkWYXgMVrvDbpm3nEvMRYI
+         d4yjVxrJvHmcJvY2Os3rUp+Ut5qpJQoj4ZZWK46TTji820AMr4cMwwQXCUzHyeHz3Opo
+         ZW0w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1739567284; x=1740172084;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=K4DTE1RY/oOG4pUdku4pRefnLMVqpQhLFnG79RW3VtA=;
+        b=InQa02TpQJ7MF9XqTOUSdccrkethxKYcEIG6EZX5H/PBHpE6gbq7byiTI87NuP1ifk
+         q8GCviyN3QpHFziil/cJjioEeNb0q67z/SNKf6o7TXRAAGjekQFN+NFIkoKXqTCmYsIS
+         ONF8laT+dLZHKDiOc02AdZ6IzW54HfFbV9kUwQ47nWsod7pkMHBDu8uVYKPE4+pJE41l
+         jHXCCeW/2UfOyGTMAx2DTe/0qnZ6EqqpKZ4nDu2sNLp9n8OP7epz6c+h2KjisHOCnsei
+         CK7f9HSnH91WUIUrUxt9J2vM2OuZ0KgTyjMIQDGgzHvpsLdD+loG/v0TZoQEXnqG7VSz
+         qIuw==
+X-Forwarded-Encrypted: i=1; AJvYcCUXiCJhCw+vGhrTwYJduya2EGsNE5GUKOzgEeKMGi2OdXa/7cbQzaggKiRTqKoHUdbnZfvMAw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxPauxARxnu9Iqg1aO6sikwSUHNu4aq22+PxUhBTwz6QVnxi983
+	1QgnNmcGIPcP2BTemJLvo30Mn0G+TFHQf4H3nA3XkumZQDPDF1QZ
+X-Gm-Gg: ASbGncvBqkENXimzu64ytmCmCNXRjmeGAdUC7XcIozQVC43/uGcN364zxY+y/dkul8k
+	Iup/G6Od9Y8GPPRpZ3xPN7QUwDr05nFlOz/RlIiz+z5XseQM6lkgfebAFhyGPR+piX8fpXhsykt
+	ikvsBd+pOsJzinZjFiyOWRCf+syY91YY+qJF6l1ZKEuBaRI8qQ2YS3d/vaIwIMBaC72cwudB9X5
+	yP/iszhws6cS6yHhu8UnQSJ31v/dF51zekHeyVyuA93bbY0VIuKzhUPIGpSIAJZPIjDU44o+iU1
+	YAJVQV9ezfi7HJ9j6EodYlBummWonsi3DbkoHWZNBtBOIKrB2kbACh1z
+X-Google-Smtp-Source: AGHT+IE8cDSeij7h3uQvLWUb7t7VUUVZZYfbj6bQ+oxCx2V+mmYmikdr1GHCHcr4K+0NWnqAf8IpEQ==
+X-Received: by 2002:a05:6870:a552:b0:29e:37af:c2d7 with SMTP id 586e51a60fabf-2bc99aa832emr353763fac.16.1739567283887;
+        Fri, 14 Feb 2025 13:08:03 -0800 (PST)
+Received: from [192.168.1.25] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-2b95a6bf5e4sm1951914fac.33.2025.02.14.13.08.02
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 14 Feb 2025 13:08:03 -0800 (PST)
+Message-ID: <0fc81066-67e8-4e8a-858d-e92784d72912@gmail.com>
+Date: Fri, 14 Feb 2025 15:08:02 -0600
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51.11.1\))
-Subject: Re: [PATCH v3 4/7] qmi: Implement QMI service request rate limiting
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v4 4/7] qmi: Implement QMI service request rate limiting
  in 'can_write_data'.
-From: Grant Erickson <gerickson@nuovations.com>
-In-Reply-To: <bee3deed-8285-4452-9c14-c40b60c06ade@gmail.com>
-Date: Fri, 14 Feb 2025 09:27:12 -0800
-Cc: ofono@lists.linux.dev
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <468C8C98-64D5-43F0-87FD-F4B9CB63049D@nuovations.com>
-References: <cover.1739509438.git.gerickson@nuovations.com>
- <31c04f926af6ddfe0e244c2d6b0999ee9442659a.1739509438.git.gerickson@nuovations.com>
- <bee3deed-8285-4452-9c14-c40b60c06ade@gmail.com>
-To: Denis Kenzior <denkenz@gmail.com>
-X-Mailer: Apple Mail (2.3776.700.51.11.1)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=content-type:mime-version:subject:from:in-reply-to:date:cc:content-transfer-encoding:message-id:references:to; s=pair-202401062137; bh=QfIHTAaBOj2LYgXDVcoD5erkLdloDERsPJ3QRS4bPgQ=; b=KlPfMU/VorFC4IynQVtouyyIfTIhGcG/QHzFq5g7/f5RHZbrEnPcPpg64gq8zIpvbSSqQUTCuVQTzEMPFkIgVV9BYFvoijaArc3+mS1OhMrhM1u8fWXlMfQSbS2K/Wg0k3qz60yff1BzQD7DG6PZYgSvmMVzWl5QJ48S8/FaK7yUVqKg6g1ApsIDcUVG6yUZPCLDLFvj2qqsLyuPhGmXrOgDHXPxrpQnsSEv5ycbAADA7TtSX9A5w4fFD4l7Nby74vjM+RmHbFH98grJUt7G6ZEObiswknHcsUoE+vjqgGZpNFi1oYX3pY1UbtB5rLT4Q0Z1twTenOpZLVqD49fi7Q==
-X-Scanned-By: mailmunge 3.10 on 66.39.139.36
+To: Grant Erickson <gerickson@nuovations.com>, ofono@lists.linux.dev
+References: <cover.1739553712.git.gerickson@nuovations.com>
+ <35556cf3af8ce161ab6e178bdf4615ee94407bc6.1739553712.git.gerickson@nuovations.com>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <35556cf3af8ce161ab6e178bdf4615ee94407bc6.1739553712.git.gerickson@nuovations.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Feb 14, 2025, at 7:29=E2=80=AFAM, Denis Kenzior <denkenz@gmail.com> =
-wrote:
->=20
->=20
-> Hi Grant,
->=20
-> >   struct qmi_qmux_device {
->> @@ -653,8 +665,25 @@ static bool can_write_data(struct l_io *io, void =
-*user_data)
->>  {
->>   struct qmi_transport *transport =3D user_data;
->>   struct qmi_request *req;
->> + const bool throttle_enabled =3D transport->min_req_period_us > 0;
->> + uint64_t now =3D 0;
->=20
-> I think this is still wrong?  There's a reason why we have =
-doc/coding-style.txt item M7.
->=20
->> + uint64_t delta;
->>   int r;
->>  + /*
->> + * Determine if we need to rate-limit commands to a
->> + * transport-specific minimum request period. If so,
->> + * return true so that the queue can be retried again
->> + * later.
->> + */
->> + if (throttle_enabled && transport->last_req_sent_time_us !=3D 0) {
->=20
-> Consider the starting condition:
->=20
-> - last_req_sent_time_us -> zero
-> - throttle_enabled -> true
->=20
-> We don't enter into this if(), 'now' is still zero.
->=20
->> + now =3D l_time_now();
->> + delta =3D l_time_diff(now, transport->last_req_sent_time_us);
->> +
->> + if (delta < transport->min_req_period_us)
->> + return true;
->> + }
->> +
->>   req =3D l_queue_pop_head(transport->req_queue);
->>   if (!req)
->>   return false;
->> @@ -665,6 +694,9 @@ static bool can_write_data(struct l_io *io, void =
-*user_data)
->>   return false;
->>   }
->>  + if (throttle_enabled)
->> + transport->last_req_sent_time_us =3D now;
->> +
->=20
-> throttle_enabled is true, we set last_req_sent_time_us to 0.  In =
-effect your throttling doesn't work...?
+Hi Grant,
 
-Confirmed, thanks. v4 submitted.
+On 2/14/25 11:22 AM, Grant Erickson wrote:
+> Determine if we need to rate-limit QMI services requests to a
+> transport-specific minimum request period. If so, return true so that
+> the queue can be retried again later.
+> 
+> Adds the following data members to 'qmi_transport':
+> 
+>    * Minimum request period
+>      - The minimum period, in microseconds, for back-to-back QMI
+>        service requests.
+> 
+>    * Last request time
+>      - Time, in microseconds, when the last QMI service request was
+>        sent.
+> 
+> to support the implementation.
+> ---
+>   drivers/qmimodem/qmi.c | 35 +++++++++++++++++++++++++++++++++++
+>   1 file changed, 35 insertions(+)
+> 
 
-I=E2=80=99ve noted that the default ofono warning flags do not highlight =
-the potential conditional issue with =E2=80=99now=E2=80=99 on arm, =
-aarch64, or x86_64 with gcc or clang. If I dial up warnings with -Wall =
--Wextra -Weverything, then I get the warning.
+The CI doesn't like this version either:
 
-With that in mind, do you want =E2=80=99now=E2=80=99 to follow M7 with =
-the default warning flag set or to not follow M7 but ensuring the =
-warning is addressed using default initialization with a non-default set =
-of warning flags?
+Alpine (musl) gcc optimized
+===========================
+Configure: PASS
+Build: FAIL
+     drivers/qmimodem/qmi.c: In function 'can_write_data':
+     drivers/qmimodem/qmi.c:701:50: error: 'now' may be used uninitialized 
+[-Werror=maybe-uninitialized]
+       701 |                 transport->last_req_sent_time_us = now;
+           |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+     drivers/qmimodem/qmi.c:669:18: note: 'now' was declared here
+       669 |         uint64_t now;
+           |                  ^~~
+     cc1: all warnings being treated as errors
+     make[1]: *** [Makefile:4090: drivers/qmimodem/qmi.o] Error 1
+     make[1]: Target 'all-am' not remade because of errors.
+     make: *** [Makefile:2405: all] Error 2
 
-Best,
-
-Grant
-
---=20
-Principal
-Nuovations
-
-gerickson@nuovations.com
-https://www.nuovations.com/
-
+Regards,
+-Denis
