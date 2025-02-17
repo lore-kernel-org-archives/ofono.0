@@ -1,35 +1,38 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F827236A9F
-	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 20:01:57 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D5F1D237701
+	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 20:01:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739822520; cv=none; b=HpfO5jRlgfqbrIxPfH4FyyxgzvvcqSovg/AocGfV1olGHcI1Nu6z+8Dv4M+JInbWCAFYXxUsPufrVxYqMXf6e670pLg39DuZsK+hTa4S6ArPL2irsGxd7GE2QgulGhJUMrTAV4JD+AJ6zJPb04OnRSAjXGvoqQy8p3kwUuJ5szI=
+	t=1739822520; cv=none; b=A6r6ryccZdBMl8xJq66iQxldsp93Rel4r6++iJkVswhx6uA0Pv+tgxEfHq9NwrMoZIQD8CBGqIw/GeV76savzK+mC7s1LlyQjOGr0pqX7m7wJtUQQTm9tjNkeMrk8r6XUhZJQZ8Md/jorb9H8DvJ9QXj23vZjCSkyQmP+MoZuk8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1739822520; c=relaxed/simple;
-	bh=40BTaThAysqwF4VFqK3Qmr4127e5eCs90QxXxkCw75M=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=N5FHruJkPIDCZWCmWd6mYAUaIVZ6vIDJVZ8j+MyRQ1gZxpC3OrWMF33DzoSdK77O3tMychGt4ZZpkeQKDvu5NM5uo6eNWT7TlxsE021XxbPAEONo9ZaW5aZyijsM8o8zEqMs3ap81//Qrzo/+p9KG9gV2O5p0Z3vzoQuxiLOJAc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=IcLb8DBc; arc=none smtp.client-ip=66.39.139.36
+	bh=M5Yt+XgkEhwDsBif7PeTj7L8IDaWFyPdeokkm14HJmE=;
+	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=BYwSPOWcneWbtS/Kgyle4OiLP9B17DZkBbQSN2+xl+Y2hk1Vjfkoef1kHuiMuoycgMwKAoKr6Hace4newEPkHgMDsD8Qp88sF3tM06XK4FGqlm3Q85qf0YUKrJfZnpJTp2js1gQefhuG6HI1egWsvWZHNo3hhIoiCFbo7/4FH4s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=Dgy0C3p4; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="IcLb8DBc"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="Dgy0C3p4"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 9D69C164A94
-	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 15:01:51 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTP id 815A6164A98
+	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 15:01:52 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 4975A124F32
-	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 15:01:51 -0500 (EST)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 361E3124FC9
+	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 15:01:52 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH v5 0/7] Add QMI Device Service Request Rate-limit Option
-Date: Mon, 17 Feb 2025 12:01:43 -0800
-Message-ID: <cover.1739822462.git.gerickson@nuovations.com>
+Subject: [PATCH v5 2/7] qmi: Added structure for device options.
+Date: Mon, 17 Feb 2025 12:01:45 -0800
+Message-ID: <520a4879b3157a715299d4874c4091a170d84638.1739822462.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
+In-Reply-To: <cover.1739822462.git.gerickson@nuovations.com>
+References: <cover.1739822462.git.gerickson@nuovations.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -37,43 +40,45 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=1Gx4Jp2z47Pxr6mXK+NJ1dTvrUq7NVhIxv7P2m4VAB4=; b=IcLb8DBcJ4ViOYHTns/3kHPDtriU6tN6dgnuILF/aMyRId9ac3NE2M7+W+3SQuBmtfkK/QyfCZhn3RvEmnRjFEb7LjzCi/WFV6eZUHlMdPbBpU+sfeZTXNmRPmyZcHbcRtnnWl1CHuy9NvVxpoDzRdllUnpqyEX9zl7iJ8uL3bJ34haR7vrYnwlvl526mO7XN/MbHIfY9i2vjhGFz+rJ56XhZKC1avarPhV3vV/AlNy17u6U6dYYagU1sRMsVJHuncgG+04Lc2T9EhpjrbD/LnUafL4nhNkHipoHZ4UZWiOzkxwG2oBO29kL4tomQnYLQ4cbSS9cKbYsjJxnhVvwoA==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=fHma6eg08g0rSRzjb2Szp8dq8ebKa/ez0Aq5JPdNAGU=; b=Dgy0C3p4MEvT2uyp+wBvphlAS8XOD+zReO7IpCbCemLFXiPx/xqkBEq6ghWkqweugHksfFGX+VqogQWRj/uB8wcs5u2qX3Npo8BMqucGxSWskCdEzZTugEic3m5VqLAtlphkxrvChaO1nIFowLaofnF+46jRJkoXWPMde5SGGfi9s1xNJ0b6rQLh4pJQyMN1qdrFRZr0X/hM91uInUJzQ9YyJeqVmhU2g/JkA3mrlDEiVmRVmSF6NJ4ZAsCKb7cQfFyFGSZUcjGM6U9FDkcdOmoE4er+izRQzBmXseo8eYrUPxz/+aXKQqtmwLbIK/+YmR7rzt6GYtOchZK+9qCbAQ==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Certain modems, among them the Quectel Wireless Solutions Co.,
-Ltd. (2c7c) BG96 CAT-M1/NB-IoT modem (0296), have a firmware issue
-where they can lock up and hang (not responding to subsequent
-commands) due to high QMI service request arrival rates.
+Defines options that may alter the default behavior of the QMI driver
+for a specific, instantiated device.
+---
+ drivers/qmimodem/qmi.h | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
 
-QMI service request rate limiting is achieved by:
-
-1. Adding a new, optional options structure to qmi_qmux_device_new
-   that has its rate-limit "quirk" and minimum request period fields
-   set when the modem "RequestThrottleTimeUs" integer property is set.
-
-2. Adding logic to the QMI driver that, when a minimum request period
-   is set, limits the QMI service request rate accordingly.
-
-(1) and (2) are used by the udevng and gobi plugins such that when the
-modem vendor and model match 2c7c/0296, then the option to rate limit
-QMI service requests is set to no more than one every 2,000 us.
-
-Grant Erickson (7):
-  qmi: Added enumeration for device quirk flags.
-  qmi: Added structure for device options.
-  qmi: Added device options parameter to 'qmi_qmux_device_new'.
-  qmi: Implement QMI service request rate limiting in 'can_write_data'.
-  qmi: Handle request rate limit option in 'qmi_qmux_device_new'.
-  udevng: Set the QMI minimum service request period for Quectel BG96
-    modems.
-  gobi: Pass QMI qmux device options to 'qmi_qmux_device_new'.
-
- drivers/qmimodem/qmi.c | 51 +++++++++++++++++++++++++++++++++++++++++-
- drivers/qmimodem/qmi.h | 40 ++++++++++++++++++++++++++++++++-
- plugins/gobi.c         | 22 +++++++++++++++++-
- plugins/udevng.c       | 14 ++++++++++++
- 4 files changed, 124 insertions(+), 3 deletions(-)
-
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index e74ff3feaeec..4ba27847176f 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -74,6 +74,25 @@ enum qmi_qmux_device_quirk {
+ 	QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT = 0x01
+ };
+ 
++/**
++ *	Defines options that may alter the default behavior of the QMI
++ *	driver for a specific, instantiated device.
++ */
++struct qmi_qmux_device_options {
++	/**
++	 *	Device-specific "quirk".
++	 */
++	enum qmi_qmux_device_quirk quirks;
++
++	/**
++	 *	If quirks has #QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT set, this
++	 *	is the minimum period, in microseconds, in which back-to-back
++	 *	QMI service requests may be sent to avoid triggering a
++	 *	firmware lock up and hang.
++	 */
++	unsigned int min_req_period_us;
++};
++
+ typedef void (*qmi_destroy_func_t)(void *user_data);
+ 
+ struct qmi_service;
 -- 
 2.45.0
 
