@@ -1,35 +1,35 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B996323770B
-	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 20:01:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36684237702
+	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 20:02:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739822522; cv=none; b=aoIf3LsLKWwec9pTJVrC/qJX6ZeIlfCNz8MHWNAtdOrECe4ikurFxvOSOYw8JQMQLHp09Iii+ATSmmi3GObQ/HCxBqrXowikTafHDTMRvkIUCKXouOppLy1bkiLiNldeIA5a8p/8zShqFPCe2tpIwJc1j/1N5GZHPDFd9SAwP/k=
+	t=1739822523; cv=none; b=llK0HmckXa7wAnH2yTiYpghzfBRBiGTHDEyYuscPPyqMQulf/poyoexpGi8I4lxscDXAyOEsJkO82cmnZEzAewc8iBtQiEi/3uA6IqgT9/sZ+9P3mnWOX8pF0mFegw7piDeklM6eGg5/TogJ34BvoJuDaZ0ensyjL+Gj0SfXUm4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739822522; c=relaxed/simple;
-	bh=BqGtxcEQ7ZOW68ToWAY0Q3/t6f0yzXBoRM2y8+3Ys/M=;
+	s=arc-20240116; t=1739822523; c=relaxed/simple;
+	bh=FIddyMiqDQ4SXLU7mGYwdnroR7JS4TpHpl436gYzOpw=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=jWst/8CktBQln6EDgAOI3ofS45WP3eV5/QD+owhYVzdSVd5PKp9wutFM+e0jP6V52ycrpyPm2pyOtoS7qnw9q3o+PosPt7CJwGJgVEnF0XWqgfCFegDHh8LCsOKEAjJpRj/kb8yDXrY0Ry6/WIhBge2rSFuUN2j8Hs10DVwFcWs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=pOTI/1aA; arc=none smtp.client-ip=66.39.139.36
+	 MIME-Version; b=oyrinn2wFiUG5iWIoRU/CpFrO30+5g8T9FM0xb/mDru6ua1wqQfojnDSt/cUVE6JsdOWkAp4u68HYzvQ54vMAwXO+R+zBzMj2i6Enn8OebLvVPi7j3DTrsqncYlUi8wVimV5C7m4mUB9CShsGq6gqzBrI1hhZUiAzuyjJ4R6nAU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=XnU5Plcu; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="pOTI/1aA"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="XnU5Plcu"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 6A528164A9A
+	by mail5.g24.pair.com (Postfix) with ESMTP id D7CD5164A9C
 	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 15:01:53 -0500 (EST)
 Received: from localhost.localdomain (c-24-6-12-99.hsd1.ca.comcast.net [24.6.12.99])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 1F4DE126369
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 8DE54126369
 	for <ofono@lists.linux.dev>; Mon, 17 Feb 2025 15:01:53 -0500 (EST)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH v5 4/7] qmi: Implement QMI service request rate limiting in 'can_write_data'.
-Date: Mon, 17 Feb 2025 12:01:47 -0800
-Message-ID: <06f2aab8af4cfd8b660bb9b1c65897618ef0ad74.1739822462.git.gerickson@nuovations.com>
+Subject: [PATCH v5 5/7] qmi: Handle request rate limit option in 'qmi_qmux_device_new'.
+Date: Mon, 17 Feb 2025 12:01:48 -0800
+Message-ID: <93d99436ed7edca6e4e2086d287446d308a3225f.1739822462.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <cover.1739822462.git.gerickson@nuovations.com>
 References: <cover.1739822462.git.gerickson@nuovations.com>
@@ -40,93 +40,37 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=19LVONsaqyrtgc0hdnY+CnoAHTfcEdl5YYgArp7rH6s=; b=pOTI/1aAGE+stSfhC6Rm4Yac9LUQYR/vp/otb7t1dn1NGYMhqPgBoNcG6nNdl6yEiDboD2sqDOY2dAARWT8PWBnPCWd2PAMYjaLzX5Y4pItapSA82tOawU9YbXCffdpVvrwHpQ7VVaXRB2gRo82ED5KeTyXIxel9aXNWGBFre46cwWafm0bf5x+oNuoxAL19WwWis77BQ3fC0d5779qPpOlTwfVlH7qrbKCYP2xWhJTeFhjX8SfloSMXKj3rMTAg5lZWKQ7HhEv0BrSvcVkgJ5WKHPHlg3kfZjqEzcO27wTIopg0g/CYJQr8J7MupCunisxIE3qWzQuqoVCLfMY1RQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=Q5rPOnnhU6QgeYqmwcfFQJMGFc+T1dSX3km0wC4zHEE=; b=XnU5PlcuXg9U9BayhktQpyemvbY3eKXO8nT1949E4Zx9N9PPxJ3MljF1SZnEAv5srwM9ZP5en4otRMU6xbRMO7a/TZpacJMN2U023qk1hJJnoBnBydFtQ34FxLKo2RKTW97AhMwhphpdSYJuKCDXWNoUQC5HnPb8lbzaR9gBxAnshkk24Wec5DIj1TKkeaK/BNFnQI6rlQ724F+r8Zii5oY69pCqKUXr8VVT+YZuYMIB0c8NaPxSpeFE7Qdf9cA4rxmq/brdbG2zZxRo6bU/HfMpX/yOvOGTSzPK+wRwRJe+4Ov9AnxHOR5yORij+Xl2X1mSoobDuGO1OcZ4cDnZ3Q==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Determine if we need to rate-limit QMI services requests to a
-transport-specific minimum request period. If so, return true so that
-the queue can be retried again later.
-
-Adds the following data members to 'qmi_transport':
-
-  * Minimum request period
-    - The minimum period, in microseconds, for back-to-back QMI
-      service requests.
-
-  * Last request time
-    - Time, in microseconds, when the last QMI service request was
-      sent.
-
-to support the implementation.
+If options are specified and QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT is
+asserted, set the qmux transport minimum service request period from
+the specified options.
 ---
- drivers/qmimodem/qmi.c | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+ drivers/qmimodem/qmi.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index bbe6440abe0f..a9ea88d31c36 100644
+index a9ea88d31c36..438b98fbc7a0 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -92,6 +92,18 @@ struct qmi_transport {
- 	const struct qmi_transport_ops *ops;
- 	struct debug_data debug;
- 	bool writer_active : 1;
-+
-+	/**
-+	 *  If specified via qmi_qmux_device_options, the minimum period
-+	 *  for back-to-back QMI service requests.
-+	 */
-+	unsigned int min_req_period_us;
-+
-+	/**
-+	 *  The time, in microseconds, when the last QMI service request
-+	 *  was sent.
-+	 */
-+	uint64_t last_req_sent_time_us;
- };
+@@ -1617,6 +1617,16 @@ struct qmi_qmux_device *qmi_qmux_device_new(const char *device,
  
- struct qmi_qmux_device {
-@@ -653,8 +665,28 @@ static bool can_write_data(struct l_io *io, void *user_data)
- {
- 	struct qmi_transport *transport = user_data;
- 	struct qmi_request *req;
-+	const bool throttle_enabled = transport->min_req_period_us > 0;
-+	uint64_t now;
- 	int r;
+ 	qmux = l_new(struct qmi_qmux_device, 1);
  
-+	/*
-+	 * Determine if we need to rate-limit commands to a
-+	 * transport-specific minimum request period. If so,
-+	 * return true so that the queue can be retried again
-+	 * later.
-+	 */
-+	if (throttle_enabled) {
-+		now = l_time_now();
++	if (options != NULL) {
++		if ((options->quirks & QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT)
++			== QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT) {
++			qmux->transport.min_req_period_us = options->min_req_period_us;
 +
-+		if (transport->last_req_sent_time_us != 0) {
-+			const uint64_t delta = l_time_diff(now,
-+				transport->last_req_sent_time_us);
-+
-+			if (delta < transport->min_req_period_us)
-+				return true;
++			ofono_info("QMI minimum service request period %u us",
++				qmux->transport.min_req_period_us);
 +		}
 +	}
 +
- 	req = l_queue_pop_head(transport->req_queue);
- 	if (!req)
- 		return false;
-@@ -665,6 +697,12 @@ static bool can_write_data(struct l_io *io, void *user_data)
- 		return false;
- 	}
- 
-+_Pragma("GCC diagnostic push")
-+_Pragma("GCC diagnostic ignored \"-Wconditional-uninitialized\"")
-+	if (throttle_enabled)
-+		transport->last_req_sent_time_us = now;
-+_Pragma("GCC diagnostic pop")
-+
- 	if (l_queue_length(transport->req_queue) > 0)
- 		return true;
- 
+ 	if (qmi_transport_open(&qmux->transport, fd, &qmux_ops) < 0) {
+ 		close(fd);
+ 		l_free(qmux);
 -- 
 2.45.0
 
