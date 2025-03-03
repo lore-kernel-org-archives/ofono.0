@@ -1,161 +1,113 @@
-Received: from mail-ot1-f49.google.com (mail-ot1-f49.google.com [209.85.210.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB0D52309B5
-	for <ofono@lists.linux.dev>; Tue, 18 Feb 2025 15:29:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9240C1D8DEE
+	for <ofono@lists.linux.dev>; Mon,  3 Mar 2025 03:36:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739892572; cv=none; b=AKCnz/zcyoUkky6yUye5m4NUmhl1BcxlWG01I/anasfR6T5vjLQKkzLM2O5Ixa/OIQ+cfLUybHnEHpxUUL+mwYpPUZSk0NjSGO3z+Vvm5mbgWrN258al6uFmbkEiV5jeowJ9v/c72QeOpeELLdOdRr07eGbsqCG83WdQRYQ7e28=
+	t=1740973017; cv=none; b=UMYB2B/Ti+c7CseaDtcAWtGBb48EytrcA0uvERptTfXf1g381kk6pPUY7DwSsREWIvZy03SR8bC1xjWXe0HAWWc2Kw25pfdyLYcOkKiAPMLi4Q2+KdO1v053M8fDsFapKjVTJMvefGZwT8+nBpoLhpPr91UqtaYB95bxRXCIHoo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739892572; c=relaxed/simple;
-	bh=+IXt63pEPMVWiC3ZOAOQQdT/cbIb2ev4Pvd0vzskoeU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=tokktugTgQr3aw0cuvNbA/4d+45zFHmd8LJjiKQS6fBp50qMCYMqvm/lPJ8L5YRAiERPJ7km3dnqTNZDbWTlkBprOiwvjLDXEu72D+1iPs8PtSjajAbmuo3w0yOf1nVomMWuIpJw8GshRs9Im0Xy4zqP2zhn8XfnRPEs9TLjI8c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GUf7SL8J; arc=none smtp.client-ip=209.85.210.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1740973017; c=relaxed/simple;
+	bh=30tUUaLIi0vqRd2/EEQhPkctbWf3IOireLrJkDxGizM=;
+	h=From:To:Cc:Subject:Date:Message-Id; b=j6e5RHdGlslIsPe8z8edkaL7fSyH0Zn4YqKV90VCOoVwPul9Qak2ph6wMlct/+5HvdO3TSChLMlip2c1Qyo86WZnIDXxcioThWor7Pfc8FGEUySLpFUzxuH+kQDUDNy8SD+cV6PVU13VUjRngjVL4vlvN0jUgNqE+EIHecHfhoY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=qualcomm.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=X9Q2tJwK; arc=none smtp.client-ip=205.220.168.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qualcomm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GUf7SL8J"
-Received: by mail-ot1-f49.google.com with SMTP id 46e09a7af769-72726025fa5so594605a34.0
-        for <ofono@lists.linux.dev>; Tue, 18 Feb 2025 07:29:30 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1739892569; x=1740497369; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=wqKfQGw8N70Xt8/NwBC4XgP6V9b9WsYTUAZFcWfxIyg=;
-        b=GUf7SL8JKZ6k+5sGIHwPkE8bRD4dBq7CNJxwQ3T7Wq5Vzx3ZfJjW0mssN7qxiA1FDA
-         6OepUSGMUzEWYJvisZ4G44eHg52NePnFb8hvVCAco8XA7bHvyoLE4flSlwFTk70FdOn+
-         SaTJibatzXCNLxrNqVvXscLqwxwwqr9OkSbZzMoLfmTIrcU+NcoWaw2tycLf+93qGUnU
-         meIx8+11x+4Q9R4s9yMSD1hOXxI2SQ4MD+6WVGaAZ0vDd2K6OY04xRzyqzzbK7tog68T
-         HnaJFZaQRLhof2Nee7S1hajAuSxAH425Fe/E15UdY64SEYMW1xJmVFVAdv/Oh54xhu6p
-         hBOQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739892569; x=1740497369;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=wqKfQGw8N70Xt8/NwBC4XgP6V9b9WsYTUAZFcWfxIyg=;
-        b=dxaiMt72zHcMT2386j76/qjAWQ8vPqCdcnlcNabzultpBBRIZsI3E5U1I8x8gWEnLQ
-         LjHNrrfqdL3qbXPv5//cLQFrm4tAGNVhAzHhiasU9nhVnc5tEmBPd7Mu5LESamT2j0Zn
-         4zfSC2b+TR8q2gLhUmWI9J3g0wXvwQ30L2o6pGAc4CDaAvQM2K3EeXPtPLXTCPdTgCxT
-         onT56znjFRmxQyXGFy2HZKNHZNU80Xs0f+xPAWoPDlAYTNN5GcgOaZuqkhMhpisHqjSU
-         7DWv5k6UjbmGNQGsTBCkqEpmItODv96TSSQ6RLaRyObfllj82nbNPbmym3/To/Mk1mwV
-         VhSA==
-X-Forwarded-Encrypted: i=1; AJvYcCVoneOWa8KZ1qigM/slnGtzgyjpOM+eW+zvIUO7rVFmm1jhCyoDi3+1xvC3i8/LSdpFAzOlXw==@lists.linux.dev
-X-Gm-Message-State: AOJu0Ywc6tM1wGxwjV7ctNufqIiya6Hoyrf5W5UbjzzyooSKz4r1ve4B
-	Vx/EujspqjBPiCJGmfbt0VpuMprVTqrAEuUcouLtl0na8ItWUtKf
-X-Gm-Gg: ASbGncvVPg3zdR6UtVcdTWswZd/rBXoOqjKF3bNLJkakm38rVxjgKP4t7LuN6OMHNCE
-	IdXNtKm/QyEF0XVdKXJtDV0M0gddREIB5j5uxCnMwoCqMjEv40GGyvOcIIWContd2iEhSDekPCN
-	/odpvUtPV+/J1NwDvia1NUWqdXp745W2vK1pIJt0To8T5v9Y3Jl20fmDSDMF17q1+ul/xetJIOi
-	Zd2fCNvIvBKtuj4ttXxYCGeqZt2HJ0lR9ilpvvNY4CVNbusx2rfUhsizZ7mOKseBBGi9qv+gDrt
-	wkfawMh0X5NJvIPrNuwUg6oP9eXLUQ3fgrAzpn/2qSsJmJZ96wBPFWO7
-X-Google-Smtp-Source: AGHT+IEeecH4B0T63yDjhNrnRl6cgZZhuOniFxefChgRVq5KhBrl1zVdBOTZXA/86QXaHeSWS6CG4Q==
-X-Received: by 2002:a05:6808:4490:b0:3f4:ad6:519e with SMTP id 5614622812f47-3f40ad6532cmr1706053b6e.31.1739892569591;
-        Tue, 18 Feb 2025 07:29:29 -0800 (PST)
-Received: from [192.168.1.25] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 5614622812f47-3f40920efcfsm432932b6e.2.2025.02.18.07.29.28
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 18 Feb 2025 07:29:29 -0800 (PST)
-Message-ID: <55b93069-f7a4-4cbd-8fc5-16160addeb01@gmail.com>
-Date: Tue, 18 Feb 2025 09:29:27 -0600
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="X9Q2tJwK"
+Received: from pps.filterd (m0279866.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 5230gZK3032740
+	for <ofono@lists.linux.dev>; Mon, 3 Mar 2025 03:36:54 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
+	cc:date:from:message-id:subject:to; s=qcppdkim1; bh=2kCD/+3emKjb
+	REdZpgNOeKkv1XuHZ8+LV70VHVLNH2w=; b=X9Q2tJwKvw3iXvkoOwAFHXJVa8gm
+	mvNFgzDlywHFcEDO2bTTC7P3/Q0SVDVMQCeLhULyff0Hz2JojKHmTL9cA297qj/o
+	Ih6mAekHPxPx8kH2nPI1DRp0faYc8T40JftFqqinAjsfqBwNdDVSqqvA7s4Yknvn
+	/G4Z4312dsJUOO8Jji1LoLPTQcnpHd4Dzk5d8520++WuYmYYlWiHeR8UmaQL1YuR
+	8uCsOFRB6+IcKif/pSeVtb+4aG/glc71iqotRydQ16qjCdUMzM14bnTsfXYrNu0/
+	4b3Y1nbTBQIWlHRS3zvG3Z2DGG9AXne/xVQ/slj/YeNjsVpFd9AzzOfiug==
+Received: from apblrppmta01.qualcomm.com (blr-bdr-fw-01_GlobalNAT_AllZones-Outside.qualcomm.com [103.229.18.19])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 453uh737uw-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT)
+	for <ofono@lists.linux.dev>; Mon, 03 Mar 2025 03:36:54 +0000 (GMT)
+Received: from pps.filterd (APBLRPPMTA01.qualcomm.com [127.0.0.1])
+	by APBLRPPMTA01.qualcomm.com (8.18.1.2/8.18.1.2) with ESMTP id 5233aohA002129
+	for <ofono@lists.linux.dev>; Mon, 3 Mar 2025 03:36:50 GMT
+Received: from pps.reinject (localhost [127.0.0.1])
+	by APBLRPPMTA01.qualcomm.com (PPS) with ESMTP id 453uakthg4-1
+	for <ofono@lists.linux.dev>; Mon, 03 Mar 2025 03:36:50 +0000
+Received: from APBLRPPMTA01.qualcomm.com (APBLRPPMTA01.qualcomm.com [127.0.0.1])
+	by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 5233aoAD002124
+	for <ofono@lists.linux.dev>; Mon, 3 Mar 2025 03:36:50 GMT
+Received: from hu-maiyas-hyd.qualcomm.com (hu-rbujala-hyd.qualcomm.com [10.213.107.103])
+	by APBLRPPMTA01.qualcomm.com (PPS) with ESMTP id 5233aobt002123;
+	Mon, 03 Mar 2025 03:36:50 +0000
+Received: by hu-maiyas-hyd.qualcomm.com (Postfix, from userid 4130939)
+	id 8A939605405; Mon,  3 Mar 2025 09:06:49 +0530 (+0530)
+From: Raghavender Reddy Bujala <quic_rbujala@quicinc.com>
+To: ofono@lists.linux.dev
+Cc: quic_mohamull@quicinc.com, quic_hbandi@quicinc.com,
+        Raghavender Reddy Bujala <quic_rbujala@quicinc.com>
+Subject: [PATCH v1] hfp:Update for new HFP 1.8
+Date: Mon,  3 Mar 2025 09:06:46 +0530
+Message-Id: <20250303033646.21816-1-quic_rbujala@quicinc.com>
+X-Mailer: git-send-email 2.17.1
+X-QCInternal: smtphost
+X-QCInternal: smtphost
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
+X-Proofpoint-GUID: hdzsNWuIZZqVRzFEp1Frx10uqekKeRGe
+X-Proofpoint-ORIG-GUID: hdzsNWuIZZqVRzFEp1Frx10uqekKeRGe
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
+ definitions=2025-03-03_01,2025-02-28_01,2024-11-22_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0 suspectscore=0
+ lowpriorityscore=0 phishscore=0 impostorscore=0 clxscore=1011
+ priorityscore=1501 adultscore=0 mlxscore=0 spamscore=0 malwarescore=0
+ mlxlogscore=866 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2502100000 definitions=main-2503030026
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v5 0/7] Add QMI Device Service Request Rate-limit Option
-To: Grant Erickson <gerickson@nuovations.com>, ofono@lists.linux.dev
-References: <cover.1739822462.git.gerickson@nuovations.com>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <cover.1739822462.git.gerickson@nuovations.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 
-Hi Grant,
+Existing 1.7 version is outdated/withdrawn to
+do certification, so updating it to 1.8 .
 
-On 2/17/25 2:01 PM, Grant Erickson wrote:
-> Certain modems, among them the Quectel Wireless Solutions Co.,
-> Ltd. (2c7c) BG96 CAT-M1/NB-IoT modem (0296), have a firmware issue
-> where they can lock up and hang (not responding to subsequent
-> commands) due to high QMI service request arrival rates.
-> 
-> QMI service request rate limiting is achieved by:
-> 
-> 1. Adding a new, optional options structure to qmi_qmux_device_new
->     that has its rate-limit "quirk" and minimum request period fields
->     set when the modem "RequestThrottleTimeUs" integer property is set.
-> 
-> 2. Adding logic to the QMI driver that, when a minimum request period
->     is set, limits the QMI service request rate accordingly.
-> 
-> (1) and (2) are used by the udevng and gobi plugins such that when the
-> modem vendor and model match 2c7c/0296, then the option to rate limit
-> QMI service requests is set to no more than one every 2,000 us.
-> 
-> Grant Erickson (7):
->    qmi: Added enumeration for device quirk flags.
->    qmi: Added structure for device options.
->    qmi: Added device options parameter to 'qmi_qmux_device_new'.
->    qmi: Implement QMI service request rate limiting in 'can_write_data'.
->    qmi: Handle request rate limit option in 'qmi_qmux_device_new'.
->    udevng: Set the QMI minimum service request period for Quectel BG96
->      modems.
->    gobi: Pass QMI qmux device options to 'qmi_qmux_device_new'.
-> 
->   drivers/qmimodem/qmi.c | 51 +++++++++++++++++++++++++++++++++++++++++-
->   drivers/qmimodem/qmi.h | 40 ++++++++++++++++++++++++++++++++-
->   plugins/gobi.c         | 22 +++++++++++++++++-
->   plugins/udevng.c       | 14 ++++++++++++
->   4 files changed, 124 insertions(+), 3 deletions(-)
-> 
+Signed-off-by: Raghavender Reddy Bujala <quic_rbujala@quicinc.com>
+---
+ plugins/hfp_hf_bluez5.c | 2 +-
+ src/hfp.h               | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-Alpine (musl) gcc debug
-=======================
-Configure: PASS
-Build: FAIL
-     drivers/qmimodem/qmi.c: In function 'can_write_data':
-     drivers/qmimodem/qmi.c:701:1: error: unknown option after '#pragma GCC 
-diagnostic' kind [-Werror=pragmas]
-       701 | _Pragma("GCC diagnostic ignored \"-Wconditional-uninitialized\"")
-           | ^~~~~~~
-     drivers/qmimodem/qmi.c:701:1: note: did you mean '-Wno-uninitialized'?
-     cc1: all warnings being treated as errors
-     make[1]: *** [Makefile:4090: drivers/qmimodem/qmi.o] Error 1
-     make[1]: Target 'all-am' not remade because of errors.
-     make: *** [Makefile:2405: all] Error 2
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 40051480..5ad1674f 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -774,7 +774,7 @@ static void connect_handler(DBusConnection *conn, void *user_data)
+ 
+ 	DBG("Registering External Profile handler ...");
+ 
+-	bt_register_profile(conn, HFP_HS_UUID, HFP_VERSION_1_7, "hfp_hf",
++	bt_register_profile(conn, HFP_HS_UUID, HFP_VERSION_1_8, "hfp_hf",
+ 					HFP_EXT_PROFILE_PATH, NULL, features);
+ }
+ 
+diff --git a/src/hfp.h b/src/hfp.h
+index e58b0d22..28600664 100644
+--- a/src/hfp.h
++++ b/src/hfp.h
+@@ -72,7 +72,8 @@ enum hfp_version {
+ 	HFP_VERSION_1_5 =	0x0105,
+ 	HFP_VERSION_1_6 =	0x0106,
+ 	HFP_VERSION_1_7 =	0x0107,
+-	HFP_VERSION_LATEST =	HFP_VERSION_1_7,
++	HFP_VERSION_1_8 =	0x0108,
++	HFP_VERSION_LATEST =	HFP_VERSION_1_8,
+ };
+ 
+ enum hfp_hf_indicator {
+-- 
+2.17.1
 
-Fedora (glibc) clang debug+sanitizers
-=====================================
-Configure: PASS
-Build: PASS
-Unit: PASS
-Distcheck: PASS
-
-Alpine (musl) gcc optimized
-===========================
-Configure: PASS
-Build: FAIL
-     drivers/qmimodem/qmi.c: In function 'can_write_data':
-     drivers/qmimodem/qmi.c:701:1: error: unknown option after '#pragma GCC 
-diagnostic' kind [-Werror=pragmas]
-       701 | _Pragma("GCC diagnostic ignored \"-Wconditional-uninitialized\"")
-           | ^~~~~~~
-     drivers/qmimodem/qmi.c:701:1: note: did you mean '-Wno-uninitialized'?
-     drivers/qmimodem/qmi.c:703:50: error: 'now' may be used uninitialized 
-[-Werror=maybe-uninitialized]
-       703 |                 transport->last_req_sent_time_us = now;
-           |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
-     drivers/qmimodem/qmi.c:669:18: note: 'now' was declared here
-       669 |         uint64_t now;
-           |                  ^~~
-     cc1: all warnings being treated as errors
-     make[1]: *** [Makefile:4090: drivers/qmimodem/qmi.o] Error 1
-     make[1]: Target 'all-am' not remade because of errors.
-     make: *** [Makefile:2405: all] Error 2
-
-Regards,
--Denis
