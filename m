@@ -1,38 +1,35 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B71B211707
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71E12212FBD
 	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 19:30:22 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742412624; cv=none; b=dcGLf18bkH0KEIOCx+dMHlRfm60GV0METFjSVylz0mXQ1LRgl36kwzSb5SCR1IXDQlBMdZL2TUlZeLDYBndNmvGnR9hW7JySi8LRgrg6y8xo/FB7IKboqzVuVgCPo8bSnf+tHAdxzBOTS2tz7UyXSbWpxTk6SCfxqJz6/lScbrQ=
+	t=1742412625; cv=none; b=tce9t8U5GIyiEv1cqw4nlNURDTzvgPvFSJLr+CAA93Aq39ABMGqmRCc9hhhzC+aMHHxUOJtsidBJSsnZXF1LKOGB9a9Yt/8M55ZXvEu0vi5mHyTrRrPwiWLjIovB+coJ8YVYIPFhsE5J2Ew048TeMcO/ixcclV/bTImLdCnO8EY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742412624; c=relaxed/simple;
-	bh=MSorLqobb9OQwVoC74blqqM3HX30zMCYyhfYvQK+C2s=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=P9PoS9+KnI1dXtXp0FDuWA6wUEuQog5JPp7cE7zS17QXmDswx5/IM8eMhLXpj/JTpY5stGhhCsqhdWnkDeXHhjFCNUen1CrCT7pdzk+O04w62rjCfK3ScNlVZNSN8Ghlq8FzgzlTySzxnlqnAqQS/2jN32wVy9nMB/asXzkwI7c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=qinEzhD3; arc=none smtp.client-ip=66.39.139.36
+	s=arc-20240116; t=1742412625; c=relaxed/simple;
+	bh=40BTaThAysqwF4VFqK3Qmr4127e5eCs90QxXxkCw75M=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=rALEkev4eqeJKNHrG6eqOEfTvq0/BgIWY+86FPMjdhqflsvoXRkowXBvRfXgktB+5Er2HvMXBj6KYPJrm6sCSrXLf91MwfD/ERsk+9mF47UGsx6awYuUApkKT1rtgtqszGakRIBb1g+Ecf8OjS3KegZJ7KnPlA1+dpdUqwEJDQM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=X85iKuDr; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="qinEzhD3"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="X85iKuDr"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id B0B3A164AA2
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:37 -0400 (EDT)
+	by mail5.g24.pair.com (Postfix) with ESMTP id DA9D1164A96
+	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:35 -0400 (EDT)
 Received: from localhost.localdomain (c-73-202-173-252.hsd1.ca.comcast.net [73.202.173.252])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 62372126374
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:37 -0400 (EDT)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id 8957F126099
+	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:35 -0400 (EDT)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH v6 4/7] qmi: Implement QMI service request rate limiting in 'can_write_data'.
-Date: Wed, 19 Mar 2025 12:22:31 -0700
-Message-ID: <ff3f37eb09769e57b2c5abf6d7bc217b99370d10.1742411889.git.gerickson@nuovations.com>
+Subject: [PATCH v6 0/7] Add QMI Device Service Request Rate-limit Option
+Date: Wed, 19 Mar 2025 12:22:27 -0700
+Message-ID: <cover.1742411889.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
-In-Reply-To: <cover.1742411889.git.gerickson@nuovations.com>
-References: <cover.1742411889.git.gerickson@nuovations.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -40,93 +37,43 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=gTner/89Vv1FmtWUBekDe8cuJ1Y7ghgt7kQLUgESQjw=; b=qinEzhD3mLciAKN00LSlF/Efccv4NwbQv7hZLStl0/iGwwmJi5RDLwRodYym8Clr+3vm7Xzux1Ts7IVTnzwx9q03ZwEbGe3mhK7VPHMYw2uTCSBeKApbm3PiUAiwSdhafADzNCPOF0dISgudTv11TaJu+10jb8MLCrZBJLHImpBFZC07e1NXR2HfJTIpOkM6WML4VvOXeLsAxP/nJpm0zDoqqAHyp9JBpcJT4AzuG0kkeBlgbjyOYr/QW/8eyyhOv9K5E9HKABWetK2kRDWHIpL4hTTTRuez6NZ0cllPU0rD/nlbI4G6AK97kGq580hwj/B+pviNOwwTcjWItYKg0w==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:mime-version:content-transfer-encoding; s=pair-202401062137; bh=1Gx4Jp2z47Pxr6mXK+NJ1dTvrUq7NVhIxv7P2m4VAB4=; b=X85iKuDr2AKBgpYXA8J4p27Ovqs0jVLKRrRkgGhxIGHcRW0z6llrb3/MNtX7rGnAUReeMDrGvX4wzFD+fHBKA4ih/UjrVuYkb83rmji7aKWUYyWZRdDhMoucWXhnoJ5FvY8xGotBbhuAW22MCPXse282+TpZqc3hvEzsQlKltM4G/b1vrP8vTt8Q597YSAc/NNp+fZFZ6+gL59HyEuFZ2MJBrDhmLDqfZdmuq/gywdu/yy+00SA3FMr2W0kcZv8V8zPM5ffULl3poiCh9MQaNz1kp3DGFjMg7hy0R/BvxFUIPOBq+XoRP4uTzRxWZAKfoTrzy7CbGMr/kmhyr0wfkw==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-Determine if we need to rate-limit QMI services requests to a
-transport-specific minimum request period. If so, return true so that
-the queue can be retried again later.
+Certain modems, among them the Quectel Wireless Solutions Co.,
+Ltd. (2c7c) BG96 CAT-M1/NB-IoT modem (0296), have a firmware issue
+where they can lock up and hang (not responding to subsequent
+commands) due to high QMI service request arrival rates.
 
-Adds the following data members to 'qmi_transport':
+QMI service request rate limiting is achieved by:
 
-  * Minimum request period
-    - The minimum period, in microseconds, for back-to-back QMI
-      service requests.
+1. Adding a new, optional options structure to qmi_qmux_device_new
+   that has its rate-limit "quirk" and minimum request period fields
+   set when the modem "RequestThrottleTimeUs" integer property is set.
 
-  * Last request time
-    - Time, in microseconds, when the last QMI service request was
-      sent.
+2. Adding logic to the QMI driver that, when a minimum request period
+   is set, limits the QMI service request rate accordingly.
 
-to support the implementation.
----
- drivers/qmimodem/qmi.c | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+(1) and (2) are used by the udevng and gobi plugins such that when the
+modem vendor and model match 2c7c/0296, then the option to rate limit
+QMI service requests is set to no more than one every 2,000 us.
 
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index bbe6440abe0f..33063483692e 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -92,6 +92,18 @@ struct qmi_transport {
- 	const struct qmi_transport_ops *ops;
- 	struct debug_data debug;
- 	bool writer_active : 1;
-+
-+	/**
-+	 *  If specified via qmi_qmux_device_options, the minimum period
-+	 *  for back-to-back QMI service requests.
-+	 */
-+	unsigned int min_req_period_us;
-+
-+	/**
-+	 *  The time, in microseconds, when the last QMI service request
-+	 *  was sent.
-+	 */
-+	uint64_t last_req_sent_time_us;
- };
- 
- struct qmi_qmux_device {
-@@ -653,8 +665,28 @@ static bool can_write_data(struct l_io *io, void *user_data)
- {
- 	struct qmi_transport *transport = user_data;
- 	struct qmi_request *req;
-+	const bool throttle_enabled = transport->min_req_period_us > 0;
-+	uint64_t now;
- 	int r;
- 
-+	/*
-+	 * Determine if we need to rate-limit commands to a
-+	 * transport-specific minimum request period. If so,
-+	 * return true so that the queue can be retried again
-+	 * later.
-+	 */
-+	if (throttle_enabled) {
-+		now = l_time_now();
-+
-+		if (transport->last_req_sent_time_us != 0) {
-+			const uint64_t delta = l_time_diff(now,
-+				transport->last_req_sent_time_us);
-+
-+			if (delta < transport->min_req_period_us)
-+				return true;
-+		}
-+	}
-+
- 	req = l_queue_pop_head(transport->req_queue);
- 	if (!req)
- 		return false;
-@@ -665,6 +697,12 @@ static bool can_write_data(struct l_io *io, void *user_data)
- 		return false;
- 	}
- 
-+_Pragma("GCC diagnostic push")
-+_Pragma("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
-+	if (throttle_enabled)
-+		transport->last_req_sent_time_us = now;
-+_Pragma("GCC diagnostic pop")
-+
- 	if (l_queue_length(transport->req_queue) > 0)
- 		return true;
- 
+Grant Erickson (7):
+  qmi: Added enumeration for device quirk flags.
+  qmi: Added structure for device options.
+  qmi: Added device options parameter to 'qmi_qmux_device_new'.
+  qmi: Implement QMI service request rate limiting in 'can_write_data'.
+  qmi: Handle request rate limit option in 'qmi_qmux_device_new'.
+  udevng: Set the QMI minimum service request period for Quectel BG96
+    modems.
+  gobi: Pass QMI qmux device options to 'qmi_qmux_device_new'.
+
+ drivers/qmimodem/qmi.c | 51 +++++++++++++++++++++++++++++++++++++++++-
+ drivers/qmimodem/qmi.h | 40 ++++++++++++++++++++++++++++++++-
+ plugins/gobi.c         | 22 +++++++++++++++++-
+ plugins/udevng.c       | 14 ++++++++++++
+ 4 files changed, 124 insertions(+), 3 deletions(-)
+
 -- 
 2.45.0
 
