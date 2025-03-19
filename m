@@ -1,35 +1,35 @@
 Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78B821DF258
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 19:22:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B60320C49E
+	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 19:30:22 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742412167; cv=none; b=nK/bCZbOThSQZSyYoMOMJybYqUR2THj9NsLNf3Mo7iUTopKFpYHqAFOWKBQDUyPlHJvaHKX8SyT8K/ilWMCHAgszz070CPj0DxnlRQdhRwYbcWJ52C6NLlO67YV4dg265s+63j4bSSIst4U0bjzKGngD2PBPL+yn6gasDbifIxI=
+	t=1742412624; cv=none; b=rLWx6gu1v6SMTS77H4pE6UFDooKknQ+PGxuPWwcONSbbbHU2LnquaomXIgg1zPvqR6BrG4wVunlnMy5+y1kQEQJOBZWgYJO6zKrNzqn6ohnEtdi+adRiapIkO7ds3P2qIy3HsKyNVayZBbt2nPdZFiZFvPaFvFViA/56GNwHroc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742412167; c=relaxed/simple;
-	bh=/zRBuxHb1YZadUGBY2Vcl0+bBcgHqG51e5rh5Q3mXrI=;
+	s=arc-20240116; t=1742412624; c=relaxed/simple;
+	bh=BOjh6BbY3gmEz2aVzixjVsKqCAX013D8zE0gTMLRqds=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=sPZSbfs5CfR3mGFZn6iKSe5Y7OfK3kzmd8MhDLY8mounhKBfG6RJtHJX+T1mdEo3AbMT52OuCBov+ox3LGQON6TpKcyh9k9irgREvDPyy4J0F62rJoeNzBKOGouF6v07F0wtm8sk4PPDC2kiTrkoIWFyrpg/yQJqDVc8hcp9c4U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=pHXnc6vo; arc=none smtp.client-ip=66.39.139.36
+	 MIME-Version; b=pUNF0BZEyg79fUZToGwO9rw5tGrUhi3rX6A3x4I/TUrnRxLNzGhMuImzPDCWhwMtW5Vjn3S1KyoA0nWl7anZrMk5cuxE2pruRx49WV8aveJn0yCrtQnDZhqvJwq6uWUK94GINlk/X9FjcnXe6RjB2JeL3pIaPdYxNmVKVo45kX8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=GQHwGfBS; arc=none smtp.client-ip=66.39.139.36
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="pHXnc6vo"
+	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="GQHwGfBS"
 Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id 103CC164AA9
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:39 -0400 (EDT)
+	by mail5.g24.pair.com (Postfix) with ESMTP id 3FD0A164AA0
+	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:37 -0400 (EDT)
 Received: from localhost.localdomain (c-73-202-173-252.hsd1.ca.comcast.net [73.202.173.252])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id B9F0F124C24
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:38 -0400 (EDT)
+	by mail5.g24.pair.com (Postfix) with ESMTPSA id E776712635B
+	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:36 -0400 (EDT)
 From: Grant Erickson <gerickson@nuovations.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH v6 7/7] gobi: Pass QMI qmux device options to 'qmi_qmux_device_new'.
-Date: Wed, 19 Mar 2025 12:22:34 -0700
-Message-ID: <c5f03c791a3a9aa06dcbb36a4aedd9ba92270079.1742411889.git.gerickson@nuovations.com>
+Subject: [PATCH v6 3/7] qmi: Added device options parameter to 'qmi_qmux_device_new'.
+Date: Wed, 19 Mar 2025 12:22:30 -0700
+Message-ID: <c91173c6116b14dc0a57c28dfb8362f8f8088c68.1742411889.git.gerickson@nuovations.com>
 X-Mailer: git-send-email 2.45.0
 In-Reply-To: <cover.1742411889.git.gerickson@nuovations.com>
 References: <cover.1742411889.git.gerickson@nuovations.com>
@@ -40,59 +40,44 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=Vxp+G+wWuhPQL8Dt96ps2vexl5kKWAzJ+wzPwtwjdmc=; b=pHXnc6voaqbd34UjKR887xHbWo8kawn5F7Uy1kXyjL1S9yGVxAa8v9pSpkragZ5LgCNpbh9+qrG2bNurQD9BpnWYbdPZo7Ipz+gS2aXffXBcPJOKPfYBXQ//4okNl3Rj2tQ+D9UsF+5/TC6PkRHRKC+/zB9dV32pG8AvXdEA5KlfY1AyhjN3vYF4MQ6HKC78bnAEgbEpLdynwERw/ZRs9JCQYKa07mDTHYAucpqtyWEd7YTIhx3xQmzS28WLi8y3UX7BlTO72UsCi/HgrTjUXwUmM1V19hu02cAVEMHLzIUjoabIBPGzWKDYLfpxzjXye4KW07sb4VJjDkMYAU+X1g==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=BzRC/MPEuWrn1WIK740cPG2Pr1K+5r5gWLIEtdkDGqY=; b=GQHwGfBS3RvCfrO46cFYJGeI8dkrKSIUt+k0eKM8iztSKIVsF9jHadwPPGCVU2z8wnp6jb70s8Znw03TxSq29acVpjdXoboKrDKtI1W7SziwNbU9e6+SWd7+meF+h0PS6ssvwDPTVrBm8GJJIdyuekknj4gxEwxj8lYMfbxStDl8WtDgeY6/AnfunwE4KMqZJQW3mS4FTWwCyW14FoMkJcgiLFc667SkEmEifG/Q30wVUHnW4FgvJU80v8Fb6TzqZmqwvB2VMQEI2uwOrsok/5TqBjN3glM+m2XhFBkFu+dlHZSr3FByU+5XtWfUhZUdTAEi2OQto23LTOUisUA0iA==
 X-Scanned-By: mailmunge 3.10 on 66.39.139.36
 
-If the QMI minimum service request period property is set on the modem
-object, then set the appropriate QMI QMUX device option quirk and
-value.
+An optional pointer to immutable device options that may alter the
+default behavior of the QMI driver for the instantiated device.
 ---
- plugins/gobi.c | 22 +++++++++++++++++++++-
- 1 file changed, 21 insertions(+), 1 deletion(-)
+ drivers/qmimodem/qmi.c | 3 ++-
+ drivers/qmimodem/qmi.h | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 027aa91d6ade..dfc7402e36aa 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -842,9 +842,19 @@ error:
- 	__shutdown_device(modem);
- }
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 10dbdaac8bf6..bbe6440abe0f 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -1567,7 +1567,8 @@ static const struct qmi_transport_ops qmux_ops = {
+ 	.write = qmi_qmux_device_write,
+ };
  
-+/*
-+ * Enable the modem. The following modem properties are optionally set:
-+ *
-+ * RequestThrottleTimeUs
-+ *   The minimum period, in microseconds, in which back-to-back *
-+ *   modem service requests may be sent.
-+ *
-+ */
- static int gobi_enable(struct ofono_modem *modem)
+-struct qmi_qmux_device *qmi_qmux_device_new(const char *device)
++struct qmi_qmux_device *qmi_qmux_device_new(const char *device,
++	const struct qmi_qmux_device_options *options)
  {
- 	struct gobi_data *data = ofono_modem_get_data(modem);
-+	struct qmi_qmux_device_options options = { QMI_QMUX_DEVICE_QUIRK_NONE, 0 };
-+	int min_req_period_us;
- 	const char *device;
+ 	struct qmi_qmux_device *qmux;
+ 	int fd;
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index 4ba27847176f..09b551d74823 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -107,7 +107,8 @@ typedef void (*qmi_qrtr_node_lookup_done_func_t)(void *);
  
- 	DBG("%p", modem);
-@@ -853,7 +863,17 @@ static int gobi_enable(struct ofono_modem *modem)
- 	if (!device)
- 		return -EINVAL;
+ typedef void (*qmi_service_result_func_t)(struct qmi_result *, void *);
  
--	data->device = qmi_qmux_device_new(device);
-+	/*
-+	 * If the QMI minimum service request period property is set, then
-+	 * set the appropriate QMI QMUX device quirk and value.
-+	 */
-+	min_req_period_us = ofono_modem_get_integer(modem, "RequestThrottleTimeUs");
-+	if (min_req_period_us > 0) {
-+		options.quirks |= QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT;
-+		options.min_req_period_us = min_req_period_us;
-+	}
-+
-+	data->device = qmi_qmux_device_new(device, &options);
- 	if (!data->device)
- 		return -EIO;
- 
+-struct qmi_qmux_device *qmi_qmux_device_new(const char *device);
++struct qmi_qmux_device *qmi_qmux_device_new(const char *device,
++				const struct qmi_qmux_device_options *options);
+ void qmi_qmux_device_free(struct qmi_qmux_device *qmux);
+ void qmi_qmux_device_set_debug(struct qmi_qmux_device *qmux,
+ 				qmi_debug_func_t func, void *user_data);
 -- 
 2.45.0
 
