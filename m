@@ -1,38 +1,35 @@
-Received: from mail5.g24.pair.com (mail5.g24.pair.com [66.39.139.36])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B66020E704
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 19:30:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.39.139.36
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D2911DC985
+	for <ofono@lists.linux.dev>; Mon, 24 Mar 2025 17:59:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742412625; cv=none; b=D1KotpzssWztthLlDjfYgpDiWLBkSuIWpEZTbFiJqVPALd2MJn4ch1yHsvJj/DH8q8YI6DVZ3gAbrKwa2u1shBeyNHdH2bZSTrs726dQxbOJhWB1IJHibYjPYhG3pn7MKhBAZMSOblL6u2CFUaUywLYM3UMS43C7tbhC3t9AhL8=
+	t=1742839199; cv=none; b=UnqMrf21Y4bKAwXvJodsvjW+88eIMFosaA/QxRYU28iR7o7lUASTBqGhtrnOHgu2h0N88Ydcvpxb/LNkSERhg6TScfgB7U5UMRx202gOMgn3ys5ovxd3e84TLtRDzbum5aHn7jGiYk8e39jeiYpRhjMU6VIpZcU524qIqC5Ibec=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742412625; c=relaxed/simple;
-	bh=M5Yt+XgkEhwDsBif7PeTj7L8IDaWFyPdeokkm14HJmE=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XFHGEOZPWHv/PwlpGaa8+psi92VaxJulS8GMZXdVPIRI1CthYwa3hEgFYOERGZ/AA6lzVuFcen9+gYKpg2wD/lpT9NDTzaggTFEsb3Ufl70DSSBDndHnYvQ2q80GUPHNy37ITyqzlkhWErdC2klQgQ6P+GwHxCfLfwRhHTUkFbk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com; spf=pass smtp.mailfrom=nuovations.com; dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b=NxHe8Laz; arc=none smtp.client-ip=66.39.139.36
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=nuovations.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=nuovations.com
+	s=arc-20240116; t=1742839199; c=relaxed/simple;
+	bh=2ej6nKnCnZr8gD8t+ZD0FAOOxqOu+MsxKQB1yLky20Y=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=Yo9w3TkJHcIoEMAzSGkikZ/zpe6R4MsfEKdPv/3UgBYgngBJpI9cM9OXFC67YAbXcaVsus0xLwZMXGf2EeUKjmVZrkKt8Qk/qCiEpIKI13luyzuLLdnkRrT6Jupmwbn8jTcZPvrnS3J4YrGaaPddj5zd0tpijH4bYN0BZdVTzMM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pqoekcJL; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=nuovations.com header.i=@nuovations.com header.b="NxHe8Laz"
-Received: from mail5.g24.pair.com (localhost [127.0.0.1])
-	by mail5.g24.pair.com (Postfix) with ESMTP id C4851164A9A
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:36 -0400 (EDT)
-Received: from localhost.localdomain (c-73-202-173-252.hsd1.ca.comcast.net [73.202.173.252])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mail5.g24.pair.com (Postfix) with ESMTPSA id 7C8AA1262BA
-	for <ofono@lists.linux.dev>; Wed, 19 Mar 2025 15:22:36 -0400 (EDT)
-From: Grant Erickson <gerickson@nuovations.com>
-To: ofono@lists.linux.dev
-Subject: [PATCH v6 2/7] qmi: Added structure for device options.
-Date: Wed, 19 Mar 2025 12:22:29 -0700
-Message-ID: <c9277d0d9b73576a232e3df4be9e4ced7bc06244.1742411889.git.gerickson@nuovations.com>
-X-Mailer: git-send-email 2.45.0
-In-Reply-To: <cover.1742411889.git.gerickson@nuovations.com>
-References: <cover.1742411889.git.gerickson@nuovations.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pqoekcJL"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 56902C4CEDD;
+	Mon, 24 Mar 2025 17:59:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1742839199;
+	bh=2ej6nKnCnZr8gD8t+ZD0FAOOxqOu+MsxKQB1yLky20Y=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=pqoekcJLRJVmKw2vS1qKRdlz00x1KqLON+9Io7SCQqlOQVUBx+ZBgH8R8yQsaBigR
+	 yCJ+lvJWZBnYIOzDm1Lw6OBFitKjP9VUABCmjRGgyyHmFLrP8vzkjycWox/dad8CqD
+	 A3PVsdos5cuBlY5McJ9K/Jts1baGkatODxXxX8w40fS5oNOU6oFGTZhyHiOzvMe8D0
+	 85JMwZnYkHcXadzCTzI86vxscAAJcdcM4KkCwwOUu762Mc4QnYS00UfHv+d+5fC32H
+	 dXttG51LtIRhhr46lqyDhxTGjhKon6WziDsOtAeZ2pSWHrC5YyJLV0TSLAbe9cYWYe
+	 RPuipszIurC1A==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id ADE19380664D;
+	Mon, 24 Mar 2025 18:00:36 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -40,45 +37,35 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nuovations.com; h=from:to:subject:date:message-id:in-reply-to:references:mime-version:content-transfer-encoding; s=pair-202401062137; bh=fHma6eg08g0rSRzjb2Szp8dq8ebKa/ez0Aq5JPdNAGU=; b=NxHe8LazRyG8cdHDgHgN95FGUAo2ZeDTBSCIjLzv+kL/6dv1/vOGNfdNG+swExIx0D1ahX/qEme0rHIjrOSdaOqSAXPgpkguPho6jj+dIXajY4CBHgPlupqR5dthaiNuEotsAc7QuUVSnXxBnkXMNIaVgiVgH1DIAfOp+pdhXYvOJLhHlvljeXR/1vYzYJVF/zeboN1zH7ALabnMlugsSKd0oqBZOVhjz5m33ysEmayeEBCofLkR7R6jG5dmaOljBtbM+j1ql8THqHXE+2jIykHGs2WpLXmsDA7G2LJgPDBaTNpm4oTc5f8baOZGDi10xtlYcGz9r3KzISVXgIILrQ==
-X-Scanned-By: mailmunge 3.10 on 66.39.139.36
+Subject: Re: [PATCH] qmi: sms: Fix possible out-of-bounds read
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <174283923555.4117759.9715462394060057262.git-patchwork-notify@kernel.org>
+Date: Mon, 24 Mar 2025 18:00:35 +0000
+References: <20250316102642.44301-1-ivo.g.dimitrov.75@gmail.com>
+In-Reply-To: <20250316102642.44301-1-ivo.g.dimitrov.75@gmail.com>
+To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+Cc: ofono@lists.linux.dev, denkenz@gmail.com, absicsz@gmail.com,
+ sunweaver@debian.org
 
-Defines options that may alter the default behavior of the QMI driver
-for a specific, instantiated device.
----
- drivers/qmimodem/qmi.h | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+Hello:
 
-diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-index e74ff3feaeec..4ba27847176f 100644
---- a/drivers/qmimodem/qmi.h
-+++ b/drivers/qmimodem/qmi.h
-@@ -74,6 +74,25 @@ enum qmi_qmux_device_quirk {
- 	QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT = 0x01
- };
- 
-+/**
-+ *	Defines options that may alter the default behavior of the QMI
-+ *	driver for a specific, instantiated device.
-+ */
-+struct qmi_qmux_device_options {
-+	/**
-+	 *	Device-specific "quirk".
-+	 */
-+	enum qmi_qmux_device_quirk quirks;
-+
-+	/**
-+	 *	If quirks has #QMI_QMUX_DEVICE_QUIRK_REQ_RATE_LIMIT set, this
-+	 *	is the minimum period, in microseconds, in which back-to-back
-+	 *	QMI service requests may be sent to avoid triggering a
-+	 *	firmware lock up and hang.
-+	 */
-+	unsigned int min_req_period_us;
-+};
-+
- typedef void (*qmi_destroy_func_t)(void *user_data);
- 
- struct qmi_service;
+This patch was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Sun, 16 Mar 2025 12:26:42 +0200 you wrote:
+> Fixes: CVE-2024-7537
+> ---
+>  drivers/qmimodem/sms.c | 13 ++++++++++---
+>  1 file changed, 10 insertions(+), 3 deletions(-)
+
+Here is the summary with links:
+  - qmi: sms: Fix possible out-of-bounds read
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=e6d8d526d507
+
+You are awesome, thank you!
 -- 
-2.45.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
