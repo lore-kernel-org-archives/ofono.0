@@ -1,65 +1,29 @@
-Received: from mail-oi1-f178.google.com (mail-oi1-f178.google.com [209.85.167.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C03C256C60
-	for <ofono@lists.linux.dev>; Fri,  2 May 2025 15:03:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3480A2580FF
+	for <ofono@lists.linux.dev>; Fri,  2 May 2025 15:40:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746198191; cv=none; b=FbZQyY9vjb1JC6S5qa1T4dVtCGII3uUtOHz8b5Zb2rbKBtwMKbmObmNMRT8r31BF1gVfSZnZl/RJJKp2MZUF5q3FXcmbVG4CTaFOnsJwsdUuBt6JVlhr4R9yq1IDLKAT3EKXav6GDvxSZ1rXoJmgpPS8IChqg35gihf5IYGr3z0=
+	t=1746200406; cv=none; b=rXtNsR2jklU8PoJ1EIi2V6byuc7MjR9W9fRqc8dRGbiX3fUepNgRnAuXpJqdcLjlGDQ865aPLHlSW8HbMQr1BWKZI/PXZUKHEd7i/tZ0LU7vuOoSFPrybhr5pOv5fu/6PMs9oUesBj2x9tU7AyvhyMXyv2JR0YhAJYHK8cJG8+Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746198191; c=relaxed/simple;
-	bh=L7O5O/YcXxTxwS2P3GtwQaMPD2YdyJvnjEXBxW3rQE8=;
+	s=arc-20240116; t=1746200406; c=relaxed/simple;
+	bh=aUAyyMBkO5MOPvnym7QDdYIY2AZb6QIZ+nQeu356dAY=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=qPRxNL8VVWQW13PGYZHzVWpMN0lgHy3bipMSHo05EziGyQTtbSXfRVp563wsj3C65QHSlY0RApSDeIa4IqeOahRKbutAvsr8sv+xkfl8thnmUKujTvSS+i2b3ZBhjeCL9TEtrxfoL/wENSGaiWiY7zvfDb1XnNNsR0C8MBGU6P4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SEz2z7cz; arc=none smtp.client-ip=209.85.167.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 In-Reply-To:Content-Type; b=bEcscxSy6t5VAo7/rIRui2gFRJ/W4x0cmdgB1ixVsths3PQYoyBAdoHBMVTZkmRp+3aZp60sFn+RBsLAV5jfOdht8k2R2KbcBPqxKFPzbVhI0rumSnkT5fPu01qiB0/696+7f0bo2yAZgn3Vur5T/WbIALNLQnWYok8Pu/75p6A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=OgwkGeja; arc=none smtp.client-ip=34.202.193.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SEz2z7cz"
-Received: by mail-oi1-f178.google.com with SMTP id 5614622812f47-3f8ae3ed8f4so1473483b6e.3
-        for <ofono@lists.linux.dev>; Fri, 02 May 2025 08:03:09 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1746198188; x=1746802988; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=js1tidUS5sLdn14rC8QCdoXXmRi1J3cwiZk/Vm3bNno=;
-        b=SEz2z7cz225MP08UATvLVZXdQ6g9JK7PhrjownkcRcb1oT9aJRd9INbgxUf4nJ68b0
-         tbOZaMlEyUv04stI0nmMazBk0OxjXbcKdNYZ9KOxAXb8U1b4K+fu5OcXYFZoRCljTH45
-         4V8FG84/FfvHVVMzwUhp9DpaFSOMmoIr33IhWTzDmJfVgY7/cGklY2aYruKFC48Y9MQz
-         sXKpl0ZEkSLQzwXA+6BdK2NFzKYWbBNPhrkF6qlQ/pto2mK+1bdQm64cuo0/ZiROvvqe
-         SlZNyKl2K9xMOkwSTIOPgvlUEQyi1Zuddm4xcSmadXhSoRKkppF2iXW3UrmWNy7vZGU1
-         NGdg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746198188; x=1746802988;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=js1tidUS5sLdn14rC8QCdoXXmRi1J3cwiZk/Vm3bNno=;
-        b=Q8N5ygpFw+he9+W2JCfzipX8De/WkXdg0pG/B9ZsIO2XVuouEXA8qXzTbsi3hg5dML
-         jREYDtipFT4jeQsqNJIMQkTyl490CoJRSwtDaG0ZUovJW2GfN4f8c49QRDo4lUIztwiU
-         OH3OR0vZZ58Kfb1UXdoZZRzJoBcmHYYc+isbdcxnqHylyIKPAmj7tKyM1VS35h5SESgW
-         OAV4nuHvAjF4bjuX0W+T6gt2SPUQkGeR0/iB8dOZq3Z9ak59f8YkOhF5fB/4iRed67EU
-         m7fp7RpoXjdJ44PscIyOp3snSTBxx8S5wGKsmuTAXuqLx4of8UpZK/ce15tl/aYjv2rn
-         iibQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUl0MTskm7ZBD6WNljH4xZI6vXDVdXZcBGF7x34UyVfC2QR7Iw7TH9ka/iuS0GhL7b7c4d6Xg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwHWC6+hKLuUnHL1NrmlhjAvwZH5sKZF1Mtu2gnwFrAeCpfwIFw
-	AnmAPijVS/qm9owWmTXNQ2DLklDbRYTq8LX5bXNRbJWeL5RuQmQ6MnSzkQ==
-X-Gm-Gg: ASbGncs0MTZJMSTIv7j3AwFrQuk9UpZer2uvCtCP7zMMtGVAuFdMCB1Yxojtu1TMGcJ
-	jl40/HrpurgAbEVUye+WK5MyeRJ1qLqjxXf/uTnZI4e/jEdJKBJgKLKYH2Hk7kNcRA3dhFZHFK8
-	c+tjlBHegdOB84PF3lobjNiYVJIYZqFB01laMbEG1gRWNte8UFgADCADKsEbzxi+ecBL/M6XVE+
-	gBEIW09fv1+VMHWDJmnNvQcw86PnNooUDdocE4kogrmnFaDD7R+tM2AXUX2fD/jpj45sY2G+r1J
-	nreiFjSOGl6WCNMHmB+Cwymtr8v7kuAHTWXCD6CmYQeF5Hlgw0hvoHJ7mh37y4SpOK4FIvNWudy
-	cfzmtMw==
-X-Google-Smtp-Source: AGHT+IEDiGeDdszMjFQISsv37sAE9LD1ITBcp1q32GHOchuEvreWmuDbtFGwr3STRwrJ+jdmavcRqQ==
-X-Received: by 2002:a05:6808:164a:b0:401:e61b:5f76 with SMTP id 5614622812f47-403414b636fmr1680474b6e.33.1746198188274;
-        Fri, 02 May 2025 08:03:08 -0700 (PDT)
-Received: from [192.168.1.25] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 006d021491bc7-607e7fe8482sm523874eaf.34.2025.05.02.08.03.07
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 02 May 2025 08:03:07 -0700 (PDT)
-Message-ID: <92709ac6-98ae-46f4-b62a-9a6ce51d9414@gmail.com>
-Date: Fri, 2 May 2025 10:03:06 -0500
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="OgwkGeja"
+DKIM-Signature: a=rsa-sha256; b=OgwkGejaqRpdHUHV1oLH3gLMgeVaQeYdMZUFc0sDXGPRixSZpeD86FL1k055kncQVj1hzxgwrb74Wip61wnfGW8nSgqdDFfLkP/uYQDvLOXDjnt/r+E9vX/TY0/NStcTzBQ3MP8pJ8xv2rDDmLB8+kgGd5NYz6gLZ6Af2KrprNUtnD6BpQcZxf3OH8nXbVNVtEA5327mbRg0Bhi6uv2s+wJNykA1R+6QOLQ5sRhg26ylyZ/F5TSxxIEued7/AQMqvN9iec9/wrdkQ5juZ5wvrnuh4592ZA3kdq7x+FwqMMZpCi0SNGiXKxOwe8B5M8Zhp/4vzpsmnW2jYmzfkUQrbw==; s=purelymail2; d=purelymail.com; v=1; bh=aUAyyMBkO5MOPvnym7QDdYIY2AZb6QIZ+nQeu356dAY=; h=Feedback-ID:Received:Date:Subject:To:From;
+Feedback-ID: 68221:10037:null:purelymail
+X-Pm-Original-To: ofono@lists.linux.dev
+Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id 1549552685;
+          (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
+          Fri, 02 May 2025 15:39:47 +0000 (UTC)
+Message-ID: <96c98808-a751-41ee-b76e-bdcc2f23300c@mentallysanemainliners.org>
+Date: Fri, 2 May 2025 20:39:43 +0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -68,208 +32,253 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
 Subject: Re: [PATCH v1 0/4] mbim: Add support for MediaTek T700 modem
-To: Muhammad <thevancedgamer@mentallysanemainliners.org>,
- ofono <ofono@lists.linux.dev>
+To: Denis Kenzior <denkenz@gmail.com>, ofono <ofono@lists.linux.dev>
 References: <20250419132215.28887-1-thevancedgamer@mentallysanemainliners.org>
+ <92709ac6-98ae-46f4-b62a-9a6ce51d9414@gmail.com>
 Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20250419132215.28887-1-thevancedgamer@mentallysanemainliners.org>
+From: Muhammad <thevancedgamer@mentallysanemainliners.org>
+In-Reply-To: <92709ac6-98ae-46f4-b62a-9a6ce51d9414@gmail.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
+X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
 
-Hi Muhammad,
+Hi Denis,
 
-On 4/19/25 8:22 AM, Muhammad wrote:
-> This modem is a PCIe MBIM modem, found in a lot of modern laptops,
-> like the Lenovo ThinkPad X1. Unfortunately, oFono does not support
-> PCIe MBIM modems out of the box, so this patch adds support for them,
-> as well as MBIM extensions which are needed for newer modems.
+On 5/2/25 20:03, Denis Kenzior wrote:
+> Do you know if this modem is available in the US for purchase?=20
+According to Lenovo, this modem is not available for sale in the USA due=20
+to it not passing FCC certifications or something.
+>
+> I had this cycle through the CI, and CI complains quite a bit. Also,=20
+> if you really want this to be applied upstream, then I'll need a a=20
+> last name in the author information.
+>
+> Alpine (musl) gcc optimized
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D
+> Configure: PASS
+> Build: FAIL
+> =C2=A0=C2=A0=C2=A0 plugins/udevng.c: In function 'setup_mbim':
+> =C2=A0=C2=A0=C2=A0 plugins/udevng.c:1203:25: error: ISO C90 forbids mixed=
+=20
+> declarations and code [-Werror=3Ddeclaration-after-statement]
+> =C2=A0=C2=A0=C2=A0=C2=A0 1203 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 DIR *d =3D opendir(path);
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ^~~
+> =C2=A0=C2=A0=C2=A0 plugins/udevng.c:1214:41: error: ISO C90 forbids mixed=
+=20
+> declarations and code [-Werror=3Ddeclaration-after-statement]
+> =C2=A0=C2=A0=C2=A0=C2=A0 1214 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 char wwan_path[1024];
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ ^~~~
+> =C2=A0=C2=A0=C2=A0 plugins/udevng.c:1217:41: error: ISO C90 forbids mixed=
+=20
+> declarations and code [-Werror=3Ddeclaration-after-statement]
+> =C2=A0=C2=A0=C2=A0=C2=A0 1217 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct udev_device=20
+> *wwan_device =3D udev_device_new_from_syspath(new_udev, wwan_path);
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ ^~~~~~
+> =C2=A0=C2=A0=C2=A0 plugins/udevng.c:1221:41: error: ISO C90 forbids mixed=
+=20
+> declarations and code [-Werror=3Ddeclaration-after-statement]
+> =C2=A0=C2=A0=C2=A0=C2=A0 1221 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DIR *sd =3D=20
+> opendir(wwan_path);
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ ^~~
+> =C2=A0=C2=A0=C2=A0 plugins/udevng.c:1231:49: error: ISO C90 forbids mixed=
+=20
+> declarations and code [-Werror=3Ddeclaration-after-statement]
+> =C2=A0=C2=A0=C2=A0=C2=A0 1231 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 char=20
+> sub_path[2048];
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ^~~~
+> =C2=A0=C2=A0=C2=A0 plugins/udevng.c:1234:49: error: ISO C90 forbids mixed=
+=20
+> declarations and code [-Werror=3Ddeclaration-after-statement]
+> =C2=A0=C2=A0=C2=A0=C2=A0 1234 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 struct=20
+> udev_device *sub_device =3D udev_device_new_from_syspath(new_udev,=20
+> sub_path);
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ^~~~~~
+> =C2=A0=C2=A0=C2=A0 cc1: all warnings being treated as errors
+> =C2=A0=C2=A0=C2=A0 make[1]: *** [Makefile:4090: plugins/udevng.o] Error 1
+> =C2=A0=C2=A0=C2=A0 make[1]: Target 'all-am' not remade because of errors.
+> =C2=A0=C2=A0=C2=A0 make: *** [Makefile:2405: all] Error 2
+>
+> Fedora (glibc) clang optimized
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D
+> Configure: FAIL
+> =C2=A0=C2=A0=C2=A0 configure.ac:25: installing 'build-aux/compile'
+> =C2=A0=C2=A0=C2=A0 configure.ac:41: installing 'build-aux/config.guess'
+> =C2=A0=C2=A0=C2=A0 configure.ac:41: installing 'build-aux/config.sub'
+> =C2=A0=C2=A0=C2=A0 configure.ac:10: installing 'build-aux/install-sh'
+> =C2=A0=C2=A0=C2=A0 configure.ac:10: installing 'build-aux/missing'
+> =C2=A0=C2=A0=C2=A0 configure.ac:8: installing 'build-aux/tap-driver.sh'
+> =C2=A0=C2=A0=C2=A0 Makefile.am: installing 'build-aux/depcomp'
+> =C2=A0=C2=A0=C2=A0 parallel-tests: installing 'build-aux/test-driver'
+> =C2=A0=C2=A0=C2=A0 ./configure: line 12804: awk: command not found
+> =C2=A0=C2=A0=C2=A0 ./configure: line 12874: awk: command not found
+> =C2=A0=C2=A0=C2=A0 ./configure: line 13443: awk: command not found
+> =C2=A0=C2=A0=C2=A0 ./config.status: line 1300: awk: command not found
+> =C2=A0=C2=A0=C2=A0 config.status: error: could not create Makefile
+>
+>
+> Checkpatch Output
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:8:=20
+> WARNING: Missing commit description - Add an appropriate one
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:22:=20
+> WARNING: Missing a blank line after declarations
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:26:=20
+> WARNING: Missing a blank line after declarations
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:28:=20
+> WARNING: Missing a blank line after declarations
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:36:=20
+> WARNING: Missing a blank line after declarations
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:38:=20
+> WARNING: line length of 124 exceeds 100 columns
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:39:=20
+> WARNING: Missing a blank line after declarations
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:44:=20
+> WARNING: Missing a blank line after declarations
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:45:=20
+> WARNING: Too many leading tabs - consider code refactoring
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:48:=20
+> WARNING: Too many leading tabs - consider code refactoring
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:53:=20
+> WARNING: line length of 102 exceeds 100 columns
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:53:=20
+> WARNING: Missing a blank line after declarations
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:55:=20
+> WARNING: line length of 130 exceeds 100 columns
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:56:=20
+> WARNING: line length of 114 exceeds 100 columns
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:58:=20
+> WARNING: Too many leading tabs - consider code refactoring
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:59:=20
+> WARNING: line length of 125 exceeds 100 columns
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:61:=20
+> WARNING: Too many leading tabs - consider code refactoring
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:62:=20
+> WARNING: line length of 106 exceeds 100 columns
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:63:=20
+> WARNING: Too many leading tabs - consider code refactoring
+> 0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:64:=20
+> WARNING: line length of 108 exceeds 100 columns
+> total: 0 errors, 20 warnings, 59 lines checked
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:8:=20
+> WARNING: Missing commit description - Add an appropriate one
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:27:=20
+> WARNING: line length of 101 exceeds 100 columns
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:134:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:135:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:140:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:142:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:143:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:144:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:145:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:158:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:161:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:163:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:164:=20
+> ERROR: code indent should use tabs where possible
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:164:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:165:=20
+> ERROR: code indent should use tabs where possible
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:165:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:167:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:168:=20
+> ERROR: code indent should use tabs where possible
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:168:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:169:=20
+> ERROR: code indent should use tabs where possible
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:169:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:172:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:175:=20
+> WARNING: line length of 103 exceeds 100 columns
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:177:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:178:=20
+> ERROR: code indent should use tabs where possible
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:178:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:179:=20
+> ERROR: code indent should use tabs where possible
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:179:=20
+> WARNING: please, no spaces at the start of a line
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:193:=20
+> WARNING: please, no space before tabs
+> 0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:211:=20
+> WARNING: line length of 104 exceeds 100 columns
+> total: 6 errors, 24 warnings, 181 lines checked
+> 0003-mbim-fetch-MBIM-version-on-init.patch:7: WARNING: Missing commit=20
+> description - Add an appropriate one
+> total: 0 errors, 1 warnings, 8 lines checked
+> 0004-plugins-udevng-Add-support-for-the-MediaTek-T700-5G-.patch:9:=20
+> WARNING: Missing commit description - Add an appropriate one
+> 0004-plugins-udevng-Add-support-for-the-MediaTek-T700-5G-.patch:21:=20
+> WARNING: please, no space before tabs
+> total: 0 errors, 2 warnings, 7 lines checked
+>
+> Regards,
+> -Denis
 
-Apologies for the delay in taking a peek into this.
-
-Do you know if this modem is available in the US for purchase?
-
-> 
-> Muhammad (4):
->    plugins/udevng: Add support for PCIe MBIM modems * Parses through the
->      sysfs tree and detects MBIM control nodes, net and   AT nodes
->    mbimmodem: add support for MBIM extensions * With MBIMEx 3.0,
->      arguments for activating GPRS changed. Update as   needed.
->    mbim: fetch MBIM version on init
->    plugins/udevng: Add support for the MediaTek T700 5G modem * Found in
->      the Lenovo ThinkPad X1 Yoga Gen 8 as the Fibocom FM350-GL   modem *
->      Works perfectly with ofono now
-
-I had this cycle through the CI, and CI complains quite a bit.  Also, if you 
-really want this to be applied upstream, then I'll need a a last name in the 
-author information.
-
-Alpine (musl) gcc optimized
-===========================
-Configure: PASS
-Build: FAIL
-     plugins/udevng.c: In function 'setup_mbim':
-     plugins/udevng.c:1203:25: error: ISO C90 forbids mixed declarations and 
-code [-Werror=declaration-after-statement]
-      1203 |                         DIR *d = opendir(path);
-           |                         ^~~
-     plugins/udevng.c:1214:41: error: ISO C90 forbids mixed declarations and 
-code [-Werror=declaration-after-statement]
-      1214 |                                         char wwan_path[1024];
-           |                                         ^~~~
-     plugins/udevng.c:1217:41: error: ISO C90 forbids mixed declarations and 
-code [-Werror=declaration-after-statement]
-      1217 |                                         struct udev_device 
-*wwan_device = udev_device_new_from_syspath(new_udev, wwan_path);
-           |                                         ^~~~~~
-     plugins/udevng.c:1221:41: error: ISO C90 forbids mixed declarations and 
-code [-Werror=declaration-after-statement]
-      1221 |                                         DIR *sd = opendir(wwan_path);
-           |                                         ^~~
-     plugins/udevng.c:1231:49: error: ISO C90 forbids mixed declarations and 
-code [-Werror=declaration-after-statement]
-      1231 |                                                 char sub_path[2048];
-           |                                                 ^~~~
-     plugins/udevng.c:1234:49: error: ISO C90 forbids mixed declarations and 
-code [-Werror=declaration-after-statement]
-      1234 |                                                 struct udev_device 
-*sub_device = udev_device_new_from_syspath(new_udev, sub_path);
-           |                                                 ^~~~~~
-     cc1: all warnings being treated as errors
-     make[1]: *** [Makefile:4090: plugins/udevng.o] Error 1
-     make[1]: Target 'all-am' not remade because of errors.
-     make: *** [Makefile:2405: all] Error 2
-
-Fedora (glibc) clang optimized
-==============================
-Configure: FAIL
-     configure.ac:25: installing 'build-aux/compile'
-     configure.ac:41: installing 'build-aux/config.guess'
-     configure.ac:41: installing 'build-aux/config.sub'
-     configure.ac:10: installing 'build-aux/install-sh'
-     configure.ac:10: installing 'build-aux/missing'
-     configure.ac:8: installing 'build-aux/tap-driver.sh'
-     Makefile.am: installing 'build-aux/depcomp'
-     parallel-tests: installing 'build-aux/test-driver'
-     ./configure: line 12804: awk: command not found
-     ./configure: line 12874: awk: command not found
-     ./configure: line 13443: awk: command not found
-     ./config.status: line 1300: awk: command not found
-     config.status: error: could not create Makefile
-
-
-Checkpatch Output
-=================
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:8: WARNING: 
-Missing commit description - Add an appropriate one
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:22: WARNING: 
-Missing a blank line after declarations
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:26: WARNING: 
-Missing a blank line after declarations
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:28: WARNING: 
-Missing a blank line after declarations
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:36: WARNING: 
-Missing a blank line after declarations
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:38: WARNING: 
-line length of 124 exceeds 100 columns
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:39: WARNING: 
-Missing a blank line after declarations
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:44: WARNING: 
-Missing a blank line after declarations
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:45: WARNING: Too 
-many leading tabs - consider code refactoring
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:48: WARNING: Too 
-many leading tabs - consider code refactoring
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:53: WARNING: 
-line length of 102 exceeds 100 columns
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:53: WARNING: 
-Missing a blank line after declarations
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:55: WARNING: 
-line length of 130 exceeds 100 columns
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:56: WARNING: 
-line length of 114 exceeds 100 columns
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:58: WARNING: Too 
-many leading tabs - consider code refactoring
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:59: WARNING: 
-line length of 125 exceeds 100 columns
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:61: WARNING: Too 
-many leading tabs - consider code refactoring
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:62: WARNING: 
-line length of 106 exceeds 100 columns
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:63: WARNING: Too 
-many leading tabs - consider code refactoring
-0001-plugins-udevng-Add-support-for-PCIe-MBIM-modems-Pars.patch:64: WARNING: 
-line length of 108 exceeds 100 columns
-total: 0 errors, 20 warnings, 59 lines checked
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:8: WARNING: 
-Missing commit description - Add an appropriate one
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:27: WARNING: 
-line length of 101 exceeds 100 columns
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:134: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:135: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:140: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:142: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:143: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:144: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:145: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:158: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:161: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:163: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:164: ERROR: code 
-indent should use tabs where possible
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:164: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:165: ERROR: code 
-indent should use tabs where possible
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:165: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:167: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:168: ERROR: code 
-indent should use tabs where possible
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:168: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:169: ERROR: code 
-indent should use tabs where possible
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:169: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:172: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:175: WARNING: 
-line length of 103 exceeds 100 columns
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:177: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:178: ERROR: code 
-indent should use tabs where possible
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:178: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:179: ERROR: code 
-indent should use tabs where possible
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:179: WARNING: 
-please, no spaces at the start of a line
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:193: WARNING: 
-please, no space before tabs
-0002-mbimmodem-add-support-for-MBIM-extensions-With-MBIME.patch:211: WARNING: 
-line length of 104 exceeds 100 columns
-total: 6 errors, 24 warnings, 181 lines checked
-0003-mbim-fetch-MBIM-version-on-init.patch:7: WARNING: Missing commit 
-description - Add an appropriate one
-total: 0 errors, 1 warnings, 8 lines checked
-0004-plugins-udevng-Add-support-for-the-MediaTek-T700-5G-.patch:9: WARNING: 
-Missing commit description - Add an appropriate one
-0004-plugins-udevng-Add-support-for-the-MediaTek-T700-5G-.patch:21: WARNING: 
-please, no space before tabs
-total: 0 errors, 2 warnings, 7 lines checked
+Thank you for the insights. I will reformat the patches, fix the=20
+warnings and send a new revision.
 
 Regards,
--Denis
+
+- Muhammad
+
