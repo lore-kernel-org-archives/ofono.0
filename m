@@ -1,71 +1,35 @@
-Received: from mail-ot1-f42.google.com (mail-ot1-f42.google.com [209.85.210.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF63125FA00
-	for <ofono@lists.linux.dev>; Fri,  9 May 2025 20:01:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D2FB2741B7
+	for <ofono@lists.linux.dev>; Wed, 14 May 2025 16:09:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746820900; cv=none; b=Ao2Wpbop5TuMqryeuW1ERPecw2a/9qX0kGFJ7rUwCeXu0+QYs/VO50ZO5wcqKokmERaki6uG2Vu/1rz79NZp+/6RZn+DMtjMUw/xMWupiZ65UWYF0mAK5rGBpc9MI/NxabtIn2B/3VWb6x/8QpPEpdkmSVonil1VQ4KSOIbAHEI=
+	t=1747238994; cv=none; b=EKgpp8VQARodgIvDe0rsQJU0gZ4NKFZ/iIZz1GlmTY5Xx2Q3XdIFL9kSOBSPvrWDhb5t+t/fjxKtUtCgoFDL/YRf76WQNQcQEKEm1K29/pGMBTEYJluYVnK7tWVlbeJaSzJ7yThJMEofj2a+aapQDUK5fxaPlauYqdEKxk5tzTI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746820900; c=relaxed/simple;
-	bh=Dwd6BcJQOcx8XCEnBM2QDoBsVksbnWl2zGB3lFQL5XQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=JvD9enCmpVQk6p6fdIrlWX/ONHzK/PE9s2A+ofypZnGdQF0h8EOX6P9UiV8Yvp/6MIg/7K8dy0Xe2De8NNcYvKEqR//W5V754kHZOFshWYB8BzNhXvxRoTyMIk0RWA5QKaYUcOlFg5Iw14HsAC3weWTsimqf9CwEOAJB4C6rlP4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UupXScSj; arc=none smtp.client-ip=209.85.210.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1747238994; c=relaxed/simple;
+	bh=adpnGKYT8b1RRqqWkoUGc5zedwWpidyCpUy9hFBMZWg=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=dLzIdPyadZb90/aqIXc9wT/qPGmxDKsj72HAH7CAMtBzwL0yo1yz/MaPBXiSE83C3Q7ralrOPMwRZjnKcAXUw3G13/T4gL1fUsZlc2wtdktrdOEy3+5gqxS9KfUlGCIeA3c4fy8AzCyaJPPm1gxYQkm5v7KBrw2qqpe74nnR8y0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=FXUzGjEk; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UupXScSj"
-Received: by mail-ot1-f42.google.com with SMTP id 46e09a7af769-72c16e658f4so1460824a34.1
-        for <ofono@lists.linux.dev>; Fri, 09 May 2025 13:01:38 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1746820897; x=1747425697; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=jeKxW7wdej8z2XFtjnn+ZmcIb6dIVu+fY3JWZgeA9/g=;
-        b=UupXScSjk23o8ND6UxpYBM7+MbX0DPIRdr/qzVzcv1ARqH+ynMxGJkjgx6hZk6w8+r
-         Tt4y3TJKeVw6yaXG2hmd3YGY4iEGldJqStJ11T/2QAdYhcyAfmcqDhyurMl0GRApBtY6
-         g3i+ZZZaPb0ReM1OB1JUob3vIYB/q+Hqvg87MRPQXdReq9189T7LJCjkwNM1PMXv1zZ7
-         Ikh1rflCnvzTGgzyaZ4b1Y/0japKubUF0X01YD1FQMZLTRthCSDZBLTYNx7VPXH1AKyK
-         GiKJ+9KWQGiP0ktAcR4jad0/W/iKJiL3SsJOiAqoMxrchjE1yCPi+9aWDL46YxBge9/g
-         XTmg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746820897; x=1747425697;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=jeKxW7wdej8z2XFtjnn+ZmcIb6dIVu+fY3JWZgeA9/g=;
-        b=Zb4yL32F32Bn/0DIFAjAryg8PEJKXMX79Wc7Guk1uLITsYOne5E85nUvO4D2L1FbZa
-         MtAdQWJvID0I9VV63c3OW9jK3ujZHnb154Qxe1iLHJn7FupSfFXHhgW7WG45wRTt2pil
-         SZzTCNtGnvygxB6Ngt7QDj4JjzymT1lErdZOd1tx+8nbfpDqC3Ab44aOtmhviti6w1+c
-         QGQeIje3C0GZPjstDDHv4tdNLg1ydw3J284bzcajm15DWBaxFGVEj54mhyT6yJS18epP
-         bxK/q7QrQXP71HfdIhl7+km4rsC0Krwiat7sPNL5mLL5yRu70+kIMp+w72zrT6Y67FwX
-         Iwog==
-X-Gm-Message-State: AOJu0YxMmZ3FNntPIeo3N8Ogs7U0EoVaotTkKhDN8esap6kfEihjvtOK
-	+xpl2yhrtu81Ce1HmVmExQ7CR4+i3KvxD2yjwxugyF/hMibydM+oA/iHqA==
-X-Gm-Gg: ASbGnctKMRD3O+jVHgPyF8zGLNDgY1zins2xwO+NZVztWhwQ+tSO8wcE4dfnLntlbs7
-	jM7qUsckN9miPVULjZfmkK/glMdalEbXjPVu8vRVnC+xQqzNd+dJ6QS+NhDzeuXueZEnoKnNsls
-	5cvXSzt6cTXatkOEoBYePUqQE5kW+7ZiOeUy1xsS1VAu8b24QhjC4wplSSx/2p+0AFo05QojuI0
-	0BfbqHTd2y+8i5gYJ8J6xRePqDRLegcH00Mwn2zJMSV9A8LmlbCbn3efh4/Vl0hubySP7vUceAz
-	aOiSvPwoy/ZbKtrmjMEudX7NQhhSVctyUUbmlYnnmsocbwhcWpQPLY0kIEeo7WAb7oodSYN17iA
-	0MJLo8znL2YUDaxrrmdLQJVvBGw==
-X-Google-Smtp-Source: AGHT+IHJy09MjSyxSyPHUpdcKqJR1T0VFfhS/dQ56lTueD1yYiJSOqjP+L0RMSvDH3ZqVW+SkF7L2g==
-X-Received: by 2002:a05:6830:6b0b:b0:72b:98f8:5c82 with SMTP id 46e09a7af769-73226ab1ffamr4160787a34.21.1746820897486;
-        Fri, 09 May 2025 13:01:37 -0700 (PDT)
-Received: from localhost.localdomain (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-732264b2e5asm667326a34.19.2025.05.09.13.01.36
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 May 2025 13:01:37 -0700 (PDT)
-From: Denis Kenzior <denkenz@gmail.com>
-To: ofono@lists.linux.dev
-Cc: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH 5/5] mbim: Print the device as a string
-Date: Fri,  9 May 2025 15:01:12 -0500
-Message-ID: <20250509200131.42020-5-denkenz@gmail.com>
-X-Mailer: git-send-email 2.48.1
-In-Reply-To: <20250509200131.42020-1-denkenz@gmail.com>
-References: <20250509200131.42020-1-denkenz@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="FXUzGjEk"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 27639C4CEE9;
+	Wed, 14 May 2025 16:09:54 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1747238994;
+	bh=adpnGKYT8b1RRqqWkoUGc5zedwWpidyCpUy9hFBMZWg=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=FXUzGjEkR8B0Oq28wV5be8V0wIm9YvCjYlCqo7pXIypaX7mWlrQddSWKEOQtQEUJ9
+	 lv7TZ1b0B1Zxw0W0n+bfskkNcqexJpRf3huA9LsjbFRVh/oxDOy7APpQrAETm2rdr0
+	 HyNP2Hi7KLDw7+LGW+AZneuXHdUeEYE/TQGEcr0plaDnj/XqAueQcX1wwlvSOmCPw/
+	 mvtWoE4BjYo3b7Bu3sv2pFCKsaQRKJzKaRqtn+QN2vJeyCQ5cfEVAZxNbIkYOExO6K
+	 WW9fuFV6yxZT2O8Q4PP60bRC0Z0n6VPyRXZzem7l7Gl4pDVXyMpJt40Ao4gQjp9deL
+	 zRjqIqCmYw3KA==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id ADC53380AA66;
+	Wed, 14 May 2025 16:10:32 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -73,26 +37,43 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH 1/5] udevng: Record devnode even for non-USB devices
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <174723903152.2422148.11684028287525685460.git-patchwork-notify@kernel.org>
+Date: Wed, 14 May 2025 16:10:31 +0000
+References: <20250509200131.42020-1-denkenz@gmail.com>
+In-Reply-To: <20250509200131.42020-1-denkenz@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+Cc: ofono@lists.linux.dev
 
-Instead of printing 'device' as a pointer, print it as a string:
-ofonod[2672]: plugins/mbim.c:mbim_enable() /dev/wwan0mbim0
----
- plugins/mbim.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hello:
 
-diff --git a/plugins/mbim.c b/plugins/mbim.c
-index fa4a25d58eee..b31f8b66711d 100644
---- a/plugins/mbim.c
-+++ b/plugins/mbim.c
-@@ -269,7 +269,7 @@ static int mbim_enable(struct ofono_modem *modem)
- 	if (!device)
- 		return -EINVAL;
- 
--	DBG("%p", device);
-+	DBG("%s", device);
- 	fd = open(device, O_EXCL | O_NONBLOCK | O_RDWR);
- 	if (fd < 0)
- 		return -EIO;
+This series was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
+
+On Fri,  9 May 2025 15:01:08 -0500 you wrote:
+> This is useful for WWAN AT/MBIM/QCDM ports that are being created by PCI
+> based devices.
+> ---
+>  plugins/udevng.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+
+Here is the summary with links:
+  - [1/5] udevng: Record devnode even for non-USB devices
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=0ede8e3300d8
+  - [2/5] udevng: mhi: Collect WWAN net devices as well
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=1d1f9cda1b53
+  - [3/5] udevng: mhi: Detect MBIM mode devices
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=92f6fe8c1b87
+  - [4/5] mbim: Do not require the DescriptorsFile property
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=597bcbcbb9ae
+  - [5/5] mbim: Print the device as a string
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=3fc849113f3a
+
+You are awesome, thank you!
 -- 
-2.48.1
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
