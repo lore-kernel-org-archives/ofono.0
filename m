@@ -1,37 +1,36 @@
-Received: from mail-0301.mail-europe.com (mail-0301.mail-europe.com [188.165.51.139])
+Received: from mail-0201.mail-europe.com (mail-0201.mail-europe.com [51.77.79.158])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C6B626E6E4
-	for <ofono@lists.linux.dev>; Tue,  1 Jul 2025 09:29:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.165.51.139
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92D8A26E6FC
+	for <ofono@lists.linux.dev>; Tue,  1 Jul 2025 09:30:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=51.77.79.158
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751362203; cv=none; b=aVK/vePudnw4XTHwg0UyByeejHZco9a+RVS0wIJ+p1AbiMI1BydammFoiM2kLa/RNf3PA6R2qsnu+3M6XVchf/PcS5JZcFke0nCQZ7aAzvlhom4970UyNWId8pPNd9Emb85StTVcaVGCDeGzD7nUKO7FOdzdFi9FJBvyCADJCEs=
+	t=1751362204; cv=none; b=rhKZZv1a7uFSbV6EffBbJBwfIzzryAYuTIzM9NpyH1NJVqi3jx+Jdo5PK4Pm1t9fqluySeGx+uB03KkBmOWKFetNPC56In5pmQy4GExMUNzhYkptPeSAKJ/kOxGJ/qFXyiB8YdGh6bmuQJuRkmLInXIq+XyP7HjrElF0z/Ft92w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751362203; c=relaxed/simple;
-	bh=BvjIpbCNvtbH70i3J48sCSBVimtRo4bS3ozn4jU8HuQ=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To; b=Lgw61HHnptZLiaD+vsIiyWS168j3mIyy4d6PFhlmjp8fJs7kxpqjsY7Zu1mf2GlE5ke7rWB2jqylQ+Pkh1G1atRgofrqcKq7b4mHEdEE5YKA+GCfork7BxuUtj5/4bjNEY/E2q6NiV02y6X7lXK3n4pdsCk09ZRkcXZhZBTGcZQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=rJWrIV7H; arc=none smtp.client-ip=188.165.51.139
+	s=arc-20240116; t=1751362204; c=relaxed/simple;
+	bh=VgqR1d2ws/7vbNFAPXFE4bodfEG8cvnZymRpJf2HLaQ=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To; b=TKawLS2PN0AvLMIH+1S9tkJ43flwHqx9RdYgTgf46MMUco8w+vvhVVe5LAGGCd+L+7yeAEK7wnGtZ2hxzGDO03nccgKX67hZthhw5Kx9j+bEzLadndqO3UCU0tG/5jK0xrxWmiNdiTCORG4ofyeEcglBcxbVndXJSX7gWlMZdMk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=IEaA57sZ; arc=none smtp.client-ip=51.77.79.158
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="rJWrIV7H"
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="IEaA57sZ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=geanix.com;
-	s=protonmail; t=1751362190; x=1751621390;
-	bh=GihPgXfbwMx8aHULhTKzr4CnujKTWqWmgzoWOuqhm2A=;
-	h=From:Date:Subject:Message-Id:References:In-Reply-To:To:From:To:Cc:
-	 Date:Subject:Reply-To:Feedback-ID:Message-ID:BIMI-Selector;
-	b=rJWrIV7HZiHiIBsk4rmLFO/thfsc/YqKy6052RgRs2fo6jVeUvzaz22pM61zrHZJn
-	 oSQ0QBrJ/N5+Vlg/kfrbRJxak8c2h9LO+52Gpl4qz/3e6+yQI6gLpMERstv0lge+N7
-	 TYbFsGe2OxYKMTDrDHVxf4Kv3VQRliDi5ZvPoQqdHWAqZytpOhuS0Flr1fLjFDiGPQ
-	 8mLxQsp29YQBzTBs4+39Kj9f1Ij0C2IV1xCC2Kp2wUXtkXZvfAUZb4QRJLi2Epw5iM
-	 I2RNXU2ph1jMtXRV7dHH/LqwngimQzlNFDBrmjIogS/qRL7zMcLpeGGx/tg/bix+dD
-	 /VBo/qjtBXveA==
-X-Pm-Submission-Id: 4bWd651FXjz1DDrL
+	s=protonmail; t=1751362187; x=1751621387;
+	bh=Lj2kovoagzVrqEMgLMoSUslk3x3kki+ZBroEvXRYek0=;
+	h=From:Subject:Date:Message-Id:To:From:To:Cc:Date:Subject:Reply-To:
+	 Feedback-ID:Message-ID:BIMI-Selector;
+	b=IEaA57sZ6X8WB10xvE2KeLHOQVd9cNpURq27CGNO3HdNrjGhB/iC9oSl8R4gSowSB
+	 c0A3u0j6xfiEgvMJ44hN8xi4USUFHA2zbvT9nW0Fe5LYrL3VipW3kO6qSynTA6loAq
+	 doREl1xoFG9JwIdsiiEQJi2L6dq99q5rZ+nJGAP4LUaz93RzFer0JyS/LHt2+FP6Zr
+	 OGsF1488kTPGL392YeO+nAqJ8xGImVOaK8sML+y9lsXogqSsJEsXNRfTa7822Sgfcq
+	 iJTF1uqR1RaLU6FU18lgdCcnYD1WXgXsqYBQfA2yvE24qLzXoGkT7VuoIKlv+65rCe
+	 mTTT4Y9ynx1Hw==
+X-Pm-Submission-Id: 4bWd6227Thz1DDrL
 From: Sean Nyekjaer <sean@geanix.com>
-Date: Tue, 01 Jul 2025 11:29:30 +0200
-Subject: [PATCH 3/4] sim: Allow SetProperties to set forbidden operator
- list(PLMN)
+Subject: [PATCH 0/4] Get/Set forbidden operator list via SimManager
+Date: Tue, 01 Jul 2025 11:29:27 +0200
+Message-Id: <20250701-fplmn-v1-0-d7fe9c901b57@geanix.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -40,132 +39,53 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20250701-fplmn-v1-3-d7fe9c901b57@geanix.com>
-References: <20250701-fplmn-v1-0-d7fe9c901b57@geanix.com>
-In-Reply-To: <20250701-fplmn-v1-0-d7fe9c901b57@geanix.com>
+X-B4-Tracking: v=1; b=H4sIAHeqY2gC/6tWKk4tykwtVrJSqFYqSi3LLM7MzwNyDHUUlJIzE
+ vPSU3UzU4B8JSMDI1MDMyMz3bSCnNw83aTkJOPUxESLpMREEyWg2oKi1LTMCrA50bG1tQDA48+
+ UVwAAAA==
+X-Change-ID: 20250626-fplmn-bcb3eaa8baa4
 To: denkenz@gmail.com, ofono@lists.linux.dev
 X-Mailer: b4 0.14.2
 
-ForbiddenPLMN allows to set a maximum of 4 PLMN's.
+IoT providers allow for enabling and disabling of operators.
+If the modem have detected an forbiddel operator it will block
+connections to that network.
+This will allow controlling software to clear that list.
+(Our IoT provider recommends to clear the list everytime we power off
+the modem).
+
+Get:
+$ busctl call org.ofono /sim76xx_0 org.ofono.SimManager GetProperties
+[...]
+"PreferredLanguages" as 4 "da" "en" "de" "fr" "PinRequired" s "none"
+"Retries" a{sy} 4 "pin" 3 "pin2" 3 "puk"
+ 10 "puk2" 10 "CardSlotCount" u 1 "ActiveCardSlot" u 1 "ForbiddenPLMN"
+ as 4 "23802" "23902" "32431" "331022"
+
+$ busctl call org.ofono /sim76xx_0 org.ofono.SimManager SetProperty sv
+ForbiddenPLMN as 1 "23802"
+
+Todo:
+I'm still missing to do continious updates of the list.
+Any idea to update it periodically?
+
+Would also really like some feedback on the dbus interface
+
 ---
- src/sim.c | 82 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 82 insertions(+)
+Sean Nyekjaer (4):
+      simutil: Add Forbidden operatator list(PLMN) fileid
+      sim: Show forbidden operator list(PLMN) with GetProperties
+      sim: Allow SetProperties to set forbidden operator list(PLMN)
+      doc: sim-api document ForbiddenPLMN
 
-diff --git a/src/sim.c b/src/sim.c
-index c33ee27058a0f1624d1f8f162cf7624bf3305da4..80d20dd9474d6357f54c35f63ee9adade0cede53 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -150,6 +150,11 @@ struct msisdn_set_request {
- 	DBusMessage *msg;
- };
- 
-+struct fplmn_set_request {
-+	struct ofono_sim *sim;
-+	DBusMessage *msg;
-+};
-+
- struct service_number {
- 	char *id;
- 	struct ofono_phone_number ph;
-@@ -683,6 +688,37 @@ static gboolean set_own_numbers(struct ofono_sim *sim,
- 	return TRUE;
- }
- 
-+static void sim_efplmn_cb(const struct ofono_error *error, void *data)
-+{
-+	DBusMessage *reply;
-+	struct fplmn_set_request *req = data;
-+
-+	if (error->type != OFONO_ERROR_TYPE_NO_ERROR) {
-+		ofono_error("Unable to clear Forbidden PLMN");
-+		reply = __ofono_error_failed(req->msg);
-+	} else {
-+		reply = dbus_message_new_method_return(req->msg);
-+	}
-+
-+	__ofono_dbus_pending_reply(&req->msg, reply);
-+
-+	l_free(req);
-+}
-+
-+static void sim_set_forbidden_plmn(struct ofono_sim *sim,
-+				   const uint8_t *plmn_list, DBusMessage *msg)
-+{
-+	struct fplmn_set_request *req;
-+
-+	req = l_new(struct fplmn_set_request, 1);
-+
-+	req->sim = sim;
-+	req->msg = dbus_message_ref(msg);
-+
-+	sim->driver->write_file_transparent(sim, SIM_EF_PLMN_FILEID, 0, 12,
-+					plmn_list, NULL, 0, sim_efplmn_cb, req);
-+}
-+
- static void sim_set_slot_callback(const struct ofono_error *error, void *data)
- {
- 	struct ofono_sim *sim = data;
-@@ -721,6 +757,7 @@ static DBusMessage *sim_set_property(DBusConnection *conn, DBusMessage *msg,
- 	DBusMessageIter var;
- 	DBusMessageIter var_elem;
- 	const char *name, *value;
-+	uint8_t plmn_list[12], i;
- 
- 	if (!dbus_message_iter_init(msg, &iter))
- 		return __ofono_error_invalid_args(msg);
-@@ -811,6 +848,51 @@ error:
- 							sim_set_slot_callback,
- 							sim);
- 		return NULL;
-+	} else if (!strcmp(name, "ForbiddenPLMN")) {
-+		dbus_message_iter_next(&iter);
-+
-+		if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_VARIANT)
-+			return __ofono_error_invalid_args(msg);
-+
-+		dbus_message_iter_recurse(&iter, &var);
-+
-+		if (dbus_message_iter_get_arg_type(&var) != DBUS_TYPE_ARRAY ||
-+				dbus_message_iter_get_element_type(&var) !=
-+				DBUS_TYPE_STRING)
-+			return __ofono_error_invalid_args(msg);
-+
-+		dbus_message_iter_recurse(&var, &var_elem);
-+
-+		i = 0;
-+		memset(plmn_list, 0xFF, sizeof(plmn_list));
-+
-+		/* Empty lists are supported */
-+		while (dbus_message_iter_get_arg_type(&var_elem) !=
-+				DBUS_TYPE_INVALID) {
-+			if (dbus_message_iter_get_arg_type(&var_elem) !=
-+					DBUS_TYPE_STRING)
-+				return __ofono_error_invalid_args(msg);
-+
-+			if (i > 3)
-+				return __ofono_error_invalid_args(msg);
-+
-+			dbus_message_iter_get_basic(&var_elem, &value);
-+
-+			DBG("%s %d", value, strlen(value));
-+
-+			if (!(strlen(value) == 5 || strlen(value) == 6))
-+				return __ofono_error_invalid_args(msg);
-+
-+			sim_encode_mcc_mnc(plmn_list + i * 3, value, value + 3);
-+
-+			i++;
-+
-+			dbus_message_iter_next(&var_elem);
-+		}
-+
-+		sim_set_forbidden_plmn(sim, plmn_list, msg);
-+
-+		return NULL;
- 	}
- 
- 	return __ofono_error_invalid_args(msg);
+ doc/sim-api.txt |   7 +++
+ src/sim.c       | 142 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/simutil.h   |   2 +
+ 3 files changed, 151 insertions(+)
+---
+base-commit: 8d892785e47bde9a0912a05725405bb60c140f87
+change-id: 20250626-fplmn-bcb3eaa8baa4
 
+Best regards,
 -- 
-2.49.0
+Sean Nyekjaer <sean@geanix.com>
 
