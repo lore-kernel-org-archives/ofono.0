@@ -1,134 +1,109 @@
-Received: from mail-244107.protonmail.ch (mail-244107.protonmail.ch [109.224.244.107])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f51.google.com (mail-oa1-f51.google.com [209.85.160.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 862D61E5711
-	for <ofono@lists.linux.dev>; Thu,  3 Jul 2025 11:48:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=109.224.244.107
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F46425A2AE
+	for <ofono@lists.linux.dev>; Thu,  3 Jul 2025 17:43:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751543328; cv=none; b=kpIRulmBQlGL4kEWbSNkmxMHm/MC587vh7R4Oje8vFpmpPjHAJaByUwT7mQigg+J/b0fXttU5wLR0hA0FON0l8YNik6/p1FGZQrP4V6bJb8V37fbCdoGAYFiX9IM4Srgkuqp2EJ5pQQW14UJ4Q+RvA4g6wk5lwtiRtTFVck9HCM=
+	t=1751564620; cv=none; b=jT9lC6gRUnG+mE2Udyj3bCUXgjsvYQwFZ8I/tts98UXKizB04VAS+D79s73tDQBAR3/Y/3w2VkoYgqeyn4A7Nrm/IWfERSvhR40/nbiPF8DZ6i8XibMcOVBxNUL/nabEAqyFkCrHZ52zk+BgplTwZIWEl+pAaYUQRbIoxV+4sVg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751543328; c=relaxed/simple;
-	bh=I2Ht8rXS87FONaDrfaM/X5Zm44aSvNK0J00c9/c3w8w=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To; b=pR47Kj/L5hX/ruiqp/o8MQd2AHvIpLDBdirVJV012cRFSrFJD0/65CjoGut0TGr+JnqBIX7iAfFj24VWxFXT+sxitDi2x+nHcs5zqPGKn4Bwt8tHA4oxsSWbJz2FV6wcm+5HOmtsQJAQm8xLQGfflYwbBQOe3ypqFwTYV5Bwh04=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=JYWqmlPb; arc=none smtp.client-ip=109.224.244.107
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
+	s=arc-20240116; t=1751564620; c=relaxed/simple;
+	bh=OwQbc/pMmAo6sr6xq2jH7I9T8lMi2l1YDhXiK/oNk9c=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=KHnpSpRjpj0CB/1zoC2x3rrk1Ee+aQTICbwFuEpl0Mgz4Ffla4Ikg/B+p/3eYJ8/GRFX4Le/mLqSBrOlJ8G5iC7JGVSPP+UHOaBXYz/jE7ZkvtTbHJaSAcVELm+Bb5HBq3XMZOJVOUWXGU/IXjpbzxm6xpVlgz4PRbp0n17CRcg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Dtdchx4k; arc=none smtp.client-ip=209.85.160.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="JYWqmlPb"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=geanix.com;
-	s=protonmail; t=1751543317; x=1751802517;
-	bh=n9YlTYvHIBUIMEov7LdaVqVKLrn/jnRMuaHvpF6QN9g=;
-	h=From:Date:Subject:Message-Id:References:In-Reply-To:To:From:To:Cc:
-	 Date:Subject:Reply-To:Feedback-ID:Message-ID:BIMI-Selector;
-	b=JYWqmlPbQzR1dd/xzABNgawOg4EQIoVfoXq4/J6GP8Hc69eJEwlP+dMMWFXlPGU07
-	 SvM3gCCdm1oCTG+N1fqTKY7gCZkEXcAc8ztlqXlGuDGWy78Jo4YhvRNYr7Y9dIAXym
-	 etXMyW0J0tPisL/pSD2c3gAI7Fj6vSKL13huj4qiemGFaTAA2SVyJN0z9z3bkNm9Ka
-	 4JJ80oGvV+c3++gAZf/t7GiUKE4VA4By4HDZKa6odO3VSVdjyAyFHqZflojyJ9pdyz
-	 +WMbjmHfcaxQw2yV7Ma2iZeJ06vraX3vBVuOOKKDCS4fhuEOzsn4bl89m0vi/0yucY
-	 mcCkaxDTKbWLg==
-X-Pm-Submission-Id: 4bXw5J08Bkz1DDWt
-From: Sean Nyekjaer <sean@geanix.com>
-Date: Thu, 03 Jul 2025 13:48:20 +0200
-Subject: [PATCH v2 2/3] sim: Create new dbus method to clear the forbidden
- network operator list
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Dtdchx4k"
+Received: by mail-oa1-f51.google.com with SMTP id 586e51a60fabf-2ea65f5a0easo115440fac.1
+        for <ofono@lists.linux.dev>; Thu, 03 Jul 2025 10:43:37 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1751564616; x=1752169416; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=eMlFrbBKvInpfCREPWczpldvZDk8fZMRBRdUmzQ1T0I=;
+        b=Dtdchx4kXWwVG60Hd/SZZqPyTENzyFu5t57XnLLBxBzyz814QqbNRFILvBzq2/gVNw
+         Jlg37PfzYf/3cF8VMwnfUsSsTmm8SRuvEgvFcMseO2z9POrzvaLTgnn1p25VohmZgAt0
+         FIV8aQlAMqQmKT3vvEF5Icd01nGgayrmbCGu5i56t6whO6o1L+IaUnvcu7YoUXTDCsJi
+         KrZQCAbMIpEKz77PIDP+zCbz+Y6/wJxabULNY59aKmDnCKfByuhK58/bCQnJH8ErHjH/
+         vU7wBgmpaH4UEZVz5dalaRaSYSuUWHiwu9xagZ2yxRquVW/5RhWQ6F37uaODJnKPwpil
+         m6sw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1751564616; x=1752169416;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=eMlFrbBKvInpfCREPWczpldvZDk8fZMRBRdUmzQ1T0I=;
+        b=tY42zK4mTaLHVQmx/FVotzFG5ayU3dctepfCMO+N+V3h44ioLrvY3XhEGA2osXuqRA
+         xpNP1FtBWHqqUC5r2TnDtfIq/lUiet0hsBLNwBUN5njR4U9MpayIXIpFiibwDbXCbvE2
+         rrUqW/4KKka1bmOpU/P3qrkuI1k/CTwx8mNQuzeNNBNfCbiorqO27iY+0KF/v2LH5E63
+         J7hwSLnQZlMGrlvk7mji7E5EPQzDvL8WzIfWvYU8PVdOXrYVYW7AgSu/Ka0m+prPrQDP
+         Urn8tKFyBESMkRkFcvMSIsL1pQ0PoC07EtfQVTAxfuopPbIN5apF4GMj80GGCchIdkyg
+         7GoQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWxPqM31uyeQImmDpRbo4Mvjj5CV62bz8jHeSxM9jBuvnrhpbEFHpWlEEV19pMyGcvMNdIThQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzqFzlMOwIcHa7jU3gqxZhp/gTeh0Ypqu+jOOPwekhvogRS/4pZ
+	wAEFE5dSNUdSWIvWJ/5acTvQwr3oN9miiylUMvyeIIQ7nWySVtLae4VSN52bHA==
+X-Gm-Gg: ASbGncs096oUn/GECti41YdeIx3z0L15S7hSuS6t2hkRHzs5Dfzv0XB4qTxwcV6bWe6
+	pkWBZliI3Mmiv5sk9CgPYbVxyGy4juMrNefHLDl2mZG/Yrljn26NV3OknZrXUxeJD2DqRq4BGw8
+	NNz7juC/IWfiI0KMwxvtTtGFYzj8Tpta7KVtSriO73uAYfiDCtA+yo1Xo2rEhMYpncpZdX7tw5v
+	ZYEQfkJZz4OyfMMgQ+dyTKH1Ov32/81FZ8rmVI84svPtZaDHtAV+FoVWS+K5EdvZsW2bU27KYAK
+	CtNYDAfW3O3kgBfQGgA5HyCohy5Q13OsLbaOYZF7oN4vCO/0x/nubeHGtdjIBTPbpbAqpWBpwIp
+	RPLXJ0DURdHf9Db3VfgLuRaHmwJA=
+X-Google-Smtp-Source: AGHT+IGh8dBVpvarVYjU3EgZmB9EZ1n1MWO+XiFSykaDZUwoKdWLPfeggfl2aWtcc7jA7RFn4FXHqw==
+X-Received: by 2002:a05:6870:c14e:b0:2e9:8f40:9ea2 with SMTP id 586e51a60fabf-2f79024e3b6mr93206fac.7.1751564616138;
+        Thu, 03 Jul 2025 10:43:36 -0700 (PDT)
+Received: from [192.168.1.21] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-2f7901a35cesm15197fac.32.2025.07.03.10.43.35
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 03 Jul 2025 10:43:35 -0700 (PDT)
+Message-ID: <b5d9cd37-3660-4853-b8e4-1e8440c4b646@gmail.com>
+Date: Thu, 3 Jul 2025 12:43:34 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20250703-fplmn-v2-2-6eb6335a7b8c@geanix.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 1/3] simutil: Add forbidden operator list fileid
+To: Sean Nyekjaer <sean@geanix.com>, ofono@lists.linux.dev
 References: <20250703-fplmn-v2-0-6eb6335a7b8c@geanix.com>
-In-Reply-To: <20250703-fplmn-v2-0-6eb6335a7b8c@geanix.com>
-To: denkenz@gmail.com, ofono@lists.linux.dev
-X-Mailer: b4 0.14.2
+ <20250703-fplmn-v2-1-6eb6335a7b8c@geanix.com>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20250703-fplmn-v2-1-6eb6335a7b8c@geanix.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-To clear the list:
-busctl call org.ofono /sim76xx_0 org.ofono.SimManager
-ClearForbiddenNetworkOperators
----
- src/sim.c | 43 +++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
+Hi Sean,
 
-diff --git a/src/sim.c b/src/sim.c
-index 7d9a180abd0c5b7adedebfe7026125dbada9752e..4f72bd9ac1abf484fed77008c03cae9186b63c9e 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -143,6 +143,11 @@ struct msisdn_set_request {
- 	DBusMessage *msg;
- };
- 
-+struct fplmn_set_request {
-+	struct ofono_sim *sim;
-+	DBusMessage *msg;
-+};
-+
- struct service_number {
- 	char *id;
- 	struct ofono_phone_number ph;
-@@ -649,6 +654,41 @@ static gboolean set_own_numbers(struct ofono_sim *sim,
- 	return TRUE;
- }
- 
-+static void sim_efplmn_cb(const struct ofono_error *error, void *data)
-+{
-+	struct ofono_sim *sim = data;
-+	DBusMessage *reply;
-+
-+	if (error->type != OFONO_ERROR_TYPE_NO_ERROR) {
-+		ofono_error("Unable to clear Forbidden PLMN");
-+		reply = __ofono_error_failed(sim->pending);
-+	} else {
-+		reply = dbus_message_new_method_return(sim->pending);
-+	}
-+
-+	__ofono_dbus_pending_reply(&sim->pending, reply);
-+}
-+
-+static DBusMessage *sim_clear_forbidden_plmn(DBusConnection *conn, DBusMessage *msg,
-+					void *data)
-+{
-+	struct ofono_sim *sim = data;
-+	DBusMessageIter iter;
-+	DBusMessageIter var;
-+	static uint8_t plmn_list[12] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-+					0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-+
-+	if (sim->pending)
-+		return __ofono_error_busy(msg);
-+
-+	sim->pending = dbus_message_ref(msg);
-+
-+	sim->driver->write_file_transparent(sim, SIM_EF_PLMN_FILEID, 0, 12,
-+					plmn_list, NULL, 0, sim_efplmn_cb, sim);
-+
-+	return NULL;
-+}
-+
- static void sim_set_slot_callback(const struct ofono_error *error, void *data)
- {
- 	struct ofono_sim *sim = data;
-@@ -687,6 +727,7 @@ static DBusMessage *sim_set_property(DBusConnection *conn, DBusMessage *msg,
- 	DBusMessageIter var;
- 	DBusMessageIter var_elem;
- 	const char *name, *value;
-+	ofono_bool_t clear_fplmn;
- 
- 	if (!dbus_message_iter_init(msg, &iter))
- 		return __ofono_error_invalid_args(msg);
-@@ -1297,6 +1338,8 @@ static const GDBusMethodTable sim_methods[] = {
- 	{ GDBUS_ASYNC_METHOD("SetProperty",
- 			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
- 			NULL, sim_set_property) },
-+	{ GDBUS_ASYNC_METHOD("ClearForbiddenNetworkOperators",
-+			NULL, NULL, sim_clear_forbidden_plmn) },
- 	{ GDBUS_ASYNC_METHOD("ChangePin",
- 			GDBUS_ARGS({ "type", "s" }, { "oldpin", "s" },
- 						{ "newpin", "s" }), NULL,
+On 7/3/25 6:48 AM, Sean Nyekjaer wrote:
+> Add the FPLMN both as a define and as a entry in the struct sim_ef_info.
+> ---
+>   src/simutil.c | 1 +
+>   src/simutil.h | 1 +
+>   2 files changed, 2 insertions(+)
 
--- 
-2.49.0
+<snip>
 
+> diff --git a/src/simutil.h b/src/simutil.h
+> index 91be5e2345d39bfe4f4f25f5f4c6b8dfd4e8c3ea..556412c4eaa089789092caa72fc3d8dd7ad5b00f 100644
+> --- a/src/simutil.h
+> +++ b/src/simutil.h
+> @@ -40,6 +40,7 @@ enum sim_fileid {
+>   	SIM_EFBDN_FILEID =			0x6F4D,
+>   	SIM_EFCBMIR_FILEID =			0x6F50,
+>   	SIM_EFEST_FILEID =			0x6F56,
+> +	SIM_EF_PLMN_FILEID =			0x6F7B,
+
+SIM_EF_FPLMN_FILEID?
+
+>   	SIM_EFAD_FILEID =			0x6FAD,
+>   	SIM_EFPHASE_FILEID =			0x6FAE,
+>   	SIM_EFECC_FILEID =			0x6FB7,
+> 
+
+Regards,
+-Denis
