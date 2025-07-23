@@ -1,69 +1,69 @@
-Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F3F825464E
-	for <ofono@lists.linux.dev>; Wed, 23 Jul 2025 06:03:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C3E95464E
+	for <ofono@lists.linux.dev>; Wed, 23 Jul 2025 06:04:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753250639; cv=none; b=KBY+1+EgjOzlwIkVlMAemLfIkQ9Epg2t/HnVbQnQSwkGFee793oZnxGFnIDhm/PE3uk0l337NR6Wd56yMQDkwFOMgt0Cq9UHpsX6S/ThVW25SQu1Tjh/yOdEHoGh486kT+OdrbmcgKkv+tEJZHl4f5v4G415T2hUMUUuEIi82EA=
+	t=1753250692; cv=none; b=kG0gGOLz/u1rpumww/PSLztwJTwUiwE5wySBxu9Ygf1rcZaiEREXUNOIl8CYY6cE2lMdMhc9lxAcU2AR4sIo5LHxQwELU+D4AZzbmo+JaNaqaxdQ5is5/TeHLiLOXfXmwb6jg4zb56tKo4SRKq0pVZu39zkDxHxH5CNwJwEbx2M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753250639; c=relaxed/simple;
-	bh=9rQjFr+zaN7AnwN23MxMHr7xSz4KEnruf5bNGPVFYMs=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=mJsDBpFxqNjWI4Cm9MO8ZbBGnCGbyU+ofQd6NK+ggo7BEPR4TJrAWK5wuEQeViU9ZlMpld74oe4NjVFEYC7hSAAGCSkHKE5/OsodHZroBMpHd1jC7ypxXj1ILwdxErn3U9OyHG+KmCkDc2WMiKEx8xdAqkTJW2LyfrkPd88ivcE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Pyw9HY43; arc=none smtp.client-ip=209.85.208.44
+	s=arc-20240116; t=1753250692; c=relaxed/simple;
+	bh=e7OHOp3l89tqjejPek9Bnnz/n9+lnbhX2B/xw1PbW80=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=tbTcyZShIDUl0p8MdBJ5R5Es80DInBRkT4+2A9+DPVTQynMAZQm4nCq3KexIiAeXKBwIUDnoVmcKuDcxgqfkMri1NACJlkxEFp2ssmU6bX8AKm5DY6AU1r6C6QYPaSCDvVR9EmlSOYlJSn5WhZu3sRURg4Q2Oz8VFgIV89VJubk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HGi6A9aZ; arc=none smtp.client-ip=209.85.208.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Pyw9HY43"
-Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-60702d77c60so12112095a12.3
-        for <ofono@lists.linux.dev>; Tue, 22 Jul 2025 23:03:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HGi6A9aZ"
+Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-60c93c23b08so11913144a12.3
+        for <ofono@lists.linux.dev>; Tue, 22 Jul 2025 23:04:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753250635; x=1753855435; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1753250689; x=1753855489; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=yzDscwq7F3NHOa1dIvX1KWiRa9kD88dSYYiBteBzrjE=;
-        b=Pyw9HY43qeSUtOq38T5tnuWirspH+FPu0WBVmNrP4VhS5cKpDUwtIRdNFl9jVoHNmg
-         wnX5rqojcWS9LDzLGVTDzUd49RpfYRTauLq2gZWQ8PYSSCAJTqXRfK0QxFRBxVRR3cKf
-         1iyj6HTnZDsByhZgya+Yo2djfD/y7epNZwkAxIViSEncRFBHWTLQcU8wNhFeHcOx4Y7S
-         w4Ee5QfLAsZElT/+HW/IBsFz1IhshNcewlnyaqEXDQuzjem4GwlSKAE4z/wZe6l6fXkW
-         /9bKuRcCsRHE/tgtyloa3oIlIJWzDwKvLbecsJI+BuU+mU2l46TlwZ6puXrtw+wtwwf/
-         C+dQ==
+        bh=YmBfZVbTepR0NAfVCgJxQO8gCQzORgPovMxaL9qniIY=;
+        b=HGi6A9aZhZaE/61hh/h1S2Yakhp8HQ/oCr4W5c0LdlcfBbhFHmEJoS6uAr/VDSbyYm
+         Ezm778YcISK4gHbAn8JZ3VC4uNNXXl5aHqYpaTTt5lPbzNZiewpOTCzsYOgzuQl4Rndx
+         9atZdviBF3Zceb4KyXWhb8i+sPAx6vjvzzbT/rmTc1TpHqt20EvY+CEmhU9tY3wSJgJO
+         RWYBr8PUDnrBuk2E35UWYaquBDyF9HXwwpI7gK1pvv9ovzxH/MDWH+Jx2FJJb9Lwp7yr
+         KiBUrsAGKv9UfTLf92CGcgQF4jtwoHa6Dhn1DjGXgjEEj/p9y6XKLxBZ1uwGbrsFU2j+
+         /S1w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753250635; x=1753855435;
+        d=1e100.net; s=20230601; t=1753250689; x=1753855489;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=yzDscwq7F3NHOa1dIvX1KWiRa9kD88dSYYiBteBzrjE=;
-        b=w2mGE8+euU+bHztCYSAvM+2P7VJ9LLFPM3iQOMEwo3csS/ZQUQH7o6K19jJF5AAzdx
-         Ox5YVrbeKb5jcmSZFUBxn8lFO9aXucnm25lHvzGPMyMR3byJUcrQ6Q5ezNBFm9ePZv5Q
-         cnn9zdm42N4JKXDOxUNiqTpzymvRm08lnKYqItYtLN2Lx4x158fdcJwS3MHgnQvkFFoP
-         eFJiwWNqoRzpQrN/pPaHJztGHn13kFUQcuu8X0b2QRN/HBGJFUpQf8AMRPLNcxaPB3hL
-         TGLD+y5U6/ko7a/FJYfQGlDSqZ2rC0N7I5HjzhhxAXNLqhPjVv+s/2YsfqPaYSM1x+6P
-         nWWQ==
-X-Gm-Message-State: AOJu0YyCtMAXEkynwQelJzu/LJXJiVLzRk+vwjLlqKi2ZY7N2y3zDUmp
-	iRYN+RteO+YVok2GufxuA6HCRnvoGEiy2RV3Ed2mHdTaj+9X0sWmVXevrohpCQ==
-X-Gm-Gg: ASbGncuBUAtQUqHkb0BaUIboMHdXFfAalmUfQ7HJ5aIXgHALj2lUA0mqlN9TkIGT+zO
-	+YmvrInvzbVOG0mJO7anHq472zHETLFUSwFrPRXO+ww7F/uaAQWoaEi7bTEk5Gt1Q6HB7MTM/yJ
-	OfB9UteIhD42Dlc4efXC5QuKsdBJrNZ4H623SxZE5Vej8ZjqDVNTL+mEEuGpHopUJ4eUg0xtChc
-	Izk5qWsxltPTj8ILdNBUmMCZkGNHiTJYWUIBnbJFvk79d+9/6G+EgqhWlm3n8bZNfZ62n1/TGJV
-	a5/UhQkzvSskanJq8qxyJx38dDT/syD28hl4ZmTK7KxxkeKgznByt70JoYRRpkNe7Mg2O3QpSll
-	zqZDWqxaf/WpmafJ1zzm5474HYrFal4o2kf4xCGkD+ORI
-X-Google-Smtp-Source: AGHT+IG3YuB9PqKPYZOJwwEO/JlrzuRz5YBLBgWvlcs9oxJyONb5TYp8kOdE1N0KndmuIRlAEuKndg==
-X-Received: by 2002:a05:6402:2712:b0:613:45b7:6f77 with SMTP id 4fb4d7f45d1cf-6149b451e3dmr1303314a12.15.1753250634926;
-        Tue, 22 Jul 2025 23:03:54 -0700 (PDT)
+        bh=YmBfZVbTepR0NAfVCgJxQO8gCQzORgPovMxaL9qniIY=;
+        b=tGgJxFZx276783Uc+356ZE0ZCEQXPn+0SbdBIujmRI3scavKZIoG+ofj5W/Tbj2EkM
+         WoX2zWTT+X1yaGvR6i72v1aTM10BgGEYbqxZ5dVRRlndm7so0omWtnPQyhqzPLG/EK3k
+         KNPXs1W8xx0mHksT+tEP1gn6AN/t0rkaAa8EMtiB+SjAxsNO+X5qx5ekvpTWpYkHiU5/
+         z0+0smhqmR4UlZDkZ1Q9g+ZAdOvsnM4gUGJxsIwSFF1ZC9WEza9YwpOshA1wxAfW7ya6
+         yolMK9yccc7Y9cNBRndkA8byuE4Vt2a3NEGfhmNKmHzMX+XWUrGcKr/ZYx9zVVogPr2A
+         InTg==
+X-Gm-Message-State: AOJu0YwNrfiBnSupKTtSNxoYw65vZCPs+k7H3gYPSpdN4fvR03lHfDrV
+	clQzXyjaVqxPBg+6U3Vtvqv7O8iAcJTngKiFJ699owWaxz+H6oE2a4T1enGVOQ==
+X-Gm-Gg: ASbGncsPhoRdbvumhCOFQjeHqlPPR3/TM8LP/K9B/xbuJFha2cBK73o5XvTjTpIiHn9
+	s9Xa3IVmet761BwEQ1TvYUtVya1waL976svCwSmLh+w3ZeIxshb2+JEPVVqiaimRrHWKNXWRTrs
+	+iSa27ndR+HH3dcBkYL8QVH1QQP9LADB6DdIJ/sF3JI/oi0mJJVBuNG9hLIMkpeO/3tcR0IGVKK
+	xpVgd4C9dnzfFD8RwqpUo7nBYUj6JN+QgbMguGngAHZiF6v0CgpMUV7mY7qFndAceidq4Bj4NDX
+	JTHbKNzMQ8MJjChFAiULaERYzuxNN9s9a9VUh26JGQSLqHjd8ZepuZnBqEgW7IjtDXAq6bpW2Fn
+	WxMzYLzA1of0rgW/nVghpJvzv4FBo7Wa+bHAzGzMfHHS4
+X-Google-Smtp-Source: AGHT+IFWkFhyiuEQEzpf0S3BtR0YWeQ/HlkNRjGcJV6/Q4i4wNccf5rkSRJcDP9jieWYl420epIodA==
+X-Received: by 2002:a05:6402:278e:b0:60c:4220:5d89 with SMTP id 4fb4d7f45d1cf-6149b59c3demr1327257a12.23.1753250689015;
+        Tue, 22 Jul 2025 23:04:49 -0700 (PDT)
 Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-612c8f36f96sm8086594a12.23.2025.07.22.23.03.54
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-612c8f0a267sm7621808a12.11.2025.07.22.23.04.48
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 22 Jul 2025 23:03:54 -0700 (PDT)
+        Tue, 22 Jul 2025 23:04:48 -0700 (PDT)
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 To: ofono@lists.linux.dev
 Cc: denkenz@gmail.com,
 	absicsz@gmail.com,
 	merlijn@wizzup.org,
 	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH] qmi: sms: Change SMS storage type to UIM
-Date: Wed, 23 Jul 2025 09:03:32 +0300
-Message-Id: <20250723060332.560825-1-ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH] qmi: sms: Implement message ack
+Date: Wed, 23 Jul 2025 09:04:37 +0300
+Message-Id: <20250723060437.560910-1-ivo.g.dimitrov.75@gmail.com>
 X-Mailer: git-send-email 2.25.1
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
@@ -73,50 +73,96 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-In theory, a SIM card can be moved to another device before a particular
-message in NV is read and then moved back. That might lead to that message
-being received twice.
-
-Also, some modems (like MDM6600 found in Motorola Droid4), cannot store
-incoming class 4 messages in NV, only in UIM.
-
-Fix that by using UIM as message storage type instead of NV for class 4
-messages.
+A "transfer route" message may come with ack_required being set to require
+ack, obey that.
 ---
- drivers/qmimodem/sms.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/qmimodem/sms.c | 44 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/qmimodem/wms.h |  3 +++
+ 2 files changed, 47 insertions(+)
 
 diff --git a/drivers/qmimodem/sms.c b/drivers/qmimodem/sms.c
-index 75863480..43fa9e39 100644
+index 43fa9e39..39a4bb3f 100644
 --- a/drivers/qmimodem/sms.c
 +++ b/drivers/qmimodem/sms.c
-@@ -349,7 +349,7 @@ static void delete_msg(struct ofono_sms *sms, uint8_t tag)
- 	param = qmi_param_new();
+@@ -571,6 +571,47 @@ static void get_msg_protocol(struct ofono_sms *sms)
+ 				get_msg_protocol_cb, sms, NULL);
+ }
  
- 	qmi_param_append_uint8(param, QMI_WMS_PARAM_DEL_STORE,
--				QMI_WMS_STORAGE_TYPE_NV);
-+				QMI_WMS_STORAGE_TYPE_UIM);
++static void send_ack_cb(struct qmi_result *result, void *user_data)
++{
++	uint16_t err;
++
++	DBG("");
++
++	if (!qmi_result_set_error(result, &err))
++		return;
++
++	DBG("Err: protocol %d - %s",
++			err, qmi_result_get_error(result));
++}
++
++static void send_ack(struct sms_data *data,
++				const struct qmi_wms_result_message *message)
++{
++	struct __attribute__((__packed__)) {
++		uint32_t transaction_id;
++		uint8_t mode;
++		uint8_t success;
++	} ack;
++	struct qmi_param *param;
++
++	ack.transaction_id = message->transaction_id;
++	ack.success = 1;
++
++	if (message->msg_format == 0)
++		ack.mode = QMI_WMS_MESSAGE_MODE_CDMA;
++	else
++		ack.mode = QMI_WMS_MESSAGE_MODE_GSMWCDMA;
++
++	param = qmi_param_new();
++	qmi_param_append(param, 0x01, sizeof(ack), &ack);
++
++	if (qmi_service_send(data->wms, QMI_WMS_SEND_ACK, param,
++				send_ack_cb, NULL, NULL) > 0)
++		return;
++
++	qmi_param_free(param);
++}
++
+ static void event_notify(struct qmi_result *result, void *user_data)
+ {
+ 	struct ofono_sms *sms = user_data;
+@@ -615,6 +656,9 @@ static void event_notify(struct qmi_result *result, void *user_data)
+ 			DBG("msg format %d PDU length %d",
+ 				message->msg_format, plen);
  
- 	if (tag == QMI_WMS_MT_UNDEFINE) {
- 		DBG("delete read msg type %d ndx %d", data->rd_msg_id.type,
-@@ -516,7 +516,7 @@ static void get_msg_list(struct ofono_sms *sms)
++			if (message->ack_required == QMI_WMS_ACK_REQUIRED)
++				send_ack(data, message);
++
+ 			ofono_sms_deliver_notify(sms, message->msg_data,
+ 							plen, plen);
+ 		}
+diff --git a/drivers/qmimodem/wms.h b/drivers/qmimodem/wms.h
+index 9d7165b5..f8d4f3f5 100644
+--- a/drivers/qmimodem/wms.h
++++ b/drivers/qmimodem/wms.h
+@@ -20,6 +20,7 @@
+ #define QMI_WMS_GET_SMSC_ADDR		52	/* Get SMSC address */
+ #define QMI_WMS_SET_SMSC_ADDR		53	/* Set SMSC address */
+ #define QMI_WMS_GET_MSG_LIST_MAX	54	/* Get maximum size of SMS storage */
++#define QMI_WMS_SEND_ACK		55	/* Send Ack */
  
- 	/* query NOT_READ msg list */
- 	qmi_param_append_uint8(param, QMI_WMS_PARAM_STORAGE_TYPE,
--				QMI_WMS_STORAGE_TYPE_NV);
-+				QMI_WMS_STORAGE_TYPE_UIM);
- 	qmi_param_append_uint8(param, QMI_WMS_PARAM_TAG_TYPE,
- 				QMI_WMS_MT_NOT_READ);
- 	qmi_param_append_uint8(param, QMI_WMS_PARAM_MESSAGE_MODE,
-@@ -689,7 +689,7 @@ static void get_routes_cb(struct qmi_result *result, void *user_data)
- 	new_list->count = L_CPU_TO_LE16(1);
- 	new_list->route[0].msg_type = QMI_WMS_MSG_TYPE_P2P;
- 	new_list->route[0].msg_class = QMI_WMS_MSG_CLASS_NONE;
--	new_list->route[0].storage_type = QMI_WMS_STORAGE_TYPE_NV;
-+	new_list->route[0].storage_type = QMI_WMS_STORAGE_TYPE_UIM;
- 	new_list->route[0].action = QMI_WMS_ACTION_STORE_AND_NOTIFY;
+ #define QMI_WMS_GET_DOMAIN_PREF		64	/* Get domain preference */
+ #define QMI_WMS_SET_DOMAIN_PREF		65	/* Set domain preference */
+@@ -32,6 +33,8 @@ struct qmi_wms_result_new_msg_notify {
+ 	uint32_t storage_index;
+ } __attribute__((__packed__));
  
- 	param = qmi_param_new();
++#define QMI_WMS_ACK_REQUIRED			0x00
++
+ #define QMI_WMS_RESULT_MESSAGE			0x11
+ struct qmi_wms_result_message {
+ 	uint8_t ack_required;				/* bool */
 -- 
 2.25.1
 
