@@ -1,71 +1,71 @@
-Received: from mail-ed1-f51.google.com (mail-ed1-f51.google.com [209.85.208.51])
+Received: from mail-ej1-f52.google.com (mail-ej1-f52.google.com [209.85.218.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 34855242D7F
-	for <ofono@lists.linux.dev>; Fri, 25 Jul 2025 12:20:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 374F2242D7F
+	for <ofono@lists.linux.dev>; Fri, 25 Jul 2025 12:20:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753446024; cv=none; b=SR2bhzUd4VWeKCqeKBkv1ANQm52HXkE4Oux3f0eeaYX6J4KPf6KdlkOfqE0T7OfEzUo7AoCEaykklEcAKDBdu8ADA+EYAAsvhu5897+uyV/pH6UxGmmoLVk0ML0mY6BLO5pGyczH4OGb7uCJLh9YekabUqhiIKTP96M+YvbUN3s=
+	t=1753446035; cv=none; b=VDeixzRZDpMNzFzJRdm3HoAbHQdLA9e+vwJ9bC4o/iEIZh8mNPeGLpQ0XumBzA4P17BvZ1LSdB4OQpa1Cc4cnqjYmN0VbQozp79lABImqjLjTziMFItBhQZbzpST72qTR6VsE+SZSGVHTfApWmLa7bnkUHTGNi+tibwWEfU/Hds=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753446024; c=relaxed/simple;
-	bh=Y1eQDeHhsDtigcC/HZv9ri3BfkpDcXNy0nNIdZJqxtU=;
+	s=arc-20240116; t=1753446035; c=relaxed/simple;
+	bh=U3yr0y9vRa6pizytB+rw90dX2iDnrFPQgk2162bekXs=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=XwwqlSmCPaDy9bCMuoggsvS8e4V+UJbRBq8e0QxlTkGD9KbRLd+2tvjyxkVXZcMbee1m88omi9w1JbWp3U0XDx+CF9vVoKnngYjEfPJcqSfp1/ob0lM8w2RsLARCXLyh1EEmElgTincxKERsUHn0y159jU0o8TESy7qQEKgEBiE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ISHVAOmp; arc=none smtp.client-ip=209.85.208.51
+	 MIME-Version; b=dF5oc9BZmWfkcIBH7VfjqgzJY0dXIobWbRqcjXzUmI9Sm+kqzFaIzatYfAYhAfKVFP43oSCts8j19+1tSJ/waUSwwY0INchnzlEIIJs0MzIcNeyRJAVaP4CkraIOTidYZxT3RfU+HDL6jcT+/oeA/LW+mzvdsjh0PpGOoIotwSs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=IBZcalim; arc=none smtp.client-ip=209.85.218.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ISHVAOmp"
-Received: by mail-ed1-f51.google.com with SMTP id 4fb4d7f45d1cf-607434e1821so2926694a12.0
-        for <ofono@lists.linux.dev>; Fri, 25 Jul 2025 05:20:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IBZcalim"
+Received: by mail-ej1-f52.google.com with SMTP id a640c23a62f3a-ae0de1c378fso280843166b.3
+        for <ofono@lists.linux.dev>; Fri, 25 Jul 2025 05:20:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753446020; x=1754050820; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1753446032; x=1754050832; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=sPcYDm7eCCgPjD9njRmIRVwa3ONuc9d3jhrppN220ok=;
-        b=ISHVAOmpiE7mSWMJkKi6eMxEMG1RNxLmo3x4uE7N0mHoi17qRGNChrxevUpesWVgdx
-         Tgou436smlNe9RjJC+gQzio1YByBojiqtZYRgc5wPSV8mRZUPosevUW4t0PNKYBkPIRW
-         /5fUgSAC9a4wVf067FP75qEcVGQxbfjf7bIg7H/ED3Q+cXglXK7IE/tZ/fGfOsufV7XR
-         dIK06hNZhWZNNcuiD5hpbgeW5RLO2jtqbJ7yljtdM3m/5hcPLjcpfRrUqASqfhSsuWa7
-         e+LOfcHQ9ASS/W5/659a1JyVF/9YoM4kn94Thwf1KFEeNlLxNOzkE2C4pJNSO2sPNsP9
-         S2rg==
+        bh=Fw+tlXqaPNjcxXnLkbxV2gB1Ier1/1+hd4FgkPkDqW4=;
+        b=IBZcalimg+iiEvz5PQIfPD3NEG22zPfL37YCWDvYJ13FyMpLhMcrML2/Eqcsmwxp3m
+         LlNaFQW6Jm0unCHgqIXrClTspOBTrRS60eMMfUQGohIA7E7mRzHItFxX3w8IwB1JxRJ3
+         EasloB4xaKMutqO8sdSZpVF7GGPA6vvPtzAV/X9LFhs72gGgaDY8vqZAUr2hHp4aGzCq
+         4uFkv/eVP9MM1FmzLSRBjEPgVTOV2Sv8762zFZiacd5DSRBFY7yNYGC7k5DIGd72Kjts
+         Ziw0eImc1JiIOWs4/FMyQkcRmaRuTFvOCfEerXAZjgfTKEZACGRxA8vKKOhAkNwppqMl
+         lL4w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753446020; x=1754050820;
+        d=1e100.net; s=20230601; t=1753446032; x=1754050832;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=sPcYDm7eCCgPjD9njRmIRVwa3ONuc9d3jhrppN220ok=;
-        b=UAWHgPLHeJpc5nZjrJN2CCFrNzYvICpKM0eXZvKQUW+z3PpLmKK+gl2Ay67HfxFwzj
-         RSpyrmWnPTxRydFOs9tA2LV+nVoZC8qrjFCaNV9L/T1nbWgbnmeMdhkLKJGviNUMh2wj
-         PqDI/8R5Iq6Ca2dtNIGhpFmW2ufsFUQXGNLazQk+nRLNXBHf/EYsQl1Wq6gHWb50r0AY
-         jdAomv/qWepGwdLQ0pYcNB3Br2YEOHIWvbSlefh+PoiPU6ErhkTl5rHS0xXVrmx6KETS
-         TTuflV51Ic15JtQ99EDyPlOT6WqZQFJq94qfMRCKUyBc3turBiOnDuvqXJarWlnecN+F
-         rTEQ==
-X-Gm-Message-State: AOJu0Yyrn9EZadA/qr++RXVtA+7A4Q+W7Hy4G6yHAcRjRrG28xMPLrXg
-	I2SLWq/DkDw6vqutxWmEs66PsxdT9G/maTnT2IJe+NZ8ak1jtPZhPzSlX0TVcA==
-X-Gm-Gg: ASbGncvddERzbBevYr92fKeMIOin7ZEow8J+MJG1Mq+gBLpY9e6A1ul4NQtz/fBE6Wu
-	BhuYgeqwTd24qyo5cyvc1/rPNNCMuPP2r0defsaaFvtKne8XvHED/EoV+pXL6oJ81BDnF7Hiau/
-	imKAj/1z4D4QkZRh5MyC0mQNL5oBXRDv8Hy+jopg5VusspVj02/G0EiA2kfXTUuhNJGqtrIy0Do
-	oO0TyIDUBXpzqqyYdvyOy1z6IvyxR+COvC0qyTtqbOVAGEL61UnsYAreD3bn1gG1Jwj+wtUjT71
-	EIbjWm1BYBTi1XBr72+kxdzD5z800mzEDk6q6JakyY51pb7udh8aE+hCJSFT+gLsdktuY9j6q+Q
-	dF7wXExcddxHXtimOk1kBGUJUhwM6KpEGFSnvycr/HQvx
-X-Google-Smtp-Source: AGHT+IGb+/juS3fgvnNDPvkZm8Xb4YPcW2WIuZpAunPte/lg3sFL6BcKB2oad/OZvcItEUWaxS9nVw==
-X-Received: by 2002:a17:907:1c08:b0:adb:229f:6b71 with SMTP id a640c23a62f3a-af61b004396mr183391066b.5.1753446019934;
-        Fri, 25 Jul 2025 05:20:19 -0700 (PDT)
+        bh=Fw+tlXqaPNjcxXnLkbxV2gB1Ier1/1+hd4FgkPkDqW4=;
+        b=H3wQSMwHsI2QT601OsinnwmGHSGoLpP/kIWGlXeVoBVvrlMedq1efeRmkGKySXHzOl
+         12hSazuOQQUm/q3vvtXnhsfBa9fje7QT8WHmdM3Ze+BQ2aubmvnYjEoTizrLoxVIlupB
+         /eg2HPkh6seq9U4Godsl8o3hQaA9UZb7NPNNSk12OcAUymMReOu7CMn6q7LHPSNfDf5t
+         c41obumGuQ2Xgj1qIMgJyBFH8EpPonGC/yhBa/FXbhwz9lwxNuKTwuAvt1ugIR0zkIT8
+         +9mYwkui3Iyhl6QIVgjNskF+wlmsdL8JUfiYgn60Nr70GsUs29c+xWUo6l8kpS+/AUzY
+         qQYg==
+X-Gm-Message-State: AOJu0Yx8Bjq5xcDh2OqwixZtl7wpgh4jwNk+bGrFym3ns68NQwBfcUhO
+	oEP74mPWXfkAJbYJgXVCEy8K7WczvWs55QJhLmy396hlRFBplLPeuL+rL5K2bw==
+X-Gm-Gg: ASbGncsnSdf93loj3IJuhGHbD0of9hdpu8TQ7eJDjKGWlcXStULLfD/USw7ha5jawBa
+	Q7+hy7gWbkmGSZuFyWtJ1k9/juso8yRLhfAyBWZGI5VAeCwWx2y7WO63EGs37cFJe4T8FtpLEiA
+	WhIg52KTL/zstEEAeJ2QKZYMIX19dFDrnSKsRXD1e0yRdONlRSs3pGjQ0qVfaZI1VkLEp0XnKde
+	Mvv+DsVWUTLDxbZNOr+g/V54ksBfXZIYGGVukdgeZKX6cxWjuDux+ycLHg8xYE3iNkpp6YnLOBX
+	FtaAQPbBukF4ApY0l4NmWmuaF5OtpxrJPqo+ZkxE0h4xkeYv9g8MGui+rCuHJflDVXmOldPh50y
+	TvBJInp5vTNzQHvCoI9gTEzAD6IO5n2uiyhwGglhVy+/B
+X-Google-Smtp-Source: AGHT+IH6HMDAG7u2rQGos9cfT4NXA8qC3NIJEegx9q/6oYTbhxbmLP6Ha+RlkwDcZr4Yuoq1L4Sc2Q==
+X-Received: by 2002:a17:907:3f16:b0:ad8:8efe:3205 with SMTP id a640c23a62f3a-af61d77d1f6mr224828266b.55.1753446031813;
+        Fri, 25 Jul 2025 05:20:31 -0700 (PDT)
 Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-af47cc6e769sm264898866b.45.2025.07.25.05.20.19
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-af47cc6e769sm264898866b.45.2025.07.25.05.20.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 25 Jul 2025 05:20:19 -0700 (PDT)
+        Fri, 25 Jul 2025 05:20:20 -0700 (PDT)
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 To: ofono@lists.linux.dev
 Cc: denkenz@gmail.com,
 	absicsz@gmail.com,
 	merlijn@wizzup.org,
 	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH 4/6] gobi: Do not try to create WDA service if modem does not support it
-Date: Fri, 25 Jul 2025 15:19:52 +0300
-Message-Id: <20250725121954.650668-5-ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH 5/6] gobi: Introduce "LTE" modem property
+Date: Fri, 25 Jul 2025 15:19:53 +0300
+Message-Id: <20250725121954.650668-6-ivo.g.dimitrov.75@gmail.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20250725121954.650668-1-ivo.g.dimitrov.75@gmail.com>
 References: <20250725121954.650668-1-ivo.g.dimitrov.75@gmail.com>
@@ -77,39 +77,60 @@ List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-fix create_wda_cb() qmi_qmux_device_create_client() result check while at
-it
+There are modems that are not LTE capable, allow them to announce that
 ---
- plugins/gobi.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ plugins/gobi.c   | 10 ++++++++--
+ plugins/udevng.c |  1 +
+ 2 files changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 8af449ae..f908f935 100644
+index f908f935..7864e192 100644
 --- a/plugins/gobi.c
 +++ b/plugins/gobi.c
-@@ -717,7 +717,7 @@ static void create_wda_cb(struct qmi_service *service, void *user_data)
- 		DBG("Failed to request WDA service, assume 802.3");
+@@ -57,6 +57,7 @@
+ #define GOBI_UIM	(1 << 5)
+ #define GOBI_VOICE	(1 << 6)
+ #define GOBI_WDA	(1 << 7)
++#define GOBI_LTE	(1 << 8)
  
- 		if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_DMS,
--					request_service_cb, modem, NULL) > 0)
-+					request_service_cb, modem, NULL))
- 			return;
+ #define MAX_CONTEXTS 4
+ #define DEFAULT_MTU 1400
+@@ -262,8 +263,13 @@ static int gobi_probe(struct ofono_modem *modem)
+ 	/* See drivers/net/ethernet/qualcomm/rmnet/rmnet_private.h */
+ 	data->max_aggregation_size = 16384;
  
- 		goto error;
-@@ -797,8 +797,11 @@ static void discover_cb(void *user_data)
- 	if (data->features & GOBI_UIM)
- 		add_service_request(data, &data->uim, QMI_SERVICE_UIM);
++	if (ofono_modem_get_boolean(modem, "LTE"))
++		data->features |= GOBI_LTE;
++
+ 	ofono_modem_set_data(modem, data);
+-	ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
++
++	if (data->features & GOBI_LTE)
++		ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
  
--	if (qmi_qmux_device_create_client(data->device, QMI_SERVICE_WDA,
--						create_wda_cb, modem, NULL))
-+	if (data->features & GOBI_WDA) {
-+		if (qmi_qmux_device_create_client(data->device,
-+				QMI_SERVICE_WDA, create_wda_cb, modem, NULL))
-+			return;
-+	} else if (start_service_requests(modem))
- 		return;
+ 	return 0;
+ }
+@@ -1144,7 +1150,7 @@ static void gobi_post_sim(struct ofono_modem *modem)
  
- error:
+ 	DBG("%p", modem);
+ 
+-	if (data->features & GOBI_WDS)
++	if (data->features & GOBI_WDS && data->features & GOBI_LTE)
+ 		ofono_lte_create(modem, 0, "qmimodem",
+ 					qmi_service_clone(data->wds));
+ 
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 320cd3a6..5627f1ec 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -255,6 +255,7 @@ static int setup_qmi_qmux(struct modem_info *modem,
+ 	ofono_modem_set_string(modem->modem, "InterfaceNumber", net->number);
+ 
+ 	ofono_modem_set_string(modem->modem, "Bus", "usb");
++	ofono_modem_set_boolean(modem->modem, "LTE", true);
+ 
+ 	return setup_qmi_netdev(modem, net);
+ }
 -- 
 2.25.1
 
