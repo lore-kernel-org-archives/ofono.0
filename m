@@ -1,97 +1,83 @@
-Received: from mail-ot1-f46.google.com (mail-ot1-f46.google.com [209.85.210.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 42D1D1F1517
-	for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 14:46:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9212222B8C2
+	for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 14:49:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753713995; cv=none; b=tmifgv9ef8qttPMQz9bAsQF8FRPJxqezbhF3r/fjSw15wAj5h8Aiu/Jf5fcKzblL/WRYAclUvseV4qMFDq29APijmRHZVwTuqhC1y+/BTv1uodaIYid2PrdxX9tYifJdVO9JjsGLrn2naIItIabFTWPrVjs9ZOqPKJTJdw6Fm14=
+	t=1753714189; cv=none; b=RG3whlM8xmE8abD89dIkhY/EQ719R7favxjBaaJAOPoFlqMXIthjgn6anGkpxywYDE5gpB7bh6mRF9unh6bB1n7TG1jJyfO8UBH7Jq4gNILlJhEA0izHCyCZVuVft9D1EFfYpqktcNGPP9AHJFo5on9MfbSy2hA9Mkl6bm+x45A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753713995; c=relaxed/simple;
-	bh=qI8ULceHsD+uAa8MUauLjzkmFvJPdQeBbxP2e7S67GE=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=KqdQW6waV7Kdv5M6cKvXa/1UL07UbgdcZYOjpHUV2gwf1S+2svtLD5DpfFw7wChrTZf21foEoGWjrl5SXwfNyI0cv0eklDh5/OuQGOqAUjGwVhaTfj+6DG4uNom9ysrZUI+7stAbCydbd42mSg5WOmXXctFy5S3AZ0C1oWHQbdI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ic85mrdW; arc=none smtp.client-ip=209.85.210.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1753714189; c=relaxed/simple;
+	bh=2+XZ1qrU8yimalrWC/L7wKuaGb0n62sAUbsU3XFoepI=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=Pq3zBwZJnOdHggfvlKf6TejY0kPl3MeaWVQBACSQ0yvS4hmF4NpK4mFLYRYHFX5y31I7pvIO7dObuNcZpPjFFc6L0qWpbGYBccUh238AtFfqQT0jATDOWZsokXg8u9LibbMmm+hLr2ogYAMaAaW2GAEoo/x/bc2FH6sdsWx0GNk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=slvI9ZLW; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ic85mrdW"
-Received: by mail-ot1-f46.google.com with SMTP id 46e09a7af769-73e88bc3776so1696797a34.1
-        for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 07:46:34 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753713993; x=1754318793; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=6y6kXDHlmZydaCRh4YNgMYucKfAfLtzZ8UlUHwGCbxQ=;
-        b=Ic85mrdWwF5B8HgKK9oykaZciEIdx0W0Ldu+uzkjQcHoDmp8cNAS3/xOmqebkNoi3p
-         YOUEVsGnUz0QF0HL6Ms2PiyBn/5knjZEFwdrhA17FVg+TK/3nW9AWSWnARV4ixcM9/y3
-         9LbpysT+g3EPGrSWd5EWBY97tj8OG/vKF+u4jC6Aqcc97kFQXdrPJNHLPIGtHxt/rP3r
-         pnwI6Xt14quFRiDh1IK+0kClvCZCqD4F7I8SqUcSK7ere1uXMsH1riQ1SaDMv6gRtES+
-         vb7QPmMJiV9lEp4rTsullWXXYcZJMir/AIswqAGOGS0XNJc8MHuRoqK7JvGk4PkLDAAO
-         SJLQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753713993; x=1754318793;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=6y6kXDHlmZydaCRh4YNgMYucKfAfLtzZ8UlUHwGCbxQ=;
-        b=OcWZp/Ot/RNkb+b9sCArthr9/auHCRgNuPeGTfZkDQD/KSksIhRaa8CSOPRcT0oMMR
-         xFrLCdlKZ4NDz0vlKBJUbT+jcu2qlSTsr94LNHHjZmXEwzjqBP5W774Sxd7tV14xn4ZY
-         y16Moi08B3EqPuyhI7VjFmgYVolna+9Vh/IJ2POCel0zp3XLe/rPfigBQrOP76zf8ViJ
-         K/XGiO0c83pPZLKYb/ykDJTSyTJAAZTwvIjSi8Ib/K3QACu1lzXmNHsRAnF/92AtD0Xc
-         ams5P6ECo43bVMxMC3O8qGlSsSQJSK7vAslq/DWGoJNkJKU1q6i3w075Tgk6YDJ98IYW
-         UU4w==
-X-Forwarded-Encrypted: i=1; AJvYcCUltiQazD6hxHw1rhFj7rXgqIhbA+kQC01eCTEYLnc+eWkP+P9LwC8Me83M+/hpLsPoHBmlgw==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw/Q8VJ4mtR59EQcOZDpp3rZZs4LAbN8UIy3Gq3l7f8DCuFkNk9
-	6txuj3ZfLQPCwkRAw0KdmEq2kuKYtDv8eJ9KJbu6R0FeD3jJjdC8V3T5
-X-Gm-Gg: ASbGncsRptKoFDxu2q0tsLhM2+6hxCMPgjX11om72pK5T5PrQkKxLfhk57LIFwMN3T8
-	XpZQO3VAERJIs3nb6nTQ7RJJv1yaJBqb+O4cpk51QB76rTNHgW6kXQqFWkZ85TkEN/vYWwct5QU
-	tmdbNtNkYHfap4qEXv6Jwl7nbvwkgLUux3QiT6S9b6FT2xt/n6QH0V2A1ya+bI8X4ByFUXhyQ09
-	Luj5rLIfrWXnldiXDE2k3vS/3yVJCjlITc06WYXWWJPVHc29g4y3ecHyVXCdxdWURH1TqWsLFpu
-	4+GGVzHv7CWwYOxxQYLnhWBJin+ezQMdDQ/CwKn+0/K56XtXOZKC2d+Q2KTS4WXvMrwZwtAx7l9
-	7WD/d10AudhBhPcNlx6nzGM2+QGlZRaWFqj/jMjFTYx+5LxUJO7w3VR0OwaslTdDOHdgSE5KYpx
-	E=
-X-Google-Smtp-Source: AGHT+IFCtMWihrikksNlM5H5XmILj4UKhoF4aBflOib0MUEOXb3ISmHiH2zf0vLe58HMd/9ZJehfVg==
-X-Received: by 2002:a05:6830:3494:b0:73c:c494:a032 with SMTP id 46e09a7af769-7413dd31412mr6474268a34.2.1753713993050;
-        Mon, 28 Jul 2025 07:46:33 -0700 (PDT)
-Received: from [172.16.49.130] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 46e09a7af769-7414827b569sm1092753a34.58.2025.07.28.07.46.32
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 28 Jul 2025 07:46:32 -0700 (PDT)
-Message-ID: <948f9442-1211-4a47-b1fe-a6b83a5fa500@gmail.com>
-Date: Mon, 28 Jul 2025 09:46:31 -0500
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="slvI9ZLW"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 13AE6C4CEE7;
+	Mon, 28 Jul 2025 14:49:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1753714189;
+	bh=2+XZ1qrU8yimalrWC/L7wKuaGb0n62sAUbsU3XFoepI=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=slvI9ZLWadH6eRATX2cDO0IsgWWpQaa66bP7XauMyDtHHF/OgDIpX3wnmGc8PtrNt
+	 W+q9V5Jgzg/S7B+ix0ROxxyGMq38UjCTljOHaftwXCyF1rtTjapbOAyVUz4dO+Kms0
+	 t9hQ3tzXp73m3Gp6HK9poEBbzoOVe06TE/3FwQ0Es1CgFe2SK7Crj+I9Q1dC/s26AJ
+	 hSF6fDafCBG6ZtUdHo3JB8StBKdPqAnaEHWY/U8toNBGX+ujuU+knuE3I4ko4xZFHS
+	 HSVtw+KZd/fhxvS1YTeC7go6/44BzuFRSHLK73B8v23T1T7e5WQcaRZZj6kjj1EGS7
+	 Wwrr+k7P2Te1g==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id EAD38383BF5F;
+	Mon, 28 Jul 2025 14:50:06 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 5/6] gobi: Introduce "LTE" modem property
-To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, ofono@lists.linux.dev
-Cc: absicsz@gmail.com, merlijn@wizzup.org
+Content-Transfer-Encoding: 8bit
+Subject: Re: [0/6] droid: migrate to gobi QMI driver
+From: patchwork-bot+ofono@kernel.org
+Message-Id: 
+ <175371420575.733265.3516017452180532925.git-patchwork-notify@kernel.org>
+Date: Mon, 28 Jul 2025 14:50:05 +0000
 References: <20250725121954.650668-1-ivo.g.dimitrov.75@gmail.com>
- <20250725121954.650668-6-ivo.g.dimitrov.75@gmail.com>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20250725121954.650668-6-ivo.g.dimitrov.75@gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+In-Reply-To: <20250725121954.650668-1-ivo.g.dimitrov.75@gmail.com>
+To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+Cc: ofono@lists.linux.dev, denkenz@gmail.com, absicsz@gmail.com,
+ merlijn@wizzup.org
 
-Hi Ivo,
+Hello:
 
-On 7/25/25 7:19 AM, Ivaylo Dimitrov wrote:
-> There are modems that are not LTE capable, allow them to announce that
-> ---
->   plugins/gobi.c   | 10 ++++++++--
->   plugins/udevng.c |  1 +
->   2 files changed, 9 insertions(+), 2 deletions(-)
-> 
+This series was applied to ofono.git (master)
+by Denis Kenzior <denkenz@gmail.com>:
 
-<snip>
+On Fri, 25 Jul 2025 15:19:48 +0300 you wrote:
+> [PATCH 1/6] gobi: PERSIST_LOW_POWER instead of LOW_POWER when
+> [PATCH 2/6] gobi: fix start_service_requests() return type
+> [PATCH 3/6] gobi: request PDS service if supported
+> [PATCH 4/6] gobi: Do not try to create WDA service if modem does not
+> [PATCH 5/6] gobi: Introduce "LTE" modem property
+> [PATCH 6/6] plugins: drop droid and use gobi for droid4 modem instead
 
-Can't we use QMI_DMS_GET_OPER_MODE to find the modem radio interfaces supported?
+Here is the summary with links:
+  - [1/6] gobi: PERSIST_LOW_POWER instead of LOW_POWER when disabling modem
+    (no matching commit)
+  - [2/6] gobi: fix start_service_requests() return type
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=9e82a797ac93
+  - [3/6] gobi: request PDS service if supported
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=4eeededadedb
+  - [4/6] gobi: Do not try to create WDA service if modem does not support it
+    https://git.kernel.org/pub/scm/network/ofono/ofono.git/?id=cd28a73c6373
+  - [5/6] gobi: Introduce "LTE" modem property
+    (no matching commit)
+  - [6/6] plugins: drop droid and use gobi for droid4 modem instead
+    (no matching commit)
 
-Regards,
--Denis
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
+
