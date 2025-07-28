@@ -1,65 +1,65 @@
-Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
+Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6AE8226FDB2
-	for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 16:45:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 25859CA5A
+	for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 16:48:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753721102; cv=none; b=MECwxQo3A6uzkzVmw2ZNtUFdxdOb12h4/5pkSFZgcBbJi5tyd8xn2mWp4szjlSwxXco0HVbnJ8zOSJh9SPg4mnQE4O8UyESxUffwC0GyRGShA+MLsGJkOYcbHSXstDyGZrzxK9vvYuCCZz0KeqzKu87kXXyBLeko1rX1p1fBg6w=
+	t=1753721309; cv=none; b=mmTnIdf6ugX0VE0+GoJGDkrUL6iEYOXu4t3DGSZS23iFWX1z+S9FJpPHyPXJobwFCKmlsK5Fa4uFXGO83UVuQAT3Hj3nK1USX9otd76ST/b2krJU94JUTCNNUh1uEkEKwVRx476M947jwiHSwveJ/kO0zF3cJjVBLUZAIsoCdh0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753721102; c=relaxed/simple;
-	bh=ZJu3PxUs1IkpwFNF7UkoO4e8C1V3O56Ku6hX/Gh9DS8=;
+	s=arc-20240116; t=1753721309; c=relaxed/simple;
+	bh=XnvRBuh1bXrE5m4t5wftbUx9D41ujgzu8JCaR4Psd80=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=PyPLOT2KEN74M1dGYNusUc4F8HfeIQliys+bPioSGNgafVr0PMG316r8BekxMoHByD6u/svDUngsNDmCER27as7zITTTmxZdGCVQ0gmzSM4ghibNg3YGo+18iG0hkjQjGG2MgzQNLhqeasx/RnjkoVvbNiWC4L8acNEX9KJDC10=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RqRojwWQ; arc=none smtp.client-ip=209.85.218.44
+	 In-Reply-To:Content-Type; b=MPGFuUjteKargUIW0G6UVcP4Mgdz3oW4AShlgCl/a+4t37o2AE9HlXB7khOR4DxfA27prL+JEkINFv7uiD2m0Dvq5zP+sUHGmUTfsM3ir4uCb4WzekZSyZG7qe16iBbnF9uAtDDP7/fgfXYXFNe0EDufIdxyX4eYgI+eYTu/Rxo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RYdGMGxH; arc=none smtp.client-ip=209.85.208.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RqRojwWQ"
-Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-ae0df6f5758so776608166b.0
-        for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 09:45:00 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RYdGMGxH"
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-6148e399effso7765404a12.2
+        for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 09:48:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753721099; x=1754325899; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1753721306; x=1754326106; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:cc:to:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=nQqN16jmfajxooTiN3kUdAFbplg7qeqlh1nWM/6ChNc=;
-        b=RqRojwWQs1tUeKR0C463QL92zZ1m7nK2k2Ld3DYXtfCkdMsSHfG1avXZu1eaJoAoAp
-         jzWXUiiGN1bHC19/Xt0JS+CAzKbDIoJNkDr3/ISGvwMtbHUINelVLVIsjrkrKSPB24HN
-         w85wTkAI7+RPK21QOM+rnuKdd/GFg4Xj2QlRlO9+oTtJGO6gL7gTwP7sCGunVSXdL9Fs
-         9JB3LpDAxWNZCw8uK56o6NPaUDksFZnDettnREl+dU1T9Ee91E3x87g091JExJJFnjG9
-         mF37/gP1aSxM+C8xhFLPRQ6xZfnZt7nIIyE7NYQUGqThg2kb5GaXZI84dofOH6tk1wFc
-         7GjA==
+        bh=Sw9QljWJO67mxYcEsWm7ywNzALB2MkGgdc0UijP3qAc=;
+        b=RYdGMGxHhwaTID22brHC8rgPNPfKQ29vU24GKssMiysj/neIt/4dLtfK4Mywy7JlKJ
+         7sCIpxupW1wQlapivQ+JMrohjokwm9z2Qm4DRIunsb+1uAXA0KFnibX05/Xiu0NirUIK
+         C3xj6C4C2G4hzzaHZj3hifekgRz4GEGNsSEv3LRlxRF5sY1COh04P5RV6HXG2o0LIeyV
+         4ntDfayg3HhVp09w9R/f7gQwplY43t5C700Zo4VsFhr8rG9z8244CvADXpX/TVzpR3Bu
+         FnhG1XU4wCW3QfxpyLBBqZ9BOaM2O5nm8eo7mVPfvFJt//NgbemCBHDVhn00FI0+2V79
+         SQvQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753721099; x=1754325899;
+        d=1e100.net; s=20230601; t=1753721306; x=1754326106;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:cc:to:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=nQqN16jmfajxooTiN3kUdAFbplg7qeqlh1nWM/6ChNc=;
-        b=DO0r0pKJ8SfNl13RwpP9edPV8lzdLThEes87C9Nz6Du6W6STYQKyybO2zPOyBQsauV
-         D4CYDQi9P4+9O4oShMKLQ6IQKSHliiETXv1CrUjnsiUlpCZiyz72HeR16ynGv3TiUqAl
-         uqCacPQBmkMOMd2F1QoJ8RsFi2GuLQQEf3MFRTFYwK5xoA1yAlj4sg0bbgP8LYkasqBF
-         v1E5c8B+lGsCk54xgnTMcGY/0Ijgy0zhrSHYv49PzobmlZU+d7BB8knwXkPS5BlvCEu2
-         LTK1JCPrkG/gUrgo7prgeQ1mL1dyVnlq1E78293KCMuMNQEEavjqOi+E/wmMVrDE3khh
-         8Gzg==
-X-Forwarded-Encrypted: i=1; AJvYcCVf9qUaFZx5f3XzKhZtbOw2aZx2/n6ukJUIXG2GRIcefA1L4npBFvkMUElvnAmyG+hAWOE7Sg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxH4WqleJtiU3TnDhxp4lWK6G8eMWs9WCELfag2x1ITrurkMhNI
-	NWAAcYEUrOCB3XTWhh9AzyskZSuqA27rUv6vhQybtF2iJHgm6L7y+k8dwzVrUw==
-X-Gm-Gg: ASbGnctWLPJNNHIXZtAc6ZqPd2npy/naqooQ4CeJIGqBIA+WdjiofWRCmKuFLYFIQS4
-	UwoOGy62LXDk33p6uFOtDfPC6wtnrqzDhE2HFztndZJNjooB5HAXRRPhqGd0PTcIucGLG6R303N
-	ksWzTtN9EVAu6WlYk631ddcCL38Kv3vUcEF5DwZwGzGYnxI+YnNVZt+jOyGS0MsT+aFNhYIy0tp
-	S9ErRbbE6612NpYAH1LrO0G3vyz2YjCy4zPlmdZm1OWSg1s7GazW7VpBm1tkvOMEU4wItH7oIgi
-	FO38Fd1uJMtVhhGkjSdGobO8w2cdPYDHVjAFa2NaW2Qcvm0qrPFJDoHqvNGj4vMy4BZuWAmsf8n
-	MNsxR8F7y+dNQeLwy6rfI+cUbqP9yRRBvWpc=
-X-Google-Smtp-Source: AGHT+IG3MWJDPeq9hdjHTzsi58wTOjCNluUbRzAr5uyjurgWJbYngqK6u1kF9koQ3IzbxGnMaR8nMg==
-X-Received: by 2002:a17:907:f818:b0:ade:79c5:21dc with SMTP id a640c23a62f3a-af617f3c06fmr1560311766b.25.1753721098259;
-        Mon, 28 Jul 2025 09:44:58 -0700 (PDT)
+        bh=Sw9QljWJO67mxYcEsWm7ywNzALB2MkGgdc0UijP3qAc=;
+        b=jT3YU+fzT9yWprOp3AXDLNII5vFtTtEsPTdlLqJ0OUO/Xu/LscqVJgG0wpks74Exmn
+         9XHN0ZU9Yw9z3tH5/uK74R8sFXRJb0EnUVWWb3Fhjlv2ZSzcXTo/j8JZ4ZV1DwaOzZlh
+         PGuGtQjGwk6Q/m5XXkV9Oo4wsim761JoWmeaJcvbA3dyAF+cTbL/w63ZYKmP3l53k/c3
+         GiICT50zcyIryojYvHX3goNBmrbr3UpdNcmr6pg10tuSEJZOj5wuizp7B6OXKzXiv4na
+         ND9xkNiYpDd7Xi6u5Vr5CD1DzB/mLuQWAUvKZxiEVjCc3TBAJCVr+6l1UpHpxsiovkLL
+         2R9g==
+X-Forwarded-Encrypted: i=1; AJvYcCWNjiazcxWIXoxK5GcwxQ14fbrMpag5pM3JkVfAW1uMjmPxgDnJxXtKiUfFfMcvRJ5x6LCZuA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yz8mZ6rPNh2RzFbzG4q7juYvIwkNT6zCpMA8Lzd5Xus8NqHFekU
+	QiauCElPA1F7HKWFIkIImul9j1HsaQlIyGo2pGDRzpIQ6KTT+FNjeX/5
+X-Gm-Gg: ASbGncsHjd7jVN8vS56LMZdaZi/NkyXAW2VBfmJ1+9T6BxmiJs0wUKRHkPlLGVpWPYa
+	l6/TnPUaVCTmGm67pvZIm7HXZPG2sFrWkkDlSH23yX2Ihq6XRfB0eKlLHkNhyBYKdHhLvP6QOJp
+	J+UiNUQcYZk7cwOmoJbHuzIschb0P5J3hDGTNmbLPD2Ux3bLYyDjXqj95WAZLS2Xla1C5ZJ2e6Z
+	AMsLe9G5IB9hRnE9t/UBPo61uLSTAvuEYXDqCQ6JIgeBC/njdYdnMOclT7FrQLYpVCuiSV20foA
+	y0POTUh3XWHuL0Ul82pV1aZ6lMWeKMc6etQDi6c+dIadTyX684KMWwca4sRhckPRzUZFxtrcWpK
+	pnEjJjYR3kgbnNiigU4jIPu2cYkSYzdCpRr4=
+X-Google-Smtp-Source: AGHT+IE6ifoR1AiwGNhaNEdWzr0gLbyv1miVtyRZvBMqAhUmMEU5x82fRux0C+A5XdfiCCWjlhoE1A==
+X-Received: by 2002:a17:906:6bcc:b0:af6:5e95:2809 with SMTP id a640c23a62f3a-af65e95286bmr392610666b.58.1753721305959;
+        Mon, 28 Jul 2025 09:48:25 -0700 (PDT)
 Received: from [192.168.1.10] ([95.43.220.235])
-        by smtp.googlemail.com with ESMTPSA id a640c23a62f3a-af635aea689sm446872366b.125.2025.07.28.09.44.57
+        by smtp.googlemail.com with ESMTPSA id a640c23a62f3a-af635b427aesm448403766b.145.2025.07.28.09.48.25
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 28 Jul 2025 09:44:57 -0700 (PDT)
-Message-ID: <b386277c-da11-4c7a-88b6-d619de6dc991@gmail.com>
-Date: Mon, 28 Jul 2025 19:44:56 +0300
+        Mon, 28 Jul 2025 09:48:25 -0700 (PDT)
+Message-ID: <d3b0c7ae-308e-4685-8b90-c154e89863f6@gmail.com>
+Date: Mon, 28 Jul 2025 19:48:24 +0300
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -67,40 +67,66 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 5/6] gobi: Introduce "LTE" modem property
+Subject: Re: [PATCH 1/6] gobi: PERSIST_LOW_POWER instead of LOW_POWER when
+ disabling modem
 To: Denis Kenzior <denkenz@gmail.com>, ofono@lists.linux.dev
 Cc: absicsz@gmail.com, merlijn@wizzup.org
 References: <20250725121954.650668-1-ivo.g.dimitrov.75@gmail.com>
- <20250725121954.650668-6-ivo.g.dimitrov.75@gmail.com>
- <948f9442-1211-4a47-b1fe-a6b83a5fa500@gmail.com>
+ <20250725121954.650668-2-ivo.g.dimitrov.75@gmail.com>
+ <63de4b6f-9af8-4bfb-b97e-8d5c7d53e53a@gmail.com>
 Content-Language: en-GB
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-In-Reply-To: <948f9442-1211-4a47-b1fe-a6b83a5fa500@gmail.com>
+In-Reply-To: <63de4b6f-9af8-4bfb-b97e-8d5c7d53e53a@gmail.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
 Hi Denis,
 
 
-On 28.07.25 г. 17:46 ч., Denis Kenzior wrote:
+On 28.07.25 г. 17:39 ч., Denis Kenzior wrote:
 > Hi Ivo,
 > 
 > On 7/25/25 7:19 AM, Ivaylo Dimitrov wrote:
->> There are modems that are not LTE capable, allow them to announce that
+>> We don't want modem to auto wake-up when
 >> ---
->>   plugins/gobi.c   | 10 ++++++++--
->>   plugins/udevng.c |  1 +
->>   2 files changed, 9 insertions(+), 2 deletions(-)
+>>   plugins/gobi.c | 4 ++--
+>>   1 file changed, 2 insertions(+), 2 deletions(-)
 >>
+>> diff --git a/plugins/gobi.c b/plugins/gobi.c
+>> index 52ead377..027c4dba 100644
+>> --- a/plugins/gobi.c
+>> +++ b/plugins/gobi.c
+>> @@ -442,7 +442,7 @@ static void get_oper_mode_cb(struct qmi_result 
+>> *result, void *user_data)
+>>       switch (data->oper_mode) {
+>>       case QMI_DMS_OPER_MODE_ONLINE:
+>>           param = qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
+>> -                    QMI_DMS_OPER_MODE_LOW_POWER);
+>> +                    QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
 > 
-> <snip>
-> 
-> Can't we use QMI_DMS_GET_OPER_MODE to find the modem radio interfaces 
-> supported?
-> 
+> Not so sure about this.  In the past we've had problems with some QMI 
+> modems either not honoring this mode, or turning off entirely (my memory 
+> is fuzzy here).   Perhaps we can make this an attribute as well and let 
+> hardware detection logic set the low power mode to use?  Similar to how 
+> you handle LTE capability in patch 5?
 
-Perhaps you meant QMI_DMS_GET_CAPS? That could work, will try and 
-(hopefully) send a patch
+I see. Ok, will send a new series without already merged patches and 
+with this (and the other change requested) implemented.
 
-Regards,
+> 
+>>           if (!param) {
+>>               shutdown_device(modem);
+>>               return;
+>> @@ -922,7 +922,7 @@ static int gobi_disable(struct ofono_modem *modem)
+>>           goto out;
+>>       param = qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
+>> -                    QMI_DMS_OPER_MODE_LOW_POWER);
+>> +                    QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
+>>       if (!param)
+>>           return -ENOMEM;
+> 
+> Regards,
+> -Denis
+
+Thanks and regards,
 Ivo
