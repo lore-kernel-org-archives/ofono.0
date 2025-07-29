@@ -1,66 +1,66 @@
-Received: from mail-oa1-f48.google.com (mail-oa1-f48.google.com [209.85.160.48])
+Received: from mail-oi1-f172.google.com (mail-oi1-f172.google.com [209.85.167.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BC3A1946BC
-	for <ofono@lists.linux.dev>; Tue, 29 Jul 2025 22:13:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8441343AA4
+	for <ofono@lists.linux.dev>; Tue, 29 Jul 2025 22:13:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753827203; cv=none; b=GiRD4xYyWsLUrTl3fy31xIITbUxaI1uZrhFyVj5zLQGk6oGIS5kaApgGbQ4V3ljInxtBxAtHXlmxBqOKwQokQHr8qIs5Y/59P2J1KohPiXIlIO0IknxjqfV8kxyTu71YqOAqQdghKB2MVQoDhRKqSl/W7bmfh0hm0HryyHZAQVY=
+	t=1753827228; cv=none; b=eVTBjAdHuFArCHFJFCTWdMw9Q8EqwlSYknRbCgALCaq7QCuzROPpNKTtFF91d9dFdCn2lMtrcEJnk0o9L45dYT+Q0uFEBwmfJCnZ2tS+JznKns1aN0JRLiWHuwIRleRnLyZYPp1C8JSXz4i7pFNeFuZcTyBQtjt+b7GDTzJuSGM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753827203; c=relaxed/simple;
-	bh=01WCHAQx2+CFwJUDQgvTRNSOdH5h/TaGqD7NWifa4S8=;
+	s=arc-20240116; t=1753827228; c=relaxed/simple;
+	bh=zLPT/2h4LzJ4w5OZFHHXzkmRyEQJ4I6gYcPuaW8IeAE=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Nqy69/Fp0qQf4mohOb3Et9d28GyyqM5+5xo6mxJJ5sPKPK98OaZ/hEzMvCuGjbMbK6hjQp5bThwsd3P5TTiPGC/zwzM2JFrAw0kIONxvUHXluSC5/TQ/a4w0v1Dp0vgFiBzWruODkIG3Y8t/LlNRCfwnKvX76YC3XPWSucznIH8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XbbQcWPE; arc=none smtp.client-ip=209.85.160.48
+	 In-Reply-To:Content-Type; b=hsqXjPOoLskhWiHTvro3wfAycqRgASdfu/1FiqzjbxYLVj5p84+8D6/HpwtsPjCWDWRHQtfzW6NMByHUNPGXaWkbir3sva4MkC71Bz2uq2ZWHZkvbmmPNgFX+JVqlJoHDFN/xhblTipo5omMwzLqku+NHoW11KT7FJAgEf23kGM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OXZHmjel; arc=none smtp.client-ip=209.85.167.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XbbQcWPE"
-Received: by mail-oa1-f48.google.com with SMTP id 586e51a60fabf-30063371404so1745247fac.1
-        for <ofono@lists.linux.dev>; Tue, 29 Jul 2025 15:13:22 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OXZHmjel"
+Received: by mail-oi1-f172.google.com with SMTP id 5614622812f47-41b4bf6ead9so3523945b6e.3
+        for <ofono@lists.linux.dev>; Tue, 29 Jul 2025 15:13:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753827201; x=1754432001; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1753827226; x=1754432026; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:cc:to:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=TxVp2YRjs+hzCI8O/e7+xb/hFFhZo618n2Z0CkSleSk=;
-        b=XbbQcWPE/6f4xAaOrDVfdGIfz7Yr6RXkasjf1m5P3Y4YNMX5CTIR8FfGRKiWC16YxA
-         xQZlqM1mnOLb/jQrqWNTwIp0MZpCCeu+lsXLnFIdlhB97r65oCMTS8DoEDIK1UIWkugU
-         XeErEV59SSNniSRBSEuZT+W9qbO4FG7eOAL5WwjxHgz9EPNHQEsEqKCMTXHI8+rcDMaw
-         S6DMFX5EMlp9ayiqfXb9yvTbOMAY27SgwAiQINglSNvgrUeP532Cs//LrFoTPHc02Zex
-         cQ8khBZ4IHcs+BOcTdec3U5bo7xrMwvOeU8C5BY6pZmgimGeMhAdRiqJY5cYTlKgZROQ
-         rc/Q==
+        bh=BJUE0qoXur5hW3UDtRNsi06Nfs8fmNI4WmxXPI4WZ9c=;
+        b=OXZHmjel6qZTCLwJYCu6COijiunsBUTFjV3RQEZi5rPyVJNuV87wsjms695KPc0CYm
+         5KdNW7QjKFogxdQH+vzcYQds55xkmAcjVGVsxJsFCx1RkeMnuZRxbI6ST9Y4esvdtvkA
+         fvJgYh9Q+qdJ2lBKFOl7znVh1+GsicvR71jZrka1uh5g0u/977RC8pRfDIZAyknCns+2
+         CdJLvJfA32ILrpLjJcJeZwB+ICFUhHh0HUtD8g21DBHgpbDO6/S7bvPKtArLCxKuar94
+         na+9zwgcHzAaVY06vWNlh2TjlPlipdmNDqXZXRN92csrcqYn0axXWpn0vonO1Fvld7b0
+         JHBw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753827201; x=1754432001;
+        d=1e100.net; s=20230601; t=1753827226; x=1754432026;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:cc:to:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=TxVp2YRjs+hzCI8O/e7+xb/hFFhZo618n2Z0CkSleSk=;
-        b=Z8FIJ9PNWsy3w0Z5d39ypW8vFonp4LTULDogVAga+o7mekeQv5+1uvLECMnR/x7Sf3
-         sy+rJSROwCNpxu3ELJ6z3Wd8Pt2eQC8Qe1s407qArgNVx6y7dPX05mxiwIx/7ZyCWEix
-         HqrH9HfzspGPE1LNdP+NPMHNUa1Oixw87HOBXvji0oGseZtDHnsikGGXVoHhvQg7z2hW
-         /FAJUAmrFM23DpxqvAboYTiC7uaZhPfRFG2B3j5hL5UHnpBLDQ7GbjAg7zlcZiA0FSYM
-         VeNLaz1AdlB7ZOLKykJgiJ48CVwmeAcAo/dBfMgWYTpY7lz108HForyjPUa3+3qwbKfB
-         y7qA==
-X-Forwarded-Encrypted: i=1; AJvYcCUDGhj3ehfjWc/rz1XyOB0EpJxxEpOXgkz0Rf/P8FrhqC8JaT7HnoF7hCfxADmX3NdVj9nbdQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyL7c1f0AF5GJtS1bZF2u3DUO9cxXK5vS0W56m4hrxVjdxQLRCi
-	bCJ3oAVhopHMRaEOfp78FjqKFwbkgS9rmU0A2tXKWyr/IQpTNYC5PHLS
-X-Gm-Gg: ASbGncvFQ8SpE92+wlykH0FlJK8BhuHpaslng8E9pi3TakLB3RkarDMmi9eNv/xplyP
-	Kk/YnTYl38Qs7Zz4PNCGP/8nGx7FX39LRXj1JsKTRsoN9Kf54TJULcB4XA9axIwEZb3oY/DXoek
-	N+QVyoKeB/3VLj9jOdIV0YN0C6JqiW24qRXBM2PClnZVAZ9xBOjdNUSllm8ief7Pb7vuvXKsuJ8
-	rnzNKAKee9rV/9O7YHkYDe071HfHAAst5HvGzybEfnalkoJjiKaDgeoy2GPCgrxUaVNnwQZkKSH
-	ndRWddOx80hwi7BjqDfaJTeXE1ty5xZladhMaLOMcTR886cewojSg0i1yzGUTKi71CLzEdtKqZ6
-	tCo5s1GfsGgPLci6V+G6AtgWd36s/UCXQCX5bcq9CCi3yJoamDyzyEQHh92mBxxvxhcZ/a0JaNu
-	s=
-X-Google-Smtp-Source: AGHT+IHyhO2mNGfjBXzOegq8ttAwxfrYvQOHMSdzNSUPOSHYIKjQ3xJdDPOZuKkbnPkVERic/Z4QHQ==
-X-Received: by 2002:a05:6870:8e17:b0:2df:787a:d8f9 with SMTP id 586e51a60fabf-30785ce06d3mr678180fac.26.1753827201209;
-        Tue, 29 Jul 2025 15:13:21 -0700 (PDT)
+        bh=BJUE0qoXur5hW3UDtRNsi06Nfs8fmNI4WmxXPI4WZ9c=;
+        b=USdZxqhfXRknD4ll9YDGAwiYqtdBSjouisxN5+vuiQ35gVCDb36IkIEolyr0KY9iCL
+         a51OnpJ9T1/Jfzx0qk1xJq8ugk8wSLjPbK40njxHeg4JvXr1RLtnjBwnucPk8+FlZHjq
+         qNRKsIGvwMU0l97M452Z4ZRYl7KgweptTeqh3MqiVVU9MGZzssBfXXu6y9nf+nDt/lBN
+         lSrflfqlh4hveD9q5aOEhx7mjwtlnpgZnutTHmIknDRYMuK9gDHLREJpmIEiWwfnlyBv
+         BujbK3m1p0x9lOod3CLb1uHKXIr/95kPmoRUaY2wWeaGyAfuMw+Eda26ZsP08OAHw3uq
+         KZhg==
+X-Forwarded-Encrypted: i=1; AJvYcCWQCR4tou8GL6ArXeN/5VB6lwf1RaJE6ZnjSMX1xk3plNi6253YeTRxt/296FrAT4FsJ3CgMA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx75S/d4x//1r7Pq0tAgyi0DII5Iq8u7ahswJEu7TbN48nBQ/Kg
+	igM/rmBK4scmcoAB0jtb++Srh+D0yZ3n5FPX3BrP3DVh+htolOuSrERk
+X-Gm-Gg: ASbGncvLWgAU0lfBmzGBqUpmK5yZvjNK7z6iZKoURD2tWYCnOBrRrnxQygYLasBKBMh
+	cKzYmZeF9jVhEPAzQmp7LtK0q2L/UsLq7sHJi1+qoZhbEw7qWFC6w7LmvkixcZo2IDbACwLaYcK
+	gLcKjfe6RovtAgmNKwiMxjxUlRhp64Qc6L2FzxWvRXHopIN2snkqdVTcxEilfAzHLWKfbUfhIL6
+	5OnYmarUZPGldTkxpSLKWp66CVuJFwYa+AzJaGfRDH9kKGJ79EtILrHoMcAEoPxcf5geOiHU4Qm
+	Hj2kOo5dSywiHXrrv12X7bLkz+2GTAb9Hj6RbFVtZKZWsgQ06X6j+leqS7owvA9VD/jADHLasCZ
+	GrhLQwa3KmOyAK6w7sraOQoVBxbJKRuHa0wZ5OpuGUf3mTiRFcQwyvT1tJdGw+vvQOGyI+oQ85b
+	z9WzjwUfztRw==
+X-Google-Smtp-Source: AGHT+IHKEPC7905x0AUR9J1hpUIzGZbFYbM0U9c/+uMrnxl/b2C/g0lbvRHBEPGBo7pmPKKBPb5QYw==
+X-Received: by 2002:a05:6808:4445:b0:406:7704:b2e9 with SMTP id 5614622812f47-43199d8fcd1mr818802b6e.9.1753827226531;
+        Tue, 29 Jul 2025 15:13:46 -0700 (PDT)
 Received: from [172.16.49.130] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-30713239fd4sm2556208fac.13.2025.07.29.15.13.20
+        by smtp.googlemail.com with ESMTPSA id 5614622812f47-42c7d8b60d5sm1634134b6e.28.2025.07.29.15.13.45
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 29 Jul 2025 15:13:20 -0700 (PDT)
-Message-ID: <c9d38d00-fb53-4f72-8087-9b81efc2d2f2@gmail.com>
-Date: Tue, 29 Jul 2025 17:13:19 -0500
+        Tue, 29 Jul 2025 15:13:46 -0700 (PDT)
+Message-ID: <3efff730-91c7-4607-9608-572e1af697a0@gmail.com>
+Date: Tue, 29 Jul 2025 17:13:45 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -68,14 +68,15 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/3] gobi: do not assume LTE is supported, detect it
+Subject: Re: [PATCH 3/3] plugins: drop droid and use gobi for droid4 modem
+ instead
 To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, ofono@lists.linux.dev
 Cc: absicsz@gmail.com, merlijn@wizzup.org
 References: <20250729052132.779994-1-ivo.g.dimitrov.75@gmail.com>
- <20250729052132.779994-2-ivo.g.dimitrov.75@gmail.com>
+ <20250729052132.779994-4-ivo.g.dimitrov.75@gmail.com>
 Content-Language: en-US
 From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20250729052132.779994-2-ivo.g.dimitrov.75@gmail.com>
+In-Reply-To: <20250729052132.779994-4-ivo.g.dimitrov.75@gmail.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
@@ -83,35 +84,15 @@ Hi Ivo,
 
 On 7/29/25 12:21 AM, Ivaylo Dimitrov wrote:
 > ---
->   plugins/gobi.c | 17 +++++++++++++----
->   1 file changed, 13 insertions(+), 4 deletions(-)
+>   Makefile.am      |   1 -
+>   plugins/droid.c  | 172 -----------------------------------------------
 
-<snip>
+Love it.  Thanks for doing this.
 
-> @@ -480,8 +480,17 @@ static void get_caps_cb(struct qmi_result *result, void *user_data)
->           DBG("service capabilities %d", caps->data_capa);
->           DBG("sim supported %d", caps->sim_supported);
->   
-> -        for (i = 0; i < caps->radio_if_count; i++)
-> -                DBG("radio = %d", caps->radio_if[i]);
-> +	for (i = 0; i < caps->radio_if_count; i++) {
-> +		uint8_t iface = caps->radio_if[i];
-> +
-> +		DBG("radio = %d", iface);
-> +
-> +		if (iface & QMI_DMS_RADIO_IF_LTE)
-
-QMI_DMS_RADIO_IF_* do not seem to be values that can be used in a bitset, so I 
-amended this line to use '==' instead of '&'.
-
-> +			data->features |= GOBI_LTE;
-> +	}
-> +
-> +	if (data->features & GOBI_LTE)
-> +		ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
->   
->   	if (qmi_service_send(data->dms, QMI_DMS_GET_OPER_MODE, NULL,
->   					get_oper_mode_cb, modem, NULL) > 0)
+>   plugins/udevng.c |  32 ++++++---
+>   3 files changed, 21 insertions(+), 184 deletions(-)
+>   delete mode 100644 plugins/droid.c
+> 
 
 Regards,
 -Denis
