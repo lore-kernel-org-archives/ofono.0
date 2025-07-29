@@ -1,336 +1,117 @@
-Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
+Received: from mail-oa1-f48.google.com (mail-oa1-f48.google.com [209.85.160.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 091B9221D92
-	for <ofono@lists.linux.dev>; Tue, 29 Jul 2025 05:22:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BC3A1946BC
+	for <ofono@lists.linux.dev>; Tue, 29 Jul 2025 22:13:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753766525; cv=none; b=R+dtbL5ooMXpHw+Ao8nj2DvaXbNbyUIrjzymfbuwU1KHTUWlfQfUf6Vp9h4zM0y/R7EfwPerRis7wMyBn6ayqfxxbvyD1uxl1+seIdNdYcLycEctz5ZBCleg8nJtREDsZAoNqUYgS4BqlJaRznQ6Ttb22pLdvrxpSLijq5ERP5s=
+	t=1753827203; cv=none; b=GiRD4xYyWsLUrTl3fy31xIITbUxaI1uZrhFyVj5zLQGk6oGIS5kaApgGbQ4V3ljInxtBxAtHXlmxBqOKwQokQHr8qIs5Y/59P2J1KohPiXIlIO0IknxjqfV8kxyTu71YqOAqQdghKB2MVQoDhRKqSl/W7bmfh0hm0HryyHZAQVY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753766525; c=relaxed/simple;
-	bh=e6RgRLt7+xY4HJcZ3SqADNvkXGVZYvlY0w+3xlZGsTk=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=E37rVGL6wjBwXhAUnN7MPjwO1SGR5F7KaOkrEQzuNxR2yifUA1+0j/tTMBw53pNqVjRWAIgoG0hUbUznJ2cYmoxs2Xh9geQVOu1h97kgSZ/dtx5ZRLsH1g9RpE1pBPEFzE/oyafDG3tWcO3xlHT/nu7xl2Jsrq+8R0HQr0qAM4A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eA8QqM/N; arc=none smtp.client-ip=209.85.208.49
+	s=arc-20240116; t=1753827203; c=relaxed/simple;
+	bh=01WCHAQx2+CFwJUDQgvTRNSOdH5h/TaGqD7NWifa4S8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Nqy69/Fp0qQf4mohOb3Et9d28GyyqM5+5xo6mxJJ5sPKPK98OaZ/hEzMvCuGjbMbK6hjQp5bThwsd3P5TTiPGC/zwzM2JFrAw0kIONxvUHXluSC5/TQ/a4w0v1Dp0vgFiBzWruODkIG3Y8t/LlNRCfwnKvX76YC3XPWSucznIH8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XbbQcWPE; arc=none smtp.client-ip=209.85.160.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eA8QqM/N"
-Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-605b9488c28so8780608a12.2
-        for <ofono@lists.linux.dev>; Mon, 28 Jul 2025 22:22:03 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XbbQcWPE"
+Received: by mail-oa1-f48.google.com with SMTP id 586e51a60fabf-30063371404so1745247fac.1
+        for <ofono@lists.linux.dev>; Tue, 29 Jul 2025 15:13:22 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753766522; x=1754371322; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=SfjENXCXgFP6em9JXegPUc2H6IaPkyPrsYwxf6xt5bI=;
-        b=eA8QqM/NKN/Nk2FNfMabYzzzNKjF8db9cdrdnnNCxgACsSzpXBhv8CisJ4olzJNry9
-         kR/elznJ/R/uYPLWaUgkiNPP5tBSM4nSfgLkDBEgHtw6w475XaBzW3D3hXveEKSLMIoX
-         7LsCHY51T2p49kjfcur7LiUTT/XUmvW1e/9rmmlXsYPm1VxYnO/bmXgesd9jnlzh4yKu
-         GgjaMBfm6mbwTbIg2yUX82kINr1/NNhIp6ettpWVCpZUac2V7nreCkQeYM6LIzu3mJ5K
-         xrr8XE7bFQ7beekld3oIa4Z2WeqTQHaprdFmykNJq5Yw6pKwhjrS3KdlsjVp5ZkV0s3j
-         W/WQ==
+        d=gmail.com; s=20230601; t=1753827201; x=1754432001; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=TxVp2YRjs+hzCI8O/e7+xb/hFFhZo618n2Z0CkSleSk=;
+        b=XbbQcWPE/6f4xAaOrDVfdGIfz7Yr6RXkasjf1m5P3Y4YNMX5CTIR8FfGRKiWC16YxA
+         xQZlqM1mnOLb/jQrqWNTwIp0MZpCCeu+lsXLnFIdlhB97r65oCMTS8DoEDIK1UIWkugU
+         XeErEV59SSNniSRBSEuZT+W9qbO4FG7eOAL5WwjxHgz9EPNHQEsEqKCMTXHI8+rcDMaw
+         S6DMFX5EMlp9ayiqfXb9yvTbOMAY27SgwAiQINglSNvgrUeP532Cs//LrFoTPHc02Zex
+         cQ8khBZ4IHcs+BOcTdec3U5bo7xrMwvOeU8C5BY6pZmgimGeMhAdRiqJY5cYTlKgZROQ
+         rc/Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753766522; x=1754371322;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=SfjENXCXgFP6em9JXegPUc2H6IaPkyPrsYwxf6xt5bI=;
-        b=iiIgDJk0Zwe+2xEt59JEj1dy9o1/fx3SQ6s9jWkDvblcRFRxPRkqkds/asCTh2N5sN
-         V8B6aNIyJ+G9LSDlAeIbCOLm/36nikUedh8H6ICAVrwiCwbtgl/AFhKmeHMNGEOyqfNI
-         KEp7+RZx9T0HkfycYFxykkkD1OqwFdrWqLgY41kT8vRtqe5qyMeEYYVpHJTAiiMw7VTa
-         3ygmc7p6MEfRuF7IMgbAwSQF7w0XiHaAxzzncJrbxBJ4c0E0nYIhQRIoUcuKFDIKwSZI
-         fFV/SG9sonB1wNdt+lGJkks/l2emgGZq0Vg9jETh6LPQWlj4VLu6GQkdOug848SC1j+b
-         OGiQ==
-X-Gm-Message-State: AOJu0YzqiGnaCpSqKQa7wEncLqffU4L6rB7kkQS4MsUl/WygxGGwUoHA
-	pzxZ3YwYKTgcEreoeBixILulAJ1SBdF4+CX8JyCPEZKFumwndcNYKP0Js4rufA==
-X-Gm-Gg: ASbGnctf4i+OIRK4cSq6j1QntmkU82itr/SOj8ZYkiQ/p5Jc6XB4iKCXWg42nBvBH1u
-	6IS8ewaZOM79VojuN1kLZjx32rxfvsqsLbEGuP0ZEhU7r0mFJks3tXWmGuZXpNzwTCgWbGei0IJ
-	V/GTLa1tjAz2mnaS5uQG8/oQdMPO9HVSVpsDzwatu07mRl8JEQaSNGJfIhfwAxRbvMnLttkU4sx
-	Yr/1xATPBX1yXoJ2dlU6mDsTSLomp/wRk73s6sS+FUbbHIy1wH28U5XX7iSsv6ARlj/qRdfTH7f
-	ErxLFlEIIJ0oCvMa8zuQlS8YoNMTk+WbGNdoMQMNOL25jQBFsC38WXSwFPvZtYPMHRyPwh+X7Oe
-	nSfx8vnsMYg1PYv1ntmTFUfb/2qT+bHdC3TsOOzvcGQtV
-X-Google-Smtp-Source: AGHT+IFYPkBNKDwFJQtgJybMg8Wm0wizT15dm/x+6iOPqElcujSAvwDiIWk+7sQbCEpNZzecvliuKg==
-X-Received: by 2002:a17:906:1705:b0:af6:a116:f13c with SMTP id a640c23a62f3a-af6a116f8c9mr258968666b.23.1753766522209;
-        Mon, 28 Jul 2025 22:22:02 -0700 (PDT)
-Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-af63589cab0sm525110266b.38.2025.07.28.22.22.01
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 28 Jul 2025 22:22:01 -0700 (PDT)
-From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-To: ofono@lists.linux.dev
-Cc: denkenz@gmail.com,
-	absicsz@gmail.com,
-	merlijn@wizzup.org,
-	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH 3/3] plugins: drop droid and use gobi for droid4 modem instead
-Date: Tue, 29 Jul 2025 08:21:32 +0300
-Message-Id: <20250729052132.779994-4-ivo.g.dimitrov.75@gmail.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20250729052132.779994-1-ivo.g.dimitrov.75@gmail.com>
-References: <20250729052132.779994-1-ivo.g.dimitrov.75@gmail.com>
+        d=1e100.net; s=20230601; t=1753827201; x=1754432001;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=TxVp2YRjs+hzCI8O/e7+xb/hFFhZo618n2Z0CkSleSk=;
+        b=Z8FIJ9PNWsy3w0Z5d39ypW8vFonp4LTULDogVAga+o7mekeQv5+1uvLECMnR/x7Sf3
+         sy+rJSROwCNpxu3ELJ6z3Wd8Pt2eQC8Qe1s407qArgNVx6y7dPX05mxiwIx/7ZyCWEix
+         HqrH9HfzspGPE1LNdP+NPMHNUa1Oixw87HOBXvji0oGseZtDHnsikGGXVoHhvQg7z2hW
+         /FAJUAmrFM23DpxqvAboYTiC7uaZhPfRFG2B3j5hL5UHnpBLDQ7GbjAg7zlcZiA0FSYM
+         VeNLaz1AdlB7ZOLKykJgiJ48CVwmeAcAo/dBfMgWYTpY7lz108HForyjPUa3+3qwbKfB
+         y7qA==
+X-Forwarded-Encrypted: i=1; AJvYcCUDGhj3ehfjWc/rz1XyOB0EpJxxEpOXgkz0Rf/P8FrhqC8JaT7HnoF7hCfxADmX3NdVj9nbdQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyL7c1f0AF5GJtS1bZF2u3DUO9cxXK5vS0W56m4hrxVjdxQLRCi
+	bCJ3oAVhopHMRaEOfp78FjqKFwbkgS9rmU0A2tXKWyr/IQpTNYC5PHLS
+X-Gm-Gg: ASbGncvFQ8SpE92+wlykH0FlJK8BhuHpaslng8E9pi3TakLB3RkarDMmi9eNv/xplyP
+	Kk/YnTYl38Qs7Zz4PNCGP/8nGx7FX39LRXj1JsKTRsoN9Kf54TJULcB4XA9axIwEZb3oY/DXoek
+	N+QVyoKeB/3VLj9jOdIV0YN0C6JqiW24qRXBM2PClnZVAZ9xBOjdNUSllm8ief7Pb7vuvXKsuJ8
+	rnzNKAKee9rV/9O7YHkYDe071HfHAAst5HvGzybEfnalkoJjiKaDgeoy2GPCgrxUaVNnwQZkKSH
+	ndRWddOx80hwi7BjqDfaJTeXE1ty5xZladhMaLOMcTR886cewojSg0i1yzGUTKi71CLzEdtKqZ6
+	tCo5s1GfsGgPLci6V+G6AtgWd36s/UCXQCX5bcq9CCi3yJoamDyzyEQHh92mBxxvxhcZ/a0JaNu
+	s=
+X-Google-Smtp-Source: AGHT+IHyhO2mNGfjBXzOegq8ttAwxfrYvQOHMSdzNSUPOSHYIKjQ3xJdDPOZuKkbnPkVERic/Z4QHQ==
+X-Received: by 2002:a05:6870:8e17:b0:2df:787a:d8f9 with SMTP id 586e51a60fabf-30785ce06d3mr678180fac.26.1753827201209;
+        Tue, 29 Jul 2025 15:13:21 -0700 (PDT)
+Received: from [172.16.49.130] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
+        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-30713239fd4sm2556208fac.13.2025.07.29.15.13.20
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 29 Jul 2025 15:13:20 -0700 (PDT)
+Message-ID: <c9d38d00-fb53-4f72-8087-9b81efc2d2f2@gmail.com>
+Date: Tue, 29 Jul 2025 17:13:19 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/3] gobi: do not assume LTE is supported, detect it
+To: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, ofono@lists.linux.dev
+Cc: absicsz@gmail.com, merlijn@wizzup.org
+References: <20250729052132.779994-1-ivo.g.dimitrov.75@gmail.com>
+ <20250729052132.779994-2-ivo.g.dimitrov.75@gmail.com>
+Content-Language: en-US
+From: Denis Kenzior <denkenz@gmail.com>
+In-Reply-To: <20250729052132.779994-2-ivo.g.dimitrov.75@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
----
- Makefile.am      |   1 -
- plugins/droid.c  | 172 -----------------------------------------------
- plugins/udevng.c |  32 ++++++---
- 3 files changed, 21 insertions(+), 184 deletions(-)
- delete mode 100644 plugins/droid.c
+Hi Ivo,
 
-diff --git a/Makefile.am b/Makefile.am
-index c013e77d..cf51cdf1 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -578,7 +578,6 @@ builtin_sources += plugins/telit.c
- builtin_sources += plugins/quectel.c
- builtin_sources += plugins/ublox.c
- builtin_sources += plugins/xmm7xxx.c
--builtin_sources += plugins/droid.c
- 
- builtin_modules += stemgr
- builtin_sources += plugins/stemgr.c
-diff --git a/plugins/droid.c b/plugins/droid.c
-deleted file mode 100644
-index 1dfae9ee..00000000
---- a/plugins/droid.c
-+++ /dev/null
-@@ -1,172 +0,0 @@
--/*
-- * oFono - Open Source Telephony
-- * Copyright (C) 2008-2011  Intel Corporation
-- * Copyright (C) 2009  Collabora Ltd
-- * Copyright (C) 2020  Pavel Machek
-- *
-- * SPDX-License-Identifier: GPL-2.0-only
-- */
--
--#ifdef HAVE_CONFIG_H
--#include <config.h>
--#endif
--
--#include <stdlib.h>
--#include <errno.h>
--
--#include <glib.h>
--#include <gatchat.h>
--#include <gattty.h>
--
--#define OFONO_API_SUBJECT_TO_CHANGE
--#include <ofono/plugin.h>
--#include <ofono/log.h>
--#include <ofono/modem.h>
--#include <ofono/call-barring.h>
--#include <ofono/call-forwarding.h>
--#include <ofono/call-meter.h>
--#include <ofono/call-settings.h>
--#include <ofono/devinfo.h>
--#include <ofono/message-waiting.h>
--#include <ofono/netreg.h>
--#include <ofono/phonebook.h>
--#include <ofono/sim.h>
--#include <ofono/sms.h>
--#include <ofono/ussd.h>
--#include <ofono/voicecall.h>
--
--#include <drivers/atmodem/atutil.h>
--#include <drivers/atmodem/vendor.h>
--
--static void droid_debug(const char *str, void *user_data)
--{
--	const char *prefix = user_data;
--
--	ofono_info("%s%s", prefix, str);
--}
--
--/* Detect hardware, and initialize if found */
--static int droid_probe(struct ofono_modem *modem)
--{
--	DBG("");
--
--	return 0;
--}
--
--static void droid_remove(struct ofono_modem *modem)
--{
--	GAtChat *chat = ofono_modem_get_data(modem);
--
--	DBG("");
--
--	if (chat) {
--		g_at_chat_unref(chat);
--		ofono_modem_set_data(modem, NULL);
--	}
--}
--
--static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_data)
--{
--	struct ofono_modem *modem = user_data;
--
--	DBG("");
--
--	if (ok)
--		ofono_modem_set_powered(modem, TRUE);
--}
--
--/* power up hardware */
--static int droid_enable(struct ofono_modem *modem)
--{
--	GAtChat *chat;
--
--	DBG("");
--
--	chat = at_util_open_device(modem, "Device", droid_debug, "", NULL);
--	ofono_modem_set_data(modem, chat);
--
--	/* ensure modem is in a known state; verbose on, echo/quiet off */
--	g_at_chat_send(chat, "ATE0Q0V1", NULL, NULL, NULL, NULL);
--
--	/* power up modem */
--	g_at_chat_send(chat, "AT+CFUN=1", NULL, cfun_set_on_cb, modem, NULL);
--
--	return 0;
--}
--
--static void cfun_set_off_cb(gboolean ok, GAtResult *result, gpointer user_data)
--{
--	struct ofono_modem *modem = user_data;
--	GAtChat *chat = ofono_modem_get_data(modem);
--
--	DBG("");
--
--	g_at_chat_unref(chat);
--	ofono_modem_set_data(modem, NULL);
--
--	if (ok)
--		ofono_modem_set_powered(modem, FALSE);
--}
--
--static int droid_disable(struct ofono_modem *modem)
--{
--	GAtChat *chat = ofono_modem_get_data(modem);
--
--	DBG("");
--
--	/* power down modem */
--	g_at_chat_cancel_all(chat);
--	g_at_chat_unregister_all(chat);
--	g_at_chat_send(chat, "AT+CFUN=0", NULL, cfun_set_off_cb, modem, NULL);
--
--	return -EINPROGRESS;
--}
--
--static void droid_pre_sim(struct ofono_modem *modem)
--{
--	GAtChat *chat = ofono_modem_get_data(modem);
--	struct ofono_sim *sim;
--
--	DBG("");
--
--	ofono_devinfo_create(modem, 0, "atmodem", chat);
--	sim = ofono_sim_create(modem, OFONO_VENDOR_DROID, "atmodem", chat);
--	ofono_voicecall_create(modem, OFONO_VENDOR_DROID, "atmodem", chat);
--
--	if (sim)
--		ofono_sim_inserted_notify(sim, TRUE);
--}
--
--static void droid_post_sim(struct ofono_modem *modem)
--{
--	GAtChat *chat = ofono_modem_get_data(modem);
--	struct ofono_message_waiting *mw;
--
--	DBG("");
--
--	ofono_ussd_create(modem, 0, "atmodem", chat);
--	ofono_call_forwarding_create(modem, 0, "atmodem", chat);
--	ofono_call_settings_create(modem, 0, "atmodem", chat);
--	ofono_netreg_create(modem, 0, "atmodem", chat);
--	/*
--	 * Droid 4 modem has problems with AT+CPUC?, avoid call meter for now.
--	 */
--	ofono_call_barring_create(modem, 0, "atmodem", chat);
--	ofono_sms_create(modem, OFONO_VENDOR_DROID, "atmodem", chat);
--	ofono_phonebook_create(modem, 0, "atmodem", chat);
--
--	mw = ofono_message_waiting_create(modem);
--	if (mw)
--		ofono_message_waiting_register(mw);
--}
--
--static struct ofono_modem_driver droid_driver = {
--	.probe		= droid_probe,
--	.remove		= droid_remove,
--	.enable		= droid_enable,
--	.disable	= droid_disable,
--	.pre_sim	= droid_pre_sim,
--	.post_sim	= droid_post_sim,
--};
--
--OFONO_MODEM_DRIVER_BUILTIN(droid, &droid_driver)
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 320cd3a6..18954d44 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -870,7 +870,9 @@ static gboolean setup_telitqmi(struct modem_info *modem)
- 
- static gboolean setup_droid(struct modem_info *modem)
- {
--	const char *at = NULL;
-+	const struct device_info *qmi = NULL;
-+	const struct device_info *net = NULL;
-+
- 	GSList *list;
- 
- 	DBG("%s", modem->syspath);
-@@ -878,23 +880,31 @@ static gboolean setup_droid(struct modem_info *modem)
- 	for (list = modem->devices; list; list = list->next) {
- 		struct device_info *info = list->data;
- 		const char *subsystem =
--			udev_device_get_subsystem(info->udev_device);
--
--		DBG("%s %s %s %s %s", info->devnode, info->interface,
--				info->number, info->label, subsystem);
-+				udev_device_get_subsystem(info->udev_device);
-+		DBG("%s %s %s %s %s %s", info->devnode, info->interface,
-+						info->number, info->label,
-+						info->sysattr, subsystem);
- 
--		if (g_strcmp0(info->interface, "255/255/255") == 0 &&
--				g_strcmp0(info->number, "04") == 0) {
--			at = info->devnode;
-+		if (g_strcmp0(subsystem, "usbmisc") == 0) {
-+			if (g_strcmp0(info->number, "05") == 0)
-+				qmi = info;
-+		} else if (g_strcmp0(subsystem, "net") == 0) {
-+			if (g_strcmp0(info->number, "05") == 0)
-+				net = info;
- 		}
- 	}
- 
--	if (at == NULL)
-+	if (qmi == NULL || net == NULL)
- 		return FALSE;
- 
--	ofono_modem_set_string(modem->modem, "Device", at);
--	ofono_modem_set_driver(modem->modem, "droid");
-+	DBG("qmi=%s net=%s", qmi->devnode, get_ifname(net));
-+
-+
-+	if (setup_qmi_qmux(modem, qmi, net) < 0)
-+		return FALSE;
- 
-+	ofono_modem_set_string(modem->modem, "OfflineOperatingMode",
-+				"PersistentLowPower");
- 	return TRUE;
- }
- 
--- 
-2.25.1
+On 7/29/25 12:21 AM, Ivaylo Dimitrov wrote:
+> ---
+>   plugins/gobi.c | 17 +++++++++++++----
+>   1 file changed, 13 insertions(+), 4 deletions(-)
 
+<snip>
+
+> @@ -480,8 +480,17 @@ static void get_caps_cb(struct qmi_result *result, void *user_data)
+>           DBG("service capabilities %d", caps->data_capa);
+>           DBG("sim supported %d", caps->sim_supported);
+>   
+> -        for (i = 0; i < caps->radio_if_count; i++)
+> -                DBG("radio = %d", caps->radio_if[i]);
+> +	for (i = 0; i < caps->radio_if_count; i++) {
+> +		uint8_t iface = caps->radio_if[i];
+> +
+> +		DBG("radio = %d", iface);
+> +
+> +		if (iface & QMI_DMS_RADIO_IF_LTE)
+
+QMI_DMS_RADIO_IF_* do not seem to be values that can be used in a bitset, so I 
+amended this line to use '==' instead of '&'.
+
+> +			data->features |= GOBI_LTE;
+> +	}
+> +
+> +	if (data->features & GOBI_LTE)
+> +		ofono_modem_set_capabilities(modem, OFONO_MODEM_CAPABILITY_LTE);
+>   
+>   	if (qmi_service_send(data->dms, QMI_DMS_GET_OPER_MODE, NULL,
+>   					get_oper_mode_cb, modem, NULL) > 0)
+
+Regards,
+-Denis
