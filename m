@@ -1,134 +1,151 @@
-Received: from mail-ot1-f42.google.com (mail-ot1-f42.google.com [209.85.210.42])
+Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED1F28479
-	for <ofono@lists.linux.dev>; Wed, 10 Sep 2025 15:31:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B6CB26E16C
+	for <ofono@lists.linux.dev>; Wed, 10 Sep 2025 17:45:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757518269; cv=none; b=YeNiZfbJ2qDaNmFgxvEjo0ohwejCMhudHLJ9dxqvIW/EdrWTyD2QkqOaFiRAAUiLAYyDh0sPNEQnSS9JyYRP+RPsWYIHtweaiagAjNslJSaMz1VSwNyPagO/EsyniRY/TR0LzDefKWpKwxG3kWFxSur3vYKcbeu2XEshDsjKAwo=
+	t=1757526312; cv=none; b=uOtQmnkm9LOEFe1eVh9tRUlrfijHlVNazTcRTP+MSNUqId6XgykzzYOeBzsvgg+5aQWJ9LGZcttpHKj63xIIsjmQvGLQ3huJTweUa0MXj2A7vt9VXINabkMwXlez/5RtboCG3NMQmgc6MVgD9hskOkTx1LIJfbFvGTapCzz5wbk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757518269; c=relaxed/simple;
-	bh=VVbL3RIkgSNsGPriKa60yC3EsxiZ90Cs67znYZLmu6k=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=YUNlU6vrIW4wkBqfPjV84M7KKW3s8d1mKydlC0e2BpiKZeEVFqRMmq7oBdnNs15QCTNcKRFBdmxhkGk9aP89UYQb+zHvj0VKXjVE+2Qs2xldbfxQbIb5dxv0QemW07aCHSVwgroKRENHlQzvHqiWdIsFetWr9+G77uMkyueFPao=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HMGu4AKW; arc=none smtp.client-ip=209.85.210.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+	s=arc-20240116; t=1757526312; c=relaxed/simple;
+	bh=WPfjDvV7KpNkE5tvPCB4q7Id5WZrWNM1AiV9viKlkNE=;
+	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=GRxQVL7ympIQuiIzYLQ7PJvW7MXqUfVA7NptU5HUtM121gmlHWx7AU8MGkh4bffjzyuIml0H8/hpnMGJL4eyebLLrBQNiCdASl7QUCJUPkUeYKq14XpbsfgahhrevesX/MtVe4cXOiNChzTAUaShA7W1YSNzCoDCto45lr4pYo0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=im4pekBL; arc=none smtp.client-ip=209.85.128.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HMGu4AKW"
-Received: by mail-ot1-f42.google.com with SMTP id 46e09a7af769-74526ca79beso5905179a34.0
-        for <ofono@lists.linux.dev>; Wed, 10 Sep 2025 08:31:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="im4pekBL"
+Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-45de1084868so22648475e9.2
+        for <ofono@lists.linux.dev>; Wed, 10 Sep 2025 10:45:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1757518267; x=1758123067; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=A88RxMd9H41O33MC4Cw3/7WvZNfuuKDXBib+E2p0OM8=;
-        b=HMGu4AKWNhD3zDWkaVwY5pMMJLDbz4CDFzOiYFZbfHqp52tV9ovmuS57sngdluU7Il
-         jTFiwBZikT1lZ+fkP57HrtQO9kC1645WgvUhjsKv8y1CwKABp9KWew/HMQSmuLNc2pBm
-         KrzkPdA/xlRxNocL+XPN60uhvaRDeQDw480SQ6Ek4K6Qloq4KjeKxmcWu5kUqXZFz+8K
-         6N/Z/5cn9HqgBsebRnMj5Ayclsqzc3JAMnUmVk7bE/Cg+7CUsNtdnt5IIN+Pw1RGVmQa
-         jzDYqpS+dvE1g2LeOQk9nuIGppuJD59byJDp4UJgXRONl4JbtcS5fA8Zy4qusKlusRdj
-         5rMQ==
+        d=gmail.com; s=20230601; t=1757526309; x=1758131109; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:to:from:sender:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=KNmmMII56h0DNvakbBl+Q3Sfu+s7QksxNjelyxKXA8A=;
+        b=im4pekBLdGddGJ20g8HeqZzefG2YfKtxOkFOgjJxlIKqvZH23j+8fOEB4mAPzVxNXW
+         uWijum9ncTjQuRDjn5EOR2e4bdLhgO+81TWo+1zxmOOd6XGeyJgs4MjXJMmmFOPZnrqE
+         myDk2cnzqbQs6mZ/ZOsz0XZ+cQ1LkjNDe8VKwyfFNjO2yuynK4SJezoUy2p+yzjmkTK+
+         77Q0BC8fFc2fA7X907xpuaVQUvuw1iOo48IaxIissfezqMqv3R3A2skbfIv1wXauRK7g
+         jaA1UuHVw1TZcnM/m54AuxSXFAiCEbF3bIfKLFbSM0AxoxihlWoSKEFDoEAQUlMTwyhH
+         hJqA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757518267; x=1758123067;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=A88RxMd9H41O33MC4Cw3/7WvZNfuuKDXBib+E2p0OM8=;
-        b=QB8/nuf/RmewEytInYTCFuVW0mIQqBx7N/CvNUwZ8y/LgNwAnYPEjCzLIjXhfI9ura
-         uzMqJ0MFUztDhat9yk5BlYRRf4wrMEnpsGNoJZrsjRdbY4sYkozr7cerXsNfto6ELpFU
-         QTlF9RLH6pX41qKnl9ImAEDT09FRLaOPmnDanJKq3KmWIVb8Csg0I138ZIZrtLA0WCGK
-         e7Gzq4e185SeOcGouE3dbYxJejeWbOJwqFdVh4KmjvXwKSRmiuObnZJ3vzWsplJrFfO0
-         dz113d+0ei//VWQ7BOILVjdAZ8SLYCoBBmIvXIFxd2QJvLN1VlbYiZtJxE4wOYpkkE+W
-         DbCw==
-X-Forwarded-Encrypted: i=1; AJvYcCVpCYGEl5li6KN6XnOfj2sW3qJGlqZ9herasIynHXw6IZg0LeJ4EOhwmF/ILSX+C37jrBEhBg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzY0TdwrJbR2ux/QvC9z653SYr3meErKgM9BFlMQtPKJqmVAX2Q
-	Vk+IQj+7k22X6n0g2uOu+S952YeLAFMLVRGyyEwzIpqShVEONmJ4Gl/YGFpUhg==
-X-Gm-Gg: ASbGncvyg/1gk5CJmgKo8MlobVi88WHONLZLowUsyizm+xhPjpZhkZdsIQ4+L7JsTuM
-	4QCRB+zGOIp2qc/gR3kY9XUcpig2mbc5v6g4pXW0szS+M05i2OG5RPzvLYe5uBhJvH33NEIvzia
-	gquNYuiMz4mJrIBuAZedmY3YWwj5FAq5uGATQzTKiGLnMtmoXDtJtAUk8gDB2v5jVinZsE7R4G9
-	tkAIR2xTMI5ekxYhZk8pcSLODSGwHb3lmSMcOYASHCCW8TXV7Q/aAwKw6ClKTM5Sb/tL0JJcPUv
-	/wMQtlcNo4VybTS3PjFCtsTIWGv4FGxpLWPeaNb8OJJr39Qb5zoQ61viO9aFHpAGvfAgpTf6BGP
-	IViaiYEdoTx1qls+6hz8cmubYXzLU4WT1t3FLZPxboG5XUAgG8qSQVW7LYnz8JpAjMu1wEi49gh
-	tkNWJ/vnm8Gg==
-X-Google-Smtp-Source: AGHT+IED5NstLQaZWSZAz0fpWKUrOqS1LwwuEqDtdcHNOeZ0cnKn6j9x8E8tkbewKSnB5zPDIwksTg==
-X-Received: by 2002:a05:6830:7105:b0:742:29a0:1c20 with SMTP id 46e09a7af769-74c76be9610mr9718229a34.28.1757518266694;
-        Wed, 10 Sep 2025 08:31:06 -0700 (PDT)
-Received: from [172.16.49.130] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 46e09a7af769-7459a657c0csm6331156a34.5.2025.09.10.08.31.05
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 10 Sep 2025 08:31:06 -0700 (PDT)
-Message-ID: <379c6d32-28be-40ac-a055-0ebcf13613ea@gmail.com>
-Date: Wed, 10 Sep 2025 10:31:05 -0500
+        d=1e100.net; s=20230601; t=1757526309; x=1758131109;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:to:from:sender:x-gm-message-state:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=KNmmMII56h0DNvakbBl+Q3Sfu+s7QksxNjelyxKXA8A=;
+        b=ArroL5vmW8wYud8CBFUC3JGlt3JG+xlEY0cw1lNSY91QhhND7DshWzP+IxhBsOHX4T
+         i7P7s3Ow7qY3NwVys3h5u0CeUaJZxrlVQMPqrGXd+xZknwMJF+6IrSO8PeebUfrRfuLO
+         Xnik4U6URqOVvYdQ5Z1uS6mlTKqhMLfg74O2XI9sayeSVdMLWk3PJYzbEDR9TtXsHdTe
+         pycnwWPOKSXG1iYMJHBvmFn/Xv1RysdaZC5tZwglwXuJgtKwmOrnL3xpLWGiP4OS6X6+
+         TSAGOfZNVAmnxH8sKV5jh0Tkf4JuT0AS5oWHX8HdsyHmi+JBxSbP4IF6NiannWC060+g
+         pCmw==
+X-Forwarded-Encrypted: i=1; AJvYcCXsH2wt4nvCWmjJ0tn+jU5mYSIzxj5rN8A8x1O7TqSp99w4CXLF97yzUC2Dg4+ciPPqOVExRA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy/V4EMfCi3hYtsj79aPhZ0JNb8SKOFBlDO0owk9yjsTVuJIiz4
+	1iirolbNAV0uZzvSZFy0j4uSB+71BuTulhQ0oFRlUaB/zj4e4HxeiXa+
+X-Gm-Gg: ASbGncv6wSD17+PewbVEh2TXu6cDiCYn93iPrq1orsEb4w+c3hyTFLJKap/mpRCw842
+	xv2NmeHFbeqLjHR0RPE5AHwCK9U0g+oB8gUlIAf4inU0gl89Y6pje9PNCf9z/wI8mRwxnjxliOT
+	EbNWIVX45j5qO8FxbQF1t9Y9KXBDG1L96MbGr1KhtirAqWQpeOatYhJZVkyBU7QOojNFBbGM8i5
+	LNmj+QC3ar+JsIICjMcwDQfegpQrvNCrQCoWaPbUFJ7kDK/T7KUmk/Ueh6cdmWgSEC2YN+l8pXG
+	BkH0aiIFTeeD/1jKSpIaYNfXJ4Z2MoiZEIY7l0RV5BDBmejYyCb0T0z7IZstzRt9D+r5hY3FI4P
+	bOsVign1kIxVIAo7Nfvj99ZSHjTc2eXDL
+X-Google-Smtp-Source: AGHT+IHza8fiTk9Lo6eJ/Hh2o0I9rD/c76vnMalG1BM0HSOu/Nlne84Jvt4cdK4eK6HmnjWAXQxliw==
+X-Received: by 2002:a05:6000:2186:b0:3e7:4071:186e with SMTP id ffacd0b85a97d-3e740711d5bmr8567678f8f.4.1757526308323;
+        Wed, 10 Sep 2025 10:45:08 -0700 (PDT)
+Received: from adam-laptop-hp.localnet ([90.242.93.48])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3e7521c9cdbsm8143021f8f.16.2025.09.10.10.45.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 10 Sep 2025 10:45:07 -0700 (PDT)
+Sender: Adam Pigg <piggz1@gmail.com>
+From: adam@piggz.co.uk
+To: Timo Ketola <timo.ketola@exertus.fi>, ofono@lists.linux.dev,
+ Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Quectel modem ceases working
+Date: Wed, 10 Sep 2025 18:45:04 +0100
+Message-ID: <2221614.9o76ZdvQCi@adam-laptop-hp>
+In-Reply-To: <379c6d32-28be-40ac-a055-0ebcf13613ea@gmail.com>
+References:
+ <3be9ef7c-fb1b-4caa-802b-93f02eaad1d6@exertus.fi>
+ <e400c04f-1550-4263-9f21-ce1476e12c80@exertus.fi>
+ <379c6d32-28be-40ac-a055-0ebcf13613ea@gmail.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Quectel modem ceases working
-To: Timo Ketola <timo.ketola@exertus.fi>, ofono@lists.linux.dev
-References: <3be9ef7c-fb1b-4caa-802b-93f02eaad1d6@exertus.fi>
- <e87a92d3-3e5b-4e5c-aab7-2310697b9fa7@gmail.com>
- <e400c04f-1550-4263-9f21-ce1476e12c80@exertus.fi>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <e400c04f-1550-4263-9f21-ce1476e12c80@exertus.fi>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="utf-8"
 
-Hi Timo,
+Hi Dennis
 
-On 9/10/25 5:59 AM, Timo Ketola wrote:
-> Hi Denis,
+Is this the same/similar issue I reported in Dec 24, where the pinephone modem 
+stopped working between 2.12 and 2.13?
+
+Thanks
+
+Adam
+
+On Wednesday, 10 September 2025 16:31:05 British Summer Time Denis Kenzior 
+wrote:
+> Hi Timo,
 > 
-> Thanks for looking at this!
+> On 9/10/25 5:59 AM, Timo Ketola wrote:
+> > Hi Denis,
+> > 
+> > Thanks for looking at this!
+> > 
+> > My further testing unsurprisingly shows that my hack does not really
+> > work. list-modems looks better and the IF gets IP address but actual
+> > traffic does not work.
 > 
-> My further testing unsurprisingly shows that my hack does not really
-> work. list-modems looks better and the IF gets IP address but actual
-> traffic does not work.
-
-Yeah, looks like the raw_ip setting isn't being reset back to what is expected.
-
+> Yeah, looks like the raw_ip setting isn't being reset back to what is
+> expected.
+> >> What kernel are you running?
+> > 
+> > 5.4.78 with RT patch.
 > 
->> What kernel are you running?
+> Ugh.  I really have no desire to support kernels pre-5.15 when the
+> passthrough capability was introduced.  I also have no hardware that is not
+> 802.3 mode capable.  You can try the following patch though and see if
+> things work again.
 > 
-> 5.4.78 with RT patch.
+> Regards,
+> -Denis
+> 
+> diff --git a/plugins/gobi.c b/plugins/gobi.c
+> index 52ead377de7f..1b77e5e32ed6 100644
+> --- a/plugins/gobi.c
+> +++ b/plugins/gobi.c
+> @@ -665,10 +665,21 @@ static void set_data_format_cb(struct qmi_result
+> *result, void *user_data)
+>   	DBG("");
+> 
+>   	if (!qmi_result_set_error(result, NULL)) {
+> +		struct qmi_wda_data_format actual;
+> +
+>   		if (!compare_data_format(data, result))
+>   			goto done;
+> 
+>   		ofono_error("Setting Data Format had no effect");
+> +
+> +		if (!qmi_wda_parse_data_format(result, &actual) &&
+> +				data->data_format == 
+WDA_DATA_FORMAT_802_3 &&
+> +				actual.ll_protocol ==
+> +				QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP) 
+{
+> +			ofono_warn("Modem seems to only work in raw-
+ip mode");
+> +			data->data_format = WDA_DATA_FORMAT_RAW_IP;
+> +			goto done;
+> +		}
+>   	}
+> 
+>   	if (data->data_format == WDA_DATA_FORMAT_802_3)
 
-Ugh.  I really have no desire to support kernels pre-5.15 when the passthrough 
-capability was introduced.  I also have no hardware that is not 802.3 mode 
-capable.  You can try the following patch though and see if things work again.
 
-Regards,
--Denis
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 52ead377de7f..1b77e5e32ed6 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -665,10 +665,21 @@ static void set_data_format_cb(struct qmi_result *result, 
-void *user_data)
-  	DBG("");
-
-  	if (!qmi_result_set_error(result, NULL)) {
-+		struct qmi_wda_data_format actual;
-+
-  		if (!compare_data_format(data, result))
-  			goto done;
-
-  		ofono_error("Setting Data Format had no effect");
-+
-+		if (!qmi_wda_parse_data_format(result, &actual) &&
-+				data->data_format == WDA_DATA_FORMAT_802_3 &&
-+				actual.ll_protocol ==
-+				QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP) {
-+			ofono_warn("Modem seems to only work in raw-ip mode");
-+			data->data_format = WDA_DATA_FORMAT_RAW_IP;
-+			goto done;
-+		}
-  	}
-
-  	if (data->data_format == WDA_DATA_FORMAT_802_3)
 
