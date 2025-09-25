@@ -1,113 +1,177 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mout02.posteo.de (mout02.posteo.de [185.67.36.66])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA21CDDC3
-	for <ofono@lists.linux.dev>; Thu, 11 Sep 2025 19:09:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8A3F1C8632
+	for <ofono@lists.linux.dev>; Thu, 25 Sep 2025 14:55:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.67.36.66
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757617742; cv=none; b=gTCMpXIwpmnwjxn4y9LGzaTWdY+1L8mrtCCuJII4xZIqshtLDtdogTs3yZCiFGBWOE0/Rh/EpfBL/9I8fd53Fmeqcq40THt96rOkNMACqj0R/RdKzENzEzUX1swJL0bEBtcrp8hVwFz9+CwuGFhdJOMFQbBKhno1y6RbmG/wxUo=
+	t=1758812156; cv=none; b=B+4NwWDk/VjMoU8yx3cr9FV+uCfv9pCcgAJkxKvjVvkFK3+wrZ72L75vGq3M9MDcaybx54i8P1QcYdWW4UWxuXz2xrLv4NDtAqBMGGckhSYPWtA3kXomX7ZNmFh2DUBil6+lMXCrkSRK4FvmaCLL4ZSP8n5U3YHeg9MXHr05pR8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757617742; c=relaxed/simple;
-	bh=TQ2hHIlCyvuhbfamhygGfm6axnUNh039FzG2NZk53TQ=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=WEvSACmLqOaKyO82o4bOeRt9JRaScpYSS8zV2wKYo2umX1OSiS+6Oy/9LnxwlbCDI4BCVEmJDu68qjyys6HZevobwxEpqteJ5henIrxUjcENRLJkRoTiKwYYS/aY4a1CGbgRGFVC/A0d7ncpUZZdo0W2qiZI2lMdiQMAHtz7oHI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=a/aobXYO; arc=none smtp.client-ip=209.85.128.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=piggz.co.uk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1758812156; c=relaxed/simple;
+	bh=j0DWykalquMEvhvxofhgR373hlMDWw25tFbk3kQJQVo=;
+	h=From:Content-Type:Mime-Version:Subject:Message-Id:Date:To; b=MvqVf8kJq4AmvsZAko2QwYXGTahVP9Vct1ukI4iCdzQmmBUPk5Iw2oHW7dt9RjkrjkZdr4KPSOxlMNe4tex3dNjVE8Q0xv10OfY3g/xePzmc/BW4GQ6XUqM2H3SJ5oDJ1rIxLkz3efGgPUaHGaOQ6CWgSEcx09Fwy8FIqYpUQeY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.de; spf=pass smtp.mailfrom=posteo.de; dkim=pass (2048-bit key) header.d=posteo.de header.i=@posteo.de header.b=QIbBF9RL; arc=none smtp.client-ip=185.67.36.66
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=posteo.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="a/aobXYO"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-45b9814efbcso13780605e9.0
-        for <ofono@lists.linux.dev>; Thu, 11 Sep 2025 12:09:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1757617739; x=1758222539; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=akDIlXZ7y+h9pA32D8iuSn2QKDcVJ1GRqzkBLlO4uQw=;
-        b=a/aobXYOqq7OyHMebkjAV7OkZrWFtMlg0mCO4Shx4EHmAqcgMQRwelVzpvTcOJLGZs
-         nUgCtO642Nf3xdgJQKNedEdq30cIJ2aRVkwe9174dkXZZvRZHPtsbfgdx/Zd9wHixX1R
-         TaCbdgoN7DNz94980uyv40AyeRVtPnTLbjxUwdWIVeDA68Cd8e6o5C9o9yl3CQS4cXG2
-         kRw+tDP30i1OHbmcZn2onUkjI6CqU6+q9UkmYkVHgOYSUMma8LbHYz8l4RW7T3slF/zJ
-         0HQnnKQZPqJFjbBqipOizPJg8s/eLRcJP7yooiwkJ61WIOaeyxh2v10c98poGhhsH7/z
-         YNag==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757617739; x=1758222539;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:sender:x-gm-message-state:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=akDIlXZ7y+h9pA32D8iuSn2QKDcVJ1GRqzkBLlO4uQw=;
-        b=mYlGlzkO5bwzDwx7dzFh2R3FmSKFkEibjGPZ8SHjzYUEzRBw7s4x9Xh6Eu//vb4XFp
-         +O90VoyYVfD9xvfOBNPZLDNVNGIXXKFO3DQZEcLdQFFd72Jgh/alzbYE3DqMiJjFf1wz
-         Jqg3HLJvLi0eoEeLm+XqSjHbWPAVuqsY2UlPFOEmYPZFojnBuIezOtUB0mgM2bHT3B6z
-         v9mUh1A8jbBli5DsOsopsWng2xiV6u/GkYCnQMMkJGjAcpT1GM282M/jStzeMR1h37cR
-         crvipj88kI9+I/TkdQqyuKusnRghMA/S1abOznpmEqMHbN2uGHGkRlAot0J1CHHalW6j
-         0SXg==
-X-Forwarded-Encrypted: i=1; AJvYcCXeHxUAXdrviNT5gsC6TSm3COWLwJHOqm12wV/ad9ltiRnEbH7liEnPReKeG2CddbooKzw5oA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyEuMnT8ILKz2EFKsenZ0hlc/nHMl7INW3pG7qD3bxyrcaMDrm/
-	/roYZZXUz54/glpYfn3uw7A+TFEEcvC4Clvq4At8VYs6Lt2l5y7gORuz
-X-Gm-Gg: ASbGnctnCerTeCkC4W/665Oub5FbSsxuKYfGvHxStlmTqe7CHxB6Ijc5qZbw0LmrcWO
-	sohZ9UYrbxaxPcLcGoWjNGyoX+c8nLyETXqa5y6S9VVUgKReLujVTJXZytWaQ96EDbDf6jLa9f3
-	aHIox5TpMhdb0jqPe86MVJd1+fEefF3UEsMsMCIRynZDNa7mJ1ZoSG5eNwYthX8zYMY4Nl7h12L
-	CArJx6e2fJhxO7HGAnaaS6sugLb+HMXkK4F6dcI/HzBJPUOXvOw0Gss9CchNQLQPT7DVdduKnhs
-	YfYONmlRrhWaf6YGvAm3uyiMWRxmrJPFaHyd+ai0K00qmz3LOMLDa6izWpHkbyYF1MZYYfA/j9N
-	ycLHnZFFNumvUUXfPTMapiyQaI574JyeU
-X-Google-Smtp-Source: AGHT+IFDFGduiuGexcl8OKVHS6W+6LgZCMbCzpvHU+dEgVgaO2NoxHSVzaWU2o0bnhoyXrNoPIw4lw==
-X-Received: by 2002:a05:6000:2301:b0:3dc:280c:51e8 with SMTP id ffacd0b85a97d-3e7659f3b94mr451821f8f.15.1757617738946;
-        Thu, 11 Sep 2025 12:08:58 -0700 (PDT)
-Received: from adam-laptop-hp.localnet ([90.242.93.48])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3e7607ccf93sm3560969f8f.38.2025.09.11.12.08.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Sep 2025 12:08:58 -0700 (PDT)
-Sender: Adam Pigg <piggz1@gmail.com>
-From: adam@piggz.co.uk
-To: Timo Ketola <timo.ketola@exertus.fi>, ofono@lists.linux.dev,
- Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Quectel modem ceases working
-Date: Thu, 11 Sep 2025 20:08:55 +0100
-Message-ID: <2784629.lGaqSPkdTl@adam-laptop-hp>
-In-Reply-To: <fc280e2e-5707-44ab-956d-0bc7d9ff19d1@gmail.com>
-References:
- <3be9ef7c-fb1b-4caa-802b-93f02eaad1d6@exertus.fi>
- <f5606785-6f7d-4363-93e0-39696bc30bed@exertus.fi>
- <fc280e2e-5707-44ab-956d-0bc7d9ff19d1@gmail.com>
+	dkim=pass (2048-bit key) header.d=posteo.de header.i=@posteo.de header.b="QIbBF9RL"
+Received: from submission (posteo.de [185.67.36.169]) 
+	by mout02.posteo.de (Postfix) with ESMTPS id BAEA4240103
+	for <ofono@lists.linux.dev>; Thu, 25 Sep 2025 16:55:51 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=posteo.de; s=2017;
+	t=1758812151; bh=nfRmqq/3psbHQ93RoqaUCfs7MIwTZeKN23NgKQU1JFA=;
+	h=From:Content-Type:Mime-Version:Subject:Message-Id:Date:To:From;
+	b=QIbBF9RLFi2GS9zle2ddIoHjH1cQCCAaMpFZEmlaacQ8UeEFG+9JQAwkFdIz7AtQE
+	 ZtLmq4NLcI8vrJCUOPTcvHRES81cpCls7V7YUW0MgpgV1SnZ6WFKx4yv7SfPq+d0OM
+	 DMXZO/fSCCOxmXJyv+e0n0u+XfSuaa4T2mr0UtV4gpO7Ssa3I97SZeGsmEfaRsXKmJ
+	 Q4UlJzdmPuY52Biv73FViut348g2Zxwi8rfmLNCTW/Of3X6d/LnabUFgSpg+9QuMP+
+	 bf2yWhWvVx1VzZNpYxgDF6Lkl18HOp8Mtct2StsH+SKBGdsii/Cap6eBYJPUdhkeX+
+	 S8mlw56xGkseA==
+Received: from customer (localhost [127.0.0.1])
+	by submission (posteo.de) with ESMTPSA id 4cXcGb2YBJz9rxS
+	for <ofono@lists.linux.dev>; Thu, 25 Sep 2025 16:55:51 +0200 (CEST)
+From: Christian Meusel <christian.meusel@posteo.de>
+Content-Type: multipart/signed;
+	boundary="Apple-Mail=_94C00879-6570-4EA2-A508-8E8663BBF4F1";
+	protocol="application/pgp-signature";
+	micalg=pgp-sha256
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="utf-8"
-
-On Thursday, 11 September 2025 15:43:55 British Summer Time Denis Kenzior 
-wrote:
-> Hi Timo,
-> 
-> On 9/11/25 7:45 AM, Timo Ketola wrote:
-> > Hi Denis,
-> > 
-> > On 10.9.2025 18.31, Denis Kenzior wrote:
-> >> You can try the following patch though and see if things work again.
-> > 
-> > Yes, it works! Thanks a lot!
-> 
-> Nice, thanks for testing.  I cleaned up the commit description and pushed it
-> out.
-
-Is this likely to fix the issue I have Dennis?  I will of course try testing it 
-when I can.
-
-> > Regarding longer term upgrade path, I'm completely on FM-broadcast-band
-> > (finnish idiom). Is it Qualcomm/Quectel FW or qmiwwan Linux driver that
-> > is the ultimate culprit here? Or is this modem completely deteriorating
-> > out of support?
-> 
-> My comment is mostly about the kernel version.  It is impractical for me to
-> test changes on old kernels or to support legacy driver behavior.
-> 
-> Regards,
-> -Denis
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.700.81\))
+Subject: Quectel EC21 with internal GSM MUX
+Message-Id: <90E62BD5-4BE0-433C-AE89-6B7D99AACE9D@posteo.de>
+Date: Thu, 25 Sep 2025 14:55:51 +0000
+To: ofono@lists.linux.dev
 
 
+--Apple-Mail=_94C00879-6570-4EA2-A508-8E8663BBF4F1
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
+
+Hello,
+
+I'm updating an embedded Linux system and reached the point where most =
+things work but I'm still struggling with getting a Quectel EC21 back =
+into operation.
+
+I updated from Linux 5.12 with oFono 1.34 to Linux 6.1 with oFono 2.18. =
+I also switched from using n_gsm as GSM MUX to oFono's internal MUX =
+because n_gsm does not seem to receive responses from the modem when =
+transitioning from plain AT to GSM MUX-ing on the serial line in Kernel =
+6.1. I can tell more of that story upon request, but I'm trying to cut =
+the effort for debugging and fixing by using oFono's MUX for the moment.
+
+For a Quectel M95 this is the end of the story as I can use a cellular =
+data connection again.
+
+But this is not the case for a Quectel EC21 in the same setup. After =
+adding a delay for the modem to switch into GSM MUX mode, communication =
+stalls after the first message from setup_aux [1] from =
+plugins/quectel.c, I can see the first of the AT commands issued from =
+this function on the wire, an OK response from the modem is received, =
+and then communications stalls. None of the other commands appears on =
+the wire. The other commands got queued according to further =
+instrumentation of g_at_chat_send.
+
+    Sep 25 14:45:48 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:ate_cb() =
+0x4f6400
+    Sep 25 14:45:48 target ofonod[4030]: at_chat_send_common: enqueued =
+"AT+CMUX=3D0,0,5,127,10,3,30,10,2", len is 1
+    Sep 25 14:45:48 target ofonod[4030]: UART: > =
+AT+CMUX=3D0,0,5,127,10,3,30,10,2\r
+    Sep 25 14:45:48 target ofonod[4030]: UART: < \r\n
+    Sep 25 14:45:48 target ofonod[4030]: UART: < OK\r\n
+    Sep 25 14:45:48 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:cmux_cb() =
+0x4f6400
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/src/modem.c:get_modem_property()=
+ modem 0x4f6400 property Mux
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:cmux_activatio=
+n_delay_cb() 0x4f6400
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:cmux_gatmux() =
+0x4f6400
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:create_chat() =
+0x4f6400
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:create_chat() =
+0x4f6400
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:identify_model=
+() 0x4f6400
+    Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued =
+"AT+CGMM", len is 1
+    Sep 25 14:45:49 target ofonod[4030]: Aux: > AT+CGMM\r
+    Sep 25 14:45:49 target ofonod[4030]: Aux: < \r\nEC21\r\n\r\nOK\r\n
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:cgmm_cb() =
+0x4f6400 ok 1
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:cgmm_cb() =
+0x4f6400 model EC21
+    Sep 25 14:45:49 target ofonod[4030]: =
+../../../../../../workspace/sources/ofono/plugins/quectel.c:setup_aux() =
+0x4f6400
+    Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued =
+"ATE0; &C0; +CMEE=3D1", len is 1
+    Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued =
+"AT+QURCCFG=3D"urcport","uart1"", len is 2
+    Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued =
+"AT+CFUN?", len is 3
+    Sep 25 14:45:49 target ofonod[4030]: Aux: > ATE0; &C0; +CMEE=3D1\r
+    Sep 25 14:45:49 target ofonod[4030]: Aux: < \r\nOK\r\n
+    Sep 25 14:45:54 target ofonod[4030]: Aux: < \r\nNORMAL POWER =
+DOWN\r\n
+    Sep 25 14:45:54 target ofonod[4030]: Modem: < \r\nPOWERED DOWN\r\n
+    Sep 25 14:45:54 target ofonod[4030]: Aux: < \r\nPOWERED DOWN\r\n
+
+I'm digging into oFono's codebase for the first time. In setup_aux, I'm =
+seeing g_at_chat_send-ing multiple requests in a row and =
+g_at_chat_send-ing without a callback for the first time. Is this =
+supposed to work or might this be the cause of the current "roadblock" =
+on my way?
 
 
+Best regards,
+
+Christian
+
+--=20
+[1] =
+https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/plugins/quecte=
+l.c?h=3D2.18#n824=
+
+--Apple-Mail=_94C00879-6570-4EA2-A508-8E8663BBF4F1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEIhqZz/J2souq/IKUfmJl21on4+EFAmjVV90ACgkQfmJl21on
+4+HyQw/+KcIMKFYFYxq0Y32ZPBgnicedswVrHtPJSZy5aGb13lUqheRFpVHv021S
+/WYNptWE3XIw0SGnI8+A0fr+cLxIwsjrHj0M6mdbMHJV0oySuv0N0ChcbZor2j06
+s+exfVcRKrBQOb/v/49ilvMtp3mpFT1cAIWws/WD162twL0s1oKSOdZSlQ6da5No
+LJk3KqWfbATvaZIEAL8SrGjOMVeNM6Q9sZNOFu7JXncy7TXpV2rP2DSRnguZmAD9
+9FLr8pSYZYru73XTJta3Cu9kMNYjSSRGyy6tPuTXZD5/cS9DQ7TBFfAKyveWMP/l
+XPV1eUsS7N2kCtUIFT79Wd9YA1t9Mmbl8hACORAS2wGax0QI9gs2iRxAG2yMUCjV
+C+ZtQUtFHE47QysTkXmnJ63EuN4CH79AA7S0fueOd8VpFMBQo5Bop5IFwwb8//fq
+/GpmgJ8pSdG0U0utBVuYoxsuJNboFqI0Kf5KHFh8iCx6abxaQLe3Fmwz8iVYRG10
+4u1MOpECBqhbAJK3ewepsEhvszocH2HjchDH395cbt91iax+swDHgiccAJMUZwZp
+bBE1Kzr/3+EzjjVemX1TonT6U1XXr+LhO+K5nk66KSyt2yWRsvQ/9/HpnfqWZUZl
+ePL1cHFBu/1pU4/K4CYVKTWsmOV4uQA2d8T7Dn0mOs5tHZZKoe0=
+=G+v+
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_94C00879-6570-4EA2-A508-8E8663BBF4F1--
