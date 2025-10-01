@@ -1,141 +1,191 @@
-Received: from mail-ot1-f49.google.com (mail-ot1-f49.google.com [209.85.210.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mout01.posteo.de (mout01.posteo.de [185.67.36.65])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C1DA723A562
-	for <ofono@lists.linux.dev>; Tue, 30 Sep 2025 15:34:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B292F14D2B7
+	for <ofono@lists.linux.dev>; Wed,  1 Oct 2025 13:01:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.67.36.65
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1759246485; cv=none; b=HeQlxzKOO86U1cES4EJe1FrUQiAFpjNazbsSpIo9zdKNmAopeVCXgtK2CbJ0/tyBi2l/Qh6QzRUO9SY8qSuXZzrkvBJKmzW9GL10dWTcG9bVSyG7ElrMHlk9HOYzOb4NdKx0z7Q9PHQv+4WbbD3Ad0Fiev21SV6DGXd3mjsegeA=
+	t=1759323687; cv=none; b=fXMC+uBilgyVu6rWV3ZmUdVgJwrbEqb7vQxdLOjwJcq+wFCZ1AdoeRQSq6TuJYXzAEzBSg7XPqCXDTgxK3iDsi7rawuXsPWiIah3G8uFTKhrqSgpoQ3QcNpYADa7DVg8bTqSvOTJpMhau5jBWCC1YJ6LAKb5seYkb0InB7Zgugs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1759246485; c=relaxed/simple;
-	bh=MPx9CInPyD01hq+pF6lmNWqGT9BODpz1anr968rsdgI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=ObERxY/f7SFgGjFULU8v3+/RhycPVYX9262s0b3N9QAFPG4yZLn+AWpRle6nmUdM2/dNAaB8qZuekZx9GMWbsuo+RC4XMJCaCt1E3PJZoUQ62k2yzZotuivPADm0NyFmZ4O79mEW56GfX3JxOLA3J2d6waAFgw1DLbCOqrF6nB0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eJgvIEea; arc=none smtp.client-ip=209.85.210.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1759323687; c=relaxed/simple;
+	bh=UQd1v/hLGtqJHP0TUQ02iZIQzUysXfeTxKN7byxlTK0=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=sEVqqMKjEYt+Tdh4mehcNnfmQWoU9XYbpCCpkgGUXOA2gHlzO90yY8ebE4ZHz4FGYE58Bk2U1NBebw4t+ydr8cxgYYl52aWZJksCy+BgVCt4gEHoyKNilepFyHAmXFwbrwMRWDpYEzAUG52PHgW/0NLt06Pat/zdrapAg5Mfi7w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.de; spf=pass smtp.mailfrom=posteo.de; dkim=pass (2048-bit key) header.d=posteo.de header.i=@posteo.de header.b=X91ivmcC; arc=none smtp.client-ip=185.67.36.65
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=posteo.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eJgvIEea"
-Received: by mail-ot1-f49.google.com with SMTP id 46e09a7af769-7b06f879d7bso5057a34.0
-        for <ofono@lists.linux.dev>; Tue, 30 Sep 2025 08:34:43 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1759246483; x=1759851283; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=747FYAeZ59bbiV5d9Ebc6oRTOXRFeNsOO6YASGb/1b8=;
-        b=eJgvIEeaFRql/yVCRn0P/6fPp47RR+OOopD3bD4v4Mg7UsMUGMJ0uzGVJavlRGPrU9
-         g5zSdXn6j1VMD+qIsGoLLWXKiX+UbzTaDVZnm5Mwo16Zmy+srJPddDtuuvz6covShEug
-         rl95/D7ejEWiDrk3YFH4Ttrxl4v9eCsCJq/dz+yHME3VDjNFnIISXW2PR8giBacJ55xl
-         S/QWGm9VAbeGHZ5uhJ1JlGnPe6JwTCo5Np85esvNWnLZUVV7bEpWvRyO/uwrVBae+R/T
-         eM2BdULyLmece01QB5GTqlRJGBeMBqrp7zEDDQta7+iPjv15GAWKm+frco89HVNpz3qd
-         SmBA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1759246483; x=1759851283;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=747FYAeZ59bbiV5d9Ebc6oRTOXRFeNsOO6YASGb/1b8=;
-        b=bD7KUAkfd6QCt5xr33uox5TNL+9imb/YLnjE9kLu5KBce1KaK3lnvvBLyVP6VVBHxL
-         49jdCklLG6YGvc3V5YRCaSw0p30IfXopZoOCdvDRLfSWdBS8CRuk/NqZiJ0kYX94nq+C
-         GsOphH39efe4C1oWHGD67y2vFLr2nxNUET8BNrZLM6keU2qzlaUXPL8XDHzLabFt07Po
-         GUpFRT5lKtPsXhk9h18KPRWHqqJmDMf86ps156Sm4lxMDWbIPsCmWQpW5TmV4hSqPgfz
-         jVpDypJppcra9DpCdcSQRMhWSoDeWfECOGPGqCk+Z2ug8zpQqADXb0/AKYF4niGQGL02
-         ocdw==
-X-Forwarded-Encrypted: i=1; AJvYcCWulDCycf36PjcOkm/fkNCSoDWTZHqHOrfd/LXvD+a1xjHMeQMySiYxS1lcIuX1dK3QYpRaoQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxcxtJydSahkNYdOLQqLRhqLrEdQ4okqbsbZxxehmpZYb1EKPHW
-	iSLN7pp6QianNkgseI6uo+osTrRSTRb7g7FQuP5zQcgdi0yq9iTtNFXY
-X-Gm-Gg: ASbGnct5HQI0k6WCSsOCEjndmAjRpzeSA6sCl4yy04sRVXRya1AzPX5KVOzlQxRkg3K
-	mfoFbkWrfGXdLSIFFKRKbS6quJyFQjcvzzk24N9hFvHjoHcPpzqnz7USPhVkfUCs1wdGqOJ+XQw
-	QZaPIm8B3h9fD24BafOkVtImixow755h8b4ib1b4pav7Zsl2+YhKorkvTOgASh2QENSoF+Js+UO
-	REogg/oqtaxm2eMwZJtZjVjT41kC4YrEgRUhWtI3rpa9xUtHhIebBUsNey4oEgoPgWHkhFPHJnS
-	yhAe0Vqiphn1RT68gMlgt2CvREkL4TtYpf246V0lvPQbnWcraqwFQTMziTfyx68DfXzkLydEl/d
-	ypoO9w7MUk6YkYNITp9uuepyHoa4uegzov+DHEieZ2yfia+XDaq8JZOVXQTZdoDzghwr3ui2TOd
-	zrPcUYGK7CUe5bBnDNMbCxDTznaQyyPJoD1gNsPJVGpWAD
-X-Google-Smtp-Source: AGHT+IEtX+I9FQ2+ix8udtfGhOuyuNBCwwwXU1xqmjkT/Ju5QvlLWNoI8wdNm8UcS3OXYCFX2R8Cgw==
-X-Received: by 2002:a05:6808:211d:b0:437:d0a7:e7aa with SMTP id 5614622812f47-43fa395f4c8mr176144b6e.19.1759246482565;
-        Tue, 30 Sep 2025 08:34:42 -0700 (PDT)
-Received: from [172.16.49.130] (syn-070-114-247-242.res.spectrum.com. [70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 5614622812f47-43f5123bd55sm2715328b6e.26.2025.09.30.08.34.41
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 30 Sep 2025 08:34:42 -0700 (PDT)
-Message-ID: <26b9ed81-db18-4876-a8b8-c9595150a311@gmail.com>
-Date: Tue, 30 Sep 2025 10:34:40 -0500
+	dkim=pass (2048-bit key) header.d=posteo.de header.i=@posteo.de header.b="X91ivmcC"
+Received: from submission (posteo.de [185.67.36.169]) 
+	by mout01.posteo.de (Postfix) with ESMTPS id 9DECC240027
+	for <ofono@lists.linux.dev>; Wed,  1 Oct 2025 15:01:21 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=posteo.de; s=2017;
+	t=1759323681; bh=ddjzUMBQlrZWhFXT3xeLNah16TlHhuoEC8xyGzGXnPA=;
+	h=Content-Type:Mime-Version:Subject:From:Date:Cc:Message-Id:To:
+	 From;
+	b=X91ivmcC6YVzoZphwKj30p1hXHCSh2ng8Mtn5giweiDFmAm7X2eR+BS8SSvKjMD/R
+	 I2NIt7SQj9HvAtT/q6UuYUI3BWdZXkityYk4H7vsCfGPCZYVNW2UTbt0TjaP+WNERR
+	 FKTRu0ovDMQcssCxH5XlL7U0476lbCdCwcPczQppudN04edI7ITvfr0ToaU9W+CAcG
+	 GK5K+GgMSZ+N3u/cCe5Oa8bHMrZWjnsudyhkmtizfwsWOxSsWG0oO/Xi/J/6nPagyB
+	 Mh34VnL0Z6zCweGKrW4JmojHwMmt5Sn/0wAHlaBy02tYtpvO6yFhRrCZGCUmfWBvO4
+	 YcyVrq10Kf/lQ==
+Received: from customer (localhost [127.0.0.1])
+	by submission (posteo.de) with ESMTPSA id 4ccFRh6dWZz6v0g;
+	Wed,  1 Oct 2025 15:01:20 +0200 (CEST)
+Content-Type: multipart/signed;
+	boundary="Apple-Mail=_3C7FAA98-A904-4A1E-B327-A1BCA94C7606";
+	protocol="application/pgp-signature";
+	micalg=pgp-sha256
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.700.81\))
 Subject: Re: Quectel EC21 with internal GSM MUX
-To: Christian Meusel <christian.meusel@posteo.de>, ofono@lists.linux.dev
+From: Christian Meusel <christian.meusel@posteo.de>
+In-Reply-To: <26b9ed81-db18-4876-a8b8-c9595150a311@gmail.com>
+Date: Wed, 01 Oct 2025 13:01:21 +0000
+Cc: ofono@lists.linux.dev
+Message-Id: <63E4C6A3-EAFA-45F4-8D23-7500BDC45DBD@posteo.de>
 References: <90E62BD5-4BE0-433C-AE89-6B7D99AACE9D@posteo.de>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <90E62BD5-4BE0-433C-AE89-6B7D99AACE9D@posteo.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+ <26b9ed81-db18-4876-a8b8-c9595150a311@gmail.com>
+To: Denis Kenzior <denkenz@gmail.com>
+
+
+--Apple-Mail=_3C7FAA98-A904-4A1E-B327-A1BCA94C7606
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
+
+Hello Dennis,
+
+thank you very much for you reply!
+
+> If the kernel isn't getting responses, highly likely oFono won't =
+either.  Did something change at the driver level? Have you tried git =
+bisect?
+
+Yes, this was my starting point. And I enden up discovering that the =
+answers in question are received by the UART driver but n_gsm just does =
+not see it (and oFono is not bothered with MUX-ing and MUX management in =
+this setup at all).
+
+There are some big overhauls to n_gsm between Kernel 5.12 and 6.1. I =
+bisected but this just brings me to one of them and which did quite =
+substantial to break my usecase with Quectel M95 and EC21. These issue =
+still exist at the latest upstream version of the Kernel. I don't have =
+the call stack at hand right now, but the situation looked there like:
+
+    * n_gsm got new data pushed via gsmld_receive_buf
+    * And while still in this call to gsmld_receive_buf
+        * The received data got immediately paresed
+        * A new request was sent to the modem
+        * It timed out because no answer was received from the modem by =
+the n_gsm
+
+However, there was actually an answer received by the UART driver. But =
+it got not pushed to n_gsm which was still stuck in gsmld_receive_buf. =
+As far as I'm overseeing things here, to untangle this, n_gsm needs to =
+split receiving and processing data from the UART to untangle this.
+
+I'm trying to work around this for the moment by switching from the =
+n_gsm GSM MUX to oFono's internal one. This works like a treat for the =
+Quectel M95. But there are issues with the Quectel EC21.
+
+
+> Not familiar with this hardware.  Is this a USB modem?  How many AT =
+ports does it have?
+
+We are operating this modem with a single physical serial connection =
+between CPU and modem. Starting in AT mode and switching over to GSM =
+07.10 MUX-ing. If I'm getting this correctly, there are three GSM MUX =
+channels opened: control, aux, and PPP data.
+
+
+> Looks like it has multiple pre-multiplexed ports.
+
+What do you mean with premultiplexed ports? The one serial port we are =
+using starts in plain AT communication mode after powering up the device =
+and is then put into GSM 07.10 multiplexing mode.
+
+
+> Why do you need multiplexing in this case?
+
+To my understanding, this is the default mode of operation (when =
+operating over a single serial line).
+
+
+> I've also never seen / heard a modem support CMUX when it is already =
+pre-multiplexed, but maybe such combinations do exist.
+
+It does perfectly fine with Kernel 5.12 and its state of n_gsm. I bet =
+I'm seeing the issues described here because we may some of the few if =
+not the only folks operating the modems like that.
+
+
+> You can invoke g_at_chat_send however you like, even one after the =
+other in the same function.  The underlying implementation still uses a =
+command queue, so commands will be sent only when the modem channel is =
+idle, or after receiving a final response from the modem (ERROR, OK, =
+etc)
+
+Thank you for clarifying this. Last weeks debugging brought me to the =
+point where I found the command list in g_at_chat and I got up to the =
+point where additional instrumentation below have_line gives me the =
+following:
+
+    Sep 26 09:43:25 target ofonod[2502]: chat_wakeup_writer
+    Sep 26 09:43:25 target ofonod[2502]: Aux: > ATE0; &C0; +CMEE=3D1\r
+    Sep 26 09:43:25 target ofonod[2502]: Aux: < \r\nOK\r\n
+    Sep 26 09:43:25 target ofonod[2502]: have_line(0x5d6e78, "OK")
+    Sep 26 09:43:25 target ofonod[2502]: =
+at_chat_handle_command_response(0x5d6e78, ..., "OK")
+    Sep 26 09:43:25 target ofonod[2502]: checking common terminators
+    Sep 26 09:43:25 target ofonod[2502]: at_chat_finish_command
+    Sep 26 09:43:25 target ofonod[2502]: command queue not empty
+    Sep 26 09:43:25 target ofonod[2502]: chat_wakeup_writer
+
+=46rom this I conclude that oFono actually considers the OK after =
+ATE0... sufficient for finishing ATE0... and wakes up the writer. But I =
+don't see any resulting action from this. In the first place, I was =
+assuming that oFono does not consider just OK as a valid and final =
+response due do a repetition of the command from the modem is missing in =
+this case. But the debug log with the additional instrumentation tells =
+otherwise ... Looking deeper into this is my next thing on the list =
+after finishing some other work.
+
+Do you have any ideas what could cause oFono to not write the next =
+command on the line in this situation?
+
+
+Best regards,
+
+Christian=
+
+--Apple-Mail=_3C7FAA98-A904-4A1E-B327-A1BCA94C7606
 Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP
 
-Hi Christian,
+-----BEGIN PGP SIGNATURE-----
 
-On 9/25/25 9:55 AM, Christian Meusel wrote:
-> Hello,
-> 
-> I'm updating an embedded Linux system and reached the point where most things work but I'm still struggling with getting a Quectel EC21 back into operation.
-> 
-> I updated from Linux 5.12 with oFono 1.34 to Linux 6.1 with oFono 2.18. I also switched from using n_gsm as GSM MUX to oFono's internal MUX because n_gsm does not seem to receive responses from the modem when transitioning from plain AT to GSM MUX-ing on the serial line in Kernel 6.1. I can tell more of that story upon request, but I'm trying to cut the effort for debugging and fixing by using oFono's MUX for the moment.
+iQIzBAEBCAAdFiEEIhqZz/J2souq/IKUfmJl21on4+EFAmjdJhEACgkQfmJl21on
+4+G7/w/+J6yp97Wy+zzLHdDwLILkBE1F933Fe7F8/0x7vPdWQKGvxPmVhjCeVCYI
+tHqEs+TBW1RTDTKWjrnT/chHR/9u1x+OL3IlDrDP8CDqgQfiaf5U6qltw6DfYJQi
+knXQlHdGym5dDvZM1SEnPrmVWgb60bEGP42FbVUDRdpRZO3baaz8YH3UicUxm+9i
+oqHaMxB7k55AdG/3qIxnQzTQRpHFotVsQGZao6a9WV/xLDAZBPuDtXXiFnVl7bZw
+mJocaI9E4qxFKRJHCA4YyMQRkkxQX9HiqgwSD3Nck2lURuMTWhOWDRPi4woCeSIH
+U0zpyiPd3RB5teLoJgv6Bhc79rKAbFI3hrhMnvbwB0a4rPmqMtgQ0YJ92LW69ywm
+ShT/J5wAxDc0L6TPmQMd8XKvnH+oJ8GJdRX6zt5dR1pxmL1xl3X11qgL2J7yktCz
+hgA/PJqeFxmakKjkNtpYryWeXhtmFbfuYEKL62JUu+tcuU65hImSxhfccO0WkP6b
+yVJFduHN0Ybo+hPU6UQ+SEYSTudnofSljgLK8F9LB/cfDqcNVXzgIlvj3xE9ufpd
+F/VbPbOK/LR2figLP/PMJgXijx3OqbCkhg5XaeSFkWpJJHwnDmnwnefPIc83XyfW
+V5V9P9ACBscw3+vGZSQrmtQUjys0bhHBUSJFG6zGKFljNG6KMyU=
+=8sjP
+-----END PGP SIGNATURE-----
 
-If the kernel isn't getting responses, highly likely oFono won't either.  Did 
-something change at the driver level? Have you tried git bisect?
-
-> 
-> For a Quectel M95 this is the end of the story as I can use a cellular data connection again.
-> 
-> But this is not the case for a Quectel EC21 in the same setup. After adding a delay for the modem to switch into GSM MUX mode, communication stalls after the first message from setup_aux [1] from plugins/quectel.c, I can see the first of the AT commands issued from this function on the wire, an OK response from the modem is received, and then communications stalls. None of the other commands appears on the wire. The other commands got queued according to further instrumentation of g_at_chat_send.
-> 
->      Sep 25 14:45:48 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:ate_cb() 0x4f6400
->      Sep 25 14:45:48 target ofonod[4030]: at_chat_send_common: enqueued "AT+CMUX=0,0,5,127,10,3,30,10,2", len is 1
->      Sep 25 14:45:48 target ofonod[4030]: UART: > AT+CMUX=0,0,5,127,10,3,30,10,2\r
->      Sep 25 14:45:48 target ofonod[4030]: UART: < \r\n
->      Sep 25 14:45:48 target ofonod[4030]: UART: < OK\r\n
-
-Not familiar with this hardware.  Is this a USB modem?  How many AT ports does 
-it have?
-
->      Sep 25 14:45:48 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:cmux_cb() 0x4f6400
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/src/modem.c:get_modem_property() modem 0x4f6400 property Mux
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:cmux_activation_delay_cb() 0x4f6400
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:cmux_gatmux() 0x4f6400
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:create_chat() 0x4f6400
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:create_chat() 0x4f6400
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:identify_model() 0x4f6400
->      Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued "AT+CGMM", len is 1
->      Sep 25 14:45:49 target ofonod[4030]: Aux: > AT+CGMM\r
->      Sep 25 14:45:49 target ofonod[4030]: Aux: < \r\nEC21\r\n\r\nOK\r\n
-
-Looks like it has multiple pre-multiplexed ports.  Why do you need multiplexing 
-in this case?  I've also never seen / heard a modem support CMUX when it is 
-already pre-multiplexed, but maybe such combinations do exist.
-
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:cgmm_cb() 0x4f6400 ok 1
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:cgmm_cb() 0x4f6400 model EC21
->      Sep 25 14:45:49 target ofonod[4030]: ../../../../../../workspace/sources/ofono/plugins/quectel.c:setup_aux() 0x4f6400
->      Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued "ATE0; &C0; +CMEE=1", len is 1
->      Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued "AT+QURCCFG="urcport","uart1"", len is 2
->      Sep 25 14:45:49 target ofonod[4030]: at_chat_send_common: enqueued "AT+CFUN?", len is 3
->      Sep 25 14:45:49 target ofonod[4030]: Aux: > ATE0; &C0; +CMEE=1\r
->      Sep 25 14:45:49 target ofonod[4030]: Aux: < \r\nOK\r\n
->      Sep 25 14:45:54 target ofonod[4030]: Aux: < \r\nNORMAL POWER DOWN\r\n
->      Sep 25 14:45:54 target ofonod[4030]: Modem: < \r\nPOWERED DOWN\r\n
->      Sep 25 14:45:54 target ofonod[4030]: Aux: < \r\nPOWERED DOWN\r\n
-> 
-> I'm digging into oFono's codebase for the first time. In setup_aux, I'm seeing g_at_chat_send-ing multiple requests in a row and g_at_chat_send-ing without a callback for the first time. Is this supposed to work or might this be the cause of the current "roadblock" on my way?
-
-You can invoke g_at_chat_send however you like, even one after the other in the 
-same function.  The underlying implementation still uses a command queue, so 
-commands will be sent only when the modem channel is idle, or after receiving a 
-final response from the modem (ERROR, OK, etc)
-
-Regards,
--Denis
+--Apple-Mail=_3C7FAA98-A904-4A1E-B327-A1BCA94C7606--
