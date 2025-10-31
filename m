@@ -1,139 +1,150 @@
-Received: from mout02.posteo.de (mout02.posteo.de [185.67.36.66])
+Received: from mail.expatria.ca (mail.expatria.ca [144.217.207.203])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4ABCC347BC3
-	for <ofono@lists.linux.dev>; Thu, 23 Oct 2025 19:50:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.67.36.66
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 759BC51022
+	for <ofono@lists.linux.dev>; Sat,  1 Nov 2025 20:13:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.217.207.203
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761249046; cv=none; b=YgIg87WL9KhYnPZL7Yf6wDHE7T/J70toHFGbBj8ODfuKKys/h6UgWou7iROfpzUJrULpYUiI3mdDwoXm/cxZYlYJOATUjPHwqcysu5DzsXzC+b/Zvkv2fpTUHMgOY4+Tq+VCLGz38R4ZKAriK+bzZY2B/ube3YyPK6dRmBZcbNE=
+	t=1762028021; cv=none; b=d5zbpRnnK6yST4RzLj1vJHXRHwb72gJdEi0vjDa/om4KN7mAaYRD2pgh33np9R4PNaOzip8iytOz7l/kRZe8OM65eeMOgLRaXZ1DHptPrm4iSu/fm4KlRahzeSTzvCH1RxJ+mEy6Q34LXdOWk8+nSefPWE/wNfZcdBz6GcYQYvY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761249046; c=relaxed/simple;
-	bh=n9jVNv9v5K1rDiofGAAlVccGi0e9bqYCDKDia4g8HL8=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=IvYncTs1R+4ebbwW5qCOqoszfIHUVHxI9ZqmKRJhnfS5Zx40KA53rUl+xVBtu2IIyOVf3vsW7ggKsoWSIC36IiJpbWL9zWFf5Fs6LDmKQum/8J3a4pNnSybizryzytnFKq03+9SQnP7JAQPI6MeCmRVm4kMi06nL/Aiyt2a2K2w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.de; spf=pass smtp.mailfrom=posteo.de; dkim=pass (2048-bit key) header.d=posteo.de header.i=@posteo.de header.b=jnWDC575; arc=none smtp.client-ip=185.67.36.66
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=posteo.de
+	s=arc-20240116; t=1762028021; c=relaxed/simple;
+	bh=X7NoJnDnWLTfsDgwpjA4XRQFOv0DlRVKVTz/j+XJbno=;
+	h=Content-Type:Message-ID:Date:MIME-Version:To:From:Subject; b=aGc5OX7Zk2cGRuuGm45VGwaoTQATsN9B8tSu/CEoM0BLiKnW8jv7V/CFbyOiCuFhs/UK/ML/JinlWNOg0w8J/QGprn5/xBdQsyreIKkovi9ldnjl2MnG5wKxiqaPLggRV0JS5/bsBEHUdITQ9eRiQ1jHj17ANrZF1GOwKv9MOdw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=expatria.ca; spf=pass smtp.mailfrom=expatria.ca; dkim=pass (2048-bit key) header.d=expatria.ca header.i=@expatria.ca header.b=MgSghzvt; arc=none smtp.client-ip=144.217.207.203
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=expatria.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=expatria.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=posteo.de header.i=@posteo.de header.b="jnWDC575"
-Received: from submission (posteo.de [185.67.36.169]) 
-	by mout02.posteo.de (Postfix) with ESMTPS id 9C769240101
-	for <ofono@lists.linux.dev>; Thu, 23 Oct 2025 21:50:41 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=posteo.de; s=2017;
-	t=1761249041; bh=VXjk9YD2bSlKRAX/jhxnsJqw75gfo2nlVw/0zFgD+Cg=;
-	h=Content-Type:Mime-Version:Subject:From:Date:Cc:Message-Id:To:
-	 From;
-	b=jnWDC575ehU0mXHfZb5i+O0aDJ8TP5i07m6W2bjRCx6/u6wOm3uKMGyh4lRzjQAM9
-	 KrXDTUWi9Q+Htp7BRRO/FiMxLeoBmnSsRpsq3TDXaDaj8jXoHPICTfijk0aL3eFR7I
-	 EprKCokzahIhOWdAWisTnjc4HRHp59gCoYuLjhX6ezQrQeHznohhXVTs/WaFz0aHJU
-	 y0N7Po64D/IOVwHYlZZETGgQUJjAF75fThIjVPaT1PYJQ/tXdNzgJ/1PR47KDHUfKu
-	 ul2yBF+lASrjSxc2wFyMHvEynhqD1zI9fgFOH1TziKc08gzNe2Zt71H8Ech/KHRnBz
-	 mMP5L/0FqNiSg==
-Received: from customer (localhost [127.0.0.1])
-	by submission (posteo.de) with ESMTPSA id 4csxTr5ncqz6tvZ;
-	Thu, 23 Oct 2025 21:50:40 +0200 (CEST)
-Content-Type: multipart/signed;
-	boundary="Apple-Mail=_1E9C1760-C6D7-4740-8B08-CB021D82BAFB";
-	protocol="application/pgp-signature";
-	micalg=pgp-sha256
+	dkim=pass (2048-bit key) header.d=expatria.ca header.i=@expatria.ca header.b="MgSghzvt"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=expatria.ca;
+	s=default; t=1761939245;
+	bh=X7NoJnDnWLTfsDgwpjA4XRQFOv0DlRVKVTz/j+XJbno=;
+	h=Date:To:From:Subject:From;
+	b=MgSghzvtFHbitiEUHXdRoR6NLeCyDmYJL8zbBg1BOo4iz0LpOZE8E8zjqYoHrs7Vm
+	 C99K+z8z297kAy/GJT2neTkJ4p7VIPaBgmPVoWL5GqSfYLZicJxTpTkBPOMkiNC+Mb
+	 xhLPgkRhkOWC+2H1IN8NpTwWEvRxQBS4vTTqa8QPoC/neq7kXghcsB/rrUutIH+w2D
+	 txf9Q9r0Ogv6FcWcmbh5CQVCQ8o9MuBYbT/Es2UhaTx+tyPUtvrG/scH0OZV9Q4A+5
+	 xBcIkzAFOSB1UYjUKZiSk4AV02EKKSRExQr814KsmrON+AxfR2RVMADSAka3QIIAZT
+	 9T/xlihrP6BhA==
+Received: from [10.89.51.52] (d154-20-248-80.bchsia.telus.net [154.20.248.80])
+	by mail.expatria.ca (Postfix) with ESMTPSA id AA8BA18655
+	for <ofono@lists.linux.dev>; Fri, 31 Oct 2025 19:34:05 +0000 (UTC)
+Content-Type: multipart/mixed; boundary="------------7AQl17BUJ69ilLGt98UChPni"
+Message-ID: <10f1a2d8-375c-44cb-bdd8-79040de34787@expatria.ca>
+Date: Fri, 31 Oct 2025 12:34:04 -0700
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.700.81\))
-Subject: Re: Quectel EC21 with internal GSM MUX
-From: Christian Meusel <christian.meusel@posteo.de>
-In-Reply-To: <8bdad6366fd5d1801efb4eecf8b15114d04fec9c.camel@geanix.com>
-Date: Thu, 23 Oct 2025 19:50:41 +0000
-Cc: Denis Kenzior <denkenz@gmail.com>,
- ofono@lists.linux.dev
-Message-Id: <024EE5A2-730F-4CC7-AB20-6D95DEE94998@posteo.de>
-References: <90E62BD5-4BE0-433C-AE89-6B7D99AACE9D@posteo.de>
- <26b9ed81-db18-4876-a8b8-c9595150a311@gmail.com>
- <63E4C6A3-EAFA-45F4-8D23-7500BDC45DBD@posteo.de>
- <6ca39764-c990-4505-b287-d6450aab803f@gmail.com>
- <8bdad6366fd5d1801efb4eecf8b15114d04fec9c.camel@geanix.com>
-To: =?utf-8?Q?Martin_Hundeb=C3=B8ll?= <martin@geanix.com>
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+To: ofono@lists.linux.dev
+From: Morgan Hughes <morgan@expatria.ca>
+Subject: Patch for crash parsing malformed MBIM packets
 
+This is a multi-part message in MIME format.
+--------------7AQl17BUJ69ilLGt98UChPni
+Content-Type: multipart/alternative;
+ boundary="------------LLPBuDhDUmpWUid0S2oFwoYs"
 
---Apple-Mail=_1E9C1760-C6D7-4740-8B08-CB021D82BAFB
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
+--------------LLPBuDhDUmpWUid0S2oFwoYs
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-Hello Martin and Denis!
+Hi oFono devs,
 
-> Could it be hardware flow control that not configured right on either
-> end? I remember having issues with both swapped cts/rts lines, and =
-with
-> floating signals (i.e. halt/flow state could change by putting a =
-finger
-> on the board).
+I have a client using oFono in the stack for an IoT gateway with a Cinterion PLS62-W 
+modem. On a small number of units, at random, this modem sends a specific URC as an MBIM 
+packet.  oFono parses the ASCII bytes as an MBIM header, leading to a wild pointer and a 
+segfault:
+    MBIM:n_iov: 3, 60
+    MBIM:> 03 00 00 00 3c 00 00 00 0b 00 00 00 01 00 00 00 ....<...........
+    MBIM:  00 00 00 00 53 3f be eb 14 fe 44 67 9f 90 33 a2 ....S?....Dg..3.
+    MBIM:  23 e5 6c 3f 02 00 00 00 00 00 00 00 0c 00 00 00 #.l?............
+    MBIM:  00 00 00 00 00 00 00 00 00 00 00 00 ............
+    MBIM:< 2b 43 4d 47 4c 3a 20 31 2c 31 2c 2c +CMGL: 1,1,,
+    MBIM:hdr->len: 824195660, header_size: 12, header_offset: 12
+    MBIM:segment_bytes_remaining: 824195648
+    MBIM:hdr->len: 824195660, header_size: 12, header_offset: 12
+    MBIM:segment_bytes_remaining: 824195309
+    MBIM:hdr->len: 824195660, header_size: 12, header_offset: 12
+    MBIM:segment_bytes_remaining: 824195058
 
-Thank you for this hint! CTS and RTS should be set up properly. I have =
-not seen (unexpected) glitches in any recording of the serial connection =
-between modem and the host controller so far. There is a small pulse on =
-nCTS after switching from plain AT communication to GSM 07.10 muxing and =
-while "pressing the power button". The former seems like normal behavior =
-from the modem while switching protocols - the latter I have ignored so =
-far as they happen after the initial failed initialization.
+I added a safety check and after a few days of testing it seems to have solved the 
+problem. I've attached a patch against the current master in hopes it'll be useful.
 
-I uploaded two screen shots to [1] and [2] and just in case you want to =
-look at the huge Saleae Logic [3] capture with analog data you can find =
-it at [4] or another system startup without analog data at [5].
+Thanks,
 
+Morgan Hughes
 
-My next step is to strace oFono's interaction with the serial interface =
-to the modem. Do you have a bespoke configuration for strace? Let's see =
-what this reveals. I expect so see the calls to poll which I did not got =
-from just instrumenting oFono.
+--------------LLPBuDhDUmpWUid0S2oFwoYs
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
+<!DOCTYPE html>
+<html>
+  <head>
 
-Best regards,
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  </head>
+  <body>
+    <p>Hi oFono devs,</p>
+    <p>I have a client using oFono in the stack for an IoT gateway with
+      a Cinterion PLS62-W modem. On a small number of units, at random,
+      this modem sends a specific URC as an MBIM packet.  oFono parses
+      the ASCII bytes as an MBIM header, leading to a wild pointer and a
+      segfault:<br>
+      <font face="monospace">   MBIM:n_iov: 3, 60<br>
+           MBIM:&gt; 03 00 00 00 3c 00 00 00 0b 00 00 00 01 00 00 00 
+        ....&lt;...........<br>
+           MBIM:  00 00 00 00 53 3f be eb 14 fe 44 67 9f 90 33 a2 
+        ....S?....Dg..3.<br>
+           MBIM:  23 e5 6c 3f 02 00 00 00 00 00 00 00 0c 00 00 00 
+        #.l?............<br>
+           MBIM:  00 00 00 00 00 00 00 00 00 00 00 00             
+        ............<br>
+           MBIM:&lt; 2b 43 4d 47 4c 3a 20 31 2c 31 2c 2c             
+        +CMGL: 1,1,,<br>
+           MBIM:hdr-&gt;len: 824195660, header_size: 12, header_offset:
+        12<br>
+           MBIM:segment_bytes_remaining: 824195648<br>
+           MBIM:hdr-&gt;len: 824195660, header_size: 12, header_offset:
+        12<br>
+           MBIM:segment_bytes_remaining: 824195309<br>
+           MBIM:hdr-&gt;len: 824195660, header_size: 12, header_offset:
+        12<br>
+           MBIM:segment_bytes_remaining: 824195058</font></p>
+    <p>I added a safety check and after a few days of testing it seems
+      to have solved the problem. I've attached a patch against the
+      current master in hopes it'll be useful.</p>
+    <p>Thanks,</p>
+    <p>Morgan Hughes</p>
+  </body>
+</html>
 
-Christian
+--------------LLPBuDhDUmpWUid0S2oFwoYs--
+--------------7AQl17BUJ69ilLGt98UChPni
+Content-Type: text/x-patch; charset=UTF-8; name="mbim-header-validate.patch"
+Content-Disposition: attachment; filename="mbim-header-validate.patch"
+Content-Transfer-Encoding: base64
 
---=20
-[1] =
-https://christian-meusel.de/share/3536ce67db07de020d6b5b8fa6fe70422cf85c93=
-107f9944debae488339fa61e/20251023-1839-6.1-omux-o6d8c-analog-overview.png
-[2] =
-https://christian-meusel.de/share/3536ce67db07de020d6b5b8fa6fe70422cf85c93=
-107f9944debae488339fa61e/20251023-1839-6.1-omux-o6d8c-analog-cts-glitch-at=
--mux-activation.png
-[3]=20
-[4] =
-https://christian-meusel.de/share/3536ce67db07de020d6b5b8fa6fe70422cf85c93=
-107f9944debae488339fa61e/20251023-1839-6.1-omux-o6d8c-analog.sal (about =
-800 MB)
-[5] =
-http://christian-meusel.de/share/3536ce67db07de020d6b5b8fa6fe70422cf85c931=
-07f9944debae488339fa61e/20251023-2052-6.1-omux-o6d8c.sal (few KB)=
+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWJpbW1vZGVtL21iaW0uYyBiL2RyaXZlcnMvbWJpbW1v
+ZGVtL21iaW0uYwppbmRleCBjNDA1NzYxZC4uNDMyMmY1YWQgMTAwNjQ0Ci0tLSBhL2RyaXZl
+cnMvbWJpbW1vZGVtL21iaW0uYworKysgYi9kcml2ZXJzL21iaW1tb2RlbS9tYmltLmMKQEAg
+LTE4LDYgKzE4LDcgQEAKICNpbmNsdWRlIDxsaW51eC90eXBlcy5oPgogCiAjaW5jbHVkZSA8
+ZWxsL2VsbC5oPgorI2luY2x1ZGUgPGVsbC91c2VmdWwuaD4KIAogI2luY2x1ZGUgIm1iaW0u
+aCIKICNpbmNsdWRlICJtYmltLW1lc3NhZ2UuaCIKQEAgLTYxMyw2ICs2MTQsMTUgQEAgc3Rh
+dGljIGJvb2wgY29tbWFuZF9yZWFkX2hhbmRsZXIoc3RydWN0IGxfaW8gKmlvLCB2b2lkICp1
+c2VyX2RhdGEpCiAJaGRyID0gKHN0cnVjdCBtYmltX21lc3NhZ2VfaGVhZGVyICopIGRldmlj
+ZS0+aGVhZGVyOwogCXR5cGUgPSBMX0xFMzJfVE9fQ1BVKGhkci0+dHlwZSk7CiAKKwlpZiAo
+dW5saWtlbHkoaGRyLT5sZW4gPiBNQVhfQ09OVFJPTF9UUkFOU0ZFUikpIHsKKwkJY2hhciAq
+aGV4ID0gbF91dGlsX2hleHN0cmluZyhkZXZpY2UtPmhlYWRlciwKKwkJCQkJCXNpemVvZihz
+dHJ1Y3QgbWJpbV9tZXNzYWdlX2hlYWRlcikpOworCQlsX3dhcm4oIk1CSU06IHNraXAgaW1w
+bGF1c2libGUgaGRyICVzOiBsZW4gMHgleCB0eXBlIDB4JXgiLCBoZXgsCisJCQlMX0xFMzJf
+VE9fQ1BVKGhkci0+bGVuKSwgTF9MRTMyX1RPX0NQVShoZHItPnR5cGUpKTsKKwkJbF9mcmVl
+KGhleCk7CisJCXJldHVybiBmYWxzZTsKKwl9CisKIAlpZiAoZGV2aWNlLT5zZWdtZW50X2J5
+dGVzX3JlbWFpbmluZyA9PSAwKQogCQlkZXZpY2UtPnNlZ21lbnRfYnl0ZXNfcmVtYWluaW5n
+ID0KIAkJCQkJTF9MRTMyX1RPX0NQVShoZHItPmxlbikgLQo=
 
---Apple-Mail=_1E9C1760-C6D7-4740-8B08-CB021D82BAFB
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEIhqZz/J2souq/IKUfmJl21on4+EFAmj6hwEACgkQfmJl21on
-4+H7ABAAoZT+gQWoI1OBFR7rWlExcJzeC0YZQ9tkCMmWCxRCN8vtjarXQUSwpgxh
-b2L7F6vCYGWbuVie2rW2lZDzvyd1SvmcDz5qtFi2mxdPhklfemivpJnmmuqVfSsV
-Mgr7ERREU7uG/0yDrhA6ffecSbBrIi0io2QIALhWdjgbrLiVTPQxqGESfB539BfR
-FvCxxMiMH5zKfrI8znUTU1QauBHLxVTy7M0y7kyYDTtEhjd0puIRAZDyWG73m6oO
-xms349/fRpkF02+adrLd7KsQfFbhfHUEpiyCbO+uM/4NA/H32ZD8aeGys4tlEgSz
-CtkrtneLF7anlqbQJkhoSkA+zr3o0Dew51ma4lSz3N4VLJz5m+FGKN1KjaSBa8MT
-lGeYCe2Zj4QRn2IDbHWx7h3m0ixogOMMsicRgHHUvDYu+V825o0pTn+pvoUqvDvt
-AIlboPPDTxMj39QCgERafD8xaFkPpUCjo7uvMEfZkoVmnTf/xOC0dKih00YDzbu3
-iBpLWwpo6OaRGV95K5O5XUU7dWABTQtnYIAGVNic2Iis0Y0KHyApMCQ/9646/hP/
-lWDJF0y+7nejJ7nKExFzit4j9WgoRibqB0RpLaQYMHI19e96nKE2WcbTLCduaxbK
-HrG3O3stTRiLHzjDqMFA5nKVDlZ89R6ulu08SaahInrHW+/Jbpk=
-=FaYa
------END PGP SIGNATURE-----
-
---Apple-Mail=_1E9C1760-C6D7-4740-8B08-CB021D82BAFB--
+--------------7AQl17BUJ69ilLGt98UChPni--
