@@ -1,34 +1,34 @@
 Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 283511E4AB
-	for <ofono@lists.linux.dev>; Thu, 27 Nov 2025 17:50:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9640C2E22A6
+	for <ofono@lists.linux.dev>; Thu, 27 Nov 2025 17:50:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764265816; cv=none; b=rluWqeNNIaheSRk99I5kLaGk4jc9sVOpOvcm6/2hetMa/uVlUKiQSWMOOpB/t3XNQn0Dl2HjnKQiWQAz+vPRsjbaQGIi7bGlZZvJXhrDv3RDWHfRuytKQhnVQg8n70ctKSG/vbTURkXIL8EPgcQbc4jVTKLZRaiRDjmFaxht2Bg=
+	t=1764265817; cv=none; b=WQvfaOrSQeK6HOjFVWfM45crVsbFKgBmptw8+3r0QJhKcvxSx4y5kVjhcA3z/Xwk5rpj38lscXPmZrIkjvXnPDVuBHoZuVEpGWopdYwbOXMxe5/tQDdSq0XVze4LALhjY3avCS11jS8eZ1vUkG6nAeN69wYLbbHoLLShxqFuGJI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764265816; c=relaxed/simple;
-	bh=rtSXVgJi8ZndPeUIr4bFOIf8gSPP5s4R0W7aIxZG5hE=;
+	s=arc-20240116; t=1764265817; c=relaxed/simple;
+	bh=+m0wj6Ok5gcdcX01KJzGwfdMp7TuS8qyx5ccVemWykc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Ea7Z0WhzGUYiZz941E4gMDmpW4/7QmWwZvlMAHEm09yjxWAA/UER5OJc+YDW2TXj8zlzynIjVnQ+TZ9FKm9X3BUCe74K6lOpdM6NHFMYNgyeRtA8F1TM6s2ynQ2mdykjAsamqbdHwtfyPPwrMl36KOf0K1oDYBVUWrqYtdUnG+I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=cyES1FbB; arc=none smtp.client-ip=34.202.193.197
+	 MIME-Version:Content-Type; b=hdBKNm6oFWb0ECgZ/BQSA2+djrbgSHvw6C53y6Pv+0hdgh8iYo8Umv1qHo49IQjqLZQXLKTKO4vsr0Fj8gUaYhcmU2WdtrhQ801dmd7kQftR2aQ+P4x17mVxurQ+fRCusvaC29f0B2ZIU44QUb2clTU4aotRJgJDCytAuf9ALgU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=mNq7dcE7; arc=none smtp.client-ip=34.202.193.197
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="cyES1FbB"
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="mNq7dcE7"
 Authentication-Results: purelymail.com; auth=pass
-DKIM-Signature: a=rsa-sha256; b=cyES1FbBYWTqLUU4UVCY4fEUqzIAyYs1ryGdYVW8BoKASLg7cSYLBDQ3TDIyShDh5bZtxGrLT50Vrztk5F3W1TDj7/0C7jIdnVhNITsBxpLklRDH6kdgpEdLeaeXzTk2vqmPLpRfwr848VNh6QiGKFx0LA+G0CygP94mR7cIYvyy7S98uJPdBoqZ9PhSZmmoCRhKTUBOPQhTd4rTKOAoVseMVKJMfS5+X3hC5Vu7yBbPdumtA1TeIC4ffexhBCLyTLj0t440Rq5oD6lPIdhlSETLNXF5xlTXrqs3Z7vG+D57BPBSc4j9x3UzzTX5sTWyphDCXiEte4xrBMBOb4wB8w==; s=purelymail2; d=purelymail.com; v=1; bh=rtSXVgJi8ZndPeUIr4bFOIf8gSPP5s4R0W7aIxZG5hE=; h=Feedback-ID:Received:From:To:Subject:Date;
+DKIM-Signature: a=rsa-sha256; b=mNq7dcE73/Qi83w9bOEcTHg2//B/tkp0oPh/GRATIcyHyMsLCNJTb+JdAzF+TrdLa2QTIH48aHuDBjgyIkmeMC0+vBzcC7W3Pzl0J7/aLsyYv8IXlwRU7jZaABZ0DX2oU2Lfxp+1y4wFXnEGzvUhF96DyANG9lOf1J5g7cx5tFdpRbDL5Kz5knvmn1Z6MZkCFIm7qP5TPncYOWR14YF8Jxtp89Oi3n+EZY3l+FFP1chcmA3X0xm1fuY1AZqQEg2XDQ1uwS9a9DthcIdUTvdoFiPgdivB9uwk1UBo5XJYVN8H7xnY4ZxHsoDLxEG1HcIRrIYXr1vmX7yQbXi+cnd7fA==; s=purelymail2; d=purelymail.com; v=1; bh=+m0wj6Ok5gcdcX01KJzGwfdMp7TuS8qyx5ccVemWykc=; h=Feedback-ID:Received:From:To:Subject:Date;
 Feedback-ID: 68221:10037:null:purelymail
 X-Pm-Original-To: ofono@lists.linux.dev
 Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id 62202782;
           (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
-          Thu, 27 Nov 2025 17:50:12 +0000 (UTC)
+          Thu, 27 Nov 2025 17:50:13 +0000 (UTC)
 From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 To: ofono <ofono@lists.linux.dev>
 Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-Subject: [PATCH v5 05/10] mbimmodem: sim: add support for querying IMSI with MBIMEx 3 This commit adds the ability to query IMSI with newer modems that use the MBIMEx 3 protocol.
-Date: Thu, 27 Nov 2025 22:49:39 +0500
-Message-ID: <20251127174946.89981-6-thevancedgamer@mentallysanemainliners.org>
+Subject: [PATCH v5 06/10] mbimmodem: sim: add support for querying ICCID This implements the required functions to query file info and read file info from the modem. Currently the other file IDs haven't been implemented, but they will be tackled later.
+Date: Thu, 27 Nov 2025 22:49:40 +0500
+Message-ID: <20251127174946.89981-7-thevancedgamer@mentallysanemainliners.org>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251127174946.89981-1-thevancedgamer@mentallysanemainliners.org>
 References: <20251127174946.89981-1-thevancedgamer@mentallysanemainliners.org>
@@ -43,70 +43,87 @@ X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
 Content-Type: text/plain; charset=UTF-8
 
 ---
- drivers/mbimmodem/sim.c | 30 ++++++++++++++++++++++++------
- 1 file changed, 24 insertions(+), 6 deletions(-)
+ drivers/mbimmodem/sim.c | 45 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
 
 diff --git a/drivers/mbimmodem/sim.c b/drivers/mbimmodem/sim.c
-index fb23609a..1046c535 100644
+index 1046c535..c74967d5 100644
 --- a/drivers/mbimmodem/sim.c
 +++ b/drivers/mbimmodem/sim.c
-@@ -392,12 +392,22 @@ static void mbim_subscriber_ready_status_changed(stru=
-ct mbim_message *message,
- =09char *imsi;
- =09char *iccid;
- =09uint32_t ready_info;
-+=09uint32_t ready_flags;
-+=09bool r;
+@@ -18,6 +18,9 @@
+ #include <ofono/modem.h>
+ #include <ofono/sim.h>
 =20
- =09DBG("");
-=20
--=09if (!mbim_message_get_arguments(message, "ussu",
--=09=09=09=09=09&ready_state, &imsi,
--=09=09=09=09=09&iccid, &ready_info))
-+=09if (mbim_device_check_mbimex_version(sd->device, 3, 0)) {
-+=09=09r =3D mbim_message_get_arguments(message, "uussu",
-+=09=09=09=09=09=09&ready_state, &ready_flags, &imsi,
-+=09=09=09=09=09=09&iccid, &ready_info);
-+=09} else {
-+=09=09r =3D mbim_message_get_arguments(message, "ussu",
-+=09=09=09=09=09=09&ready_state, &imsi,
-+=09=09=09=09=09=09&iccid, &ready_info);
-+=09}
++#include <glib.h>
++#include "simutil.h"
 +
-+=09if (!r)
- =09=09return;
+ #include "drivers/mbimmodem/mbim.h"
+ #include "drivers/mbimmodem/mbim-message.h"
+ #include "drivers/mbimmodem/mbimmodem.h"
+@@ -76,6 +79,45 @@ static void mbim_read_imsi(struct ofono_sim *sim,
+ =09CALLBACK_WITH_SUCCESS(cb, sd->imsi, user_data);
+ }
 =20
- =09l_free(sd->iccid);
-@@ -422,6 +432,7 @@ static void mbim_subscriber_ready_status_cb(struct mbim=
++static void mbim_read_file_info(struct ofono_sim *sim,
++=09=09=09=09=09int fileid, const unsigned char *path,
++=09=09=09=09=09unsigned int path_len,
++=09=09=09=09=09ofono_sim_file_info_cb_t cb, void *user_data)
++{
++=09unsigned char access[3] =3D {0x0f, 0xff, 0xff};
++
++=09switch (fileid) {
++=09case SIM_EF_ICCID_FILEID:
++=09=09CALLBACK_WITH_SUCCESS(cb, 10, 0, 0, access, 1, user_data);
++=09=09break;
++=09default:
++=09=09CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL, 0, user_data);
++=09=09break;
++=09}
++}
++
++static void mbim_read_file_transparent(struct ofono_sim *sim,
++=09=09=09=09=09int fileid,=09int start, int length,
++=09=09=09=09=09const unsigned char *path, unsigned int path_len,
++=09=09=09=09=09ofono_sim_read_cb_t cb, void *user_data)
++{
++=09struct sim_data *sd =3D ofono_sim_get_data(sim);
++=09unsigned char iccid[10];
++=09int iccid_len, len =3D strlen(sd->imsi);
++
++=09sim_encode_bcd_number(sd->iccid, iccid);
++=09iccid_len =3D len / 2;
++
++=09switch (fileid) {
++=09case SIM_EF_ICCID_FILEID:
++=09=09CALLBACK_WITH_SUCCESS(cb, iccid, iccid_len, user_data);
++=09=09break;
++=09default:
++=09=09CALLBACK_WITH_FAILURE(cb, NULL, 0, user_data);
++=09=09break;
++=09}
++}
++
+ static enum ofono_sim_password_type mbim_pin_type_to_sim_password(
+ =09=09=09=09=09=09=09uint32_t pin_type)
+ {
+@@ -457,6 +499,7 @@ static void mbim_subscriber_ready_status_cb(struct mbim=
 _message *message,
- =09char *imsi;
- =09char *iccid;
- =09uint32_t ready_info;
-+=09uint32_t ready_flags;
- =09bool r;
+ =09sd->iccid =3D iccid;
+ =09sd->imsi =3D imsi;
 =20
- =09DBG("");
-@@ -430,9 +441,16 @@ static void mbim_subscriber_ready_status_cb(struct mbi=
-m_message *message,
- =09=09goto error;
-=20
- =09/* We don't bother parsing MSISDN/MDN array */
--=09r =3D mbim_message_get_arguments(message, "ussu",
--=09=09=09=09=09&ready_state, &imsi,
--=09=09=09=09=09&iccid, &ready_info);
-+=09if (mbim_device_check_mbimex_version(sd->device, 3, 0)) {
-+=09=09r =3D mbim_message_get_arguments(message, "uussu",
-+=09=09=09=09=09=09&ready_state, &ready_flags, &imsi,
-+=09=09=09=09=09=09&iccid, &ready_info);
-+=09} else {
-+=09=09r =3D mbim_message_get_arguments(message, "ussu",
-+=09=09=09=09=09=09&ready_state, &imsi,
-+=09=09=09=09=09=09&iccid, &ready_info);
-+=09}
-+
- =09if (!r)
- =09=09goto error;
-=20
++=09DBG("Got ICCID! %s", iccid);
+ =09if (!mbim_device_register(sd->device, SIM_GROUP,
+ =09=09=09=09=09mbim_uuid_basic_connect,
+ =09=09=09=09=09MBIM_CID_SUBSCRIBER_READY_STATUS,
+@@ -520,6 +563,8 @@ static void mbim_sim_remove(struct ofono_sim *sim)
+ static const struct ofono_sim_driver driver =3D {
+ =09.probe=09=09=09=3D mbim_sim_probe,
+ =09.remove=09=09=09=3D mbim_sim_remove,
++=09.read_file_info=09=3D mbim_read_file_info,
++=09.read_file_transparent=09=3D mbim_read_file_transparent,
+ =09.read_imsi=09=09=3D mbim_read_imsi,
+ =09.query_passwd_state=09=3D mbim_pin_query,
+ =09.query_pin_retries=09=3D mbim_pin_retries_query,
 --=20
 2.52.0
 
