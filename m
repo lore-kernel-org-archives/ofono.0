@@ -1,34 +1,34 @@
 Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 283C22EC095
-	for <ofono@lists.linux.dev>; Thu, 27 Nov 2025 17:50:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37F782E092D
+	for <ofono@lists.linux.dev>; Thu, 27 Nov 2025 17:50:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764265817; cv=none; b=u3exbhfeemzc08qQjUSrefrgU+MBiw5xJlQbYfIclZyLaBOOBHbN/L39YA3QmnnplgkDOicnI6MQ4U2wcjAQD71Jf9GHlZxTbwZeHeMi9Abz6TBAMyOnHVMWqby5E1jv6SYpl6WBqfvrtqMZn0rpxgSR3lM7v41hry32E7Jf37c=
+	t=1764265820; cv=none; b=FlMy+Rlw8kCQwJ5aEkTHZYTw9b/mCX5hHycGMQYSX98Lh5Hi8tKxo5UFRR/5fwk0dPMW1Pet1wp603WsHtZ7w0aWP4jGwckiGIDuSrIDMdFDv36bUpWtJQkhYDfewQpHY+z8ONwoF3hxJu7HhIhxAZNEbsYvEE6LjIxAtqieCe4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764265817; c=relaxed/simple;
-	bh=yVDhIyDAVRKcy2GE3C+iekEW4ft2liKeD6tCpwv88fk=;
+	s=arc-20240116; t=1764265820; c=relaxed/simple;
+	bh=zOeyDpRjsE9KYR8gQkt9Keqevkrzv8Cu+nYu0q9rv4Y=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=HTzDAWORehpcUGxOm9D9H86MYITl5g+zZpAR/q7a0VgitT6HKo/wHd8+z1mOEswG58f9yZZUgRIvnqGBWK+CZ1Tr/li5Wc71pR+z9I+qgbmMDV3ugLWZlSb5+G9RuHd3E+egdkXT1Lq9Dd2EMOPnI2/FVmZZoCiyR8Abcp7Y5II=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=XOSmmQQ/; arc=none smtp.client-ip=34.202.193.197
+	 MIME-Version:Content-Type; b=d+0H2OZDM8cz1FGSm7Obt+BMr/FPphjVDNeVunGBWVqxh3efIixs4Kk/m5BDUT8wmsvAuHcsFm12kYn3a7ol4soDe1Ej+vCrWcukKARMpHNngNvT4GMWr9nOMTAiTVT8JkFkXvXKWE9kkVnqZl9zKBduSsfotxj5iejPWyaJ1Xw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=Djc1/Q8D; arc=none smtp.client-ip=34.202.193.197
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="XOSmmQQ/"
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="Djc1/Q8D"
 Authentication-Results: purelymail.com; auth=pass
-DKIM-Signature: a=rsa-sha256; b=XOSmmQQ/utVdxCBLZlNzb8OuU7cXzJAXf5wTjnvuubsBmVORRFGKtAva3lSS0qu+RqcJxRBr0CETNi0gkUeM0llccrK6NI/hLjw6IfH3avUo2SmdolWwp/angvMMi1+KFw20/VECMw6IKsLsEjX8I0SFU8ONtFJxB71fpb9bWZ184+tO4HO+G1l4/E3MATRvM5lEwFiEvCEY2GTswTteANEe78PoSKWE8omVaQ5ZafIwfCla53GBstoESXHKVVt4EgTITluMscuPQT99mrZylIF3ZHQdItM006Rv7XpRZAwpYwOlTEQTDGr8/wKZiMMHcoIG3C/7XuFztM+0u7ZSFg==; s=purelymail2; d=purelymail.com; v=1; bh=yVDhIyDAVRKcy2GE3C+iekEW4ft2liKeD6tCpwv88fk=; h=Feedback-ID:Received:From:To:Subject:Date;
+DKIM-Signature: a=rsa-sha256; b=Djc1/Q8DcL0lboXaSLHi7LF04L09PFwQMWZS6Zvj/84BWDQhwuO8RpE8LsFJ09enWMz0k4fYV/mi7uCq82CxmryqeUQOaYvNYJw44uNMx9nEHUgjVmsLO73WGJh03Xscq+vXCn49cBxvGriwIACH+qlYA7kTBGIYCGpes1AlEJFgdjpRqtz16APaN2yJTx/ZGJGEc6BiVZ6z0h9jfQ38Jb+aTjoOgl5eMWgmhBffBfl+2IFYTe0tKkRKa97dHmNYU95wM/Qg0SGu4h+4JGaQ/2l2zs9+Uh6GJC4rcJYIbLRqgxcZsQsK6qzF40g3oS3zu8ah/ivX84aXOBD6lVSwOA==; s=purelymail2; d=purelymail.com; v=1; bh=zOeyDpRjsE9KYR8gQkt9Keqevkrzv8Cu+nYu0q9rv4Y=; h=Feedback-ID:Received:From:To:Subject:Date;
 Feedback-ID: 68221:10037:null:purelymail
 X-Pm-Original-To: ofono@lists.linux.dev
 Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id 62202782;
           (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
-          Thu, 27 Nov 2025 17:49:58 +0000 (UTC)
+          Thu, 27 Nov 2025 17:50:15 +0000 (UTC)
 From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 To: ofono <ofono@lists.linux.dev>
 Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-Subject: [PATCH v5 01/10] sim: add ofono_sim_get_modem method Align with the other ofono structures for fetching ofono_modem from atoms
-Date: Thu, 27 Nov 2025 22:49:35 +0500
-Message-ID: <20251127174946.89981-2-thevancedgamer@mentallysanemainliners.org>
+Subject: [PATCH v5 07/10] mbim-message: Add support for parsing both UTF8/16 strings
+Date: Thu, 27 Nov 2025 22:49:41 +0500
+Message-ID: <20251127174946.89981-8-thevancedgamer@mentallysanemainliners.org>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251127174946.89981-1-thevancedgamer@mentallysanemainliners.org>
 References: <20251127174946.89981-1-thevancedgamer@mentallysanemainliners.org>
@@ -44,40 +44,66 @@ Content-Type: text/plain; charset=UTF-8
 
 Signed-off-by: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 ---
- include/sim.h | 2 ++
- src/sim.c     | 5 +++++
- 2 files changed, 7 insertions(+)
+ drivers/mbimmodem/mbim-message.c | 24 +++++++++++++++---------
+ 1 file changed, 15 insertions(+), 9 deletions(-)
 
-diff --git a/include/sim.h b/include/sim.h
-index 84592fc9..c0fc364f 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -211,6 +211,8 @@ void ofono_sim_remove(struct ofono_sim *sim);
+diff --git a/drivers/mbimmodem/mbim-message.c b/drivers/mbimmodem/mbim-mess=
+age.c
+index 65cdc73f..ecb4f689 100644
+--- a/drivers/mbimmodem/mbim-message.c
++++ b/drivers/mbimmodem/mbim-message.c
+@@ -139,8 +139,8 @@ static bool _iter_copy_string(struct mbim_message_iter =
+*iter,
+ =09=09=09=09=09uint32_t offset, uint32_t len,
+ =09=09=09=09=09char **out)
+ {
+-=09uint16_t buf[len / 2 + 1];
+-=09uint8_t *dest =3D (uint8_t *) buf;
++=09uint8_t buf[len + 1];
++=09uint8_t *dest =3D buf;
+ =09uint32_t remaining =3D len;
+ =09uint32_t iov_start =3D 0;
+ =09uint32_t i =3D 0;
+@@ -164,7 +164,7 @@ static bool _iter_copy_string(struct mbim_message_iter =
+*iter,
+ =09if (tocopy > remaining)
+ =09=09tocopy =3D remaining;
 =20
- void ofono_sim_set_data(struct ofono_sim *sim, void *data);
- void *ofono_sim_get_data(struct ofono_sim *sim);
-+struct ofono_modem *ofono_sim_get_modem(struct ofono_sim *sim);
+-=09memcpy(dest, iter->iov[i].iov_base + offset - iov_start, tocopy);
++=09memcpy(buf, iter->iov[i].iov_base + offset - iov_start, tocopy);
+ =09remaining -=3D tocopy;
+ =09dest +=3D tocopy;
+ =09i +=3D 1;
+@@ -180,15 +180,21 @@ static bool _iter_copy_string(struct mbim_message_ite=
+r *iter,
+ =09=09dest +=3D tocopy;
+ =09}
+=20
+-=09/* Strings are in UTF16-LE, so convert to UTF16-CPU first if needed */
+-=09if (L_CPU_TO_LE16(0x8000) !=3D 0x8000) {
+-=09=09uint16_t *le =3D buf;
++=09dest =3D buf;
++=09if (!l_utf8_validate((const char *)dest, len, NULL)) {
++=09=09/* Strings are in UTF16-LE, so convert to UTF16-CPU first if needed =
+*/
++=09=09if (L_CPU_TO_LE16(0x8000) !=3D 0x8000) {
++=09=09=09uint16_t *le =3D (uint16_t *)dest;
+=20
+-=09=09for (i =3D 0; i < len / 2; i++)
+-=09=09=09le[i] =3D __builtin_bswap16(le[i]);
++=09=09=09for (i =3D 0; i < len / 2; i++)
++=09=09=09=09le[i] =3D __builtin_bswap16(le[i]);
++=09=09}
 +
- void ofono_sim_set_card_slot_count(struct ofono_sim *sim, unsigned int val=
-);
- void ofono_sim_set_active_card_slot(struct ofono_sim *sim,
- =09=09=09=09=09unsigned int val);
-diff --git a/src/sim.c b/src/sim.c
-index dedb7d8d..cc33e864 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -3423,6 +3423,11 @@ void *ofono_sim_get_data(struct ofono_sim *sim)
- =09return sim->driver_data;
++=09=09*out =3D l_utf8_from_utf16(dest, len);
++=09} else {
++=09=09*out =3D l_strndup(dest, len);
+ =09}
+=20
+-=09*out =3D l_utf8_from_utf16(buf, len);
+ =09return true;
  }
 =20
-+struct ofono_modem *ofono_sim_get_modem(struct ofono_sim *sim)
-+{
-+=09return __ofono_atom_get_modem(sim->atom);
-+}
-+
- static ofono_bool_t is_valid_pin(const char *pin, unsigned int min,
- =09=09=09=09=09unsigned int max)
- {
 --=20
 2.52.0
 
