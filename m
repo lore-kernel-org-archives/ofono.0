@@ -1,34 +1,34 @@
 Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27E2530F7F3
-	for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 17:18:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE2983054DE
+	for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 17:18:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764350304; cv=none; b=oitQ9scs1LQcSTZ4LsSdPgLwq2knb3Lt5CswH7KXdEYVIAsVlUG3W7ILj0MJKN0CVOJTlmvRhjurb1vdwVdRvr7PglmTqqS7GWfSN0ASJa/FUiUZHXdctwXXEOi+EbuzmtAoJrXOIc84ydpPfcJJkGIB30BJmUbR2ggCsNbOe7A=
+	t=1764350306; cv=none; b=ZOZ1MUC5zf/DD3SeapzMRYWbLa2pvIw8ug9tKnNJ+OqyRtG28y2FL4OyhOattDgSayczArVZ9xNYm3fxd2d9ME+Mq29fymSvOw9JcfudsOBq3t6UQPR8LMiVRW92SGryZn/3c2mjYp+DaprZinP6xpeekyIRzyTxMDuUE4JVpMc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764350304; c=relaxed/simple;
-	bh=KVIZpwoiMWYuPFQo5Xhx65ey3fa6IpVGIS36fjnShGc=;
+	s=arc-20240116; t=1764350306; c=relaxed/simple;
+	bh=Pau/BlUZPB9s58F1Z/Wmd2XqQIaMgHpKbXShjCF1ucE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=JxW6xM3l0KtPYGHNjFhbkCTyJ7dfxu3rGhVBI2ZfXYS9M0oXP6mTnDQoqsW4hX7BWr7m5gadHNv6Gzs8SNcNWAGZMJ5TvIKAFnpmLSMYitiVjzkkNuKfVD/7zoMoSEFJiTL3hk61d8Y38+rZOz5nBnpwUF/GSIUu4VXoqrUyi3A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=LvzanbtX; arc=none smtp.client-ip=34.202.193.197
+	 MIME-Version:Content-Type; b=HxQYQHDqmvJ/H8FEeBkTAG2WNNOphl3rRAHmdHn3hlFCC3PAZO9VTfHI+s2SgwGedtV++wmzIIvqpxL5QKUijGwJPWhQVKVu3AkZQFTRb3JywGQ2CVw6uVwgC8blrANT3yplNnlpFTrbWQ11vHhXQty1eSv5UsTCpfSsDgBYd4M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=SgUpLt7h; arc=none smtp.client-ip=34.202.193.197
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="LvzanbtX"
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="SgUpLt7h"
 Authentication-Results: purelymail.com; auth=pass
-DKIM-Signature: a=rsa-sha256; b=LvzanbtXBgTZxW9GXjjA7++REYrYS/kQL787BKK5GJ1m4MHXviFiEC0qVMUqesyzaF4aNdCYlYqtBWmYp84FxQbgyVHIPNgdks+UWkyLEWCxJtSO9WxBQ+Wckk84jKJecTh8T7itPYWkd3ZED4X0anSa0N66ROyi7RzDZpP1cWoB2vQMZsw5UUHDGMfsNIt/Urpp2GWXyCVbsYjLhWD0iwyyPRN1CZWjcjRPeD3lpZE3xGfOxX461IFEPvvCNZftl4MRwQLWfV+zAGPooMOSNa8qHeM+BwuzC7q5T4aJf4XD6VUtMDl2NH+97uTVbnXHDcOtThzFvCEFqt/+BVWKIg==; s=purelymail2; d=purelymail.com; v=1; bh=KVIZpwoiMWYuPFQo5Xhx65ey3fa6IpVGIS36fjnShGc=; h=Feedback-ID:Received:From:To:Subject:Date;
+DKIM-Signature: a=rsa-sha256; b=SgUpLt7h6o4pi471TCVHCZhby9PoX31wKtVABTxgCzAIxKTqW21jZB8omkN41DZQ9M4L6EOmDSzXAxnhloZegIFpNeGkX+wWgRqPsgCPYwxFTgUjUKEkPeYxO4peFXemiW7T5YdD5Y8wedFe2dTMUENFRk8GlOIHuEJO19bIaJFkwfLkh70STBWAaIKM6CZwS2OlvrNAQMmwcnUH7vRBjl35b4KOzu8UlUDIkVyGOb1DH2NF+yXnqd9nnmvor5+kZphy28PV+wqQF8z1M8+Fd+UssKZcwUDbXkJ1pEd5OtLR3IyksItt5+TAuzNC23ba1KoVVgbDHxBhhWutymyFFw==; s=purelymail2; d=purelymail.com; v=1; bh=Pau/BlUZPB9s58F1Z/Wmd2XqQIaMgHpKbXShjCF1ucE=; h=Feedback-ID:Received:From:To:Subject:Date;
 Feedback-ID: 68221:10037:null:purelymail
 X-Pm-Original-To: ofono@lists.linux.dev
 Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id -2023556145;
           (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
-          Fri, 28 Nov 2025 17:18:19 +0000 (UTC)
+          Fri, 28 Nov 2025 17:18:20 +0000 (UTC)
 From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 To: ofono <ofono@lists.linux.dev>
 Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-Subject: [PATCH v6 1/9] sim: add ofono_sim_get_modem method
-Date: Fri, 28 Nov 2025 22:17:39 +0500
-Message-ID: <20251128171747.32679-2-thevancedgamer@mentallysanemainliners.org>
+Subject: [PATCH v6 2/9] plugins/udevng: Add support for PCIe MBIM modems
+Date: Fri, 28 Nov 2025 22:17:40 +0500
+Message-ID: <20251128171747.32679-3-thevancedgamer@mentallysanemainliners.org>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251128171747.32679-1-thevancedgamer@mentallysanemainliners.org>
 References: <20251128171747.32679-1-thevancedgamer@mentallysanemainliners.org>
@@ -42,44 +42,108 @@ Content-Transfer-Encoding: quoted-printable
 X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
 Content-Type: text/plain; charset=UTF-8
 
-Align with the other ofono structures for fetching ofono_modem from atoms
-
-Signed-off-by: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
+Parses through the sysfs tree and detects MBIM control nodes, net and
+AT nodes
 ---
- include/sim.h | 2 ++
- src/sim.c     | 5 +++++
- 2 files changed, 7 insertions(+)
+ plugins/udevng.c | 77 +++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 76 insertions(+), 1 deletion(-)
 
-diff --git a/include/sim.h b/include/sim.h
-index 84592fc9..c0fc364f 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -211,6 +211,8 @@ void ofono_sim_remove(struct ofono_sim *sim);
-=20
- void ofono_sim_set_data(struct ofono_sim *sim, void *data);
- void *ofono_sim_get_data(struct ofono_sim *sim);
-+struct ofono_modem *ofono_sim_get_modem(struct ofono_sim *sim);
-+
- void ofono_sim_set_card_slot_count(struct ofono_sim *sim, unsigned int val=
-);
- void ofono_sim_set_active_card_slot(struct ofono_sim *sim,
- =09=09=09=09=09unsigned int val);
-diff --git a/src/sim.c b/src/sim.c
-index dedb7d8d..cc33e864 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -3423,6 +3423,11 @@ void *ofono_sim_get_data(struct ofono_sim *sim)
- =09return sim->driver_data;
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 18954d44..e779524c 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1182,6 +1182,80 @@ static gboolean setup_quectelqmi(struct modem_info *=
+modem)
+ =09return TRUE;
  }
 =20
-+struct ofono_modem *ofono_sim_get_modem(struct ofono_sim *sim)
++static void setup_mbim_pci(struct device_info *info,
++=09=09=09=09const char **ctl,
++=09=09=09=09const char **net,
++=09=09=09=09const char **atcmd)
 +{
-+=09return __ofono_atom_get_modem(sim->atom);
++=09struct udev *udev =3D udev_new();
++=09struct udev_device *wwan_device, *sub_device;
++
++=09GDir *dir =3D NULL, *subdir =3D NULL;
++=09const gchar *filename =3D NULL, *subfile =3D NULL;
++=09gchar *path =3D NULL;
++=09gchar *wwan_path =3D NULL, *sub_path =3D NULL;
++=09const char *sub_subsystem =3D NULL;
++=09const char *type =3D NULL;
++
++=09/* Create a path to the WWAN subsystem in sysfs */
++=09path =3D g_build_path("/", udev_device_get_syspath(info->udev_device),
++=09=09=09=09=09=09=09"wwan", NULL);
++
++=09dir =3D g_dir_open(path, 0, NULL);
++=09if (!dir)
++=09=09goto cleanup;
++
++=09while ((filename =3D g_dir_read_name(dir))) {
++=09=09/* Build a path to the WWAN interface (e.g. wwan0) */
++=09=09wwan_path =3D g_build_path("/", path,
++=09=09=09=09=09=09=09filename, NULL);
++
++=09=09wwan_device =3D udev_device_new_from_syspath(udev,
++=09=09=09=09=09=09=09wwan_path);
++=09=09*net =3D g_strdup(udev_device_get_sysname(wwan_device));
++
++=09=09/* Parse all the subdirectories now */
++=09=09subdir =3D g_dir_open(wwan_path, 0, NULL);
++=09=09if (!g_file_test(wwan_path, G_FILE_TEST_IS_DIR) ||
++=09=09=09=09!subdir) {
++=09=09=09udev_device_unref(wwan_device);
++=09=09=09g_free(wwan_path);
++=09=09=09continue;
++=09=09}
++
++=09=09while ((subfile =3D g_dir_read_name(subdir))) {
++=09=09=09/* Build a path to the subsystems for the WWAN control nodes */
++=09=09=09sub_path =3D g_build_filename("/", wwan_path,
++=09=09=09=09=09=09=09=09=09subfile, NULL);
++
++=09=09=09sub_device =3D udev_device_new_from_syspath(udev,
++=09=09=09=09=09=09=09=09sub_path);
++=09=09=09sub_subsystem =3D udev_device_get_subsystem(sub_device);
++
++=09=09=09if (g_strcmp0(sub_subsystem, "wwan") =3D=3D 0) {
++=09=09=09=09type =3D udev_device_get_sysattr_value(sub_device, "type");
++
++=09=09=09=09/* Detect the subsystem of the subdirectories */
++=09=09=09=09if (g_strcmp0(type, "MBIM") =3D=3D 0)
++=09=09=09=09=09*ctl =3D g_strdup(udev_device_get_devnode(sub_device));
++=09=09=09=09else if (g_strcmp0(type, "AT") =3D=3D 0)
++=09=09=09=09=09*atcmd =3D g_strdup(udev_device_get_devnode(sub_device));
++=09=09=09}
++
++=09=09=09udev_device_unref(sub_device);
++=09=09=09g_free(sub_path);
++=09=09}
++=09=09g_dir_close(subdir);
++=09=09udev_device_unref(wwan_device);
++=09=09g_free(wwan_path);
++=09}
++
++cleanup:
++=09g_dir_close(dir);
++=09g_free(path);
++=09udev_unref(udev);
 +}
 +
- static ofono_bool_t is_valid_pin(const char *pin, unsigned int min,
- =09=09=09=09=09unsigned int max)
+ static gboolean setup_mbim(struct modem_info *modem)
  {
+ =09const char *ctl =3D NULL, *net =3D NULL, *atcmd =3D NULL;
+@@ -1206,7 +1280,8 @@ static gboolean setup_mbim(struct modem_info *modem)
+ =09=09else if (g_strcmp0(subsystem, "tty") =3D=3D 0) {
+ =09=09=09if (g_strcmp0(info->number, "02") =3D=3D 0)
+ =09=09=09=09atcmd =3D info->devnode;
+-=09=09}
++=09=09} else if (g_strcmp0(subsystem, "pci") =3D=3D 0)
++=09=09=09setup_mbim_pci(info, &ctl, &net, &atcmd);
+ =09}
+=20
+ =09if (ctl =3D=3D NULL || net =3D=3D NULL)
 --=20
 2.52.0
 
