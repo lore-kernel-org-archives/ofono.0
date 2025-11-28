@@ -1,115 +1,83 @@
-Received: from mail-oa1-f53.google.com (mail-oa1-f53.google.com [209.85.160.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8919723C4F4
-	for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 16:36:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9438C3054DE
+	for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 17:18:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764347818; cv=none; b=Vk+mGF8m8th4mPqchRR4Lkk7N4c24A2VGxjiLkpED2lnXlWhzcdaRYne1I5sLNf+CsIB1xLVVvG6T5vxRgSxPPInZGV24bGW2n6352uclv5xstcQ4G5RhgIYo2eSFVjseM/oOXhcL83y5nLx19xWjUrOqi6aYAO09v/030tnIU0=
+	t=1764350302; cv=none; b=bNzAylM/Gzt6oLuS2thsh9rrolOA9w50RUGoQFEYKLh/7J3N+R8ClQ1qxdbjcl6EG2BIxmkSJAcMJAfQyXCEhQK4Z6Gl91yGeX879korJvXeXflT5fjwsbs/5xrly/MNhUzfSOjgLsoPuiBeTRLfLzi+E2qjdX6fen2b2ZFGjrs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764347818; c=relaxed/simple;
-	bh=u6FqVxB8R38pheevalwIZJB6/WnE1aJseU/6eT+yNcA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=dZJM2MW17nHdvucwBMoikCClvwqqyGhUm4TC4RLc+7RSYGVyxEoWIZqpC7Ao+lbyDTCXHfPAxaSt+pOM+aYUZWh+nZgihzsjJjLRasmSYAGwt7w3GRJuVolAAzkKLecffrPR5B9bhXEFhb59zDBeKZlXifExxfYL8u5T3S3YLQE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=fH6jR8N4; arc=none smtp.client-ip=209.85.160.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1764350302; c=relaxed/simple;
+	bh=P5t34/HrCQ6Xi1T2kQetyIVkM37ffdt9crom5NcxTL4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=vCgtRg2ixHPrGwI6xRsfHFB/XN7JZU25MoiMxV8HbdIvLjpwXAIihutU3CUYkz9eFsmj+JZq2LdgwE48CkWRzc/MGUV3gxfFEjw+xxvLwODUU2hU07APdjiF/J+cav5zEXO0slE0CA47rO86uSrRp3Qcpz6gyBq7jb7mfhVUw2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=TcySVr0Y; arc=none smtp.client-ip=34.202.193.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fH6jR8N4"
-Received: by mail-oa1-f53.google.com with SMTP id 586e51a60fabf-3e37ad3d95aso1388066fac.3
-        for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 08:36:56 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1764347816; x=1764952616; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=B/c5eiBOwIAmGJRwmmRwdiYiizU1tpqLHKCbV1J7ISA=;
-        b=fH6jR8N47N3mQrBOTNj1doWjYlxBpXyWWAEfJq1ADAMn4lvX+WDQljYh4WjR4GU/3n
-         3RvWUGb3FBM+n8DH40eRvS5iPHllEwWRmRLFsQgEhXswj0vjm+vluqa8O/wxrtnXIEDd
-         G3ieArVCl3sddx/b5RPGerlvcIcbBv73SZcP+ZXW2pXmnQDE+1MrV4OPfR6oe5C5XsSt
-         gUHUjk801Ox8gTCOZsOyD+aaxasxhx+BflKoq5/NNexZkRdB43aXkpXfVTtmTYwY9sOO
-         13ugPJCnTR0m8Kfz89SNZ8oLRMCdYSiPEe1S6dtmzVDB/d6y7WdDAmew81oCFERCzK3Z
-         dRnA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1764347816; x=1764952616;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=B/c5eiBOwIAmGJRwmmRwdiYiizU1tpqLHKCbV1J7ISA=;
-        b=jBcmRbJ+DrIcVQ/KPj7sr94bsvimTC8gYNGpIo4RlxaspLLJoJeEQF61yOdWshpM86
-         Umflu/cm/WwQ4ElYA8DnOM/Y/1gxEbEJTX6oQHK9A9j6m4V9AVc4HcP7lB9Wx75x8M19
-         cO1rTTKkJqPqA5mYh9EzkmM4MaTxtsqLlkWcgMxPAJthltTAbL4JnviqdUFPSIZ6Wlsi
-         +WT0VGzyOV3EtrSVcqUIx62Rc8iT8yFXtt2YWjSR4tHTKY0C51SZ9uUEypsILtye6joG
-         8kawUeKc00cn9ofop5EHyfvpu6kDt1HAAPbhzbFDcWZDsvr+LHQKUJKAP6+PAfJSW4fG
-         dJMg==
-X-Forwarded-Encrypted: i=1; AJvYcCUPqqudiiV2X+qb5Niiuu9dcchSmvMaMgxqD31ceG/gcFCBc657wQwCXhicgihcdOtJRKSzjg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yzkl8S6UecqwJ2MhAHch1wXr4dRC5JoBCOefunzIQD+LFnYs4VX
-	YySFIJCRFGJ8A08amXtFnl1YEOu1tgE6Ij2FE5PKFty6UHoTXFanOphI
-X-Gm-Gg: ASbGncsgcjyvM9vZLreTSLQc3UY7454GaOqzLk4GtV9FJgHLJ4UuEXn7C6Z8AKbID1k
-	o4AkwpPb9NbR/vA3baX13M7q0UepgAi7/BORVFwgKtQKfwlmoSOEbddLSLNDGdrSY0AxxoAgLVO
-	KNdXYvqeaxvfmSQ0mG+xIqxfXxeb5ZPj36wX3iFzZ9fdjujWrv6Lvc+ieImcvSYe94OcAaG5tU/
-	eYYvmmp2Hb9vNIMctfagLLYpUdKlcOjr/7UO31m7WCZyqTb44TTktDZyrPx4W/K9qe0hctr/wX8
-	NrBYc2akwEoMAHRsWz7Canlt/wnFr42z7J1Wt8U3lFev4AeIBypgcOuiLbzHpCLdgwU+e5GFeLg
-	25S/o+Ip0nzobgAIpdkBJqVPud65fp7D9WDhLByLmMDtEx/BXUCRe5roYoqXB5LdUC41E96/FZX
-	JhGho27geh/6+5UuqEKtsHp+k=
-X-Google-Smtp-Source: AGHT+IHd6uqvqc629HidY3E7ZDwGFtfvFaj0KLAogMtybS/JkJB+liS5SjOInXdW/0nmALP49O3TuQ==
-X-Received: by 2002:a05:6870:72d3:b0:3e8:3382:aaf9 with SMTP id 586e51a60fabf-3ed1fff5b3bmr8163286fac.37.1764347815541;
-        Fri, 28 Nov 2025 08:36:55 -0800 (PST)
-Received: from [172.16.49.130] ([70.114.247.242])
-        by smtp.googlemail.com with ESMTPSA id 586e51a60fabf-3f0dd02a927sm1960889fac.19.2025.11.28.08.36.54
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 28 Nov 2025 08:36:54 -0800 (PST)
-Message-ID: <079fb21f-5e84-4129-9fdf-65329b88e819@gmail.com>
-Date: Fri, 28 Nov 2025 10:36:53 -0600
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="TcySVr0Y"
+Authentication-Results: purelymail.com; auth=pass
+DKIM-Signature: a=rsa-sha256; b=TcySVr0Y+IZP8t/GOf51BvXJMTp3IoqlorpxXSmEWG0Dy/mln+RGoNl3lZIJZUH9LgVuK6cKIx1lBBdpMGKgmpWV4fvk+BFBOdI9cQTL3fAxlBhmE2ZktxHPfX0ozZIK1IcG89dXhLKbW34HA95NXoii4H9m3MYbPh/y1MSlz7D/2Vx4NrRlpJIwyAaSEVaR+l6Hec0jZAgYqIpiqvdAFmAMdXKnge5MFRzL8s+KxPdORIjzNZBt+5Om53IYYInCLtfDLoKYWGD0vaC13Stq2g10Ybp+tSgyUS8mrLsCTY9/kn4Rw/RDf96F5uaexttAD//dMY7Hub43pWJqVBSQMw==; s=purelymail2; d=purelymail.com; v=1; bh=P5t34/HrCQ6Xi1T2kQetyIVkM37ffdt9crom5NcxTL4=; h=Feedback-ID:Received:From:To:Subject:Date;
+Feedback-ID: 68221:10037:null:purelymail
+X-Pm-Original-To: ofono@lists.linux.dev
+Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id -2023556145;
+          (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
+          Fri, 28 Nov 2025 17:18:17 +0000 (UTC)
+From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
+To: ofono <ofono@lists.linux.dev>
+Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
+Subject: [PATCH v6 0/9] mbim: Add support for MediaTek T700 5G
+Date: Fri, 28 Nov 2025 22:17:38 +0500
+Message-ID: <20251128171747.32679-1-thevancedgamer@mentallysanemainliners.org>
+X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v5 09/10] mbimmodem: add support for SIM I/O operations
-To: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>,
- ofono <ofono@lists.linux.dev>
-References: <20251127174946.89981-1-thevancedgamer@mentallysanemainliners.org>
- <20251127174946.89981-10-thevancedgamer@mentallysanemainliners.org>
-Content-Language: en-US
-From: Denis Kenzior <denkenz@gmail.com>
-In-Reply-To: <20251127174946.89981-10-thevancedgamer@mentallysanemainliners.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
+X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
+Content-Type: text/plain; charset=UTF-8
 
-Hi Muhammad,
+This modem is a PCIe MBIM modem, found in a lot of modern laptops,
+like the Lenovo ThinkPad X1. Unfortunately, oFono does not support
+PCIe MBIM modems out of the box, so this patch adds support for them,
+as well as MBIM extensions which are needed for newer modems.
 
-On 11/27/25 11:49 AM, Muhammad Asif wrote:
-> Signed-off-by: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
+Changes from v5:
+- Fixed the ugly commit messages (truly sorry about that!)
+- Fixed patch corruption (git decided it wasn't having it)
+- Migrated from existing code using DIR* to GIO
+- Improved MBIMEx naming and functions
 
-No Signed-off-by for oFono contributions.  Please see HACKING, "Submitting 
-patches" section.
+Muhammad Asif (9):
+  sim: add ofono_sim_get_modem method
+  plugins/udevng: Add support for PCIe MBIM modems
+  mbimmodem: add support for MBIM extensions
+  plugins/udevng: Add support for the MediaTek T700 5G modem
+  mbimmodem: sim: add support for querying IMSI with MBIMEx 3
+  mbimmodem: sim: add support for querying ICCID
+  mbim-message: Add support for parsing both UTF8/16 strings
+  mbim: Add support for nested fixed arrays in arrays/structs
+  mbim/network-registration: add support for manual registration
 
-> ---
->   drivers/mbimmodem/mbim.c |   5 +
->   drivers/mbimmodem/mbim.h |  16 +++
->   drivers/mbimmodem/sim.c  | 223 ++++++++++++++++++++++++++++++++++-----
->   drivers/mbimmodem/util.c |  37 +++++++
->   drivers/mbimmodem/util.h |   1 +
->   5 files changed, 255 insertions(+), 27 deletions(-)
-> 
+ drivers/mbimmodem/gprs-context.c         |  64 ++++--
+ drivers/mbimmodem/gprs.c                 |   2 +-
+ drivers/mbimmodem/mbim-message.c         |  51 +++--
+ drivers/mbimmodem/mbim.c                 |  18 ++
+ drivers/mbimmodem/mbim.h                 |  37 ++++
+ drivers/mbimmodem/mbimmodem.h            |   1 +
+ drivers/mbimmodem/network-registration.c | 103 +++++++++-
+ drivers/mbimmodem/sim.c                  | 248 ++++++++++++++++++++++-
+ drivers/mbimmodem/sms.c                  |   5 +-
+ drivers/mbimmodem/util.c                 |  56 +++++
+ drivers/mbimmodem/util.h                 |   3 +
+ include/sim.h                            |   2 +
+ plugins/mbim.c                           |  39 ++++
+ plugins/udevng.c                         |  78 ++++++-
+ src/sim.c                                |   5 +
+ 15 files changed, 670 insertions(+), 42 deletions(-)
 
-This patch seems to be corrupt:
+--=20
+2.52.0
 
-[denkenz@archdev ofono]$ git am 
-~/Downloads/v5-09-10-mbimmodem-add-support-for-SIM-I-O-operations.patch
-Applying: mbimmodem: add support for SIM I/O operations
-error: corrupt patch at line 423
-Patch failed at 0001 mbimmodem: add support for SIM I/O operations
-hint: Use 'git am --show-current-patch=diff' to see the failed patch
-hint: When you have resolved this problem, run "git am --continue".
-hint: If you prefer to skip this patch, run "git am --skip" instead.
-hint: To restore the original branch and stop patching, run "git am --abort".
-hint: Disable this message with "git config set advice.mergeConflict false"
-[denkenz@archdev ofono]$ git am --abort
-
-Regards,
--Denis
