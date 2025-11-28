@@ -1,34 +1,34 @@
 Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE2983054DE
-	for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 17:18:23 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE5CF329E48
+	for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 17:18:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764350306; cv=none; b=ZOZ1MUC5zf/DD3SeapzMRYWbLa2pvIw8ug9tKnNJ+OqyRtG28y2FL4OyhOattDgSayczArVZ9xNYm3fxd2d9ME+Mq29fymSvOw9JcfudsOBq3t6UQPR8LMiVRW92SGryZn/3c2mjYp+DaprZinP6xpeekyIRzyTxMDuUE4JVpMc=
+	t=1764350308; cv=none; b=R/HFnwASNRM/QwU/Ms1NYGgpk/pgvB4lgwDaLXc7uwnl8RcrZLR0qv/EhwQsrIjTSWWzBvcbFc/HRu/ALsgnIDibT6iXLl4UnkArRhGrcnupmKiV2eLWj0Omws/iFMNIV/7yaDuCjQZp7PAbOeFdYtOetsyHSdwnvZIRZ7ebaPU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764350306; c=relaxed/simple;
-	bh=Pau/BlUZPB9s58F1Z/Wmd2XqQIaMgHpKbXShjCF1ucE=;
+	s=arc-20240116; t=1764350308; c=relaxed/simple;
+	bh=3xYccOLNcjG/DxtmeS8WW59xuiUXwjaJpt7PQErPqRQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=HxQYQHDqmvJ/H8FEeBkTAG2WNNOphl3rRAHmdHn3hlFCC3PAZO9VTfHI+s2SgwGedtV++wmzIIvqpxL5QKUijGwJPWhQVKVu3AkZQFTRb3JywGQ2CVw6uVwgC8blrANT3yplNnlpFTrbWQ11vHhXQty1eSv5UsTCpfSsDgBYd4M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=SgUpLt7h; arc=none smtp.client-ip=34.202.193.197
+	 MIME-Version:Content-Type; b=YzoKE7aoFRt9aLJgVeP2d1gvPEkQWB7Ve3m4Q3kN++XIQoDUIEHqfeVKhBUXKQaTB6VIo+c+ubqMOFcyPOOG/DJPXKlnssKhqgFJ9cwNH+rr7MBUGRSTvkwXIlrFog/X7nmzkX2+UZ4iQc154KhH8lGO2bcT/ZJ3Omz5tTEXUHw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=ggW5l/2p; arc=none smtp.client-ip=34.202.193.197
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="SgUpLt7h"
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="ggW5l/2p"
 Authentication-Results: purelymail.com; auth=pass
-DKIM-Signature: a=rsa-sha256; b=SgUpLt7h6o4pi471TCVHCZhby9PoX31wKtVABTxgCzAIxKTqW21jZB8omkN41DZQ9M4L6EOmDSzXAxnhloZegIFpNeGkX+wWgRqPsgCPYwxFTgUjUKEkPeYxO4peFXemiW7T5YdD5Y8wedFe2dTMUENFRk8GlOIHuEJO19bIaJFkwfLkh70STBWAaIKM6CZwS2OlvrNAQMmwcnUH7vRBjl35b4KOzu8UlUDIkVyGOb1DH2NF+yXnqd9nnmvor5+kZphy28PV+wqQF8z1M8+Fd+UssKZcwUDbXkJ1pEd5OtLR3IyksItt5+TAuzNC23ba1KoVVgbDHxBhhWutymyFFw==; s=purelymail2; d=purelymail.com; v=1; bh=Pau/BlUZPB9s58F1Z/Wmd2XqQIaMgHpKbXShjCF1ucE=; h=Feedback-ID:Received:From:To:Subject:Date;
+DKIM-Signature: a=rsa-sha256; b=ggW5l/2po+E224xFnDnTjKQX8eI1gwtLyiEaAttv4rwY+7cVCoLetX6W3AyNPeLsoQNdfGsV/TkEyp/TgHSg4dVYy4GTGWtZECGOjOXCV/5E44yK+QIizzLBhrJu1jWhBnzaElPuOU95rZSH1QqAgB7OSdlE9ufOcF72v26w8MqeuprAnEVLrH9ZzhBVdPFxPrxNeQ9wfPiggSSdflcH8QwKKF8WaaKy8csnp3O6Vn35xSsyoiF2qNvg9ToiddKTDtA/SEFMqVmHQMaoiHzMo6xgEDBo/bWzGSemIViqMbJ41/9WBkrs40Q+KXOmuk48bKTCp1tG9Vds63q8BvVPNg==; s=purelymail2; d=purelymail.com; v=1; bh=3xYccOLNcjG/DxtmeS8WW59xuiUXwjaJpt7PQErPqRQ=; h=Feedback-ID:Received:From:To:Subject:Date;
 Feedback-ID: 68221:10037:null:purelymail
 X-Pm-Original-To: ofono@lists.linux.dev
 Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id -2023556145;
           (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
-          Fri, 28 Nov 2025 17:18:20 +0000 (UTC)
+          Fri, 28 Nov 2025 17:18:21 +0000 (UTC)
 From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 To: ofono <ofono@lists.linux.dev>
 Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-Subject: [PATCH v6 2/9] plugins/udevng: Add support for PCIe MBIM modems
-Date: Fri, 28 Nov 2025 22:17:40 +0500
-Message-ID: <20251128171747.32679-3-thevancedgamer@mentallysanemainliners.org>
+Subject: [PATCH v6 3/9] mbimmodem: add support for MBIM extensions
+Date: Fri, 28 Nov 2025 22:17:41 +0500
+Message-ID: <20251128171747.32679-4-thevancedgamer@mentallysanemainliners.org>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251128171747.32679-1-thevancedgamer@mentallysanemainliners.org>
 References: <20251128171747.32679-1-thevancedgamer@mentallysanemainliners.org>
@@ -42,108 +42,351 @@ Content-Transfer-Encoding: quoted-printable
 X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
 Content-Type: text/plain; charset=UTF-8
 
-Parses through the sysfs tree and detects MBIM control nodes, net and
-AT nodes
+With MBIMEx 3.0, arguments for activating GPRS changed. Update as
+needed.
 ---
- plugins/udevng.c | 77 +++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 76 insertions(+), 1 deletion(-)
+ drivers/mbimmodem/gprs-context.c | 64 +++++++++++++++++++++++++-------
+ drivers/mbimmodem/mbim.c         | 13 +++++++
+ drivers/mbimmodem/mbim.h         |  6 +++
+ drivers/mbimmodem/mbimmodem.h    |  1 +
+ drivers/mbimmodem/sim.c          | 31 +++++++++++++---
+ drivers/mbimmodem/util.c         |  1 -
+ plugins/mbim.c                   | 39 +++++++++++++++++++
+ 7 files changed, 134 insertions(+), 21 deletions(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 18954d44..e779524c 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1182,6 +1182,80 @@ static gboolean setup_quectelqmi(struct modem_info *=
-modem)
- =09return TRUE;
+diff --git a/drivers/mbimmodem/gprs-context.c b/drivers/mbimmodem/gprs-cont=
+ext.c
+index c420e300..31bf6ef3 100644
+--- a/drivers/mbimmodem/gprs-context.c
++++ b/drivers/mbimmodem/gprs-context.c
+@@ -91,6 +91,8 @@ static void mbim_gprs_deactivate_primary(struct ofono_gpr=
+s_context *gc,
+ =09=09=09=09=09ofono_gprs_context_cb_t cb, void *data)
+ {
+ =09struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++=09struct ofono_modem *modem =3D ofono_gprs_context_get_modem(gc);
++=09uint16_t mbimex_version =3D ofono_modem_get_integer(modem, "MBIMExVersi=
+on");
+ =09struct mbim_message *message;
+=20
+ =09DBG("cid %u", cid);
+@@ -102,9 +104,16 @@ static void mbim_gprs_deactivate_primary(struct ofono_=
+gprs_context *gc,
+ =09message =3D mbim_message_new(mbim_uuid_basic_connect,
+ =09=09=09=09=09MBIM_CID_CONNECT,
+ =09=09=09=09=09MBIM_COMMAND_TYPE_SET);
+-=09mbim_message_set_arguments(message, "uusssuuu16y",
+-=09=09=09=09=09cid, 0, NULL, NULL, NULL, 0, 0, 0,
+-=09=09=09=09=09mbim_context_type_internet);
++
++=09if (mbim_device_mbimex_version_at_least(mbimex_version, 3, 0)) {
++=09=09mbim_message_set_arguments(message, "uuuuu16yussss",
++=09=09=09=09=09=09cid, 0, 0, 0, 0, mbim_context_type_internet,
++=09=09=09=09=09=090, NULL, NULL, NULL, NULL);
++=09} else {
++=09=09mbim_message_set_arguments(message, "uusssuuu16y",
++=09=09=09=09=09=09cid, 0, NULL, NULL, NULL, 0, 0, 0,
++=09=09=09=09=09=09mbim_context_type_internet);
++=09}
+=20
+ =09if (mbim_device_send(gcd->device, GPRS_CONTEXT_GROUP, message,
+ =09=09=09=09mbim_deactivate_cb, gc, NULL) > 0)
+@@ -121,6 +130,7 @@ static void mbim_ip_configuration_cb(struct mbim_messag=
+e *message, void *user)
+ =09struct ofono_gprs_context *gc =3D user;
+ =09struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ =09struct ofono_modem *modem =3D ofono_gprs_context_get_modem(gc);
++=09uint16_t mbimex_version =3D ofono_modem_get_integer(modem, "MBIMExVersi=
+on");
+ =09const char *interface;
+ =09uint32_t session_id;
+ =09uint32_t ipv4_config_available;
+@@ -288,10 +298,18 @@ error:
+ =09message =3D mbim_message_new(mbim_uuid_basic_connect,
+ =09=09=09=09=09MBIM_CID_CONNECT,
+ =09=09=09=09=09MBIM_COMMAND_TYPE_SET);
+-=09mbim_message_set_arguments(message, "uusssuuu16y",
++
++=09if (mbim_device_mbimex_version_at_least(mbimex_version, 3, 0)) {
++=09=09mbim_message_set_arguments(message, "uuuuu16yussss",
++=09=09=09=09=09gcd->active_context, 0, 0, 0, 0,
++=09=09=09=09=09mbim_context_type_internet, 0, NULL,
++=09=09=09=09=09NULL, NULL, NULL);
++=09} else {
++=09=09mbim_message_set_arguments(message, "uusssuuu16y",
+ =09=09=09=09=09gcd->active_context, 0,
+ =09=09=09=09=09NULL, NULL, NULL, 0, 0, 0,
+ =09=09=09=09=09mbim_context_type_internet);
++=09}
+=20
+ =09if (!mbim_device_send(gcd->device, GPRS_CONTEXT_GROUP, message,
+ =09=09=09=09NULL, NULL, NULL))
+@@ -331,6 +349,8 @@ static void mbim_gprs_activate_primary(struct ofono_gpr=
+s_context *gc,
+ =09=09=09=09ofono_gprs_context_cb_t cb, void *data)
+ {
+ =09struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++=09struct ofono_modem *modem =3D ofono_gprs_context_get_modem(gc);
++=09uint16_t mbimex_version =3D ofono_modem_get_integer(modem, "MBIMExVersi=
+on");
+ =09struct mbim_message *message;
+ =09const char *username =3D NULL;
+ =09const char *password =3D NULL;
+@@ -352,16 +372,32 @@ static void mbim_gprs_activate_primary(struct ofono_g=
+prs_context *gc,
+ =09message =3D mbim_message_new(mbim_uuid_basic_connect,
+ =09=09=09=09=09MBIM_CID_CONNECT,
+ =09=09=09=09=09MBIM_COMMAND_TYPE_SET);
+-=09mbim_message_set_arguments(message, "uusssuuu16y",
+-=09=09=09=09ctx->cid,
+-=09=09=09=091, /* MBIMActivationCommandActivate */
+-=09=09=09=09ctx->apn,
+-=09=09=09=09username,
+-=09=09=09=09password,
+-=09=09=09=090, /*MBIMCompressionNone */
+-=09=09=09=09auth_method_to_auth_protocol(ctx->auth_method),
+-=09=09=09=09proto_to_context_ip_type(ctx->proto),
+-=09=09=09=09mbim_context_type_internet);
++
++=09if (mbim_device_mbimex_version_at_least(mbimex_version, 3, 0)) {
++=09=09mbim_message_set_arguments(message, "uuuuu16yussss",
++=09=09=09ctx->cid,
++=09=09=091, /* MBIMActivationCommandActivate */
++=09=09=090, /* MBIMCompressionNone */
++=09=09=09auth_method_to_auth_protocol(ctx->auth_method),
++=09=09=09proto_to_context_ip_type(ctx->proto),
++=09=09=09mbim_context_type_internet,
++=09=09=090, /* MBIMMediaTypeNone */
++=09=09=09ctx->apn,
++=09=09=09username,
++=09=09=09password,
++=09=09=09NULL);
++=09} else {
++=09=09mbim_message_set_arguments(message, "uusssuuu16y",
++=09=09=09ctx->cid,
++=09=09=091, /* MBIMActivationCommandActivate */
++=09=09=09ctx->apn,
++=09=09=09username,
++=09=09=09password,
++=09=09=090, /* MBIMCompressionNone */
++=09=09=09auth_method_to_auth_protocol(ctx->auth_method),
++=09=09=09proto_to_context_ip_type(ctx->proto),
++=09=09=09mbim_context_type_internet);
++=09}
+=20
+ =09if (mbim_device_send(gcd->device, GPRS_CONTEXT_GROUP, message,
+ =09=09=09=09mbim_activate_cb, gc, NULL) > 0)
+diff --git a/drivers/mbimmodem/mbim.c b/drivers/mbimmodem/mbim.c
+index c405761d..cd642515 100644
+--- a/drivers/mbimmodem/mbim.c
++++ b/drivers/mbimmodem/mbim.c
+@@ -107,6 +107,11 @@ const uint8_t mbim_context_type_local[] =3D {
+ =090x03, 0x3C, 0x39, 0xF6, 0x0D, 0xB9,
+ };
+=20
++const uint8_t mbim_ms_basic_connect_extensions[] =3D {
++=090x3D, 0x01, 0xDC, 0xC5, 0xFE, 0xF5, 0x4D, 0x05, 0x0D, 0x3A,
++=090xBE, 0xF7, 0x05, 0x8E, 0x9A, 0xAF,
++};
++
+ struct message_assembly_node {
+ =09struct mbim_message_header msg_hdr;
+ =09struct mbim_fragment_header frag_hdr;
+@@ -1039,6 +1044,14 @@ bool mbim_device_set_ready_handler(struct mbim_devic=
+e *device,
+ =09return true;
  }
 =20
-+static void setup_mbim_pci(struct device_info *info,
-+=09=09=09=09const char **ctl,
-+=09=09=09=09const char **net,
-+=09=09=09=09const char **atcmd)
++bool mbim_device_mbimex_version_at_least(uint16_t mbimex_version,
++=09=09=09=09=09int version_major, int version_minor)
 +{
-+=09struct udev *udev =3D udev_new();
-+=09struct udev_device *wwan_device, *sub_device;
-+
-+=09GDir *dir =3D NULL, *subdir =3D NULL;
-+=09const gchar *filename =3D NULL, *subfile =3D NULL;
-+=09gchar *path =3D NULL;
-+=09gchar *wwan_path =3D NULL, *sub_path =3D NULL;
-+=09const char *sub_subsystem =3D NULL;
-+=09const char *type =3D NULL;
-+
-+=09/* Create a path to the WWAN subsystem in sysfs */
-+=09path =3D g_build_path("/", udev_device_get_syspath(info->udev_device),
-+=09=09=09=09=09=09=09"wwan", NULL);
-+
-+=09dir =3D g_dir_open(path, 0, NULL);
-+=09if (!dir)
-+=09=09goto cleanup;
-+
-+=09while ((filename =3D g_dir_read_name(dir))) {
-+=09=09/* Build a path to the WWAN interface (e.g. wwan0) */
-+=09=09wwan_path =3D g_build_path("/", path,
-+=09=09=09=09=09=09=09filename, NULL);
-+
-+=09=09wwan_device =3D udev_device_new_from_syspath(udev,
-+=09=09=09=09=09=09=09wwan_path);
-+=09=09*net =3D g_strdup(udev_device_get_sysname(wwan_device));
-+
-+=09=09/* Parse all the subdirectories now */
-+=09=09subdir =3D g_dir_open(wwan_path, 0, NULL);
-+=09=09if (!g_file_test(wwan_path, G_FILE_TEST_IS_DIR) ||
-+=09=09=09=09!subdir) {
-+=09=09=09udev_device_unref(wwan_device);
-+=09=09=09g_free(wwan_path);
-+=09=09=09continue;
-+=09=09}
-+
-+=09=09while ((subfile =3D g_dir_read_name(subdir))) {
-+=09=09=09/* Build a path to the subsystems for the WWAN control nodes */
-+=09=09=09sub_path =3D g_build_filename("/", wwan_path,
-+=09=09=09=09=09=09=09=09=09subfile, NULL);
-+
-+=09=09=09sub_device =3D udev_device_new_from_syspath(udev,
-+=09=09=09=09=09=09=09=09sub_path);
-+=09=09=09sub_subsystem =3D udev_device_get_subsystem(sub_device);
-+
-+=09=09=09if (g_strcmp0(sub_subsystem, "wwan") =3D=3D 0) {
-+=09=09=09=09type =3D udev_device_get_sysattr_value(sub_device, "type");
-+
-+=09=09=09=09/* Detect the subsystem of the subdirectories */
-+=09=09=09=09if (g_strcmp0(type, "MBIM") =3D=3D 0)
-+=09=09=09=09=09*ctl =3D g_strdup(udev_device_get_devnode(sub_device));
-+=09=09=09=09else if (g_strcmp0(type, "AT") =3D=3D 0)
-+=09=09=09=09=09*atcmd =3D g_strdup(udev_device_get_devnode(sub_device));
-+=09=09=09}
-+
-+=09=09=09udev_device_unref(sub_device);
-+=09=09=09g_free(sub_path);
-+=09=09}
-+=09=09g_dir_close(subdir);
-+=09=09udev_device_unref(wwan_device);
-+=09=09g_free(wwan_path);
-+=09}
-+
-+cleanup:
-+=09g_dir_close(dir);
-+=09g_free(path);
-+=09udev_unref(udev);
++=09return ((mbimex_version >> 8) > version_major) ||
++=09=09=09(((mbimex_version >> 8) =3D=3D version_major) &&
++=09=09=09((mbimex_version & 0xFF) >=3D version_minor));
 +}
 +
- static gboolean setup_mbim(struct modem_info *modem)
- {
- =09const char *ctl =3D NULL, *net =3D NULL, *atcmd =3D NULL;
-@@ -1206,7 +1280,8 @@ static gboolean setup_mbim(struct modem_info *modem)
- =09=09else if (g_strcmp0(subsystem, "tty") =3D=3D 0) {
- =09=09=09if (g_strcmp0(info->number, "02") =3D=3D 0)
- =09=09=09=09atcmd =3D info->devnode;
--=09=09}
-+=09=09} else if (g_strcmp0(subsystem, "pci") =3D=3D 0)
-+=09=09=09setup_mbim_pci(info, &ctl, &net, &atcmd);
- =09}
+ uint32_t mbim_device_send(struct mbim_device *device, uint32_t gid,
+ =09=09=09=09struct mbim_message *message,
+ =09=09=09=09mbim_device_reply_func_t function,
+diff --git a/drivers/mbimmodem/mbim.h b/drivers/mbimmodem/mbim.h
+index 5f15d0a2..7101d811 100644
+--- a/drivers/mbimmodem/mbim.h
++++ b/drivers/mbimmodem/mbim.h
+@@ -31,6 +31,8 @@ struct mbim_message;
+ #define MBIM_CID_IP_PACKET_FILTERS=09=0923
+ #define MBIM_CID_MULTICARRIER_PROVIDERS=09=0924
 =20
- =09if (ctl =3D=3D NULL || net =3D=3D NULL)
++#define MBIM_CID_MS_BASIC_CONNECT_EXTENSIONS_VERSION=0915
++
+ #define MBIM_CID_SMS_CONFIGURATION=09=091
+ #define MBIM_CID_SMS_READ=09=09=092
+ #define MBIM_CID_SMS_SEND=09=09=093
+@@ -87,6 +89,7 @@ extern const uint8_t mbim_uuid_phonebook[];
+ extern const uint8_t mbim_uuid_stk[];
+ extern const uint8_t mbim_uuid_auth[];
+ extern const uint8_t mbim_uuid_dss[];
++extern const uint8_t mbim_ms_basic_connect_extensions[];
+=20
+ extern const uint8_t mbim_context_type_none[];
+ extern const uint8_t mbim_context_type_internet[];
+@@ -118,6 +121,9 @@ bool mbim_device_set_ready_handler(struct mbim_device *=
+device,
+ =09=09=09=09=09void *user_data,
+ =09=09=09=09=09mbim_device_destroy_func_t destroy);
+=20
++bool mbim_device_mbimex_version_at_least(uint16_t mbimex_version,
++=09=09=09=09=09int version_major, int version_minor);
++
+ uint32_t mbim_device_send(struct mbim_device *device, uint32_t gid,
+ =09=09=09=09struct mbim_message *message,
+ =09=09=09=09mbim_device_reply_func_t function,
+diff --git a/drivers/mbimmodem/mbimmodem.h b/drivers/mbimmodem/mbimmodem.h
+index 96432738..7cec3249 100644
+--- a/drivers/mbimmodem/mbimmodem.h
++++ b/drivers/mbimmodem/mbimmodem.h
+@@ -14,3 +14,4 @@ enum MBIM_GROUP {
+ =09GPRS_GROUP =3D 4,
+ =09GPRS_CONTEXT_GROUP =3D 101,
+ };
++
+diff --git a/drivers/mbimmodem/sim.c b/drivers/mbimmodem/sim.c
+index df8d73ce..1e932b76 100644
+--- a/drivers/mbimmodem/sim.c
++++ b/drivers/mbimmodem/sim.c
+@@ -385,7 +385,9 @@ static void mbim_subscriber_ready_status_changed(struct=
+ mbim_message *message,
+ =09=09=09=09=09=09=09=09void *user)
+ {
+ =09struct ofono_sim *sim =3D user;
++=09struct ofono_modem *modem =3D ofono_sim_get_modem(sim);
+ =09struct sim_data *sd =3D ofono_sim_get_data(sim);
++=09uint16_t mbimex_version =3D ofono_modem_get_integer(modem, "MBIMExVersi=
+on");
+ =09uint32_t ready_state;
+ =09char *imsi;
+ =09char *iccid;
+@@ -393,9 +395,17 @@ static void mbim_subscriber_ready_status_changed(struc=
+t mbim_message *message,
+=20
+ =09DBG("");
+=20
+-=09if (!mbim_message_get_arguments(message, "ussu",
+-=09=09=09=09=09&ready_state, &imsi,
+-=09=09=09=09=09&iccid, &ready_info))
++=09if (mbim_device_mbimex_version_at_least(mbimex_version, 3, 0)) {
++=09=09r =3D mbim_message_get_arguments(message, "uussu",
++=09=09=09=09=09=09&ready_state, &ready_flags, &imsi,
++=09=09=09=09=09=09&iccid, &ready_info);
++=09} else {
++=09=09r =3D mbim_message_get_arguments(message, "ussu",
++=09=09=09=09=09=09&ready_state, &imsi,
++=09=09=09=09=09=09&iccid, &ready_info);
++=09}
++
++=09if (!r)
+ =09=09return;
+=20
+ =09l_free(sd->iccid);
+@@ -413,7 +423,9 @@ static void mbim_subscriber_ready_status_cb(struct mbim=
+_message *message,
+ =09=09=09=09=09=09=09=09void *user)
+ {
+ =09struct ofono_sim *sim =3D user;
++=09struct ofono_modem *modem =3D ofono_sim_get_modem(sim);
+ =09struct sim_data *sd =3D ofono_sim_get_data(sim);
++=09uint16_t mbimex_version =3D ofono_modem_get_integer(modem, "MBIMExVersi=
+on");
+ =09uint32_t ready_state;
+ =09char *imsi;
+ =09char *iccid;
+@@ -426,9 +438,16 @@ static void mbim_subscriber_ready_status_cb(struct mbi=
+m_message *message,
+ =09=09goto error;
+=20
+ =09/* We don't bother parsing MSISDN/MDN array */
+-=09r =3D mbim_message_get_arguments(message, "ussu",
+-=09=09=09=09=09&ready_state, &imsi,
+-=09=09=09=09=09&iccid, &ready_info);
++=09if (mbim_device_mbimex_version_at_least(mbimex_version, 3, 0)) {
++=09=09r =3D mbim_message_get_arguments(message, "uussu",
++=09=09=09=09=09=09&ready_state, &ready_flags, &imsi,
++=09=09=09=09=09=09&iccid, &ready_info);
++=09} else {
++=09=09r =3D mbim_message_get_arguments(message, "ussu",
++=09=09=09=09=09=09&ready_state, &imsi,
++=09=09=09=09=09=09&iccid, &ready_info);
++=09}
++
+ =09if (!r)
+ =09=09goto error;
+=20
+diff --git a/drivers/mbimmodem/util.c b/drivers/mbimmodem/util.c
+index b4e61d69..4a3d9627 100644
+--- a/drivers/mbimmodem/util.c
++++ b/drivers/mbimmodem/util.c
+@@ -37,4 +37,3 @@ int mbim_data_class_to_tech(uint32_t n)
+=20
+ =09return -1;
+ }
+-
+diff --git a/plugins/mbim.c b/plugins/mbim.c
+index eeedfdac..6d75a106 100644
+--- a/plugins/mbim.c
++++ b/plugins/mbim.c
+@@ -281,6 +281,29 @@ error:
+ =09mbim_device_shutdown(md->device);
+ }
+=20
++static void mbim_device_mbimex_version_cb(struct mbim_message *message,
++=09=09=09=09=09=09=09=09void *user)
++{
++=09struct ofono_modem *modem =3D user;
++=09uint16_t mbim_version, mbimex_version;
++
++=09if (mbim_message_get_error(message) !=3D 0) {
++=09=09/* Fallback to MBIM 1.0 with no extensions */
++=09=09mbim_version =3D (1 << 8) | 0;
++=09=09mbimex_version =3D (0 << 8) | 0;
++=09=09goto version_set;
++=09}
++
++=09mbim_message_get_arguments(message, "qq",
++=09=09&mbim_version, &mbimex_version);
++
++version_set:
++=09ofono_modem_set_integer(modem, "MBIMVersion",
++=09=09mbim_version);
++=09ofono_modem_set_integer(modem, "MBIMExVersion",
++=09=09mbimex_version);
++}
++
+ static void mbim_device_closed(void *user_data)
+ {
+ =09struct ofono_modem *modem =3D user_data;
+@@ -298,6 +321,22 @@ static void mbim_device_ready(void *user_data)
+ =09struct mbim_data *md =3D ofono_modem_get_data(modem);
+ =09struct mbim_message *message;
+=20
++=09/* Version is formatted as (major version) << 8 | (minor version) */
++=09static const uint16_t mbim_version =3D (1 << 8) | 0;
++
++=09/* Always open with MBIMEx 3, devices not supporting it will fallback t=
+o MBIMEx 2 */
++=09static const uint16_t mbimex_version =3D (3 << 8) | 0;
++
++=09message =3D mbim_message_new(mbim_ms_basic_connect_extensions,
++=09=09=09=09=09MBIM_CID_MS_BASIC_CONNECT_EXTENSIONS_VERSION,
++=09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
++=09mbim_message_set_arguments(message, "qq",
++=09=09=09=09=09mbim_version,
++=09=09=09=09=09mbimex_version);
++
++=09mbim_device_send(md->device, 0, message,
++=09=09=09=09mbim_device_mbimex_version_cb, modem, NULL);
++
+ =09message =3D mbim_message_new(mbim_uuid_basic_connect,
+ =09=09=09=09=09MBIM_CID_DEVICE_CAPS,
+ =09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
 --=20
 2.52.0
 
