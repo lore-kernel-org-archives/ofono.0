@@ -1,261 +1,107 @@
-Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8922332EB2
-	for <ofono@lists.linux.dev>; Fri, 28 Nov 2025 17:37:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
+Received: from spindle.queued.net (spindle.queued.net [45.33.49.30])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 9865A275844
+	for <ofono@lists.linux.dev>; Wed, 10 Dec 2025 04:06:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.33.49.30
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764351450; cv=none; b=JmbocSrAk3phmWRjXemuV3v8wwaSC2oxa+QXuhHiPvTHm85RSzJOwNNlqGKqtdWsDZjbd+9u/mP2j5C2OSkjNcs0u0qnUAPE8ZvWG76PrSDf5UbjZUeNVcn92x52q954ZH1twT7G/7W7FlvaPKlqJv8H06E5rr8KikFFoK++Jd8=
+	t=1765339613; cv=none; b=STGjv72RU5bTabMSt9qUFTUjz1CgIrAloH3VVvLl+eXG0kM+kqp8ByLYTHmLMecP+cCMDOEpyIB3M10ycfg31Z2kUO0idlTCNzUTkqTC3zksrYC3olx2mgs+dldKEo/9n+0meJdEB9Xxw3U0m9JxQ24CjidzRwZPdu6I5Glwp/M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764351450; c=relaxed/simple;
-	bh=RP1yo7B3p6fFkdgpYv6osGo30mJnzcaSQVyua7+vYW8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=b6Os+vWNWP78IxRvBNUKeOqtshXgjoTSzJ3sIXtOSiA6qdUZxXtFOajwvqpsHpyjOpi5ilIVRcGd1uY0r4I3Px7dAY9dp5TXmi8Ji9s2HbFMUNGzUqrwkWG+kQN6+d6ZoQNodnCyCTW4CW9qXfo5dAx91Zi9+9EnNnGfTUseqJY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=Sw/kxZyy; arc=none smtp.client-ip=34.202.193.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="Sw/kxZyy"
-Authentication-Results: purelymail.com; auth=pass
-DKIM-Signature: a=rsa-sha256; b=Sw/kxZyy0G38fehkFC1Y6WvPD9D8R1bmNAcXdi6oTPS78vySsca8/2Nlrog/mVfQ2U9GQ8mzUF9S8MWFgHfWZg7y48lm0y8zIavsOBNVkawAP7JC2kplMFji8MIBJcsEIcmwCOoBPBcG3QS62UhJJwXCvBZoFLJWwpBwdo2Dri7T/i5yimW3eV5K6U1fZuV4Hfg8xDbGz7VJGGj6fHouzOksTu/RSH4QGPb+0OVZ9y8SWkHvi+vA1hTgLxJ2Rxa6KiQOf7beSkvT3hpmLh5hdn+BNk6dRb7WGRGsbbj3noI8LLn0Nkw8/9xKf/TbD3GZTD85gmaAWqOPBMBLCVmKVg==; s=purelymail2; d=purelymail.com; v=1; bh=RP1yo7B3p6fFkdgpYv6osGo30mJnzcaSQVyua7+vYW8=; h=Feedback-ID:Received:From:To:Subject:Date;
-Feedback-ID: 68221:10037:null:purelymail
-X-Pm-Original-To: ofono@lists.linux.dev
-Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id -1079628981;
-          (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
-          Fri, 28 Nov 2025 17:37:25 +0000 (UTC)
-From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-To: ofono <ofono@lists.linux.dev>
-Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-Subject: [PATCH v7 10/10] mbim/network-registration: add support for manual registration
-Date: Fri, 28 Nov 2025 22:36:56 +0500
-Message-ID: <20251128173656.55692-11-thevancedgamer@mentallysanemainliners.org>
-X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20251128173656.55692-1-thevancedgamer@mentallysanemainliners.org>
-References: <20251128173656.55692-1-thevancedgamer@mentallysanemainliners.org>
+	s=arc-20240116; t=1765339613; c=relaxed/simple;
+	bh=5/KvrO1jWhynTvWYw0Navc3Wii3y443tY10evA3sEHo=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type; b=X13QOia3WS2ps4Fe9nwPdkFit4CFw0EjbnC6wCqO4aPorCOqz+L0gZhnBFPNCKosuR2Edw9uB+gxMpQLzu7xUpY6/ElW3IPcIp1262twOa3Pvi2+QMFveDmXiAj9PJCfCIy5ghcDMFxyDYoKio+0i91VgpIYCG+rwAuaiA1647s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net; spf=pass smtp.mailfrom=queued.net; arc=none smtp.client-ip=45.33.49.30
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=queued.net
+Received: by spindle.queued.net (Postfix, from userid 1001)
+	id A1EF6114711; Tue,  9 Dec 2025 23:00:01 -0500 (EST)
+Received: from 5400 (unknown [172.56.167.181])
+	by spindle.queued.net (Postfix) with ESMTPSA id 4B1681146EF
+	for <ofono@lists.linux.dev>; Tue,  9 Dec 2025 23:00:01 -0500 (EST)
+Date: Tue, 9 Dec 2025 22:59:59 -0500
+From: Andres Salomon <dilinger@queued.net>
+To: ofono@lists.linux.dev
+Subject: [PATCH] test: fix list-modems hang & simplify handling of Byte/Bool
+ properties
+Message-ID: <20251209225959.2355f276@5400>
+X-Mailer: Claws Mail 4.3.1 (GTK 3.24.49; x86_64-pc-linux-gnu)
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
-X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
-Content-Type: text/plain; charset=UTF-8
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.5
 
-Adds support for scanning available operators, and manually registering
-to a selected network.
+=46rom 690d6af7b672d883bd7d7b86435ddcfad5bdc15d Mon Sep 17 00:00:00 2001
+From: Andres Salomon <dilinger@queued.net>
+Date: Tue, 9 Dec 2025 22:36:16 -0500
+Subject: [PATCH] test: fix list-modems hang & simplify handling of Byte/Bool
+ properties
+
+Using list-modems with current phonesim (2.0) results in list-modems
+hanging while trying to print SimToolkit's IdleModeIcon property. No
+errors; it just silently hangs. The issue is that it's a dbus.Byte with
+the value b'0' (which python implicitly converts to something that makes
+its i/o and string handling deeply unhappy).
+
+It's unpleasant to have to special-case every dbus.Byte property value,
+so instead let's display Bytes based on their type. That will help
+future-proof this script as new properties get added to interfaces.
+
+While we're at it, also stop implicitly converting dbus.Boolean values
+to "1"/"0", and use "TRUE"/"FALSE" to make it clearer that they  are
+bools.
+
+A small sample of what list-modem's output looks like with phonesim:
+
+task-0:     [ org.ofono.SimToolkit ]
+task-0:         IdleModeText =3D=20
+task-0:         IdleModeIcon =3D 0
+task-0:         MainMenuTitle =3D=20
+task-0:         MainMenuIcon =3D 0
+task-0:         MainMenu =3D=20
+task-0:     [ org.ofono.MessageWaiting ]
+task-0:         VoicemailWaiting =3D TRUE
+task-0:         VoicemailMessageCount =3D 1
+task-0:         VoicemailMailboxNumber =3D 6789
+task-0:     [ org.ofono.SimAuthentication ]
+task-0:         NetworkAccessIdentity =3D 12345678@phonesim.org
+
 ---
- drivers/mbimmodem/mbim.h                 |  15 ++++
- drivers/mbimmodem/network-registration.c | 103 ++++++++++++++++++++++-
- drivers/mbimmodem/util.c                 |  20 +++++
- drivers/mbimmodem/util.h                 |   1 +
- 4 files changed, 138 insertions(+), 1 deletion(-)
+ test/list-modems | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/mbimmodem/mbim.h b/drivers/mbimmodem/mbim.h
-index 70142cc9..b0825060 100644
---- a/drivers/mbimmodem/mbim.h
-+++ b/drivers/mbimmodem/mbim.h
-@@ -80,6 +80,21 @@ enum mbim_data_class {
- =09MBIM_DATA_CLASS_CUSTOM=09=09=3D 0x80000000,
- };
-=20
-+enum mbim_provider_state {
-+=09MBIM_PROVIDER_STATE_UNKNOWN                =3D 0,
-+=09MBIM_PROVIDER_STATE_HOME                   =3D 1 << 0,
-+=09MBIM_PROVIDER_STATE_FORBIDDEN              =3D 1 << 1,
-+=09MBIM_PROVIDER_STATE_PREFERRED              =3D 1 << 2,
-+=09MBIM_PROVIDER_STATE_VISIBLE                =3D 1 << 3,
-+=09MBIM_PROVIDER_STATE_REGISTERED             =3D 1 << 4,
-+=09MBIM_PROVIDER_STATE_PREFERRED_MULTICARRIER =3D 1 << 5
-+};
-+
-+enum mbim_register_type {
-+=09MBIM_REGISTER_TYPE_AUTOMATIC    =3D 0,
-+=09MBIM_REGISTER_TYPE_MANUAL       =3D 1,
-+};
-+
- enum mbim_app_type {
- =09MBIM_APP_UNKNOWN,
- =09MBIM_APP_MF,
-diff --git a/drivers/mbimmodem/network-registration.c b/drivers/mbimmodem/n=
-etwork-registration.c
-index ded1bf69..e95dd73a 100644
---- a/drivers/mbimmodem/network-registration.c
-+++ b/drivers/mbimmodem/network-registration.c
-@@ -204,6 +204,70 @@ static void mbim_current_operator(struct ofono_netreg =
-*netreg,
- =09CALLBACK_WITH_FAILURE(cb, NULL, data);
- }
-=20
-+static void mbim_list_operators_cb(struct mbim_message *message,
-+=09=09=09=09=09=09void *user)
-+{
-+=09struct cb_data *cb =3D user;
-+=09ofono_netreg_operator_list_cb_t cb_func =3D cb->cb;
-+=09struct ofono_network_operator *list =3D NULL;
-+
-+=09uint32_t providers_count, provider_state, cellular_class;
-+=09uint32_t rssi, error_rate;
-+=09char *provider_id, *provider_name;
-+=09struct mbim_message_iter iter;
-+=09int i =3D 0;
-+
-+=09if (!mbim_message_get_arguments(message, "ua(susuuu)", &providers_count=
-, &iter)) {
-+=09=09CALLBACK_WITH_FAILURE(cb_func, 0, NULL, cb->data);
-+=09=09return;
-+=09}
-+
-+=09list =3D l_new(struct ofono_network_operator, providers_count);
-+
-+=09while (mbim_message_iter_next_entry(&iter, &provider_id, &provider_stat=
-e,
-+=09=09=09=09=09&provider_name, &cellular_class, &rssi, &error_rate)) {
-+
-+=09=09strcpy(list[i].name, provider_name);
-+=09=09strncpy(list[i].mcc, provider_id, OFONO_MAX_MCC_LENGTH);
-+=09=09list[i].mcc[OFONO_MAX_MCC_LENGTH] =3D '\0';
-+
-+=09=09strncpy(list[i].mnc, provider_id + OFONO_MAX_MCC_LENGTH, OFONO_MAX_M=
-NC_LENGTH);
-+=09=09list[i].mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
-+
-+=09=09list[i].status =3D mbim_provider_state_to_status(provider_state);
-+=09=09list[i].tech =3D -1;
-+
-+=09=09i++;
-+=09}
-+
-+=09if (list)
-+=09=09CALLBACK_WITH_SUCCESS(cb_func, providers_count, list, cb->data);
-+=09else
-+=09=09CALLBACK_WITH_FAILURE(cb_func, 0, NULL, cb->data);
-+}
-+
-+static void mbim_list_operators(struct ofono_netreg *netreg,
-+=09=09=09=09=09ofono_netreg_operator_list_cb_t cb, void *user_data)
-+{
-+=09struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+=09struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+=09struct mbim_message *message;
-+
-+=09message =3D mbim_message_new(mbim_uuid_basic_connect,
-+=09=09=09=09=09=09MBIM_CID_VISIBLE_PROVIDERS,
-+=09=09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
-+=09/* "0" is a full scan, whereas "1" means a restricted scan */
-+=09mbim_message_set_arguments(message, "u", 0);
-+
-+=09if (mbim_device_send(nd->device, NETREG_GROUP, message,
-+=09=09=09=09=09=09mbim_list_operators_cb, cbd, l_free) > 0)
-+=09=09return;
-+
-+=09l_free(cbd);
-+=09mbim_message_unref(message);
-+=09CALLBACK_WITH_FAILURE(cb, 0, NULL, user_data);
-+}
-+
- static void mbim_register_state_set_cb(struct mbim_message *message, void =
-*user)
- {
- =09struct cb_data *cbd =3D user;
-@@ -233,7 +297,42 @@ static void mbim_register_auto(struct ofono_netreg *ne=
-treg,
- =09message =3D mbim_message_new(mbim_uuid_basic_connect,
- =09=09=09=09=09MBIM_CID_REGISTER_STATE,
- =09=09=09=09=09MBIM_COMMAND_TYPE_SET);
--=09mbim_message_set_arguments(message, "suu", NULL, 0, data_class);
-+=09mbim_message_set_arguments(message, "suu", NULL,
-+=09=09=09=09=09MBIM_REGISTER_TYPE_AUTOMATIC, data_class);
-+
-+=09if (mbim_device_send(nd->device, NETREG_GROUP, message,
-+=09=09=09=09mbim_register_state_set_cb, cbd, l_free) > 0)
-+=09=09return;
-+
-+=09l_free(cbd);
-+=09mbim_message_unref(message);
-+=09CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void mbim_register_manual(struct ofono_netreg *netreg,
-+=09=09=09=09const char *mcc, const char *mnc,
-+=09=09=09=09ofono_netreg_register_cb_t cb, void *data)
-+{
-+=09static const uint32_t data_class =3D MBIM_DATA_CLASS_GPRS |
-+=09=09=09=09=09=09MBIM_DATA_CLASS_EDGE |
-+=09=09=09=09=09=09MBIM_DATA_CLASS_UMTS |
-+=09=09=09=09=09=09MBIM_DATA_CLASS_HSDPA |
-+=09=09=09=09=09=09MBIM_DATA_CLASS_HSUPA |
-+=09=09=09=09=09=09MBIM_DATA_CLASS_LTE;
-+=09struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+=09struct cb_data *cbd =3D cb_data_new(cb, data);
-+=09struct mbim_message *message;
-+=09L_AUTO_FREE_VAR(char *, provider_id) =3D NULL;
-+
-+=09DBG("");
-+
-+=09provider_id =3D l_strdup_printf("%s%s", mcc, mnc);
-+
-+=09message =3D mbim_message_new(mbim_uuid_basic_connect,
-+=09=09=09=09=09MBIM_CID_REGISTER_STATE,
-+=09=09=09=09=09MBIM_COMMAND_TYPE_SET);
-+=09mbim_message_set_arguments(message, "suu", provider_id,
-+=09=09=09=09=09MBIM_REGISTER_TYPE_MANUAL, data_class);
-=20
- =09if (mbim_device_send(nd->device, NETREG_GROUP, message,
- =09=09=09=09mbim_register_state_set_cb, cbd, l_free) > 0)
-@@ -385,7 +484,9 @@ static const struct ofono_netreg_driver driver =3D {
- =09.remove=09=09=09=09=3D mbim_netreg_remove,
- =09.registration_status=09=09=3D mbim_registration_status,
- =09.current_operator=09=09=3D mbim_current_operator,
-+=09.list_operators=09=09=09=3D mbim_list_operators,
- =09.register_auto=09=09=09=3D mbim_register_auto,
-+=09.register_manual=09=09=3D mbim_register_manual,
- =09.strength=09=09=09=3D mbim_signal_strength,
- };
-=20
-diff --git a/drivers/mbimmodem/util.c b/drivers/mbimmodem/util.c
-index 731764fc..45b7af9b 100644
---- a/drivers/mbimmodem/util.c
-+++ b/drivers/mbimmodem/util.c
-@@ -39,6 +39,26 @@ int mbim_data_class_to_tech(uint32_t n)
- =09return -1;
- }
-=20
-+int mbim_provider_state_to_status(uint32_t state)
-+{
-+=09switch (state) {
-+=09case MBIM_PROVIDER_STATE_REGISTERED:
-+=09=09return OPERATOR_STATUS_CURRENT;
-+
-+=09case MBIM_PROVIDER_STATE_VISIBLE:
-+=09case MBIM_PROVIDER_STATE_HOME:
-+=09case MBIM_PROVIDER_STATE_PREFERRED:
-+=09case MBIM_PROVIDER_STATE_PREFERRED_MULTICARRIER:
-+=09=09return OPERATOR_STATUS_AVAILABLE;
-+
-+=09case MBIM_PROVIDER_STATE_FORBIDDEN:
-+=09=09return OPERATOR_STATUS_FORBIDDEN;
-+
-+=09default:
-+=09=09return OPERATOR_STATUS_UNKNOWN;
-+=09}
-+}
-+
- uint8_t *mbim_get_fileid(uint32_t fileid)
- {
- =09/* TODO: Handle MF paths for different app types */
-diff --git a/drivers/mbimmodem/util.h b/drivers/mbimmodem/util.h
-index 2d260fd5..c58a0ec7 100644
---- a/drivers/mbimmodem/util.h
-+++ b/drivers/mbimmodem/util.h
-@@ -43,5 +43,6 @@ static inline struct cb_data *cb_data_new(void *cb, void =
-*data)
- =09} while (0)
-=20
- int mbim_data_class_to_tech(uint32_t n);
-+int mbim_provider_state_to_status(uint32_t state);
- uint8_t *mbim_get_fileid(uint32_t fileid);
-=20
+diff --git a/test/list-modems b/test/list-modems
+index a163791e..1b262482 100755
+--- a/test/list-modems
++++ b/test/list-modems
+@@ -50,14 +50,6 @@ for path, properties in modems:
+ 				for i in properties[key]:
+ 					val +=3D "[" + i + "] =3D '"
+ 					val +=3D properties[key][i] + "' "
+-			elif key in ["MobileNetworkCodeLength",
+-						"VoicemailMessageCount",
+-						"MicrophoneVolume",
+-						"SpeakerVolume",
+-						"Strength",
+-						"DataStrength",
+-						"BatteryChargeLevel"]:
+-				val =3D int(properties[key])
+ 			elif key in ["MainMenu"]:
+ 				val =3D ", ".join([ text + " (" + str(int(icon)) +
+ 					")" for text, icon in properties[key] ])
+@@ -76,6 +68,10 @@ for path, properties in modems:
+ 					else:
+ 						val +=3D properties[key][i]
+ 				val +=3D " }"
++			elif type(properties[key]) =3D=3D dbus.Byte:
++				val =3D int(properties[key])
++			elif type(properties[key]) =3D=3D dbus.Boolean:
++				val =3D str(bool(properties[key])).upper()
+ 			else:
+ 				val =3D properties[key]
+ 			print("        %s =3D %s" % (key, val))
 --=20
-2.52.0
+2.47.3
 
