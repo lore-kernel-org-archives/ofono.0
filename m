@@ -1,24 +1,24 @@
 Received: from spindle.queued.net (spindle.queued.net [45.33.49.30])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 7D91A188713
-	for <ofono@lists.linux.dev>; Fri, 12 Dec 2025 07:32:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id CE8952BDC0E
+	for <ofono@lists.linux.dev>; Fri, 12 Dec 2025 09:13:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.33.49.30
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765524766; cv=none; b=ZfDqIy+THN6+41iJwU5PDosZLFFN8+FyQJJp/1jWiIc03j4uegcRJPriDgnUxhpT4HbB0ZNQ9l5b7tK6IaL8HGi8iRxnUpWBHtBsLUEfa5180ZbGULGzmIG4C99nvPtDrLQP/J/b4Azqb72eN7HOFu8epKaXH9gUjvQ8i33plXU=
+	t=1765530791; cv=none; b=YW59CYEpjw0F5qDSxj337M3G/OW7KS6t9OtW/QeTCdNEnCKkqN0SSLl1eIkd50VPuUQlu5GocJUCFhHnu+2A2euBoYEk8H/9a1riVM11HeTjSiGauNEIYSYV6QGkB4oU0kPOjB6IO4rZpgEE3gyu0esiGITx7x+BAg3XW2OGe1s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765524766; c=relaxed/simple;
-	bh=X8o0fW06VXRPoeiIkIzD8md0fTAATau7zK9RoRExyZE=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:Cc:
-	 In-Reply-To:Content-Type; b=UQ7OZWDRK1h8R2V3JG9973nsbdJtsXZmIf/5o83B+Sr7yeLmDysctRuP2qMpoKAsoBdn8/Ie1/bNHFY1nfs8la9NGZurtwo/ct3YTNgTylV7hg7lbIa3Za1Of6L4y8hKzQNLHfxUdYKmnVq9aVLaFfrcfMwz+EMYV0GKSABdRSc=
+	s=arc-20240116; t=1765530791; c=relaxed/simple;
+	bh=rRRaGGY3PIMMEwd80CZcYN7p3eAXjKquRpn3i6n+kt0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:Cc:From:
+	 In-Reply-To:Content-Type; b=ng/p/sYTi2Ehf5szt8I1ywxTSKZoSCo3oDn4MvRuHh80HVYeqDTA4hRIVqnMn/Vswd7dIZMm1bTfOiJfBIHzpSAW58cu4jSluWuE/kyGnitCbvdvCK9ZOYAvOsjHHGcZucDcQrA4u2+V8HTz/plBMpf9Wbeip5g+4pA7yS8pVyQ=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net; spf=pass smtp.mailfrom=queued.net; arc=none smtp.client-ip=45.33.49.30
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=queued.net
 Received: by spindle.queued.net (Postfix, from userid 1001)
-	id 96E8511408C; Fri, 12 Dec 2025 02:32:38 -0500 (EST)
+	id 2A8FC114B58; Fri, 12 Dec 2025 04:13:09 -0500 (EST)
 Received: from [192.168.12.220] (unknown [172.56.164.103])
-	by spindle.queued.net (Postfix) with ESMTPSA id 407B61129C9;
-	Fri, 12 Dec 2025 02:32:38 -0500 (EST)
-Message-ID: <40c11b5a-4988-4c89-8b79-b15c4a79fdfe@queued.net>
-Date: Fri, 12 Dec 2025 02:32:36 -0500
+	by spindle.queued.net (Postfix) with ESMTPSA id C573611419A;
+	Fri, 12 Dec 2025 04:13:08 -0500 (EST)
+Message-ID: <7c70ff36-d828-413f-9221-b63268b857bf@queued.net>
+Date: Fri, 12 Dec 2025 04:13:07 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -26,13 +26,14 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v7 03/10] mbimmodem: add support for MBIM extensions
+Subject: Re: [PATCH v7 05/10] mbimmodem: sim: add support for querying IMSI
+ with MBIMEx 3
 To: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 References: <20251128173656.55692-1-thevancedgamer@mentallysanemainliners.org>
- <20251128173656.55692-4-thevancedgamer@mentallysanemainliners.org>
+ <20251128173656.55692-6-thevancedgamer@mentallysanemainliners.org>
 Content-Language: en-US
-From: Andres Salomon <dilinger@queued.net>
 Cc: ofono <ofono@lists.linux.dev>
+From: Andres Salomon <dilinger@queued.net>
 Autocrypt: addr=dilinger@queued.net; keydata=
  xsFNBFQBDrEBEADHJO2YfSTJw+WIhkZYeFiQEXxrGhZjRSdWFoeQH4yk+xOoEGYibQQ8nrrT
  omCGcWdABrHW8jBFgDuqhND8V4U0IH7DNzNYSWtUMEuZsjKswoc9+ZGLGFwLdx/6+prXiq1k
@@ -75,90 +76,39 @@ Autocrypt: addr=dilinger@queued.net; keydata=
  XM1uDcCLSjmQRylJAtUh4dBZ9KsMWUbYjXnSUXxyAS7MrNCe52O0GFdovHelTlaWhVBiSGYi
  f1JOwOC58c8y0ckmcEK9SFp3SRPDjCLrH4Fxp22+fywq6aB/4piRClbpnwqnHh5Xs2BkwS+W
  stksZadd/iuwYCTfjhXPCNmgfATirGHXAbknHg+1WE5XC6VIcYRMnqGRaXE72ieCrMw=
-In-Reply-To: <20251128173656.55692-4-thevancedgamer@mentallysanemainliners.org>
+In-Reply-To: <20251128173656.55692-6-thevancedgamer@mentallysanemainliners.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.5
 
 On 11/28/25 12:36, Muhammad Asif wrote:
-> With MBIMEx 3.0, arguments for activating GPRS changed. Update as
-> needed.
+> This commit adds the ability to query IMSI with newer modems that use
+> the MBIMEx 3 protocol.
 > ---
->   drivers/mbimmodem/gprs-context.c | 64 +++++++++++++++++++++++++-------
->   drivers/mbimmodem/mbim.c         | 13 +++++++
->   drivers/mbimmodem/mbim.h         |  6 +++
->   drivers/mbimmodem/mbimmodem.h    |  1 +
->   drivers/mbimmodem/sim.c          | 31 +++++++++++++---
->   drivers/mbimmodem/util.c         |  1 -
->   plugins/mbim.c                   | 39 +++++++++++++++++++
->   7 files changed, 134 insertions(+), 21 deletions(-)
+>   drivers/mbimmodem/sim.c | 3 +++
+>   1 file changed, 3 insertions(+)
 > 
-[...]
-> @@ -281,6 +281,29 @@ error:
->   	mbim_device_shutdown(md->device);
->   }
+> diff --git a/drivers/mbimmodem/sim.c b/drivers/mbimmodem/sim.c
+> index 1e932b76..9df34121 100644
+> --- a/drivers/mbimmodem/sim.c
+> +++ b/drivers/mbimmodem/sim.c
+> @@ -392,6 +392,8 @@ static void mbim_subscriber_ready_status_changed(struct mbim_message *message,
+>   	char *imsi;
+>   	char *iccid;
+>   	uint32_t ready_info;
+> +	uint32_t ready_flags;
+> +	bool r;
 >   
-> +static void mbim_device_mbimex_version_cb(struct mbim_message *message,
-> +								void *user)
-> +{
-> +	struct ofono_modem *modem = user;
-> +	uint16_t mbim_version, mbimex_version;
-> +
-> +	if (mbim_message_get_error(message) != 0) {
-> +		/* Fallback to MBIM 1.0 with no extensions */
-> +		mbim_version = (1 << 8) | 0;
-> +		mbimex_version = (0 << 8) | 0;
-> +		goto version_set;
-> +	}
-> +
-> +	mbim_message_get_arguments(message, "qq",
-> +		&mbim_version, &mbimex_version);
-
-mbim_message_get_arguments() can fail, and the return value should be 
-checked here; I'd rework it to something like this:
-
-if (mbim_message_get_error(message) != 0 ||
-!mbim_message_get_arguments(message, "qq", &mbim_version, 
-&mbimex_version)) {
-	/* fallback to MBIM 1.0 with no extensions */
-	mbim_version = ...
-	mbimex_version = ...
-}
-
-ofono_modem_set_integer(...);
-
-> +
-> +version_set:
-> +	ofono_modem_set_integer(modem, "MBIMVersion",
-> +		mbim_version);
-> +	ofono_modem_set_integer(modem, "MBIMExVersion",
-> +		mbimex_version);
-> +}
-> +
->   static void mbim_device_closed(void *user_data)
->   {
->   	struct ofono_modem *modem = user_data;
-> @@ -298,6 +321,22 @@ static void mbim_device_ready(void *user_data)
->   	struct mbim_data *md = ofono_modem_get_data(modem);
->   	struct mbim_message *message;
+>   	DBG("");
 >   
-> +	/* Version is formatted as (major version) << 8 | (minor version) */
-> +	static const uint16_t mbim_version = (1 << 8) | 0;
-> +
-> +	/* Always open with MBIMEx 3, devices not supporting it will fallback to MBIMEx 2 */
-> +	static const uint16_t mbimex_version = (3 << 8) | 0;
-> +
-> +	message = mbim_message_new(mbim_ms_basic_connect_extensions,
-> +					MBIM_CID_MS_BASIC_CONNECT_EXTENSIONS_VERSION,
-> +					MBIM_COMMAND_TYPE_QUERY);
-> +	mbim_message_set_arguments(message, "qq",
-> +					mbim_version,
-> +					mbimex_version);
-> +
-> +	mbim_device_send(md->device, 0, message,
-> +				mbim_device_mbimex_version_cb, modem, NULL);
-> +
->   	message = mbim_message_new(mbim_uuid_basic_connect,
->   					MBIM_CID_DEVICE_CAPS,
->   					MBIM_COMMAND_TYPE_QUERY);
+> @@ -430,6 +432,7 @@ static void mbim_subscriber_ready_status_cb(struct mbim_message *message,
+>   	char *imsi;
+>   	char *iccid;
+>   	uint32_t ready_info;
+> +	uint32_t ready_flags;
+>   	bool r;
+>   
+>   	DBG("");
 
+
+I think this is meant to be part of patch #3?
