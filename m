@@ -1,24 +1,24 @@
 Received: from spindle.queued.net (spindle.queued.net [45.33.49.30])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id EBF5E2D8DB0
-	for <ofono@lists.linux.dev>; Fri, 12 Dec 2025 10:00:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 173B2169AD2
+	for <ofono@lists.linux.dev>; Fri, 12 Dec 2025 10:33:16 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.33.49.30
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765533620; cv=none; b=f7M/Kcux5+ZNpHTz1lTniwU5qAMmmAVT+CS73lUYw57MM+ECTRR18WfyaQ7chYUcJVFoTgi1qPVyx24w0dPJabYL/KsdnUG6ha6TvdDXLyVr++hy0LPDAs1CQTCl2bmDT0vjJeW0qWVNsmJoQqq6OOT/c1EYzpcFU1ZBgPeAi+A=
+	t=1765535598; cv=none; b=u2kkJ5rRARlrevjTJhbZ3YvAhJUyk/cAcZweHrUP1VffaH01h0LvLbkVVhPmAeOg0Df5lolkszKDOc6BwNWpIqjLezH0/p5qvbbFHgMrUCZOMBgPTlaQ356S0sQpp7Wjcx8BeKC7j1f5GXjL4O+iJN4gv6ILIih9xY6O0FlaO0U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765533620; c=relaxed/simple;
-	bh=VF1CE9VuBu8/5xPPA2yX3hltPJF6iK/LTBfpV858IYc=;
+	s=arc-20240116; t=1765535598; c=relaxed/simple;
+	bh=r6kXqX5yskC2WK9pn+7zgjrGUNF1gbWVP6o6bpgloUA=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:From:Cc:
-	 In-Reply-To:Content-Type; b=FqIDAAAon1sd3BON+3wj+YVXSq3T9Mvm90DdtjOEr0FQE2kIfWuC1YBnyWNE/ITEpkpJy3Bu368bns6N0TbXQWBKzOF4jEOog4u5/DO+37H3/z/x7e1t2Mt8IHWgnlbWL//a6ZLLohezQLWI0PdYEDOv+t2BFEuKKZeNhmuwiUM=
+	 In-Reply-To:Content-Type; b=ITY0BjacXgltNEHx0Zfu8hjeFr3p8aEXBYI0sxTKyJt5VgjYLXgdt2YEomuV6p2H+Dc6k8EwVn4HtvoWmHrl6/CFwQH6S1kyB+eMWpoqVNtWzrVb+MM6wP1EhoDLzCgJrPLwPhlT31KzMsVZFYR2DCbZb/5wmGFsEUIhXpMoR50=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net; spf=pass smtp.mailfrom=queued.net; arc=none smtp.client-ip=45.33.49.30
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=queued.net
 Received: by spindle.queued.net (Postfix, from userid 1001)
-	id 70377114C1C; Fri, 12 Dec 2025 05:00:17 -0500 (EST)
+	id 512D3114C27; Fri, 12 Dec 2025 05:33:16 -0500 (EST)
 Received: from [192.168.12.220] (unknown [172.56.164.103])
-	by spindle.queued.net (Postfix) with ESMTPSA id 19568114C07;
-	Fri, 12 Dec 2025 05:00:17 -0500 (EST)
-Message-ID: <05b3a598-5b0a-440e-a294-8e0807e005b2@queued.net>
-Date: Fri, 12 Dec 2025 05:00:15 -0500
+	by spindle.queued.net (Postfix) with ESMTPSA id EDEF3114C18;
+	Fri, 12 Dec 2025 05:33:15 -0500 (EST)
+Message-ID: <3c333a65-308a-417d-a966-1600eb4e5127@queued.net>
+Date: Fri, 12 Dec 2025 05:33:14 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -26,10 +26,11 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v7 02/10] plugins/udevng: Add support for PCIe MBIM modems
+Subject: Re: [PATCH v7 10/10] mbim/network-registration: add support for
+ manual registration
 To: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 References: <20251128173656.55692-1-thevancedgamer@mentallysanemainliners.org>
- <20251128173656.55692-3-thevancedgamer@mentallysanemainliners.org>
+ <20251128173656.55692-11-thevancedgamer@mentallysanemainliners.org>
 Content-Language: en-US
 From: Andres Salomon <dilinger@queued.net>
 Cc: ofono <ofono@lists.linux.dev>
@@ -75,142 +76,164 @@ Autocrypt: addr=dilinger@queued.net; keydata=
  XM1uDcCLSjmQRylJAtUh4dBZ9KsMWUbYjXnSUXxyAS7MrNCe52O0GFdovHelTlaWhVBiSGYi
  f1JOwOC58c8y0ckmcEK9SFp3SRPDjCLrH4Fxp22+fywq6aB/4piRClbpnwqnHh5Xs2BkwS+W
  stksZadd/iuwYCTfjhXPCNmgfATirGHXAbknHg+1WE5XC6VIcYRMnqGRaXE72ieCrMw=
-In-Reply-To: <20251128173656.55692-3-thevancedgamer@mentallysanemainliners.org>
+In-Reply-To: <20251128173656.55692-11-thevancedgamer@mentallysanemainliners.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.5
 
 On 11/28/25 12:36, Muhammad Asif wrote:
-> Parses through the sysfs tree and detects MBIM control nodes, net and
-> AT nodes
-> ---
->   plugins/udevng.c | 77 +++++++++++++++++++++++++++++++++++++++++++++++-
->   1 file changed, 76 insertions(+), 1 deletion(-)
-> 
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index 18954d44..e779524c 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -1182,6 +1182,80 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
->   	return TRUE;
+> Adds support for scanning available operators, and manually registering
+> to a selected network.
+[...]
+> diff --git a/drivers/mbimmodem/network-registration.c b/drivers/mbimmodem/network-registration.c
+> index ded1bf69..e95dd73a 100644
+> --- a/drivers/mbimmodem/network-registration.c
+> +++ b/drivers/mbimmodem/network-registration.c
+> @@ -204,6 +204,70 @@ static void mbim_current_operator(struct ofono_netreg *netreg,
+>   	CALLBACK_WITH_FAILURE(cb, NULL, data);
 >   }
 >   
-
-FYI, when I said earlier about a comment, what I meant was something 
-describing what's happening here overall. Eg, "/* traverse entries in 
-the /sys/class/wwan/ directory looking for control nodes where 
-wwanX/type == MBIM and/or AT. */"
-
-With the correct text to describe what the function is actually doing, 
-of course. :)
-
-
-> +static void setup_mbim_pci(struct device_info *info,
-> +				const char **ctl,
-> +				const char **net,
-> +				const char **atcmd)
+> +static void mbim_list_operators_cb(struct mbim_message *message,
+> +						void *user)
 > +{
-> +	struct udev *udev = udev_new();
- > +	struct udev_device *wwan_device, *sub_device;> +
-> +	GDir *dir = NULL, *subdir = NULL;
-> +	const gchar *filename = NULL, *subfile = NULL;
-> +	gchar *path = NULL;
-> +	gchar *wwan_path = NULL, *sub_path = NULL;
-> +	const char *sub_subsystem = NULL;
-> +	const char *type = NULL;
- > +> +	/* Create a path to the WWAN subsystem in sysfs */
-> +	path = g_build_path("/", udev_device_get_syspath(info->udev_device),
-> +							"wwan", NULL);
+> +	struct cb_data *cb = user;
+> +	ofono_netreg_operator_list_cb_t cb_func = cb->cb;
+> +	struct ofono_network_operator *list = NULL;
 > +
-> +	dir = g_dir_open(path, 0, NULL);
-> +	if (!dir)
-> +		goto cleanup;
+> +	uint32_t providers_count, provider_state, cellular_class;
+> +	uint32_t rssi, error_rate;
+> +	char *provider_id, *provider_name;
+> +	struct mbim_message_iter iter;
+> +	int i = 0;
 > +
-> +	while ((filename = g_dir_read_name(dir))) {
-> +		/* Build a path to the WWAN interface (e.g. wwan0) */
-> +		wwan_path = g_build_path("/", path,
-> +							filename, NULL);
-> +
-> +		wwan_device = udev_device_new_from_syspath(udev,
-> +							wwan_path);
- > +		*net = g_strdup(udev_device_get_sysname(wwan_device));
-
-This string will be leaked, along with 'net' and 'atcmd' strings below 
-once ofono_modem_set_string() is done with them in the calling function. 
-I wonder if there's a better way to handle this? Eg, returning a bool 
-from this function if ctl/net/atcmd should be g_free()'d after 
-ofono_modem_set_string() is called? Or some other better way to handle this.
-
-
-
-
-> +
-> +		/* Parse all the subdirectories now */
-> +		subdir = g_dir_open(wwan_path, 0, NULL);
- > +		if (!g_file_test(wwan_path, G_FILE_TEST_IS_DIR) ||> +				!subdir) {
-> +			udev_device_unref(wwan_device);
-> +			g_free(wwan_path);
-> +			continue;
-> +		}
-
-It feels weird to g_dir_open() first, and *then* do a g_file_test to 
-determine if it's a directory. Perhaps it's better to do something like 
-this?
-
-if (!g_file_test(wwan_path, G_FILE_TEST_IS_DIR) ||
-	!(subdir = g_dir_open(wwan_path, 0, NULL)) {
-
-
-Also, if there's multiple entries in the wwan directory, won't *net be 
-allocated for each one and overwritten/leaked? I'm not entirely clear 
-what's going on there, which is why I suggest a comment that describes 
-what the wwan directory layout on your Yoga X1 looks like.
-
-
-> +
-> +		while ((subfile = g_dir_read_name(subdir))) {
-> +			/* Build a path to the subsystems for the WWAN control nodes */
-> +			sub_path = g_build_filename("/", wwan_path,
-> +									subfile, NULL);
-> +
-> +			sub_device = udev_device_new_from_syspath(udev,
-> +								sub_path);
-> +			sub_subsystem = udev_device_get_subsystem(sub_device);
-> +
-> +			if (g_strcmp0(sub_subsystem, "wwan") == 0) {
-> +				type = udev_device_get_sysattr_value(sub_device, "type");
-> +
-> +				/* Detect the subsystem of the subdirectories */
-> +				if (g_strcmp0(type, "MBIM") == 0)
-> +					*ctl = g_strdup(udev_device_get_devnode(sub_device));
-> +				else if (g_strcmp0(type, "AT") == 0)
-> +					*atcmd = g_strdup(udev_device_get_devnode(sub_device));
-> +			}
-> +
-> +			udev_device_unref(sub_device);
-> +			g_free(sub_path);
-> +		}
-> +		g_dir_close(subdir);
-> +		udev_device_unref(wwan_device);
-> +		g_free(wwan_path);
+> +	if (!mbim_message_get_arguments(message, "ua(susuuu)", &providers_count, &iter)) {
+> +		CALLBACK_WITH_FAILURE(cb_func, 0, NULL, cb->data);
+> +		return;
 > +	}
 > +
-> +cleanup:
-> +	g_dir_close(dir);
-> +	g_free(path);
- > +	udev_unref(udev);> +}
+> +	list = l_new(struct ofono_network_operator, providers_count);
 > +
->   static gboolean setup_mbim(struct modem_info *modem)
+> +	while (mbim_message_iter_next_entry(&iter, &provider_id, &provider_state,
+> +					&provider_name, &cellular_class, &rssi, &error_rate)) {
+> +
+> +		strcpy(list[i].name, provider_name);
+
+This should probably be a strncpy using OFONO_MAX_OPERATOR_NAME_LENGTH.
+
+
+> +		strncpy(list[i].mcc, provider_id, OFONO_MAX_MCC_LENGTH);
+> +		list[i].mcc[OFONO_MAX_MCC_LENGTH] = '\0';
+> +
+> +		strncpy(list[i].mnc, provider_id + OFONO_MAX_MCC_LENGTH, OFONO_MAX_MNC_LENGTH);
+> +		list[i].mnc[OFONO_MAX_MNC_LENGTH] = '\0';
+> +
+> +		list[i].status = mbim_provider_state_to_status(provider_state);
+> +		list[i].tech = -1;
+> +
+> +		i++;
+> +	}
+> +
+> +	if (list)
+> +		CALLBACK_WITH_SUCCESS(cb_func, providers_count, list, cb->data);
+> +	else
+> +		CALLBACK_WITH_FAILURE(cb_func, 0, NULL, cb->data);
+> +}
+> +
+> +static void mbim_list_operators(struct ofono_netreg *netreg,
+> +					ofono_netreg_operator_list_cb_t cb, void *user_data)
+> +{
+> +	struct netreg_data *nd = ofono_netreg_get_data(netreg);
+> +	struct cb_data *cbd = cb_data_new(cb, user_data);
+> +	struct mbim_message *message;
+> +
+> +	message = mbim_message_new(mbim_uuid_basic_connect,
+> +						MBIM_CID_VISIBLE_PROVIDERS,
+> +						MBIM_COMMAND_TYPE_QUERY);
+> +	/* "0" is a full scan, whereas "1" means a restricted scan */
+> +	mbim_message_set_arguments(message, "u", 0);
+> +
+> +	if (mbim_device_send(nd->device, NETREG_GROUP, message,
+> +						mbim_list_operators_cb, cbd, l_free) > 0)
+> +		return;
+> +
+> +	l_free(cbd);
+> +	mbim_message_unref(message);
+> +	CALLBACK_WITH_FAILURE(cb, 0, NULL, user_data);
+> +}
+> +
+>   static void mbim_register_state_set_cb(struct mbim_message *message, void *user)
 >   {
->   	const char *ctl = NULL, *net = NULL, *atcmd = NULL;
-> @@ -1206,7 +1280,8 @@ static gboolean setup_mbim(struct modem_info *modem)
->   		else if (g_strcmp0(subsystem, "tty") == 0) {
->   			if (g_strcmp0(info->number, "02") == 0)
->   				atcmd = info->devnode;
-> -		}
-> +		} else if (g_strcmp0(subsystem, "pci") == 0)
-> +			setup_mbim_pci(info, &ctl, &net, &atcmd);
->   	}
+>   	struct cb_data *cbd = user;
+> @@ -233,7 +297,42 @@ static void mbim_register_auto(struct ofono_netreg *netreg,
+>   	message = mbim_message_new(mbim_uuid_basic_connect,
+>   					MBIM_CID_REGISTER_STATE,
+>   					MBIM_COMMAND_TYPE_SET);
+> -	mbim_message_set_arguments(message, "suu", NULL, 0, data_class);
+> +	mbim_message_set_arguments(message, "suu", NULL,
+> +					MBIM_REGISTER_TYPE_AUTOMATIC, data_class);
+> +
+> +	if (mbim_device_send(nd->device, NETREG_GROUP, message,
+> +				mbim_register_state_set_cb, cbd, l_free) > 0)
+> +		return;
+> +
+> +	l_free(cbd);
+> +	mbim_message_unref(message);
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +}
+> +
+> +static void mbim_register_manual(struct ofono_netreg *netreg,
+> +				const char *mcc, const char *mnc,
+> +				ofono_netreg_register_cb_t cb, void *data)
+> +{
+> +	static const uint32_t data_class = MBIM_DATA_CLASS_GPRS |
+> +						MBIM_DATA_CLASS_EDGE |
+> +						MBIM_DATA_CLASS_UMTS |
+> +						MBIM_DATA_CLASS_HSDPA |
+> +						MBIM_DATA_CLASS_HSUPA |
+> +						MBIM_DATA_CLASS_LTE;
+> +	struct netreg_data *nd = ofono_netreg_get_data(netreg);
+> +	struct cb_data *cbd = cb_data_new(cb, data);
+> +	struct mbim_message *message;
+> +	L_AUTO_FREE_VAR(char *, provider_id) = NULL;
+> +
+> +	DBG("");
+> +
+> +	provider_id = l_strdup_printf("%s%s", mcc, mnc);
+> +
+> +	message = mbim_message_new(mbim_uuid_basic_connect,
+> +					MBIM_CID_REGISTER_STATE,
+> +					MBIM_COMMAND_TYPE_SET);
+> +	mbim_message_set_arguments(message, "suu", provider_id,
+> +					MBIM_REGISTER_TYPE_MANUAL, data_class);
 >   
->   	if (ctl == NULL || net == NULL)
+
+Given that mbim_register_auto and mbim_register_manual are almost the 
+exact same function except for the MBIM_REGISTER_TYPE_* argument and 
+provider_id (which is leaked, btw; should probably be deleted in 
+mbim_register_state_set_cb?)... maybe it makes sense to have a common 
+function for these two, with mbim_register_auto and mbim_register_manual 
+calling it?
+
+
+
+>   	if (mbim_device_send(nd->device, NETREG_GROUP, message,
+>   				mbim_register_state_set_cb, cbd, l_free) > 0)
+> @@ -385,7 +484,9 @@ static const struct ofono_netreg_driver driver = {
+>   	.remove				= mbim_netreg_remove,
+>   	.registration_status		= mbim_registration_status,
+>   	.current_operator		= mbim_current_operator,
+> +	.list_operators			= mbim_list_operators,
+>   	.register_auto			= mbim_register_auto,
+> +	.register_manual		= mbim_register_manual,
+>   	.strength			= mbim_signal_strength,
+>   };
+>   
+> diff --git a/drivers/mbimmodem/util.c b/drivers/mbimmodem/util.c
+> index 731764fc..45b7af9b 100644
+> --- a/drivers/mbimmodem/util.c
+> +++ b/drivers/mbimmodem/util.c
+> @@ -39,6 +39,26 @@ int mbim_data_class_to_tech(uint32_t n)
+>   	return -1;
+
+>   
 
