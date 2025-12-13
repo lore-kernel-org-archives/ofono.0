@@ -1,288 +1,258 @@
-Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 20063188A3A
-	for <ofono@lists.linux.dev>; Fri, 12 Dec 2025 21:03:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
+Received: from spindle.queued.net (spindle.queued.net [45.33.49.30])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 448E12773F
+	for <ofono@lists.linux.dev>; Sat, 13 Dec 2025 08:35:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.33.49.30
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765573412; cv=none; b=aHQev47eDC0NEf02Raughs1qx3MTeYd2Z8o9T84VW7+ES9zRoQiKw6bzxxp1nVMw97UiYngxNAl6GSNnhQKB/tkEpgTOAJpAyq976BuFvlzS6ee0wEO6fELcfJcmOBja7x7uzovlry/NZ+cme1YogYScHVQ3NYqtwQml0kAKhng=
+	t=1765614924; cv=none; b=oHKDGV5t9VEFdHKfq4HonN3BbIWqKBBPjPKawcEQSOYfuZtLNBuoFvw8T4nVKj7KTUu9N56inr7Sl99f0OCso9yFLUt9epu7BA7arfXMbyeOu6+qoPdFwvfd42NoYsak+XaT/UZ1IP1qqHNDOdQkqJulkWStjM40KXIeOi0ySHM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765573412; c=relaxed/simple;
-	bh=zdJCq5c+8/PmBm9Rg3Sz/rrHV4qWIvzRkOAlZSTlGKw=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=fg/2ovn/wNd/RJnzyn9nZJXknTl9lN9DsAVA8bfNfFffLbSm2cGCwpOwx+k+8LnD7IE/el5xHsaPw0vaqZQCG3ZZFLNP3n6iEBBLkUhbwEn8hifRhhRpMV9RXAlxDtyWWCa/clWTldACZIlKIRUZpxZVblBBr+RoqMXzQzl/MKw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=mpwwiTj2; arc=none smtp.client-ip=34.202.193.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="mpwwiTj2"
-Authentication-Results: purelymail.com; auth=pass
-DKIM-Signature: a=rsa-sha256; b=mpwwiTj23u4Driw635zSMoMxS/Y5PYs2hMHHBdMWlmvKxbTKtjpLa3AA+LoWe4LVGwMRP8eFAfuwGnz3CyZYXEn1gjnD3vEloYOvBLtgqFPz/ehqXBCMnu12/7Y5sY2dQ6b6vECFdudkOJt/bJW61NA5kMKocWFPN3XtNDdrNiSLsOshlfeCX3qiPmGR6ZkQ4mFGsHInhFnvB5zahOcgUK4g+PnwAudCPZ+3d4DtsumAoWnMel7MxD4GhB5R63ZC8wqVrNDxT97c6Qd2uO3YjUKQfDOPr+nSTuByxCWE4WS585iIsarGK8E/zaX5YspIEtSYQO5ZfY0eCzC740DWIg==; s=purelymail1; d=purelymail.com; v=1; bh=zdJCq5c+8/PmBm9Rg3Sz/rrHV4qWIvzRkOAlZSTlGKw=; h=Feedback-ID:Received:From:To:Subject:Date;
-Feedback-ID: 68221:10037:null:purelymail
-X-Pm-Original-To: ofono@lists.linux.dev
-Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id 511728581;
-          (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
-          Fri, 12 Dec 2025 21:03:27 +0000 (UTC)
-From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-To: ofono@lists.linux.dev
-Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-Subject: [PATCH v8 8/8] mbim/network-registration: add support for manual registration
-Date: Sat, 13 Dec 2025 02:02:49 +0500
-Message-ID: <20251212210249.95597-9-thevancedgamer@mentallysanemainliners.org>
-X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20251212210249.95597-1-thevancedgamer@mentallysanemainliners.org>
-References: <20251212210249.95597-1-thevancedgamer@mentallysanemainliners.org>
+	s=arc-20240116; t=1765614924; c=relaxed/simple;
+	bh=mMnCrgKfHS0b83aicxuvQx2u1Hn7O0gKYtZA1DhRkHo=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:Cc:From:
+	 In-Reply-To:Content-Type; b=nPLvK6gyRlvg1NtjkFkdNB5Up2GU0Kny4uRto/L3vbySmKWZkzffDiiEJBCT7lt16ouaX1OVklLXUuTL3Up6qInDjdGl/0gvyZ8U6IuKxVBcc51uCc6hh8Mp3rWGuxSu76nxjH3p58koeWiyRNH7nsYwK16xeHJHNaHsarAmuKA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net; spf=pass smtp.mailfrom=queued.net; arc=none smtp.client-ip=45.33.49.30
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=queued.net
+Received: by spindle.queued.net (Postfix, from userid 1001)
+	id 841A9114D8C; Sat, 13 Dec 2025 03:35:15 -0500 (EST)
+Received: from [192.168.12.220] (unknown [172.56.164.103])
+	by spindle.queued.net (Postfix) with ESMTPSA id 25C37114D7E;
+	Sat, 13 Dec 2025 03:35:15 -0500 (EST)
+Message-ID: <a680f738-29a9-45ca-9baf-1d1257b92341@queued.net>
+Date: Sat, 13 Dec 2025 03:35:13 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
-Content-Type: text/plain; charset=UTF-8
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v8 2/8] plugins/udevng: Add support for PCIe MBIM modems
+To: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
+References: <20251212210249.95597-1-thevancedgamer@mentallysanemainliners.org>
+ <20251212210249.95597-3-thevancedgamer@mentallysanemainliners.org>
+Content-Language: en-US
+Cc: ofono <ofono@lists.linux.dev>
+From: Andres Salomon <dilinger@queued.net>
+Autocrypt: addr=dilinger@queued.net; keydata=
+ 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
+In-Reply-To: <20251212210249.95597-3-thevancedgamer@mentallysanemainliners.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.5
 
-Adds support for scanning available operators, and manually registering
-to a selected network.
----
- drivers/mbimmodem/mbim.h                 |  15 ++++
- drivers/mbimmodem/network-registration.c | 108 +++++++++++++++++++++--
- drivers/mbimmodem/util.c                 |  20 +++++
- drivers/mbimmodem/util.h                 |   1 +
- 4 files changed, 137 insertions(+), 7 deletions(-)
+On 12/12/25 16:02, Muhammad Asif wrote:
+> Parses through the sysfs tree and detects MBIM control nodes, net and
+> AT nodes
+> ---
+>   plugins/udevng.c | 111 ++++++++++++++++++++++++++++++++++++++++++++++-
+>   1 file changed, 110 insertions(+), 1 deletion(-)
+> 
+> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index 18954d44..97d64466 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -1182,6 +1182,109 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
+>   	return TRUE;
+>   }
+>   
+> +static void setup_mbim_pci(struct device_info *info,
+> +				const char **ctl,
+> +				const char **net,
+> +				const char **atcmd)
+> +{
+> +	struct udev *udev = udev_new();
+> +	struct udev_device *wwan_device, *sub_device;
+> +
+> +	GDir *dir = NULL, *subdir = NULL;
+> +	const gchar *filename = NULL, *subfile = NULL;
+> +	gchar *path = NULL;
+> +	gchar *wwan_path = NULL, *sub_path = NULL;
+> +	const char *sub_subsystem = NULL;
+> +	const char *type = NULL;
+> +
+> +	/* Create a path to the WWAN subsystem with the sysfs path of the
+> +	 * modem itself. e.g.: /devices/pci0000:00/0000:00:1c.0/0000:08:00.0
+> +	 */
+> +	path = g_build_path("/", udev_device_get_syspath(info->udev_device),
+> +							"wwan", NULL);
+> +
+> +	dir = g_dir_open(path, 0, NULL);
+> +	if (!dir)
+> +		goto cleanup;
+> +
+> +	while ((filename = g_dir_read_name(dir))) {
+> +		/* Build a path to the WWAN interface (e.g. .../wwan0).
+> +		 * TODO: We currently assume only one WWAN interface per device.
+> +		 * This will most likely break with multi-executor modems, but I have
+> +		 * yet to see any of them available on the market.
+> +		 */
+> +		wwan_path = g_build_path("/", path,
+> +					filename, NULL);
+> +
+> +		/* Check if the WWAN interface even exists. */
+> +		if (!g_file_test(wwan_path, G_FILE_TEST_IS_DIR)) {
+> +			g_free((void *)wwan_path);
+> +			continue;
+> +		}
+> +
+> +		subdir = g_dir_open(wwan_path, 0, NULL);
+> +		if (!subdir) {
+> +			g_free((void *)wwan_path);
+> +			continue;
+> +		}
+> +
+> +		wwan_device = udev_device_new_from_syspath(udev,
+> +							wwan_path);
+> +
+> +		/* Only copy the WWAN interface name once */
+> +		if (!*net)
+> +			*net = g_strdup(udev_device_get_sysname(wwan_device));
+> +
+> +		/* The WWAN directory will now have subdirectories, for each
+> +		 * associated control node (e.g. wwan0mbim0, wwan0at0). Open
+> +		 * each of the subdirectories to figure out their type.
 
-diff --git a/drivers/mbimmodem/mbim.h b/drivers/mbimmodem/mbim.h
-index 70142cc9..b0825060 100644
---- a/drivers/mbimmodem/mbim.h
-+++ b/drivers/mbimmodem/mbim.h
-@@ -80,6 +80,21 @@ enum mbim_data_class {
- =09MBIM_DATA_CLASS_CUSTOM=09=09=3D 0x80000000,
- };
-=20
-+enum mbim_provider_state {
-+=09MBIM_PROVIDER_STATE_UNKNOWN                =3D 0,
-+=09MBIM_PROVIDER_STATE_HOME                   =3D 1 << 0,
-+=09MBIM_PROVIDER_STATE_FORBIDDEN              =3D 1 << 1,
-+=09MBIM_PROVIDER_STATE_PREFERRED              =3D 1 << 2,
-+=09MBIM_PROVIDER_STATE_VISIBLE                =3D 1 << 3,
-+=09MBIM_PROVIDER_STATE_REGISTERED             =3D 1 << 4,
-+=09MBIM_PROVIDER_STATE_PREFERRED_MULTICARRIER =3D 1 << 5
-+};
-+
-+enum mbim_register_type {
-+=09MBIM_REGISTER_TYPE_AUTOMATIC    =3D 0,
-+=09MBIM_REGISTER_TYPE_MANUAL       =3D 1,
-+};
-+
- enum mbim_app_type {
- =09MBIM_APP_UNKNOWN,
- =09MBIM_APP_MF,
-diff --git a/drivers/mbimmodem/network-registration.c b/drivers/mbimmodem/n=
-etwork-registration.c
-index ded1bf69..d56611d3 100644
---- a/drivers/mbimmodem/network-registration.c
-+++ b/drivers/mbimmodem/network-registration.c
-@@ -204,6 +204,72 @@ static void mbim_current_operator(struct ofono_netreg =
-*netreg,
- =09CALLBACK_WITH_FAILURE(cb, NULL, data);
- }
-=20
-+static void mbim_list_operators_cb(struct mbim_message *message,
-+=09=09=09=09=09=09void *user)
-+{
-+=09struct cb_data *cb =3D user;
-+=09ofono_netreg_operator_list_cb_t cb_func =3D cb->cb;
-+=09struct ofono_network_operator *list =3D NULL;
-+
-+=09uint32_t providers_count, provider_state, cellular_class;
-+=09uint32_t rssi, error_rate;
-+=09char *provider_id, *provider_name;
-+=09struct mbim_message_iter iter;
-+=09int i =3D 0;
-+
-+=09if (!mbim_message_get_arguments(message, "ua(susuuu)", &providers_count=
-, &iter)) {
-+=09=09CALLBACK_WITH_FAILURE(cb_func, 0, NULL, cb->data);
-+=09=09return;
-+=09}
-+
-+=09list =3D l_new(struct ofono_network_operator, providers_count);
-+
-+=09while (mbim_message_iter_next_entry(&iter, &provider_id, &provider_stat=
-e,
-+=09=09=09=09=09&provider_name, &cellular_class, &rssi, &error_rate)) {
-+
-+=09=09strncpy(list[i].name, provider_name, OFONO_MAX_OPERATOR_NAME_LENGTH)=
-;
-+=09=09list[i].name[OFONO_MAX_OPERATOR_NAME_LENGTH] =3D '\0';
-+
-+=09=09strncpy(list[i].mcc, provider_id, OFONO_MAX_MCC_LENGTH);
-+=09=09list[i].mcc[OFONO_MAX_MCC_LENGTH] =3D '\0';
-+
-+=09=09strncpy(list[i].mnc, provider_id + OFONO_MAX_MCC_LENGTH, OFONO_MAX_M=
-NC_LENGTH);
-+=09=09list[i].mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
-+
-+=09=09list[i].status =3D mbim_provider_state_to_status(provider_state);
-+=09=09list[i].tech =3D -1;
-+
-+=09=09i++;
-+=09}
-+
-+=09if (list)
-+=09=09CALLBACK_WITH_SUCCESS(cb_func, providers_count, list, cb->data);
-+=09else
-+=09=09CALLBACK_WITH_FAILURE(cb_func, 0, NULL, cb->data);
-+}
-+
-+static void mbim_list_operators(struct ofono_netreg *netreg,
-+=09=09=09=09=09ofono_netreg_operator_list_cb_t cb, void *user_data)
-+{
-+=09struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+=09struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+=09struct mbim_message *message;
-+
-+=09message =3D mbim_message_new(mbim_uuid_basic_connect,
-+=09=09=09=09=09=09MBIM_CID_VISIBLE_PROVIDERS,
-+=09=09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
-+=09/* "0" is a full scan, whereas "1" means a restricted scan */
-+=09mbim_message_set_arguments(message, "u", 0);
-+
-+=09if (mbim_device_send(nd->device, NETREG_GROUP, message,
-+=09=09=09=09=09=09mbim_list_operators_cb, cbd, l_free) > 0)
-+=09=09return;
-+
-+=09l_free(cbd);
-+=09mbim_message_unref(message);
-+=09CALLBACK_WITH_FAILURE(cb, 0, NULL, user_data);
-+}
-+
- static void mbim_register_state_set_cb(struct mbim_message *message, void =
-*user)
- {
- =09struct cb_data *cbd =3D user;
-@@ -217,8 +283,8 @@ static void mbim_register_state_set_cb(struct mbim_mess=
-age *message, void *user)
- =09=09CALLBACK_WITH_SUCCESS(cb, cbd->data);
- }
-=20
--static void mbim_register_auto(struct ofono_netreg *netreg,
--=09=09=09=09ofono_netreg_register_cb_t cb, void *data)
-+static void mbim_register(struct cb_data *cbd, enum mbim_register_type reg=
-_type,
-+=09=09=09=09const char *provider_id)
- {
- =09static const uint32_t data_class =3D MBIM_DATA_CLASS_GPRS |
- =09=09=09=09=09=09MBIM_DATA_CLASS_EDGE |
-@@ -226,22 +292,48 @@ static void mbim_register_auto(struct ofono_netreg *n=
-etreg,
- =09=09=09=09=09=09MBIM_DATA_CLASS_HSDPA |
- =09=09=09=09=09=09MBIM_DATA_CLASS_HSUPA |
- =09=09=09=09=09=09MBIM_DATA_CLASS_LTE;
--=09struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
--=09struct cb_data *cbd =3D cb_data_new(cb, data);
- =09struct mbim_message *message;
-=20
- =09message =3D mbim_message_new(mbim_uuid_basic_connect,
- =09=09=09=09=09MBIM_CID_REGISTER_STATE,
- =09=09=09=09=09MBIM_COMMAND_TYPE_SET);
--=09mbim_message_set_arguments(message, "suu", NULL, 0, data_class);
-=20
--=09if (mbim_device_send(nd->device, NETREG_GROUP, message,
-+=09mbim_message_set_arguments(message, "suu", provider_id,
-+=09=09=09=09=09reg_type, data_class);
-+
-+=09if (mbim_device_send(cbd->data, NETREG_GROUP, message,
- =09=09=09=09mbim_register_state_set_cb, cbd, l_free) > 0)
- =09=09return;
-=20
- =09l_free(cbd);
- =09mbim_message_unref(message);
--=09CALLBACK_WITH_FAILURE(cb, data);
-+=09CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void mbim_register_auto(struct ofono_netreg *netreg,
-+=09=09=09=09ofono_netreg_register_cb_t cb, void *data)
-+{
-+=09struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+=09struct cb_data *cbd =3D cb_data_new(cb, data);
-+
-+=09mbim_register(cbd, MBIM_REGISTER_TYPE_AUTOMATIC, NULL);
-+}
-+
-+static void mbim_register_manual(struct ofono_netreg *netreg,
-+=09=09=09=09const char *mcc, const char *mnc,
-+=09=09=09=09ofono_netreg_register_cb_t cb, void *data)
-+{
-+=09struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+=09struct cb_data *cbd =3D cb_data_new(cb, data);
-+=09L_AUTO_FREE_VAR(char *, provider_id) =3D NULL;
-+
-+=09DBG("");
-+
-+=09provider_id =3D l_strdup_printf("%s%s", mcc, mnc);
-+
-+=09mbim_register(cbd, MBIM_REGISTER_TYPE_MANUAL, provider_id);
-+
-+=09l_free(provider_id);
- }
-=20
- static inline int convert_signal_strength(uint32_t strength)
-@@ -385,7 +477,9 @@ static const struct ofono_netreg_driver driver =3D {
- =09.remove=09=09=09=09=3D mbim_netreg_remove,
- =09.registration_status=09=09=3D mbim_registration_status,
- =09.current_operator=09=09=3D mbim_current_operator,
-+=09.list_operators=09=09=09=3D mbim_list_operators,
- =09.register_auto=09=09=09=3D mbim_register_auto,
-+=09.register_manual=09=09=3D mbim_register_manual,
- =09.strength=09=09=09=3D mbim_signal_strength,
- };
-=20
-diff --git a/drivers/mbimmodem/util.c b/drivers/mbimmodem/util.c
-index 3280c863..35a236a3 100644
---- a/drivers/mbimmodem/util.c
-+++ b/drivers/mbimmodem/util.c
-@@ -39,6 +39,26 @@ int mbim_data_class_to_tech(uint32_t n)
- =09return -1;
- }
-=20
-+int mbim_provider_state_to_status(uint32_t state)
-+{
-+=09switch (state) {
-+=09case MBIM_PROVIDER_STATE_REGISTERED:
-+=09=09return OPERATOR_STATUS_CURRENT;
-+
-+=09case MBIM_PROVIDER_STATE_VISIBLE:
-+=09case MBIM_PROVIDER_STATE_HOME:
-+=09case MBIM_PROVIDER_STATE_PREFERRED:
-+=09case MBIM_PROVIDER_STATE_PREFERRED_MULTICARRIER:
-+=09=09return OPERATOR_STATUS_AVAILABLE;
-+
-+=09case MBIM_PROVIDER_STATE_FORBIDDEN:
-+=09=09return OPERATOR_STATUS_FORBIDDEN;
-+
-+=09default:
-+=09=09return OPERATOR_STATUS_UNKNOWN;
-+=09}
-+}
-+
- uint8_t *mbim_get_fileid(enum mbim_app_type app_type, uint32_t fileid, int=
- *file_id_len)
- {
- =09uint8_t parent_path[6] =3D {0};
-diff --git a/drivers/mbimmodem/util.h b/drivers/mbimmodem/util.h
-index 55669450..e42851be 100644
---- a/drivers/mbimmodem/util.h
-+++ b/drivers/mbimmodem/util.h
-@@ -43,4 +43,5 @@ static inline struct cb_data *cb_data_new(void *cb, void =
-*data)
- =09} while (0)
-=20
- int mbim_data_class_to_tech(uint32_t n);
-+int mbim_provider_state_to_status(uint32_t state);
- uint8_t *mbim_get_fileid(enum mbim_app_type app_type, uint32_t fileid, int=
- *file_id_len);
---=20
-2.52.0
+Thanks, this makes much more sense!
+
+
+> +		 */
+> +		while ((subfile = g_dir_read_name(subdir))) {
+> +			/* Build a path to the directory for each of the WWAN
+> +			 * control nodes that we found earlier. (e.g. /wwan0/wwan0mbim0).
+> +			 * Check if the subdirectory belongs to the WWAN subsystem,
+> +			 * and if so, check its type (MBIM or AT).
+> +			 */
+> +			sub_path = g_build_filename("/", wwan_path,
+> +							subfile, NULL);
+> +
+> +			/* We only want the subdirectories for the control nodes. */
+> +			if (!g_file_test(sub_path, G_FILE_TEST_IS_DIR)) {
+> +				g_free((void *)sub_path);
+> +				continue;
+> +			}
+> +
+> +			sub_device = udev_device_new_from_syspath(udev,
+> +								sub_path);
+> +			sub_subsystem = udev_device_get_subsystem(sub_device);
+> +
+> +			/* We can only have one MBIM and AT node in each WWAN interface,
+> +			 * so set them without checking if they're already set.
+> +			 */
+> +			if (g_strcmp0(sub_subsystem, "wwan") == 0) {
+> +				type = udev_device_get_sysattr_value(sub_device, "type");
+> +
+> +				/* Detect the type of the WWAN control node */
+> +				if (g_strcmp0(type, "MBIM") == 0)
+> +					*ctl = g_strdup(udev_device_get_devnode(sub_device));
+> +				else if (g_strcmp0(type, "AT") == 0)
+> +					*atcmd = g_strdup(udev_device_get_devnode(sub_device));
+> +			}
+> +
+> +			udev_device_unref(sub_device);
+> +			g_free((void *)sub_path);
+> +		}
+> +		g_dir_close(subdir);
+> +		udev_device_unref(wwan_device);
+> +		g_free((void *)wwan_path);
+> +	}
+> +
+> +cleanup:
+> +	g_dir_close(dir);
+> +	g_free((void *)path);
+> +	udev_unref(udev);
+> +}
+> +
+>   static gboolean setup_mbim(struct modem_info *modem)
+>   {
+>   	const char *ctl = NULL, *net = NULL, *atcmd = NULL;
+> @@ -1206,7 +1309,8 @@ static gboolean setup_mbim(struct modem_info *modem)
+>   		else if (g_strcmp0(subsystem, "tty") == 0) {
+>   			if (g_strcmp0(info->number, "02") == 0)
+>   				atcmd = info->devnode;
+> -		}
+> +		} else if (g_strcmp0(subsystem, "pci") == 0)
+> +			setup_mbim_pci(info, &ctl, &net, &atcmd);
+>   	}
+>   
+>   	if (ctl == NULL || net == NULL)
+> @@ -1220,6 +1324,11 @@ static gboolean setup_mbim(struct modem_info *modem)
+>   	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
+>   	ofono_modem_set_string(modem->modem, "DescriptorFile", descriptors);
+>   
+> +	/* Free up all of the strings */
+> +	g_free((void *)ctl);
+> +	g_free((void *)net);
+> +	g_free((void *)atcmd);
+> +
+
+Sadly, I don't think that'll work. In the case of other types of 
+(non-pci) devices, ctl and net will point to memory that we didn't 
+allocate. For example, for a usbmisc device, ctl will point to the same 
+chunk of memory as info->devnode. If you free it here, later on when 
+device_info_free() is called on that device_info, it will try to free 
+the same chunk of memory and you'll get a double free.
+
+One possibility is something like the following:
+
+	bool free_strings = false;
+[...]
+		} else if (g_strcmp0(subsystem, "pci") == 0) {
+			free_strings = true;
+			setup_mbim_pci(info, &ctl, &net, &atcmd);
+		}
+[...]
+	if (free_strings) {
+		g_free(ctl);
+		g_free(net);
+		g_free(atcmd);
+	}
+
+Note that setup_mbim_pci() might not set anything, so you could be 
+calling g_free() on NULL pointers, but g_free does check for that (it 
+might spit out a warning though, I forget).
+
+
+>   	return TRUE;
+>   }
+>   
 
