@@ -1,24 +1,24 @@
 Received: from spindle.queued.net (spindle.queued.net [45.33.49.30])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 448E12773F
-	for <ofono@lists.linux.dev>; Sat, 13 Dec 2025 08:35:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 9E50723817F
+	for <ofono@lists.linux.dev>; Sat, 13 Dec 2025 08:58:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.33.49.30
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765614924; cv=none; b=oHKDGV5t9VEFdHKfq4HonN3BbIWqKBBPjPKawcEQSOYfuZtLNBuoFvw8T4nVKj7KTUu9N56inr7Sl99f0OCso9yFLUt9epu7BA7arfXMbyeOu6+qoPdFwvfd42NoYsak+XaT/UZ1IP1qqHNDOdQkqJulkWStjM40KXIeOi0ySHM=
+	t=1765616286; cv=none; b=lSO6LrlTKARMujvsvJRUIbN+VXGNVLYioPQPNM+SXEaGcVaweC+gsMSz8FA/eJ+92gzpZB6smDblj2m5hk9hpJ2lj9Mn0XW7IpzMzVrvHplHN78ckfRP9iF1nieB8mVCxL5vnwsETZW1PY9DKPi2nMTZow6OWQU881xm4YyQKb0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765614924; c=relaxed/simple;
-	bh=mMnCrgKfHS0b83aicxuvQx2u1Hn7O0gKYtZA1DhRkHo=;
+	s=arc-20240116; t=1765616286; c=relaxed/simple;
+	bh=/XaiEyl4tRzqXMiiwtjwZGdpwrBczfdq/k+yEG8Bcd4=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:Cc:From:
-	 In-Reply-To:Content-Type; b=nPLvK6gyRlvg1NtjkFkdNB5Up2GU0Kny4uRto/L3vbySmKWZkzffDiiEJBCT7lt16ouaX1OVklLXUuTL3Up6qInDjdGl/0gvyZ8U6IuKxVBcc51uCc6hh8Mp3rWGuxSu76nxjH3p58koeWiyRNH7nsYwK16xeHJHNaHsarAmuKA=
+	 In-Reply-To:Content-Type; b=RL0k+F4dqNWe+oxchD9BbI4l0XvsNy5Tkst8uGclPg28ZA4Vyz7QIXtQJVFjViXAFRfb4yMzxGfbs4E0BRWOG4SAzvaS0NyQvbztZDO43+64ZqSmfAvlDvLGp5kXK+X9CtuVgvC0k7HAkQx/u7JWUdAT0PELrHy5wtvgOM5mxWU=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net; spf=pass smtp.mailfrom=queued.net; arc=none smtp.client-ip=45.33.49.30
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=queued.net
 Received: by spindle.queued.net (Postfix, from userid 1001)
-	id 841A9114D8C; Sat, 13 Dec 2025 03:35:15 -0500 (EST)
+	id 0AB37114D91; Sat, 13 Dec 2025 03:58:04 -0500 (EST)
 Received: from [192.168.12.220] (unknown [172.56.164.103])
-	by spindle.queued.net (Postfix) with ESMTPSA id 25C37114D7E;
-	Sat, 13 Dec 2025 03:35:15 -0500 (EST)
-Message-ID: <a680f738-29a9-45ca-9baf-1d1257b92341@queued.net>
-Date: Sat, 13 Dec 2025 03:35:13 -0500
+	by spindle.queued.net (Postfix) with ESMTPSA id A3FCF114D84;
+	Sat, 13 Dec 2025 03:58:03 -0500 (EST)
+Message-ID: <22fbbf08-85bc-4060-902d-06d605064119@queued.net>
+Date: Sat, 13 Dec 2025 03:58:02 -0500
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -26,10 +26,11 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v8 2/8] plugins/udevng: Add support for PCIe MBIM modems
+Subject: Re: [PATCH v8 8/8] mbim/network-registration: add support for manual
+ registration
 To: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 References: <20251212210249.95597-1-thevancedgamer@mentallysanemainliners.org>
- <20251212210249.95597-3-thevancedgamer@mentallysanemainliners.org>
+ <20251212210249.95597-9-thevancedgamer@mentallysanemainliners.org>
 Content-Language: en-US
 Cc: ofono <ofono@lists.linux.dev>
 From: Andres Salomon <dilinger@queued.net>
@@ -75,184 +76,55 @@ Autocrypt: addr=dilinger@queued.net; keydata=
  XM1uDcCLSjmQRylJAtUh4dBZ9KsMWUbYjXnSUXxyAS7MrNCe52O0GFdovHelTlaWhVBiSGYi
  f1JOwOC58c8y0ckmcEK9SFp3SRPDjCLrH4Fxp22+fywq6aB/4piRClbpnwqnHh5Xs2BkwS+W
  stksZadd/iuwYCTfjhXPCNmgfATirGHXAbknHg+1WE5XC6VIcYRMnqGRaXE72ieCrMw=
-In-Reply-To: <20251212210249.95597-3-thevancedgamer@mentallysanemainliners.org>
+In-Reply-To: <20251212210249.95597-9-thevancedgamer@mentallysanemainliners.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.5
 
 On 12/12/25 16:02, Muhammad Asif wrote:
-> Parses through the sysfs tree and detects MBIM control nodes, net and
-> AT nodes
-> ---
->   plugins/udevng.c | 111 ++++++++++++++++++++++++++++++++++++++++++++++-
->   1 file changed, 110 insertions(+), 1 deletion(-)
-> 
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index 18954d44..97d64466 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -1182,6 +1182,109 @@ static gboolean setup_quectelqmi(struct modem_info *modem)
->   	return TRUE;
+> Adds support for scanning available operators, and manually registering
+> to a selected network.
+[...]
+> @@ -217,8 +283,8 @@ static void mbim_register_state_set_cb(struct mbim_message *message, void *user)
+>   		CALLBACK_WITH_SUCCESS(cb, cbd->data);
 >   }
 >   
-> +static void setup_mbim_pci(struct device_info *info,
-> +				const char **ctl,
-> +				const char **net,
-> +				const char **atcmd)
-> +{
-> +	struct udev *udev = udev_new();
-> +	struct udev_device *wwan_device, *sub_device;
-> +
-> +	GDir *dir = NULL, *subdir = NULL;
-> +	const gchar *filename = NULL, *subfile = NULL;
-> +	gchar *path = NULL;
-> +	gchar *wwan_path = NULL, *sub_path = NULL;
-> +	const char *sub_subsystem = NULL;
-> +	const char *type = NULL;
-> +
-> +	/* Create a path to the WWAN subsystem with the sysfs path of the
-> +	 * modem itself. e.g.: /devices/pci0000:00/0000:00:1c.0/0000:08:00.0
-> +	 */
-> +	path = g_build_path("/", udev_device_get_syspath(info->udev_device),
-> +							"wwan", NULL);
-> +
-> +	dir = g_dir_open(path, 0, NULL);
-> +	if (!dir)
-> +		goto cleanup;
-> +
-> +	while ((filename = g_dir_read_name(dir))) {
-> +		/* Build a path to the WWAN interface (e.g. .../wwan0).
-> +		 * TODO: We currently assume only one WWAN interface per device.
-> +		 * This will most likely break with multi-executor modems, but I have
-> +		 * yet to see any of them available on the market.
-> +		 */
-> +		wwan_path = g_build_path("/", path,
-> +					filename, NULL);
-> +
-> +		/* Check if the WWAN interface even exists. */
-> +		if (!g_file_test(wwan_path, G_FILE_TEST_IS_DIR)) {
-> +			g_free((void *)wwan_path);
-> +			continue;
-> +		}
-> +
-> +		subdir = g_dir_open(wwan_path, 0, NULL);
-> +		if (!subdir) {
-> +			g_free((void *)wwan_path);
-> +			continue;
-> +		}
-> +
-> +		wwan_device = udev_device_new_from_syspath(udev,
-> +							wwan_path);
-> +
-> +		/* Only copy the WWAN interface name once */
-> +		if (!*net)
-> +			*net = g_strdup(udev_device_get_sysname(wwan_device));
-> +
-> +		/* The WWAN directory will now have subdirectories, for each
-> +		 * associated control node (e.g. wwan0mbim0, wwan0at0). Open
-> +		 * each of the subdirectories to figure out their type.
-
-Thanks, this makes much more sense!
-
-
-> +		 */
-> +		while ((subfile = g_dir_read_name(subdir))) {
-> +			/* Build a path to the directory for each of the WWAN
-> +			 * control nodes that we found earlier. (e.g. /wwan0/wwan0mbim0).
-> +			 * Check if the subdirectory belongs to the WWAN subsystem,
-> +			 * and if so, check its type (MBIM or AT).
-> +			 */
-> +			sub_path = g_build_filename("/", wwan_path,
-> +							subfile, NULL);
-> +
-> +			/* We only want the subdirectories for the control nodes. */
-> +			if (!g_file_test(sub_path, G_FILE_TEST_IS_DIR)) {
-> +				g_free((void *)sub_path);
-> +				continue;
-> +			}
-> +
-> +			sub_device = udev_device_new_from_syspath(udev,
-> +								sub_path);
-> +			sub_subsystem = udev_device_get_subsystem(sub_device);
-> +
-> +			/* We can only have one MBIM and AT node in each WWAN interface,
-> +			 * so set them without checking if they're already set.
-> +			 */
-> +			if (g_strcmp0(sub_subsystem, "wwan") == 0) {
-> +				type = udev_device_get_sysattr_value(sub_device, "type");
-> +
-> +				/* Detect the type of the WWAN control node */
-> +				if (g_strcmp0(type, "MBIM") == 0)
-> +					*ctl = g_strdup(udev_device_get_devnode(sub_device));
-> +				else if (g_strcmp0(type, "AT") == 0)
-> +					*atcmd = g_strdup(udev_device_get_devnode(sub_device));
-> +			}
-> +
-> +			udev_device_unref(sub_device);
-> +			g_free((void *)sub_path);
-> +		}
-> +		g_dir_close(subdir);
-> +		udev_device_unref(wwan_device);
-> +		g_free((void *)wwan_path);
-> +	}
-> +
-> +cleanup:
-> +	g_dir_close(dir);
-> +	g_free((void *)path);
-> +	udev_unref(udev);
-> +}
-> +
->   static gboolean setup_mbim(struct modem_info *modem)
+> -static void mbim_register_auto(struct ofono_netreg *netreg,
+> -				ofono_netreg_register_cb_t cb, void *data)
+> +static void mbim_register(struct cb_data *cbd, enum mbim_register_type reg_type,
+> +				const char *provider_id)
 >   {
->   	const char *ctl = NULL, *net = NULL, *atcmd = NULL;
-> @@ -1206,7 +1309,8 @@ static gboolean setup_mbim(struct modem_info *modem)
->   		else if (g_strcmp0(subsystem, "tty") == 0) {
->   			if (g_strcmp0(info->number, "02") == 0)
->   				atcmd = info->devnode;
-> -		}
-> +		} else if (g_strcmp0(subsystem, "pci") == 0)
-> +			setup_mbim_pci(info, &ctl, &net, &atcmd);
->   	}
+>   	static const uint32_t data_class = MBIM_DATA_CLASS_GPRS |
+>   						MBIM_DATA_CLASS_EDGE |
+> @@ -226,22 +292,48 @@ static void mbim_register_auto(struct ofono_netreg *netreg,
+>   						MBIM_DATA_CLASS_HSDPA |
+>   						MBIM_DATA_CLASS_HSUPA |
+>   						MBIM_DATA_CLASS_LTE;
+> -	struct netreg_data *nd = ofono_netreg_get_data(netreg);
+> -	struct cb_data *cbd = cb_data_new(cb, data);
+>   	struct mbim_message *message;
 >   
->   	if (ctl == NULL || net == NULL)
-> @@ -1220,6 +1324,11 @@ static gboolean setup_mbim(struct modem_info *modem)
->   	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
->   	ofono_modem_set_string(modem->modem, "DescriptorFile", descriptors);
+>   	message = mbim_message_new(mbim_uuid_basic_connect,
+>   					MBIM_CID_REGISTER_STATE,
+>   					MBIM_COMMAND_TYPE_SET);
+> -	mbim_message_set_arguments(message, "suu", NULL, 0, data_class);
 >   
-> +	/* Free up all of the strings */
-> +	g_free((void *)ctl);
-> +	g_free((void *)net);
-> +	g_free((void *)atcmd);
+> -	if (mbim_device_send(nd->device, NETREG_GROUP, message,
+> +	mbim_message_set_arguments(message, "suu", provider_id,
+> +					reg_type, data_class);
 > +
+> +	if (mbim_device_send(cbd->data, NETREG_GROUP, message,
 
-Sadly, I don't think that'll work. In the case of other types of 
-(non-pci) devices, ctl and net will point to memory that we didn't 
-allocate. For example, for a usbmisc device, ctl will point to the same 
-chunk of memory as info->devnode. If you free it here, later on when 
-device_info_free() is called on that device_info, it will try to free 
-the same chunk of memory and you'll get a double free.
-
-One possibility is something like the following:
-
-	bool free_strings = false;
-[...]
-		} else if (g_strcmp0(subsystem, "pci") == 0) {
-			free_strings = true;
-			setup_mbim_pci(info, &ctl, &net, &atcmd);
-		}
-[...]
-	if (free_strings) {
-		g_free(ctl);
-		g_free(net);
-		g_free(atcmd);
-	}
-
-Note that setup_mbim_pci() might not set anything, so you could be 
-calling g_free() on NULL pointers, but g_free does check for that (it 
-might spit out a warning though, I forget).
+Did you mean to pass cbd->data here, instaed of nd->device?
 
 
->   	return TRUE;
->   }
+>   				mbim_register_state_set_cb, cbd, l_free) > 0)
+>   		return;
 >   
+>   	l_free(cbd);
+>   	mbim_message_unref(message);
+> -	CALLBACK_WITH_FAILURE(cb, data);
+> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +}
+
 
