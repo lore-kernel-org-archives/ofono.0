@@ -1,34 +1,34 @@
 Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C571A24466B
-	for <ofono@lists.linux.dev>; Fri, 26 Dec 2025 14:14:24 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B44CC32142D
+	for <ofono@lists.linux.dev>; Fri, 26 Dec 2025 14:14:26 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766758466; cv=none; b=dYG6jOtmPcI65OKZroI4cLN5t52sUkh48J4O/SFCp4F9s2dXdyLi6B4NB9KSi4uj2Fefcu3mv4wkKvc1uuk/RI+dFqC1pJOAaZguF+hVQp6QQcI3JUuNdIykZA2Fhw95YIdqwdvDA/N3aynj04NKFAxCsMHl6f3ERXVBx/CLnsg=
+	t=1766758468; cv=none; b=ES4RnQcP4yE9SmClGGtkEVZCOrxsui77awEdmFRmHa1/Y+ICdyEIJILOyvaRTwlwN5548dm38tEMLROSWC9/Lg8We8jvJZedPbLiFOTWFMZVAwlX6HWsoPBG51JOgeYC6UX6xeRB1vGM7ttYCuloarQtvoGgQR/EYHi3DBqL7TY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766758466; c=relaxed/simple;
-	bh=FjB88wVB8WWLY7b70Hj5dHBPZIO/Sp626fgTmQ8M54E=;
+	s=arc-20240116; t=1766758468; c=relaxed/simple;
+	bh=RURV6QzV5TUel9dEom43LkLR+aIMlPXxqQNqQjt1REM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Fi2PdtAM9l8ZzaRKTZWjtQBxynnmYcI2uVKsXf8Jl9oP2a35q0dFGjtss5WHiDF3+c+tgsU3ggb3ZOqhSBb9BmGlrg+M4IqpF0xJF4D9OhKSphMlqXoAFJ8+Ll34LWG+SMhCuiPugM++MzIykDlaneddsbZVybAcmuIC6+HRm4A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=JPPrub+Y; arc=none smtp.client-ip=34.202.193.197
+	 MIME-Version:Content-Type; b=ouQ++r+2mW3t5fGk0n3FGc7NxmiKDq85W9wM2ILmG4YY8idx5TPG23rf/JpkHI548pF4gFlzaIh/F5+6Db7nYRq0pXogEjvi5v5G6KNhTw1DJoBR3eaigbNHm9UWMmi90tiARlHoxQb4+psPkyAec0ZO8l25jd8C4HIQ1RPYxQ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org; spf=pass smtp.mailfrom=mentallysanemainliners.org; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=EdbX1AeN; arc=none smtp.client-ip=34.202.193.197
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mentallysanemainliners.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="JPPrub+Y"
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="EdbX1AeN"
 Authentication-Results: purelymail.com; auth=pass
-DKIM-Signature: a=rsa-sha256; b=JPPrub+Y6NGdb4cWHekbYbUpMkirppJ0zJsmqn2MJvepjUzqDkxwIu5ZrK6Bd/LS+aVu3CmCGXuLvXnYf1WZjGyv4ZAeesLgNu5k+UVjrtKdeu92Uiyrtm5uNzOHdzRcN97/H8aATuBu5BspX0/iBnIH/6gyjnpgpeLpozLq4BBImMEPWZm3857Z+WNCfEdhKyInYz0Nbn01QOPqaXV5Z1ZbuR5eELlnI28A6eSbVe6K7xRQAfi5XcpSLmyWZE4fqiIaSDc2I/YDKXzVqE5qz76G9OP/ivsrBCsryIyt+kJOIBp9gDvhykKQ1nqdKOEhFgrlFrJ68LOshJ/S/SMAlA==; s=purelymail3; d=purelymail.com; v=1; bh=FjB88wVB8WWLY7b70Hj5dHBPZIO/Sp626fgTmQ8M54E=; h=Feedback-ID:Received:From:To:Subject:Date;
+DKIM-Signature: a=rsa-sha256; b=EdbX1AeN9ZFk9s8cBpIrXo9wCzBgIadlenmdJ2P/MoR+AXOtmC1Vt6zs/FzSMD0qg0jtYtSjEp348c4DAj4rqd/6D4Q4TqfHw++fIHIbBg28UwKb0/lsB2FsXxdulZfeuUGiKjoV7taAm6I65lAUn3/GNwkiVxIox/xPFlmZikr1p1O16X7By937/wxZUuQ1MtQg7Bttun+GMrDZrE4XXBNO8pVHh2VEwKXJowjTLzGLjwaG9kTVelLoGFuEdM1Uft6XhFyuYeEvkH71tQxylJ1CPdyY4i5/VxagJ2iqfMP+aPVrXghRm5rtdnD+2Mq3X6yPMgbFdKjuSrdPnXLPzQ==; s=purelymail3; d=purelymail.com; v=1; bh=RURV6QzV5TUel9dEom43LkLR+aIMlPXxqQNqQjt1REM=; h=Feedback-ID:Received:From:To:Subject:Date;
 Feedback-ID: 68221:10037:null:purelymail
 X-Pm-Original-To: ofono@lists.linux.dev
 Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id -2072196880;
           (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
-          Fri, 26 Dec 2025 14:14:22 +0000 (UTC)
+          Fri, 26 Dec 2025 14:14:24 +0000 (UTC)
 From: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
 To: ofono@lists.linux.dev
 Cc: Muhammad Asif <thevancedgamer@mentallysanemainliners.org>
-Subject: [PATCH v9 07/10] mbim: Add support for nested fixed arrays in arrays/structs
-Date: Fri, 26 Dec 2025 19:13:07 +0500
-Message-ID: <20251226141310.41856-8-thevancedgamer@mentallysanemainliners.org>
+Subject: [PATCH v9 08/10] mbim: Add support for SIM I/O operations
+Date: Fri, 26 Dec 2025 19:13:08 +0500
+Message-ID: <20251226141310.41856-9-thevancedgamer@mentallysanemainliners.org>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251226141310.41856-1-thevancedgamer@mentallysanemainliners.org>
 References: <20251226141310.41856-1-thevancedgamer@mentallysanemainliners.org>
@@ -42,156 +42,458 @@ Content-Transfer-Encoding: quoted-printable
 X-MIME-Autoconverted: from 8bit to quoted-printable by Purelymail
 Content-Type: text/plain; charset=UTF-8
 
-In some arrays, a nested array can be a fixed array coupled with an
-OL-pair, which breaks the existing assumptions of arrays and structs,
-leading to wrong data being parsed. Or the parent array can have no
-OL-pair in this condition.
-
-For example:
-The UICC low-level access data has a struct array, but the array itself
-has no OL-pair, instead the OL-pair is of the struct, so the position is
-no longer incremented in the array parser so the nested struct can parse
-its OL-pair properly. Instead the global iterator position is increased,
-so the properties after the OL-pair can be parsed properly.
-
-The method for detecting a fixed array is also flawed, because a nested
-array can be fixed, e.g. in the example above, the AID array inside the
-struct array is a fixed array, but parsing fails due to it being treated
-as a variable array.
-
-Introduce a new argument type to parse fixed nested arrays in order to
-solve this. Also remove out_n_elem for arrays, since it can be a
-separate field away from the array itself.
+Adds support for complete SIM I/O operations, with complete path
+resolution using sim_ef_db.
 ---
- drivers/mbimmodem/gprs.c         |  2 +-
- drivers/mbimmodem/mbim-message.c | 27 +++++++++++++++++++--------
- drivers/mbimmodem/sms.c          |  5 +++--
- 3 files changed, 23 insertions(+), 11 deletions(-)
+ drivers/mbimmodem/mbim.c |   5 +
+ drivers/mbimmodem/mbim.h |  16 +++
+ drivers/mbimmodem/sim.c  | 249 ++++++++++++++++++++++++++++++++++++++-
+ drivers/mbimmodem/util.c |  27 +++++
+ drivers/mbimmodem/util.h |   1 +
+ 5 files changed, 296 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/mbimmodem/gprs.c b/drivers/mbimmodem/gprs.c
-index 06a50f3d..23953faf 100644
---- a/drivers/mbimmodem/gprs.c
-+++ b/drivers/mbimmodem/gprs.c
-@@ -175,7 +175,7 @@ static void provisioned_contexts_query_cb(struct mbim_m=
-essage *message,
- =09if (mbim_message_get_error(message) !=3D 0)
- =09=09return;
+diff --git a/drivers/mbimmodem/mbim.c b/drivers/mbimmodem/mbim.c
+index cd642515..6289497b 100644
+--- a/drivers/mbimmodem/mbim.c
++++ b/drivers/mbimmodem/mbim.c
+@@ -112,6 +112,11 @@ const uint8_t mbim_ms_basic_connect_extensions[] =3D {
+ =090xBE, 0xF7, 0x05, 0x8E, 0x9A, 0xAF,
+ };
 =20
--=09if (!mbim_message_get_arguments(message, "a(u16ysssuu)",
-+=09if (!mbim_message_get_arguments(message, "ua(u16ysssuu)",
- =09=09=09=09=09=09&n_contexts, &contexts))
- =09=09return;
++const uint8_t mbim_ms_uicc_low_level_access[] =3D {
++=090xC2, 0xF6, 0x58, 0x8E, 0xF0, 0x37, 0x4B, 0xC9, 0x86, 0x65,
++=090xF4, 0xD4, 0x4B, 0xD0, 0x93, 0x67
++};
++
+ struct message_assembly_node {
+ =09struct mbim_message_header msg_hdr;
+ =09struct mbim_fragment_header frag_hdr;
+diff --git a/drivers/mbimmodem/mbim.h b/drivers/mbimmodem/mbim.h
+index 7101d811..70142cc9 100644
+--- a/drivers/mbimmodem/mbim.h
++++ b/drivers/mbimmodem/mbim.h
+@@ -33,6 +33,11 @@ struct mbim_message;
 =20
-diff --git a/drivers/mbimmodem/mbim-message.c b/drivers/mbimmodem/mbim-mess=
-age.c
-index b6f91c1c..ccda322d 100644
---- a/drivers/mbimmodem/mbim-message.c
-+++ b/drivers/mbimmodem/mbim-message.c
-@@ -309,7 +309,8 @@ static bool _iter_next_entry_basic(struct mbim_message_=
-iter *iter,
+ #define MBIM_CID_MS_BASIC_CONNECT_EXTENSIONS_VERSION=0915
+=20
++#define MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_APPLICATION_LIST 7
++#define MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_FILE_STATUS=098
++#define MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_READ_BINARY=099
++#define MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_READ_RECORD=0910
++
+ #define MBIM_CID_SMS_CONFIGURATION=09=091
+ #define MBIM_CID_SMS_READ=09=09=092
+ #define MBIM_CID_SMS_SEND=09=09=093
+@@ -75,6 +80,16 @@ enum mbim_data_class {
+ =09MBIM_DATA_CLASS_CUSTOM=09=09=3D 0x80000000,
+ };
+=20
++enum mbim_app_type {
++=09MBIM_APP_UNKNOWN,
++=09MBIM_APP_MF,
++=09MBIM_APP_MF_SIM,
++=09MBIM_APP_MF_RUIM,
++=09MBIM_APP_USIM,
++=09MBIM_APP_CSIM,
++=09MBIM_APP_ISIM,
++};
++
+ typedef void (*mbim_device_debug_func_t) (const char *str, void *user_data=
+);
+ typedef void (*mbim_device_disconnect_func_t) (void *user_data);
+ typedef void (*mbim_device_destroy_func_t) (void *user_data);
+@@ -90,6 +105,7 @@ extern const uint8_t mbim_uuid_stk[];
+ extern const uint8_t mbim_uuid_auth[];
+ extern const uint8_t mbim_uuid_dss[];
+ extern const uint8_t mbim_ms_basic_connect_extensions[];
++extern const uint8_t mbim_ms_uicc_low_level_access[];
+=20
+ extern const uint8_t mbim_context_type_none[];
+ extern const uint8_t mbim_context_type_internet[];
+diff --git a/drivers/mbimmodem/sim.c b/drivers/mbimmodem/sim.c
+index 9df34121..382229d2 100644
+--- a/drivers/mbimmodem/sim.c
++++ b/drivers/mbimmodem/sim.c
+@@ -22,14 +22,39 @@
+ #include "drivers/mbimmodem/mbim-message.h"
+ #include "drivers/mbimmodem/mbimmodem.h"
+=20
++struct sim_app {
++=09enum mbim_app_type app_type;
++=09uint32_t aid_len;
++=09uint8_t *aid;
++=09char *label;
++=09uint32_t pin_key_references;
++};
++
+ struct sim_data {
+ =09struct mbim_device *device;
++=09uint32_t app_count;
++=09uint32_t active_app;
++=09struct sim_app *apps;
+ =09char *iccid;
+ =09char *imsi;
+ =09uint32_t last_pin_type;
+ =09bool present : 1;
+ };
+=20
++static uint32_t mbim_file_structure_to_ofono(uint32_t file_structure)
++{
++=09switch (file_structure) {
++=09case 1:
++=09=09return OFONO_SIM_FILE_STRUCTURE_TRANSPARENT;
++=09case 2:
++=09=09return OFONO_SIM_FILE_STRUCTURE_CYCLIC;
++=09case 3:
++=09=09return OFONO_SIM_FILE_STRUCTURE_FIXED;
++=09default:
++=09=09return OFONO_SIM_FILE_STRUCTURE_TRANSPARENT;
++=09}
++}
++
+ static void mbim_sim_state_changed(struct ofono_sim *sim, uint32_t ready_s=
+tate)
+ {
+ =09struct sim_data *sd =3D ofono_sim_get_data(sim);
+@@ -76,6 +101,139 @@ static void mbim_read_imsi(struct ofono_sim *sim,
+ =09CALLBACK_WITH_SUCCESS(cb, sd->imsi, user_data);
  }
 =20
- static bool _iter_enter_array(struct mbim_message_iter *iter,
--=09=09=09=09=09struct mbim_message_iter *array)
-+=09=09=09=09=09struct mbim_message_iter *array,
-+=09=09=09=09=09bool fixed_array)
++static void read_file_info_cb(struct mbim_message *message, void *user_dat=
+a)
++{
++=09struct cb_data *cbd =3D user_data;
++=09ofono_sim_file_info_cb_t cb =3D cbd->cb;
++=09unsigned char access[3] =3D {0x0f, 0xff, 0xff};
++=09uint32_t version, status_word1, status_word2, file_accessibility;
++=09uint32_t file_type, file_structure, file_item_count, file_item_size;
++
++=09if (!mbim_message_get_error(message) &&
++=09=09mbim_message_get_arguments(message, "uuuuuuuu", &version, &status_wo=
+rd1,
++=09=09=09=09=09&status_word2, &file_accessibility,
++=09=09=09=09=09&file_type, &file_structure,
++=09=09=09=09=09&file_item_count, &file_item_size)) {
++
++=09=09CALLBACK_WITH_SUCCESS(cb, file_item_size,
++=09=09=09=09=09mbim_file_structure_to_ofono(file_structure),
++=09=09=09=09=09file_item_size * file_item_count,
++=09=09=09=09=09access, file_accessibility, cbd->data);
++=09} else {
++=09=09CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL, -1, cbd->data);
++=09}
++}
++
++static void mbim_read_file_info(struct ofono_sim *sim,
++=09=09=09=09int fileid, const unsigned char *path,
++=09=09=09=09unsigned int path_len,
++=09=09=09=09ofono_sim_file_info_cb_t cb, void *user_data)
++{
++=09struct sim_data *data =3D ofono_sim_get_data(sim);
++=09struct cb_data *cbd =3D cb_data_new(cb, user_data);
++=09struct mbim_message *message;
++=09uint8_t *file_id_buf;
++=09int file_id_len;
++
++=09message =3D mbim_message_new(mbim_ms_uicc_low_level_access,
++=09=09=09=09=09MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_FILE_STATUS,
++=09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
++
++=09file_id_buf =3D mbim_get_fileid_new(data->apps[data->active_app].app_ty=
+pe,
++=09=09=09=09=09=09fileid, &file_id_len);
++=09mbim_message_set_arguments(message, "uayay", 1,
++=09=09=09=09=09data->apps[data->active_app].aid_len,
++=09=09=09=09=09data->apps[data->active_app].aid,
++=09=09=09=09=09file_id_len, file_id_buf);
++=09l_free(file_id_buf);
++
++=09mbim_device_send(data->device, SIM_GROUP, message, read_file_info_cb, c=
+bd, l_free);
++}
++
++static void read_file_cb(struct mbim_message *message, void *user_data)
++{
++=09struct cb_data *cbd =3D user_data;
++=09ofono_sim_read_cb_t cb =3D cbd->cb;
++=09struct mbim_message_iter iter;
++=09uint32_t version, status_word1, status_word2, data_size;
++=09uint8_t *data =3D NULL;
++=09int i =3D 0;
++
++=09if (!mbim_message_get_error(message) &&
++=09=09mbim_message_get_arguments(message, "uuuAy", &version,
++=09=09=09=09=09=09&status_word1, &status_word2, &iter)) {
++
++=09=09data_size =3D iter.n_elem;
++=09=09data =3D l_malloc(data_size);
++=09=09while (mbim_message_iter_next_entry(&iter, data + i))
++=09=09=09i++;
++
++=09=09CALLBACK_WITH_SUCCESS(cb, data, data_size, cbd->data);
++=09} else {
++=09=09CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
++=09}
++
++=09/* The data gets copied by ofono's sim driver, so we can free it */
++=09if (data)
++=09=09l_free(data);
++}
++
++static void mbim_read_file_transparent(struct ofono_sim *sim,
++=09=09=09=09=09int fileid, int start, int length,
++=09=09=09=09=09const unsigned char *path, unsigned int path_len,
++=09=09=09=09=09ofono_sim_read_cb_t cb, void *user_data)
++{
++=09struct sim_data *sd =3D ofono_sim_get_data(sim);
++=09struct cb_data *cbd =3D cb_data_new(cb, user_data);
++=09struct mbim_message *message;
++=09uint8_t *file_id_buf;
++=09int file_id_len;
++
++=09message =3D mbim_message_new(mbim_ms_uicc_low_level_access,
++=09=09=09=09=09MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_READ_BINARY,
++=09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
++
++=09file_id_buf =3D mbim_get_fileid_new(sd->apps[sd->active_app].app_type,
++=09=09=09=09=09=09fileid, &file_id_len);
++=09mbim_message_set_arguments(message, "uayayuusay", 1,
++=09=09=09=09=09sd->apps[sd->active_app].aid_len,
++=09=09=09=09=09sd->apps[sd->active_app].aid,
++=09=09=09=09=09file_id_len, file_id_buf, start,
++=09=09=09=09=09length, "", 0, NULL);
++=09l_free(file_id_buf);
++
++=09mbim_device_send(sd->device, SIM_GROUP, message,
++=09=09=09=09read_file_cb, cbd, l_free);
++}
++
++static void mbim_read_file_fixed_cyclic(struct ofono_sim *sim,
++=09=09=09=09=09int fileid, int record, int length,
++=09=09=09=09=09const unsigned char *path, unsigned int path_len,
++=09=09=09=09=09ofono_sim_read_cb_t cb, void *data)
++{
++=09struct sim_data *sd =3D ofono_sim_get_data(sim);
++=09struct cb_data *cbd =3D cb_data_new(cb, data);
++=09struct mbim_message *message;
++=09uint8_t *file_id_buf;
++=09int file_id_len;
++
++=09message =3D mbim_message_new(mbim_ms_uicc_low_level_access,
++=09=09=09=09=09MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_READ_RECORD,
++=09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
++
++=09file_id_buf =3D mbim_get_fileid_new(sd->apps[sd->active_app].app_type,
++=09=09=09=09=09=09fileid, &file_id_len);
++=09mbim_message_set_arguments(message, "uayayusay", 1,
++=09=09=09=09=09sd->apps[sd->active_app].aid_len,
++=09=09=09=09=09sd->apps[sd->active_app].aid,
++=09=09=09=09=09file_id_len, file_id_buf, record,
++=09=09=09=09=09"", 0, NULL);
++=09l_free(file_id_buf);
++
++=09mbim_device_send(sd->device, SIM_GROUP, message,
++=09=09=09=09read_file_cb, cbd, l_free);
++}
++
+ static enum ofono_sim_password_type mbim_pin_type_to_sim_password(
+ =09=09=09=09=09=09=09uint32_t pin_type)
  {
- =09size_t pos;
- =09uint32_t n_elem;
-@@ -322,7 +323,7 @@ static bool _iter_enter_array(struct mbim_message_iter =
-*iter,
- =09if (iter->container_type =3D=3D CONTAINER_TYPE_ARRAY && !iter->n_elem)
- =09=09return false;
+@@ -381,6 +539,68 @@ static void mbim_pin_change(struct ofono_sim *sim,
+ =09mbim_pin_set(sim, pin_type, 3, old_passwd, new_passwd, cb, data);
+ }
 =20
--=09if (iter->sig_start[iter->sig_pos] !=3D 'a')
-+=09if (iter->sig_start[iter->sig_pos] !=3D 'a' && iter->sig_start[iter->si=
-g_pos] !=3D 'A')
- =09=09return false;
-=20
- =09sig_start =3D iter->sig_start + iter->sig_pos + 1;
-@@ -333,7 +334,7 @@ static bool _iter_enter_array(struct mbim_message_iter =
-*iter,
- =09 * 1. Element Count, followed by OL_PAIR_LIST
- =09 * 2. Offset, followed by element length or size for raw buffers
- =09 */
--=09fixed =3D is_fixed_size(sig_start, sig_end);
-+=09fixed =3D is_fixed_size(sig_start, sig_end) || fixed_array;
-=20
- =09if (fixed) {
- =09=09pos =3D align_len(iter->pos, 4);
-@@ -351,7 +352,9 @@ static bool _iter_enter_array(struct mbim_message_iter =
-*iter,
-=20
- =09data =3D _iter_get_data(iter, pos);
- =09n_elem =3D l_get_le32(data);
--=09pos +=3D 4;
++static void mbim_sim_list_apps_cb(struct mbim_message *message,
++=09=09=09=09=09void *user)
++{
++=09struct cb_data *cbd =3D user;
++=09struct sim_data *data =3D ofono_sim_get_data(cbd->data);
++=09uint32_t ready_state =3D L_PTR_TO_UINT(cbd->cb);
 +
-+=09if (fixed)
-+=09=09iter->pos +=3D 4;
-=20
- =09if (iter->container_type !=3D CONTAINER_TYPE_ARRAY)
- =09=09iter->sig_pos +=3D sig_end - sig_start + 1;
-@@ -445,7 +448,6 @@ static bool message_iter_next_entry_valist(struct mbim_=
-message_iter *orig,
- =09struct mbim_message_iter *iter =3D orig;
- =09const char *signature =3D orig->sig_start + orig->sig_pos;
- =09const char *end;
--=09uint32_t *out_n_elem;
- =09struct mbim_message_iter *sub_iter;
- =09struct mbim_message_iter stack[MAX_NESTING];
- =09unsigned int indent =3D 0;
-@@ -518,13 +520,22 @@ static bool message_iter_next_entry_valist(struct mbi=
-m_message_iter *orig,
- =09=09=09=09iter =3D &stack[indent - 1];
- =09=09=09break;
- =09=09case 'a':
--=09=09=09out_n_elem =3D va_arg(args, uint32_t *);
- =09=09=09sub_iter =3D va_arg(args, void *);
-=20
--=09=09=09if (!_iter_enter_array(iter, sub_iter))
-+=09=09=09if (!_iter_enter_array(iter, sub_iter, false))
- =09=09=09=09return false;
-=20
--=09=09=09*out_n_elem =3D sub_iter->n_elem;
-+=09=09=09end =3D _signature_end(signature + 1);
-+=09=09=09signature =3D end + 1;
-+=09=09=09break;
-+=09=09/* Fixed array with an OL pair list, no element count
-+=09=09 * TODO: Implement sending fixed arrays to the modem too
-+=09=09 */
-+=09=09case 'A':
-+=09=09=09sub_iter =3D va_arg(args, void *);
++=09uint32_t version, count, active_app;
++=09uint32_t application_id, size, pin_key_references;
++=09char *aid_label;
++=09struct mbim_message_iter iter, aid_iter, pin_iter;
++=09int i =3D 0;
 +
-+=09=09=09if (!_iter_enter_array(iter, sub_iter, true))
-+=09=09=09=09return false;
++=09if (mbim_message_get_error(message))
++=09=09goto out;
++
++=09if (!mbim_message_get_arguments(message, "uuuua(uAysuAy)", &version,
++=09=09=09=09=09&count, &active_app, &size, &iter))
++=09=09goto out;
++
++=09data->apps =3D l_new(struct sim_app, count);
++=09data->active_app =3D active_app;
++=09data->app_count =3D count;
++
++=09while (mbim_message_iter_next_entry(&iter, &application_id, &aid_iter,
++=09=09=09=09=09&aid_label, &pin_key_references, &pin_iter)) {
++=09=09int j =3D 0;
++
++=09=09data->apps[i].app_type =3D application_id;
++=09=09data->apps[i].aid_len =3D aid_iter.n_elem;
++=09=09data->apps[i].aid =3D l_malloc(aid_iter.n_elem);
++
++=09=09while (mbim_message_iter_next_entry(&aid_iter,
++=09=09=09=09=09=09=09data->apps[i].aid + j))
++=09=09=09j++;
++
++=09=09data->apps[i].label =3D aid_label;
++=09=09i++;
++=09}
++
++out:
++=09mbim_sim_state_changed(cbd->data, ready_state);
++}
++
++static void mbim_sim_list_apps(struct ofono_sim *sim, uint32_t ready_state=
+)
++{
++=09struct sim_data *data =3D ofono_sim_get_data(sim);
++=09struct cb_data *cbd =3D cb_data_new(L_UINT_TO_PTR(ready_state), sim);
++=09struct mbim_message *message;
++
++=09message =3D mbim_message_new(mbim_ms_uicc_low_level_access,
++=09=09=09=09=09MBIM_CID_MS_UICC_LOW_LEVEL_ACCESS_APPLICATION_LIST,
++=09=09=09=09=09MBIM_COMMAND_TYPE_QUERY);
++=09mbim_message_set_arguments(message, "");
++
++=09if (mbim_device_send(data->device, SIM_GROUP, message,
++=09=09=09mbim_sim_list_apps_cb, cbd, l_free) > 0)
++=09=09return;
++
++=09mbim_message_unref(message);
++}
++
+ static void mbim_subscriber_ready_status_changed(struct mbim_message *mess=
+age,
+ =09=09=09=09=09=09=09=09void *user)
+ {
+@@ -418,7 +638,13 @@ static void mbim_subscriber_ready_status_changed(struc=
+t mbim_message *message,
 =20
- =09=09=09end =3D _signature_end(signature + 1);
- =09=09=09signature =3D end + 1;
-diff --git a/drivers/mbimmodem/sms.c b/drivers/mbimmodem/sms.c
-index 1f52ef7e..c0610ef3 100644
---- a/drivers/mbimmodem/sms.c
-+++ b/drivers/mbimmodem/sms.c
-@@ -211,7 +211,7 @@ static void mbim_parse_sms_read_info(struct mbim_messag=
-e *message,
- =09uint32_t status;
- =09uint32_t pdu_len;
+ =09DBG("%s %s", iccid, imsi);
 =20
--=09if (!mbim_message_get_arguments(message, "ua(uuay)",
-+=09if (!mbim_message_get_arguments(message, "uua(uuay)",
- =09=09=09=09=09=09&format, &n_sms, &array))
- =09=09return;
+-=09mbim_sim_state_changed(sim, ready_state);
++=09/* We need to setup the apps list before notifying ofono about SIM stat=
+us,
++=09 * otherwise ofono will try to read files before we have the AIDs avail=
+able.
++=09 */
++=09if (mbim_device_mbimex_version_at_least(mbimex_version, 3, 0) && !sd->a=
+pps)
++=09=09mbim_sim_list_apps(sim, ready_state);
++=09else
++=09=09mbim_sim_state_changed(sim, ready_state);
+ }
 =20
-@@ -219,7 +219,8 @@ static void mbim_parse_sms_read_info(struct mbim_messag=
-e *message,
- =09=09return;
+ static void mbim_subscriber_ready_status_cb(struct mbim_message *message,
+@@ -466,7 +692,12 @@ static void mbim_subscriber_ready_status_cb(struct mbi=
+m_message *message,
 =20
- =09while (mbim_message_iter_next_entry(&array, &index, &status,
--=09=09=09=09=09=09=09&pdu_len, &bytes)) {
-+=09=09=09=09=09=09=09&bytes)) {
-+=09=09pdu_len =3D bytes.n_elem;
- =09=09int i =3D 0;
+ =09ofono_sim_register(sim);
+ =09DBG("%s %s", iccid, imsi);
+-=09mbim_sim_state_changed(sim, ready_state);
++
++=09if (mbim_device_mbimex_version_at_least(mbimex_version, 3, 0) && !sd->a=
+pps)
++=09=09mbim_sim_list_apps(sim, ready_state);
++=09else
++=09=09mbim_sim_state_changed(sim, ready_state);
++
+ =09return;
 =20
- =09=09/* Ignore Draft (2) and Sent (3) messages */
+ error:
+@@ -496,6 +727,8 @@ static int mbim_sim_probe(struct ofono_sim *sim, unsign=
+ed int vendor,
+=20
+ =09sd =3D l_new(struct sim_data, 1);
+ =09sd->device =3D mbim_device_ref(device);
++=09sd->apps =3D NULL;
++=09sd->app_count =3D 0;
+ =09ofono_sim_set_data(sim, sd);
+=20
+ =09return 0;
+@@ -514,12 +747,24 @@ static void mbim_sim_remove(struct ofono_sim *sim)
+=20
+ =09l_free(sd->iccid);
+ =09l_free(sd->imsi);
++
++=09for (int i =3D 0; i < sd->app_count; i++) {
++=09=09l_free(sd->apps[i].aid);
++=09=09l_free(sd->apps[i].label);
++=09}
++
++=09l_free(sd->apps);
++
+ =09l_free(sd);
+ }
+=20
+ static const struct ofono_sim_driver driver =3D {
+ =09.probe=09=09=09=3D mbim_sim_probe,
+ =09.remove=09=09=09=3D mbim_sim_remove,
++=09.read_file_info=09=09=3D mbim_read_file_info,
++=09.read_file_transparent=09=3D mbim_read_file_transparent,
++=09.read_file_cyclic=09=3D mbim_read_file_fixed_cyclic,
++=09.read_file_linear=09=3D mbim_read_file_fixed_cyclic,
+ =09.read_imsi=09=09=3D mbim_read_imsi,
+ =09.query_passwd_state=09=3D mbim_pin_query,
+ =09.query_pin_retries=09=3D mbim_pin_retries_query,
+diff --git a/drivers/mbimmodem/util.c b/drivers/mbimmodem/util.c
+index 4a3d9627..0eaec48e 100644
+--- a/drivers/mbimmodem/util.c
++++ b/drivers/mbimmodem/util.c
+@@ -9,6 +9,7 @@
+ #include <stdbool.h>
+=20
+ #include "src/common.h"
++#include "simutil.h"
+ #include "mbim.h"
+ #include "util.h"
+=20
+@@ -37,3 +38,29 @@ int mbim_data_class_to_tech(uint32_t n)
+=20
+ =09return -1;
+ }
++
++uint8_t *mbim_get_fileid_new(enum mbim_app_type app_type, uint32_t fileid,=
+ int *file_id_len)
++{
++=09uint8_t parent_path[6] =3D {0};
++=09int fileid_len =3D 0;
++=09uint8_t *full_path;
++
++=09if (app_type =3D=3D MBIM_APP_USIM || app_type =3D=3D MBIM_APP_ISIM)
++=09=09fileid_len =3D sim_ef_db_get_path_3g(fileid, parent_path);
++=09else
++=09=09fileid_len =3D sim_ef_db_get_path_2g(fileid, parent_path);
++
++=09if (fileid_len < 2 || fileid_len > 6) {
++=09=09*file_id_len =3D 0;
++=09=09return NULL;
++=09}
++
++=09full_path =3D l_malloc(fileid_len + 2);
++=09memcpy(full_path, parent_path, fileid_len);
++
++=09full_path[fileid_len] =3D (fileid >> 8) & 0xFF;
++=09full_path[fileid_len + 1] =3D fileid & 0xFF;
++=09*file_id_len =3D fileid_len + 2;
++
++=09return full_path;
++}
+diff --git a/drivers/mbimmodem/util.h b/drivers/mbimmodem/util.h
+index 2172cd9f..eebcf744 100644
+--- a/drivers/mbimmodem/util.h
++++ b/drivers/mbimmodem/util.h
+@@ -43,3 +43,4 @@ static inline struct cb_data *cb_data_new(void *cb, void =
+*data)
+ =09} while (0)
+=20
+ int mbim_data_class_to_tech(uint32_t n);
++uint8_t *mbim_get_fileid_new(enum mbim_app_type app_type, uint32_t fileid,=
+ int *file_id_len);
 --=20
 2.52.0
 
