@@ -1,253 +1,338 @@
-Received: from mail.expatria.ca (mail.expatria.ca [144.217.207.203])
+Received: from mail-07.mail-europe.com (mail-07.mail-europe.com [188.165.51.139])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C84F37DE84
-	for <ofono@lists.linux.dev>; Thu, 12 Mar 2026 20:39:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.217.207.203
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEFD338657A
+	for <ofono@lists.linux.dev>; Thu, 16 Apr 2026 07:20:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.165.51.139
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773347945; cv=none; b=ni47CGsafnnWMbWcW8ywEDTsgS1CzEwrSfjWiPuHNmc3/8i+KW0zxqAW/2T+lGuB9ytq3LeSanXsKoA6xfYt8HcVmGUrXozrwT9bMSh97kf+OfLaB5wLeYObhk6/eNZJeY7vWKkMRUHHG4qVJuvXZsaoq5Siw55cCJURHDmDMXg=
+	t=1776324017; cv=none; b=VIEJMjN4Nk0R+hW4w55NyuXedSC8J8fT0kb+8bNZwbyaaVrPfcuyUOzMDrC0WSVvkZnDh/ifDSDrrXnrhAxYAA66vGDS0o9EIr/MeLRKcyTeJ87St10tOV82OtEx4/WOLwq3wAB6/dg4WNoxzesg79zKw2gtTLMLlxdnD8iO+jc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773347945; c=relaxed/simple;
-	bh=0+DY9YWtqgtZCkbP13B2a7p7Z5Ot+eArGtLZ9lEj11M=;
-	h=Content-Type:Message-ID:Date:MIME-Version:Subject:To:Cc:
-	 References:From:In-Reply-To; b=Q3v2HQgpafgqSYbKZIj5eGAY55mMzOmr95Eoy1mJ476whB0VfEb+9FA6D67FB1Gp8JFCkRdeukD9o+b+BA5fhOQuygW+fkHpyvl8YHGCsSecOyI0Z6bR+IvCmfq9VypIrYcP5uj5RISNR+Ta+k8y1sxBPqCwiSYjoseaknCdm5Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=expatria.ca; spf=pass smtp.mailfrom=expatria.ca; dkim=pass (2048-bit key) header.d=expatria.ca header.i=@expatria.ca header.b=CZTfOngJ; arc=none smtp.client-ip=144.217.207.203
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=expatria.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=expatria.ca
+	s=arc-20240116; t=1776324017; c=relaxed/simple;
+	bh=X4MBUs4u6bQDB81Oj1j/SkUwnxSZLR4SMPAbj1Wwol4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=dcLS1nbdPD/pDaCGCdMQZoMrZQYhJH0BH4cHaO2Niav1L2Z5Ib23ZSUHzaZZrxQDgyPkHOxBth/Fj/Kkmo3XlU+hjjEOJ6F1Z/ngEmyUNBfAFODTyQeM6reQ+BpUY9gP8Lk5aKIyx+Dc9GKmrYLdR/c3BPCfhv+Ywf0dT93AQNE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=lBtJd5qV; arc=none smtp.client-ip=188.165.51.139
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=expatria.ca header.i=@expatria.ca header.b="CZTfOngJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=expatria.ca;
-	s=default; t=1773347559;
-	bh=0+DY9YWtqgtZCkbP13B2a7p7Z5Ot+eArGtLZ9lEj11M=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=CZTfOngJcEzM9eAjpRizvMPfCfM9M5Q3gxyAqavx7HmpXxsvT1ckBJf2GfA4KlKln
-	 z1sfLsHJmzCkXJZaJxcaXc5EsJCYEsCQCpGdEVaYjb50CxIFwF6bgUvImFYUKTkZRS
-	 nP4intFtlX3cNQHJtd5jZwxcYhlrSiAACk2JTtdIKKh+dOFMABWBZPIepjOJht7m96
-	 rMrOYcETDv9c8ubKKeiv8xd6tx3/tiV7FdicVXbZNHKdMEL80BqlrUKCE7WIIWmdIt
-	 38hDsHzbd9XItd4hwZLpsmRcRlWaKItt8Lj38xUvu4edpPPU6lW/0KPnzIW3G4rGgl
-	 srTQXFdfEVz2A==
-Received: from [10.89.51.52] (d154-20-248-80.bchsia.telus.net [154.20.248.80])
-	by mail.expatria.ca (Postfix) with ESMTPSA id 69294124C1;
-	Thu, 12 Mar 2026 20:32:38 +0000 (UTC)
-Content-Type: multipart/mixed; boundary="------------XRNfIUndevMGWEP8jBBh8lW0"
-Message-ID: <9571cabe-0c3d-43b8-be30-32ce44e6343c@expatria.ca>
-Date: Thu, 12 Mar 2026 13:32:37 -0700
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="lBtJd5qV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=geanix.com;
+	s=protonmail3; t=1776323996; x=1776583196;
+	bh=J72e0HH3eZIl6wzET5895nXQNSo2Tv+L2fOBC1CgCC4=;
+	h=From:To:Cc:Subject:Date:Message-ID:From:To:Cc:Date:Subject:
+	 Reply-To:Feedback-ID:Message-ID:BIMI-Selector;
+	b=lBtJd5qVG62FFRBtT3f/q+gOfNFCSIv3iYRzsYyfOI0YbbKBUK0JRYTmw6H/YvGMH
+	 RbHiOwMtd9uvDbyokAgbka/FWa9fd7IWTAe6OknQIqHrw6hqx///qT5lPnRn0sEFUI
+	 mTDXvKNwzb3g7Mx4GdufRq4S99KVPzPMxXLr6QyC7NZ6NUl5P34oun4e2TJ2I5p+bc
+	 YdxZh1eCtlYOJ2MbpzoYV6+A25IF9+8vGYi3GmhZ6mABy5/txIemvT96msCbtcoYwJ
+	 VCVUCRxdPzBDlWeCcdAPAyXUUxwoPjiz6IMkiRc7CdbtIiW9rVPtvHQ1a1lNRHB1Dk
+	 ofat5bDkjOmtw==
+X-Pm-Submission-Id: 4fx8Xp69R1z1DDs4
+From: Sean Nyekjaer <sean@geanix.com>
+To: denkenz@gmail.com,
+	ofono@lists.linux.dev
+Cc: Sean Nyekjaer <sean@geanix.com>
+Subject: [PATCH v2 1/2] simcommodem: Add netmon driver for Simcom A7671E
+Date: Thu, 16 Apr 2026 09:19:47 +0200
+Message-ID: <20260416071949.2221937-1-sean@geanix.com>
+X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: ZDI-CAN-29089: New Vulnerability Report
-To: Sicelo <absicsz@gmail.com>,
- "zdi-disclosures@trendmicro.com" <zdi-disclosures@trendmicro.com>
-Cc: Willy Tarreau <w@1wt.eu>, "ofono@lists.linux.dev"
- <ofono@lists.linux.dev>, "secalert@redhat.com" <secalert@redhat.com>,
- ivo.g.dimitrov.75@gmail.com, maemo-leste@lists.dyne.org
-References: <BYAPR01MB3830BD5C9755FDDBA5ADE0FC8062A@BYAPR01MB3830.prod.exchangelabs.com>
- <BYAPR01MB38303CF32A86888EBE5918DA8062A@BYAPR01MB3830.prod.exchangelabs.com>
- <BYAPR01MB3830E1E9E11FC8716A722A588062A@BYAPR01MB3830.prod.exchangelabs.com>
- <aYtkc7oTpBivYUZ1@1wt.eu>
- <BYAPR01MB38300A127FB5267EA5A6846E8044A@BYAPR01MB3830.prod.exchangelabs.com>
- <abMecbIIvAhibdPv@tp440p.steeds.sam>
-Content-Language: en-US
-From: Morgan Hughes <morgan@expatria.ca>
-In-Reply-To: <abMecbIIvAhibdPv@tp440p.steeds.sam>
-
-This is a multi-part message in MIME format.
---------------XRNfIUndevMGWEP8jBBh8lW0
-Content-Type: multipart/alternative;
- boundary="------------uOfmbM0by1jXN1c4vmLhn9LF"
-
---------------uOfmbM0by1jXN1c4vmLhn9LF
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-On 2026-03-12 13:13, Sicelo wrote:
-> Community members will work on these. As with any other open-source
-> projects, patches welcome.
+---
+Changes in v2:
+ - Removed unused ref counting
 
-This looks a lot like a problem I encountered on a buggy modem in October and submitted a 
-patch for.  I've re-attached the patch here, perhaps it was missed because I didn't submit 
-it using git?
+ Makefile.am                  |   3 +-
+ drivers/simcommodem/netmon.c | 240 +++++++++++++++++++++++++++++++++++
+ plugins/sim7100.c            |   2 +
+ 3 files changed, 244 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/simcommodem/netmon.c
 
-Morgan Hughes
+diff --git a/Makefile.am b/Makefile.am
+index cf51cdf1..6f10d396 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -541,7 +541,8 @@ builtin_sources += drivers/atmodem/atutil.h \
+ 			drivers/quectelmodem/radio-settings.c
+ 
+ builtin_sources += drivers/atmodem/atutil.h \
+-			drivers/simcommodem/radio-settings.c
++			drivers/simcommodem/radio-settings.c \
++			drivers/simcommodem/netmon.c
+ 
+ if PHONESIM
+ builtin_modules += phonesim
+diff --git a/drivers/simcommodem/netmon.c b/drivers/simcommodem/netmon.c
+new file mode 100644
+index 00000000..8981ea51
+--- /dev/null
++++ b/drivers/simcommodem/netmon.c
+@@ -0,0 +1,240 @@
++/*
++ * oFono - Open Source Telephony
++ *
++ * SPDX-License-Identifier: GPL-2.0-only
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <stdint.h>
++#include <string.h>
++#include <errno.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/netreg.h>
++#include <ofono/netmon.h>
++
++#include <drivers/atmodem/atutil.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "common.h"
++
++#include "drivers/atmodem/vendor.h"
++
++static const char *cpsi_prefix[] = { "+CPSI:", NULL };
++
++struct netmon_driver_data {
++	GAtChat *chat;
++};
++
++struct req_cb_data {
++	struct ofono_netmon *netmon;
++	ofono_netmon_cb_t cb;
++	void *data;
++
++	struct ofono_network_operator op;
++
++	int rssi;	/* CSQ: received signal strength indicator (RSSI) */
++
++	struct {
++		int tac;	/* CPSI: Tracing Area Code */
++		int pcell;	/* CPSI: Physical Cell ID */
++		int earfcn;	/* CPSI: E-UTRA Absolute Radio Frequency Channel Number */
++		int rsrp;	/* CPSI: Reference Signal Received Power */
++		int rsrq;	/* CPSI: Reference Signal Received Quality */
++	} lte;
++};
++
++static inline struct req_cb_data *req_cb_data_new0(void *cb, void *data,
++							void *user)
++{
++	struct req_cb_data *ret = g_new0(struct req_cb_data, 1);
++
++	ret->netmon = user;
++	ret->data = data;
++	ret->cb = cb;
++
++	return ret;
++}
++
++static int simcom_parse_cpsi_lte(GAtResultIter *iter, struct req_cb_data *cbd) {
++	/*
++	 * +CPSI: <System Mode>,<Operation Mode>[,<MCC>-<MNC>,<TAC>,<SCellID>,<PCellID>,<Frequency Band>,<earfcn>,<dlbw>,<ulbw>,<RSRQ>,<RSRP>,<RSSI>,<RSSNR>]
++	 * +CPSI: LTE,Online,460-01,0x230A,175499523,318,EUTRAN-BAND3,1650,5,0,21,67,255,19
++	 */
++
++	struct ofono_netmon *nm = cbd->netmon;
++	int number;
++	const char *field = NULL;
++	char *mcc = NULL;
++	char *mnc = NULL;
++
++	cbd->lte.earfcn = -1;
++	cbd->lte.rsrp = -1;
++	cbd->lte.rsrq = -1;
++
++	g_at_result_iter_skip_next(iter);
++
++	if (g_at_result_iter_next_unquoted_string(iter, &field)) {
++		mcc = strdup(field);
++		mnc = strchr(mcc, '-');
++		if(mnc != NULL) {
++			*mnc++ = 0;
++			snprintf(cbd->op.mcc, 4, "%s", mcc);
++			snprintf(cbd->op.mnc, 4, "%s", mnc);
++		}
++		free(mcc);
++	}
++
++	if (g_at_result_iter_next_unquoted_string(iter, &field))
++		cbd->lte.tac = strtol(field, NULL, 16);
++
++	g_at_result_iter_skip_next(iter);
++
++	if (g_at_result_iter_next_number(iter, &number))
++		cbd->lte.pcell = number;
++
++	g_at_result_iter_skip_next(iter);
++
++	if (g_at_result_iter_next_number(iter, &number))
++		cbd->lte.earfcn = number;
++
++	g_at_result_iter_skip_next(iter);
++	g_at_result_iter_skip_next(iter);
++
++	if (g_at_result_iter_next_number(iter, &number))
++		cbd->lte.rsrq = number;
++
++	if (g_at_result_iter_next_number(iter, &number))
++		cbd->lte.rsrp = number;
++
++	if (g_at_result_iter_next_number(iter, &number))
++		cbd->rssi = number;
++
++	DBG(" %-15s %s", "LTE.MCC", cbd->op.mcc);
++	DBG(" %-15s %s", "LTE.MNC", cbd->op.mnc);
++	DBG(" %-15s %d", "LTE.TAC", cbd->lte.tac);
++	DBG(" %-15s %d", "LTE.PCI", cbd->lte.pcell);
++	DBG(" %-15s %d", "LTE.EUARFCN", cbd->lte.earfcn);
++	DBG(" %-15s %d", "LTE.RSRP", cbd->lte.rsrp);
++	DBG(" %-15s %d", "LTE.RSRQ", cbd->lte.rsrq);
++
++	ofono_netmon_serving_cell_notify(nm, cbd->op.tech,
++		OFONO_NETMON_INFO_MCC, cbd->op.mcc,
++		OFONO_NETMON_INFO_MNC, cbd->op.mnc,
++		OFONO_NETMON_INFO_TAC, cbd->lte.tac,
++		OFONO_NETMON_INFO_PCI, cbd->lte.pcell,
++		OFONO_NETMON_INFO_RSSI, cbd->rssi,
++		OFONO_NETMON_INFO_EARFCN, cbd->lte.earfcn,
++		OFONO_NETMON_INFO_RSRP, cbd->lte.rsrp,
++		OFONO_NETMON_INFO_RSRQ, cbd->lte.rsrq,
++		OFONO_NETMON_INFO_INVALID);
++}
++
++static void cpsi_cb(gboolean ok, GAtResult *result, gpointer user_data) {
++	struct req_cb_data *cbd = user_data;
++	struct ofono_error error;
++	const char *technology;
++	GAtResultIter iter;
++
++	DBG("ok %d", ok);
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		CALLBACK_WITH_FAILURE(cbd->cb, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if(!g_at_result_iter_next(&iter, "+CPSI: ")) {
++		ofono_warn("Failed to find iterate +CPSI response");
++		CALLBACK_WITH_SUCCESS(cbd->cb, cbd->data);
++		return;
++	}
++
++	if (!g_at_result_iter_next_unquoted_string(&iter, &technology)) {
++		ofono_warn("+CPSI: failed to parse technology");
++		CALLBACK_WITH_SUCCESS(cbd->cb, cbd->data);
++		return;
++	}
++
++	if (strcmp(technology, "LTE") == 0) {
++		cbd->op.tech = OFONO_NETMON_CELL_TYPE_LTE;
++		simcom_parse_cpsi_lte(&iter, cbd);
++	} else if (strcmp(technology, "NO SERVICE") == 0 ) {
++		cbd->op.tech = -1;
++	} else {
++		ofono_warn("Unknown technology in +CPSI response: %s", technology);
++		cbd->op.tech = -1;
++	}
++
++	CALLBACK_WITH_SUCCESS(cbd->cb, cbd->data);
++}
++
++static void simcom_netmon_request_update(struct ofono_netmon *netmon,
++						ofono_netmon_cb_t cb,
++						void *data)
++{
++	struct netmon_driver_data *nmd = ofono_netmon_get_data(netmon);
++	struct req_cb_data *cbd;
++
++	DBG("simcom netmon request update");
++
++	cbd = req_cb_data_new0(cb, data, netmon);
++
++	if (g_at_chat_send(nmd->chat, "AT+CPSI?", cpsi_prefix, cpsi_cb, cbd,
++				g_free) == 0) {
++		CALLBACK_WITH_FAILURE(cbd->cb, cbd->data);
++		g_free(cbd);
++	}
++
++}
++
++static int simcom_netmon_probe(struct ofono_netmon *netmon,
++					unsigned int vendor, void *user)
++{
++	struct netmon_driver_data *nmd = g_new0(struct netmon_driver_data, 1);
++	GAtChat *chat = user;
++
++	DBG("simcom netmon probe");
++
++	nmd->chat = g_at_chat_clone(chat);
++
++	ofono_netmon_set_data(netmon, nmd);
++
++	ofono_netmon_register(netmon);
++
++	return 0;
++}
++
++static void simcom_netmon_remove(struct ofono_netmon *netmon)
++{
++	struct netmon_driver_data *nmd = ofono_netmon_get_data(netmon);
++
++	DBG("simcom netmon remove");
++
++	g_at_chat_unref(nmd->chat);
++
++	ofono_netmon_set_data(netmon, NULL);
++
++	g_free(nmd);
++}
++
++static const struct ofono_netmon_driver driver = {
++	.probe			= simcom_netmon_probe,
++	.remove			= simcom_netmon_remove,
++	.request_update		= simcom_netmon_request_update,
++};
++
++OFONO_ATOM_DRIVER_BUILTIN(netmon, simcommodem, &driver);
+diff --git a/plugins/sim7100.c b/plugins/sim7100.c
+index c4fc5798..0d937868 100644
+--- a/plugins/sim7100.c
++++ b/plugins/sim7100.c
+@@ -34,6 +34,7 @@
+ #include <ofono/call-settings.h>
+ #include <ofono/devinfo.h>
+ #include <ofono/message-waiting.h>
++#include <ofono/netmon.h>
+ #include <ofono/netreg.h>
+ #include <ofono/phonebook.h>
+ #include <ofono/radio-settings.h>
+@@ -357,6 +358,7 @@ static void sim7100_post_sim(struct ofono_modem *modem)
+ 		ofono_sms_create(modem, OFONO_VENDOR_SIMCOM_A76XX,
+ 							"atmodem", data->at);
+ 		ofono_radio_settings_create(modem, 0, "simcommodem", data->at);
++		ofono_netmon_create(modem, 0, "simcommodem", data->at);
+ 		gprs = ofono_gprs_create(modem, OFONO_VENDOR_SIMCOM_A76XX,
+ 							"atmodem", data->at);
+ 		break;
+-- 
+2.52.0
 
-
->
->
->
-> On Thu, Mar 12, 2026 at 07:13:20PM +0000,zdi-disclosures@trendmicro.com wrote:
->> Hello Willy,
->>
->> Noted thank you!
->>
->> Any updates on this issue?
->>
->> Thanks,
->> ZDI
->>
->> -----Original Message-----
->> From: Willy Tarreau<w@1wt.eu>
->> Sent: Tuesday, February 10, 2026 9:02 AM
->> To: ZDI Disclosures Mailbox<zdi-disclosures@trendmicro.com>
->> Cc:ofono@lists.linux.dev;secalert@redhat.com;security@kernel.org
->> Subject: Re: ZDI-CAN-29089: New Vulnerability Report
->>
->> Hello,
->>
->> On Tue, Feb 10, 2026 at 04:54:46PM +0000,zdi-disclosures@trendmicro.com wrote:
->>> ZDI-CAN-29089: oFono MBIM SMS Handling Heap-based Buffer Overflow Arbitrary Code Execution Vulnerability
->>>
->>> -- CVSS -----------------------------------------
->>>
->>> 6.8: AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
->>>
->>> -- ABSTRACT -------------------------------------
->>>
->>> Trend Micro's Zero Day Initiative has identified a vulnerability affecting the following products:
->>> oFono - oFono
->>>
->>> -- VULNERABILITY DETAILS ------------------------
->>> * Version tested:20.0.3
->>> * Installerfile:agl-demo-platform-crosssdk-raspberrypi4-64.wic.xz
->>> * Platform tested:Raspberry Pi
->> (...)
->>
->> Please note that none of these 3 reports concern code in the Linux
->> kernel, sosecurity@kernel.org can be dropped from future exchanges.
->>
->> Thanks,
->> Willy
->> TREND MICRO EMAIL NOTICE
->> The information contained in this email and any attachments is confidential
->> and may be subject to copyright or other intellectual property protection.
->> If you are not the intended recipient, you are not authorized to use or
->> disclose this information, and we request that you notify us by reply mail or
->> telephone and delete the original message from your mail system.
->> For details about what personal information we collect and why, please see our Privacy Notice on our website at: [https://www.trendmicro.com/privacy]
->>
->>
-
---------------uOfmbM0by1jXN1c4vmLhn9LF
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  </head>
-  <body>
-    <div class="moz-cite-prefix">On 2026-03-12 13:13, Sicelo wrote:<br>
-    </div>
-    <blockquote type="cite"
-      cite="mid:abMecbIIvAhibdPv@tp440p.steeds.sam">
-      <pre wrap="" class="moz-quote-pre">Community members will work on these. As with any other open-source
-projects, patches welcome.</pre>
-    </blockquote>
-    <p>This looks a lot like a problem I encountered on a buggy modem in
-      October and submitted a patch for.  I've re-attached the patch
-      here, perhaps it was missed because I didn't submit it using git?</p>
-    <p>Morgan Hughes</p>
-    <p><br>
-    </p>
-    <blockquote type="cite"
-      cite="mid:abMecbIIvAhibdPv@tp440p.steeds.sam">
-      <pre wrap="" class="moz-quote-pre">
-
-
-
-On Thu, Mar 12, 2026 at 07:13:20PM +0000, <a class="moz-txt-link-abbreviated" href="mailto:zdi-disclosures@trendmicro.com">zdi-disclosures@trendmicro.com</a> wrote:
-</pre>
-      <blockquote type="cite">
-        <pre wrap="" class="moz-quote-pre">Hello Willy,
-
-Noted thank you!
-
-Any updates on this issue?
-
-Thanks,
-ZDI
-
------Original Message-----
-From: Willy Tarreau <a class="moz-txt-link-rfc2396E" href="mailto:w@1wt.eu">&lt;w@1wt.eu&gt;</a>
-Sent: Tuesday, February 10, 2026 9:02 AM
-To: ZDI Disclosures Mailbox <a class="moz-txt-link-rfc2396E" href="mailto:zdi-disclosures@trendmicro.com">&lt;zdi-disclosures@trendmicro.com&gt;</a>
-Cc: <a class="moz-txt-link-abbreviated" href="mailto:ofono@lists.linux.dev">ofono@lists.linux.dev</a>; <a class="moz-txt-link-abbreviated" href="mailto:secalert@redhat.com">secalert@redhat.com</a>; <a class="moz-txt-link-abbreviated" href="mailto:security@kernel.org">security@kernel.org</a>
-Subject: Re: ZDI-CAN-29089: New Vulnerability Report
-
-Hello,
-
-On Tue, Feb 10, 2026 at 04:54:46PM +0000, <a class="moz-txt-link-abbreviated" href="mailto:zdi-disclosures@trendmicro.com">zdi-disclosures@trendmicro.com</a> wrote:
-</pre>
-        <blockquote type="cite">
-          <pre wrap="" class="moz-quote-pre">ZDI-CAN-29089: oFono MBIM SMS Handling Heap-based Buffer Overflow Arbitrary Code Execution Vulnerability
-
--- CVSS -----------------------------------------
-
-6.8: AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
-
--- ABSTRACT -------------------------------------
-
-Trend Micro's Zero Day Initiative has identified a vulnerability affecting the following products:
-oFono - oFono
-
--- VULNERABILITY DETAILS ------------------------
-* Version tested:20.0.3
-* Installer <a class="moz-txt-link-freetext" href="file:agl-demo-platform-crosssdk-raspberrypi4-64.wic.xz">file:agl-demo-platform-crosssdk-raspberrypi4-64.wic.xz</a>
-* Platform tested:Raspberry Pi
-</pre>
-        </blockquote>
-        <pre wrap="" class="moz-quote-pre">(...)
-
-Please note that none of these 3 reports concern code in the Linux
-kernel, so <a class="moz-txt-link-abbreviated" href="mailto:security@kernel.org">security@kernel.org</a> can be dropped from future exchanges.
-
-Thanks,
-Willy
-TREND MICRO EMAIL NOTICE
-The information contained in this email and any attachments is confidential
-and may be subject to copyright or other intellectual property protection.
-If you are not the intended recipient, you are not authorized to use or
-disclose this information, and we request that you notify us by reply mail or
-telephone and delete the original message from your mail system.
-For details about what personal information we collect and why, please see our Privacy Notice on our website at: [ <a class="moz-txt-link-freetext" href="https://www.trendmicro.com/privacy">https://www.trendmicro.com/privacy</a>]
-
-
-</pre>
-      </blockquote>
-      <pre wrap="" class="moz-quote-pre">
-</pre>
-    </blockquote>
-    <p><br>
-    </p>
-  </body>
-</html>
-
---------------uOfmbM0by1jXN1c4vmLhn9LF--
---------------XRNfIUndevMGWEP8jBBh8lW0
-Content-Type: text/x-patch; charset=UTF-8; name="mbim-header-validate.patch"
-Content-Disposition: attachment; filename="mbim-header-validate.patch"
-Content-Transfer-Encoding: base64
-
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWJpbW1vZGVtL21iaW0uYyBiL2RyaXZlcnMvbWJpbW1v
-ZGVtL21iaW0uYwppbmRleCBjNDA1NzYxZC4uNDMyMmY1YWQgMTAwNjQ0Ci0tLSBhL2RyaXZl
-cnMvbWJpbW1vZGVtL21iaW0uYworKysgYi9kcml2ZXJzL21iaW1tb2RlbS9tYmltLmMKQEAg
-LTE4LDYgKzE4LDcgQEAKICNpbmNsdWRlIDxsaW51eC90eXBlcy5oPgogCiAjaW5jbHVkZSA8
-ZWxsL2VsbC5oPgorI2luY2x1ZGUgPGVsbC91c2VmdWwuaD4KIAogI2luY2x1ZGUgIm1iaW0u
-aCIKICNpbmNsdWRlICJtYmltLW1lc3NhZ2UuaCIKQEAgLTYxMyw2ICs2MTQsMTUgQEAgc3Rh
-dGljIGJvb2wgY29tbWFuZF9yZWFkX2hhbmRsZXIoc3RydWN0IGxfaW8gKmlvLCB2b2lkICp1
-c2VyX2RhdGEpCiAJaGRyID0gKHN0cnVjdCBtYmltX21lc3NhZ2VfaGVhZGVyICopIGRldmlj
-ZS0+aGVhZGVyOwogCXR5cGUgPSBMX0xFMzJfVE9fQ1BVKGhkci0+dHlwZSk7CiAKKwlpZiAo
-dW5saWtlbHkoaGRyLT5sZW4gPiBNQVhfQ09OVFJPTF9UUkFOU0ZFUikpIHsKKwkJY2hhciAq
-aGV4ID0gbF91dGlsX2hleHN0cmluZyhkZXZpY2UtPmhlYWRlciwKKwkJCQkJCXNpemVvZihz
-dHJ1Y3QgbWJpbV9tZXNzYWdlX2hlYWRlcikpOworCQlsX3dhcm4oIk1CSU06IHNraXAgaW1w
-bGF1c2libGUgaGRyICVzOiBsZW4gMHgleCB0eXBlIDB4JXgiLCBoZXgsCisJCQlMX0xFMzJf
-VE9fQ1BVKGhkci0+bGVuKSwgTF9MRTMyX1RPX0NQVShoZHItPnR5cGUpKTsKKwkJbF9mcmVl
-KGhleCk7CisJCXJldHVybiBmYWxzZTsKKwl9CisKIAlpZiAoZGV2aWNlLT5zZWdtZW50X2J5
-dGVzX3JlbWFpbmluZyA9PSAwKQogCQlkZXZpY2UtPnNlZ21lbnRfYnl0ZXNfcmVtYWluaW5n
-ID0KIAkJCQkJTF9MRTMyX1RPX0NQVShoZHItPmxlbikgLQo=
-
---------------XRNfIUndevMGWEP8jBBh8lW0--
