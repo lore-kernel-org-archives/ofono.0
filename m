@@ -1,86 +1,93 @@
-Received: from spindle.queued.net (spindle.queued.net [45.33.49.30])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 22F4913B293
-	for <ofono@lists.linux.dev>; Sat, 25 Apr 2026 21:27:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.33.49.30
+Received: from b224-2.smtp-out.eu-central-1.amazonses.com (b224-2.smtp-out.eu-central-1.amazonses.com [69.169.224.2])
+	(using TLSv1.2 with cipher AES128-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAE5C3D1CB2
+	for <ofono@lists.linux.dev>; Thu,  7 May 2026 23:02:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=69.169.224.2
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777152443; cv=none; b=FvUd8AeVtD6YBYBki0uxC8WuzKMXTI36vYETq8ZMoqX4jG8ooEgiCPm4h7xQQzh3fwUgFJv8qxZlZQ/3PqecPgmY6HHWHEgXyI9SQsq8L8qtalBVIaew1QT5IKhdvoO6eAbFA08vQRLmvjECL9G2b43Ref6/+KievtmMQNFLcO4=
+	t=1778194974; cv=none; b=vEHZcnUo8BUMzBNC5IsJwXHunwMQB26ubNfk+QZ0/O6BoLlO2gvG/VwB605m2GDG9Qs6YXtgUVciQ2zfQ1Skb/IUxuyj5+g/v+jyVxNqxJlQERgtK1B2ztwD/jS/26uhzp2X8oxWe2dVln3fgH+dnapW7UFRF3TrSrwFyJxDzpo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777152443; c=relaxed/simple;
-	bh=ccwyTEzdn3I8skgMOK+3Z0FZGYRvOvvw1ZD4SM7d8I4=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type; b=SHsQeILWzcSSooc1w5qoZnWp6xqwXyXtQkhTtHezXRVluvbe+TtMcvvh1SfP/g/sPTA/rQpYiRaO6kFnlRztM1v3Uxf8euYp+0/86YDRZp0o0hZrHEJ/Nz0J6ijK4RnQl/xiVjWA8xBnfHK/fe92XtQ203A2lHvvJictM3oqxJY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net; spf=pass smtp.mailfrom=queued.net; arc=none smtp.client-ip=45.33.49.30
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=queued.net
-Received: by spindle.queued.net (Postfix, from userid 1001)
-	id 7420011B37E; Sat, 25 Apr 2026 17:19:48 -0400 (EDT)
-Received: from 5400 (unknown [172.56.35.236])
-	by spindle.queued.net (Postfix) with ESMTPSA id 258AF11B372
-	for <ofono@lists.linux.dev>; Sat, 25 Apr 2026 17:19:48 -0400 (EDT)
-Date: Sat, 25 Apr 2026 17:19:44 -0400
-From: Andres Salomon <dilinger@queued.net>
+	s=arc-20240116; t=1778194974; c=relaxed/simple;
+	bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DbPQYJwANZrBBUpHzn5EkWsLyD1OU4M7aYxzocT366i1ea3gyabz9SnPoDmvkQlUCkh53s7hlS5vKhSntDydEU6PMv0fxI5bf2EeBiXnzHiVk8Vyd/FaGI2dX9AT+Vq9nQozlXqGQBtk374jo++wMyWLLjf33PMdhvHfMBni/aI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ubports.com; spf=pass smtp.mailfrom=eu-central-1.amazonses.com; dkim=pass (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b=iHEbe2Js; dkim=pass (1024-bit key) header.d=amazonses.com header.i=@amazonses.com header.b=N1Ev6Mb8; dkim=fail (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b=bjtGdXBj reason="signature verification failed"; arc=none smtp.client-ip=69.169.224.2
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ubports.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=eu-central-1.amazonses.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b="iHEbe2Js";
+	dkim=pass (1024-bit key) header.d=amazonses.com header.i=@amazonses.com header.b="N1Ev6Mb8";
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b="bjtGdXBj"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=sh5da3j2jknfud6neishr7wiyevoggdh; d=ubports.com; t=1778194971;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Transfer-Encoding;
+	bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
+	b=iHEbe2JsCrlLl5CJPDCB/j5l4RWj6QitRuuCLfNqKr1L16duREQlt6ophT5hceLS
+	VhRxVi+UZZRLJgY7ULsmhMQp0Tj6lfs116QGpUl5KYRO5koPdXoO3x8/K5MuULOXmqx
+	nTR7lwn95bqvaiZxbEt+wL9VndHlAB81ag/HmD1kIbJwiFYKdaONfqF6Sw/A0dyKSBZ
+	twh9QHbmKDYkc5KgJFzDaPcyDNCX9+m0EcjS/0ik+JIJg4a8KYxkuHMPuJrtdOT6Swd
+	1QE9+kGukHK5liaIXjhaU38yUbKgD6H2D4ywiJse2Ow3IIKNBTwryIJYnOFJ3pLSctn
+	t9y5pKrCZQ==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=sokbgaaqhfgd6qjht2wmdajpuuanpimv; d=amazonses.com; t=1778194971;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Transfer-Encoding:Feedback-ID;
+	bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
+	b=N1Ev6Mb8mKwreb5XyVLXdOSHU9TaaMYG3C2emfc1fPiuu1yB3BnkWbqJPILrmG7L
+	yOc48kUdC7IUtdyjGseP5hJ+3DFoYUB6ZZdNR2E2AgatFsw4z0ZyA5bdU4xkJCYPFJC
+	kdKOfJrM77eL41Kp5y/wLWysoVNkP+AxY3qHMcuk=
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=ubports.com; s=mail;
+	t=1778194970; bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
+	h=From:To:Cc:Subject:Date:From;
+	b=bjtGdXBj5WVuMemgZ3IRjn9aWh39zcaDTlQBASUQhFwSwhHindH3u30+TIf7sf5jV
+	 U48i9kGtKCztD+3Ai8GUNKhMCLlzLmbWvrKcCTZJSiZmipkjNnrWMr4P9B0cupz7oa
+	 k9RcXmlu0pBaITOyvG6bfnBzlcXO8aOqlCHJ3fGQh7mEH3WcArwsGeXlINKPo5jkIY
+	 fo5a/RWotsQPzfBIycwyADj+i2gdMD0qxj6hcJpqLMhh/DszSHI1qIS8naJMIKcAYR
+	 MQRCW+fZmeqHlzwKSLceLxOJgWZtuS0pzXk3nvrguWP7cqYEuNPw+n2Vt3LYWFdM/W
+	 1X5TTsU/sp/MA==
+From: Marius Gripsgard <marius@ubports.com>
 To: ofono@lists.linux.dev
-Subject: [PATCH] callforwarding: fix missing prefixes in PropertyChanged
- property names
-Message-ID: <20260425171944.18590822@5400>
-X-Mailer: Claws Mail 4.3.1 (GTK 3.24.49; x86_64-pc-linux-gnu)
+Cc: Marius Gripsgard <marius@ubports.com>
+Subject: [PATCH] sim: fix use-after-free in open_channel_cb watcher loop
+Date: Thu, 7 May 2026 23:02:50 +0000
+Message-ID: <0107019e04adf95a-a0e08395-5cda-4937-b142-329901156dcd-000000@eu-central-1.amazonses.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.5
+Content-Transfer-Encoding: 8bit
+Feedback-ID: ::1.eu-central-1.U71sxic/3tmi0U3T+Ze2hDyqoN46zyPgdCO+zEPT6YQ=:AmazonSES
+X-SES-Outgoing: 2026.05.07-69.169.224.2
 
-A qofono test I was running hit a failure due to unexpected responses:
+The notify callback (get_session_cb -> sim_fs_end_current) calls
+__ofono_sim_remove_session_watch, which removes and frees the current
+GSList node from session->watches->items. iter = g_slist_next(iter)
+then reads ->next from the freed node, on newer glibc the freed memory
+holds a random tcache key rather than accessible heap data, turning the
+next iter->data dereference into a SIGSEGV.
 
-task-0: method call time=1777146276.985742 sender=:1.6 -> destination=org.ofono serial=23 path=/phonesim; interface=org.ofono.CallForwarding; member=SetProperty
-task-0:    string "VoiceUnconditional"
-task-0:    variant       string "12345678"
-task-0: method return time=1777146276.991119 sender=:1.1 -> destination=:1.6 serial=159 reply_serial=23
-task-0: signal time=1777146276.991146 sender=:1.1 -> destination=(null destination) serial=160 path=/phonesim; interface=org.ofono.CallForwarding; member=PropertyChanged
-task-0:    string "VoiceUnconditional"
-task-0:    variant       string "12345678"
-task-0: signal time=1777146276.991165 sender=:1.1 -> destination=(null destination) serial=161 path=/phonesim; interface=org.ofono.CallForwarding; member=PropertyChanged
-task-0:    string "Busy"
-task-0:    variant       string ""
-task-0: signal time=1777146276.991181 sender=:1.1 -> destination=(null destination) serial=162 path=/phonesim; interface=org.ofono.CallForwarding; member=PropertyChanged
-task-0:    string "NoReply"
-task-0:    variant       string ""
-task-0: signal time=1777146276.991196 sender=:1.1 -> destination=(null destination) serial=163 path=/phonesim; interface=org.ofono.CallForwarding; member=PropertyChanged
-task-0:    string "NotReachable"
-task-0:    variant       string ""
-task-0: signal time=1777146276.991212 sender=:1.1 -> destination=(null destination) serial=164 path=/phonesim; interface=org.ofono.CallForwarding; member=PropertyChanged
-task-0:    string "ForwardingFlagOnSim"
-task-0:    variant       boolean true
-
-Other places in the code and call-forwarding-api.txt document that those
-property names should have a class prefix like "VoiceNoReply", instead
-of just "NoReply". This fixes the lack of prefix.
+Advance iter before calling notify so the next-pointer is captured
+before the current node can be freed.
 ---
- src/call-forwarding.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ src/sim.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 9aca1f03..12bc463f 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -395,9 +395,13 @@ static void set_new_cond_list(struct ofono_call_forwarding *cf,
- 				number = phone_number_to_string(
- 							&lc->phone_number);
+diff --git a/src/sim.c b/src/sim.c
+index dedb7d8d..6a733169 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -3659,9 +3659,9 @@ end:
+ 		struct ofono_watchlist_item *item = iter->data;
+ 		ofono_sim_session_event_cb_t notify = item->notify;
  
-+			snprintf(attr, sizeof(attr), "%s%s",
-+				bearer_class_to_string(BEARER_CLASS_VOICE),
-+				cf_type_lut[i]);
+-		notify(active, session->session_id, item->notify_data);
+-
+ 		iter = g_slist_next(iter);
 +
- 			ofono_dbus_signal_property_changed(conn, path,
- 						OFONO_CALL_FORWARDING_INTERFACE,
--						cf_type_lut[i],
-+						attr,
- 						DBUS_TYPE_STRING, &number);
- 		}
++		notify(active, session->session_id, item->notify_data);
+ 	}
+ }
  
 -- 
-2.53.0
+2.43.0
 
