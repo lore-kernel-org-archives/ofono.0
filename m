@@ -1,54 +1,43 @@
-Received: from b224-2.smtp-out.eu-central-1.amazonses.com (b224-2.smtp-out.eu-central-1.amazonses.com [69.169.224.2])
-	(using TLSv1.2 with cipher AES128-SHA256 (128/128 bits))
+Received: from mail-244106.protonmail.ch (mail-244106.protonmail.ch [109.224.244.106])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAE5C3D1CB2
-	for <ofono@lists.linux.dev>; Thu,  7 May 2026 23:02:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=69.169.224.2
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AD9D0428495
+	for <ofono@lists.linux.dev>; Wed, 13 May 2026 12:59:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=109.224.244.106
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778194974; cv=none; b=vEHZcnUo8BUMzBNC5IsJwXHunwMQB26ubNfk+QZ0/O6BoLlO2gvG/VwB605m2GDG9Qs6YXtgUVciQ2zfQ1Skb/IUxuyj5+g/v+jyVxNqxJlQERgtK1B2ztwD/jS/26uhzp2X8oxWe2dVln3fgH+dnapW7UFRF3TrSrwFyJxDzpo=
+	t=1778677191; cv=none; b=aEAoUF/An4pQrojdVDKaTLcFN0QVF2OyL/ipBcUAWIhc9L+f9V9ot2prmtvOhRYRKOkQXeSrqzaj2AToExMOv1PIxc7C3L9ls1CGhE3XUh3lvPuwTfyXyJDt4we9Qm4Sd6Jeyuv++ECi6fTF/RIff7FV7vwGxXqTrLVHzjTaUfU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778194974; c=relaxed/simple;
-	bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DbPQYJwANZrBBUpHzn5EkWsLyD1OU4M7aYxzocT366i1ea3gyabz9SnPoDmvkQlUCkh53s7hlS5vKhSntDydEU6PMv0fxI5bf2EeBiXnzHiVk8Vyd/FaGI2dX9AT+Vq9nQozlXqGQBtk374jo++wMyWLLjf33PMdhvHfMBni/aI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ubports.com; spf=pass smtp.mailfrom=eu-central-1.amazonses.com; dkim=pass (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b=iHEbe2Js; dkim=pass (1024-bit key) header.d=amazonses.com header.i=@amazonses.com header.b=N1Ev6Mb8; dkim=fail (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b=bjtGdXBj reason="signature verification failed"; arc=none smtp.client-ip=69.169.224.2
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ubports.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=eu-central-1.amazonses.com
+	s=arc-20240116; t=1778677191; c=relaxed/simple;
+	bh=K0HDvXJ8ntrkDi66Hb1ep/UKuwbOwgdGcyc6MxqNgTA=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=CdE1CZ9FcrwYyReEbrr+amzLA7a9TxSlm37L61c4wUvHqtjbnDSmJjHvjAGBEoEEz93HzdbBvJ0/EiUHKiTqa+29oPV94Oqh5Py6xDsK2bMIe0VZfB7K9U3uYEjX9jDSOGcMPU7DlVK8PWtzs33oDSiN6QkWeeyKITt/pJWZkO8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=Gmimpa0u; arc=none smtp.client-ip=109.224.244.106
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=geanix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b="iHEbe2Js";
-	dkim=pass (1024-bit key) header.d=amazonses.com header.i=@amazonses.com header.b="N1Ev6Mb8";
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=ubports.com header.i=@ubports.com header.b="bjtGdXBj"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
-	s=sh5da3j2jknfud6neishr7wiyevoggdh; d=ubports.com; t=1778194971;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Transfer-Encoding;
-	bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
-	b=iHEbe2JsCrlLl5CJPDCB/j5l4RWj6QitRuuCLfNqKr1L16duREQlt6ophT5hceLS
-	VhRxVi+UZZRLJgY7ULsmhMQp0Tj6lfs116QGpUl5KYRO5koPdXoO3x8/K5MuULOXmqx
-	nTR7lwn95bqvaiZxbEt+wL9VndHlAB81ag/HmD1kIbJwiFYKdaONfqF6Sw/A0dyKSBZ
-	twh9QHbmKDYkc5KgJFzDaPcyDNCX9+m0EcjS/0ik+JIJg4a8KYxkuHMPuJrtdOT6Swd
-	1QE9+kGukHK5liaIXjhaU38yUbKgD6H2D4ywiJse2Ow3IIKNBTwryIJYnOFJ3pLSctn
-	t9y5pKrCZQ==
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
-	s=sokbgaaqhfgd6qjht2wmdajpuuanpimv; d=amazonses.com; t=1778194971;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Transfer-Encoding:Feedback-ID;
-	bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
-	b=N1Ev6Mb8mKwreb5XyVLXdOSHU9TaaMYG3C2emfc1fPiuu1yB3BnkWbqJPILrmG7L
-	yOc48kUdC7IUtdyjGseP5hJ+3DFoYUB6ZZdNR2E2AgatFsw4z0ZyA5bdU4xkJCYPFJC
-	kdKOfJrM77eL41Kp5y/wLWysoVNkP+AxY3qHMcuk=
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=ubports.com; s=mail;
-	t=1778194970; bh=h4UT54Plf64B0fElO8MM/RjKQyJlHXHrezSxAIYN/AE=;
-	h=From:To:Cc:Subject:Date:From;
-	b=bjtGdXBj5WVuMemgZ3IRjn9aWh39zcaDTlQBASUQhFwSwhHindH3u30+TIf7sf5jV
-	 U48i9kGtKCztD+3Ai8GUNKhMCLlzLmbWvrKcCTZJSiZmipkjNnrWMr4P9B0cupz7oa
-	 k9RcXmlu0pBaITOyvG6bfnBzlcXO8aOqlCHJ3fGQh7mEH3WcArwsGeXlINKPo5jkIY
-	 fo5a/RWotsQPzfBIycwyADj+i2gdMD0qxj6hcJpqLMhh/DszSHI1qIS8naJMIKcAYR
-	 MQRCW+fZmeqHlzwKSLceLxOJgWZtuS0pzXk3nvrguWP7cqYEuNPw+n2Vt3LYWFdM/W
-	 1X5TTsU/sp/MA==
-From: Marius Gripsgard <marius@ubports.com>
-To: ofono@lists.linux.dev
-Cc: Marius Gripsgard <marius@ubports.com>
-Subject: [PATCH] sim: fix use-after-free in open_channel_cb watcher loop
-Date: Thu, 7 May 2026 23:02:50 +0000
-Message-ID: <0107019e04adf95a-a0e08395-5cda-4937-b142-329901156dcd-000000@eu-central-1.amazonses.com>
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="Gmimpa0u"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=geanix.com;
+	s=protonmail3; t=1778677177; x=1778936377;
+	bh=wvD33sLBqBPDBdvcQm27DDAX/PUs0B4tJT8aXAg+nvo=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:From:To:
+	 Cc:Date:Subject:Reply-To:Feedback-ID:Message-ID:BIMI-Selector;
+	b=Gmimpa0uYeRLlW8qA1UZ+CjEuRWVe5sR9ZMybMp5Zab5Q5OmFESgHD2oXANY0xzCA
+	 nmivibYETIlMt8fpju5nWiJFI+up0oBNiCFEV8S3jtbhD3X3dMrUajIWwwubYuig3C
+	 bNmAyy2zj90MEsiXVYatmjfeqYyrrb7oPVp5ahAuLRwIsUfLVk3opEDAfOKzbHiwW5
+	 iQHKw1T66JYLU6tJBgp0KqUg/1dRY39BzahhFVX4mIlnkJhYbk6p8CZIYeBgnFejpE
+	 kiwTE6cg8Lb9r1JhOAEgGu6SCIHimgFde+kHrXq0+gP5FaIPjFUwfCtpKdjr9iePNN
+	 /PtaiLqp6epNw==
+X-Pm-Submission-Id: 4gFtpH2WP1z1DF7P
+From: Sean Nyekjaer <sean@geanix.com>
+To: denkenz@gmail.com,
+	ofono@lists.linux.dev
+Cc: Sean Nyekjaer <sean@geanix.com>
+Subject: [PATCH 2/3] sim7100: disable unsupported features on A7671
+Date: Wed, 13 May 2026 14:59:22 +0200
+Message-ID: <20260513125925.2164959-2-sean@geanix.com>
+X-Mailer: git-send-email 2.52.0
+In-Reply-To: <20260513125925.2164959-1-sean@geanix.com>
+References: <20260513125925.2164959-1-sean@geanix.com>
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -56,38 +45,37 @@ List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Feedback-ID: ::1.eu-central-1.U71sxic/3tmi0U3T+Ze2hDyqoN46zyPgdCO+zEPT6YQ=:AmazonSES
-X-SES-Outgoing: 2026.05.07-69.169.224.2
 
-The notify callback (get_session_cb -> sim_fs_end_current) calls
-__ofono_sim_remove_session_watch, which removes and frees the current
-GSList node from session->watches->items. iter = g_slist_next(iter)
-then reads ->next from the freed node, on newer glibc the freed memory
-holds a random tcache key rather than accessible heap data, turning the
-next iter->data dereference into a SIGSEGV.
-
-Advance iter before calling notify so the next-pointer is captured
-before the current node can be freed.
+SimCom A7671 does not support anything related to calls.
 ---
- src/sim.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ plugins/sim7100.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
 
-diff --git a/src/sim.c b/src/sim.c
-index dedb7d8d..6a733169 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -3659,9 +3659,9 @@ end:
- 		struct ofono_watchlist_item *item = iter->data;
- 		ofono_sim_session_event_cb_t notify = item->notify;
+diff --git a/plugins/sim7100.c b/plugins/sim7100.c
+index 1e892007..01620e31 100644
+--- a/plugins/sim7100.c
++++ b/plugins/sim7100.c
+@@ -367,12 +367,14 @@ static void sim7100_post_sim(struct ofono_modem *modem)
  
--		notify(active, session->session_id, item->notify_data);
--
- 		iter = g_slist_next(iter);
-+
-+		notify(active, session->session_id, item->notify_data);
- 	}
- }
+ 	DBG("");
  
+-	ofono_ussd_create(modem, 0, "atmodem", data->at);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->at);
+-	ofono_call_settings_create(modem, 0, "atmodem", data->at);
+-	ofono_call_meter_create(modem, 0, "atmodem", data->at);
+-	ofono_call_barring_create(modem, 0, "atmodem", data->at);
+-	ofono_phonebook_create(modem, 0, "atmodem", data->at);
++	if (data->model != SIMCOM_A7671) {
++		ofono_ussd_create(modem, 0, "atmodem", data->at);
++		ofono_call_forwarding_create(modem, 0, "atmodem", data->at);
++		ofono_call_settings_create(modem, 0, "atmodem", data->at);
++		ofono_call_meter_create(modem, 0, "atmodem", data->at);
++		ofono_call_barring_create(modem, 0, "atmodem", data->at);
++		ofono_phonebook_create(modem, 0, "atmodem", data->at);
++	}
+ 
+ 	switch (data->model) {
+ 	case SIMCOM_A7671:
 -- 
-2.43.0
+2.52.0
 
