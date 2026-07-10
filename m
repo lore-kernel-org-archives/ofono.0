@@ -1,120 +1,202 @@
-Received: from spindle.queued.net (spindle.queued.net [45.33.49.30])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 1307015A85A
-	for <ofono@lists.linux.dev>; Mon, 18 May 2026 22:28:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.33.49.30
+Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45FEC3DCDBC;
+	Fri, 10 Jul 2026 07:55:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779143332; cv=none; b=U/QoNWJscGDE3iNSmOg+Y/DFdt0njdsbFNcCSarbuIdtSn/8QQ3bP3KwzXXI4afGz+VIaQlHsLHWj+IR/y3t2QvoO8Tvvg7DoNPyzmMNA+E+4L4t09ZNUu2CK9Iamn1BFdKMjIEQWp2O+uCvKj0P8dn8zN7rmtwMWWGFBX+D65s=
+	t=1783670158; cv=none; b=IR8U2wBrQxJ30kngTC8kJgm4yEl8h7v1CyqJG7y5QfMzuamAUFQLNF8b0p1MZJvyGrUBZ00b1kaC2P/TfpJuih/8h+/LAYGuTkd1ZipN+bemhfCjsmaUla2LxDghM2iE7lzYV+iTnxx2EfMhFEeFtdXxgvC0iJ9zbykXdLLQSEk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779143332; c=relaxed/simple;
-	bh=88TU6pSgOSqQZYaCbolGx2tCkmt4AUA7qt/VJYokg4U=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:Cc:From:
-	 In-Reply-To:Content-Type; b=JXsOT5mqDob0ANdD1/noVoRs1fFhLA7HB8NcG7JZUk760iP1rAq1dsw+2W0+pDs7HAln9mPOWNC2lZ06Tjp6uc3i+2R8S3/jgjkcpcvcWPpiEXgy4UnWLiFPWQ3nCVNq6SesbbRtFJt0bMBgzlz19lDa21Gu9FYmmeLYuT923c8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net; spf=pass smtp.mailfrom=queued.net; arc=none smtp.client-ip=45.33.49.30
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=queued.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=queued.net
-Received: by spindle.queued.net (Postfix, from userid 1001)
-	id 7D5F611CB92; Mon, 18 May 2026 18:19:24 -0400 (EDT)
-Received: from [192.168.12.132] (unknown [172.56.35.188])
-	by spindle.queued.net (Postfix) with ESMTPSA id 2A77A11CB8B;
-	Mon, 18 May 2026 18:19:24 -0400 (EDT)
-Message-ID: <56f28586-afad-4a8b-97c8-d63e8ddb1aac@queued.net>
-Date: Mon, 18 May 2026 18:19:23 -0400
+	s=arc-20240116; t=1783670158; c=relaxed/simple;
+	bh=XMM32TQmGhcQpZYrMCkvDBvVP1LFoGU5DLiX20A91/o=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=o+IeBRrgUEaQHHJZUFqp+ne8cX2eM7P2yTANLpEBFxcgSChoq04W1UxkBI072h8sUv1miTXhfwN6FSMpg4i+Z5MzSsSjrSR/ENBwtcgN0u+RVraGhm4rURf1rwyqLUfWU0twDL27dM1z3UInDdiq0lF7r8UtntcnYdwr6iOcaqE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=GuJeenZ7; arc=none smtp.client-ip=205.220.168.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="GuJeenZ7"
+Received: from pps.filterd (m0279863.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 66A7dMMs182264;
+	Fri, 10 Jul 2026 07:55:55 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
+	cc:content-transfer-encoding:date:from:message-id:mime-version
+	:subject:to; s=qcppdkim1; bh=TothW9MKlIfk3C3GAeZZ1/447cGxI39S5SR
+	uSVUfI+Y=; b=GuJeenZ7Ia5Ywpneb0n5RW9PYfGgMlrzZ6VEFE4iqp4j/YR+Uee
+	LED/Tif6zn+PSek+wKyUjzIBT2IrhoodVSwbXfVwu+le7EnYE4M5K6DW2HtfiSUH
+	0ngfMelZxycfg2pVmw/afS3j+ciWmTtMMxslf7XCiyaKZPZYBTCllornXs5LZmlo
+	TL5vzgA+4C+WNzfOcIF7iwU27FN0azFvxBx4MeLvD5jjg0E825sx6wuzcrvj0Rlq
+	ct8PxRQpLCUaQ7JTY03LJgmLBufpCEBlflzU0L7SeVYgwywYFd535f1okrEEwOzj
+	3h1HgkvaNIkGjS7p9iZ8/iHx9NDs+D75tHg==
+Received: from aptaippmta01.qualcomm.com (tpe-colo-wan-fw-bordernet.qualcomm.com [103.229.16.4])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4fajte21ky-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 10 Jul 2026 07:55:54 +0000 (GMT)
+Received: from pps.filterd (APTAIPPMTA01.qualcomm.com [127.0.0.1])
+	by APTAIPPMTA01.qualcomm.com (8.18.1.7/8.18.1.7) with ESMTP id 66A7tqwN021767;
+	Fri, 10 Jul 2026 07:55:52 GMT
+Received: from pps.reinject (localhost [127.0.0.1])
+	by APTAIPPMTA01.qualcomm.com (PPS) with ESMTPS id 4f6u8jq2jd-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 10 Jul 2026 07:55:52 +0000 (GMT)
+Received: from APTAIPPMTA01.qualcomm.com (APTAIPPMTA01.qualcomm.com [127.0.0.1])
+	by pps.reinject (8.18.1.12/8.18.1.12) with ESMTP id 66A7tqA4021761;
+	Fri, 10 Jul 2026 07:55:52 GMT
+Received: from bt-iot-sh03-lnx.qualcomm.com (smtphost-taiwan.qualcomm.com [10.249.136.33])
+	by APTAIPPMTA01.qualcomm.com (PPS) with ESMTPS id 66A7tpJQ021758
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 10 Jul 2026 07:55:52 +0000 (GMT)
+Received: by bt-iot-sh03-lnx.qualcomm.com (Postfix, from userid 2385805)
+	id 3377F43850; Fri, 10 Jul 2026 15:55:51 +0800 (CST)
+From: Xiuzhuo Shang <xiuzhuo.shang@oss.qualcomm.com>
+To: luiz.dentz@gmail.com, denkenz@gmail.com
+Cc: ofono@lists.linux.dev, linux-bluetooth@vger.kernel.org,
+        cheng.jiang@oss.qualcomm.com, quic_chezhou@quicinc.com,
+        wei.deng@oss.qualcomm.com, shuai.zhang@oss.qualcomm.com,
+        mengshi.wu@oss.qualcomm.com, jinwang.li@oss.qualcomm.com,
+        xiuzhuo.shang@oss.qualcomm.com
+Subject: [PATCH v1] gdbus: Skip BLE random-address devices and remove broad match rule
+Date: Fri, 10 Jul 2026 15:55:48 +0800
+Message-ID: <20260710075548.1072741-1-xiuzhuo.shang@oss.qualcomm.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] sim: fix use-after-free in open_channel_cb watcher loop
-To: Marius Gripsgard <marius@ubports.com>
-References: <0107019e04adf95a-a0e08395-5cda-4937-b142-329901156dcd-000000@eu-central-1.amazonses.com>
-Content-Language: en-US
-Cc: ofono <ofono@lists.linux.dev>
-From: Andres Salomon <dilinger@queued.net>
-Autocrypt: addr=dilinger@queued.net; keydata=
- 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
-In-Reply-To: <0107019e04adf95a-a0e08395-5cda-4937-b142-329901156dcd-000000@eu-central-1.amazonses.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.5
+Content-Transfer-Encoding: 8bit
+X-QCInternal: smtphost
+X-QCInternal: smtphost
+X-Proofpoint-GUID: 48FWhjQD09g5rPSd9fqk_5DYOPGTeJwm
+X-Proofpoint-ORIG-GUID: 48FWhjQD09g5rPSd9fqk_5DYOPGTeJwm
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNzEwMDA3NCBTYWx0ZWRfX1ObJohWILEC3
+ lRUmDEYM6sW1S+jHQCiiit2NtPZISTF6KcttVqp7a6BylRxCkh8tBo52lJyLqksPFvBdfFsEEhC
+ sga56qa761D4NLmNj8OzucXW8dsH5LbFvNQp+T81OyMbmNlsNrTeetcYPTCA0HKipaOdoJM7N2G
+ PNjvQ7Anxuktw7pHY9VQLQ8ndvVeqEGYL4hP2tb9gnBGeGUKxhfC+AK6M+x4fpQXKVnTCP8nMGZ
+ bIdB46mTTs3zQts0YAxwmJBuKcCRSedGhu7XBBZaP/0OybzQLm7tRtJRTIpRNbUdQSNFpM7WlAr
+ jrTn93CR+5EIf3DgVxkyZd7ms3WJTj+gf4s/aoI+krMc5Ra04ee9arMK06A1rSEEfeiDkE2ESOM
+ aslgY0nR1jPIGTMTI7H8Kt1xv5ikh/iDQQf6mb6kCSr6knwnS85Ftat9gkZRiMHpuPsvuPH83iZ
+ bpGJgCy9qBnP/Rmzm8A==
+X-Authority-Analysis: v=2.4 cv=N7MZ0W9B c=1 sm=1 tr=0 ts=6a50a58b cx=c_pps
+ a=nuhDOHQX5FNHPW3J6Bj6AA==:117 a=nuhDOHQX5FNHPW3J6Bj6AA==:17
+ a=RAioF0-LDSMA:10 a=VkNPw1HP01LnGYTKEx00:22 a=u7WPNUs3qKkmUXheDGA7:22
+ a=yOCtJkima9RkubShWh1s:22 a=EUspDBNiAAAA:8 a=epjkyemPI9OHKLGXjuYA:9
+X-Proofpoint-Spam-Info: AW1haW4tMjYwNzEwMDA3NCBTYWx0ZWRfX7oHvqNcivbeB
+ MVu+ikRP1mr8sZt2D9Rzi5QV/KKTN79XKujQwwYI2IWUzIldR+mLXdpF9Xi8pRiMDVT09p5WNJx
+ bEwuGdLmmsph56inxxNFr5FuTJ/gAlo=
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.134,FMLib:17.12.100.49
+ definitions=2026-07-10_02,2026-07-09_04,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ clxscore=1011 spamscore=0 impostorscore=0 suspectscore=0 adultscore=0
+ malwarescore=0 phishscore=0 lowpriorityscore=0 priorityscore=1501 bulkscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2606150000 definitions=main-2607100074
 
-On 5/7/26 19:02, Marius Gripsgard wrote:
-> The notify callback (get_session_cb -> sim_fs_end_current) calls
-> __ofono_sim_remove_session_watch, which removes and frees the current
-> GSList node from session->watches->items. iter = g_slist_next(iter)
-> then reads ->next from the freed node, on newer glibc the freed memory
-> holds a random tcache key rather than accessible heap data, turning the
-> next iter->data dereference into a SIGSEGV.
-> 
-> Advance iter before calling notify so the next-pointer is captured
-> before the current node can be freed.
-> ---
->   src/sim.c | 4 ++--
->   1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/src/sim.c b/src/sim.c
-> index dedb7d8d..6a733169 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -3659,9 +3659,9 @@ end:
->   		struct ofono_watchlist_item *item = iter->data;
->   		ofono_sim_session_event_cb_t notify = item->notify;
->   
-> -		notify(active, session->session_id, item->notify_data);
-> -
->   		iter = g_slist_next(iter);
-> +
-> +		notify(active, session->session_id, item->notify_data);
->   	}
->   }
->   
+Two related changes to reduce dbus-daemon load caused by high-rate
+BLE advertising signals:
 
+1. In parse_properties(), skip creating a GDBusProxy for Device1
+   objects whose AddressType is 'random' (BLE-only devices). Each
+   proxy registers a per-device PropertiesChanged watch via
+   g_dbus_add_properties_watch(); with hundreds of BLE peripherals
+   advertising simultaneously, this results in hundreds of match rules
+   and dbus-daemon routing thousands of RSSI PropertiesChanged signals
+   per second to ofono, none of which ofono processes. The
+   AddressType property is available in the InterfacesAdded dict at
+   the time parse_properties() is called, so the check is reliable
+   and race-free.
 
-This fix looks both necessary (the error path in get_session_cb() will 
-potentially call __ofono_sim_remove_session_watch() in its error path; 
-and get_session_cb() is used as a notify callback and open_channel_cb() 
-iterates unsafely through a GSList) and correct.
+   BR/EDR devices (AddressType='public') are unaffected: their proxies
+   are created as before, and the property_changed callback continues
+   to receive Paired and ServicesResolved updates needed for HFP/HSP.
 
-In general ofono should probably be calling g_slist_foreach() instead of 
-manually iterating through lists to avoid this type of bug.
+2. In g_dbus_client_new_full(), remove the broad
+   type='signal',sender=<service>,path_namespace=<path> match rule.
+   This rule was the sole feeder for the signal_func path in
+   message_filter(). ofono never calls g_dbus_client_set_signal_watch()
+   so signal_func is always NULL; the broad rule therefore served no
+   purpose and caused dbus-daemon to route every bluetoothd signal
+   (including all BLE PropertiesChanged) to ofono.
+
+   InterfacesAdded and InterfacesRemoved are already covered by the
+   precise watches registered via g_dbus_add_signal_watch() earlier in
+   g_dbus_client_new_full(), so no functionality is lost.
+
+Together these two changes prevent dbus-daemon from routing BLE
+advertising PropertiesChanged signals to ofono entirely, eliminating
+the dbus-daemon memory growth and bluetoothd socket backpressure seen
+after hours of BLE scanning.
+
+Signed-off-by: Xiuzhuo Shang <xiuzhuo.shang@oss.qualcomm.com>
+---
+ gdbus/client.c | 46 ++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 38 insertions(+), 8 deletions(-)
+
+diff --git a/gdbus/client.c b/gdbus/client.c
+index 48711ae8..dd3c17f9 100644
+--- a/gdbus/client.c
++++ b/gdbus/client.c
+@@ -937,6 +937,44 @@ static void parse_properties(GDBusClient *client, const char *path,
+ 	if (g_str_equal(interface, DBUS_INTERFACE_PROPERTIES) == TRUE)
+ 		return;
+ 
++	/*
++	 * Skip BLE devices (AddressType='random') to avoid registering a
++	 * per-device PropertiesChanged watch for every advertising BLE
++	 * peripheral. ofono only needs BR/EDR devices for HFP/HSP; the
++	 * high-rate RSSI PropertiesChanged signals from BLE scanners cause
++	 * dbus-daemon memory bloat and socket backpressure in bluetoothd.
++	 *
++	 * The AddressType property is present in the InterfacesAdded dict
++	 * (iter) at this point, so it can be checked before proxy_new().
++	 */
++	if (g_str_equal(interface, "org.bluez.Device1") == TRUE) {
++		DBusMessageIter props, entry;
++		DBusMessageIter copy = *iter;
++
++		if (dbus_message_iter_get_arg_type(&copy) == DBUS_TYPE_ARRAY) {
++			dbus_message_iter_recurse(&copy, &props);
++			while (dbus_message_iter_get_arg_type(&props) ==
++						DBUS_TYPE_DICT_ENTRY) {
++				const char *key;
++				dbus_message_iter_recurse(&props, &entry);
++				dbus_message_iter_get_basic(&entry, &key);
++				if (g_str_equal(key, "AddressType") == TRUE) {
++					DBusMessageIter var;
++					const char *addr_type;
++					dbus_message_iter_next(&entry);
++					dbus_message_iter_recurse(&entry, &var);
++					dbus_message_iter_get_basic(&var,
++								&addr_type);
++					if (g_str_equal(addr_type,
++							"random") == TRUE)
++						return;
++					break;
++				}
++				dbus_message_iter_next(&props);
++			}
++		}
++	}
++
+ 	proxy = proxy_lookup(client, path, interface);
+ 	if (proxy) {
+ 		update_properties(proxy, iter, FALSE);
+@@ -1255,14 +1293,6 @@ GDBusClient *g_dbus_client_new_full(DBusConnection *connection,
+ 						"InterfacesRemoved",
+ 						interfaces_removed,
+ 						client, NULL);
+-	g_ptr_array_add(client->match_rules, g_strdup_printf("type='signal',"
+-				"sender='%s',path_namespace='%s'",
+-				client->service_name, client->base_path));
+-
+-	for (i = 0; i < client->match_rules->len; i++) {
+-		modify_match(client->dbus_conn, "AddMatch",
+-				g_ptr_array_index(client->match_rules, i));
+-	}
+ 
+ 	return g_dbus_client_ref(client);
+ }
+-- 
+2.43.0
+
