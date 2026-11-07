@@ -1,80 +1,80 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.52
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794068591;
-	b=4baSA/G/A69JqvRVFhjO9rAm3Y9yVN4QbS2f+O4ncoPFhZmzUhzbBk7BHPRPBvTzp+ec
-	 7qY+3U7+JHQ2DM9H/AoEUjRVdpSMx5WLKbZ8YfFnh3FT0nX4BXx9ZdWjRvdxxJljIgYR6
-	 DWA39I0BraybamiDw9z1Qe8rmIjTveJrUNcxBv+mebaIRb0WCzF42RDKk6O5ybYnmTcFq
-	 8BXSoQyEpysEZAqjpboeWwKR4vz4uYGHIvk0sUK+UjMtDcyb1uNPZx6tRVIJpKptPpYPi
-	 Gm9D9/rqMBjWgo/4LQF9ywcPDoyl/BY0dZTPwga7pAGfvnEDQj04b75L9rY3vwrBHlA==
+	t=1794068630;
+	b=Y/9UOqQ7o9okEBbwCEIOgODb61qNIVUO9qhLmPrvEwvtdRgQn8d5M5jRrF+S5VcC+7Ha
+	 GLvo8PYCXIq5a3IOea28733i+XIUn0VzN0/n06IW32HustXJLMdmsaOC4kUCnRf1WobCM
+	 mv/7OmPU/RxopSOkIqJYnw2hdb6/jpebznBnp2+9eXd+2wq4j2cQZhMK1Pw0dlvrqfjUW
+	 cZB4SYMtDx8BZspuIjQWoPhutJba+AiA1zKXU8TI5PmtvbqU4No60pzE7JGqT61gt2GmB
+	 HILH6rQJPmnwIpPJ9LL/uOVjqbUVtfaGhKNYgemNo6HI9+HdOd0mMpa4t6zSJk/ikrQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794068591;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794068630;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
 	 Date:Message-Id:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=UMKEfozDdaiLDcrVvo51Jgtq7s6MJ05l9UlXaaYRQ9Q=;
-	b=e4f0G/xDlc6wjY2lbXOqjDQF8vdlzjoeIJiVL2TOu/rJG/IxG+cEQ4wUgtG+1zoRDXML
-	 1ZSYdEKLA6fCdBifoHlHtrazJkpLkklLQiSaGxvMOTHmFofvjsVyQRmHrzXr6DYgBsPqz
-	 G434vtAlVqC0GhWnbdlkGUeCBCKJ5dJuoHemqZLm6hERFtMUxdhI++yPBIHtD04CQcghY
-	 GhdYnVqPiROqlJ2lJmcFtnJDpXaFb4A8dnGQk/7rS1F9/Zh9rsVxVI2tECYeFNqT4fGl7
-	 j512/vF3dWz4ts6CV+LRp8iSGEaGB24XHTpk+GCGp9j9oOx+3ftSfpHBUYImlEQRfgQ==
+	bh=JzM0PFn4t+jOJ02XhuGNvYCb7UVOQNVu/xOSLrRagX0=;
+	b=yszJGv2TgJmRPFvOXSEhz3RXyOqRkWKkYG0qU/TrLffknR0H8zhVA5etpdNdqzZcxPge
+	 50okjWZE6b9Qx+vIOK/qxFpDX/GCvIhHcOP2oOv0RpcPWZMPdCcMO9iGsbv7+V9mTj9fV
+	 ce/fp89x1v7UWxM0rr58THBJJxVkcdTkmAUP2E/zBHPEAcyRGvv17Go0nsvP8ZxVhx1AY
+	 eHmnUA628RhjBARm4atyMk4aeg1wlwqWX6w2W9zF0ubS6bDy55wjwBijArq3w4qqomi8l
+	 rS64vO73oZOtbUn4pbRNpzvLmzMgfSVFWxDPCHsSFyRJI60ETGsysT9YnM70MVs5/Jw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=r9q53jzE;
-	arc=none smtp.remote-ip=209.85.221.52
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=fs7g3AXg;
+	arc=none smtp.remote-ip=209.85.128.50
+Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43282606A32C
-	for <ofono@lists.linux.dev>; Sat,  7 Nov 2026 16:23:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 43282606A32C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6793A606A326
+	for <ofono@lists.linux.dev>; Sat,  7 Nov 2026 16:23:50 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6793A606A326
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=r9q53jzE
-Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-491aaed7565so916023f8f.2
-        for <ofono@lists.linux.dev>; Sat, 07 Nov 2026 08:23:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=fs7g3AXg
+Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4b467581b98so12574915e9.0
+        for <ofono@lists.linux.dev>; Sat, 07 Nov 2026 08:23:50 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794068590; x=1794673390; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1794068629; x=1794673429; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=UMKEfozDdaiLDcrVvo51Jgtq7s6MJ05l9UlXaaYRQ9Q=;
-        b=r9q53jzEdTgt++RYp09aYq/Koac1I/1Tpt3vOMjZPPxend0ilN5sdWvptmGlZ3uEYt
-         e8pt294Jqp/V5ZqY5728iTqOupFE5tG/KaEMPoJDMH71Mr7SmD1x9wdSLX6zZhqjK5sD
-         AwJZ37/rZzOOjhy/MbS4mgoc50rHTbyoS3loC251DeIK4rU0MI/uNsHCtbguZ9frex4h
-         G6CmoPiCdDA1G6t8ftaPT6zt+G+3APe4F56GniD0IH5b0jTh7VyCVQbuHOIDgN15dFPV
-         5nMKndbt2+6Dv4v8PfauV0uMNK7HNv3GvEpuz/vUOalFA1aZLMOGiWZqR6ByKHkLiZrZ
-         fMbA==
+        bh=JzM0PFn4t+jOJ02XhuGNvYCb7UVOQNVu/xOSLrRagX0=;
+        b=fs7g3AXgsJRk4zQ8KQfs59nc/AgaUjd+/NISgu4zzkeicb2RKU+IkXuJir5kDxfana
+         bMmQBlSk+TXbZUTU+yUSUbA1KGT2CIvdBxd9yU8kO1doDlSgFTUYBdL0CZGSLLhUd2pi
+         /nhdyAiDZLchPCDVZvuGq1sO8Hy3X/N+GFDJM0h5ynCpRAZOv4CSANXfAbsaLz9YCOhO
+         jJMoUBs2pK+43Oh7P3x4iODrvNUdFqs0Dvy5Da27+Vob7TYldIwsY1Zby4ejyLGlf7OF
+         mg5ASZpqN1Xbrqgdj2z0hoSvLjZdsXD4tAvJw5hyTlwH/MRwdRQSU0WStJ6J9w0RgYGt
+         EOtg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794068590; x=1794673390;
+        d=1e100.net; s=20260707; t=1794068629; x=1794673429;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=UMKEfozDdaiLDcrVvo51Jgtq7s6MJ05l9UlXaaYRQ9Q=;
-        b=gvY6pIBxX82HjQ0O7It6idFwDe13AbaNaihH4w7kF2gBsCz6hGXFe9GlTyNRLJfsYZ
-         M9jqU5D2WrA6oaNlbC1we2WQz6ffiuN+7uDQGOpLpWnkC/jkEhihgCFply295zSVhhlJ
-         BnKGtsNsVDVR+t8CFmXMJn0U48fzWGJSZcP53dSK2L5aAy/cjFSpdCW98klAAin3D1O5
-         KI6qFMkio2RLDHKy2yoMa51lRNugSlajECMMs1gE9KKz2AmsIpwKN4PIwCKPCAzGZ9l3
-         tBvWW8mYFBHxXMYei92rJ8FA78ghqF2IkyqDgTi2WMRR9sjC/HVF7EddaiU/FSq5F32k
-         q/Wg==
-X-Gm-Message-State: APuU4Z+0SCW+XdLHTbqjaTdZCW9kHNWIyT4fwvE/PjribZ49jXhUgZ8L
-	0RM/n162mwRJraeLPhafVipSy0nwtsc+ksla4rwPKAljyh7wckf67/Hg6mCYRw==
-X-Gm-Gg: AYBFou0IIoIKkJHcY8lR4zJ4cKy6lBwk5Mtm/OJnNnoyu/Y1pH/v2F9aq99mjNZHk10
-	tLxeT3tANvyu1BjASpqC+oIuws4FWZo+vh8UwBXziPKFJZnFpsqtTtv64c5ZiUfkhX1tiYgyTuG
-	LY8eU3Mx6LMLKWvrf7yVmHS/9HxUyJiSP39DD55NQwglwGjm+MUm4uT8tFqzoy83w1VNYEJD7Uz
-	1EsiQklVpMMjYAZ/k4K7CjibL/ID4+p8ZJzIGLo0mKM2l2ap99b2he6qTcr64OvFj+hPOTCKNEv
-	zJmnFcrdoB5FbHg/9O5wMnrf+cujG4yj2CvdVaXS1SSGnC6PS7a9fEt6SpVXnrVCsiQpUoXJxiU
-	kzMHq3qKZAj4F3YOOV5n/J9S5uXXqHGKOGVkA7vFP1iSTOkzqsf2RGSnZ+CPp9c6AX+78IvQhWl
-	1Vh7pDGDn/eU31TIGqPv6PdA5TmEkUYjo4OqlSfspvxQVBJpxCn8A+8NLZUmtl0XRQ8MYEoCKNr
-	qD32Xo6yn1fHNqoxjEAlR/v3jq0nbDDJm1UScCh8CXHMjvLePps6Hz+InRljzwW8ccmVZoAUJcu
-	LOLfmt+3kGMm1SLhVzeUNHhwWRqMw6qsg1GeXovJj/7G3/pzng==
-X-Received: by 2002:a05:6000:454f:b0:48d:f4ea:49c9 with SMTP id ffacd0b85a97d-4927835f07bmr7333995f8f.54.1794068589375;
-        Sat, 07 Nov 2026 08:23:09 -0800 (PST)
+        bh=JzM0PFn4t+jOJ02XhuGNvYCb7UVOQNVu/xOSLrRagX0=;
+        b=txFFrmVRZczz//ZSyLrtXJe73lEqY6Olyr5iLS94a/FBlSthR4zHHBX3kYeyBmFa69
+         ja64JrxYHEZUVj617ZLiUFepjA8jC3SLakbCQqpiDrLBx4sOB6g+g9jrZb2//bPSNKGT
+         d0zz+zYYK2op6+QbGapeem4EU/WAwHMOxmEJIsjFlwzpJbapkauBgJrhtLTITYlzMjhJ
+         2/k+Pd6SfNOMC/wPK3++sjkKgeyKYar40SX+p8HVKGrdmN/ehza45ympjLmpDPkYzEsr
+         lWAXlxzfMoXMkEeNoCrGG6WH+JHiENz7024N4sJwR1QTQRTCns7xvgoJHaFETAfvEt5T
+         HUwg==
+X-Gm-Message-State: APuU4Z+DcXK/aKvxis84tH2wIR1Q9jaEozP6iXDbhcyoiXtrOOlr5LNQ
+	NrvquWy1I9qNORl9WWyjU2GwiMrxOs8AL/Qx9zdOc2JAT1PHcA8c6O2t5RlLXg==
+X-Gm-Gg: AYBFou29pw2JAKiUxu+NB7FrHENDLQoMUmUt3ewKuRuaxVYdk8x0vzhuNQX8sIUSGbp
+	oM+RPLGRp9jNgtr/J4H1YtrvC2/OJjueDhVUJiBXMyl88UGtZkqcsL4kPBSPdDJjMb9brV0kVsp
+	25MjMx1uGoKYb042v8gOgO+BLVfkUDguefc3JyAaV8ein/8ewNRfQzMTvpW3jzntORXQ3uEGKLq
+	5x0JqKRO05V6ND6n1kaMtMvGFLaMBEReW+SfSc85YZYOUsILYn+VgjnXXBiF6x9DaBNtbZOdLB9
+	WeDxCq9zm4C3q+v2i6N1ap7AK2r9FgJrlz4/NAd17Gt2yPvsrjTskxC81qie7R8XwLvQENbI6Cc
+	CW16ZT2LFI3l6hQ6WoNi1P/8UwhbfwIJJRLhQOH3JE+cT0VLrS833x/1dXmUSDVh5yZsuupHxJP
+	E1mL612zH/JZwyGy79znUMq0jq+WCJqJJoo3vsny1SYzivkIOGvLBm2S7C6LUxCHqqoARwTeMpf
+	D6IMAKbSk1Fs9Fah/svQnsAYUIvyMfjIO2HyirOeZwMAJijJSO8XtdOGhKyTpvl9BKbaQLtd9eT
+	R6FcyruDn35GbYm6w+gnljr0JXD0XzaXq34xEl3HbsmLTieSgA==
+X-Received: by 2002:a05:600c:529a:b0:4a1:d675:b031 with SMTP id 5b1f17b1804b1-4b6ddee3235mr95085805e9.6.1794068628721;
+        Sat, 07 Nov 2026 08:23:48 -0800 (PST)
 Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-492d809df2dsm10487667f8f.51.2026.11.07.08.23.08
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b8af10dd35sm66768625e9.4.2026.11.07.08.23.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 07 Nov 2026 08:23:08 -0800 (PST)
+        Sat, 07 Nov 2026 08:23:48 -0800 (PST)
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 To: ofono@lists.linux.dev
 Cc: denkenz@gmail.com,
@@ -82,9 +82,9 @@ Cc: denkenz@gmail.com,
 	absicsz@gmail.com,
 	merlijn@wizzup.org,
 	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH] mbim: Fix possible heap-based buffer overflow
-Date: Sat,  7 Nov 2026 18:22:19 +0200
-Message-Id: <20261107162219.472399-1-ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH] gatchat: Fix possible heap-based buffer overflow
+Date: Sat,  7 Nov 2026 18:23:15 +0200
+Message-Id: <20261107162315.472471-1-ivo.g.dimitrov.75@gmail.com>
 X-Mailer: git-send-email 2.25.1
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -97,57 +97,38 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The length field of an incoming MBIM message header was used to
-compute the number of bytes to read into the fixed-size segment
-buffer without validating it against the negotiated maximum segment
-size.  A malicious modem could claim an oversized segment and overflow
-the heap buffer via readv(), or underflow the byte count with a
-length smaller than the header itself.  Validate the claimed length
-against the segment buffer capacity before reading.
+The PPP option iterator did not enforce the RFC 1661 requirement
+that the option length field is at least 2, and could read the length
+byte itself one byte past the option data.  A peer sending an option
+with a length field of 0 or 1 caused a guint8 underflow in the
+computed option length, which ipcp_server_rcr() then used as a memcpy
+size, overflowing the rejection buffer.  Require at least two bytes
+present and an option length of at least 2.
 
-Fixes: ZDI-CAN-29089
+Fixes: ZDI-CAN-29663
 Reported-by: Trend Micro's Zero Day Initiative
 ---
- drivers/mbimmodem/mbim.c | 21 ++++++++++++++++-----
- 1 file changed, 16 insertions(+), 5 deletions(-)
+ gatchat/ppp_cp.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/mbimmodem/mbim.c b/drivers/mbimmodem/mbim.c
-index f12f2e61..8584513f 100644
---- a/drivers/mbimmodem/mbim.c
-+++ b/drivers/mbimmodem/mbim.c
-@@ -628,16 +628,27 @@ static bool command_read_handler(struct l_io *io, void *user_data)
- 	hdr = (struct mbim_message_header *) device->header;
- 	type = L_LE32_TO_CPU(hdr->type);
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index cc2f2089..b4d93e71 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -232,10 +232,11 @@ gboolean ppp_option_iter_next(struct ppp_option_iter *iter)
+ 	const guint8 *cur = iter->pdata + iter->pos;
+ 	const guint8 *end = iter->pdata + iter->max;
  
--	if (device->segment_bytes_remaining == 0)
--		device->segment_bytes_remaining =
--					L_LE32_TO_CPU(hdr->len) -
--					sizeof(struct mbim_message_header);
--
- 	if (type == MBIM_COMMAND_DONE || type == MBIM_INDICATE_STATUS_MSG)
- 		header_size = HEADER_SIZE;
- 	else
- 		header_size = sizeof(struct mbim_message_header);
+-	if (cur + 1 > end)
++	if (cur + 2 > end)
+ 		return FALSE;
  
-+	/*
-+	 * The segment buffer holds max_segment_size - HEADER_SIZE bytes
-+	 * and receives hdr->len - header_size of data.  Reject segments
-+	 * that claim a size the buffer cannot hold, or that are too
-+	 * small to even contain their own header.
-+	 */
-+	if (L_LE32_TO_CPU(hdr->len) < header_size ||
-+			L_LE32_TO_CPU(hdr->len) - header_size >
-+				device->max_segment_size - HEADER_SIZE)
-+		return false;
-+
-+	if (device->segment_bytes_remaining == 0)
-+		device->segment_bytes_remaining =
-+					L_LE32_TO_CPU(hdr->len) -
-+					sizeof(struct mbim_message_header);
-+
- 	/* Put the rest of the header into the first chunk */
- 	if (device->header_offset < header_size) {
- 		iov[n_iov].iov_base = device->header + device->header_offset;
+-	if (cur + cur[1] > end)
++	/* RFC 1661: option length includes the type and length bytes */
++	if (cur[1] < 2 || cur + cur[1] > end)
+ 		return FALSE;
+ 
+ 	iter->type = cur[0];
 -- 
 2.25.1
 
