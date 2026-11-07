@@ -1,80 +1,80 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.45
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.54
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794068292;
-	b=3hza5HdJNObEccwHnWIjVk4Y/pxbgCAmEY3jgxBSDQu/BqMS5XzVtPn5+TuX9Sb+QRAL
-	 cT7/P0Aq58JMKFKbO7J9JvJKFAzZPsftEU/xzpHGeyPhUY5tpiQvwFhn49pXIG+GUiGfm
-	 Ej1Dmpquv/JjnbYs3dpkoe+rAiEhR/vUIdSTVzJvHzsYiX0d5hXT4OLljvm2lS8FMIhvx
-	 vFIOqKu9c3voflXEPbYdSzoUOyG1wMwC5K6shjP+3g7bpCVSS/ysl69yXZw0ugJ9PTmkO
-	 Gfemd0Xd4ujp+cd3UOMUZN2tGA5ckRskD4Uhey5X0Xffe4yvtXKZ1+Rrss97G9OWI8g==
+	t=1794068381;
+	b=V66jm0EQ3dt7TL9lNq/y8yObHg3BSMWnmrdg5Pu0sBSNPwSaYVDrKBtEZ3En0A5YzFkS
+	 3BfFI/eXgbd/S0fbi6lKLdwtp7tjQ+hcSkYmslcDtmXcTuAOnJmd/40ilWmTGYoTmMCSS
+	 zIxSUZRIkYTF9rgu0s/8xJvHWpuovUqCwQZN0HNeOsaMFMQaZNz76LBMEZaWEeOBSpB7A
+	 +b70VfcLDO4z/QVz/WjGa/tExKEKSedExtm8/PRpwl62ul3LME+PQYl3Y5Lr8oH+2KQN7
+	 6r+WuzJwk194bawDd7v4UUjYtFIfqzYJWrc0I8ovylR77i+jcwR7NaYMim2U/uuzE8Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794068292;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794068381;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
 	 Date:Message-Id:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=yAjkDhXHphDC0iNcA3DVy9TbHQUJVYUFYl9wkDkGU/A=;
-	b=s+b/86weuicxSk1abYidInQLB/6cyr7tgt8HiNS1WJtCN6FBhYM715MQsncG90o/HdaE
-	 hgAl4GTyMVE7F77W2iSm+w7f9R7thNPEmtZivXTIEwY7qrOWewgYKGuEvbrD9pMTLof1+
-	 NKg+rtc+2cX9rhyO1X+cAveEwuItZ8QJLaC4TYAca36kjd/Tnq6qqjtMFbxZXT1o1jKyk
-	 lZ1rUhDRQSaAGDRWUnIvM5veTfenult7eMDH9xDgaopLqtq0OJtPkQ3yHhbIBYddra5Jv
-	 aX6cNlxdzT2YJ95fWn9c0aLuF+NQT77io4esakJwPNvN6rdSofJzCNLdw7le1ui0e8Q==
+	bh=6rFtDL+4M0QJuXDJ/u9fzL3dy/dGvGVkv79Kcm6X45A=;
+	b=DoUaW1AWxsmLEcrw9QxBRJP7ZoorhM35ks/B/AxW6hmmNsgwfxVPPeqCiiyTjV/Mn3BN
+	 vjtBe+16ikmB6SpuqlGQkByPeqB4XaKvTDk8bTKgrcLrlnnrZV3zijaGz8I2hD6oCJRSp
+	 PY7tQDupTOUhxwNhVlXK2Mo3Ij8TVQgYi8n+LKy0OwFkP2vegFqqQWrRJdCircwyQC+wl
+	 t8fRTQoKxV1LqsqTyO5cunmmS2bZ7IJaEuopOShkvJtvbDGQ7StZOUGNtXHKDuPmJ7D+b
+	 cYJv1bYJ79zdt6I/OdSRYYJ2XAsPw3t8UoLbxSKRQSeQw6E2gJM5xNCAd0EQsbd+MBw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=u+e5G4NJ;
-	arc=none smtp.remote-ip=209.85.128.45
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=tCorYqv9;
+	arc=none smtp.remote-ip=209.85.128.54
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E712E606A32D
-	for <ofono@lists.linux.dev>; Sat,  7 Nov 2026 16:18:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E712E606A32D
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86BF0606A326
+	for <ofono@lists.linux.dev>; Sat,  7 Nov 2026 16:19:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 86BF0606A326
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=u+e5G4NJ
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-4a59100fa83so13110185e9.0
-        for <ofono@lists.linux.dev>; Sat, 07 Nov 2026 08:18:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=tCorYqv9
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4a549cd7fd2so4564145e9.0
+        for <ofono@lists.linux.dev>; Sat, 07 Nov 2026 08:19:41 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794068287; x=1794673087; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1794068380; x=1794673180; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=yAjkDhXHphDC0iNcA3DVy9TbHQUJVYUFYl9wkDkGU/A=;
-        b=u+e5G4NJwyjRANeQejknbkMTX26CD7AeYJ2hEWWn7sP57xpgDhvzxYWUSDlvfnUioZ
-         D7fLz8Mm9iHcA9pUOQRd5RWHlDMaqz5CB11vmIBOJDSn+xUFMUpu6SwYQnWpeNg69G15
-         jm93NRMx7BWuLGaoh4ELWpPydVWZg+FH5GYONCXmHAPsFUM6hsXBbwx338P3h5oip+dc
-         45agxS1wCpJZ2ZQgtzjcxSzKusuioeERZnmd43lVnO21fF9nl2mIPJxr9S5cG4U+et3l
-         PBb7hwtgsud8VMnsl4C7k+mECnHeZ80kNgQPDIkENGI9JL+/vH4VRHdZijo4pATrcfhx
-         zn2w==
+        bh=6rFtDL+4M0QJuXDJ/u9fzL3dy/dGvGVkv79Kcm6X45A=;
+        b=tCorYqv9O009maDlMmKNZN/AqFerI/ZvKc4CkHhNszlAY1V0gIf0J2LgECaQPliv5i
+         NL9GHwR8WVLSlEdMHqSksCIJq/6kcpikR0td56fccJd2pJOoQY4Nf4IoKus4rDaG4c4w
+         wQbaHVLHq1uuu/RlyCN9bh68I1BZFuWB7T+CFlmXT+zUl4rqgtS6Z/Au3HiOWXReZTuc
+         jRo57n6FfypRRaAJki0jtmEZ+fpSX01xEGU/2KfCqTGZzOm132v15HFCJehx2jk6n3/f
+         8WKkFj00/iXK2D2XxNy5DTedCYZXzRKsOC2SLMZ6l++MbRfqt53z9O0zspIMZ+ZB8YAS
+         3+xg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794068287; x=1794673087;
+        d=1e100.net; s=20260707; t=1794068380; x=1794673180;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=yAjkDhXHphDC0iNcA3DVy9TbHQUJVYUFYl9wkDkGU/A=;
-        b=VolPuAiH9l2zmBt+mLng1pFsngOuAQg1fHc+aneyXQLLn4c81qwScMNl6G4oFuNnjG
-         4A92rEF7mkqdIcqCIFT+wZ1rdxXXQaYHgPYmSnUyaUeA6U3VBnmJM6Qix6zt5M/aP8Js
-         RPb41XGzg4sgjvW72D3V+Qv+1te20Jvp3a1RXB5QJlhKvt+y/KKNtDIgKM9M6JM+lt9h
-         6PzeAdJZlQMQ9vBueDHjt+JBn+32/Z2l8JLYw7QOCO/SSq6N0TSXJwOihMBebkD63FWG
-         9KHyAJTUB9Ubv/ofQQKEPBaItXVXnVXASJJzwDXaH93yTkcZXvO8Fj/Eh7gycjqiffyi
-         dW2A==
-X-Gm-Message-State: APuU4Z+7vy6xs2jkoIjkzqTxc1T2W31ePC2EFIUnxp0N/9XCzUrqqrc/
-	Rq9OL2T0VI2r7kxdS1GIyOeiNpbxPs/ABUBn5LRdiRiskLZERNr4bQnju1jOWA==
-X-Gm-Gg: AYBFou18Q4ggzCaozYICLk0f3laW0X5z2S2xDkSOPyPi+NS2xyylxT0Mb/XPlU04dsI
-	IncMo92GEhjr2F8GAwimBG9uhTmJ8Sda8aD8whbGq8iqIrTUiIpv7QnE50orl/uwOfa8r7mtNuv
-	sfeeiHjXf6oYord8k8V0RFHRGYoPcaKw0ovebIyUTuGZfslGH7wfXvCKs5XyoX4QvVhFy973MWH
-	IIolG5g6JC4GqThk90xrKHbbHhGL+sMUPm8uqMUisYxG88YghUBq94UYkefv1oAAeLionToI8hP
-	StRVYG/FUaNg+2fB18FoibT2F+yHMAk5xYduh6XumlXzJQaZs613yli8bJ9mef0sR1rE8Zu49QA
-	WIMNsEjPvrLJAMNf6t7oqAqpQlZWyy8XZgxCG+7wlg6ngrflEQhUwp0SLAQtmHR9zw4YVvhyZB1
-	axTCLGTwFkyLGi/ebYjUOrdRevv0kfso1HgDcnunK6dNqAD7jzXIeVBONbNG321mwbus2mKTWHa
-	90ZuLPm1qCOfdLQBVKlQeNma9dIB3CFMokcSN56uQYhbIE2aeAiAhPR4h/YYS4o0FsQhbokrZCy
-	F9imN+09N10/9jOQ0I3amau9UXie6KtXiENh6Xxo9FguDewSdnhwPEdxjoDk59caN9BpvVE=
-X-Received: by 2002:a05:600c:4f4a:b0:4a1:e6c8:ff74 with SMTP id 5b1f17b1804b1-4b6e0267f51mr107715765e9.29.1794068287251;
-        Sat, 07 Nov 2026 08:18:07 -0800 (PST)
+        bh=6rFtDL+4M0QJuXDJ/u9fzL3dy/dGvGVkv79Kcm6X45A=;
+        b=W5KvGW1UJtubTcMi9Tsb/wiRq6Os7sBh1bcKc6uJR8iRyGGu/xxjzVGZnBttNJUWuv
+         gSG2l/H/Ja68gJ2D7nCD7i0vEi14IYva5G5bAS7h/eNYZgZf5yo88Zfi/QFNEF8l3LYW
+         Anpq/omUcO0t2AmT0mz9Qh2jT49wfVfko+U4sHFRqZxPf1GVRfiYPUk820ua5cXWJ3kH
+         KhMLGzSaVDH9pmOsL3SYafLWSBZn5IrllHaqYYqA0aGepgeFFqnxGgmgsR8Q0i8aQLf7
+         Mpy/2Wn7s1VBKT7K4GliTDU22pKhCE3d0nf3QYxnWqvFla3dWBsvOuVspZxVDwnhZdvZ
+         iVWw==
+X-Gm-Message-State: APuU4Z9OuAopBngDFnT77z1zFHpJ+dK4lFm4XxGmGQazoyUTkUfYlxwZ
+	xJFj377lhELqkxOKfFlqVMG+F6vMk68kDZ/izMdWy2PbqNNCP8QkQ3ghdp2lLQ==
+X-Gm-Gg: AYBFou3BBn9Qncmxorxer0B6I+87r8iqKwJVJksbCWOaletW5Yi+syS/X9Cqg7XMPs7
+	4wLL9z80dMAzF5cxjYveYjE0sdU0zb+d2Pe+W4czUyYoiNOGkBfp2eAtyaoSYuVUwDyqfBnqfx0
+	tsJFCFY0mBDEs5M8IuFbw0pN7zWaDfFh+ht0oo0qmAv/1tSf6ykjmxAAjCra9eqX3Wk0T/opRBI
+	j52naZxWp77plzWE0t9ya8tYFb+YY/jo/SydkxRReEJXhfo1KuV6yT52kOW8Nsc3JrWAYHpDBHk
+	oxzDiau3ctE5UWYfmsQs5iDJ2xRZhwAM6ENE75LFijPvAodSGzJE/2/rIadZIeEj4bN8DMiISLA
+	xMk2K+b/dGdNoOrjxNvF3x+zdd7bEK8rFqv8HQ6lcWsM7uo4UxExY3nFvYvU2MI0o9idU3UMbK1
+	mFmfPCcfwemXMco8cf5qCLIUa+h0mqGRJxJwHLDJz+Oh9KoCCx0j60urS/o7fQ1vfzDdWsp3kCo
+	QQpcX2LwDysS/9cBApJ2pB/NQi2wxPJqU0c/wtkS5mLJts0nQyf2ZIizwY8X+wFfNdnAC00VPe7
+	2cFFo8g/Y+zUAqaXWSIHaEwUdKY+8bzGr38ptZw2hgU8VSEGhg==
+X-Received: by 2002:a05:600c:4e0e:b0:4a2:526b:d40f with SMTP id 5b1f17b1804b1-4b810df8c0fmr43761105e9.0.1794068379856;
+        Sat, 07 Nov 2026 08:19:39 -0800 (PST)
 Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b7e32b46a3sm83312035e9.6.2026.11.07.08.18.06
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b76cb75913sm68334085e9.0.2026.11.07.08.19.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 07 Nov 2026 08:18:06 -0800 (PST)
+        Sat, 07 Nov 2026 08:19:39 -0800 (PST)
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 To: ofono@lists.linux.dev
 Cc: denkenz@gmail.com,
@@ -82,9 +82,9 @@ Cc: denkenz@gmail.com,
 	absicsz@gmail.com,
 	merlijn@wizzup.org,
 	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH] gatchat: Limit MRU to the HDLC buffer
-Date: Sat,  7 Nov 2026 18:17:33 +0200
-Message-Id: <20261107161733.471895-1-ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH] gatchat: Fix possible stack-based buffer overflow
+Date: Sat,  7 Nov 2026 18:18:27 +0200
+Message-Id: <20261107161827.472030-1-ivo.g.dimitrov.75@gmail.com>
 X-Mailer: git-send-email 2.25.1
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -97,41 +97,50 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The peer's LCP MRU option was accepted without any bound, allowing a
-modem to negotiate frames larger than the HDLC decoder can receive.
-Clamp the negotiated MRU to 2048, the maximum frame size the HDLC
-layer is sized for, so such frames are never expected in the first
-place.
----
- gatchat/gatppp.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+The GSM 07.10 test-command echo on DLC 0 copies the command payload
+into a frame buffer sized for the negotiated frame size, without
+validating the payload length against it.  A malicious modem can send
+an oversized test command and overflow the stack frame.  Ignore test
+commands whose payload does not fit into a single frame, mirroring the
+existing length clamp in the status-change handler.
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 307be641..e6ebd165 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -41,6 +41,7 @@
- #include "ppp.h"
- 
- #define DEFAULT_MTU	1500
-+#define MAX_MRU	2048
- 
- #define PPP_ADDR_FIELD	0xff
- #define PPP_CTRL	0x03
-@@ -505,6 +506,13 @@ void ppp_set_mtu(GAtPPP *ppp, const guint8 *data)
- {
- 	guint16 mtu = get_host_short(data);
- 
-+	/*
-+	 * Frames larger than the HDLC receive buffer cannot be
-+	 * received, so never negotiate an MRU above it.
-+	 */
-+	if (mtu > MAX_MRU)
-+		mtu = MAX_MRU;
+Fixes: ZDI-CAN-31014
+Reported-by: Trend Micro's Zero Day Initiative
+---
+ gatchat/gatmux.c | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
+index 95ffeb8d..b86d4754 100644
+--- a/gatchat/gatmux.c
++++ b/gatchat/gatmux.c
+@@ -984,10 +984,23 @@ static gboolean gsm0710_packet(GAtMux *mux, int dlc, guint8 control,
+ 							data + 2, len - 2,
+ 							write_frame);
+ 			} else if (len >= 2 && data[0] == 0x43) {
+-				/* Test command from other side - send the same bytes back */
+-				unsigned char *resp = alloca(len);
++				struct gsm0710_data *gd =
++					g_at_mux_get_data(mux);
++				unsigned char *resp;
 +
- 	ppp->mtu = mtu;
- }
- 
++				/*
++				 * Test command from other side - send the
++				 * same bytes back, provided they fit into
++				 * a single frame.
++				 */
++				if (len > gd->frame_size)
++					return TRUE;
++
++				resp = alloca(len);
+ 				memcpy(resp, data, len);
+-				resp[0] = 0x41;	/* Clear the C/R bit in the response */
++
++				/* Clear the C/R bit in the response */
++				resp[0] = 0x41;
+ 				write_frame(mux, 0, GSM0710_DATA, resp, len);
+ 			}
+ 		}
 -- 
 2.25.1
 
