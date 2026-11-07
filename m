@@ -1,188 +1,133 @@
-Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.44
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1794067885;
+	b=H0zy0lns+6gQwt37SwBOtogS9qU2LX3nfAJGoCAD++LbtzqemDu4202F4bgnVhiLNA3/
+	 s8ch1v7hvhaeGJQ64rY7a4Kl35fXFiIjj1FkldR10reslnCEmPFxGmPtgfkbwsaUO7lbQ
+	 kNeQoacIk8GVXhFqtcvJTrTuydP/MKVpMbtdimJ7+vPd/cp7kYa6qwt6tq7IFlZ5osANQ
+	 Oin/AfQWsQXnX+0MyHL/3x6Wd6l0gKIpDnKXwO5izCEtNiK+qdR45owToHDRkn8n9r+pH
+	 Kfo+zbevwJjjhU5wXztnH/1hI7b4xZPujir0UaMdP95jHRVexSZUpWlqOsu70d4H2bQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794067885;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
+	 Date:Message-Id:X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=8n9eCAAcS++FkSkW/UwUTeH951bQ49xzGQuHOFIXW3U=;
+	b=JUQXN3M22eZpZOQarTOUfY6HRjLEancNEPhuVkieww+v1Rd1b5YxKa/F31DHH4RZ0kNq
+	 R0UV4lHv1BthvhcEBirFLM1+c91UdO81lj1upxGl25qXkuRumtAXFO+xDvgbCJJQt9z5l
+	 52pGhj0RvrKVmG1ylj6NhK01B2dh9X6xZUIfFwSbxhiSZlUxRJv0t71gpqtwGKNZSUqjL
+	 PpUz/PJLOFn9fLNK0VnGG1xGcxIDHmHDL5eUtBG3KOPAU0YjepUCr14gaDrIZw7tM/xcK
+	 sYG5k2nlaH+0mrMN6D7uiggcd4tsPI83BlYCpA10vQeihJLIvVgJMfRuLFxAWuCXvfg==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RuKvZ6Om;
+	arc=none smtp.remote-ip=209.85.128.44
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0401345C70B
-	for <ofono@lists.linux.dev>; Thu,  3 Sep 2026 08:53:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788425622; cv=none; b=QGKQEZGwntJ0owEubdd/6d9GzT9P1rLYeeL5JV9oCUM1MGDUrHYYs18ogxbqAvFIdwbuw2NEUJVmKaxyn0hUmpxAIuB40kDnrdeIxj+H2vOTfadjdTbxaSB/xsS2N2/C7NIs5ZlpygTFg6nWrsJAorQytuBkZYp4g6n0UbEBl68=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788425622; c=relaxed/simple;
-	bh=+sNuDdkH7vC+QxV3Y36bLSU0bcncjvJaZf656AO8ghg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=RpBnAmALbOjDPsOxr255NwuRyq4sB8elIaWuBfOkv6MBv4JSxe6mfXFDDkLOGQl2ZcfN0jBH4C0ctKgPvQuJI/alA5hcQkVHmezNgnapoVl/5N56ZZ5wq1PFYDNLndV45js1WSW7XHNnh8VjrOvmlKp/b3UD4Z2AAH7NMsomucc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=oss.qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=ioqooRx8; dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b=dCVXevBM; arc=none smtp.client-ip=205.220.180.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oss.qualcomm.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 66135606A33D
+	for <ofono@lists.linux.dev>; Sat,  7 Nov 2026 16:11:25 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 66135606A33D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="ioqooRx8";
-	dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b="dCVXevBM"
-Received: from pps.filterd (m0279872.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6838l0mi3578007
-	for <ofono@lists.linux.dev>; Thu, 3 Sep 2026 08:53:39 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
-	content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
-	z3yqwegkAd5xqQtcb/0dgCXbkBUJdBWQTVk7wX5DjSg=; b=ioqooRx8YuUcprVq
-	NMrVfo6O0v9OUzbZobASrq6pTb39mpKjrm721H2mdJzns0OKhhBJahtg6v1scHBq
-	eR5yqw9axs878ES9ln6V5Vx76UVNTOaEh5qmeSqdtMTqoXpa2bWBYhyC/g3E66qO
-	3Vk2Y9XjdFTw2h6GWsKdqcw2gb2Jfj11TcVE90NYh+lQ7cDWYiazX/tn7uiw+ViH
-	EgdxcLHDPIaNcbvF7okh7ghtuRWddMBxfCM+LYBY6nnsQntTOcpu56EqrzxP8XxL
-	J3QrOj6benaeIW6FTs+3661X0ugPBK6WWFunWBRWZ+ejYIugd5uact8W7jxbjbIn
-	Ee6hLA==
-Received: from mail-pj1-f69.google.com (mail-pj1-f69.google.com [209.85.216.69])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4gf5pdr0uv-1
-	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NOT)
-	for <ofono@lists.linux.dev>; Thu, 03 Sep 2026 08:53:39 +0000 (GMT)
-Received: by mail-pj1-f69.google.com with SMTP id 98e67ed59e1d1-39af92138f9so1427162a91.0
-        for <ofono@lists.linux.dev>; Thu, 03 Sep 2026 01:53:39 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RuKvZ6Om
+Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-4a140e7405dso15573925e9.3
+        for <ofono@lists.linux.dev>; Sat, 07 Nov 2026 08:11:25 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=oss.qualcomm.com; s=google; t=1788425618; x=1789030418; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:to:subject:user-agent:mime-version:date
-         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=z3yqwegkAd5xqQtcb/0dgCXbkBUJdBWQTVk7wX5DjSg=;
-        b=dCVXevBMBlCFVQHT2pivOVO7AtXExSLkkbrDI+zSvZHbeV60S9/PuUWsHeAQJaGrPt
-         GVGdUx17n+V1cwFU6xZi3Gz9Np/mCe3Fg8wgzZpvFz0l+5eH+Ciq+XySD8BEmLiOPuzt
-         JfmCtghRt76f8Yw6XxKHt4uF/IV2Hf8JkRbVyk2HQtcjSc+GaIv8SKpEKSKPQhquIm61
-         E+xZYSj2XXxH/5E+QnW9kDZKYy4dC/MzkEdjHdUVDAHVgAsZbkWOyI2ST2bMn7oOltlJ
-         +FzGrYSgKvzF9eSx4PFiSoLQCQKCsixOsAK50N0e+yqYj6GADtMo2t3N1nAH+1F28TG9
-         1Vog==
+        d=gmail.com; s=20260707; t=1794067884; x=1794672684; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=8n9eCAAcS++FkSkW/UwUTeH951bQ49xzGQuHOFIXW3U=;
+        b=RuKvZ6OmySNUA6w59jNqY1lWHr5aGuqOhO/0fGGcRRZJmYfe0a6gPdu4bx/S3Cx0v5
+         CqJdgVqx5Hw5ROgF9FiY7aG+Hb+NEYcAGxoNy8QBpcuFrCX/YRHm15CuNWuBRplv/Wo6
+         VIz/8QxklawzBqF2MpQQzQRonJJnujuaV+rwKAyAkH4boto2x3zTFWONQUgC/TKnMUQp
+         tmqOHEzMAu/0IGBB8EbUAnGwEm9kHL9X+0RdIAsvSqH8Mr6N4p08R4zoc7OQLBs0GFy5
+         RFPZjudSVVBpcOK3ZeA/u8x8db+FwXUnTPgRDNF27TRfc++yEYoPZm9N9HL9tiZOOADO
+         uWlg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788425618; x=1789030418;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:to:subject:user-agent:mime-version:date
-         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=1e100.net; s=20260707; t=1794067884; x=1794672684;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=z3yqwegkAd5xqQtcb/0dgCXbkBUJdBWQTVk7wX5DjSg=;
-        b=S2kF4MrGoVFa0B+5sD4CBWY2B3vENsVXeC0jhk3t82rrkHsjn2+EytFkcQMctfL/zK
-         77YAT8aapD8Ma+8HGXf4VmjRef9jGHb2wixFpSX0At4piCXGjiEFZCNAMdkjDhQu4TmG
-         d5nAeo/FsvtpzedflhHSW0LUKcKnN5Va2SdmKl2kX80VKJIqSvU7KBB7ibFsI+epWrvR
-         vKmW98FPVNaDpqRferHlVCAEdljZa0JKvu16hsLqVIxPPL1WiLHh89JqET9AMx7D8m92
-         8+L2JwyWisiP9O7TAWZuQvWWg7BxEYglOgxV2UegKsBd9G8CiAiLdIqk0qCA5h4qnoJz
-         hYXg==
-X-Gm-Message-State: AFuF++laUp/E3/hN4AuMrodQWcW/0ZMPJdoI49OPhbeEEh/HyNS1r4fG
-	SWckokYaFy4V0BNhPLix09YTjHVTQpZoIqwrp2yUQKCBlZ4oTwr1ZCxGmSnUM+QT7IBJUwmF+jD
-	WfLxBmzWyzscdv8chYlgH/JMHlwgKYHt44kBf0hx6ib8ZsU0/uQv3pJQn+evxmpJong==
-X-Gm-Gg: AYBFou2TRFpG/vRksnov2KUo4II3QuSMMMnscbQ79g4Qq/j7BUOJQIsAA8Vft0G+/P+
-	QwnxKn0c78Plkoyk6EJ37YILso8yK1GhIsAnoJLjPve3xaYB6ZKCIVF4caDB9O+owo+zU3p0BlS
-	AjbafGBE2xlVkrloo1c+OsmM1VF4EUH2XKTkMtGYnvIR9wzfN9agBZfLqzbue1SaHYvdA7Gd/iX
-	vOmu2f+/aALfgCVrFPhdVsCF6ShHs5SiMw8Omk4fNVpfs72Y5EYmCRZPihsTlLKiN2IlDwMtwld
-	FUE5AiqbM7gnDlILPSmlnY3DdLWhC82sWUpxvxhTgEroIINQ4IC8iiI0Gd0JnZN6ILf1ipXSl6C
-	GKhcjkTEvtUZ2kHjKNCssPPvtXDY=
-X-Received: by 2002:a17:90a:149:b0:38e:42f5:d096 with SMTP id 98e67ed59e1d1-39b12fccb47mr1126686a91.0.1788425618567;
-        Thu, 03 Sep 2026 01:53:38 -0700 (PDT)
-X-Received: by 2002:a17:90a:149:b0:38e:42f5:d096 with SMTP id 98e67ed59e1d1-39b12fccb47mr1126677a91.0.1788425617995;
-        Thu, 03 Sep 2026 01:53:37 -0700 (PDT)
-Received: from [10.239.97.158] ([114.94.8.21])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-39b083e4fafsm4121629a91.1.2026.09.03.01.53.36
-        for <ofono@lists.linux.dev>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 03 Sep 2026 01:53:37 -0700 (PDT)
-Message-ID: <f0835373-da4d-4c9d-a953-428657fbb5d7@oss.qualcomm.com>
-Date: Thu, 3 Sep 2026 16:53:35 +0800
-Precedence: bulk
+        bh=8n9eCAAcS++FkSkW/UwUTeH951bQ49xzGQuHOFIXW3U=;
+        b=v+CpZ+QNvM+c7hlRD4lg32K7Bvu5ba7ToKRVtDRv/zsCx4s34HMmBpxbdNOQ/dfamV
+         I1tde8zd5x5ZCQiaaGLywQ8r4OCt3FvwonzrdjeOs40y7DzykoJph5Tx5GWlUQFvAueD
+         O+eJbo8Ne86x5Qdgh5sWUdbvMniy2tpJnHRr53REGW3LLNmhwcRjrBDvCN6oY4tQF/Wb
+         t/q3ZzC+b5O6bQ8wymYLqeyxO7QC+4qsAwZ4toYoOje9H14XIqocGXlu+KSpZtCQ/wDF
+         ucNk7xbPTULajX+I0VX6ye990uQ/jQuDnq8pyuWhVDcQW6Xtt12UPnL13O3U6KCQTDw8
+         YVTg==
+X-Gm-Message-State: APuU4Z9BoUOooop1FaWSa9AXr+nmzdejLWaP7yZ010tI/BccEuO2XHVs
+	EqtY3wizC0Gr8Wuoc88D/LjvhiJnWBJ5UdqIomW26YEP7L5s4cWbG5c9AkThtA==
+X-Gm-Gg: AYBFou1zY2kKC2Uq/u4VgK2R1+7FWVbqQSWy1yfcDGfvwYDYuZBom8ZNoBHioMH47PA
+	6vq/NK3SBxqrB0qi/mdRGSXcx9VKaklKptyAFji6ZWm5yG07/7HgFF5j5Zv3cal+iKzSZMfjANs
+	y3Hr/VanOTpSp/pUg9MaqQZU/LiO2KxwY1uD5B5LYCsb2r/ThoNLTwWmV2ywQx320AC3TI8e9Gf
+	VnkGCKA+ZTPX/qCJfTxfAZRd+UVxhJFSXAmzHR1we+rK3cbxVoNPoN5gVyBFNeulu+gy0Yf1Dre
+	/HN2VkTvQDIo1jrjYL2VYfoVHmR0+YHucPCQ8C6nk+p9B8dOGOeFnaNAB01vF+weSpYoaOTfJIL
+	Ec9+1RUo0PdaSZ2JBDm0Y8N+tggB6TeE/2lC36iH2PGVa/Xy1do/6C1WpzOJaQgGXyz7YMVLe+C
+	+21d+jFDc0zK76WJwxUeddShi3mpMmlcKxFxXKyAa56W0rm+z+uiYx8CLywbcPuecv9D5rdM55r
+	J+6A9Sfd7VTMegPsySPI0Nj7sAtYK9kpshsn8E3SU89n4eD23IdDuS4m821/fk/aqBHqaxM3D1v
+	ICim4moWtjnVA+GD4OmdeGQPLoSKg8uyS49tiDiTM++1wHwTEA==
+X-Received: by 2002:a05:600c:4444:b0:4a1:cfa7:e968 with SMTP id 5b1f17b1804b1-4b6df9bec76mr97094755e9.21.1794067883533;
+        Sat, 07 Nov 2026 08:11:23 -0800 (PST)
+Received: from localhost.localdomain ([95.43.220.235])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b7da62edb4sm100834525e9.1.2026.11.07.08.11.22
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 07 Nov 2026 08:11:23 -0800 (PST)
+From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+To: ofono@lists.linux.dev
+Cc: denkenz@gmail.com,
+	sunweaver@debian.org,
+	absicsz@gmail.com,
+	merlijn@wizzup.org,
+	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH] qmimodem: Fix TLV length validation
+Date: Sat,  7 Nov 2026 18:11:04 +0200
+Message-Id: <20261107161104.471346-1-ivo.g.dimitrov.75@gmail.com>
+X-Mailer: git-send-email 2.25.1
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
+List-Post: <mailto:ofono@lists.linux.dev>
+List-Help: <mailto:ofono+help@lists.linux.dev>
 List-Subscribe: <mailto:ofono+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:ofono+unsubscribe@lists.linux.dev>
+List-Owner: <mailto:ofono+owner@lists.linux.dev>
+Precedence: list
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v1] test: Add optional modem path argument to volume
- scripts
-To: ofono@lists.linux.dev
-References: <20260717080605.3876414-1-shuai.zhang@oss.qualcomm.com>
-Content-Language: en-US
-From: Shuai Zhang <shuai.zhang@oss.qualcomm.com>
-In-Reply-To: <20260717080605.3876414-1-shuai.zhang@oss.qualcomm.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-Proofpoint-Spam-Info: AW1haW4tMjYwOTAzMDA3NiBTYWx0ZWRfX32b9fQ4KUi7n
- 3A1CdCXmlxVcKw2/+Z+Irw4J3uxyuUBQ5oGDO2vnJWcVDoJTWakvhqZl0E2jxc/qsWxbgJ/Wteh
- X/wHTssDSIwOFHdigWuSUNIflWHPECg=
-X-Proofpoint-ORIG-GUID: _HHiMYEHf9nPCl-cHURJoI-e0TGFZsWb
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwOTAzMDA3NiBTYWx0ZWRfXy82EHypNQ8Qk
- vzp9MRIasd2ZiIFI6EE907tLaCIGXz5UQswEhEGDTvKKpRcrQtGWtzIoZDryvw0sLmNLVRym46n
- kVmoI/NedRx/mdPXUqdCR2tudntUkupOhPF66KQG8QgwH/noqTIPkfFMH4YaEUfu2pvT5ZjM8Li
- lNCX9CEGLanT7w1JOLzBhx4oc8fCwcx2404DNAwBdImRgBvnkh3RLPSYdF/cpGal/KhOtx3uLX3
- BaEA8E2EEehciqNSRN+FPQmYWmaWvrYE8a6QtyRKXHH7+eiTRbEmv9Qqi1WRUjxKtYn/TW4fAWC
- cLoiaF5HF0UEFtR0s7VkCS2K6QHLt566d0b34HWPbKIvUrpowh0TQhf7nPuTHaSofutKQDVTLfT
- AjcYhPSeqaXzkjktJ6aKzoTWF3zjxs0gJFPOufLoYQmo9FcPD6S6VMINmBgw9oXoVXwUHRq5m3H
- kuLlRC6EfViIb2Tkkxg==
-X-Authority-Analysis: v=2.4 cv=RsL16imK c=1 sm=1 tr=0 ts=6a993593 cx=c_pps
- a=vVfyC5vLCtgYJKYeQD43oA==:117 a=Uz3yg00KUFJ2y2WijEJ4bw==:17
- a=IkcTkHD0fZMA:10 a=VdqzKS8jKosA:10 a=s4-Qcg_JpJYA:10
- a=VkNPw1HP01LnGYTKEx00:22 a=u7WPNUs3qKkmUXheDGA7:22 a=yx91gb_oNiZeI1HMLzn7:22
- a=t1GSApx7oizSpk-wZuYA:9 a=QEXdDO2ut3YA:10 a=rl5im9kqc5Lf4LNbBjHf:22
-X-Proofpoint-GUID: _HHiMYEHf9nPCl-cHURJoI-e0TGFZsWb
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
- definitions=2026-09-03_02,2026-09-02_04,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- spamscore=0 phishscore=0 priorityscore=1501 suspectscore=0 clxscore=1015
- lowpriorityscore=0 adultscore=0 bulkscore=0 malwarescore=0 impostorscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2606150000 definitions=main-2609030076
+Content-Transfer-Encoding: 8bit
 
-Hi maintainers,
+tlv_get() returned the TLV length from the wire without validating that
+it fits within the data actually received. A malicious modem could
+report a TLV length exceeding the result buffer, causing callers to
+validate against the declared length and subsequently read beyond the
+buffer boundary, e.g. in get_msg_list_cb() in the SMS code.
 
-On 7/17/2026 4:06 PM, Shuai Zhang wrote:
-> set-mic-volume and set-speaker-volume scripts hardcode the call
-> path to modems[0][0], the first modem in the list. When the DUT is
-> paired with multiple devices and the active call is not on
-> modem[0], the scripts fail to target the correct modem.
->
-> Add an optional modem path first argument to both scripts,
-> following the same pattern already used in hangup-all, allowing
-> the caller to explicitly specify the target modem path.
-> ---
->   test/set-mic-volume     | 8 +++++++-
->   test/set-speaker-volume | 8 +++++++-
->   2 files changed, 14 insertions(+), 2 deletions(-)
->
-> diff --git a/test/set-mic-volume b/test/set-mic-volume
-> index cd6c73fa..4cdf2c99 100755
-> --- a/test/set-mic-volume
-> +++ b/test/set-mic-volume
-> @@ -11,7 +11,13 @@ manager = dbus.Interface(bus.get_object('org.ofono', '/'),
->   modems = manager.GetModems()
->   path = modems[0][0]
->   
-> +if (len(sys.argv) == 3):
-> +	path = sys.argv[1]
-> +	volume = sys.argv[2]
-> +else:
-> +	volume = sys.argv[1]
-> +
->   cv = dbus.Interface(bus.get_object('org.ofono', path),
->   						'org.ofono.CallVolume')
->   
-> -cv.SetProperty("MicrophoneVolume", dbus.Byte(int(sys.argv[1])))
-> +cv.SetProperty("MicrophoneVolume", dbus.Byte(int(volume)))
-> diff --git a/test/set-speaker-volume b/test/set-speaker-volume
-> index 6d4e3019..3f468da0 100755
-> --- a/test/set-speaker-volume
-> +++ b/test/set-speaker-volume
-> @@ -11,7 +11,13 @@ manager = dbus.Interface(bus.get_object('org.ofono', '/'),
->   modems = manager.GetModems()
->   path = modems[0][0]
->   
-> +if (len(sys.argv) == 3):
-> +	path = sys.argv[1]
-> +	volume = sys.argv[2]
-> +else:
-> +	volume = sys.argv[1]
-> +
->   cv = dbus.Interface(bus.get_object('org.ofono', path),
->   						'org.ofono.CallVolume')
->   
-> -cv.SetProperty("SpeakerVolume", dbus.Byte(int(sys.argv[1])))
-> +cv.SetProperty("SpeakerVolume", dbus.Byte(int(volume)))
+Fixes: ZDI-CAN-28993, ZDI-CAN-26348
+Reported-by: Rob Blakely working with Trend Micro Zero Day Initiative
+---
+ drivers/qmimodem/qmi.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-
-This is a gentle reminder for this patch.
-Any comments or feedback would be greatly appreciated.
-
-Thanks,
-Shuai
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 4468761a..30f7cfa2 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -915,6 +915,14 @@ static const void *tlv_get(const void *data, uint16_t size,
+ 		const struct qmi_tlv_hdr *tlv = ptr;
+ 		uint16_t tlv_length = L_LE16_TO_CPU(tlv->length);
+ 
++		/*
++		 * The TLV length is provided by the modem and must not
++		 * exceed the data actually received, otherwise the caller
++		 * would read beyond the end of the message buffer.
++		 */
++		if (tlv_length > len - QMI_TLV_HDR_SIZE)
++			return NULL;
++
+ 		if (tlv->type == type) {
+ 			if (length)
+ 				*length = tlv_length;
+-- 
+2.25.1
 
