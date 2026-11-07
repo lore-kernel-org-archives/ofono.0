@@ -1,80 +1,80 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.45
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794068403;
-	b=g54Z5WIRywi+7GJDuaFAoufjmJt2p8QkZpmDeeXkWdsMufpyCp+eYAXkz8CPy1kRoFeq
-	 gOK/zTbI1rUz/1r91HhHGOHG75AyZGrIcQ/As44YvMg7tzuiEmySdkfYKknsFJkJW7NdH
-	 0PcwxZnse3dHdNx3LPwFpTfRAde3mXPQzc7A9hf7giJtlSmBA7UpvpsTQ6sdoMgJRVJdQ
-	 SCB8fGz7TspzY/egRtXdE312OU33hCujutnMwgax2C/kWb07j6QKjYj1YwK6DHxn8/C6l
-	 3ptp5RmLI0yH+JrSPEnvnfqnaNvqwht7w7AyW2tEP8XVPxVl3aYSHork0e6CSFftGKw==
+	t=1794068446;
+	b=iU1uX4zOL+h2ItcLiwLPluUOteq5XKHY6lDqdYb3NQ5WkGkLFGW+k7p9b+ugq2/Hl4n4
+	 SqUPCl8zxJAehPAIhrnYzOwYspgXZEL+uriGwA6TtXqSmLkFDGETvbo0fD/8nVbDLim6g
+	 iuSYNgmMrT6OHr0D8czdCq7r762vZtSaBwpW+kCr7v0yDvZ9Hl/D+H69v5ewuIFNnkicL
+	 HpKPqmskrtXnpjKxgyl/vg5tItRzGgR0HiUNyEzgu0B4cgTLK5D66aKHLoA96MZiKjWHX
+	 RbddbAJfCoszVRqp0D+Djc7Jvt8xttnR6PjSxmlsXkGeV/5aMBRsOJ1ropnfP+oF6GA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794068403;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794068446;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
 	 Date:Message-Id:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=X8fSlRozd32SWNYEdG7Fz40/mNYCjIxfKvbK3u0HDoM=;
-	b=qDBctLvfuDyrrFV52F5tDWiuTeyHMUk9VHDwhTsKoJAKlysD9L+8U8C4LuGPPMbq5cRz
-	 8Pfqf5UDi/e4SA7f0aKqCaEb8yIdJjJshLT49KgLAGC35XdY4DcF2CIfuLRuFVGjRvi1p
-	 Hd3ia7IXwY3/8/nPCmw7emwldYf2Vwi+KT4Ok1nD/FfxUbaGOyCE/hrevi+IXTnSxaW+d
-	 XrKE1qof+uNc62iNpVKj5xykhYrrjzBgDFLO1BRUNXaxZDFEIUedxVpzptCra7Wxa7Lm8
-	 RRkHaeS5Us9ymykwlmAoT1sX8oxw+1aa1yoGvuySnqwhHX1XBxloJ3Tanf0z0clvIKw==
+	bh=IYoBvM0JMOyso4p6v9cK67Nzl+TRB4hGl//c/EVgF3U=;
+	b=vTaFRDnzy4snclYQolc63hWiLO8KjIHMQTz6/gXr7HplqZG+0wnLbWRL0Zsd5WztzfQK
+	 Y0F+Chj208Bz5X0iAoWqcvPJ/1R4A98CW04WvfVkp0ZUjje3FyeNsEURfRPEQ1G8omt2R
+	 18HCK9G5LqwBUpSOUsKbUHaJ/QNRvqoO5dqcEmyUZZffpJ48/Karze1jGoKK3EqsWIYt3
+	 XuUzPP37lkjKpls0DcD6Ydp5GNjaRIWCFmk/A+Z94HIBD554dQFymyLMXg+4SeeXufmPy
+	 zhwZuA9n6LTGGNDHT4Brq3gJQ8NGpSiIkgERFKI+lQBv4raspUxzIg+Ztq7YjaWbkdA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=byuCTieS;
-	arc=none smtp.remote-ip=209.85.221.41
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RyqQlgHK;
+	arc=none smtp.remote-ip=209.85.128.45
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 394CD606A326
-	for <ofono@lists.linux.dev>; Sat,  7 Nov 2026 16:20:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 394CD606A326
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFF45606A326
+	for <ofono@lists.linux.dev>; Sat,  7 Nov 2026 16:20:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EFF45606A326
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=byuCTieS
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-492fcbfaa88so923286f8f.3
-        for <ofono@lists.linux.dev>; Sat, 07 Nov 2026 08:20:03 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RyqQlgHK
+Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-4a35db1f202so12603145e9.3
+        for <ofono@lists.linux.dev>; Sat, 07 Nov 2026 08:20:45 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794068401; x=1794673201; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1794068444; x=1794673244; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=X8fSlRozd32SWNYEdG7Fz40/mNYCjIxfKvbK3u0HDoM=;
-        b=byuCTieSjeLcUvrbM+wdp9R+m8ezjNyEkxWgfy+5b1AVfVHSa1GKTHCeP+cRP9ajdp
-         w2rw4MWE2hr1p/Zd9MBIiTlxXuA1SKZ9IZKEFOsGFGbUk5zAqXDVogBNR+rlJEpxt85j
-         1OThZP8LlNIpNHecnUbaRhcHyJc2mDzsdB8nHer4H4CFUern0D8vAVlEXc6umGtBQu4x
-         GHuA3SquRC6jESOD26taEnriHL851Y1wjM4jjKPSqOlvo4bf+2vuE1OA5jvD6vVzcQ4Y
-         9lBErXUWltnFlj8GPfYIlRQRBuOzpe4nyaa2ajYGyB8EEabGNb1fiWhISpK9sIQx2BUM
-         sE4Q==
+        bh=IYoBvM0JMOyso4p6v9cK67Nzl+TRB4hGl//c/EVgF3U=;
+        b=RyqQlgHKKiT1M/dftUEj8okwGRZv3ILyyiJ3wMoJTUbxNubU/PxyH4U59gs8eSwXEa
+         dot0cil7lLCuW5BP3Ezou4efIA5nxBsP8bv9NakL/NzEv3vl5ZXWtxw2jXhJmzVkycvs
+         KT7IQrxxPkwYiKBRctXS0cnjmCt1X+vXySHaCCGX6TB9S0gl1gN5AyACaHp4Jy7UFptf
+         t660QU0idHB53Bb0ZhE0wyrLpA/3ijB1yYTk2L5D30Tj5H3QcSNPApwmzEXhENa8p+UP
+         PeJl0f/38bKgae0E5NSUEJcLPSj3l+FN/2eGVIAQpEQyv85mhsdve4A83Y3UhGaNcauG
+         VzGQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794068401; x=1794673201;
+        d=1e100.net; s=20260707; t=1794068444; x=1794673244;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=X8fSlRozd32SWNYEdG7Fz40/mNYCjIxfKvbK3u0HDoM=;
-        b=HUJlyWJ08V1U/NCAKyyB1wJ9+XhVTRgeNV3jKQ5vOjrs+GHHjxtA1c8gmTXgA1yNih
-         /FlgBqtVTNcFRbJtL3KzjmlOjmlY9nPc6UoJSQWxETUHKplxEt0PAkoemOMkwh+RJJ+q
-         iL2Gpc9DADmAwg+yCVcOyBuGXFuuQr5gARAVaCWaH6IDHdVkEEicxMNeUpvIGtBNO0ox
-         wqdUl+HWFxQqdthAQIn6vOHsSvpMIO+3Q3na+kT01gT2f8QyKacnxcuNXpWsFVd/hXdI
-         U7nz9kG4imVRlN8g51Y2ZjR/XwdY7TTlFvDRzUmDf6/wiknwIepF4dwsBmb13w29zY8G
-         8LGg==
-X-Gm-Message-State: APuU4Z9td/g41K2vme93/h7gqTTTN4kXG0HtAgzpOwNSSzVtgwE24xSA
-	kwXAsHPdNAWYrlNClf5YcOjSS2oHaBUcFqjgKiV/xkIAPb3uVrE6JXYd5OFTIw==
-X-Gm-Gg: AYBFou2aD3Pe3uQgUKJf8nAl/lWAC4xozy4kAHRYup6l1m3SviHFCL++HYGynSHeSxg
-	gytuSc2aATqNeE5UNA8YOt/wmCGQtDo5wYjASyC8R14fGgNls0bJfni6qDI4rXMmM3ALcQvfdXV
-	UVRf8mpsm3XkQM6i6hTTKv4j8UTwtFdB8kvJXWHPQZgWtLKWe9jzRZymKyWXm95lNmOwi1C4UBW
-	tKUdgnraew6v1X3+x1N4lpb+tu26STDuh7BKDvL4TM8ct+V8Kk6M6BWMiPWEdpVTuiePwz8E2bH
-	J7vRyfaxCViCj+LIIEaGFZdb6zkCmqFedTb8GSzk+iTdZku/ziOvSk4tcJj0PWcwbbk0o9f1gM2
-	G7lO2VZpBVtOrlP8vzNgDfxaq8A7kZzQsadJdAyR//+GS5ftsX85NtChGvct2UC/sQKdIh5qFhN
-	3224BPWKYy3dd/Jw2uHVj0l5zL4r+fRK+s/nnuFwCIruUwa5jvUvNLhUD8W2ryps4NXWWfObBR5
-	arrQUfuHsak6sUX32LTmTy5PcbosYIk1YE+/qHZf72nJuoByv7LuGwJcG80hMocNtPOItBJUEAp
-	VXgqMObXuTshvjsALu7UH0FN3/gcRNAQt9WoM8zk4tVleoUovA==
-X-Received: by 2002:a5d:5e8e:0:b0:48a:f404:695e with SMTP id ffacd0b85a97d-49278733ab0mr9788745f8f.50.1794068401518;
-        Sat, 07 Nov 2026 08:20:01 -0800 (PST)
+        bh=IYoBvM0JMOyso4p6v9cK67Nzl+TRB4hGl//c/EVgF3U=;
+        b=hbq0WkNTIoyTToQi9ZyWm72Lo1vN2g+41Zqho/sbZ6qX5Dh2AA3bqey/DaHxsjNgjz
+         PEnCfJ0yCxSqRwfkvvWxRgcd+/iW26yf/iMvot8PdkV8jpfi6xWhTJM1FLb7eHCQ0KaN
+         6nmQW5hOMvmQ41If46IthCPr2lpMULpS9jQYa1Gn06ZNmtysCFfwWn4RpUWj/pynpJqY
+         q/2FymtOhEPMd2VmK1cOVThhATC9ELtI5AhXLOzCbFfBT5MPjoKj+eO1mik9EMg6NY6B
+         Bz/Yny3xebLKrMKECZLmWYkFv72j8u4UOV+huMBSIqvYngfJzigkz8s7xvuF/ZTIdmhO
+         TBYQ==
+X-Gm-Message-State: APuU4Z9oMTumob1DzRSafBw6qnCdw9J0eadBPG9oFOYDENuScUjlEx4H
+	CVhUqLUqBOvSw3sJKi2gfkVlTv7Bja4pJbn2RDKkNb+j0wY6nWEEqLeq8pbqcQ==
+X-Gm-Gg: AYBFou0PTGVy7yhCEvFHWZ2m8GGd/9Q/WJzE4fRKL7QJwRwry9/icu+ty6fMydWNmzF
+	7snuA/lrJA8fkmnavMNlOVa/I4/FZZrY3wlLK90GGDu7pPTT8o5K4XP4w8FDqpZAHhJ5Y448b0K
+	DnG7ghIK/ZZU9msxn/N7EwFEFzaybBIzLs3ug/HcDqDRyAYucC0i3NUMHEIWSqF9KCDOSZzGelk
+	pGcjBD6ccAE9RE1+5FUvvOoCIKUZ7zfIajY/m/w8Ckr7vpVg20X1xDhCxBb4QjJXsr7nFGrGrnH
+	WTY1/zJWRfkTCAOexjGSqld8Es4geFd46fmtpRh0kN9FEmX8zP+qQmZblGkTvt8KFg27vkv5zzr
+	AD021SyuDbE/mqM93U6gdQAx8gCimJ8B89HIqI26mMTveDtDc6L2zFx3tq0gti36BejCPsDYk94
+	Zn2Juh9ynFPKrWTNttZLtSRBwu3FhqUOJgmVNoV7L+FIZT2vnZkPrEdLjFG3KO0ydpbKGOEed97
+	QkxfeFqi8IRDhO6p0Oolnsp30kePf0uPosopdxVHIcDLspzbUup4MPB9EVFlLS3AgbD7DOn5jNj
+	8Ym3qcHgDFreBjhyv+3+a1CKXYkOyTBukDpQNC82mWiUMDCxXA==
+X-Received: by 2002:a05:600c:c172:b0:4a1:702f:c736 with SMTP id 5b1f17b1804b1-4b6db2ba61dmr100757635e9.3.1794068444408;
+        Sat, 07 Nov 2026 08:20:44 -0800 (PST)
 Received: from localhost.localdomain ([95.43.220.235])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4930a5a91dbsm8383911f8f.35.2026.11.07.08.19.59
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b7d2ad9b95sm87948945e9.0.2026.11.07.08.20.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 07 Nov 2026 08:20:00 -0800 (PST)
+        Sat, 07 Nov 2026 08:20:43 -0800 (PST)
 From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 To: ofono@lists.linux.dev
 Cc: denkenz@gmail.com,
@@ -82,9 +82,9 @@ Cc: denkenz@gmail.com,
 	absicsz@gmail.com,
 	merlijn@wizzup.org,
 	Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Subject: [PATCH] smsutil: Fix CBS assembly double free
-Date: Sat,  7 Nov 2026 18:19:47 +0200
-Message-Id: <20261107161947.472111-1-ivo.g.dimitrov.75@gmail.com>
+Subject: [PATCH] gatchat: Fix possible out-of-bounds read and write
+Date: Sat,  7 Nov 2026 18:20:10 +0200
+Message-Id: <20261107162010.472179-1-ivo.g.dimitrov.75@gmail.com>
 X-Mailer: git-send-email 2.25.1
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -97,30 +97,36 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-cbs_assembly_expire() freed the pages list and then passed the now
-dangling list head to g_free() again instead of freeing the node
-itself, causing a double free and leaking the node.  Free the node,
-matching cbs_assembly_free().
+The control protocol dispatcher never validated the packet length
+field against the actual frame size.  A declared length smaller than
+the header caused an integer underflow when computing option length,
+leading to a heap overflow in pppcp_send_configure_nak(); a declared
+length larger than the frame made option iterators and reply
+generation read past the end of the receive buffer.  Reject packets
+whose length field is inconsistent with the frame.
 
-Fixes: ZDI-CAN-30141
+Fixes: ZDI-CAN-31027
+Fixes: ZDI-CAN-31543
 Reported-by: Trend Micro's Zero Day Initiative
 ---
- src/smsutil.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ gatchat/ppp_cp.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 84895c4f..7c8a82e0 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -4228,7 +4228,7 @@ static void cbs_assembly_expire(struct cbs_assembly *assembly,
- 			assembly->assembly_list = l->next;
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index f3f2cc4f..cc2f2089 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -956,6 +956,10 @@ void pppcp_process_packet(gpointer priv, const guint8 *new_packet, gsize len)
+ 	if (len < sizeof(struct pppcp_packet))
+ 		return;
  
- 		g_slist_free_full(node->pages, g_free);
--		g_free(node->pages);
-+		g_free(node);
- 		tmp = l;
- 		l = l->next;
- 		g_slist_free_1(tmp);
++	if (ntohs(packet->length) < sizeof(struct pppcp_packet) ||
++				ntohs(packet->length) > len)
++		return;
++
+ 	/* check flags to see if we support this code */
+ 	if (!(data->driver->supported_codes & (1 << packet->code)))
+ 		event_type = RUC;
 -- 
 2.25.1
 
