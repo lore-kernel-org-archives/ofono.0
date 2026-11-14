@@ -1,86 +1,48 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.44
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=136.144.136.8
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794433388;
-	b=aLSRdGrDH/T5vm/yW+F8Lj+dzUp3wqARIPWY0W3dK5FGFpF/DWd7BZp1bgdJUvkKs7mK
-	 7AoBq7l00/oI+wOsB/bIyskqF00f4nTyqXAEzzZHmPzAv3qpwygG/X0UBgy2ODC/MQj7z
-	 sL8JGwi6WzvJnjraMerzXFo5XdLr/WH49zZML9wmz6ooRmotYhyEtEtHfS3CcBzXfIfsX
-	 yW28fXaD8RZZkH9pWtBDPkqRg8XelWwgO5G36F7XhzL9tOOldJAral84i+B4GtwU/idYV
-	 W/msA8B1pxrUIqwPkIVz0BMHFkG6Mnl3uszPktMp3shEkG7kuB+w3ubQ86/HiFyc37Q==
+	t=1794636379;
+	b=272kD0NzrqVg1BYSi7ORFgWFmInHtrjslSmArFPyg9+/D1YwW90jWRs8pKEYgDY/9kZ0
+	 KImzi6RlnHDemLHfvOjvBdfsK7n9oLMZITj6nv4jJirvXNfY21y/l9xeSU+eUmMnocwPI
+	 KLqUcC/hLPmQQqd4xIX1ExuNN/RSQPIxZsZmPeqnKh3TF8AXBbfteWskpLf23d11omoNq
+	 GrvlK6u5yg953fZvquMPrGTVS3iwHhMb44vixVY7wT5OAV2wtx1ChlLTf9lf/ZUZijF65
+	 FvBs0dy31059/76UoX9phGgWnrcAokWBNuA1nXpC3rmaRACByyvJFNlgFEog2/NM/ew==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794433388;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=GV6o1IuXGL79ZbSEdXNpgocv0V5ogyKLI/G/f5L5jj0=;
-	b=oWVVyyeKRt5dkhz6IeVDEX9yHxkfINq75iaCsDCUXcf7bAqnwgiJgj/GO3LMMAV+8oUM
-	 9vdgdeBl8HNilnqLmWgKlHapqouMFk28yQsEdZ5nF1t4TcSVvKeculA0Kl6qzaJQsdEkH
-	 VfS6P9MNj9SCHnDUxuC69JUpb2GMXDA++8aT3SecUw6jacAA5tV/SYJvZgrOkMoXtYM0S
-	 KCzIbRhCCKDxX/RkNWtZflMeXBCCPKM1DNu+o6j2Rt4ghLE/hPw3vj5E9xNcSkuGWUss/
-	 jZaIAdGgPzX6TmMXzRt5Or7XrKcwzkaG9/1nWshGxrx8jBymBuCySTkcBFUxCydY6gw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794636379;
+	h=DMARC-Filter:Received:Received:From:To:Cc:Subject:Date:Message-ID:
+	 X-Mailer:MIME-Version:Content-Transfer-Encoding:X-Scanned-By:
+	 DKIM-Signature:X-Report-Abuse-To;
+	bh=YKvW3ik3SnaKff9W7rc6p2+Nr96/MJ215w0sIXXs2eQ=;
+	b=R6KOkeKqeGJqCjxARluEO7ZQB+iwGVIPmn+7EOVFrJ5iTXKgNfiVg3kSzQfGPNLmSkA/
+	 mRcRhpchvfPFAiCipB9kHeNzlCl75aDTB/wwQurBcdgqZUlSqTeFPjAVevefWXhNFRsO8
+	 izqLfgpkkgD9/tH/2TIe+PQ2rLKXzBvs1jdWrWgLJRIc6I1inCX3GQEgsx6fcc+UZ2A0h
+	 9dossT2ZVcS7InRCDYGezkhOZKz3PEPpSwRi7xWx0un+WeX4+FxHm/5kpCffcD/FpiKmE
+	 VfjXhIdZk10S6vdrCeuHvWq2wBfR7T6cMrupBGUvl8FqPHR4iR+riEOIsWgAMDro+Aw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=uz4ZCkHD;
-	arc=none smtp.remote-ip=209.85.167.44
-Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=none header.from=herrie.org;
+	spf=pass smtp.mailfrom=herrie.org;
+	arc=none smtp.remote-ip=136.144.136.8
+Received: from outbound8.mail.transip.nl (outbound8.mail.transip.nl [136.144.136.8])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF079606A324
-	for <ofono@lists.linux.dev>; Wed, 11 Nov 2026 21:43:07 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DF079606A324
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=uz4ZCkHD
-Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-5be47aa555cso3293054e87.3
-        for <ofono@lists.linux.dev>; Wed, 11 Nov 2026 13:43:07 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794433386; x=1795038186; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=GV6o1IuXGL79ZbSEdXNpgocv0V5ogyKLI/G/f5L5jj0=;
-        b=uz4ZCkHD1NlVBMQt7Ue936mvtdmaVk34RuEPu8CFZRfs/dysGfpFSiDVhJwsy5nk06
-         e6ewrExFY0NPXQkPc+FoLq1EwosHkHebAVyBAIXmyru2mXvphXQz1rBPrXQScrvn/r44
-         mvQrIOUoEYvS1A9XcZwJuZehyPMi0fxyR0WJWK6V5HKOaNqhr0Pr4TXYg25poE5jIKR3
-         dEtG/XUmyrmw0qyP6xEUZBJsDxhOgJ/lad5bNZJXBVLy6iOL/bSpLT50ShhsnhdK1gQU
-         LQGxTDTYJMfwDFpFqCdgKAABzfr7MM/hLpsKBpKm4npqh6aN/mcd1yBBX1914zj8pZbl
-         67Aw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794433386; x=1795038186;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=GV6o1IuXGL79ZbSEdXNpgocv0V5ogyKLI/G/f5L5jj0=;
-        b=ta2tlBd2WlxxnkQ6MrN1XGMtIaKDGLvt+9LegEHVHO0MJLc4yr2nTGdN/UhWySgAlV
-         4ozSVxn/JsB6M3Yq7OD3ztow6Ukuvcq+rPle5a3+GgDpsaUtVHKsRUcxusKyNkhjWUwd
-         f7F/zI4S36lAnatILwBUTGFANLP/GXmf65ahRz6PVr6tazToHKdqu2EN16Dq3jOCpO6w
-         QZQVVdRudx5CUF9ijl8VVqwNBHATKKjZHcGp1PN12Jkz5fkmqNtw+Vrn8iWNGNmRRzux
-         5W8dsP1SIiZpVd1RIDTV80cqtCfd7QARjRQ+ucILj47QUP+voNexD2mXfOBtu2cXrAIf
-         9u0Q==
-X-Gm-Message-State: APuU4Z98W5+JbX6QMEYnFWn50d+KtEZGjt3kwrCtvGb1zFHaGVh8Ja2I
-	ssgUwZG50FT2WFxY9pm75wXRcIIwJZgj3+qDzv3rUeWVso3eURTjkViiMWL6aw==
-X-Gm-Gg: AYBFou29qpEAYBuO7p2k0lq+Z8X10R28bKTmw3tn08zXCP997FSFKKLXC1wZfTgfoFD
-	y50tnf73aHIoMiPq3/BTX92/N/vtCtOwosfKF+2yMu8H8Naa5bpdGbm2L1PjA5du1m5PON6YZ3U
-	qO/KUoMW6FtE5/h4UY8kp3V5wLsZlhXZHhjqVusw+Zn5PjCWexk+yAK0HEaVANTWIxKw/T5+PnX
-	mCZL5WWRlnIvSopF1HIeknHVyPR886oC6dlMSYCv3C/nzU3Hoafz/TWlIjiuXMUpvoVwcD/JoQC
-	OSIlQ9v9R0QGoUygvwiR3+qlKtxJFqgT9AalPfKugHxRRIWlrkQFhySVcV0jWR+Yjn9Dcg18G7d
-	bFkaG2rhyOAb0iR6VIZcHycnKgERg67ULmreTfcPlLa8TPpHyLkMxeJrGf5N/Qb334E+g0eq6cN
-	1xUK5KwDmGpLAi+KdKQCU0iyuk/A9q2q7HOQIOGHS01w1/oiDhcjzASwkYV26AxRoDtoQXGrek1
-	Tnt/WQsfmuTYJqRGyzWnEepkKpbCGO9DNAk8C/KChW7lVN1u14798Q5uMGGKA6Pa9BAAnVYAma7
-	l5vZqbd6qam+98390jfSr+Y=
-X-Received: by 2002:a05:6512:12c5:b0:5c1:45a9:c2ae with SMTP id 2adb3069b0e04-5c15d644128mr1004743e87.23.1794433385813;
-        Wed, 11 Nov 2026 13:43:05 -0800 (PST)
-Received: from MATRIX ([31.28.200.120])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5c157b7a100sm1190220e87.10.2026.11.11.13.43.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 11 Nov 2026 13:43:05 -0800 (PST)
-From: Andrey Larionov <id.dozer007@gmail.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DBC9606A323
+	for <ofono@lists.linux.dev>; Sat, 14 Nov 2026 06:06:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8DBC9606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=herrie.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=herrie.org
+Received: from submission7.mail.transip.nl (unknown [10.103.8.158])
+	by outbound8.mail.transip.nl (Postfix) with ESMTP id 4jRNsr1yNJzY75PZ
+	for <ofono@lists.linux.dev>; Sat, 14 Nov 2026 07:06:08 +0100 (CET)
+Received: from herrie-desktop (150-83-201-31.ftth.glasoperator.nl [31.201.83.150])
+	by submission7.mail.transip.nl (Postfix) with ESMTPA id 4jRNsq4sbrz3fqYsS;
+	Sat, 14 Nov 2026 07:06:07 +0100 (CET)
+From: Herman van Hazendonk <github.com@herrie.org>
 To: ofono@lists.linux.dev
-Cc: Andrey Larionov <id.dozer007@gmail.com>
-Subject: [PATCH] atmodem: Filter unspecified PPP DNS addresses
-Date: Thu, 12 Nov 2026 00:42:26 +0300
-Message-ID: <20261111214226.1983661-1-id.dozer007@gmail.com>
+Cc: Marcel Holtmann <marcel@holtmann.org>,
+	Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH phonesim] callmanager: End calls when the radio is turned off
+Date: Sat, 14 Nov 2026 07:05:54 +0100
+Message-ID: <20261114060554.4104107-1-github.com@herrie.org>
 X-Mailer: git-send-email 2.53.0
 X-Mailing-List: ofono@lists.linux.dev
 List-Id: <ofono.lists.linux.dev>
@@ -92,67 +54,91 @@ List-Owner: <mailto:ofono+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-Scanned-By: ClueGetter at submission7.mail.transip.nl
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ s=transip-a; d=herrie.org; t=1794636367; h=from:subject:to:cc:date:
+ mime-version; bh=YKvW3ik3SnaKff9W7rc6p2+Nr96/MJ215w0sIXXs2eQ=;
+ b=j0hpPKrh963KMsakXUmo2pB5WDG2SUMEcnaMGxyei4OYZkNlBpm1wRAyaCB8DEX6gX779r
+ RlPOgPgFi6RksudkdoPNfu4ZIH2YD2maRr1EwJbZouzpGi7us+bDHOGkCLSl+G76Ue8+MK
+ /vxXFtf81NE/WVUxzQvm3R/DhqIbQPB9kEH/Andb5hhaIbDwFUwUmO4Kt+Rjgb3vMfaysf
+ y9Zeiv+l4XeY24os1yTpYqr+kTniJff5vEOFepTnMdMByWAVhLyanY9jFWoExsqQYRK0+I
+ 2PfubnTkacY6tt4vA0NpQYzyQh3lOhbQg+Mke1bwGJV5c4ozc+MwTPj6AAlY7A==
+X-Report-Abuse-To: abuse@transip.nl
 
-When the PPP peer rejects the secondary DNS option before supplying an
-address, ipcp_rcn_rej() clears REQ_OPTION_DNS2 but leaves dns2 at its
-initial value of zero. Once IPCP is up, ipcp_up() converts that value to
-the non-empty string "0.0.0.0". ppp_connect() then includes it in the
-ConnectionContext Settings DomainNameServers array, for example:
+AT+CFUN=4 only switched off registration, so calls that were up stayed
+up with the radio off.  A real modem ends them, and oFono does not end
+them on its own: it waits for the modem to report it, so it went on
+showing calls that could no longer exist.
 
-  DomainNameServers: [172.25.0.1, 0.0.0.0]
+Once a rule has answered an AT+CFUN=<fun> with <fun> other than 1, hang
+up every call from the network side, the way the GUI's remote hangup
+does: *ECAV with the call ended and NO CARRIER for each, after which
+oFono queries AT+CLCC and drops them.  The rule's response has been
+written by then, so the NO CARRIERs follow the OK and are not taken
+for the final response to AT+CFUN.  AT+CFUN? and AT+CFUN=? are left
+alone, and so is a CFUN no rule accepts (default.xml has none for
+CFUN=0).
 
-A connection with only one DNS server is valid. RFC 1877 section 1 says
-that primary and secondary addresses are negotiated independently, and
-section 1.3 states that no secondary DNS address is provided by default.
-3GPP TS 27.060 V17.0.0 section 9 (pages 13-14) requires IPv4 DNS
-information over the TE-MT PPP link to be delivered as defined in
-RFC 1877.
-
-Skip unspecified, empty and missing DNS addresses when building the
-list. Keep it compact and NULL-terminated so that a usable secondary
-address is retained even if the primary address is unavailable. The
-example above is then published as [172.25.0.1]. Log the filtered list,
-using "(none)" when no usable DNS address is available.
-
-This only changes the exported settings and logging, not IPCP negotiation
-or the handling of previously supplied nonzero addresses for rejected
-options.
-
-References:
-  https://www.rfc-editor.org/rfc/rfc1877.html#section-1
-  https://www.rfc-editor.org/rfc/rfc1877.html#section-1.3
-  https://www.etsi.org/deliver/etsi_ts/127000_127099/127060/17.00.00_60/ts_127060v170000p.pdf
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
- drivers/atmodem/gprs-context.c | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
+ src/callmanager.cpp |  6 ++++++
+ src/callmanager.h   |  3 +++
+ src/phonesim.cpp    | 11 +++++++++++
+ 3 files changed, 20 insertions(+)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -70,15 +70,22 @@ static void ppp_connect(const char *interface, const char *local,
- 	struct ofono_gprs_context *gc = user_data;
- 	struct gprs_context_data *gcd = ofono_gprs_context_get_data(gc);
- 	const char *dns[3];
-+	unsigned int n_dns = 0;
+diff --git a/src/callmanager.cpp b/src/callmanager.cpp
+index 40f9b3b..f1c0385 100644
+--- a/src/callmanager.cpp
++++ b/src/callmanager.cpp
+@@ -478,6 +478,12 @@ void CallManager::hangupRemote( int id )
+     }
+ }
  
- 	DBG("");
- 
--	dns[0] = dns1;
--	dns[1] = dns2;
--	dns[2] = 0;
-+	if (dns1 && dns1[0] && strcmp(dns1, "0.0.0.0"))
-+		dns[n_dns++] = dns1;
++void CallManager::hangupAllRemote()
++{
++    while ( !callList.isEmpty() )
++        hangupRemote( callList.constFirst().id );
++}
 +
-+	if (dns2 && dns2[0] && strcmp(dns2, "0.0.0.0"))
-+		dns[n_dns++] = dns2;
+ bool CallManager::acceptCall()
+ {
+     int id = idForIncoming();
+diff --git a/src/callmanager.h b/src/callmanager.h
+index a39f484..93381db 100644
+--- a/src/callmanager.h
++++ b/src/callmanager.h
+@@ -109,6 +109,9 @@ public slots:
+     // Simulate a remote hangup.
+     void hangupRemote( int id );
+ 
++    // Simulate a remote hangup of every call, as when the radio goes off.
++    void hangupAllRemote();
 +
-+	dns[n_dns] = NULL;
+ signals:
+     // Send a response to a command.
+     void send( const QString& line );
+diff --git a/src/phonesim.cpp b/src/phonesim.cpp
+index 89d5e9d..994031c 100644
+--- a/src/phonesim.cpp
++++ b/src/phonesim.cpp
+@@ -1182,6 +1182,17 @@ void SimRules::command( const QString& cmd )
+             respond( "ERROR" );
  
- 	ofono_info("IP: %s", local);
--	ofono_info("DNS: %s, %s", dns1, dns2);
-+	ofono_info("DNS: %s%s%s", n_dns ? dns[0] : "(none)",
-+			n_dns > 1 ? ", " : "",
-+			n_dns > 1 ? dns[1] : "");
+         }
++    } else if ( cmd.startsWith( "AT+CFUN=" ) ) {
++
++        // A real modem ends every call when its radio is turned off, and
++        // oFono waits for it to do so.  The rule has answered by now, so
++        // the NO CARRIERs cannot be taken as the final response to AT+CFUN.
++        bool ok;
++        int fun = cmd.mid( 8 ).section( ',', 0, 0 ).toInt( &ok );
++
++        if ( ok && fun != 1 )
++            _callManager->hangupAllRemote();
++
+     }
+ }
  
- 	gcd->state = STATE_ACTIVE;
- 	ofono_gprs_context_set_interface(gc, interface);
+-- 
+2.53.0
+
